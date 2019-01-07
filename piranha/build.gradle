@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2017-2018. Uber Technologies Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import net.ltgt.gradle.errorprone.CheckSeverity
+
+plugins {
+  id "java"
+  // For code coverage:
+  id 'jacoco'
+}
+
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
+
+dependencies {
+    compileOnly deps.apt.autoService
+    annotationProcessor deps.apt.autoService
+
+    compileOnly deps.build.errorProneCheckApi
+
+    testCompile deps.test.junit4
+    testCompile(deps.build.errorProneTestHelpers) {
+        exclude group: "junit", module: "junit"
+    }
+}
+
+javadoc {
+    failOnError = false
+}
+
+test {
+  maxHeapSize = "1024m"
+  jvmArgs "-Xbootclasspath/p:${configurations.errorproneJavac.asPath}"
+}
+
+apply from: rootProject.file("gradle/gradle-mvn-push.gradle")
+
+// From https://github.com/kt3k/coveralls-gradle-plugin
+jacocoTestReport {
+    reports {
+        xml.enabled = true // coveralls plugin depends on xml format report
+        html.enabled = true
+    }
+}
