@@ -161,7 +161,7 @@ Please feel free to [open a GitHub issue](https://github.com/uber/piranha/issues
 
 ## Contributors
 
-We'd love for you to contribute to NullAway!  Please note that once
+We'd love for you to contribute to Piranha!  Please note that once
 you create a pull request, you will be asked to sign our [Uber Contributor License Agreement](https://docs.google.com/a/uber.com/forms/d/1pAwS_-dA1KhPlfxzYLBqK6rsSWwRwH95OCCZrcsY5rk/viewform).
 
 ## License
