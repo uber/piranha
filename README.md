@@ -162,7 +162,7 @@ Please feel free to [open a GitHub issue](https://github.com/uber/piranha/issues
 ## Contributors
 
 We'd love for you to contribute to Piranha!  Please note that once
-you create a pull request, you will be asked to sign our [Uber Contributor License Agreement](https://docs.google.com/a/uber.com/forms/d/1pAwS_-dA1KhPlfxzYLBqK6rsSWwRwH95OCCZrcsY5rk/viewform).
+you create a pull request, you will be asked to sign our [Uber Contributor License Agreement](https://cla-assistant.io/uber/piranha).
 
 ## License
 Piranha is licensed under the Apache 2.0 license.  See the LICENSE file for more information.
