@@ -155,6 +155,11 @@ public class MyClass {
 
 This example is present in the [sample](https://github.com/uber/piranha/sample/) directory. 
 
+
+## Supported Languages
+Currently, Piranha can be used to refactor Java code. We expect to add support 
+for other languages soon. 
+
 ## Support
 
 Please feel free to [open a GitHub issue](https://github.com/uber/piranha/issues) if you have any questions on how to use Piranha.  
