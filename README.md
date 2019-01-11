@@ -8,6 +8,9 @@ Feature flags are commonly used to enable gradual rollout or experiment with new
 
 Piranha is a tool to automatically refactor code related to stale flags. At a higher level, the input to the tool is the name of the flag and the expected behavior, after specifying a list of APIs related to flags in a properties file. Piranha will use these inputs to automatically refactor the code according to the expected behavior. 
 
+Currently, Piranha is used to refactor Java code. We plan on supporting 
+other languages soon. 
+
 ## Installation
 
 ### Overview
@@ -155,10 +158,6 @@ public class MyClass {
 
 This example is present in the [sample](https://github.com/uber/piranha/sample/) directory. 
 
-
-## Supported Languages
-Currently, Piranha can be used to refactor Java code. We expect to add support 
-for other languages soon. 
 
 ## Support
 
