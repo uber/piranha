@@ -19,7 +19,7 @@ Piranha requires that you build your code with [Error Prone](http://errorprone.i
 
 ### Gradle
 
-Integrate Piranha into your Java project by adding the following to your `build.gradle` file:
+To integrate Piranha into your Java project you'll need a version of the following additions to your `build.gradle` file:
 
 ```
 plugins {
@@ -45,6 +45,8 @@ tasks.withType(JavaCompile) {
   }
   options.errorprone.errorproneArgs << "-XepPatchChecks:Piranha"
   options.errorprone.errorproneArgs << "-XepPatchLocation:IN_PLACE"
+  // The lines below should be replaced by code that loads the specific flag to patch
+  // and final treatment condition.
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG"
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/piranha.properties"
@@ -61,6 +63,7 @@ The properties file has the following template:
 treatedMethods=treated,flagEnabled
 controlMethods=flagDisabled
 emptyMethods=enableFlag,disableFlag
+treatmentGroupMethods=isToggleInGroup
 annotations=FlagTesting
 linkURL=<provide_your_url>
 ```

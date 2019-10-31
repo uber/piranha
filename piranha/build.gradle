@@ -32,6 +32,7 @@ dependencies {
     compileOnly deps.build.errorProneCheckApi
 
     testCompile deps.test.junit4
+    testCompile deps.test.daggerAnnotations
     testCompile(deps.build.errorProneTestHelpers) {
         exclude group: "junit", module: "junit"
     }

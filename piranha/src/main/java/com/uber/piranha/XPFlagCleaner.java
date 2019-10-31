@@ -1,12 +1,26 @@
+/**
+ *    Copyright (c) 2019 Uber Technologies, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package com.uber.piranha;
 
-import static com.google.errorprone.BugPattern.Category.JDK;
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 
-import java.text.ParseException;
-import java.util.Optional;
-
 import com.google.auto.service.AutoService;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
 import com.google.errorprone.VisitorState;
@@ -15,59 +29,86 @@ import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.FindIdentifiers;
-import com.sun.source.tree.MethodTree;
-import com.sun.source.tree.ReturnTree;
-import com.sun.source.tree.LiteralTree;
+import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.AssignmentTree;
 import com.sun.source.tree.BinaryTree;
+import com.sun.source.tree.BlockTree;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ConditionalExpressionTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
+import com.sun.source.tree.ImportTree;
+import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
+import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.ParenthesizedTree;
+import com.sun.source.tree.ReturnTree;
+import com.sun.source.tree.StatementTree;
 import com.sun.source.tree.Tree;
-import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.Tree.Kind;
+import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
-import com.sun.source.tree.AnnotationTree;
+import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
 import java.io.IOException;
-
-import java.nio.file.Files;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-
+import java.text.ParseException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
+import javax.lang.model.element.ElementKind;
 
 /** @author murali@uber.com (Murali Krishna Ramanathan) */
 @AutoService(BugChecker.class)
-@BugPattern(
-  name = "Piranha",
-  category = JDK,
-  summary = "Cleans stale XP flags.",
-  severity = SUGGESTION
-)
+@BugPattern(name = "Piranha",
+        altNames = {"XPFlagCleaner"},
+        summary = "Cleans stale XP flags.",
+        severity = SUGGESTION)
 public class XPFlagCleaner extends BugChecker
     implements BugChecker.AssignmentTreeMatcher,
         BugChecker.BinaryTreeMatcher,
+        BugChecker.CompilationUnitTreeMatcher,
         BugChecker.ConditionalExpressionTreeMatcher,
+        BugChecker.ClassTreeMatcher,
         BugChecker.ExpressionStatementTreeMatcher,
         BugChecker.IfTreeMatcher,
+        BugChecker.ImportTreeMatcher,
         BugChecker.MethodInvocationTreeMatcher,
         BugChecker.ReturnTreeMatcher,
         BugChecker.UnaryTreeMatcher,
         BugChecker.VariableTreeMatcher,
         BugChecker.MethodTreeMatcher {
 
+  private static final ImmutableSet<String> COMMON_GROUP_NAMES =
+      ImmutableSet.of("control", "enabled", "disabled", "treatment");
+
   private static final int DONTCARE = -1;
 
+  private static final String TRUE = "true";
+  private static final String FALSE = "false";
+  private static final String EMPTY = "";
+
+  /**
+   * Used to defer initialization until after traversal has begun, since Error Prone eats all error
+   * messages thrown inside the constructor.
+   */
+  private boolean initialized = false;
+
+  private boolean disabled = false;
+  private ErrorProneFlags flags = null;
+
   private String xpFlagName = "_xpflag_dummy";
-  private final String TRUE = "true";
-  private final String FALSE = "false";
-  private final String EMPTY = "";
 
   /** Enumerator for different values returned by expression evaluation */
   private enum Value {
@@ -80,12 +121,15 @@ public class XPFlagCleaner extends BugChecker
   private enum API {
     IS_TREATED,
     IS_CONTROL,
+    IS_TREATMENT_GROUP_CHECK,
     DELETE_METHOD,
     UNKNOWN
   }
 
   private Symbol xpSym = null;
   private boolean isTreated = true;
+  private String treatmentGroup = "";
+  private String treatmentGroupsEnum = null; // FQN of the enum containing the treatment group names
 
   /**
    * when source is refactored, this specifies the end position for the refactoring until the
@@ -97,8 +141,16 @@ public class XPFlagCleaner extends BugChecker
   private final HashSet<String> treatedMethods = new HashSet<String>();
   private final HashSet<String> controlMethods = new HashSet<String>();
   private final HashSet<String> deleteMethods = new HashSet<String>();
+  private final HashSet<String> treatmentGroupMethods = new HashSet<String>();
   private final HashSet<String> handledAnnotations = new HashSet<String>();
   private String linkURL;
+
+  /** State used to track usage counts and delete corresponding declarations if needed. */
+  private TreePath cuPath = null;
+
+  private boolean countsCollected = false;
+  private ImmutableMap<Symbol, UsageCounter.CounterData> usageCounts = null;
+  private Map<Symbol, Integer> deletedUsages = null;
 
   /**
    * Copied from NullAway comment. Error Prone requires us to have an empty constructor for each
@@ -108,10 +160,15 @@ public class XPFlagCleaner extends BugChecker
   public XPFlagCleaner() {}
 
   public XPFlagCleaner(ErrorProneFlags flags) throws ParseException {
+    this.flags = flags;
+  }
+
+  private void init(ErrorProneFlags flags) throws ParseException {
     Optional<String> s = flags.get("Piranha:FlagName");
     if (s.isPresent()) {
       xpFlagName = s.get();
       isTreated = flags.getBoolean("Piranha:IsTreated").orElse(true);
+      treatmentGroup = flags.get("Piranha:TreatmentGroup").orElse("").toLowerCase();
     } else {
       throw new ParseException("Piranha:FlagName is missing", 0);
     }
@@ -126,6 +183,7 @@ public class XPFlagCleaner extends BugChecker
         updateConfig(prop, "treatedMethods", treatedMethods);
         updateConfig(prop, "controlMethods", controlMethods);
         updateConfig(prop, "emptyMethods", deleteMethods);
+        updateConfig(prop, "treatmentGroupMethods", treatmentGroupMethods);
         updateConfig(prop, "annotations", handledAnnotations);
         linkURL = prop.getProperty("linkURL");
       } catch (IOException fnfe) {
@@ -136,6 +194,72 @@ public class XPFlagCleaner extends BugChecker
     } else {
       throw new ParseException("Piranha:Config is missing", 0);
     }
+    initialized = true;
+  }
+
+  // We call this lazily only when needed, meaning when a symbol usage is first deleted for this
+  // Compilation Unit.
+  private void computeSymbolCounts(VisitorState visitorState) {
+    Preconditions.checkArgument(
+        !countsCollected, "This shouldn't be called more than once per Compilation Unit");
+    deletedUsages = new LinkedHashMap<>();
+    // We count all usages stating at the root of the current compilation unit.
+    usageCounts = UsageCounter.getUsageCounts(visitorState, cuPath);
+    countsCollected = true;
+  }
+
+  private void decrementSymbolUsage(
+      Symbol symbol, VisitorState visitorState, SuggestedFix.Builder builder) {
+    // Run UsageCounter and check if this is a variable of interest as per that class.
+    if (!countsCollected) {
+      computeSymbolCounts(visitorState);
+    }
+    if (!usageCounts.containsKey(symbol)) {
+      // Not a variable tracked by UsageCounter or UsageCheckers
+      return;
+    }
+    // Then, update the number of deletions of `symbol`
+    int perSymbolDeletedUsages = 1;
+    if (deletedUsages.containsKey(symbol)) {
+      perSymbolDeletedUsages += deletedUsages.get(symbol);
+    }
+    deletedUsages.put(symbol, perSymbolDeletedUsages);
+    // Finally, check if this number of deletions equals the entire usage count and patch
+    // accordingly.
+    UsageCounter.CounterData counterData = usageCounts.get(symbol);
+    Preconditions.checkArgument(counterData.count >= perSymbolDeletedUsages);
+    if (counterData.count == perSymbolDeletedUsages) {
+      // Remove the variable declaration.
+      builder.delete(counterData.declaration);
+    }
+  }
+
+  private void decrementAllSymbolUsages(
+      Tree tree, VisitorState visitorState, SuggestedFix.Builder builder) {
+    Map<Symbol, Integer> deletedUsages = UsageCounter.getRawUsageCounts(tree);
+    for (Symbol s : deletedUsages.keySet()) {
+      decrementSymbolUsage(s, visitorState, builder);
+    }
+  }
+
+  @Override
+  public Description matchCompilationUnit(
+      CompilationUnitTree compilationUnitTree, VisitorState visitorState) {
+    if (!initialized && !disabled) {
+      try {
+        init(flags);
+      } catch (ParseException pe) {
+        disabled = true;
+      }
+    }
+    if (countsCollected) {
+      // Clear out this info
+      countsCollected = false;
+      usageCounts = null;
+      deletedUsages = null;
+    }
+    cuPath = visitorState.getPath();
+    return Description.NO_MATCH;
   }
 
   @Override
@@ -160,7 +284,7 @@ public class XPFlagCleaner extends BugChecker
         return API.UNKNOWN;
       }
 
-      if (mit.getArguments().size() == 1) {
+      if (mit.getArguments().size() == 1 || mit.getArguments().size() == 2) {
         ExpressionTree arg = mit.getArguments().get(0);
         Symbol argSym = ASTHelpers.getSymbol(arg);
         if (argSym != null && (argSym.equals(xpSym) || argSym.toString().equals(xpFlagName))) {
@@ -172,6 +296,8 @@ public class XPFlagCleaner extends BugChecker
             return API.IS_TREATED;
           } else if (deleteMethods.contains(methodName)) {
             return API.DELETE_METHOD;
+          } else if (treatmentGroupMethods.contains(methodName)) {
+            return API.IS_TREATMENT_GROUP_CHECK;
           }
         }
       }
@@ -186,7 +312,7 @@ public class XPFlagCleaner extends BugChecker
         s = s.substring(0, s.length() - 1);
       }
     }
-    return s;
+    return s.trim();
   }
 
   /* this method checks for whether the enclosing source is already replaced.
@@ -245,9 +371,10 @@ public class XPFlagCleaner extends BugChecker
       API api = getXPAPI(tree);
       if (api.equals(API.IS_TREATED)) {
         return isTreated ? Value.TRUE : Value.FALSE;
-      }
-      if (api.equals(API.IS_CONTROL)) {
+      } else if (api.equals(API.IS_CONTROL)) {
         return isTreated ? Value.FALSE : Value.TRUE;
+      } else if (api.equals(API.IS_TREATMENT_GROUP_CHECK)) {
+        return evalTreatmentGroupCheck((MethodInvocationTree) tree) ? Value.TRUE : Value.FALSE;
       }
     }
 
@@ -280,6 +407,21 @@ public class XPFlagCleaner extends BugChecker
     return Value.BOT;
   }
 
+  /**
+   * A utility method that simulated evaluation of isInTreatmentGroup and similar methods.
+   *
+   * @param methodInvocationTree The method call to isInTreatmentGroup
+   * @return true if the second argument matches the treatmentGroup passed to this checker
+   */
+  private boolean evalTreatmentGroupCheck(MethodInvocationTree methodInvocationTree) {
+    Preconditions.checkArgument(
+        methodInvocationTree.getArguments().size() == 2,
+        "Treatment group checks (e.g. isInTreatmentGroup) must take two arguments");
+    ExpressionTree arg = methodInvocationTree.getArguments().get(1);
+    Symbol argSym = ASTHelpers.getSymbol(arg);
+    return (argSym != null && argSym.toString().toLowerCase().equals(treatmentGroup));
+  }
+
   /* A utility method to update code corresponding to an expression
    *  used for various expression kinds
    */
@@ -298,9 +440,76 @@ public class XPFlagCleaner extends BugChecker
 
     if (update) {
       Description.Builder builder = buildDescription(tree);
-      builder.addFix(SuggestedFix.replace(expr, replacementString));
+      SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+      fixBuilder.replace(expr, replacementString);
+      decrementAllSymbolUsages(expr, state, fixBuilder);
+      builder.addFix(fixBuilder.build());
       endPos = state.getEndPosition(expr);
       return builder.build();
+    }
+    return Description.NO_MATCH;
+  }
+
+  private boolean isTreatmentGroupEnum(Symbol.ClassSymbol enumSym) {
+    // Filter out some generic names, like CONTROL to make sure we don't match the wrong
+    // TreatmentGroup
+    if (COMMON_GROUP_NAMES.contains(treatmentGroup)) {
+      return false;
+    }
+    for (Symbol fsym : enumSym.getEnclosedElements()) {
+      if (fsym.getKind().equals(ElementKind.ENUM_CONSTANT)
+          && fsym.name.toString().toLowerCase().equals(treatmentGroup)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public Description matchClass(ClassTree classTree, VisitorState visitorState) {
+    Symbol.ClassSymbol classSymbol = ASTHelpers.getSymbol(classTree);
+    if (classSymbol.getKind().equals(ElementKind.ENUM) && isTreatmentGroupEnum(classSymbol)) {
+      treatmentGroupsEnum = classSymbol.fullname.toString();
+      if (classSymbol.getNestingKind().isNested()) {
+        return buildDescription(classTree).addFix(SuggestedFix.delete(classTree)).build();
+      } else {
+        String emptyEnum =
+            PiranhaUtils.DELETE_REQUEST_COMMENT
+                + "enum "
+                + classSymbol.getSimpleName().toString()
+                + " { }";
+        return buildDescription(classTree)
+            .addFix(SuggestedFix.replace(classTree, emptyEnum))
+            .build();
+      }
+    }
+    return Description.NO_MATCH;
+  }
+
+  @Override
+  public Description matchImport(ImportTree importTree, VisitorState visitorState) {
+    if (importTree.isStatic()) {
+      Tree importIdentifier = importTree.getQualifiedIdentifier();
+      if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
+        MemberSelectTree memberSelectTree = (MemberSelectTree) importIdentifier;
+        if (memberSelectTree.getIdentifier().toString().endsWith(xpFlagName)
+            || (treatmentGroupsEnum != null
+                && memberSelectTree.getExpression().toString().startsWith(treatmentGroupsEnum))) {
+          return buildDescription(importTree)
+              .addFix(SuggestedFix.replace(importTree, "", 0, 1))
+              .build();
+        } else if (treatmentGroup.length() > 0 && treatmentGroupsEnum == null) {
+          // Check if this import is for values in the same enum that includes the treatmentGroup
+          Symbol importSymbol = ASTHelpers.getSymbol(memberSelectTree.getExpression());
+          if (importSymbol.getKind().equals(ElementKind.ENUM)
+              && isTreatmentGroupEnum((Symbol.ClassSymbol) importSymbol)) {
+            treatmentGroupsEnum = ((Symbol.ClassSymbol) importSymbol).fullname.toString();
+            return buildDescription(importTree)
+                .addFix(SuggestedFix.replace(importTree, "", 0, 1))
+                .build();
+          }
+        }
+      }
     }
     return Description.NO_MATCH;
   }
@@ -345,26 +554,35 @@ public class XPFlagCleaner extends BugChecker
       return d;
     }
 
-    String replacementString = null;
+    ExpressionTree deletedSubTree = null;
+    ExpressionTree remainingSubTree = null;
     Value l = evalExpr(tree.getLeftOperand(), state);
     Value r = evalExpr(tree.getRightOperand(), state);
     if (tree.getKind().equals(Kind.CONDITIONAL_AND)) {
       if (l.equals(Value.TRUE)) {
-        replacementString = tree.getRightOperand().toString();
+        deletedSubTree = tree.getLeftOperand();
+        remainingSubTree = tree.getRightOperand();
       } else if (r.equals(Value.TRUE)) {
-        replacementString = tree.getLeftOperand().toString();
+        deletedSubTree = tree.getRightOperand();
+        remainingSubTree = tree.getLeftOperand();
       }
     } else if (tree.getKind().equals(Kind.CONDITIONAL_OR)) {
       if (l.equals(Value.FALSE)) {
-        replacementString = tree.getRightOperand().toString();
+        deletedSubTree = tree.getLeftOperand();
+        remainingSubTree = tree.getRightOperand();
       } else if (r.equals(Value.FALSE)) {
-        replacementString = tree.getLeftOperand().toString();
+        deletedSubTree = tree.getRightOperand();
+        remainingSubTree = tree.getLeftOperand();
       }
     }
 
-    if (replacementString != null) {
+    if (deletedSubTree != null) {
       Description.Builder builder = buildDescription(tree);
-      builder.addFix(SuggestedFix.replace(tree, replacementString));
+      SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+      fixBuilder.replace(tree, remainingSubTree.toString());
+      decrementAllSymbolUsages(deletedSubTree, state, fixBuilder);
+      builder.addFix(fixBuilder.build());
+
       endPos = state.getEndPosition(tree);
       return builder.build();
     }
@@ -383,7 +601,10 @@ public class XPFlagCleaner extends BugChecker
       API api = getXPAPI(mit);
       if (api.equals(API.DELETE_METHOD)) {
         Description.Builder builder = buildDescription(tree);
-        builder.addFix(SuggestedFix.delete(tree));
+        SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+        fixBuilder.delete(tree);
+        decrementAllSymbolUsages(tree, state, fixBuilder);
+        builder.addFix(fixBuilder.build());
         endPos = state.getEndPosition(tree);
         return builder.build();
       }
@@ -415,7 +636,10 @@ public class XPFlagCleaner extends BugChecker
 
     if (update) {
       Description.Builder builder = buildDescription(tree);
-      builder.addFix(SuggestedFix.replace(et, replacementString));
+      SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+      fixBuilder.replace(et, replacementString);
+      decrementAllSymbolUsages(et, state, fixBuilder);
+      builder.addFix(fixBuilder.build());
       endPos = state.getEndPosition(tree);
       return builder.build();
     }
@@ -425,8 +649,21 @@ public class XPFlagCleaner extends BugChecker
   @Override
   public Description matchVariable(VariableTree tree, VisitorState state) {
     Symbol sym = FindIdentifiers.findIdent(xpFlagName, state);
+    // Check if this is the flag definition and remove it.
     if (sym != null && sym.isEnum() && sym.equals(ASTHelpers.getSymbol(tree))) {
       xpSym = sym;
+      // Remove the flag symbol. This only works because the error prone patch is applied once
+      // after all files have been analyzed, otherwise targets that use the flag but haven't been
+      // cleaned up would be broken. We use replace with a position adjustment, to get rid of the
+      // trailing "," if present on the parent.
+      String enumAsStr = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
+      String varAsStrWithComma = tree.getName().toString() + ",";
+      if (enumAsStr.contains(varAsStrWithComma)) {
+        return buildDescription(tree).addFix(SuggestedFix.replace(tree, "", 0, 1)).build();
+      } else {
+        // Fallback for single/last enum variable detection
+        return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
+      }
     }
     return Description.NO_MATCH;
   }
@@ -444,11 +681,15 @@ public class XPFlagCleaner extends BugChecker
             AssignmentTree assn = (AssignmentTree) et;
             if (assn.getExpression().toString().endsWith(xpFlagName)) {
               Description.Builder builder = buildDescription(tree);
+              SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
               if (isTreated) {
-                builder.addFix(SuggestedFix.delete(at));
+                fixBuilder.delete(at);
+                decrementAllSymbolUsages(at, state, fixBuilder);
               } else {
-                builder.addFix(SuggestedFix.delete(tree));
+                fixBuilder.delete(tree);
+                decrementAllSymbolUsages(tree, state, fixBuilder);
               }
+              builder.addFix(fixBuilder.build());
               return builder.build();
             }
           }
@@ -470,17 +711,24 @@ public class XPFlagCleaner extends BugChecker
     boolean update = false;
     String replacementString = EMPTY;
 
+    ExpressionTree removedBranch = null;
     if (x.equals(Value.TRUE)) {
       update = true;
       replacementString = state.getSourceForNode(tree.getTrueExpression());
+      removedBranch = tree.getFalseExpression();
     } else if (x.equals(Value.FALSE)) {
       update = true;
       replacementString = state.getSourceForNode(tree.getFalseExpression());
+      removedBranch = tree.getTrueExpression();
     }
 
     if (update) {
       Description.Builder builder = buildDescription(tree);
-      builder.addFix(SuggestedFix.replace(tree, stripBraces(replacementString)));
+      SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+      fixBuilder.replace(tree, stripBraces(replacementString));
+      decrementAllSymbolUsages(et, state, fixBuilder);
+      decrementAllSymbolUsages(removedBranch, state, fixBuilder);
+      builder.addFix(fixBuilder.build());
       endPos = state.getEndPosition(tree);
       return builder.build();
     }
@@ -494,28 +742,117 @@ public class XPFlagCleaner extends BugChecker
       return Description.NO_MATCH;
     }
 
+    // Ignore if this is part of an else-if clause, we will process it all at once
+    // when we get to the topmost if.
+    Tree parentTree = visitorState.getPath().getParentPath().getLeaf();
+    if (parentTree.getKind().equals(Kind.IF)) {
+      Tree parentElseChild = ((IfTree) parentTree).getElseStatement();
+      if (parentElseChild != null && parentElseChild.equals(ifTree)) {
+        return Description.NO_MATCH;
+      }
+    }
+
     ParenthesizedTree parenTree = (ParenthesizedTree) ifTree.getCondition();
     Value x = evalExpr(parenTree.getExpression(), visitorState);
     boolean update = false;
     String replacementString = EMPTY;
-
-    if (x.equals(Value.TRUE)) {
-      update = true;
-      replacementString = visitorState.getSourceForNode(ifTree.getThenStatement());
-    } else if (x.equals(Value.FALSE)) {
-      update = true;
-      if (ifTree.getElseStatement() != null) {
-        replacementString = visitorState.getSourceForNode(ifTree.getElseStatement());
+    boolean lastStmtIsReturn = false;
+    Set<StatementTree> removedBranches = new LinkedHashSet<StatementTree>();
+    // This code simplifies a nested if {...} (else if {...})* (else {...})? three all at once
+    IfTree subIfTree = ifTree;
+    boolean recurse;
+    do {
+      recurse = false;
+      StatementTree elseStatement = subIfTree.getElseStatement();
+      if (x.equals(Value.TRUE)) {
+        update = true;
+        if (elseStatement != null) {
+          removedBranches.add(elseStatement);
+        }
+        replacementString = visitorState.getSourceForNode(subIfTree.getThenStatement());
+        lastStmtIsReturn = endsWithReturn(ifTree.getThenStatement());
+      } else if (x.equals(Value.FALSE)) {
+        update = true;
+        if (elseStatement != null) {
+          removedBranches.add(subIfTree.getThenStatement());
+          replacementString = visitorState.getSourceForNode(elseStatement);
+          if (elseStatement.getKind().equals(Kind.IF)) {
+            // Keep going, in case we can eliminate more of the branches of the
+            // nested if.
+            recurse = true;
+            subIfTree = (IfTree) elseStatement;
+            ParenthesizedTree pT = (ParenthesizedTree) subIfTree.getCondition();
+            x = evalExpr(pT, visitorState);
+          } else {
+            lastStmtIsReturn = endsWithReturn(subIfTree.getElseStatement());
+          }
+        }
       }
-    }
+    } while (recurse);
 
     if (update) {
+      replacementString = stripBraces(replacementString);
       Description.Builder builder = buildDescription(ifTree);
-      builder.addFix(SuggestedFix.replace(ifTree, stripBraces(replacementString)));
+      // We use SuggestedFix.Builder to AND-compose fixes. Note that calling
+      // Description.Builder.addFix(...) multiple times is interpreted as OR-composing
+      // multiple candidate fixes (i.e. "Fix by doing A or B or C" where we want
+      // "Fix by doing A and B and C")
+      SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+      if (lastStmtIsReturn) {
+        // find the parent, and if it's a BlockTree, replace the if statement and delete any
+        // subsequent statements
+        Tree parent = visitorState.getPath().getParentPath().getLeaf();
+        // note that parent may not be a block, e.g., if we have a parent if statement with no
+        // braces for the body
+        if (parent instanceof BlockTree) {
+          BlockTree block = (BlockTree) parent;
+          boolean foundIf = false;
+          for (StatementTree stmt : block.getStatements()) {
+            if (foundIf) {
+              // We are past the if statement, so everything after this will be deleted,
+              // decrement all usage counts accordingly
+              decrementAllSymbolUsages(stmt, visitorState, fixBuilder);
+              fixBuilder.delete(stmt);
+            } else if (!stmt.equals(ifTree)) {
+              // preceding statement, keep it
+              continue;
+            } else {
+              // we reached the if
+              for (StatementTree removedBranch : removedBranches) {
+                decrementAllSymbolUsages(removedBranch, visitorState, fixBuilder);
+              }
+              decrementAllSymbolUsages(ifTree.getCondition(), visitorState, fixBuilder);
+              fixBuilder.replace(ifTree, replacementString);
+              // elide the remaining statements
+              foundIf = true;
+            }
+          }
+          // Usage counts already decremented above.
+          endPos = visitorState.getEndPosition(block);
+          return builder.addFix(fixBuilder.build()).build();
+        }
+      }
+      fixBuilder.replace(ifTree, replacementString);
+      for (StatementTree removedBranch : removedBranches) {
+        decrementAllSymbolUsages(removedBranch, visitorState, fixBuilder);
+      }
+      decrementAllSymbolUsages(ifTree.getCondition(), visitorState, fixBuilder);
       endPos = visitorState.getEndPosition(ifTree);
-      return builder.build();
+      return builder.addFix(fixBuilder.build()).build();
     }
 
     return Description.NO_MATCH;
+  }
+
+  /** Is the statement a return statement, or is it a block that ends in a return statement? */
+  private boolean endsWithReturn(StatementTree stmt) {
+    if (stmt instanceof ReturnTree) {
+      return true;
+    }
+    if (stmt instanceof BlockTree) {
+      List<? extends StatementTree> statements = ((BlockTree) stmt).getStatements();
+      return statements.size() > 0 && statements.get(statements.size() - 1) instanceof ReturnTree;
+    }
+    return false;
   }
 }

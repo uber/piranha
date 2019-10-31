@@ -33,6 +33,7 @@ def build = [
 
 def test = [
     junit4                  : "junit:junit:4.12",
+    daggerAnnotations       : "com.google.dagger:dagger:2.16",
 ]
 
 ext.deps = [
