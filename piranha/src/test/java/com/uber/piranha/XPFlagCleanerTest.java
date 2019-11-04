@@ -195,30 +195,7 @@ public class XPFlagCleanerTest {
 
   private BugCheckerRefactoringTestHelper addHelperClasses(BugCheckerRefactoringTestHelper bcr)
       throws IOException {
-    return bcr.addInputLines(
-            "XPTest.java",
-            "package com.uber.piranha;",
-            "class XPTest {",
-            " public boolean isToggleEnabled(Object x) { return true; }",
-            " public boolean putToggleEnabled(Object x) { return true; }",
-            " public boolean includeEvent(Object x) { return true; }",
-            " public boolean isToggleDisabled(Object x) { return true; }",
-            " public boolean putToggleDisabled(Object x) { return true; }",
-            " public boolean isFlagTreated(Object x) { return true; }",
-            " public boolean isToggleInGroup(Object x, Object y) { return true; }",
-            " }")
-        .addOutputLines(
-            "XPTest.java",
-            "package com.uber.piranha;",
-            "class XPTest {",
-            " public boolean isToggleEnabled(Object x) { return true; }",
-            " public boolean putToggleEnabled(Object x) { return true; }",
-            " public boolean includeEvent(Object x) { return true; }",
-            " public boolean isToggleDisabled(Object x) { return true; }",
-            " public boolean putToggleDisabled(Object x) { return true; }",
-            " public boolean isFlagTreated(Object x) { return true; }",
-            " public boolean isToggleInGroup(Object x, Object y) { return true; }",
-            " }");
+    return bcr.addInput("XPTest.java").expectUnchanged();
   }
 
   @Test
