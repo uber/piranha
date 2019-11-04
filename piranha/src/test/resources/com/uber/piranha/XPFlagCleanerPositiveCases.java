@@ -1,3 +1,18 @@
+/**
+ *    Copyright (c) 2019 Uber Technologies, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package com.uber.piranha;
 
 import java.lang.annotation.ElementType;
@@ -5,11 +20,27 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import dagger.Module;
+import dagger.Provides;
+import javax.inject.Inject;
+
 
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
+    // BUG: Diagnostic contains: Cleans stale XP flags
     STALE_FLAG
+  }
+
+  enum AnotherTestExperimentName {
+    // BUG: Diagnostic contains: Cleans stale XP flags
+    @Autorollout
+    STALE_FLAG
+  }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface Autorollout {
+     boolean staged() default false;
   }
 
   @Retention(RetentionPolicy.RUNTIME)
@@ -99,15 +130,128 @@ class XPFlagCleanerPositiveCases {
     experimentation.putToggleDisabled(TestExperimentName.STALE_FLAG);
 
     // BUG: Diagnostic contains: Cleans stale XP flags
-    if(experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG) && (tBool ||
-        true)) {}
+    if(experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG) && (tBool || true)) {}
 
 
+  }
+
+  public int return_within_if_basic() {
+    // BUG: Diagnostic contains: Cleans stale XP flags
+    if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+      return 20;
+    }
+    return 30;
+  }
+
+  public int return_within_if_additional(int x) {
+    if (x == 0) {
+      // BUG: Diagnostic contains: Cleans stale XP flags
+      if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+        return 0;
+      }
+      return 75;
+    }
+
+    if (x == 1)
+      // BUG: Diagnostic contains: Cleans stale XP flags
+      if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+        return 1;
+      } else {
+        return 76;
+      }
+
+    if (x == 2) {
+      int y = 3;
+      // BUG: Diagnostic contains: Cleans stale XP flags
+      if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+        y++;
+        return y;
+      }
+      return y+10;
+    }
+
+    if (x == 3) {
+      int z = 4;
+      // BUG: Diagnostic contains: Cleans stale XP flags
+      if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+        z++;
+      } else {
+        z = z*5;
+        return z+10;
+      }
+      return z;
+    }
+
+    return 100;
   }
 
   @ToggleTesting(treated = TestExperimentName.STALE_FLAG)
   // BUG: Diagnostic contains: Cleans stale XP flags
   public void annotation_test() {}
+
+  @Inject XPTest injectedExperimentsShouldBeDeleted;
+
+  private int testRemovingInjectField() {
+     // BUG: Diagnostic contains: Cleans stale XP flags
+     if(injectedExperimentsShouldBeDeleted.isToggleEnabled(TestExperimentName.STALE_FLAG))
+        return 1;
+     else
+        return 2;
+  }
+
+  @Inject XPTest injectedExperimentsMultipleUses;
+
+  private void randomSet(XPTest x) {
+     injectedExperimentsMultipleUses = x;
+  }
+
+  private int testNotRemovingInjectField() {
+     // BUG: Diagnostic contains: Cleans stale XP flags
+     if(injectedExperimentsMultipleUses.isToggleEnabled(TestExperimentName.STALE_FLAG))
+        return 1;
+     else
+        return 2;
+
+  }
+
+  @Provides public int unusedParamTestWithDeletion(XPTest x) {
+     // BUG: Diagnostic contains: Cleans stale XP flags
+     if(x.isToggleEnabled(TestExperimentName.STALE_FLAG))
+        return 1;
+     else
+        return 2;
+  }
+
+  @Provides public int unusedParamTestWithoutDeletion(XPTest x) {
+
+     if (x != null) {
+       // just another use to prevent deletion of this parameter.
+     }
+
+     // BUG: Diagnostic contains: Cleans stale XP flags
+     if(x.isToggleEnabled(TestExperimentName.STALE_FLAG))
+        return 1;
+     else
+        return 2;
+  }
+
+  private void testMultipleCalls(int x) {
+     if (x > 0) {
+       // BUG: Diagnostic contains: Cleans stale XP flags
+       experimentation.includeEvent(TestExperimentName.STALE_FLAG);
+       // BUG: Diagnostic contains: Cleans stale XP flags
+       if(experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+          // comment0
+          return;
+       } else {
+          // comment1
+          return;
+       }
+     }
+
+     // do something here
+     return;
+  }
 
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) { return true; }
@@ -116,6 +260,7 @@ class XPFlagCleanerPositiveCases {
     public boolean isToggleDisabled(TestExperimentName x) { return true; }
     public boolean putToggleDisabled(TestExperimentName x) { return true; }
     public boolean isFlagTreated(TestExperimentName x) { return true; }
+    public boolean isToggleInGroup(TestExperimentName x) { return true; }
   }
 
 
