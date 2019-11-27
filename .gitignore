@@ -1,5 +1,5 @@
 java/.gradle
-*/build/
+java/*/build/
 .idea
 piranha.iml
 objc/process
