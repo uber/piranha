@@ -11,3 +11,9 @@
 
 # TODO
 - Refactoring the implementation to accept other APIs
+
+# Acknowledgements
+- Some aspects of the refactoring are based on this blog [article](http://www.goldsborough.me/c++/clang/llvm/tools/2017/02/24/00-00-06-emitting_diagnostics_and_fixithints_in_clang_tools/)
+
+- A majority of the test cases (as of Nov 11, 2019) are due to Nick Lauer.
+
