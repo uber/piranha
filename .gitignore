@@ -1,4 +1,6 @@
-.gradle
+java/.gradle
 */build/
 .idea
 piranha.iml
+objc/process
+objc/piranha-objc
