@@ -16,6 +16,8 @@ To use/build each version, look under the corresponding [lang]/ directory and fo
 - [PiranhaObjC](objc/README.md)
 - [PiranhaSwift](swift/README.md)
 
+A report detailing our experiences with using Piranha at Uber is available [here](report.pdf).
+
 ## Support
 
 Please feel free to [open a GitHub issue](https://github.com/uber/piranha/issues) if you have any questions on how to use Piranha.  
