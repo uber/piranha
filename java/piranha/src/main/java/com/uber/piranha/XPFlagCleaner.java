@@ -90,8 +90,12 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.VariableTreeMatcher,
         BugChecker.MethodTreeMatcher {
 
+  /**
+   * Do not try to auto-delete imports with these common/generic names, as multiple treament groups
+   * for different flags are likely to re-use these names.
+   */
   private static final ImmutableSet<String> COMMON_GROUP_NAMES =
-      ImmutableSet.of("control", "enabled", "disabled", "treatment");
+      ImmutableSet.of("control", "enabled", "disabled", "treatment", "treated");
 
   private static final int DONTCARE = -1;
 
