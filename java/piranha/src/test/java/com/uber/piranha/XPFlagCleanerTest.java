@@ -169,6 +169,82 @@ public class XPFlagCleanerTest {
   }
 
   @Test
+  public void dontRemoveGenericallyNamedTreatmentGroups() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:TreatmentGroup", "TREATED");
+    b.putFlag("Piranha:Config", "config/piranha.properties");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+
+      bcr.addInputLines(
+              "TestExperimentName.java",
+              "package com.uber.piranha;",
+              "public enum TestExperimentName {",
+              " STALE_FLAG",
+              "}")
+              .addOutputLines(
+                      "TestExperimentName.java",
+                      "package com.uber.piranha;",
+                      "public enum TestExperimentName {", // Ideally we would remove this too, fix later
+                      "}")
+              .addInputLines(
+                      "TestExperimentGroups.java",
+                      "package com.uber.piranha;",
+                      "public enum TestExperimentGroups {",
+                      " TREATED,",
+                      " CONTROL,",
+                      "}")
+              .addOutputLines(
+                      "TestExperimentGroups.java",
+                      "package com.uber.piranha;",
+                      "public enum TestExperimentGroups {",
+                      " TREATED,",
+                      " CONTROL,",
+                      "}")
+              .addInputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+                      "import static com.uber.piranha.TestExperimentGroups.TREATED;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      " private XPTest experimentation;",
+                      " public String groupToString() {",
+                      "  // BUG: Diagnostic contains: Cleans stale XP flags",
+                      "  if (experimentation.isToggleDisabled(STALE_FLAG)) { return \"\"; }",
+                      "  else if (experimentation.isToggleInGroup(",
+                      "            STALE_FLAG,TREATED)) { ",
+                      "    return \"Treated\";",
+                      "  } else { return \"Controll\"; }",
+                      " }",
+                      "}")
+              .addOutputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "import static com.uber.piranha.TestExperimentGroups.TREATED;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      " private XPTest experimentation;",
+                      " public String groupToString() {",
+                      "  return \"Treated\";",
+                      " }",
+                      "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
+  @Test
   public void positiveControl() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();

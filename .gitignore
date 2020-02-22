@@ -7,3 +7,4 @@ objc/piranha-objc
 swift/artifact
 swift/Piranha.xcodeproj
 swift/Package.resolved
+**/*.iml
