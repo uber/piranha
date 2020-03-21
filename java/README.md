@@ -148,4 +148,4 @@ public class MyClass {
 }
 ```
 
-This example is present in the [sample](https://github.com/uber/piranha/java/sample/) directory. 
+This example is present in the [sample](https://github.com/uber/piranha/tree/master/java/sample/) directory. 
