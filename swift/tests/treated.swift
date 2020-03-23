@@ -16,6 +16,8 @@
 
 // swiftlint:disable custom_rules
 
+#if TESTFILE
+
 import Foundation
 
 protocol ExperimentKeying {
@@ -268,7 +270,7 @@ class SwiftExamples {
     }
 
     // tests for task T2191251
-    func storeuse_before() {
+    func storeuse_before() -> [Bool] {
         print("Hi world")
         print("somestring0")
         print("somestring1")
@@ -287,6 +289,8 @@ class SwiftExamples {
         if fieldZ {
             print("pqr")
         }
+
+        return [true, true]
     }
 
     func storeuse_init() {
@@ -359,3 +363,5 @@ class SwiftExamples {
         .loyalty_stack_view_migration
     ]
 }
+
+#endif

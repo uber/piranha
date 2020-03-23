@@ -252,6 +252,18 @@ class XPFlagCleaner: SyntaxRewriter {
         return result
     }
 
+    private func valueSyntax(_ node: Syntax) -> ExprSyntax? {
+        let value = evaluate(expression: node)
+        switch value {
+        case Value.isTrue:
+            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword())
+        case Value.isFalse:
+            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword())
+        case Value.isBot:
+            return nil
+        }
+    }
+
     // Returns an element from exprlist at the given index
     private func element(from exprlist: ExprListSyntax, at index: Int) -> ExprSyntax? {
         // TODO: Value of type 'ExprListSyntax' has no subscripts
@@ -640,6 +652,24 @@ class XPFlagCleaner: SyntaxRewriter {
         return simplify(node: node)
     }
 
+    override func visit(_ node: MemberAccessExprSyntax) -> ExprSyntax {
+        if isDeepCleanPass {
+            if let val = valueSyntax(node) {
+                return val
+            }
+        }
+        return super.visit(node)
+    }
+
+    override func visit(_ token: TokenSyntax) -> Syntax {
+        if isDeepCleanPass {
+            if let val = valueSyntax(token) {
+                return val
+            }
+        }
+        return super.visit(token)
+    }
+
     override func visit(_ node: ArrayElementListSyntax) -> Syntax {
         var newNode = SyntaxFactory.makeBlankArrayElementList()
         for expr in node {
@@ -780,15 +810,7 @@ class XPFlagCleaner: SyntaxRewriter {
     }
 
     override func visit(_ node: FunctionCallExprSyntax) -> ExprSyntax {
-        let value = evaluate(expression: node)
-        switch value {
-        case Value.isTrue:
-            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword())
-        case Value.isFalse:
-            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword())
-        case Value.isBot:
-            return super.visit(node)
-        }
+        return valueSyntax(node) ??  super.visit(node)
     }
 
     override func visit(_ node: CodeBlockItemListSyntax) -> Syntax {

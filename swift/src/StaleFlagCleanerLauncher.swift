@@ -18,37 +18,47 @@ import Foundation
 import SwiftSyntax
 
 // groupname is optional. the other arguments are necessary
-class StaleFlagCleanerLauncher: CommandLauncher {
+public class StaleFlagCleanerLauncher: CommandLauncher {
     let command: Command = .cleanupStaleFlags
+    public init() {
+    }
 
-    func launch(_ args: [String]) throws {
-        var sourceFile = URL(fileURLWithPath: "")
-        var configFile = URL(fileURLWithPath: "")
-        var flagName = ""
-        var groupName = ""
-        var isTreated = false
+    public func launch(_ args: [String]) throws {
+        runCleaner(args)
+    }
+}
 
-        for (index, argument) in args.enumerated() {
-            switch index {
-            case 2:
-                configFile = URL(fileURLWithPath: argument)
-            case 3:
-                sourceFile = URL(fileURLWithPath: argument)
-            case 4:
-                flagName = argument
-            case 5:
-                isTreated = argument.elementsEqual("true") ? true : false
-            case 6:
-                groupName = argument
-            default: break
-            }
+public func runCleaner(_ args: [String]) -> String {
+    var source = ""
+    var config = ""
+    var flagName = ""
+    var groupName = ""
+    var isTreated = false
+
+    for (index, argument) in args.enumerated() {
+        switch index {
+        case 2:
+            config = argument
+        case 3:
+            source = argument
+        case 4:
+            flagName = argument
+        case 5:
+            isTreated = argument.elementsEqual("true") ? true : false
+        case 6:
+            groupName = argument
+        default: break
         }
+    }
+    guard flagName.count > 0 else {
+        // swiftlint:disable:next custom_rules
+        print("Flag name is necessary to use the refactoring tool.")
+        exit(-1)
+    }
+    do {
 
-        guard flagName.count > 0 else {
-            // swiftlint:disable:next custom_rules
-            print("Flag name is necessary to use the refactoring tool.")
-            exit(-1)
-        }
+        let sourceFile = URL(fileURLWithPath: source)
+        let configFile = URL(fileURLWithPath: config)
 
         let parsed = try SyntaxParser.parse(sourceFile)
         let cleaner = XPFlagCleaner(with: configFile, flag: flagName, behavior: isTreated, group: groupName)
@@ -62,5 +72,8 @@ class StaleFlagCleanerLauncher: CommandLauncher {
 
         // swiftlint:disable:next custom_rules
         print(refactoredOutput, terminator: "")
+        return refactoredOutput.description
+    } catch {
+        fatalError(error.localizedDescription)
     }
 }
