@@ -151,8 +151,13 @@ class XPFlagCleanerPositiveCases {
      return;
   }
 
-
-
+  public int or_compounded_with_not(int x, boolean extra_toggle) {
+    if (extra_toggle) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
 
 
   class XPTest {

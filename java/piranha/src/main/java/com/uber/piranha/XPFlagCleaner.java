@@ -326,7 +326,7 @@ public class XPFlagCleaner extends BugChecker
    * the internal expression does not happen.
    */
   private boolean overLaps(Tree t, VisitorState visitorState) {
-    if (endPos != DONTCARE && visitorState.getEndPosition(t) < endPos) {
+    if (endPos != DONTCARE && visitorState.getEndPosition(t) <= endPos) {
       return true;
     } else {
       endPos = DONTCARE;
