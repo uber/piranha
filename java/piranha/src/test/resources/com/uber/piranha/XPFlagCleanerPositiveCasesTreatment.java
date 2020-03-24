@@ -158,6 +158,10 @@ class XPFlagCleanerPositiveCases {
      return;
   }
 
+  public int or_compounded_with_not(int x, boolean extra_toggle) {
+    return 0;
+  }
+
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) { return true; }
     public boolean putToggleEnabled(TestExperimentName x) { return true; }
