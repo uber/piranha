@@ -760,6 +760,7 @@ public class XPFlagCleaner extends BugChecker
     Value x = evalExpr(parenTree.getExpression(), visitorState);
     boolean update = false;
     String replacementString = EMPTY;
+    String replacementPrefix = EMPTY;
     boolean lastStmtIsReturn = false;
     Set<StatementTree> removedBranches = new LinkedHashSet<StatementTree>();
     // This code simplifies a nested if {...} (else if {...})* (else {...})? three all at once
@@ -791,11 +792,27 @@ public class XPFlagCleaner extends BugChecker
             lastStmtIsReturn = endsWithReturn(subIfTree.getElseStatement());
           }
         }
+      } else {
+          // The condition doesn't simplify to a constant, but the condition to some nested "else if" might.
+          if (elseStatement != null && elseStatement.getKind().equals(Kind.IF)) {
+            // Copy the initial if condition (don't mark as needing update yet)
+            replacementPrefix += "if " + visitorState.getSourceForNode(subIfTree.getCondition());
+            replacementPrefix += visitorState.getSourceForNode(subIfTree.getThenStatement()) + " else ";
+            // Then recurse on the else case
+            recurse = true;
+            subIfTree = (IfTree) elseStatement;
+            ParenthesizedTree pT = (ParenthesizedTree) subIfTree.getCondition();
+            x = evalExpr(pT, visitorState);
+          }
       }
     } while (recurse);
 
     if (update) {
-      replacementString = stripBraces(replacementString);
+      if (replacementPrefix != EMPTY) {
+        replacementString = replacementPrefix + replacementString;
+      } else {
+        replacementString = stripBraces(replacementString);
+      }
       Description.Builder builder = buildDescription(ifTree);
       // We use SuggestedFix.Builder to AND-compose fixes. Note that calling
       // Description.Builder.addFix(...) multiple times is interpreted as OR-composing

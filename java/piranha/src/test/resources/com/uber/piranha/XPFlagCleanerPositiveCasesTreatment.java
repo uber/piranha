@@ -162,6 +162,14 @@ class XPFlagCleanerPositiveCases {
     return 0;
   }
 
+  public int remove_else_if(boolean extra_toggle) {
+    if (extra_toggle) {
+      return 0;
+    } else {
+      return 2;
+    }
+  }
+
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) { return true; }
     public boolean putToggleEnabled(TestExperimentName x) { return true; }

@@ -262,6 +262,17 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
+  public int remove_else_if(boolean extra_toggle) {
+    // BUG: Diagnostic contains: Cleans stale XP flags
+    if (extra_toggle) {
+      return 0;
+    } else if(experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG)) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) { return true; }
     public boolean putToggleEnabled(TestExperimentName x) { return true; }
