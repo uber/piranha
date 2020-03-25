@@ -21,7 +21,7 @@ sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 dependencies {
-  annotationProcessor "com.uber.piranha:piranha:0.0.2"
+  annotationProcessor "com.uber.piranha:piranha:0.0.3"
   errorprone "com.google.errorprone:error_prone_core:2.3.2"
   errorproneJavac "com.google.errorprone:javac:9+181-r4173-1"
 }

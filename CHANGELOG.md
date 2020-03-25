@@ -1,7 +1,6 @@
 Changelog
 =========
 
-Version 0.0.1
--------------
+See changelog for per-language versions of the tool:
 
-* Initial release
+[Piranha for Java CHANGELOG.md](https://github.com/uber/piranha/tree/master/java/CHANGELOG.md)
