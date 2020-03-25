@@ -1,3 +1,5 @@
+// swift-tools-version:5.1
+// The swift-tools-version declares the minimum version of Swift required to build this package.
 /**
  *    Copyright (c) 2019 Uber Technologies, Inc.
  *
@@ -14,8 +16,6 @@
  *    limitations under the License.
  */
 
-// swift-tools-version:5.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
