@@ -7,6 +7,8 @@ package com.uber.mylib;
 // runs, as that pollutes the git staging area).
 // If you need to change this file, change the copy inside main/resources/com/uber/mylib/MyClass.bak
 
+// After clean-up, this file must match main/resources/com/uber/mylib/MyClass.expect
+
 /** A sample class. */
 public class MyClass {
 
