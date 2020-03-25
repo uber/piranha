@@ -38,3 +38,14 @@ tasks.withType(JavaCompile) {
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/piranha.properties"
 }
+
+compileJava.doFirst {
+    exec {
+        commandLine 'cp', 'src/main/resources/com/uber/mylib/MyClass.bak', 'src/main/java/com/uber/mylib/MyClass.java'
+    }
+}
+compileJava.doLast {
+    exec {
+        commandLine 'cp', 'src/main/resources/com/uber/mylib/MyClass.bak', 'src/main/java/com/uber/mylib/MyClass.java'
+    }
+}
