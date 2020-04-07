@@ -149,3 +149,41 @@ public class MyClass {
 ```
 
 This example is present in the [sample](https://github.com/uber/piranha/tree/master/java/sample/) directory. 
+
+### Maven Instructions
+
+* For the example Piranha configuration discussed above, follow steps given for the ErrorProne [example](https://github.com/google/error-prone/blob/master/examples/maven/pom.xml) to setup the `pom.xml` to run with ErrorProne.
+
+* Update the `pom.xml` with Piranha related configuration. It will be as follows: 
+```
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <source>8</source>
+          <target>8</target>
+           <showWarnings>true</showWarnings>
+          <compilerArgs>
+            <arg>-XDcompilePolicy=simple</arg>
+            <arg>-Xplugin:ErrorProne -Xep:Piranha:WARN -XepPatchChecks:Piranha -XepPatchLocation:IN_PLACE -XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG -XepOpt:Piranha:IsTreated=true -XepOpt:Piranha:Config=config/piranha.properties</arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.uber.piranha</groupId>
+              <artifactId>piranha</artifactId>
+              <version>0.0.3</version>
+            </path>
+            <path>
+              <groupId>com.google.errorprone</groupId>
+              <artifactId>error_prone_core</artifactId>
+              <version>2.3.2</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+```
