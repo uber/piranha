@@ -20,7 +20,7 @@ A few additional links on Piranha:
 
 - A technical [report](report.pdf) detailing our experiences with using Piranha at Uber.
 - A [blogpost](https://eng.uber.com/piranha/) presenting more information on Piranha. 
-- 5 minute [video](https://www.youtube.com/watch?v=V5XirDs6LX8&feature=emb_logo) overview of Piranha.
+- 6 minute [video](https://www.youtube.com/watch?v=V5XirDs6LX8&feature=emb_logo) overview of Piranha.
 
 ## Support
 
