@@ -1,5 +1,7 @@
 # Piranha
 
+[![Join the chat at https://gitter.im/uber/piranha](https://badges.gitter.im/uber/piranha.svg)](https://gitter.im/uber/piranha?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Feature flags are commonly used to enable gradual rollout or experiment with new features. In a few cases, even after the purpose of the flag is accomplished, the code pertaining to the feature flag is not removed. We refer to such flags as stale flags. The presence of code pertaining to stale flags can have the following drawbacks: 
 - Unnecessary code clutter increases the overall complexity w.r.t maintenance resulting in reduced developer productivity 
 - The flags can interfere with other experimental flags (e.g., due to nesting under a flag that is always false)
