@@ -354,4 +354,137 @@ public class XPFlagCleanerTest {
       assert_().fail("Incorrect parameters passed to the checker");
     }
   }
+
+  @Test
+  public void positiveSpecificTreatmentGroupWithFlagNameAsVariable() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
+    b.putFlag("Piranha:Config", "config/piranha.properties");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+
+      bcr.addInputLines(
+                      "TestExperimentGroups.java",
+                      "package com.uber.piranha;",
+                      "public enum TestExperimentGroups {",
+                      " GROUP_A,",
+                      " GROUP_B,",
+                      "}")
+              .addOutputLines(
+                      "TestExperimentGroups.java",
+                      "package com.uber.piranha;",
+                      "//[PIRANHA_DELETE_FILE_SEQ] Delete this class if not automatically removed.",
+                      "enum TestExperimentGroups { }")
+              .addInputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "import static com.uber.piranha.TestExperimentGroups.GROUP_A;",
+                      "import static com.uber.piranha.TestExperimentGroups.GROUP_B;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";",
+                      " private XPTest experimentation;",
+                      " public String groupToString() {",
+                      "  // BUG: Diagnostic contains: Cleans stale XP flags",
+                      "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"\"; }",
+                      "  else if (experimentation.isToggleInGroup(",
+                      "            STALE_FLAG_CONSTANTS,GROUP_A)) { ",
+                      "    return \"A\";",
+                      "  } else if (experimentation.isToggleInGroup(",
+                      "            STALE_FLAG_CONSTANTS,GROUP_B)) { ",
+                      "    return \"B\";",
+                      "  } else { return \"C\"; }",
+                      " }",
+                      "}")
+              .addOutputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";",
+                      " private XPTest experimentation;",
+                      " public String groupToString() {",
+                      "  return \"A\";",
+                      " }",
+                      "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
+  @Test
+  public void positiveSpecificTreatmentGroupWithFlagNameAsString() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
+    b.putFlag("Piranha:Config", "config/piranha.properties");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+
+      bcr.addInputLines(
+              "TestExperimentGroups.java",
+              "package com.uber.piranha;",
+              "public enum TestExperimentGroups {",
+              " GROUP_A,",
+              " GROUP_B,",
+              "}")
+              .addOutputLines(
+                      "TestExperimentGroups.java",
+                      "package com.uber.piranha;",
+                      "//[PIRANHA_DELETE_FILE_SEQ] Delete this class if not automatically removed.",
+                      "enum TestExperimentGroups { }")
+              .addInputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "import static com.uber.piranha.TestExperimentGroups.GROUP_A;",
+                      "import static com.uber.piranha.TestExperimentGroups.GROUP_B;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      " private XPTest experimentation;",
+                      " public String groupToString() {",
+                      "  // BUG: Diagnostic contains: Cleans stale XP flags",
+                      "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"\"; }",
+                      "  else if (experimentation.isToggleInGroup(",
+                      "            \"STALE_FLAG\",GROUP_A)) { ",
+                      "    return \"A\";",
+                      "  } else if (experimentation.isToggleInGroup(",
+                      "            \"STALE_FLAG\",GROUP_B)) { ",
+                      "    return \"B\";",
+                      "  } else { return \"C\"; }",
+                      " }",
+                      "}")
+              .addOutputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      " private XPTest experimentation;",
+                      " public String groupToString() {",
+                      "  return \"A\";",
+                      " }",
+                      "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
 }
