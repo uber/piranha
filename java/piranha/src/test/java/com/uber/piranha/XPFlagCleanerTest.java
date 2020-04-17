@@ -361,7 +361,6 @@ public class XPFlagCleanerTest {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
     b.putFlag("Piranha:Config", "config/piranha.properties");
 
     try {
@@ -406,7 +405,6 @@ public class XPFlagCleanerTest {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
     b.putFlag("Piranha:Config", "config/piranha.properties");
 
     try {
@@ -450,7 +448,6 @@ public class XPFlagCleanerTest {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
     b.putFlag("Piranha:Config", "config/piranha.properties");
 
     try {
@@ -496,7 +493,6 @@ public class XPFlagCleanerTest {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
     b.putFlag("Piranha:Config", "config/piranha.properties");
 
     try {
