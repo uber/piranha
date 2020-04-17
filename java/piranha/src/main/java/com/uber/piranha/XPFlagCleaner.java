@@ -703,6 +703,8 @@ public class XPFlagCleaner extends BugChecker
         // Fallback for single/last enum variable detection
         return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
       }
+    } else if (sym == null && tree != null && ASTHelpers.getSymbol(tree) != null && xpFlagName.equals(ASTHelpers.getSymbol(tree).getConstantValue())) {
+      return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
     }
     return Description.NO_MATCH;
   }

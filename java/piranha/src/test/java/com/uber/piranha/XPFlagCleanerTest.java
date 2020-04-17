@@ -387,7 +387,6 @@ public class XPFlagCleanerTest {
                       "XPFlagCleanerSinglePositiveCase.java",
                       "package com.uber.piranha;",
                       "class XPFlagCleanerSinglePositiveCase {",
-                      "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";",
                       " private XPTest experimentation;",
                       " public String evaluate() {",
                       "  return \"Y\";",
