@@ -1,0 +1,32 @@
+matrix:
+  include:
+
+    - language: java
+      install: true
+      os: linux
+      dist: trusty
+      jdk:
+        - oraclejdk8
+        - openjdk11
+      before_script:
+        - cd java/
+      script:
+        - ./gradlew build
+      after_success:
+        - ./gradlew jacocoTestReport coveralls
+      cache:
+        directories:
+          - $HOME/.gradle
+
+    - language: swift
+      os: osx
+      osx_image: xcode11.3
+      env: SWIFT=5.1
+      before_script:
+        - cd swift/
+      script:
+        - sh package.sh 
+        - sh test.sh
+
+notifications:
+  email: false
