@@ -14,8 +14,6 @@ matrix:
         - ./gradlew build
       after_success:
         - ./gradlew jacocoTestReport coveralls
-      notifications:
-        email: false
       cache:
         directories:
           - $HOME/.gradle
@@ -28,3 +26,6 @@ matrix:
         - cd swift/
       script:
         - swift build && swift build && swift package generate-xcodeproj && sh package.sh && sh test.sh
+
+notifications:
+  email: false
