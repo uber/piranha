@@ -25,7 +25,10 @@ matrix:
       before_script:
         - cd swift/
       script:
-        - swift build && swift build && swift package generate-xcodeproj && sh package.sh && sh test.sh
+        - swift build
+        - swift package generate-xcodeproj 
+        - sh package.sh 
+        - sh test.sh
 
 notifications:
   email: false
