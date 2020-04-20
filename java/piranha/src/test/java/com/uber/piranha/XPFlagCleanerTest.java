@@ -1,17 +1,15 @@
 /**
- *    Copyright (c) 2019 Uber Technologies, Inc.
+ * Copyright (c) 2019 Uber Technologies, Inc.
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.uber.piranha;
 
@@ -179,7 +177,7 @@ public class XPFlagCleanerTest {
 
     try {
       BugCheckerRefactoringTestHelper bcr =
-              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
@@ -191,51 +189,51 @@ public class XPFlagCleanerTest {
               "public enum TestExperimentName {",
               " STALE_FLAG",
               "}")
-              .addOutputLines(
-                      "TestExperimentName.java",
-                      "package com.uber.piranha;",
-                      "public enum TestExperimentName {", // Ideally we would remove this too, fix later
-                      "}")
-              .addInputLines(
-                      "TestExperimentGroups.java",
-                      "package com.uber.piranha;",
-                      "public enum TestExperimentGroups {",
-                      " TREATED,",
-                      " CONTROL,",
-                      "}")
-              .addOutputLines(
-                      "TestExperimentGroups.java",
-                      "package com.uber.piranha;",
-                      "public enum TestExperimentGroups {",
-                      " TREATED,",
-                      " CONTROL,",
-                      "}")
-              .addInputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-                      "import static com.uber.piranha.TestExperimentGroups.TREATED;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      " private XPTest experimentation;",
-                      " public String groupToString() {",
-                      "  // BUG: Diagnostic contains: Cleans stale XP flags",
-                      "  if (experimentation.isToggleDisabled(STALE_FLAG)) { return \"\"; }",
-                      "  else if (experimentation.isToggleInGroup(",
-                      "            STALE_FLAG,TREATED)) { ",
-                      "    return \"Treated\";",
-                      "  } else { return \"Controll\"; }",
-                      " }",
-                      "}")
-              .addOutputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "import static com.uber.piranha.TestExperimentGroups.TREATED;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      " private XPTest experimentation;",
-                      " public String groupToString() {",
-                      "  return \"Treated\";",
-                      " }",
-                      "}");
+          .addOutputLines(
+              "TestExperimentName.java",
+              "package com.uber.piranha;",
+              "public enum TestExperimentName {", // Ideally we would remove this too, fix later
+              "}")
+          .addInputLines(
+              "TestExperimentGroups.java",
+              "package com.uber.piranha;",
+              "public enum TestExperimentGroups {",
+              " TREATED,",
+              " CONTROL,",
+              "}")
+          .addOutputLines(
+              "TestExperimentGroups.java",
+              "package com.uber.piranha;",
+              "public enum TestExperimentGroups {",
+              " TREATED,",
+              " CONTROL,",
+              "}")
+          .addInputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+              "import static com.uber.piranha.TestExperimentGroups.TREATED;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String groupToString() {",
+              "  // BUG: Diagnostic contains: Cleans stale XP flags",
+              "  if (experimentation.isToggleDisabled(STALE_FLAG)) { return \"\"; }",
+              "  else if (experimentation.isToggleInGroup(",
+              "            STALE_FLAG,TREATED)) { ",
+              "    return \"Treated\";",
+              "  } else { return \"Controll\"; }",
+              " }",
+              "}")
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "import static com.uber.piranha.TestExperimentGroups.TREATED;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String groupToString() {",
+              "  return \"Treated\";",
+              " }",
+              "}");
 
       bcr.doTest();
     } catch (ParseException pe) {
@@ -304,8 +302,7 @@ public class XPFlagCleanerTest {
           .addInputLines(
               "XPFlagCleanerSinglePositiveCase.java",
               "package com.uber.piranha;",
-              "import static com.uber.piranha.TestExperimentName"
-                  + ".STALE_FLAG;",
+              "import static com.uber.piranha.TestExperimentName" + ".STALE_FLAG;",
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public boolean return_contains_stale_flag() {",
@@ -365,7 +362,7 @@ public class XPFlagCleanerTest {
 
     try {
       BugCheckerRefactoringTestHelper bcr =
-              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
@@ -382,15 +379,15 @@ public class XPFlagCleanerTest {
               "     else { return \"Y\";}",
               " }",
               "}")
-              .addOutputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      " private XPTest experimentation;",
-                      " public String evaluate() {",
-                      "  return \"Y\";",
-                      " }",
-                      "}");
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  return \"Y\";",
+              " }",
+              "}");
 
       bcr.doTest();
     } catch (ParseException pe) {
@@ -409,7 +406,7 @@ public class XPFlagCleanerTest {
 
     try {
       BugCheckerRefactoringTestHelper bcr =
-              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
@@ -425,15 +422,15 @@ public class XPFlagCleanerTest {
               "     else { return \"Y\";}",
               " }",
               "}")
-              .addOutputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      " private XPTest experimentation;",
-                      " public String evaluate() {",
-                      "  return \"Y\";",
-                      " }",
-                      "}");
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  return \"Y\";",
+              " }",
+              "}");
 
       bcr.doTest();
     } catch (ParseException pe) {
@@ -452,7 +449,7 @@ public class XPFlagCleanerTest {
 
     try {
       BugCheckerRefactoringTestHelper bcr =
-              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
@@ -467,16 +464,16 @@ public class XPFlagCleanerTest {
               "     else { return \"Y\";}",
               " }",
               "}")
-              .addOutputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      " private XPTest experimentation;",
-                      " public String evaluate() {",
-                      "  if (experimentation.isToggleDisabled(\"NOT_STALE_FLAG\")) { return \"X\"; }",
-                      "     else { return \"Y\";}",
-                      " }",
-                      "}");
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleDisabled(\"NOT_STALE_FLAG\")) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}");
 
       bcr.doTest();
     } catch (ParseException pe) {
@@ -495,7 +492,7 @@ public class XPFlagCleanerTest {
 
     try {
       BugCheckerRefactoringTestHelper bcr =
-              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
@@ -511,17 +508,17 @@ public class XPFlagCleanerTest {
               "     else { return \"Y\";}",
               " }",
               "}")
-              .addOutputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      "private static final String STALE_FLAG_CONSTANTS = \"NOT_STALE_FLAG\";",
-                      " private XPTest experimentation;",
-                      " public String evaluate() {",
-                      "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
-                      "     else { return \"Y\";}",
-                      " }",
-                      "}");
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              "private static final String STALE_FLAG_CONSTANTS = \"NOT_STALE_FLAG\";",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}");
 
       bcr.doTest();
     } catch (ParseException pe) {
