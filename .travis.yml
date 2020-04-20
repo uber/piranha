@@ -21,7 +21,8 @@ matrix:
           - $HOME/.gradle
 
     - language: swift
-      osx_image: xcode11.2
+      os: osx
+      osx_image: xcode11.3
       env: SWIFT=5.1
       before_script:
         - cd swift/
