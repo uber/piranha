@@ -291,7 +291,9 @@ public class XPFlagCleaner extends BugChecker
       if (mit.getArguments().size() == 1 || mit.getArguments().size() == 2) {
         ExpressionTree arg = mit.getArguments().get(0);
         Symbol argSym = ASTHelpers.getSymbol(arg);
-        if (argSym != null && (argSym.equals(xpSym) || argSym.toString().equals(xpFlagName))) {
+        if (isLiteralTreeAndMatchesFlagName(arg)
+                || isVarSymbolAndMatchesFlagName(argSym)
+                || isSymbolAndMatchesFlagName(argSym)) {
           MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
           String methodName = mst.getIdentifier().toString();
           if (controlMethods.contains(methodName)) {
@@ -308,6 +310,39 @@ public class XPFlagCleaner extends BugChecker
     }
     return API.UNKNOWN;
   }
+
+  /**
+   * Checks for {@link Symbol} and the flag name
+   * @param argSym
+   * @return True if matches. Otherwise false
+   */
+  private boolean isSymbolAndMatchesFlagName(Symbol argSym) {
+    return argSym != null && (argSym.equals(xpSym) || argSym.toString().equals(xpFlagName));
+  }
+
+  /**
+   * Checks for {@link com.sun.tools.javac.code.Symbol.VarSymbol} and the flag name
+   * @param argSym
+   * @return True if matches. Otherwise false
+   */
+  private boolean isVarSymbolAndMatchesFlagName(Symbol argSym) {
+    return argSym != null
+            && argSym instanceof Symbol.VarSymbol
+            && ((Symbol.VarSymbol) argSym).getConstantValue() != null
+            && ((Symbol.VarSymbol) argSym).getConstantValue().equals(xpFlagName);
+  }
+
+  /**
+   * Checks for {@link LiteralTree} and the flag name
+   * @param arg
+   * @return True if matches. Otherwise false
+   */
+  private boolean isLiteralTreeAndMatchesFlagName(ExpressionTree arg) {
+    return arg instanceof LiteralTree
+            && ((LiteralTree) arg).getValue() != null
+            && ((LiteralTree) arg).getValue().equals(xpFlagName);
+  }
+
 
   private String stripBraces(String s) {
     if (s.startsWith("{")) {
@@ -668,6 +703,8 @@ public class XPFlagCleaner extends BugChecker
         // Fallback for single/last enum variable detection
         return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
       }
+    } else if (sym == null && tree != null && ASTHelpers.getSymbol(tree) != null && xpFlagName.equals(ASTHelpers.getSymbol(tree).getConstantValue())) {
+      return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
     }
     return Description.NO_MATCH;
   }
