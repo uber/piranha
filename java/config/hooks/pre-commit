@@ -4,9 +4,12 @@ set -e
 
 REPO_ROOT_DIR="$(git rev-parse --show-toplevel)"
 
-files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.java$") || true)
+pushd "${REPO_ROOT_DIR}/java"
+files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.java$" | sed -e 's/^java\///') || true)
 if [ ! -z "${files}" ]; then
     comma_files=$(echo "$files" | paste -s -d "," -)
-    "${REPO_ROOT_DIR}/gradlew" goJF -DgoogleJavaFormat.include="$comma_files" &>/dev/null
+    echo "Will run ${REPO_ROOT_DIR}/java/gradlew goJF -DgoogleJavaFormat.include=$comma_files"
+    "${REPO_ROOT_DIR}/java/gradlew" goJF -DgoogleJavaFormat.include="$comma_files" &>/dev/null
     git add $(echo "$files" | paste -s -d " " -)
 fi
+popd
