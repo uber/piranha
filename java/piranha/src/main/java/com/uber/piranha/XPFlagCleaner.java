@@ -1,17 +1,15 @@
 /**
- *    Copyright (c) 2019 Uber Technologies, Inc.
+ * Copyright (c) 2019 Uber Technologies, Inc.
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.uber.piranha;
 
@@ -58,7 +56,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -71,10 +68,11 @@ import javax.lang.model.element.ElementKind;
 
 /** @author murali@uber.com (Murali Krishna Ramanathan) */
 @AutoService(BugChecker.class)
-@BugPattern(name = "Piranha",
-        altNames = {"XPFlagCleaner"},
-        summary = "Cleans stale XP flags.",
-        severity = SUGGESTION)
+@BugPattern(
+    name = "Piranha",
+    altNames = {"XPFlagCleaner"},
+    summary = "Cleans stale XP flags.",
+    severity = SUGGESTION)
 public class XPFlagCleaner extends BugChecker
     implements BugChecker.AssignmentTreeMatcher,
         BugChecker.BinaryTreeMatcher,
@@ -292,8 +290,8 @@ public class XPFlagCleaner extends BugChecker
         ExpressionTree arg = mit.getArguments().get(0);
         Symbol argSym = ASTHelpers.getSymbol(arg);
         if (isLiteralTreeAndMatchesFlagName(arg)
-                || isVarSymbolAndMatchesFlagName(argSym)
-                || isSymbolAndMatchesFlagName(argSym)) {
+            || isVarSymbolAndMatchesFlagName(argSym)
+            || isSymbolAndMatchesFlagName(argSym)) {
           MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
           String methodName = mst.getIdentifier().toString();
           if (controlMethods.contains(methodName)) {
@@ -313,6 +311,7 @@ public class XPFlagCleaner extends BugChecker
 
   /**
    * Checks for {@link Symbol} and the flag name
+   *
    * @param argSym
    * @return True if matches. Otherwise false
    */
@@ -322,27 +321,28 @@ public class XPFlagCleaner extends BugChecker
 
   /**
    * Checks for {@link com.sun.tools.javac.code.Symbol.VarSymbol} and the flag name
+   *
    * @param argSym
    * @return True if matches. Otherwise false
    */
   private boolean isVarSymbolAndMatchesFlagName(Symbol argSym) {
     return argSym != null
-            && argSym instanceof Symbol.VarSymbol
-            && ((Symbol.VarSymbol) argSym).getConstantValue() != null
-            && ((Symbol.VarSymbol) argSym).getConstantValue().equals(xpFlagName);
+        && argSym instanceof Symbol.VarSymbol
+        && ((Symbol.VarSymbol) argSym).getConstantValue() != null
+        && ((Symbol.VarSymbol) argSym).getConstantValue().equals(xpFlagName);
   }
 
   /**
    * Checks for {@link LiteralTree} and the flag name
+   *
    * @param arg
    * @return True if matches. Otherwise false
    */
   private boolean isLiteralTreeAndMatchesFlagName(ExpressionTree arg) {
     return arg instanceof LiteralTree
-            && ((LiteralTree) arg).getValue() != null
-            && ((LiteralTree) arg).getValue().equals(xpFlagName);
+        && ((LiteralTree) arg).getValue() != null
+        && ((LiteralTree) arg).getValue().equals(xpFlagName);
   }
-
 
   private String stripBraces(String s) {
     if (s.startsWith("{")) {
@@ -703,7 +703,10 @@ public class XPFlagCleaner extends BugChecker
         // Fallback for single/last enum variable detection
         return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
       }
-    } else if (sym == null && tree != null && ASTHelpers.getSymbol(tree) != null && xpFlagName.equals(ASTHelpers.getSymbol(tree).getConstantValue())) {
+    } else if (sym == null
+        && tree != null
+        && ASTHelpers.getSymbol(tree) != null
+        && xpFlagName.equals(ASTHelpers.getSymbol(tree).getConstantValue())) {
       return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
     }
     return Description.NO_MATCH;
@@ -830,17 +833,19 @@ public class XPFlagCleaner extends BugChecker
           }
         }
       } else {
-          // The condition doesn't simplify to a constant, but the condition to some nested "else if" might.
-          if (elseStatement != null && elseStatement.getKind().equals(Kind.IF)) {
-            // Copy the initial if condition (don't mark as needing update yet)
-            replacementPrefix += "if " + visitorState.getSourceForNode(subIfTree.getCondition());
-            replacementPrefix += visitorState.getSourceForNode(subIfTree.getThenStatement()) + " else ";
-            // Then recurse on the else case
-            recurse = true;
-            subIfTree = (IfTree) elseStatement;
-            ParenthesizedTree pT = (ParenthesizedTree) subIfTree.getCondition();
-            x = evalExpr(pT, visitorState);
-          }
+        // The condition doesn't simplify to a constant, but the condition to some nested "else if"
+        // might.
+        if (elseStatement != null && elseStatement.getKind().equals(Kind.IF)) {
+          // Copy the initial if condition (don't mark as needing update yet)
+          replacementPrefix += "if " + visitorState.getSourceForNode(subIfTree.getCondition());
+          replacementPrefix +=
+              visitorState.getSourceForNode(subIfTree.getThenStatement()) + " else ";
+          // Then recurse on the else case
+          recurse = true;
+          subIfTree = (IfTree) elseStatement;
+          ParenthesizedTree pT = (ParenthesizedTree) subIfTree.getCondition();
+          x = evalExpr(pT, visitorState);
+        }
       }
     } while (recurse);
 

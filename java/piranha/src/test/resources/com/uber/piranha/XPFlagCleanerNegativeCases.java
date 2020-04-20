@@ -1,17 +1,15 @@
 /**
- *    Copyright (c) 2019 Uber Technologies, Inc.
+ * Copyright (c) 2019 Uber Technologies, Inc.
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.uber.piranha;
 
@@ -40,13 +38,13 @@ class XPFlagCleanerNegativeCases {
   private boolean tBool2 = false;
 
   public void conditional_contains_nonstale_flag() {
-    if(experimentation.isFlagTreated(TestExperimentName.RANDOM_FLAG)) {
+    if (experimentation.isFlagTreated(TestExperimentName.RANDOM_FLAG)) {
       System.out.println("Hello World");
     }
   }
 
   public void conditional_with_else_contains_nonstale_flag() {
-    if(experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG)) {
+    if (experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG)) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -54,8 +52,7 @@ class XPFlagCleanerNegativeCases {
   }
 
   public void complex_conditional_contains_nonstale_flag() {
-    if(tBool1 || (tBool2 && experimentation.isToggleEnabled(TestExperimentName
-        .RANDOM_FLAG))) {
+    if (tBool1 || (tBool2 && experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG))) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -69,41 +66,49 @@ class XPFlagCleanerNegativeCases {
 
     tBool = experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) || tBool;
 
-    tBool = experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) && (tBool1
-        || tBool2);
-
+    tBool = experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) && (tBool1 || tBool2);
   }
 
   public boolean return_contains_nonstale_flag() {
     return experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG);
   }
 
-
   public void condexp_contains_nonstale_flag() {
-    tBool =  experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) ? true : false;
+    tBool = experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) ? true : false;
   }
 
   public void misc_xp_apis_containing_nonstale_flag() {
-    if(experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) && (tBool1 ||
-        tBool2)) {}
+    if (experimentation.isToggleEnabled(TestExperimentName.RANDOM_FLAG) && (tBool1 || tBool2)) {}
 
     experimentation.putToggleEnabled(TestExperimentName.RANDOM_FLAG);
 
     experimentation.putToggleDisabled(TestExperimentName.RANDOM_FLAG);
 
-    if(experimentation.isToggledDisabled(TestExperimentName.RANDOM_FLAG) &&
-        (tBool1 || tBool2)) {}
+    if (experimentation.isToggledDisabled(TestExperimentName.RANDOM_FLAG) && (tBool1 || tBool2)) {}
   }
 
   @ToggleTesting(treated = TestExperimentName.RANDOM_FLAG)
   public void annotation_test() {}
 
-
   class XPTest {
-    public boolean isToggleEnabled(TestExperimentName x) { return true; }
-    public boolean putToggleEnabled(TestExperimentName x) { return true; }
-    public boolean isToggledDisabled(TestExperimentName x) { return true; }
-    public boolean isFlagTreated(TestExperimentName x) { return true; }
-    public boolean putToggleDisabled(TestExperimentName x) { return true; }
+    public boolean isToggleEnabled(TestExperimentName x) {
+      return true;
+    }
+
+    public boolean putToggleEnabled(TestExperimentName x) {
+      return true;
+    }
+
+    public boolean isToggledDisabled(TestExperimentName x) {
+      return true;
+    }
+
+    public boolean isFlagTreated(TestExperimentName x) {
+      return true;
+    }
+
+    public boolean putToggleDisabled(TestExperimentName x) {
+      return true;
+    }
   }
 }
