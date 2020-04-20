@@ -22,6 +22,7 @@ matrix:
 
     - language: swift
       osx_image: xcode11.2
+      env: SWIFT=5.1
       before_script:
         - cd swift/
       script:
