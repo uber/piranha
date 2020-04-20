@@ -11,7 +11,7 @@ matrix:
       before_script:
         - cd java/
       script:
-        - ./gradlew verGJF build
+        - ./gradlew build
       after_success:
         - ./gradlew jacocoTestReport coveralls
       notifications:
