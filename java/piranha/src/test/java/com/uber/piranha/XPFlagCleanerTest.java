@@ -406,7 +406,7 @@ public class XPFlagCleanerTest {
 
     try {
       BugCheckerRefactoringTestHelper bcr =
-              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
