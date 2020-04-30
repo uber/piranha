@@ -423,15 +423,15 @@ public class XPFlagCleanerTest {
               "     else { return \"Y\";}",
               " }",
               "}")
-              .addOutputLines(
-                      "XPFlagCleanerSinglePositiveCase.java",
-                      "package com.uber.piranha;",
-                      "class XPFlagCleanerSinglePositiveCase {",
-                      " private XPTest experimentation;",
-                      " public String evaluate() {",
-                      "  return \"Y\";",
-                      " }",
-                      "}");
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  return \"Y\";",
+              " }",
+              "}");
 
       bcr.doTest();
     } catch (ParseException pe) {
