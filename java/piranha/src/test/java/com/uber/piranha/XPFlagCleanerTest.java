@@ -397,6 +397,50 @@ public class XPFlagCleanerTest {
   }
 
   @Test
+  public void positiveCaseWithMultipleControlArguments() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/piranha.properties");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+              BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+      bcr.addInputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  // BUG: Diagnostic contains: Cleans stale XP flags",
+              "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS, \"parameter1\", \"parameter2\")) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}")
+              .addOutputLines(
+                      "XPFlagCleanerSinglePositiveCase.java",
+                      "package com.uber.piranha;",
+                      "class XPFlagCleanerSinglePositiveCase {",
+                      " private XPTest experimentation;",
+                      " public String evaluate() {",
+                      "  return \"Y\";",
+                      " }",
+                      "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
+  @Test
   public void positiveCaseWithFlagNameAsStringLiteral() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();

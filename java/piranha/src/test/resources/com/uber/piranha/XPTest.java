@@ -30,6 +30,10 @@ class XPTest {
     return true;
   }
 
+  public boolean isToggleDisabled(Object x, Object y, Object z) {
+    return true;
+  }
+
   public boolean putToggleDisabled(Object x) {
     return true;
   }

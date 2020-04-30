@@ -286,7 +286,7 @@ public class XPFlagCleaner extends BugChecker
         return API.UNKNOWN;
       }
 
-      if (mit.getArguments().size() == 1 || mit.getArguments().size() == 2) {
+      if (mit.getArguments().size() >= 1) {
         ExpressionTree arg = mit.getArguments().get(0);
         Symbol argSym = ASTHelpers.getSymbol(arg);
         if (isLiteralTreeAndMatchesFlagName(arg)
