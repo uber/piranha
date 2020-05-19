@@ -288,25 +288,36 @@ public class XPFlagCleaner extends BugChecker
         return API.UNKNOWN;
       }
 
-      if (mit.getArguments().size() == 1 || mit.getArguments().size() == 2) {
-        ExpressionTree arg = mit.getArguments().get(0);
-        Symbol argSym = ASTHelpers.getSymbol(arg);
-        if (isLiteralTreeAndMatchesFlagName(arg)
-            || isVarSymbolAndMatchesFlagName(argSym)
-            || isSymbolAndMatchesFlagName(argSym)) {
-          MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
-          String methodName = mst.getIdentifier().toString();
-          if (controlMethods.contains(methodName)) {
-            return API.IS_CONTROL;
-          } else if (treatedMethods.contains(methodName)) {
-            return API.IS_TREATED;
-          } else if (deleteMethods.contains(methodName)) {
-            return API.DELETE_METHOD;
-          } else if (treatmentGroupMethods.contains(methodName)) {
-            return API.IS_TREATMENT_GROUP_CHECK;
+      if (mit.getArguments().size() == 0
+          || mit.getArguments().size() == 1
+          || mit.getArguments().size() == 2) {
+        MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+        String methodName = mst.getIdentifier().toString();
+        if (mit.getArguments().size() == 0) {
+          return getXPAPIFromMethodName(methodName);
+        } else {
+          ExpressionTree arg = mit.getArguments().get(0);
+          Symbol argSym = ASTHelpers.getSymbol(arg);
+          if (isLiteralTreeAndMatchesFlagName(arg)
+              || isVarSymbolAndMatchesFlagName(argSym)
+              || isSymbolAndMatchesFlagName(argSym)) {
+            return getXPAPIFromMethodName(methodName);
           }
         }
       }
+    }
+    return API.UNKNOWN;
+  }
+
+  private API getXPAPIFromMethodName(String methodName) {
+    if (controlMethods.contains(methodName)) {
+      return API.IS_CONTROL;
+    } else if (treatedMethods.contains(methodName)) {
+      return API.IS_TREATED;
+    } else if (deleteMethods.contains(methodName)) {
+      return API.DELETE_METHOD;
+    } else if (treatmentGroupMethods.contains(methodName)) {
+      return API.IS_TREATMENT_GROUP_CHECK;
     }
     return API.UNKNOWN;
   }
