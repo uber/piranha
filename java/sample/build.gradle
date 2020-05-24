@@ -36,7 +36,7 @@ tasks.withType(JavaCompile) {
   options.errorprone.errorproneArgs << "-XepPatchLocation:IN_PLACE"
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG"
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
-  options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/piranha.properties"
+  options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/properties.json"
 }
 
 compileJava.doFirst {

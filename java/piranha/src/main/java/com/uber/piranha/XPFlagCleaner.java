@@ -56,7 +56,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,7 +67,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.lang.model.element.ElementKind;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 /** @author murali@uber.com (Murali Krishna Ramanathan) */
 @AutoService(BugChecker.class)
@@ -100,6 +106,10 @@ public class XPFlagCleaner extends BugChecker
   private static final String TRUE = "true";
   private static final String FALSE = "false";
   private static final String EMPTY = "";
+  private static final String FLAG_TYPE_KEY = "flagType";
+  private static final String METHOD_NAME_KEY = "methodName";
+  private static final String RETURN_TYPE_STRING = "returnType";
+  private static final String RECEIVER_TYPE_STRING = "receiverType";
 
   /**
    * Used to defer initialization until after traversal has begun, since Error Prone eats all error
@@ -117,7 +127,7 @@ public class XPFlagCleaner extends BugChecker
     TRUE,
     FALSE,
     BOT
-  };
+  }
 
   /** Identify the appropriate API for experiments */
   private enum API {
@@ -139,12 +149,14 @@ public class XPFlagCleaner extends BugChecker
    */
   private int endPos = DONTCARE;
 
-  /* information provided in the config file */
-  private final HashSet<String> treatedMethods = new HashSet<String>();
-  private final HashSet<String> controlMethods = new HashSet<String>();
-  private final HashSet<String> deleteMethods = new HashSet<String>();
-  private final HashSet<String> treatmentGroupMethods = new HashSet<String>();
-  private final HashSet<String> handledAnnotations = new HashSet<String>();
+  /** Information provided in the properties.json config file */
+  private final Set<Map<String, Object>> methodProperties = new HashSet<>();
+
+  private final Map<String, List<Map<String, Object>>> treatedMethods = new HashMap<>();
+  private final Map<String, List<Map<String, Object>>> controlMethods = new HashMap<>();
+  private final Map<String, List<Map<String, Object>>> deleteMethods = new HashMap<>();
+  private final Map<String, List<Map<String, Object>>> treatmentGroupMethods = new HashMap<>();
+  private final HashSet<String> handledAnnotations = new HashSet<>();
   private String linkURL;
 
   /** State used to track usage counts and delete corresponding declarations if needed. */
@@ -180,14 +192,23 @@ public class XPFlagCleaner extends BugChecker
       String configFile = f.get();
 
       try {
-        Properties prop = new Properties();
-        prop.load(Files.newBufferedReader(Paths.get(configFile), Charset.defaultCharset()));
-        updateConfig(prop, "treatedMethods", treatedMethods);
-        updateConfig(prop, "controlMethods", controlMethods);
-        updateConfig(prop, "emptyMethods", deleteMethods);
-        updateConfig(prop, "treatmentGroupMethods", treatmentGroupMethods);
-        updateConfig(prop, "annotations", handledAnnotations);
-        linkURL = prop.getProperty("linkURL");
+        JSONParser jsonParser = new JSONParser();
+        JSONObject propertiesJson =
+            (JSONObject)
+                jsonParser.parse(
+                    Files.newBufferedReader(Paths.get(configFile), Charset.defaultCharset()));
+        linkURL = (String) propertiesJson.get("linkURL");
+        if (propertiesJson.get("annotations") != null) {
+          handledAnnotations.addAll((List<String>) propertiesJson.get("annotations"));
+        }
+        if (propertiesJson.get("piranhaMethodProperties") != null) {
+          methodProperties.addAll(
+              (List<Map<String, Object>>) propertiesJson.get("piranhaMethodProperties"));
+        } else {
+          throw new ParseException(
+              "Invalid config file. \"piranhaMethodProperties\" not found.", 0);
+        }
+        classifyMethodPropertiesByFlagType(methodProperties);
       } catch (IOException fnfe) {
         throw new ParseException("Provided config file is not found", 0);
       } catch (Exception e) {
@@ -278,6 +299,42 @@ public class XPFlagCleaner extends BugChecker
     }
   }
 
+  private void classifyMethodPropertiesByFlagType(Set<Map<String, Object>> methodProperties) {
+    Iterator<Map<String, Object>> methodPropsIterator = methodProperties.iterator();
+    while (methodPropsIterator.hasNext()) {
+      Map<String, Object> methodPropsMap = methodPropsIterator.next();
+      if (checkValueStringExistsAndNotEmpty(methodPropsMap, FLAG_TYPE_KEY)
+          && checkValueStringExistsAndNotEmpty(methodPropsMap, METHOD_NAME_KEY)) {
+        if (methodPropsMap.get(FLAG_TYPE_KEY).equals("treated")) {
+          addMethodPropertyToMethodMap(
+              treatedMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
+        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals("control")) {
+          addMethodPropertyToMethodMap(
+              controlMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
+        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals("empty")) {
+          addMethodPropertyToMethodMap(
+              deleteMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
+        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals("treatmentGroup")) {
+          addMethodPropertyToMethodMap(
+              treatmentGroupMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
+        }
+      }
+    }
+  }
+
+  private void addMethodPropertyToMethodMap(
+      Map<String, List<Map<String, Object>>> methodMap,
+      Map<String, Object> methodProperty,
+      String key) {
+    if (methodMap.containsKey(key)) {
+      methodMap.get(key).add(methodProperty);
+    } else {
+      List<Map<String, Object>> methodPropertyList = new ArrayList<>();
+      methodPropertyList.add(methodProperty);
+      methodMap.put(key, methodPropertyList);
+    }
+  }
+
   /* Returns the appropriate XP API, if any, as given by the expression */
   private API getXPAPI(ExpressionTree et) {
     et = ASTHelpers.stripParentheses(et);
@@ -287,21 +344,16 @@ public class XPFlagCleaner extends BugChecker
       if (!mit.getMethodSelect().getKind().equals(Kind.MEMBER_SELECT)) {
         return API.UNKNOWN;
       }
-
-      if (mit.getArguments().size() == 0
-          || mit.getArguments().size() == 1
-          || mit.getArguments().size() == 2) {
-        MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
-        String methodName = mst.getIdentifier().toString();
-        if (mit.getArguments().size() == 0) {
-          return getXPAPIFromMethodName(methodName);
+      if (mit.getArguments().size() <= 2) {
+        if (mit.getArguments().isEmpty()) {
+          return getXPAPIFromMIT(mit);
         } else {
           ExpressionTree arg = mit.getArguments().get(0);
           Symbol argSym = ASTHelpers.getSymbol(arg);
           if (isLiteralTreeAndMatchesFlagName(arg)
               || isVarSymbolAndMatchesFlagName(argSym)
               || isSymbolAndMatchesFlagName(argSym)) {
-            return getXPAPIFromMethodName(methodName);
+            return getXPAPIFromMIT(mit);
           }
         }
       }
@@ -309,17 +361,73 @@ public class XPFlagCleaner extends BugChecker
     return API.UNKNOWN;
   }
 
-  private API getXPAPIFromMethodName(String methodName) {
-    if (controlMethods.contains(methodName)) {
-      return API.IS_CONTROL;
-    } else if (treatedMethods.contains(methodName)) {
-      return API.IS_TREATED;
-    } else if (deleteMethods.contains(methodName)) {
-      return API.DELETE_METHOD;
-    } else if (treatmentGroupMethods.contains(methodName)) {
-      return API.IS_TREATMENT_GROUP_CHECK;
+  private API getXPAPIFromMIT(MethodInvocationTree mit) {
+    MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+    String methodName = mst.getIdentifier().toString();
+    if (treatedMethods.containsKey(methodName)) {
+      return getAPIFromMethodProps(mit, treatedMethods.get(methodName), API.IS_TREATED);
+    }
+    if (controlMethods.containsKey(methodName)) {
+      return getAPIFromMethodProps(mit, controlMethods.get(methodName), API.IS_CONTROL);
+    }
+    if (deleteMethods.containsKey(methodName)) {
+      return getAPIFromMethodProps(mit, deleteMethods.get(methodName), API.DELETE_METHOD);
+    }
+    if (treatmentGroupMethods.containsKey(methodName)) {
+      return getAPIFromMethodProps(
+          mit, treatmentGroupMethods.get(methodName), API.IS_TREATMENT_GROUP_CHECK);
     }
     return API.UNKNOWN;
+  }
+
+  private API getAPIFromMethodProps(
+      MethodInvocationTree mit, List<Map<String, Object>> methods, API successAPI) {
+    for (Map<String, Object> currentMethodProperties : methods) {
+      boolean returnSpecified =
+          checkValueStringExistsAndNotEmpty(currentMethodProperties, RETURN_TYPE_STRING);
+      boolean receiverSpecified =
+          checkValueStringExistsAndNotEmpty(currentMethodProperties, RECEIVER_TYPE_STRING);
+      if (returnSpecified && receiverSpecified) {
+        if (checkMethodTreeMatchesMethodProperty(
+                mit, RETURN_TYPE_STRING, (String) currentMethodProperties.get(RETURN_TYPE_STRING))
+            && checkMethodTreeMatchesMethodProperty(
+                mit,
+                RECEIVER_TYPE_STRING,
+                (String) currentMethodProperties.get(RECEIVER_TYPE_STRING))) {
+          return successAPI;
+        }
+      } else if (returnSpecified || receiverSpecified) {
+        if (returnSpecified) {
+          if (checkMethodTreeMatchesMethodProperty(
+              mit, RETURN_TYPE_STRING, (String) currentMethodProperties.get(RETURN_TYPE_STRING))) {
+            return successAPI;
+          }
+        } else if (receiverSpecified) {
+          if (checkMethodTreeMatchesMethodProperty(
+              mit,
+              RECEIVER_TYPE_STRING,
+              (String) currentMethodProperties.get(RECEIVER_TYPE_STRING))) {
+            return successAPI;
+          }
+        }
+      } else {
+        return successAPI;
+      }
+    }
+    return API.UNKNOWN;
+  }
+
+  private boolean checkMethodTreeMatchesMethodProperty(
+      MethodInvocationTree mit, String propKey, String propValue) {
+    MemberSelectTree mst = ((MemberSelectTree) mit.getMethodSelect());
+    if (RETURN_TYPE_STRING.equals(propKey)) {
+      String mReturn = ASTHelpers.getReturnType(mst).toString();
+      return Pattern.compile(propValue, Pattern.CASE_INSENSITIVE).matcher(mReturn).find();
+    } else if (RECEIVER_TYPE_STRING.equals(propKey)) {
+      String mReceive = ASTHelpers.getReceiverType(mst).toString();
+      return Pattern.compile(propValue, Pattern.CASE_INSENSITIVE).matcher(mReceive).find();
+    }
+    return false;
   }
 
   /**
@@ -930,5 +1038,12 @@ public class XPFlagCleaner extends BugChecker
       return statements.size() > 0 && statements.get(statements.size() - 1) instanceof ReturnTree;
     }
     return false;
+  }
+
+  private boolean checkValueStringExistsAndNotEmpty(Map<String, Object> map, String key) {
+    return map.containsKey(key)
+        && map.get(key) != null
+        && map.get(key) instanceof String
+        && !map.get(key).equals(EMPTY);
   }
 }

@@ -38,7 +38,7 @@ tasks.withType(JavaCompile) {
   // and final treatment condition.
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG"
   options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
-  options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/piranha.properties"
+  options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/properties.json"
 }
 ```
 
@@ -49,17 +49,36 @@ In the `tasks.withType(JavaCompile)` section, we pass some configuration options
 The properties file has the following template: 
 
 ```
-treatedMethods=treated,flagEnabled
-controlMethods=flagDisabled
-emptyMethods=enableFlag,disableFlag
-treatmentGroupMethods=isToggleInGroup
-annotations=FlagTesting
-linkURL=<provide_your_url>
+{
+  "piranhaMethodProperties":
+    [
+      {
+        "methodName": "isToggleEnabled",
+        "flagType": "treated",
+        "returnType": "boolean",
+        "receiverType": "com.uber.piranha.XPTest"
+      },
+      {
+        "methodName": null,
+        "flagType": null,
+        "returnType": null,
+        "receiverType": null
+      }
+    ],
+  "linkURL": "<provide_your_url>",
+  "annotations": ["ToggleTesting"]
+}
 ```
 
-The `treatedMethods` are the APIs which correspond to the treatment behavior of the flag, `controlMethods` correspond to the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when `IsTreated` flag is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`. 
+The required top level field is `piranhaMethodProperties`.
+Within that, there is an array of JSON objects, having the required fields `methodName` and `flagType`.
+`returnType` and `receiverType` are optional fields.
 
-The `emptyMethods` specify the APIs which need to be discarded from the code. For example, a statement `enableFlag(SAMPLE_STALE_FLAG);` will be deleted from the code. 
+The `flagType` with `treated` are the APIs which correspond to the treatment behavior of the flag, `control` correspond to the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when `IsTreated` Piranha argument is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`. 
+
+The `flagType` with `empty` specifies the APIs which need to be discarded from the code. For example, a statement `enableFlag(SAMPLE_STALE_FLAG);` will be deleted from the code. 
+
+For `returnType` and `receiverType`, types should be written as `boolean` or `void` for primitive types, and fully qualified for custom defined types. (You can write exact strings - with \\ escape for . characters -  or regex for `returnType` and `receiverType`. eg: write `com.uber.piranha.XPFlagCleanerPositiveCases.XPTest` or `com.uber.piranha.*.XPTest` - or even `com\\.uber\\.piranha\\..*\\.XPTest` if you want to be more precise.)
 
 The `annotations` specify the annotations used (e.g., in unit testing) to determine treatment or control behavior. For example:
 
@@ -106,16 +125,34 @@ and the following arguments to Piranha
 ```
 options.errorprone.errorproneArgs << "-XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG"
 options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
-options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/piranha.properties
+options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/properties.json
 ```
-where `piranha.properties` contains the following, 
+where `properties.json` contains the following, 
 
 ```
-treatedMethods=treated,flagEnabled
-controlMethods=flagDisabled
-emptyMethods=enableFlag,disableFlag
-annotations=FlagTesting
-linkURL=<provide_your_url>
+{
+  "piranhaMethodProperties":
+    [
+      {
+        "methodName": "flagEnabled",
+        "flagType": "treated"
+      },
+      {
+        "methodName": "flagDisabled",
+        "flagType": "control"
+      },
+      {
+        "methodName": "enableFlag",
+        "flagType": "empty"
+      },
+      {
+        "methodName": "disableFlag",
+        "flagType": "empty"
+      }
+    ],
+  "linkURL": "<provide_your_url>",
+  "annotations": ["FlagTesting"]
+}
 ```
 
 the refactored output will be 
@@ -168,7 +205,7 @@ This example is present in the [sample](https://github.com/uber/piranha/tree/mas
            <showWarnings>true</showWarnings>
           <compilerArgs>
             <arg>-XDcompilePolicy=simple</arg>
-            <arg>-Xplugin:ErrorProne -Xep:Piranha:WARN -XepPatchChecks:Piranha -XepPatchLocation:IN_PLACE -XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG -XepOpt:Piranha:IsTreated=true -XepOpt:Piranha:Config=config/piranha.properties</arg>
+            <arg>-Xplugin:ErrorProne -Xep:Piranha:WARN -XepPatchChecks:Piranha -XepPatchLocation:IN_PLACE -XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG -XepOpt:Piranha:IsTreated=true -XepOpt:Piranha:Config=config/properties.json</arg>
           </compilerArgs>
           <annotationProcessorPaths>
             <path>

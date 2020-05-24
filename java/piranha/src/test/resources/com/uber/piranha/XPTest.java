@@ -18,6 +18,14 @@ class XPTest {
     return true;
   }
 
+  public boolean isToggleEnabled() {
+    return true;
+  }
+
+  public boolean isUnrelatedToggleEnabled() {
+    return true;
+  }
+
   public boolean putToggleEnabled(Object x) {
     return true;
   }
@@ -27,6 +35,10 @@ class XPTest {
   }
 
   public boolean isToggleDisabled(Object x) {
+    return true;
+  }
+
+  public boolean isToggleDisabled() {
     return true;
   }
 
