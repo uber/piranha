@@ -1,0 +1,28 @@
+{
+  "piranhaMethodProperties": [
+    {
+      "methodName": "flagDisabled",
+      "flagType": "control"
+    },
+    {
+      "methodName": "treated",
+      "flagType": "treated"
+    },
+    {
+      "methodName": "flagEnabled",
+      "flagType": "treated"
+    },
+    {
+      "methodName": "enableFlag",
+      "flagType": "empty"
+    },
+    {
+      "methodName": "disableFlag",
+      "flagType": "empty"
+    }
+  ],
+  "linkURL": "<provide_your_url>",
+  "annotations": [
+    "FlagTesting"
+  ]
+}
