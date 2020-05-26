@@ -397,11 +397,7 @@ public class XPFlagCleanerTest {
   }
 
   @Test
-  public void caseWithFlagNameAsVariableWithReturnType() throws IOException {
-    /* todo - piranha deletes the line
-     * "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";"
-     * even though it shouldn't. because isToggleEnabled is still using it.
-     * */
+  public void caseWithFlagNameAsVariableWithReturnTypeRegex() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -450,10 +446,6 @@ public class XPFlagCleanerTest {
 
   @Test
   public void caseWithFlagNameAsStringLiteralWithReceiverTypeRegex() throws IOException {
-    /* todo - piranha deletes the line
-     * "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";"
-     * even though it shouldn't. because isToggleEnabled is still using it.
-     * */
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -694,10 +686,13 @@ public class XPFlagCleanerTest {
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public String evaluate() {",
-              "     int a = 1;",
+              "  // BUG: Diagnostic contains: Cleans stale XP flags",
+              "  if (experimentation.isToggleEnabled()) { int a = 1; }",
+              "     else { int b = 2;}",
               "  if (experimentation.isUnrelatedToggleEnabled()) { int c = 1; }",
               "     else { int d = 2;}",
-              "     return \"Y\";",
+              "  if (experimentation.isToggleDisabled()) { return \"X\"; }",
+              "     else { return \"Y\";}",
               " }",
               "}");
 

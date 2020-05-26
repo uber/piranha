@@ -30,12 +30,6 @@
     {
       "methodName": "isToggleInGroup",
       "flagType": "treatmentGroup"
-    },
-    {
-      "methodName": null,
-      "flagType": null,
-      "returnType": null,
-      "receiverType": null
     }
   ],
   "linkURL": "<provide_your_url>",

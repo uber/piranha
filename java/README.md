@@ -58,12 +58,7 @@ The properties file has the following template:
         "returnType": "boolean",
         "receiverType": "com.uber.piranha.XPTest"
       },
-      {
-        "methodName": null,
-        "flagType": null,
-        "returnType": null,
-        "receiverType": null
-      }
+      ...
     ],
   "linkURL": "<provide_your_url>",
   "annotations": ["ToggleTesting"]

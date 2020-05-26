@@ -110,6 +110,10 @@ public class XPFlagCleaner extends BugChecker
   private static final String METHOD_NAME_KEY = "methodName";
   private static final String RETURN_TYPE_STRING = "returnType";
   private static final String RECEIVER_TYPE_STRING = "receiverType";
+  private static final String TREATED_KEY = "treated";
+  private static final String CONTROL_KEY = "control";
+  private static final String EMPTY_KEY = "empty";
+  private static final String TREATMENT_GROUP_KEY = "treatmentGroup";
 
   /**
    * Used to defer initialization until after traversal has begun, since Error Prone eats all error
@@ -152,10 +156,8 @@ public class XPFlagCleaner extends BugChecker
   /** Information provided in the properties.json config file */
   private final Set<Map<String, Object>> methodProperties = new HashSet<>();
 
-  private final Map<String, List<Map<String, Object>>> treatedMethods = new HashMap<>();
-  private final Map<String, List<Map<String, Object>>> controlMethods = new HashMap<>();
-  private final Map<String, List<Map<String, Object>>> deleteMethods = new HashMap<>();
-  private final Map<String, List<Map<String, Object>>> treatmentGroupMethods = new HashMap<>();
+  private final Map<String, Map<String, List<Map<String, Object>>>> configMethodsMap =
+      new HashMap<>();
   private final HashSet<String> handledAnnotations = new HashSet<>();
   private String linkURL;
 
@@ -305,24 +307,49 @@ public class XPFlagCleaner extends BugChecker
       Map<String, Object> methodPropsMap = methodPropsIterator.next();
       if (checkValueStringExistsAndNotEmpty(methodPropsMap, FLAG_TYPE_KEY)
           && checkValueStringExistsAndNotEmpty(methodPropsMap, METHOD_NAME_KEY)) {
-        if (methodPropsMap.get(FLAG_TYPE_KEY).equals("treated")) {
-          addMethodPropertyToMethodMap(
-              treatedMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
-        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals("control")) {
-          addMethodPropertyToMethodMap(
-              controlMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
-        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals("empty")) {
-          addMethodPropertyToMethodMap(
-              deleteMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
-        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals("treatmentGroup")) {
-          addMethodPropertyToMethodMap(
-              treatmentGroupMethods, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
+        if (methodPropsMap.get(FLAG_TYPE_KEY).equals(TREATED_KEY)) {
+          addMethodPropertyToConfigMethodsMap(
+              TREATED_KEY,
+              configMethodsMap,
+              methodPropsMap,
+              (String) methodPropsMap.get(METHOD_NAME_KEY));
+        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals(CONTROL_KEY)) {
+          addMethodPropertyToConfigMethodsMap(
+              CONTROL_KEY,
+              configMethodsMap,
+              methodPropsMap,
+              (String) methodPropsMap.get(METHOD_NAME_KEY));
+        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals(EMPTY_KEY)) {
+          addMethodPropertyToConfigMethodsMap(
+              EMPTY_KEY,
+              configMethodsMap,
+              methodPropsMap,
+              (String) methodPropsMap.get(METHOD_NAME_KEY));
+        } else if (methodPropsMap.get(FLAG_TYPE_KEY).equals(TREATMENT_GROUP_KEY)) {
+          addMethodPropertyToConfigMethodsMap(
+              TREATMENT_GROUP_KEY,
+              configMethodsMap,
+              methodPropsMap,
+              (String) methodPropsMap.get(METHOD_NAME_KEY));
         }
       }
     }
   }
 
-  private void addMethodPropertyToMethodMap(
+  private void addMethodPropertyToConfigMethodsMap(
+      String flagTypeKey,
+      Map<String, Map<String, List<Map<String, Object>>>> configMethodsMap,
+      Map<String, Object> methodProperty,
+      String methodNameKey) {
+    if (!configMethodsMap.containsKey(flagTypeKey)) {
+      Map<String, List<Map<String, Object>>> newFlagTypeMap = new HashMap<>();
+      configMethodsMap.put(flagTypeKey, newFlagTypeMap);
+    }
+    addMethodPropertyToFlagTypeMethodsMap(
+        configMethodsMap.get(flagTypeKey), methodProperty, methodNameKey);
+  }
+
+  private void addMethodPropertyToFlagTypeMethodsMap(
       Map<String, List<Map<String, Object>>> methodMap,
       Map<String, Object> methodProperty,
       String key) {
@@ -346,7 +373,11 @@ public class XPFlagCleaner extends BugChecker
       }
       if (mit.getArguments().size() <= 2) {
         if (mit.getArguments().isEmpty()) {
-          return getXPAPIFromMIT(mit);
+          if (xpFlagName.equals(EMPTY)) {
+            return getXPAPIFromMIT(mit);
+          } else {
+            return API.UNKNOWN;
+          }
         } else {
           ExpressionTree arg = mit.getArguments().get(0);
           Symbol argSym = ASTHelpers.getSymbol(arg);
@@ -364,18 +395,27 @@ public class XPFlagCleaner extends BugChecker
   private API getXPAPIFromMIT(MethodInvocationTree mit) {
     MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
     String methodName = mst.getIdentifier().toString();
-    if (treatedMethods.containsKey(methodName)) {
-      return getAPIFromMethodProps(mit, treatedMethods.get(methodName), API.IS_TREATED);
-    }
-    if (controlMethods.containsKey(methodName)) {
-      return getAPIFromMethodProps(mit, controlMethods.get(methodName), API.IS_CONTROL);
-    }
-    if (deleteMethods.containsKey(methodName)) {
-      return getAPIFromMethodProps(mit, deleteMethods.get(methodName), API.DELETE_METHOD);
-    }
-    if (treatmentGroupMethods.containsKey(methodName)) {
+    if (configMethodsMap.containsKey(TREATED_KEY)
+        && configMethodsMap.get(TREATED_KEY).containsKey(methodName)) {
       return getAPIFromMethodProps(
-          mit, treatmentGroupMethods.get(methodName), API.IS_TREATMENT_GROUP_CHECK);
+          mit, configMethodsMap.get(TREATED_KEY).get(methodName), API.IS_TREATED);
+    }
+    if (configMethodsMap.containsKey(CONTROL_KEY)
+        && configMethodsMap.get(CONTROL_KEY).containsKey(methodName)) {
+      return getAPIFromMethodProps(
+          mit, configMethodsMap.get(CONTROL_KEY).get(methodName), API.IS_CONTROL);
+    }
+    if (configMethodsMap.containsKey(EMPTY_KEY)
+        && configMethodsMap.get(EMPTY_KEY).containsKey(methodName)) {
+      return getAPIFromMethodProps(
+          mit, configMethodsMap.get(EMPTY_KEY).get(methodName), API.DELETE_METHOD);
+    }
+    if (configMethodsMap.containsKey(TREATMENT_GROUP_KEY)
+        && configMethodsMap.get(TREATMENT_GROUP_KEY).containsKey(methodName)) {
+      return getAPIFromMethodProps(
+          mit,
+          configMethodsMap.get(TREATMENT_GROUP_KEY).get(methodName),
+          API.IS_TREATMENT_GROUP_CHECK);
     }
     return API.UNKNOWN;
   }
