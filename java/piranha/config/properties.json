@@ -2,26 +2,31 @@
   "piranhaMethodProperties": [
     {
       "methodName": "isToggleDisabled",
-      "flagType": "control"
+      "flagType": "control",
+      "argumentIndex": 0
     },
     {
       "methodName": "isFlagTreated",
       "flagType": "treated",
-      "returnType": "boolean"
+      "returnType": "boolean",
+      "argumentIndex": 0
     },
     {
       "methodName": "isToggleEnabled",
       "flagType": "treated",
       "returnType": "boolean",
-      "receiverType": "com.uber.piranha.*.XPTest"
+      "receiverType": "com.uber.piranha.*.XPTest",
+      "argumentIndex": 0
     },
     {
       "methodName": "putToggleEnabled",
-      "flagType": "empty"
+      "flagType": "empty",
+      "argumentIndex": 0
     },
     {
       "methodName": "putToggleDisabled",
-      "flagType": "empty"
+      "flagType": "empty",
+      "argumentIndex": 0
     },
     {
       "methodName": "includeEvent",

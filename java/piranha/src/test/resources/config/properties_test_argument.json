@@ -3,22 +3,17 @@
     {
       "methodName": "isToggleDisabled",
       "flagType": "control",
-      "receiverType": "com\\.uber\\.piranha\\.XPTest"
+      "argumentIndex": -1
     },
     {
       "methodName": "isFlagTreated",
       "flagType": "treated",
-      "receiverType": "UNICORN"
-    },
-    {
-      "methodName": "isFlagTreated",
-      "flagType": "treated",
-      "receiverType": "com.uber.*"
+      "argumentIndex": 0
     },
     {
       "methodName": "isToggleEnabled",
       "flagType": "treated",
-      "receiverType": "UNICORN"
+      "argumentIndex": 392875
     }
   ]
 }

@@ -3,6 +3,11 @@
     {
       "methodName": "isToggleDisabled",
       "flagType": "control",
+      "returnType": "UNICORN"
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
       "returnType": "bool.*"
     },
     {

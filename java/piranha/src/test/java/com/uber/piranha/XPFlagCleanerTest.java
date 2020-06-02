@@ -396,6 +396,11 @@ public class XPFlagCleanerTest {
     }
   }
 
+  /*
+   * Uses "properties_test_return.json" instead of "properties.json".
+   * In it, the method "isToggleEnabled" has a non-existent returnType specified.
+   * Hence, "isToggleEnabled" is not simplified.
+   * */
   @Test
   public void caseWithFlagNameAsVariableWithReturnTypeRegex() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -444,8 +449,13 @@ public class XPFlagCleanerTest {
     }
   }
 
+  /*
+   * Uses "properties_test_receive.json" instead of "properties.json".
+   * In it, the method "isToggleEnabled" has a non-existent receiverType specified.
+   * Hence, "isToggleEnabled" is not simplified.
+   * */
   @Test
-  public void caseWithFlagNameAsStringLiteralWithReceiverTypeRegex() throws IOException {
+  public void caseWithFlagNameAsVariableWithReceiverTypeRegex() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -651,19 +661,25 @@ public class XPFlagCleanerTest {
     }
   }
 
+  /*
+   * Test for the case when xpFlagName is ""
+   * Methods with no arguments are simplified,
+   * provided argumentIndex is not specified (or argumentIndex == -1)
+   * (assuming that returnType and receiverType - if specified - are a match)
+   * Uses "properties_test_noFlag.json" as the config file.
+   * */
   @Test
   public void noFlagCase() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_noFlag.json");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
           BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
       bcr = addHelperClasses(bcr);
       bcr.addInputLines(
               "XPFlagCleanerSinglePositiveCase.java",
@@ -687,12 +703,10 @@ public class XPFlagCleanerTest {
               " private XPTest experimentation;",
               " public String evaluate() {",
               "  // BUG: Diagnostic contains: Cleans stale XP flags",
-              "  if (experimentation.isToggleEnabled()) { int a = 1; }",
-              "     else { int b = 2;}",
+              "int a = 1;",
               "  if (experimentation.isUnrelatedToggleEnabled()) { int c = 1; }",
               "     else { int d = 2;}",
-              "  if (experimentation.isToggleDisabled()) { return \"X\"; }",
-              "     else { return \"Y\";}",
+              "  return \"Y\";",
               " }",
               "}");
 
@@ -703,12 +717,17 @@ public class XPFlagCleanerTest {
     }
   }
 
+  /*
+   * This test passes flag name as a Piranha argument.
+   * Whether or not flag name is passed, the noFlagCase simplification should not be affected.
+   * Uses "properties_test_noFlag.json" as the config file.
+   * */
   @Test
   public void noFlagCaseWithFlagSpecified() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_noFlag.json");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -752,6 +771,11 @@ public class XPFlagCleanerTest {
     }
   }
 
+  /*
+   * Uses "properties_test_return.json" instead of "properties.json".
+   * In it, the method "isToggleEnabled" has a non-existent returnType specified.
+   * Hence, "isToggleEnabled" is not simplified.
+   * */
   @Test
   public void noFlagCaseWithReturnType() throws IOException {
 
@@ -799,6 +823,11 @@ public class XPFlagCleanerTest {
     }
   }
 
+  /*
+   * Uses "properties_test_receive.json" instead of "properties.json".
+   * In it, the method "isToggleEnabled" has a non-existent receiverType specified.
+   * Hence, "isToggleEnabled" is not simplified.
+   * */
   @Test
   public void noFlagCaseWithReceiverType() throws IOException {
 
@@ -834,6 +863,114 @@ public class XPFlagCleanerTest {
               " private XPTest experimentation;",
               " public String evaluate() {",
               "  if (experimentation.isToggleEnabled()) { int a = 1; }",
+              "     else { int b = 2;}",
+              "  return \"Y\";",
+              " }",
+              "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
+  /*
+   * Uses "properties_test_argument.json" instead of "properties.json".
+   * In it, the method "isToggleEnabled" has a non-existent argumentIndex specified.
+   * Hence, "isToggleEnabled" is not simplified.
+   * */
+  @Test
+  public void caseWithFlagNameAsVariableWithArgumentIndex() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_argument.json");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.allowBreakingChanges();
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+      bcr.addInputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleEnabled(STALE_FLAG_CONSTANTS)) { int a = 1; }",
+              "     else { int b = 2;}",
+              "  if (experimentation.isFlagTreated(STALE_FLAG_CONSTANTS)) { int c = 1; }",
+              "     else { int d = 2;}",
+              "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}")
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleEnabled(STALE_FLAG_CONSTANTS)) { int a = 1; }",
+              "     else { int b = 2;}",
+              "  int c = 1;",
+              "  return \"Y\";",
+              " }",
+              "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
+  /*
+   * Uses "properties_test_argument.json" instead of "properties.json".
+   * In it, the method "isToggleEnabled" has a non-existent argumentIndex specified.
+   * Hence, "isToggleEnabled" is not simplified.
+   * */
+  @Test
+  public void caseWithFlagNameAsStringLiteralWithArgumentIndex() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_argument.json");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.allowBreakingChanges();
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+      bcr.addInputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
+              "     else { int b = 2;}",
+              "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}")
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
               "     else { int b = 2;}",
               "  return \"Y\";",
               " }",
