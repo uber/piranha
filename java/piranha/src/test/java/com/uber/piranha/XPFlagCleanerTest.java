@@ -526,4 +526,29 @@ public class XPFlagCleanerTest {
       assert_().fail("Incorrect parameters passed to the checker");
     }
   }
+
+  @Test
+  public void runPiranhaWithFewProperties() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/fewer-piranha.properties");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      BugCheckerRefactoringTestHelper.ExpectOutput eo =
+          bcr.addInput("XPFlagCleanerPositiveCases.java");
+      eo.addOutput("XPFlagCleanerPositiveCasesTreatment.java");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
 }
