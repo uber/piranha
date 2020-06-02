@@ -56,7 +56,8 @@ The properties file has the following template:
         "methodName": "isToggleEnabled",
         "flagType": "treated",
         "returnType": "boolean",
-        "receiverType": "com.uber.piranha.XPTest"
+        "receiverType": "com.uber.piranha.XPTest",
+        "argumentIndex": 0
       },
       ...
     ],
@@ -65,15 +66,19 @@ The properties file has the following template:
 }
 ```
 
-The required top level field is `piranhaMethodProperties`.
+The required top-level field is `piranhaMethodProperties`.
 Within that, there is an array of JSON objects, having the required fields `methodName` and `flagType`.
-`returnType` and `receiverType` are optional fields.
+The optional fields are `returnType`, `receiverType` and `argumentIndex`.
 
 The `flagType` with `treated` are the APIs which correspond to the treatment behavior of the flag, `control` correspond to the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when `IsTreated` Piranha argument is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`. 
 
 The `flagType` with `empty` specifies the APIs which need to be discarded from the code. For example, a statement `enableFlag(SAMPLE_STALE_FLAG);` will be deleted from the code. 
 
-For `returnType` and `receiverType`, types should be written as `boolean` or `void` for primitive types, and fully qualified for custom defined types. (You can write exact strings - with \\ escape for . characters -  or regex for `returnType` and `receiverType`. eg: write `com.uber.piranha.XPFlagCleanerPositiveCases.XPTest` or `com.uber.piranha.*.XPTest` - or even `com\\.uber\\.piranha\\..*\\.XPTest` if you want to be more precise.)
+The `argumentIndex` specifies where to look for the flag name (given by `-XepOpt:Piranha:FlagName`) in the method's arguments. We follow 0 based indexing.
+As the `argumentIndex` field is optional, it can either be omitted or given the value -1. 
+If your toggle method takes no arguments, or if you want to delete all occurrences of a given `methodName` irrespective of their arguments, `argumentIndex` need not be specified.
+
+For `returnType` and `receiverType`, types should be written as `boolean` or `void` for primitive types, and fully qualified for custom defined types. (You can write exact strings - with `\\` escape for `.` characters -  or regex for `returnType` and `receiverType`. eg: write `com.uber.piranha.XPFlagCleanerPositiveCases.XPTest` or `com.uber.piranha.*.XPTest` - or even `com\\.uber\\.piranha\\..*\\.XPTest` if you want to be more precise.)
 
 The `annotations` specify the annotations used (e.g., in unit testing) to determine treatment or control behavior. For example:
 
