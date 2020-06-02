@@ -271,8 +271,10 @@ public class XPFlagCleaner extends BugChecker
 
   private void updateConfig(Properties prop, String key, HashSet<String> hs) {
     String str = prop.getProperty(key);
-    for (String s : str.split(",")) {
-      hs.add(s);
+    if (str != null) {
+      for (String s : str.split(",")) {
+        hs.add(s);
+      }
     }
   }
 
@@ -850,7 +852,7 @@ public class XPFlagCleaner extends BugChecker
     } while (recurse);
 
     if (update) {
-      if (replacementPrefix != EMPTY) {
+      if (!replacementPrefix.equals(EMPTY)) {
         replacementString = replacementPrefix + replacementString;
       } else {
         replacementString = stripBraces(replacementString);
