@@ -412,6 +412,7 @@ public class XPFlagCleanerTest {
       BugCheckerRefactoringTestHelper bcr =
           BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
+      // can be removed after Piranha implements two pass analysis
       bcr.allowBreakingChanges();
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -465,6 +466,7 @@ public class XPFlagCleanerTest {
       BugCheckerRefactoringTestHelper bcr =
           BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
+      // can be removed after Piranha implements two pass analysis
       bcr.allowBreakingChanges();
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -642,7 +644,7 @@ public class XPFlagCleanerTest {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/fewer-piranha.properties");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_noTreatmentGroup.json");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -664,7 +666,7 @@ public class XPFlagCleanerTest {
   /*
    * Test for the case when xpFlagName is ""
    * Methods with no arguments are simplified,
-   * provided argumentIndex is not specified (or argumentIndex == -1)
+   * provided argumentIndex is not specified
    * (assuming that returnType and receiverType - if specified - are a match)
    * Uses "properties_test_noFlag.json" as the config file.
    * */
@@ -687,7 +689,6 @@ public class XPFlagCleanerTest {
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public String evaluate() {",
-              "  // BUG: Diagnostic contains: Cleans stale XP flags",
               "  if (experimentation.isToggleEnabled()) { int a = 1; }",
               "     else { int b = 2;}",
               "  if (experimentation.isUnrelatedToggleEnabled()) { int c = 1; }",
@@ -702,7 +703,6 @@ public class XPFlagCleanerTest {
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public String evaluate() {",
-              "  // BUG: Diagnostic contains: Cleans stale XP flags",
               "int a = 1;",
               "  if (experimentation.isUnrelatedToggleEnabled()) { int c = 1; }",
               "     else { int d = 2;}",
@@ -742,7 +742,6 @@ public class XPFlagCleanerTest {
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public String evaluate() {",
-              "  // BUG: Diagnostic contains: Cleans stale XP flags",
               "  if (experimentation.isToggleEnabled()) { int a = 1; }",
               "     else { int b = 2;}",
               "  if (experimentation.isUnrelatedToggleEnabled()) { int c = 1; }",
@@ -797,7 +796,6 @@ public class XPFlagCleanerTest {
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public String evaluate() {",
-              "  // BUG: Diagnostic contains: Cleans stale XP flags",
               "  if (experimentation.isToggleEnabled()) { int a = 1; }",
               "     else { int b = 2;}",
               "  if (experimentation.isToggleDisabled()) { return \"X\"; }",
@@ -849,7 +847,6 @@ public class XPFlagCleanerTest {
               "class XPFlagCleanerSinglePositiveCase {",
               " private XPTest experimentation;",
               " public String evaluate() {",
-              "  // BUG: Diagnostic contains: Cleans stale XP flags",
               "  if (experimentation.isToggleEnabled()) { int a = 1; }",
               "     else { int b = 2;}",
               "  if (experimentation.isToggleDisabled()) { return \"X\"; }",
@@ -891,6 +888,7 @@ public class XPFlagCleanerTest {
       BugCheckerRefactoringTestHelper bcr =
           BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
+      // can be removed after Piranha implements two pass analysis
       bcr.allowBreakingChanges();
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -946,8 +944,6 @@ public class XPFlagCleanerTest {
     try {
       BugCheckerRefactoringTestHelper bcr =
           BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-      bcr.allowBreakingChanges();
 
       bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 

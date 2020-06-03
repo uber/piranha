@@ -1,0 +1,32 @@
+{
+  "piranhaMethodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control"
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated"
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated"
+    },
+    {
+      "methodName": "putToggleEnabled",
+      "flagType": "empty"
+    },
+    {
+      "methodName": "putToggleDisabled",
+      "flagType": "empty"
+    },
+    {
+      "methodName": "includeEvent",
+      "flagType": "empty"
+    }
+  ],
+  "linkURL": "<provide_your_url>",
+  "annotations": [
+    "ToggleTesting"
+  ]
+}

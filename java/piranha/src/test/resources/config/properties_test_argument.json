@@ -2,8 +2,7 @@
   "piranhaMethodProperties": [
     {
       "methodName": "isToggleDisabled",
-      "flagType": "control",
-      "argumentIndex": -1
+      "flagType": "control"
     },
     {
       "methodName": "isFlagTreated",

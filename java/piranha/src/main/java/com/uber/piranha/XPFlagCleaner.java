@@ -52,11 +52,12 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -102,22 +103,25 @@ public class XPFlagCleaner extends BugChecker
       ImmutableSet.of("control", "enabled", "disabled", "treatment", "treated");
 
   private static final int DONTCARE = -1;
-  private static final long DONTCARE_LONG = -1L;
-
+  private static final int ZERO = 0;
   private static final String TRUE = "true";
   private static final String FALSE = "false";
   private static final String EMPTY = "";
 
+  // Allowed fields for a method property in the config file.
+  // Entered under the top-level "piranhaMethodProperties" in properties.json.
+  // flagType and methodName are mandatory. The rest are optional.
   private static final String FLAG_TYPE_KEY = "flagType";
   private static final String METHOD_NAME_KEY = "methodName";
   private static final String RETURN_TYPE_STRING = "returnType";
   private static final String RECEIVER_TYPE_STRING = "receiverType";
   private static final String ARGUMENT_INDEX_STRING = "argumentIndex";
 
-  private static final String TREATED_KEY = "treated";
-  private static final String CONTROL_KEY = "control";
-  private static final String EMPTY_KEY = "empty";
-  private static final String TREATMENT_GROUP_KEY = "treatmentGroup";
+  /**
+   * Holds the mapping of flagType string to API. Eg: "treated" -> API.IS_TREATED. Is initialized
+   * once and then accessed without updating.
+   */
+  private static final Map<String, API> flagTypeToAPIMap = initializeFlagTypeToAPIMap();
 
   /**
    * Used to defer initialization until after traversal has begun, since Error Prone eats all error
@@ -157,10 +161,17 @@ public class XPFlagCleaner extends BugChecker
    */
   private int endPos = DONTCARE;
 
-  /** Information provided in the properties.json config file */
-  private final Set<Map<String, Object>> methodProperties = new HashSet<>();
+  /**
+   * Information provided in the properties.json config file.
+   *
+   * <p>configMethodsMap is a map where key is method name and value is a list where each item in
+   * the list is a map that corresponds to each method property from properties.json. In most cases,
+   * the list would have only one element. But if someone reuses the same method name with different
+   * returnType/receiverType/argumentIndex, the list would have each method property map as one
+   * element.
+   */
+  private final Map<String, List<Map<String, Object>>> configMethodProperties = new HashMap<>();
 
-  private final Map<String, List<Map<String, Object>>> configMethodsMap = new HashMap<>();
   private final HashSet<String> handledAnnotations = new HashSet<>();
   private String linkURL;
 
@@ -201,11 +212,12 @@ public class XPFlagCleaner extends BugChecker
         JSONObject propertiesJson =
             (JSONObject)
                 jsonParser.parse(
-                    Files.newBufferedReader(Paths.get(configFile), Charset.defaultCharset()));
+                    Files.newBufferedReader(Paths.get(configFile), StandardCharsets.UTF_8));
         linkURL = (String) propertiesJson.get("linkURL");
         if (propertiesJson.get("annotations") != null) {
           handledAnnotations.addAll((List<String>) propertiesJson.get("annotations"));
         }
+        Set<Map<String, Object>> methodProperties = new HashSet<>();
         if (propertiesJson.get("piranhaMethodProperties") != null) {
           methodProperties.addAll(
               (List<Map<String, Object>>) propertiesJson.get("piranhaMethodProperties"));
@@ -213,7 +225,7 @@ public class XPFlagCleaner extends BugChecker
           throw new ParseException(
               "Invalid config file. \"piranhaMethodProperties\" not found.", 0);
         }
-        classifyMethodPropertiesByFlagType(methodProperties);
+        addMethodPropertiesToConfigMethodProperties(methodProperties);
       } catch (IOException fnfe) {
         throw new ParseException("Provided config file is not found", 0);
       } catch (Exception e) {
@@ -304,28 +316,26 @@ public class XPFlagCleaner extends BugChecker
     }
   }
 
-  private void classifyMethodPropertiesByFlagType(Set<Map<String, Object>> methodProperties) {
+  private void addMethodPropertiesToConfigMethodProperties(
+      Set<Map<String, Object>> methodProperties) {
     Iterator<Map<String, Object>> methodPropsIterator = methodProperties.iterator();
     while (methodPropsIterator.hasNext()) {
-      Map<String, Object> methodPropsMap = methodPropsIterator.next();
-      if (checkValueStringExistsAndNotEmpty(methodPropsMap, FLAG_TYPE_KEY)
-          && checkValueStringExistsAndNotEmpty(methodPropsMap, METHOD_NAME_KEY)) {
-        addMethodPropertyToConfigMethodsMap(
-            configMethodsMap, methodPropsMap, (String) methodPropsMap.get(METHOD_NAME_KEY));
+      Map<String, Object> methodProperty = methodPropsIterator.next();
+      if (checkValueStringExistsAndNotEmpty(methodProperty, FLAG_TYPE_KEY)
+          && checkValueStringExistsAndNotEmpty(methodProperty, METHOD_NAME_KEY)) {
+        addMethodPropertyToConfigMethodProperties(methodProperty);
       }
     }
   }
 
-  private void addMethodPropertyToConfigMethodsMap(
-      Map<String, List<Map<String, Object>>> configMethodsMap,
-      Map<String, Object> methodProperty,
-      String methodNameKey) {
-    if (configMethodsMap.containsKey(methodNameKey)) {
-      configMethodsMap.get(methodNameKey).add(methodProperty);
+  private void addMethodPropertyToConfigMethodProperties(Map<String, Object> methodProperty) {
+    String methodNameKey = (String) methodProperty.get(METHOD_NAME_KEY);
+    if (configMethodProperties.containsKey(methodNameKey)) {
+      configMethodProperties.get(methodNameKey).add(methodProperty);
     } else {
       List<Map<String, Object>> methodPropertyList = new ArrayList<>();
       methodPropertyList.add(methodProperty);
-      configMethodsMap.put(methodNameKey, methodPropertyList);
+      configMethodProperties.put(methodNameKey, methodPropertyList);
     }
   }
 
@@ -338,31 +348,27 @@ public class XPFlagCleaner extends BugChecker
       if (!mit.getMethodSelect().getKind().equals(Kind.MEMBER_SELECT)) {
         return API.UNKNOWN;
       }
-      return getXPAPIFromMIT(mit);
-    }
-    return API.UNKNOWN;
-  }
-
-  private API getXPAPIFromMIT(MethodInvocationTree mit) {
-    MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
-    String methodName = mst.getIdentifier().toString();
-    if (configMethodsMap.containsKey(methodName)) {
-      return getAPIFromMethodPropsAndMIT(mit, configMethodsMap.get(methodName));
+      MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+      String methodName = mst.getIdentifier().toString();
+      List<Map<String, Object>> methodPropertiesForMethodName =
+          configMethodProperties.get(methodName);
+      if (methodPropertiesForMethodName != null) {
+        return getAPIFromMethodPropsAndMIT(mit, methodPropertiesForMethodName);
+      }
     }
     return API.UNKNOWN;
   }
 
   private API getAPIFromMethodPropsAndMIT(
-      MethodInvocationTree mit, List<Map<String, Object>> methods) {
-    for (Map<String, Object> currentMethodProperties : methods) {
+      MethodInvocationTree mit, List<Map<String, Object>> methodPropertiesForMethodName) {
+    for (Map<String, Object> currentMethodProperties : methodPropertiesForMethodName) {
       boolean returnSpecified =
           checkValueStringExistsAndNotEmpty(currentMethodProperties, RETURN_TYPE_STRING);
       boolean receiverSpecified =
           checkValueStringExistsAndNotEmpty(currentMethodProperties, RECEIVER_TYPE_STRING);
-      boolean argumentIndexSpecified =
-          checkValueIntOrLongExistsAndIsValid(currentMethodProperties, ARGUMENT_INDEX_STRING);
+      boolean argumentIndexSpecified = checkArgumentIndexExistsAndIsValid(currentMethodProperties);
 
-      // when argumentIndex is specified, if mit's argument at argIndex doesn't match,
+      // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
       if (argumentIndexSpecified) {
         int argIndex = ((Long) currentMethodProperties.get(ARGUMENT_INDEX_STRING)).intValue();
@@ -376,56 +382,42 @@ public class XPFlagCleaner extends BugChecker
           continue;
         }
       }
-
-      // check both return and receiver if both are specified
-      // else check only the one which is specified
-      if (returnSpecified && receiverSpecified) {
-        if (checkMethodTreeMatchesMethodProperty(
-                mit, RETURN_TYPE_STRING, (String) currentMethodProperties.get(RETURN_TYPE_STRING))
-            && checkMethodTreeMatchesMethodProperty(
-                mit,
-                RECEIVER_TYPE_STRING,
-                (String) currentMethodProperties.get(RECEIVER_TYPE_STRING))) {
-          return matchAPIToFlagTypeString((String) currentMethodProperties.get(FLAG_TYPE_KEY));
+      MemberSelectTree mst = ((MemberSelectTree) mit.getMethodSelect());
+      // when returnType regex is specified, check if mst's return type matches it
+      // if it's not a match, skip to next method property map
+      if (returnSpecified) {
+        if (!isMethodTreeMatchesMethodProperty(
+            mst, RETURN_TYPE_STRING, (String) currentMethodProperties.get(RETURN_TYPE_STRING))) {
+          continue;
         }
-      } else if (returnSpecified || receiverSpecified) {
-        if (returnSpecified) {
-          if (checkMethodTreeMatchesMethodProperty(
-              mit, RETURN_TYPE_STRING, (String) currentMethodProperties.get(RETURN_TYPE_STRING))) {
-            return matchAPIToFlagTypeString((String) currentMethodProperties.get(FLAG_TYPE_KEY));
-          }
-        } else if (receiverSpecified) {
-          if (checkMethodTreeMatchesMethodProperty(
-              mit,
-              RECEIVER_TYPE_STRING,
-              (String) currentMethodProperties.get(RECEIVER_TYPE_STRING))) {
-            return matchAPIToFlagTypeString((String) currentMethodProperties.get(FLAG_TYPE_KEY));
-          }
-        }
-      } else {
-        return matchAPIToFlagTypeString((String) currentMethodProperties.get(FLAG_TYPE_KEY));
       }
+      // when receiverType regex is specified, check if mst's receiver type matches it
+      // if it's not a match, skip to next method property map
+      if (receiverSpecified) {
+        if (!isMethodTreeMatchesMethodProperty(
+            mst,
+            RECEIVER_TYPE_STRING,
+            (String) currentMethodProperties.get(RECEIVER_TYPE_STRING))) {
+          continue;
+        }
+      }
+      return flagTypeToAPIMap.getOrDefault(
+          (String) currentMethodProperties.get(FLAG_TYPE_KEY), API.UNKNOWN);
     }
     return API.UNKNOWN;
   }
 
-  private API matchAPIToFlagTypeString(String flagType) {
-    if (TREATED_KEY.equalsIgnoreCase(flagType)) {
-      return API.IS_TREATED;
-    } else if (CONTROL_KEY.equalsIgnoreCase(flagType)) {
-      return API.IS_CONTROL;
-    } else if (EMPTY_KEY.equalsIgnoreCase(flagType)) {
-      return API.DELETE_METHOD;
-    } else if (TREATMENT_GROUP_KEY.equalsIgnoreCase(flagType)) {
-      return API.IS_TREATMENT_GROUP_CHECK;
-    } else {
-      return API.UNKNOWN;
-    }
+  private static Map<String, API> initializeFlagTypeToAPIMap() {
+    Map<String, API> map = new HashMap<>();
+    map.put("treated", API.IS_TREATED);
+    map.put("control", API.IS_CONTROL);
+    map.put("empty", API.DELETE_METHOD);
+    map.put("treatmentGroup", API.IS_TREATMENT_GROUP_CHECK);
+    return Collections.unmodifiableMap(map);
   }
 
-  private boolean checkMethodTreeMatchesMethodProperty(
-      MethodInvocationTree mit, String propKey, String propValue) {
-    MemberSelectTree mst = ((MemberSelectTree) mit.getMethodSelect());
+  private boolean isMethodTreeMatchesMethodProperty(
+      MemberSelectTree mst, String propKey, String propValue) {
     if (RETURN_TYPE_STRING.equals(propKey)) {
       String mReturn = ASTHelpers.getReturnType(mst).toString();
       return Pattern.compile(propValue, Pattern.CASE_INSENSITIVE).matcher(mReturn).find();
@@ -459,8 +451,7 @@ public class XPFlagCleaner extends BugChecker
    * @return True if matches. Otherwise false
    */
   private boolean isVarSymbolAndMatchesFlagName(Symbol argSym) {
-    return argSym != null
-        && argSym instanceof Symbol.VarSymbol
+    return argSym instanceof Symbol.VarSymbol
         && ((Symbol.VarSymbol) argSym).getConstantValue() != null
         && ((Symbol.VarSymbol) argSym).getConstantValue().equals(xpFlagName);
   }
@@ -1052,21 +1043,32 @@ public class XPFlagCleaner extends BugChecker
     return false;
   }
 
+  /**
+   * Utility method. Checks whether the value associated to a given map and given key is a non-empty
+   * string.
+   *
+   * @param map - map corresponding to a method property
+   * @param key - key to check the corresponding value
+   * @return true if value is a non-empty string
+   */
   private boolean checkValueStringExistsAndNotEmpty(Map<String, Object> map, String key) {
-    return map.containsKey(key)
-        && map.get(key) != null
-        && map.get(key) instanceof String
-        && !map.get(key).equals(EMPTY);
+    Object value = map.get(key);
+    return value instanceof String && !value.equals(EMPTY);
   }
 
-  private boolean checkValueIntOrLongExistsAndIsValid(Map<String, Object> map, String key) {
-    boolean nonNullValue = map.containsKey(key) && map.get(key) != null;
-    if (nonNullValue) {
-      if (map.get(key) instanceof Integer) {
-        return !map.get(key).equals(DONTCARE) && ((Integer) map.get(key)) >= 0;
-      } else if (map.get(key) instanceof Long) {
-        return !map.get(key).equals(DONTCARE_LONG) && ((Long) map.get(key)) >= 0L;
-      }
+  /**
+   * Utility method. Checks whether the argumentIndex key of a method property map is a non-negative
+   * integer.
+   *
+   * @param map - map corresponding to a method property
+   * @return true if argument index is a non-negative integer
+   */
+  private boolean checkArgumentIndexExistsAndIsValid(Map<String, Object> map) {
+    Object value = map.get(ARGUMENT_INDEX_STRING);
+    if (value instanceof Long) {
+      return ((Long) value).intValue() >= ZERO;
+    } else if (value instanceof Integer) {
+      return ((Integer) value) >= ZERO;
     }
     return false;
   }

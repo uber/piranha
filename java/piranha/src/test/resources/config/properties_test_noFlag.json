@@ -6,8 +6,7 @@
     },
     {
       "methodName": "isToggleEnabled",
-      "flagType": "treated",
-      "argumentIndex": -1
+      "flagType": "treated"
     }
   ]
 }
