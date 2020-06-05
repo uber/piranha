@@ -1,5 +1,5 @@
 {
-  "piranhaMethodProperties": [
+  "methodProperties": [
     {
       "methodName": "isToggleDisabled",
       "flagType": "control"
@@ -10,9 +10,24 @@
       "argumentIndex": 0
     },
     {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "argumentIndex": 1
+    },
+    {
       "methodName": "isToggleEnabled",
       "flagType": "treated",
       "argumentIndex": 392875
+    },
+    {
+      "methodName": "isNonexistentToggleEnabled",
+      "flagType": "treated",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "argumentIndex": "INVALID_DATATYPE"
     }
   ]
 }

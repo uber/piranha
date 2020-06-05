@@ -1,5 +1,5 @@
 {
-  "piranhaMethodProperties": [
+  "methodProperties": [
     {
       "methodName": "isToggleDisabled",
       "flagType": "control",
@@ -8,12 +8,17 @@
     {
       "methodName": "isToggleDisabled",
       "flagType": "control",
-      "returnType": "bool.*"
+      "returnType": "boolean"
     },
     {
       "methodName": "isToggleEnabled",
       "flagType": "treated",
       "returnType": "UNICORN"
+    },
+    {
+      "methodName": "isNonexistentToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean"
     }
   ]
 }

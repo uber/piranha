@@ -22,6 +22,10 @@ class XPTest {
     return true;
   }
 
+  public boolean isToggleEnabledWithMultipleArguments(Object x, Object y) {
+    return true;
+  }
+
   public boolean isUnrelatedToggleEnabled() {
     return true;
   }

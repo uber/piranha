@@ -1,5 +1,5 @@
 {
-  "piranhaMethodProperties": [
+  "methodProperties": [
     {
       "methodName": "isToggleDisabled",
       "flagType": "control"

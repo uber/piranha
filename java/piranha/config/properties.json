@@ -1,5 +1,5 @@
 {
-  "piranhaMethodProperties": [
+  "methodProperties": [
     {
       "methodName": "isToggleDisabled",
       "flagType": "control",
@@ -15,7 +15,6 @@
       "methodName": "isToggleEnabled",
       "flagType": "treated",
       "returnType": "boolean",
-      "receiverType": "com.uber.piranha.*.XPTest",
       "argumentIndex": 0
     },
     {

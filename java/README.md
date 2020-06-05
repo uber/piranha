@@ -50,7 +50,7 @@ The properties file has the following template:
 
 ```
 {
-  "piranhaMethodProperties":
+  "methodProperties":
     [
       {
         "methodName": "isToggleEnabled",
@@ -66,7 +66,7 @@ The properties file has the following template:
 }
 ```
 
-The required top-level field is `piranhaMethodProperties`.
+The required top-level field is `methodProperties`.
 Within that, there is an array of JSON objects, having the required fields `methodName` and `flagType`.
 The optional fields are `returnType`, `receiverType` and `argumentIndex`.
 
@@ -77,7 +77,7 @@ The `flagType` with `empty` specifies the APIs which need to be discarded from t
 The optional field `argumentIndex` specifies where to look for the flag name (given by `-XepOpt:Piranha:FlagName`) in the method's arguments. We follow 0 based indexing.
 If your toggle method takes no arguments, or if you want to delete all occurrences of a given `methodName` irrespective of their arguments, `argumentIndex` need not be specified.
 
-For `returnType` and `receiverType`, types should be written as `boolean` or `void` for primitive types, and fully qualified for custom defined types. (You can write exact strings - with `\\` escape for `.` characters -  or regex for `returnType` and `receiverType`. eg: write `com.uber.piranha.XPFlagCleanerPositiveCases.XPTest` or `com.uber.piranha.*.XPTest` - or even `com\\.uber\\.piranha\\..*\\.XPTest` if you want to be more precise.)
+For `returnType` and `receiverType`, types should be written as `boolean` or `void` for inbuilt types, and fully qualified for custom defined types. eg: `com.uber.piranha.XPFlagCleanerPositiveCases.XPTest`
 
 The `annotations` specify the annotations used (e.g., in unit testing) to determine treatment or control behavior. For example:
 
@@ -130,7 +130,7 @@ where `properties.json` contains the following,
 
 ```
 {
-  "piranhaMethodProperties":
+  "methodProperties":
     [
       {
         "methodName": "flagEnabled",

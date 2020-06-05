@@ -24,6 +24,7 @@ import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -402,7 +403,7 @@ public class XPFlagCleanerTest {
    * Hence, "isToggleEnabled" is not simplified.
    * */
   @Test
-  public void caseWithFlagNameAsVariableWithReturnTypeRegex() throws IOException {
+  public void variableFlagNameWithReturnType() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -456,7 +457,7 @@ public class XPFlagCleanerTest {
    * Hence, "isToggleEnabled" is not simplified.
    * */
   @Test
-  public void caseWithFlagNameAsVariableWithReceiverTypeRegex() throws IOException {
+  public void variableFlagNameWithReceiverType() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -878,7 +879,7 @@ public class XPFlagCleanerTest {
    * Hence, "isToggleEnabled" is not simplified.
    * */
   @Test
-  public void caseWithFlagNameAsVariableWithArgumentIndex() throws IOException {
+  public void variableFlagWithArgumentIndex() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -935,7 +936,7 @@ public class XPFlagCleanerTest {
    * Hence, "isToggleEnabled" is not simplified.
    * */
   @Test
-  public void caseWithFlagNameAsStringLiteralWithArgumentIndex() throws IOException {
+  public void stringLiteralFlagWithArgumentIndex() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -977,5 +978,134 @@ public class XPFlagCleanerTest {
       pe.printStackTrace();
       assert_().fail("Incorrect parameters passed to the checker");
     }
+  }
+
+  /*
+   * Uses "properties_test_invalid.json" instead of "properties.json".
+   * In it, the required top-level "methodProperties" is not present.
+   * As a result, refactoring will not be carried out, except for unreachable code.
+   * */
+  @Test
+  public void dontRefactorWhenInvalidConfigFile() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_invalid.json");
+
+    try {
+      BugCheckerRefactoringTestHelper bcr =
+          BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+      bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+      bcr = addHelperClasses(bcr);
+      bcr.addInputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
+              "     else { int b = 2;}",
+              "  if (experimentation.isFlagTreated(\"STALE_FLAG\")) { int c = 1; }",
+              "     else { int d = 2;}",
+              "if (true) {",
+              "int q = 1;",
+              "}",
+              "else {",
+              "int w = 2;",
+              "}",
+              "if (false) {",
+              "int e = 1;",
+              "}",
+              "else {",
+              "int r = 2;",
+              "}",
+              "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}")
+          .addOutputLines(
+              "XPFlagCleanerSinglePositiveCase.java",
+              "package com.uber.piranha;",
+              "class XPFlagCleanerSinglePositiveCase {",
+              " private XPTest experimentation;",
+              " public String evaluate() {",
+              "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
+              "     else { int b = 2;}",
+              "  if (experimentation.isFlagTreated(\"STALE_FLAG\")) { int c = 1; }",
+              "     else { int d = 2;}",
+              "int q = 1;",
+              "int r = 2;",
+              "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
+              "     else { return \"Y\";}",
+              " }",
+              "}");
+
+      bcr.doTest();
+    } catch (ParseException pe) {
+      pe.printStackTrace();
+      assert_().fail("Incorrect parameters passed to the checker");
+    }
+  }
+
+  /*
+   * Used to test exception handling in init method.
+   * */
+  @Rule public ExpectedException expectedEx = ExpectedException.none();
+
+  /*
+   * Uses "properties_test_invalid.json" instead of "properties.json".
+   * When "methodProperties" is not specified,
+   * raise ParseException with appropriate exception message.
+   * */
+  @Test
+  public void exceptionWhenConfigFileInvalid() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_invalid.json");
+
+    expectedEx.expect(ParseException.class);
+    expectedEx.expectMessage("Invalid or incorrectly formatted config file.");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
+
+  /*
+   * When "Piranha:Config" Piranha argument is passed an empty string,
+   * raise ParseException with appropriate exception message.
+   * */
+  @Test
+  public void exceptionWhenConfigPathNotSpecified() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "");
+
+    expectedEx.expect(ParseException.class);
+    expectedEx.expectMessage("Provided config file is not found");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
+
+  /*
+   * When "Piranha:Config" Piranha argument is passed an invalid path,
+   * raise ParseException with appropriate exception message.
+   * */
+  @Test
+  public void exceptionWhenInvalidPathSpecified() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "this/path/does/not/exist");
+
+    expectedEx.expect(ParseException.class);
+    expectedEx.expectMessage("Provided config file is not found");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
   }
 }

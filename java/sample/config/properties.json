@@ -1,5 +1,5 @@
 {
-  "piranhaMethodProperties": [
+  "methodProperties": [
     {
       "methodName": "flagDisabled",
       "flagType": "control"
