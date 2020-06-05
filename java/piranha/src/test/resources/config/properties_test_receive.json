@@ -8,12 +8,12 @@
     {
       "methodName": "isFlagTreated",
       "flagType": "treated",
-      "receiverType": "UNICORN"
+      "receiverType": "com.uber.piranha.XPTest"
     },
     {
       "methodName": "isFlagTreated",
       "flagType": "treated",
-      "receiverType": "com.uber.piranha.XPTest"
+      "receiverType": "UNICORN"
     },
     {
       "methodName": "isToggleEnabled",

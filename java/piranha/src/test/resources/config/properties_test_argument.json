@@ -17,7 +17,7 @@
     {
       "methodName": "isToggleEnabled",
       "flagType": "treated",
-      "argumentIndex": 392875
+      "argumentIndex": 99999
     },
     {
       "methodName": "isNonexistentToggleEnabled",
@@ -27,7 +27,7 @@
     {
       "methodName": "isFlagTreated",
       "flagType": "treated",
-      "argumentIndex": "INVALID_DATATYPE"
+      "argumentIndex": 99999
     }
   ]
 }

@@ -3,12 +3,11 @@
     {
       "methodName": "isToggleDisabled",
       "flagType": "control",
-      "returnType": "UNICORN"
+      "returnType": "boolean"
     },
     {
-      "methodName": "isToggleDisabled",
-      "flagType": "control",
-      "returnType": "boolean"
+      "methodName": "isFlagTreated",
+      "flagType": "treated"
     },
     {
       "methodName": "isToggleEnabled",
@@ -19,6 +18,11 @@
       "methodName": "isNonexistentToggleEnabled",
       "flagType": "treated",
       "returnType": "boolean"
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "UNICORN"
     }
   ]
 }
