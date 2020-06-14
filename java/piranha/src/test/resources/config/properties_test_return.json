@@ -6,6 +6,16 @@
       "returnType": "boolean"
     },
     {
+      "methodName": "flagMethodThatReturnsBooleanObject",
+      "flagType": "treated",
+      "returnType": "java.lang.boolean"
+    },
+    {
+      "methodName": "flagMethodThatReturnsStringObject",
+      "flagType": "treated",
+      "returnType": "java.lang.string"
+    },
+    {
       "methodName": "isFlagTreated",
       "flagType": "treated"
     },

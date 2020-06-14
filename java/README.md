@@ -67,17 +67,16 @@ The properties file has the following template:
 ```
 
 The required top-level field is `methodProperties`.
-Within that, there is an array of JSON objects, having the required fields `methodName` and `flagType`.
-The optional fields are `returnType`, `receiverType` and `argumentIndex`.
+Within that, there is an array of JSON objects, having the required fields `methodName`, `flagType` and `argumentIndex`.
+The optional fields are `returnType`, `receiverType`.
 
-The `flagType` with `treated` are the APIs which correspond to the treatment behavior of the flag, `control` correspond to the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when `IsTreated` Piranha argument is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`. 
+The `flagType` with `treated` are the APIs which correspond to the treatment behavior of the flag, `control` correspond to the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when the `IsTreated` Piranha argument is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`. 
+The `flagType` with `empty` specifies the APIs which need to be discarded from the code. For example, if `enableFlag` is listed as a method in properties.json, with `flagType=empty`, a statement `enableFlag(SAMPLE_STALE_FLAG);` will be deleted from the code. 
 
-The `flagType` with `empty` specifies the APIs which need to be discarded from the code. For example, a statement `enableFlag(SAMPLE_STALE_FLAG);` will be deleted from the code. 
+The `argumentIndex` field specifies where to look for the flag name (given by `-XepOpt:Piranha:FlagName`) in the method's arguments. We follow 0 based indexing.
+If your toggle methods take no arguments, or if you want to delete all occurrences of a given `methodName` irrespective of their arguments, you can set the `Piranha:ArgumentIndexOptional` to `true` to make specifying `argumentIndex` optional.
 
-The optional field `argumentIndex` specifies where to look for the flag name (given by `-XepOpt:Piranha:FlagName`) in the method's arguments. We follow 0 based indexing.
-If your toggle method takes no arguments, or if you want to delete all occurrences of a given `methodName` irrespective of their arguments, `argumentIndex` need not be specified.
-
-For `returnType` and `receiverType`, types should be written as `boolean` or `void` for inbuilt types, and fully qualified for custom defined types. eg: `com.uber.piranha.XPFlagCleanerPositiveCases.XPTest`
+For `returnType` and `receiverType`, types should be written as `boolean` or `void` for primitive types, and fully qualified for custom defined types. eg: `com.uber.piranha.XPTest` or `java.lang.String` (not case-sensitive)
 
 The `annotations` specify the annotations used (e.g., in unit testing) to determine treatment or control behavior. For example:
 
@@ -134,19 +133,23 @@ where `properties.json` contains the following,
     [
       {
         "methodName": "flagEnabled",
-        "flagType": "treated"
+        "flagType": "treated",
+        "argumentIndex": 0
       },
       {
         "methodName": "flagDisabled",
-        "flagType": "control"
+        "flagType": "control",
+        "argumentIndex": 0
       },
       {
         "methodName": "enableFlag",
-        "flagType": "empty"
+        "flagType": "empty",
+        "argumentIndex": 0
       },
       {
         "methodName": "disableFlag",
-        "flagType": "empty"
+        "flagType": "empty",
+        "argumentIndex": 0
       }
     ],
   "linkURL": "<provide_your_url>",

@@ -29,11 +29,13 @@
     },
     {
       "methodName": "includeEvent",
-      "flagType": "empty"
+      "flagType": "empty",
+      "argumentIndex": 0
     },
     {
       "methodName": "isToggleInGroup",
-      "flagType": "treatmentGroup"
+      "flagType": "treatmentGroup",
+      "argumentIndex": 0
     }
   ],
   "linkURL": "<provide_your_url>",
@@ -41,4 +43,3 @@
     "ToggleTesting"
   ]
 }
-   

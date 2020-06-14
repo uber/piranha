@@ -562,7 +562,7 @@ public class XPFlagCleanerTest {
    * Methods with no arguments are simplified, provided argumentIndex is not specified
    * (assuming that returnType and receiverType - if specified - are a match)
    * Uses "properties_test_noFlag.json" as the config file.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void noFlagCase() throws IOException {
@@ -570,6 +570,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_noFlag.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -615,7 +616,7 @@ public class XPFlagCleanerTest {
    * This test passes flag name as a Piranha argument.
    * Whether or not flag name is passed, the noFlagCase simplification should not be affected.
    * Uses "properties_test_noFlag.json" as the config file.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void noFlagCaseWithFlagSpecified() throws IOException {
@@ -623,6 +624,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_noFlag.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -669,7 +671,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void noFlagCaseWithReturnType() throws IOException {
@@ -678,6 +680,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -721,7 +724,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent receiverType specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void noFlagCaseWithReceiverType() throws IOException {
@@ -730,6 +733,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -773,7 +777,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void stringLiteralFlagWithReturn() throws Exception {
@@ -781,6 +785,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -799,6 +804,10 @@ public class XPFlagCleanerTest {
               "     else { int b = 2;}",
               "  if (experimentation.isFlagTreated(\"STALE_FLAG\")) { int c = 1; }",
               "     else { int d = 2;}",
+              "  if (\"true\".equals(experimentation.flagMethodThatReturnsStringObject())) { int e = 1; }",
+              "     else { int f = 2;}",
+              "  if (experimentation.flagMethodThatReturnsBooleanObject()) { int g = 1; }",
+              "     else { int h = 2;}",
               "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
               "     else { return \"Y\";}",
               " }",
@@ -812,6 +821,9 @@ public class XPFlagCleanerTest {
               "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
               "     else { int b = 2;}",
               "  int c = 1;",
+              "  if (\"true\".equals(true)) { int e = 1; }",
+              "     else { int f = 2;}",
+              "  int g = 1;",
               "  return \"Y\";",
               " }",
               "}");
@@ -827,7 +839,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void variableFlagWithReturn() throws Exception {
@@ -835,6 +847,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -857,6 +870,10 @@ public class XPFlagCleanerTest {
               "     else { int b = 2;}",
               "  if (experimentation.isFlagTreated(STALE_FLAG_CONSTANTS)) { int c = 1; }",
               "     else { int d = 2;}",
+              "  if (\"true\".equals(experimentation.flagMethodThatReturnsStringObject())) { int e = 1; }",
+              "     else { int f = 2;}",
+              "  if (experimentation.flagMethodThatReturnsBooleanObject()) { int g = 1; }",
+              "     else { int h = 2;}",
               "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
               "     else { return \"Y\";}",
               " }",
@@ -870,6 +887,9 @@ public class XPFlagCleanerTest {
               "  if (experimentation.isToggleEnabled(STALE_FLAG_CONSTANTS)) { int a = 1; }",
               "     else { int b = 2;}",
               "  int c = 1;",
+              "  if (\"true\".equals(true)) { int e = 1; }",
+              "     else { int f = 2;}",
+              "  int g = 1;",
               "  return \"Y\";",
               " }",
               "}");
@@ -885,7 +905,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent receiverType specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void stringLiteralFlagWithReceiver() throws Exception {
@@ -893,6 +913,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -939,7 +960,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent receiverType specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * Note that "Piranha:FlagName" is not considered when argumentIndex is not specified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void variableFlagWithReceiver() throws Exception {
@@ -947,6 +968,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -1112,7 +1134,8 @@ public class XPFlagCleanerTest {
               "     else { int j = 2;}",
               "  if (experimentation.isFlagTreated(STALE_FLAG_CONSTANTS)) { int c = 1; }",
               "     else { int d = 2;}",
-              "  return \"Y\";",
+              "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
+              "     else { return \"Y\";}",
               " }",
               "}");
 
@@ -1236,7 +1259,8 @@ public class XPFlagCleanerTest {
               "     else { int j = 2;}",
               "  if (experimentation.isFlagTreated(\"STALE_FLAG\")) { int c = 1; }",
               "     else { int d = 2;}",
-              "  return \"Y\";",
+              "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
+              "     else { return \"Y\";}",
               " }",
               "}");
 
@@ -1695,6 +1719,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType + receiverType combination specified.
    * Hence, "isToggleEnabled" is not simplified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void variableFlagWithReturnAndReceiver() throws Exception {
@@ -1702,6 +1727,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -1758,8 +1784,8 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType + receiverType combination specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * A different "Piranha:FlagName" argument is specified, but no argumentIndex is specified in the config file,
-   * hence simplification is carried out irrespective of flag name.
+   * A different "Piranha:FlagName" argument is specified, but "Piranha:ArgumentIndexOptional" is true and
+   * no argumentIndex is specified in the config file, hence simplification is carried out irrespective of flag name.
    * */
   @Test
   public void variableFlagWithReturnAndReceiverWhenWrongFlag() throws Exception {
@@ -1767,6 +1793,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "NOT_STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -1884,6 +1911,7 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType + receiverType combination specified.
    * Hence, "isToggleEnabled" is not simplified.
+   * Note that "Piranha:FlagName" is not considered when "Piranha:ArgumentIndexOptional" is set to true and argumentIndex is not specified.
    * */
   @Test
   public void stringLiteralFlagWithReturnAndReceiver() throws Exception {
@@ -1891,6 +1919,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -1943,8 +1972,8 @@ public class XPFlagCleanerTest {
    * Uses "properties_test_return_receive.json" instead of "properties.json".
    * In it, the method "isToggleEnabled" has a non-existent returnType + receiverType combination specified.
    * Hence, "isToggleEnabled" is not simplified.
-   * A different "Piranha:FlagName" argument is specified, but no argumentIndex is specified in the config file,
-   * hence simplification is carried out irrespective of flag name.
+   * A different "Piranha:FlagName" argument is specified, but "Piranha:ArgumentIndexOptional" is true and
+   * no argumentIndex is specified in the config file, hence simplification is carried out irrespective of flag name.
    * */
   @Test
   public void stringLiteralFlagWithReturnAndReceiverWhenWrongFlag() throws Exception {
@@ -1952,6 +1981,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:FlagName", "NOT_STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_return_receive.json");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -2132,11 +2162,11 @@ public class XPFlagCleanerTest {
    * As a result, refactoring will not be carried out, except for unreachable code.
    * */
   @Test
-  public void dontRefactorWhenInvalidConfigFile() throws IOException {
+  public void refactorUnreachableWhenInvalidConfigFile() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_invalid.json");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid.json");
 
     try {
       BugCheckerRefactoringTestHelper bcr =
@@ -2205,7 +2235,7 @@ public class XPFlagCleanerTest {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_invalid.json");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid.json");
 
     expectedEx.expect(ParseException.class);
     expectedEx.expectMessage("Invalid or incorrectly formatted config file.");
@@ -2245,6 +2275,63 @@ public class XPFlagCleanerTest {
 
     expectedEx.expect(ParseException.class);
     expectedEx.expectMessage("Provided config file is not found");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
+
+  /*
+   * Uses "properties_test_invalid_2.json" as the config file.
+   * When any method property does not have "methodName",
+   * raise ParseException with appropriate exception message.
+   * */
+  @Test
+  public void exceptionWhenMethodNameNotSpecified() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid_2.json");
+
+    expectedEx.expect(ParseException.class);
+    expectedEx.expectMessage("methodProperty did not have methodName or flagType");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
+
+  /*
+   * Uses "properties_test_invalid_3.json" as the config file.
+   * When any method property does not have "flagType",
+   * raise ParseException with appropriate exception message.
+   * */
+  @Test
+  public void exceptionWhenFlagTypeNotSpecified() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid_3.json");
+
+    expectedEx.expect(ParseException.class);
+    expectedEx.expectMessage("methodProperty did not have methodName or flagType");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
+
+  /*
+   * Uses "properties_test_invalid_4.json" as the config file.
+   * When any method property does not have "argumentIndex", and "Piranha:ArgumentIndexOptional" is not set to true,
+   * raise ParseException with appropriate exception message.
+   * */
+  @Test
+  public void exceptionWhenArgumentIndexNotSpecifiedAndNotArgumentIndexOptional() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid_4.json");
+
+    expectedEx.expect(ParseException.class);
+    expectedEx.expectMessage("methodProperty did not have argumentIndex");
 
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());

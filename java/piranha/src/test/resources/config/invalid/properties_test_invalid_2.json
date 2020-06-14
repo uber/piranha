@@ -1,0 +1,13 @@
+{
+  "methodProperties": [
+    {
+      "flagType": "control",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "argumentIndex": 0
+    }
+  ]
+}

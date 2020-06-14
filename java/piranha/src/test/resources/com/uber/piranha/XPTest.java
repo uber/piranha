@@ -54,6 +54,14 @@ class XPTest {
     return true;
   }
 
+  public String flagMethodThatReturnsStringObject() {
+    return "true";
+  }
+
+  public Boolean flagMethodThatReturnsBooleanObject() {
+    return true;
+  }
+
   public boolean isToggleInGroup(Object x, Object y) {
     return true;
   }
