@@ -1,0 +1,172 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "boolean",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 1
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "UNICORN",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "boolean",
+      "receiverType": "UNICORN",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "boolean",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "boolean",
+      "receiverType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "UNICORN",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "UNICORN",
+      "receiverType": "UNICORN",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "UNICORN",
+      "receiverType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 1
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "UNICORN",
+      "argumentIndex": 1
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "UNICORN",
+      "argumentIndex": 1
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "UNICORN",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "receiverType": "com.uber.piranha.XPTest",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "receiverType": "UNICORN",
+      "argumentIndex": 0
+    }
+  ]
+}

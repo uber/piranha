@@ -1,0 +1,38 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "boolean"
+    },
+    {
+      "methodName": "flagMethodThatReturnsBooleanObject",
+      "flagType": "treated",
+      "returnType": "java.lang.Boolean"
+    },
+    {
+      "methodName": "flagMethodThatReturnsStringObject",
+      "flagType": "treated",
+      "returnType": "java.lang.String"
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated"
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN"
+    },
+    {
+      "methodName": "isNonexistentToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean"
+    },
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "UNICORN"
+    }
+  ]
+}

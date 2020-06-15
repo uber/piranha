@@ -30,6 +30,7 @@ dependencies {
     annotationProcessor deps.apt.autoService
 
     compileOnly deps.build.errorProneCheckApi
+    implementation deps.build.googleJsonSimple
 
     testCompile deps.test.junit4
     testCompile deps.test.daggerAnnotations

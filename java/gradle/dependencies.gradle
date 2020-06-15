@@ -29,6 +29,7 @@ def build = [
     errorProneTestHelpers   : "com.google.errorprone:error_prone_test_helpers:${versions.errorProne}",
     gradleErrorPronePlugin  : "net.ltgt.gradle:gradle-errorprone-plugin:0.0.16",
     jsr305Annotations       : "com.google.code.findbugs:jsr305:3.0.2",
+    googleJsonSimple        : "com.googlecode.json-simple:json-simple:1.1.1",
 ]
 
 def test = [
