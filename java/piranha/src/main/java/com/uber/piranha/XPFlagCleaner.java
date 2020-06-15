@@ -322,24 +322,19 @@ public class XPFlagCleaner extends BugChecker
       throws ParseException {
     for (Map<String, Object> methodProperty : methodProperties) {
       String methodName = getValueStringFromMap(methodProperty, METHOD_NAME_KEY);
-      if (methodName != null && getValueStringFromMap(methodProperty, FLAG_TYPE_KEY) != null) {
-        if (!isArgumentIndexOptional && getArgumentIndexFromMap(methodProperty) == null) {
-          throw new ParseException(
-              "methodProperty did not have argumentIndex. Use Piranha:ArgumentIndexOptional if required. Check:"
-                  + methodProperty,
-              0);
-        }
-        List<Map<String, Object>> methodPropertiesForMethodName =
-            configMethodProperties.get(methodName);
-        if (methodPropertiesForMethodName == null) {
-          methodPropertiesForMethodName = new ArrayList<>();
-          configMethodProperties.put(methodName, methodPropertiesForMethodName);
-        }
-        methodPropertiesForMethodName.add(methodProperty);
-      } else {
+      if (methodName == null || getValueStringFromMap(methodProperty, FLAG_TYPE_KEY) == null) {
         throw new ParseException(
             "methodProperty did not have methodName or flagType. Check:" + methodProperty, 0);
       }
+      if (!isArgumentIndexOptional && getArgumentIndexFromMap(methodProperty) == null) {
+        throw new ParseException(
+            "methodProperty did not have argumentIndex. By default, Piranha requires an argument index for flag APIs, to which the flag name/symbol will be passed. This is to avoid over-deletion of all occurrences of a flag API method. If you are sure you want to delete all instances of the method below, consider using Piranha:ArgumentIndexOptional=true to override this behavior. Check:"
+                + methodProperty,
+            0);
+      }
+      configMethodProperties
+          .computeIfAbsent(methodName, k -> new ArrayList<>())
+          .add(methodProperty);
     }
   }
 
@@ -387,7 +382,7 @@ public class XPFlagCleaner extends BugChecker
       String returnType = getValueStringFromMap(currentMethodProperties, RETURN_TYPE_STRING);
       if (returnType != null) {
         String mReturn = ASTHelpers.getReturnType(mst).toString();
-        if (!returnType.equalsIgnoreCase(mReturn)) {
+        if (!returnType.equals(mReturn)) {
           continue;
         }
       }
@@ -396,7 +391,7 @@ public class XPFlagCleaner extends BugChecker
       String receiverType = getValueStringFromMap(currentMethodProperties, RECEIVER_TYPE_STRING);
       if (receiverType != null) {
         String mReceive = ASTHelpers.getReceiverType(mst).toString();
-        if (!receiverType.equalsIgnoreCase(mReceive)) {
+        if (!receiverType.equals(mReceive)) {
           continue;
         }
       }
