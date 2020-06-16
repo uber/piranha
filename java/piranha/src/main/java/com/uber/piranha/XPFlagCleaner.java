@@ -347,8 +347,9 @@ public class XPFlagCleaner extends BugChecker
     for (PiranhaMethodRecord methodRecord : methodRecordsForName) {
       // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
-      if (methodRecord.getArgumentIdx().isPresent()) {
-        int argumentIndex = methodRecord.getArgumentIdx().get().intValue();
+      Optional<Integer> optionalArgumentIdx = methodRecord.getArgumentIdx();
+      if (optionalArgumentIdx.isPresent()) {
+        int argumentIndex = optionalArgumentIdx.get().intValue();
         if (argumentIndex < mit.getArguments().size()) {
           ExpressionTree argTree = mit.getArguments().get(argumentIndex);
           Symbol argSym = ASTHelpers.getSymbol(argTree);
@@ -362,17 +363,19 @@ public class XPFlagCleaner extends BugChecker
       MemberSelectTree mst = ((MemberSelectTree) mit.getMethodSelect());
       // when returnType is specified, check if mst's return type matches it
       // if it's not a match, skip to next method property map
-      if (methodRecord.getReturnType().isPresent()) {
+      Optional<String> optionalReturnType = methodRecord.getReturnType();
+      if (optionalReturnType.isPresent()) {
         String mReturn = ASTHelpers.getReturnType(mst).toString();
-        if (!methodRecord.getReturnType().get().equals(mReturn)) {
+        if (!optionalReturnType.get().equals(mReturn)) {
           continue;
         }
       }
       // when receiverType is specified, check if mst's receiver type matches it
       // if it's not a match, skip to next method property map
-      if (methodRecord.getReceiverType().isPresent()) {
+      Optional<String> optionalReceiverType = methodRecord.getReceiverType();
+      if (optionalReceiverType.isPresent()) {
         String mReceive = ASTHelpers.getReceiverType(mst).toString();
-        if (!methodRecord.getReceiverType().get().equals(mReceive)) {
+        if (!optionalReceiverType.get().equals(mReceive)) {
           continue;
         }
       }
