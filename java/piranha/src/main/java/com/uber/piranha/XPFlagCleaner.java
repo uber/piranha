@@ -17,7 +17,9 @@ import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
@@ -56,10 +58,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -70,6 +68,7 @@ import java.util.Set;
 import javax.lang.model.element.ElementKind;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /** @author murali@uber.com (Murali Krishna Ramanathan) */
 @AutoService(BugChecker.class)
@@ -106,22 +105,6 @@ public class XPFlagCleaner extends BugChecker
   private static final String FALSE = "false";
   private static final String EMPTY = "";
 
-  // Allowed fields for a method property in the config file.
-  // Entered under the top-level "methodProperties" in properties.json.
-  // By default, the flagType, methodName and argumentIndex fields are mandatory.
-  // The returnType and receiverType fields are optional.
-  private static final String FLAG_TYPE_KEY = "flagType";
-  private static final String METHOD_NAME_KEY = "methodName";
-  private static final String ARGUMENT_INDEX_KEY = "argumentIndex";
-  private static final String RETURN_TYPE_STRING = "returnType";
-  private static final String RECEIVER_TYPE_STRING = "receiverType";
-
-  /**
-   * Holds the mapping of flagType string to API. Eg: "treated" -> API.IS_TREATED. Is initialized
-   * once and then accessed without updating.
-   */
-  private static final Map<String, API> flagTypeToAPIMap = initializeFlagTypeToAPIMap();
-
   /**
    * Used to defer initialization until after traversal has begun, since Error Prone eats all error
    * messages thrown inside the constructor.
@@ -141,7 +124,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   /** Identify the appropriate API for experiments */
-  private enum API {
+  enum API {
     IS_TREATED,
     IS_CONTROL,
     IS_TREATMENT_GROUP_CHECK,
@@ -168,8 +151,10 @@ public class XPFlagCleaner extends BugChecker
    * the list would have only one element. But if someone reuses the same method name with different
    * returnType/receiverType/argumentIndex, the list would have each method property map as one
    * element.
+   *
+   * <p>Can't be final due to init() method, but should not be assigned anywhere else
    */
-  private final Map<String, List<Map<String, Object>>> configMethodProperties = new HashMap<>();
+  private ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
   private final HashSet<String> handledAnnotations = new HashSet<>();
   private String linkURL;
@@ -188,18 +173,19 @@ public class XPFlagCleaner extends BugChecker
    */
   public XPFlagCleaner() {}
 
-  public XPFlagCleaner(ErrorProneFlags flags) throws ParseException {
+  public XPFlagCleaner(ErrorProneFlags flags) {
     this.flags = flags;
   }
 
-  void init(ErrorProneFlags flags) throws ParseException {
+  @SuppressWarnings("unchecked") // Needed for JSON parsing.
+  void init(ErrorProneFlags flags) throws PiranhaConfigurationException {
     Optional<String> s = flags.get("Piranha:FlagName");
     if (s.isPresent()) {
       xpFlagName = s.get();
       isTreated = flags.getBoolean("Piranha:IsTreated").orElse(true);
       treatmentGroup = flags.get("Piranha:TreatmentGroup").orElse("").toLowerCase();
     } else {
-      throw new ParseException("Piranha:FlagName is missing", 0);
+      throw new PiranhaConfigurationException("Piranha:FlagName is missing");
     }
 
     Optional<String> f = flags.get("Piranha:Config");
@@ -210,7 +196,7 @@ public class XPFlagCleaner extends BugChecker
         Path configFilePath = Paths.get(configFile);
         boolean configFileExists = configFilePath.toFile().exists();
         if (!configFileExists) {
-          throw new IOException();
+          throw new IOException("Provided config file not found");
         }
         JSONParser parser = new JSONParser();
         JSONObject propertiesJson =
@@ -225,7 +211,7 @@ public class XPFlagCleaner extends BugChecker
           methodProperties.addAll(
               (List<Map<String, Object>>) propertiesJson.get("methodProperties"));
         } else {
-          throw new ParseException("methodProperties not found.", 0);
+          throw new PiranhaConfigurationException("methodProperties not found.");
         }
         Optional<String> argumentIndexOptional = flags.get("Piranha:ArgumentIndexOptional");
         boolean isArgumentIndexOptional = false;
@@ -233,16 +219,37 @@ public class XPFlagCleaner extends BugChecker
             && TRUE.equalsIgnoreCase(argumentIndexOptional.get())) {
           isArgumentIndexOptional = true;
         }
-        addMethodPropertiesToConfigMethodProperties(methodProperties, isArgumentIndexOptional);
+        ImmutableMultimap.Builder<String, PiranhaMethodRecord> builder =
+            new ImmutableMultimap.Builder<>();
+        for (Map<String, Object> methodProperty : methodProperties) {
+          PiranhaMethodRecord methodRecord =
+              PiranhaMethodRecord.parseFromJSONPropertyEntryMap(
+                  methodProperty, isArgumentIndexOptional);
+          builder.put(methodRecord.getMethodName(), methodRecord);
+        }
+        configMethodProperties = builder.build();
       } catch (IOException fnfe) {
-        throw new ParseException("Provided config file is not found", 0);
+        throw new PiranhaConfigurationException("Error reading config file. " + fnfe);
       } catch (ParseException pe) {
-        throw new ParseException("Invalid or incorrectly formatted config file. " + pe, 0);
+        String extraWarning = "";
+        if (configFile.endsWith(".properties")) {
+          // Ends in space to make link clickable on terminal.
+          extraWarning =
+              "\nWARNING: With version 0.1.0, PiranhaJava has changed its configuration file format to json "
+                  + "(properties.json), but it looks you are passing the old piranha.properties format. Please "
+                  + "migrate your configuration to json. "
+                  + "See. https://github.com/uber/piranha/blob/master/java/README.md ";
+        }
+        throw new PiranhaConfigurationException(
+            "Invalid or incorrectly formatted config file. " + pe + extraWarning);
+      } catch (PiranhaConfigurationException pce) {
+        // Already in the right format, re-throw
+        throw pce;
       } catch (Exception e) {
-        throw new ParseException("Some other exception thrown while parsing config", 0);
+        throw new PiranhaConfigurationException("Some other exception thrown while parsing config");
       }
     } else {
-      throw new ParseException("Piranha:Config is missing", 0);
+      throw new PiranhaConfigurationException("Piranha:Config is missing");
     }
     initialized = true;
   }
@@ -298,7 +305,7 @@ public class XPFlagCleaner extends BugChecker
     if (!initialized && !disabled) {
       try {
         init(flags);
-      } catch (ParseException pe) {
+      } catch (PiranhaConfigurationException pe) {
         disabled = true;
       }
     }
@@ -317,27 +324,6 @@ public class XPFlagCleaner extends BugChecker
     return linkURL;
   }
 
-  private void addMethodPropertiesToConfigMethodProperties(
-      Set<Map<String, Object>> methodProperties, boolean isArgumentIndexOptional)
-      throws ParseException {
-    for (Map<String, Object> methodProperty : methodProperties) {
-      String methodName = getValueStringFromMap(methodProperty, METHOD_NAME_KEY);
-      if (methodName == null || getValueStringFromMap(methodProperty, FLAG_TYPE_KEY) == null) {
-        throw new ParseException(
-            "methodProperty did not have methodName or flagType. Check:" + methodProperty, 0);
-      }
-      if (!isArgumentIndexOptional && getArgumentIndexFromMap(methodProperty) == null) {
-        throw new ParseException(
-            "methodProperty did not have argumentIndex. By default, Piranha requires an argument index for flag APIs, to which the flag name/symbol will be passed. This is to avoid over-deletion of all occurrences of a flag API method. If you are sure you want to delete all instances of the method below, consider using Piranha:ArgumentIndexOptional=true to override this behavior. Check:"
-                + methodProperty,
-            0);
-      }
-      configMethodProperties
-          .computeIfAbsent(methodName, k -> new ArrayList<>())
-          .add(methodProperty);
-    }
-  }
-
   /* Returns the appropriate XP API, if any, as given by the expression */
   private API getXPAPI(ExpressionTree et) {
     et = ASTHelpers.stripParentheses(et);
@@ -349,23 +335,21 @@ public class XPFlagCleaner extends BugChecker
       }
       MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
       String methodName = mst.getIdentifier().toString();
-      List<Map<String, Object>> methodPropertiesForMethodName =
-          configMethodProperties.get(methodName);
-      if (methodPropertiesForMethodName != null) {
-        return getXPAPI(mit, methodPropertiesForMethodName);
+      if (!disabled && configMethodProperties.containsKey(methodName)) {
+        return getXPAPI(mit, configMethodProperties.get(methodName));
       }
     }
     return API.UNKNOWN;
   }
 
   private API getXPAPI(
-      MethodInvocationTree mit, List<Map<String, Object>> methodPropertiesForMethodName) {
-    for (Map<String, Object> currentMethodProperties : methodPropertiesForMethodName) {
-      Integer argumentIndex = getArgumentIndexFromMap(currentMethodProperties);
-
+      MethodInvocationTree mit, ImmutableCollection<PiranhaMethodRecord> methodRecordsForName) {
+    for (PiranhaMethodRecord methodRecord : methodRecordsForName) {
       // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
-      if (argumentIndex != null) {
+      Optional<Integer> optionalArgumentIdx = methodRecord.getArgumentIdx();
+      if (optionalArgumentIdx.isPresent()) {
+        int argumentIndex = optionalArgumentIdx.get().intValue();
         if (argumentIndex < mit.getArguments().size()) {
           ExpressionTree argTree = mit.getArguments().get(argumentIndex);
           Symbol argSym = ASTHelpers.getSymbol(argTree);
@@ -379,35 +363,26 @@ public class XPFlagCleaner extends BugChecker
       MemberSelectTree mst = ((MemberSelectTree) mit.getMethodSelect());
       // when returnType is specified, check if mst's return type matches it
       // if it's not a match, skip to next method property map
-      String returnType = getValueStringFromMap(currentMethodProperties, RETURN_TYPE_STRING);
-      if (returnType != null) {
+      Optional<String> optionalReturnType = methodRecord.getReturnType();
+      if (optionalReturnType.isPresent()) {
         String mReturn = ASTHelpers.getReturnType(mst).toString();
-        if (!returnType.equals(mReturn)) {
+        if (!optionalReturnType.get().equals(mReturn)) {
           continue;
         }
       }
       // when receiverType is specified, check if mst's receiver type matches it
       // if it's not a match, skip to next method property map
-      String receiverType = getValueStringFromMap(currentMethodProperties, RECEIVER_TYPE_STRING);
-      if (receiverType != null) {
+      Optional<String> optionalReceiverType = methodRecord.getReceiverType();
+      if (optionalReceiverType.isPresent()) {
         String mReceive = ASTHelpers.getReceiverType(mst).toString();
-        if (!receiverType.equals(mReceive)) {
+        if (!optionalReceiverType.get().equals(mReceive)) {
           continue;
         }
       }
-      return flagTypeToAPIMap.getOrDefault(
-          (String) currentMethodProperties.get(FLAG_TYPE_KEY), API.UNKNOWN);
+      // The record matches the checks so far, so return its API type as the type of mit
+      return methodRecord.getApiType();
     }
     return API.UNKNOWN;
-  }
-
-  private static Map<String, API> initializeFlagTypeToAPIMap() {
-    Map<String, API> map = new HashMap<>();
-    map.put("treated", API.IS_TREATED);
-    map.put("control", API.IS_CONTROL);
-    map.put("empty", API.DELETE_METHOD);
-    map.put("treatmentGroup", API.IS_TREATMENT_GROUP_CHECK);
-    return Collections.unmodifiableMap(map);
   }
 
   private boolean isArgumentMatchesFlagName(ExpressionTree argTree, Symbol argSym) {
@@ -1023,39 +998,5 @@ public class XPFlagCleaner extends BugChecker
       return statements.size() > 0 && statements.get(statements.size() - 1) instanceof ReturnTree;
     }
     return false;
-  }
-
-  /**
-   * Utility method. Checks whether the value associated to a given map and given key is a non-empty
-   * string.
-   *
-   * @param map - map corresponding to a method property
-   * @param key - key to check the corresponding value
-   * @return String if value is a non-empty string, null otherwise
-   */
-  private static String getValueStringFromMap(Map<String, Object> map, String key) {
-    Object value = map.get(key);
-    if (value instanceof String && !value.equals(EMPTY)) {
-      return String.valueOf(value);
-    }
-    return null;
-  }
-
-  /**
-   * Utility method. Checks whether the argumentIndex key of a method property map is a non-negative
-   * integer.
-   *
-   * @param map - map corresponding to a method property
-   * @return argumentIndex if argument index is a non-negative integer, null otherwise
-   */
-  private static Integer getArgumentIndexFromMap(Map<String, Object> map) {
-    Object value = map.get(ARGUMENT_INDEX_KEY);
-    if (value instanceof Long) {
-      int argumentIndex = ((Long) value).intValue();
-      if (argumentIndex >= ZERO) {
-        return argumentIndex;
-      }
-    }
-    return null;
   }
 }
