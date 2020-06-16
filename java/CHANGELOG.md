@@ -1,3 +1,15 @@
+Version 0.1.0
+-------------
+* [IMPORTANT] Switch config to structured properties.json [#39] 
+* Refactor PiranhaJava configuration internals. [#55]
+* New/extra types allowed for flags [#28]
+  - Ability to use string-literal flags
+  - Ability to use string-constant flags
+* Build/repo cleanup:
+  - Add maven instructions [#27], additional links [#29]
+  - Set up travis CI for PiranhaJava and PiranhaSwift [#33]
+  - Enforce Google Java Format for PiranhaJava [#34]
+
 Version 0.0.3
 -------------
 * Improve simplification of nested conditionals [#18]

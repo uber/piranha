@@ -21,7 +21,7 @@ sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 dependencies {
-  annotationProcessor "com.uber.piranha:piranha:0.0.3"
+  annotationProcessor "com.uber.piranha:piranha:0.1.0"
   errorprone "com.google.errorprone:error_prone_core:2.3.2"
   errorproneJavac "com.google.errorprone:javac:9+181-r4173-1"
 }
@@ -213,7 +213,7 @@ This example is present in the [sample](https://github.com/uber/piranha/tree/mas
             <path>
               <groupId>com.uber.piranha</groupId>
               <artifactId>piranha</artifactId>
-              <version>0.0.3</version>
+              <version>0.1.0</version>
             </path>
             <path>
               <groupId>com.google.errorprone</groupId>
