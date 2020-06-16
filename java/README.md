@@ -10,7 +10,7 @@ Piranha requires that you build your code with [Error Prone](http://errorprone.i
 
 To integrate Piranha into your Java project you'll need a version of the following additions to your `build.gradle` file:
 
-```
+```groovy
 plugins {
   id "com.github.sherter.google-java-format" version "0.7.1"
   id "net.ltgt.errorprone" version "0.6" apply false
@@ -48,7 +48,7 @@ In the `tasks.withType(JavaCompile)` section, we pass some configuration options
 
 The properties file has the following template: 
 
-```
+```json
 {
   "methodProperties":
     [
@@ -80,14 +80,14 @@ For `returnType` and `receiverType`, types should be written as `boolean` or `vo
 
 The `annotations` specify the annotations used (e.g., in unit testing) to determine treatment or control behavior. For example:
 
-```
+```java
 @FlagTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)
 public void some_unit_test() { ... }
 ```
 
 will be refactored to 
 
-```
+```java
 public void some_unit_test() { ... }
 ```
 
@@ -100,7 +100,7 @@ Finally, the setting `linkURL` in the properties file is to provide a URL descri
 
 Consider a simple example
 
-```
+```java
 public class MyClass {
   private XPTest expt;
   ...
@@ -120,14 +120,14 @@ public class MyClass {
 
 and the following arguments to Piranha
 
-```
+```groovy
 options.errorprone.errorproneArgs << "-XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG"
 options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
 options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/properties.json
 ```
 where `properties.json` contains the following, 
 
-```
+```json
 {
   "methodProperties":
     [
@@ -159,7 +159,7 @@ where `properties.json` contains the following,
 
 the refactored output will be 
 
-```
+```java
 public class MyClass {
   private XPTest expt;
   ...
@@ -174,7 +174,7 @@ public class MyClass {
 
 When `IsTreated` is `false`, then the refactored output will be 
 
-```
+```java
 public class MyClass {
   private XPTest expt;
   ...
@@ -194,7 +194,7 @@ This example is present in the [sample](https://github.com/uber/piranha/tree/mas
 * For the example Piranha configuration discussed above, follow steps given for the ErrorProne [example](https://github.com/google/error-prone/blob/master/examples/maven/pom.xml) to setup the `pom.xml` to run with ErrorProne.
 
 * Update the `pom.xml` with Piranha related configuration. It will be as follows: 
-```
+```xml
   <build>
     <plugins>
       <plugin>
