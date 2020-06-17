@@ -226,3 +226,17 @@ This example is present in the [sample](https://github.com/uber/piranha/tree/mas
     </plugins>
   </build>
 ```
+
+## Running the Sample app
+
+Piranha is built on top of [Error Prone](https://github.com/google/error-prone) and to use Piranha first we would need to setup Error Prone.
+To setup Error Prone check [Error prone installation guide](http://errorprone.info/docs/installation).
+
+Once error-prone is setup one can try running the embedded sample app to see how piranha reacts to the sample input.
+To do this,
+run `gradle build` from within the sample project directory and check the `java/sample/src/main/java/com/uber/mylib/MyClass.java` file to see the output
+
+1. `cd java/sample`
+2. `gradle build`
+
+To experiment and understand how Piranha behaves with different inputs one can modify the `java/sample/src/main/resources/com/uber/mylib/MyClass.bak` file and run Piranha against the input as mentioned above.
