@@ -699,7 +699,17 @@ public class XPFlagCleaner extends BugChecker
     if (deletedSubTree != null) {
       Description.Builder builder = buildDescription(tree);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
-      fixBuilder.replace(tree, remainingSubTree.toString());
+      boolean loneCondition =
+          (checkLoneCondition(tree.getLeftOperand(), state, remainingSubTree.toString())
+              || checkLoneCondition(tree.getRightOperand(), state, remainingSubTree.toString()));
+      if (loneCondition) {
+        // strip parenthesis
+        int end = state.getEndPosition(tree);
+        int start = end - state.getSourceForNode(tree).length();
+        fixBuilder.replace(start - 1, end + 1, remainingSubTree.toString());
+      } else {
+        fixBuilder.replace(tree, remainingSubTree.toString());
+      }
       decrementAllSymbolUsages(deletedSubTree, state, fixBuilder);
       builder.addFix(fixBuilder.build());
 
@@ -708,6 +718,22 @@ public class XPFlagCleaner extends BugChecker
     }
 
     return Description.NO_MATCH;
+  }
+
+  /**
+   * This method checks if the input (binary) expression tree is equivalent to the final result.
+   * Note that to avoid incorrect removal of parenthesis, we check if the expression is again not a
+   * binary expression.
+   *
+   * @param tree expression tree
+   * @param state visitor state
+   * @param remaining expression after removal
+   * @return true if parenthesis are redundant
+   */
+  private boolean checkLoneCondition(ExpressionTree tree, VisitorState state, String remaining) {
+    return (state.getSourceForNode(tree).equals(remaining)
+        && (!tree.getKind().equals(Kind.CONDITIONAL_OR)
+            && !tree.getKind().equals(Kind.CONDITIONAL_AND)));
   }
 
   @Override
