@@ -28,8 +28,10 @@ def build = [
     errorProneJavac         : "com.google.errorprone:javac:9+181-r4173-1",
     errorProneTestHelpers   : "com.google.errorprone:error_prone_test_helpers:${versions.errorProne}",
     gradleErrorPronePlugin  : "net.ltgt.gradle:gradle-errorprone-plugin:0.0.16",
-    jsr305Annotations       : "com.google.code.findbugs:jsr305:3.0.2",
     googleJsonSimple        : "com.googlecode.json-simple:json-simple:1.1.1",
+    jsr305Annotations       : "com.google.code.findbugs:jsr305:3.0.2",
+    inferAnnotations        : "com.facebook.infer.annotation:infer-annotation:0.11.0",
+    nullaway                : "com.uber.nullaway:nullaway:0.7.10",
 ]
 
 def test = [

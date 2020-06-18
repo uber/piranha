@@ -20,6 +20,8 @@ plugins {
   id "java"
   // For code coverage:
   id 'jacoco'
+  // For NullAway, just in case
+  id "net.ltgt.errorprone"
 }
 
 sourceCompatibility = "1.8"
@@ -37,6 +39,24 @@ dependencies {
     testCompile(deps.build.errorProneTestHelpers) {
         exclude group: "junit", module: "junit"
     }
+
+    // Check with NullAway
+    annotationProcessor deps.build.nullaway
+    compileOnly deps.build.jsr305Annotations
+    compileOnly deps.build.inferAnnotations // @Initializer annotation
+
+    errorprone deps.build.errorProneCore
+    errorproneJavac deps.build.errorProneJavac
+}
+
+tasks.withType(JavaCompile) {
+  // remove the if condition if you want to run NullAway on test code
+  if (!name.toLowerCase().contains("test")) {
+    options.errorprone {
+      check("NullAway", CheckSeverity.ERROR)
+      option("NullAway:AnnotatedPackages", "com.uber")
+    }
+  }
 }
 
 javadoc {
