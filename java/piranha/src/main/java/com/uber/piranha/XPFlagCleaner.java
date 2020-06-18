@@ -15,6 +15,7 @@ package com.uber.piranha;
 
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 
+import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -65,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -92,8 +94,10 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.VariableTreeMatcher,
         BugChecker.MethodTreeMatcher {
 
+  private static final String PIRANHA_DEFAULT_URL = "https://github.com/uber/piranha";
+
   /**
-   * Do not try to auto-delete imports with these common/generic names, as multiple treament groups
+   * Do not try to auto-delete imports with these common/generic names, as multiple treatment groups
    * for different flags are likely to re-use these names.
    */
   private static final ImmutableSet<String> COMMON_GROUP_NAMES =
@@ -112,7 +116,7 @@ public class XPFlagCleaner extends BugChecker
   private boolean initialized = false;
 
   private boolean disabled = false;
-  private ErrorProneFlags flags = null;
+  @Nullable private ErrorProneFlags flags = null;
 
   private String xpFlagName = "_xpflag_dummy";
 
@@ -132,9 +136,11 @@ public class XPFlagCleaner extends BugChecker
     UNKNOWN
   }
 
-  private Symbol xpSym = null;
+  @Nullable private Symbol xpSym = null;
   private boolean isTreated = true;
   private String treatmentGroup = "";
+
+  @Nullable
   private String treatmentGroupsEnum = null; // FQN of the enum containing the treatment group names
 
   /**
@@ -157,14 +163,14 @@ public class XPFlagCleaner extends BugChecker
   private ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
   private final HashSet<String> handledAnnotations = new HashSet<>();
-  private String linkURL;
+  private String linkURL = PIRANHA_DEFAULT_URL;
 
   /** State used to track usage counts and delete corresponding declarations if needed. */
-  private TreePath cuPath = null;
+  @Nullable private TreePath cuPath = null;
 
   private boolean countsCollected = false;
-  private ImmutableMap<Symbol, UsageCounter.CounterData> usageCounts = null;
-  private Map<Symbol, Integer> deletedUsages = null;
+  @Nullable private ImmutableMap<Symbol, UsageCounter.CounterData> usageCounts = null;
+  @Nullable private Map<Symbol, Integer> deletedUsages = null;
 
   /**
    * Copied from NullAway comment. Error Prone requires us to have an empty constructor for each
@@ -178,6 +184,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   @SuppressWarnings("unchecked") // Needed for JSON parsing.
+  @Initializer
   void init(ErrorProneFlags flags) throws PiranhaConfigurationException {
     Optional<String> s = flags.get("Piranha:FlagName");
     if (s.isPresent()) {
@@ -202,7 +209,10 @@ public class XPFlagCleaner extends BugChecker
         JSONObject propertiesJson =
             (JSONObject)
                 parser.parse(Files.newBufferedReader(configFilePath, StandardCharsets.UTF_8));
-        linkURL = (String) propertiesJson.get("linkURL");
+        final String linkURLKey = "linkURL";
+        if (propertiesJson.containsKey(linkURLKey)) {
+          linkURL = (String) propertiesJson.get(linkURLKey);
+        }
         if (propertiesJson.get("annotations") != null) {
           handledAnnotations.addAll((List<String>) propertiesJson.get("annotations"));
         }
@@ -257,6 +267,7 @@ public class XPFlagCleaner extends BugChecker
   // We call this lazily only when needed, meaning when a symbol usage is first deleted for this
   // Compilation Unit.
   private void computeSymbolCounts(VisitorState visitorState) {
+    Preconditions.checkNotNull(cuPath, "Compilation Unit TreePath should be set by this point.");
     Preconditions.checkArgument(
         !countsCollected, "This shouldn't be called more than once per Compilation Unit");
     deletedUsages = new LinkedHashMap<>();
@@ -271,6 +282,8 @@ public class XPFlagCleaner extends BugChecker
     if (!countsCollected) {
       computeSymbolCounts(visitorState);
     }
+    Preconditions.checkNotNull(usageCounts, "The code above should set usage counts info");
+    Preconditions.checkNotNull(deletedUsages, "The code above should set deleted usages info");
     if (!usageCounts.containsKey(symbol)) {
       // Not a variable tracked by UsageCounter or UsageCheckers
       return;
@@ -303,6 +316,10 @@ public class XPFlagCleaner extends BugChecker
   public Description matchCompilationUnit(
       CompilationUnitTree compilationUnitTree, VisitorState visitorState) {
     if (!initialized && !disabled) {
+      Preconditions.checkNotNull(
+          flags,
+          "The configuration-aware constructor should have been called at this point, and flags set to "
+              + "a non-null value.");
       try {
         init(flags);
       } catch (PiranhaConfigurationException pe) {
@@ -408,9 +425,11 @@ public class XPFlagCleaner extends BugChecker
    * @return True if matches. Otherwise false
    */
   private boolean isVarSymbolAndMatchesFlagName(Symbol argSym) {
-    return argSym instanceof Symbol.VarSymbol
-        && ((Symbol.VarSymbol) argSym).getConstantValue() != null
-        && ((Symbol.VarSymbol) argSym).getConstantValue().equals(xpFlagName);
+    if (argSym instanceof Symbol.VarSymbol) {
+      Object constantValue = ((Symbol.VarSymbol) argSym).getConstantValue();
+      return constantValue != null && constantValue.equals(xpFlagName);
+    }
+    return false;
   }
 
   /**
@@ -697,6 +716,8 @@ public class XPFlagCleaner extends BugChecker
     }
 
     if (deletedSubTree != null) {
+      Preconditions.checkNotNull(
+          remainingSubTree, "deletedSubTree != null => remainingSubTree !=null here.");
       Description.Builder builder = buildDescription(tree);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
       fixBuilder.replace(tree, remainingSubTree.toString());
@@ -833,9 +854,9 @@ public class XPFlagCleaner extends BugChecker
     }
     ExpressionTree et = tree.getCondition();
     Value x = evalExpr(et, state);
-    boolean update = false;
     String replacementString = EMPTY;
 
+    boolean update = false;
     ExpressionTree removedBranch = null;
     if (x.equals(Value.TRUE)) {
       update = true;
@@ -848,6 +869,7 @@ public class XPFlagCleaner extends BugChecker
     }
 
     if (update) {
+      Preconditions.checkNotNull(removedBranch, "update => removedBranch != null here.");
       Description.Builder builder = buildDescription(tree);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
       fixBuilder.replace(tree, stripBraces(replacementString));
