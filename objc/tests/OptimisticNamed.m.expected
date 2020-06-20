@@ -16,6 +16,7 @@
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
+#include "NonExistentHeader.h" // non existent header
 
 
 @protocol UBAdvancedExperimenting

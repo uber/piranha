@@ -564,12 +564,17 @@ private:
 
 class XPRefactorConsumer : public ASTConsumer {
 public:
-  XPRefactorConsumer(string flagName, FlagType flagType,
+  XPRefactorConsumer(CompilerInstance &CI, string flagName, FlagType flagType,
                      bool shouldHandleMethodImpl)
       : HandlerForIf(flagName, flagType), HandlerForMethodImpl(flagName),
         HandlerForMethodInvocation(flagName), HandlerForDeclRef(flagName),
         HandlerForBinOp(flagName, flagType),
         HandlerForConditionalOp(flagName, flagType) {
+
+   // ignore missing headers
+   if(CI.hasPreprocessor()) {
+     CI.getPreprocessor().SetSuppressIncludeNotFoundError(true);
+   }
 
     // matches if([self.....<flagName>])
     Matcher.addMatcher(
@@ -714,10 +719,10 @@ private:
 
 class XPRefactorASTAction : public PluginASTAction {
 public:
-  virtual unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &Compiler,
+  virtual unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                     llvm::StringRef InFile) {
     return unique_ptr<ASTConsumer>(
-        new XPRefactorConsumer(flagName, flagType, shouldHandleMethodImpl));
+        new XPRefactorConsumer(CI, flagName, flagType, shouldHandleMethodImpl));
   }
 
   bool ParseArgs(const CompilerInstance &CI, const vector<string> &args) {
