@@ -6,7 +6,7 @@
 
 Piranha requires that you build your code with [Error Prone](http://errorprone.info), version 2.3.2 or higher.  See the [Error Prone documentation](http://errorprone.info/docs/installation) for instructions on getting started with Error Prone and integration with your build system.  
 
-While not required, we strongly recommend that you use Piranha in combination with an automated code formatter, such as [Google Java Format](https://github.com/google/google-java-format) running as a pre-commit hook. The reason being that Piranha will transform code without any particular way to configure code style guideliness into the tool directly. While we strive to produce clean and readable refactorings by default, no commitment exists to any particular whitespace, line lenght, or styling behavior, nor even consistency between Piranha minor versions.
+While not required, we strongly recommend that you use Piranha in combination with an automated code formatter, such as [Google Java Format](https://github.com/google/google-java-format) running as a pre-commit hook. This is because Piranha will transform code without any particular way to configure code style guidelines into the tool directly. While we strive to produce clean and readable refactorings by default, no commitment exists to any particular whitespace, line length, or styling behavior, nor even consistency between Piranha minor versions.
 
 ### Gradle
 
