@@ -705,8 +705,10 @@ public class XPFlagCleaner extends BugChecker
       if (loneCondition) {
         // strip parenthesis
         int end = state.getEndPosition(tree);
+        while (state.getSourceCode().charAt(end) != ')') end++;
         int start = end - state.getSourceForNode(tree).length();
-        fixBuilder.replace(start - 1, end + 1, remainingSubTree.toString());
+        while (state.getSourceCode().charAt(start) != '(') start--;
+        fixBuilder.replace(start, end + 1, remainingSubTree.toString());
       } else {
         fixBuilder.replace(tree, remainingSubTree.toString());
       }
@@ -733,7 +735,8 @@ public class XPFlagCleaner extends BugChecker
   private boolean checkLoneCondition(ExpressionTree tree, VisitorState state, String remaining) {
     return (state.getSourceForNode(tree).equals(remaining)
         && (!tree.getKind().equals(Kind.CONDITIONAL_OR)
-            && !tree.getKind().equals(Kind.CONDITIONAL_AND)));
+            && !tree.getKind().equals(Kind.CONDITIONAL_AND))
+        && isTreated);
   }
 
   @Override
