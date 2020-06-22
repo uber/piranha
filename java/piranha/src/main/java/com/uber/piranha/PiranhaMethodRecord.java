@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** A class repesenting a method configuration record from properties.json */
+/** A class representing a method configuration record from properties.json */
 final class PiranhaMethodRecord {
 
   // Allowed fields for a method property in the config file.
