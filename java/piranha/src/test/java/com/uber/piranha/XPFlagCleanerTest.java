@@ -2161,4 +2161,188 @@ public class XPFlagCleanerTest {
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());
   }
+
+  @Test
+  public void testStripRedundantParenthesisWithNoSpaceControl() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            "}");
+
+    bcr.doTest();
+  }
+
+  @Test
+  public void testStripRedundantParenthesisWithSpaceControl() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (   y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)   )) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            "}");
+
+    bcr.doTest();
+  }
+
+  @Test
+  public void testStripRedundantParenthesisWithNoSpaceTreated() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x) { System.out.println(\"if block\"); }",
+            " }",
+            "}");
+
+    bcr.doTest();
+  }
+
+  @Test
+  public void testStripRedundantParenthesisWithSpaceTreated() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (   y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)   )) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x) { System.out.println(\"if block\"); }",
+            " }",
+            "}");
+
+    bcr.doTest();
+  }
 }
