@@ -39,17 +39,6 @@ public final class UsageCounter {
     /* Helper class only, not instantiable */
   }
 
-  private static boolean symbolHasSuppressUnusedCheckerWarningsAnnotation(
-      Symbol symbol, String checkerName) {
-    SuppressWarnings annotation = symbol.getAnnotation(SuppressWarnings.class);
-    if (annotation != null) {
-      for (String s : annotation.value()) {
-        if (s.equals(checkerName)) return true;
-      }
-    }
-    return false;
-  }
-
   public static ImmutableMap<Symbol, CounterData> getUsageCounts(VisitorState state) {
     return getUsageCounts(state, state.getPath());
   }
@@ -71,7 +60,6 @@ public final class UsageCounter {
 
     for (VariableTree decl : callScanner.declaredParamVars.keySet()) {
       Symbol s = ASTHelpers.getSymbol(decl);
-      Symbol.MethodSymbol mSym = callScanner.declaredParamVars.get(decl);
       CounterData counterData =
           new CounterData(
               DeclType.PARAM,
