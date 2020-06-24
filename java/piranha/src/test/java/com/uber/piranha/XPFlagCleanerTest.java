@@ -38,32 +38,37 @@ public class XPFlagCleanerTest {
 
   @Before
   public void setup() {
-    compilationHelper = CompilationTestHelper.newInstance(XPFlagCleaner.class, getClass());
-    compilationHelper.setArgs(Arrays.asList("-d", temporaryFolder.getRoot().getAbsolutePath()));
+    compilationHelper =
+        CompilationTestHelper.newInstance(XPFlagCleaner.class, getClass())
+            .setArgs(Arrays.asList("-d", temporaryFolder.getRoot().getAbsolutePath()));
   }
 
   @Test
   public void test_xpflagsPositiveCases() {
-    compilationHelper.setArgs(
-        Arrays.asList(
-            "-d",
-            temporaryFolder.getRoot().getAbsolutePath(),
-            "-XepOpt:Piranha:FlagName=STALE_FLAG",
-            "-XepOpt:Piranha:IsTreated=true",
-            "-XepOpt:Piranha:Config=config/properties.json"));
-    compilationHelper.addSourceFile("XPFlagCleanerPositiveCases.java").doTest();
+    compilationHelper
+        .setArgs(
+            Arrays.asList(
+                "-d",
+                temporaryFolder.getRoot().getAbsolutePath(),
+                "-XepOpt:Piranha:FlagName=STALE_FLAG",
+                "-XepOpt:Piranha:IsTreated=true",
+                "-XepOpt:Piranha:Config=config/properties.json"))
+        .addSourceFile("XPFlagCleanerPositiveCases.java")
+        .doTest();
   }
 
   @Test
   public void test_xpflagsNegativeCases() {
-    compilationHelper.setArgs(
-        Arrays.asList(
-            "-d",
-            temporaryFolder.getRoot().getAbsolutePath(),
-            "-XepOpt:Piranha:FlagName=STALE_FLAG",
-            "-XepOpt:Piranha:IsTreated=true",
-            "-XepOpt:Piranha:Config=config/properties.json"));
-    compilationHelper.addSourceFile("XPFlagCleanerNegativeCases.java").doTest();
+    compilationHelper
+        .setArgs(
+            Arrays.asList(
+                "-d",
+                temporaryFolder.getRoot().getAbsolutePath(),
+                "-XepOpt:Piranha:FlagName=STALE_FLAG",
+                "-XepOpt:Piranha:IsTreated=true",
+                "-XepOpt:Piranha:Config=config/properties.json"))
+        .addSourceFile("XPFlagCleanerNegativeCases.java")
+        .doTest();
   }
 
   @Test
@@ -77,13 +82,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    BugCheckerRefactoringTestHelper.ExpectOutput eo =
-        bcr.addInput("XPFlagCleanerPositiveCases.java");
-    eo.addOutput("XPFlagCleanerPositiveCasesTreatment.java");
-
-    bcr.doTest();
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
+        .addInput("XPFlagCleanerPositiveCases.java")
+        .addOutput("XPFlagCleanerPositiveCasesTreatment.java")
+        .doTest();
   }
 
   @Test
@@ -98,7 +100,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
 
@@ -153,9 +155,8 @@ public class XPFlagCleanerTest {
             " public String groupToString() {",
             "  return \"A\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -170,7 +171,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
 
@@ -224,9 +225,8 @@ public class XPFlagCleanerTest {
             " public String groupToString() {",
             "  return \"Treated\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -240,13 +240,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    BugCheckerRefactoringTestHelper.ExpectOutput eo =
-        bcr.addInput("XPFlagCleanerPositiveCases.java");
-    eo.addOutput("XPFlagCleanerPositiveCasesControl.java");
-
-    bcr.doTest();
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
+        .addInput("XPFlagCleanerPositiveCases.java")
+        .addOutput("XPFlagCleanerPositiveCasesControl.java")
+        .doTest();
   }
 
   private BugCheckerRefactoringTestHelper addHelperClasses(BugCheckerRefactoringTestHelper bcr)
@@ -265,7 +262,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
 
@@ -299,9 +296,8 @@ public class XPFlagCleanerTest {
             " public boolean return_contains_stale_flag() {",
             "  return true;",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -315,13 +311,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    BugCheckerRefactoringTestHelper.ExpectOutput eo =
-        bcr.addInput("XPFlagCleanerNegativeCases.java");
-
-    eo.expectUnchanged();
-    bcr.doTest();
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
+        .addInput("XPFlagCleanerNegativeCases.java")
+        .expectUnchanged()
+        .doTest();
   }
 
   @Test
@@ -335,7 +328,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -358,9 +351,8 @@ public class XPFlagCleanerTest {
             " public String evaluate() {",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -374,7 +366,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -396,9 +388,8 @@ public class XPFlagCleanerTest {
             " public String evaluate() {",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -412,7 +403,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -434,9 +425,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(\"NOT_STALE_FLAG\")) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -450,7 +440,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -474,9 +464,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -490,13 +479,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    BugCheckerRefactoringTestHelper.ExpectOutput eo =
-        bcr.addInput("XPFlagCleanerPositiveCases.java");
-    eo.addOutput("XPFlagCleanerPositiveCasesTreatment.java");
-
-    bcr.doTest();
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
+        .addInput("XPFlagCleanerPositiveCases.java")
+        .addOutput("XPFlagCleanerPositiveCasesTreatment.java")
+        .doTest();
   }
 
   /*
@@ -517,7 +503,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
@@ -544,9 +530,8 @@ public class XPFlagCleanerTest {
             "     else { int d = 2;}",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -566,7 +551,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -594,9 +579,8 @@ public class XPFlagCleanerTest {
             "     else { int d = 2;}",
             "     return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -617,7 +601,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -642,9 +626,8 @@ public class XPFlagCleanerTest {
             "     else { int b = 2;}",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -665,7 +648,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -690,9 +673,8 @@ public class XPFlagCleanerTest {
             "     else { int b = 2;}",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -712,7 +694,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -747,9 +729,8 @@ public class XPFlagCleanerTest {
             "  int g = 1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -770,9 +751,9 @@ public class XPFlagCleanerTest {
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -808,9 +789,8 @@ public class XPFlagCleanerTest {
             "  int g = 1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -830,7 +810,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -858,9 +838,8 @@ public class XPFlagCleanerTest {
             "  int c = 1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -881,9 +860,9 @@ public class XPFlagCleanerTest {
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -912,9 +891,8 @@ public class XPFlagCleanerTest {
             "  int c = 1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -934,9 +912,9 @@ public class XPFlagCleanerTest {
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -972,9 +950,8 @@ public class XPFlagCleanerTest {
             "  int c = 1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -993,7 +970,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1033,9 +1010,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1054,7 +1030,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1089,9 +1065,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1110,7 +1085,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1148,9 +1123,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1169,7 +1143,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1204,9 +1178,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1224,7 +1197,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1262,9 +1235,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1283,7 +1255,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1318,9 +1290,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1339,10 +1310,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1378,9 +1349,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1398,7 +1368,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1438,9 +1408,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1458,10 +1427,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1497,9 +1466,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1517,7 +1485,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1557,9 +1525,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1579,10 +1546,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1617,9 +1584,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1640,7 +1606,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1676,9 +1642,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1696,7 +1661,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1734,9 +1699,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
             "     else { return \"Y\";}",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1756,7 +1720,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1790,9 +1754,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1813,7 +1776,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1847,9 +1810,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1868,7 +1830,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1903,9 +1865,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1924,10 +1885,10 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     // can be removed after Piranha implements two pass analysis
-    bcr.allowBreakingChanges();
+    bcr = bcr.allowBreakingChanges();
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -1963,9 +1924,8 @@ public class XPFlagCleanerTest {
             "  int c =1;",
             "  return \"Y\";",
             " }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*
@@ -1983,7 +1943,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -2027,9 +1987,8 @@ public class XPFlagCleanerTest {
             "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
             "     else { return \"Y\";}",
             "  }",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   /*

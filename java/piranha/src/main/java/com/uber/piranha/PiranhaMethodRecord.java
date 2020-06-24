@@ -1,7 +1,6 @@
 package com.uber.piranha;
 
 import com.google.common.collect.ImmutableMap;
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -117,7 +116,8 @@ final class PiranhaMethodRecord {
    * @param methodPropertyEntry The decoded json entry (as a Map of property names to values)
    * @param isArgumentIndexOptional Whether argumentIdx should be treated as optional
    * @return A PiranhaMethodRecord corresponding to the given map/json record.
-   * @throws ParseException
+   * @throws PiranhaConfigurationException if there was any issue reading or parsing the
+   *     configuration file.
    */
   static PiranhaMethodRecord parseFromJSONPropertyEntryMap(
       Map<String, Object> methodPropertyEntry, boolean isArgumentIndexOptional)
