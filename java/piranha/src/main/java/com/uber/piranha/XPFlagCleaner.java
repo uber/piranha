@@ -640,8 +640,8 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
-  @SuppressWarnings(
-      "TreeToString") // Likely worth fixing, not sure of a better way to match import FQNs.
+  // Likely worth fixing, not sure of a better way to match import FQNs:
+  @SuppressWarnings("TreeToString")
   @Override
   public Description matchImport(ImportTree importTree, VisitorState visitorState) {
     if (importTree.isStatic()) {
@@ -699,8 +699,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   // Pretty sure the Tree.toString() API is our best option here, but be aware of the issues listed
-  // in:
-  // https://errorprone.info/bugpattern/TreeToString
+  // in: https://errorprone.info/bugpattern/TreeToString
   // e.g. comments and whitespace might be removed, which could be retrieved through
   // `VisitorState#getSourceForNode`
   // (but that makes the actual AST rewriting harder).
