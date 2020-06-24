@@ -4,7 +4,7 @@
 
 ### Overview
 
-Piranha requires that you build your code with [Error Prone](http://errorprone.info), version 2.3.2 or higher.  See the [Error Prone documentation](http://errorprone.info/docs/installation) for instructions on getting started with Error Prone and integration with your build system.  
+Piranha requires that you build your code with [Error Prone](http://errorprone.info), version 2.4.0 or higher.  See the [Error Prone documentation](http://errorprone.info/docs/installation) for instructions on getting started with Error Prone and integration with your build system.  
 
 While not required, we strongly recommend that you use Piranha in combination with an automated code formatter, such as [Google Java Format](https://github.com/google/google-java-format) running as a pre-commit hook. This is because Piranha will transform code without any particular way to configure code style guidelines into the tool directly. While we strive to produce clean and readable refactorings by default, no commitment exists to any particular whitespace, line length, or styling behavior, nor even consistency between Piranha minor versions.
 
@@ -24,7 +24,7 @@ targetCompatibility = "1.8"
 
 dependencies {
   annotationProcessor "com.uber.piranha:piranha:0.1.0"
-  errorprone "com.google.errorprone:error_prone_core:2.3.2"
+  errorprone "com.google.errorprone:error_prone_core:2.4.0"
   errorproneJavac "com.google.errorprone:javac:9+181-r4173-1"
 }
 
@@ -220,7 +220,7 @@ This example is present in the [sample](https://github.com/uber/piranha/tree/mas
             <path>
               <groupId>com.google.errorprone</groupId>
               <artifactId>error_prone_core</artifactId>
-              <version>2.3.2</version>
+              <version>2.4.0</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
