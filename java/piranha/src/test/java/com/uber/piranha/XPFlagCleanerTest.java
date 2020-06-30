@@ -2211,4 +2211,136 @@ public class XPFlagCleanerTest {
 
     bcr.doTest();
   }
+
+  @Test
+  public void testEmptyFlagRemovesAnnotatedMethodsTreatment() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "EmptyFlagRemovesAnnotatedMethods.java",
+            "package com.uber.piranha;",
+            "class EmptyFlagRemovesAnnotatedMethods {",
+            "  enum TestExperimentName {",
+            "    SAMPLE_STALE_FLAG",
+            "  }",
+            "  public String evaluate(int x) {",
+            "    if (x == 1) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "EmptyFlagRemovesAnnotatedMethods.java",
+            "package com.uber.piranha;",
+            "class EmptyFlagRemovesAnnotatedMethods {",
+            "  enum TestExperimentName {",
+            "    SAMPLE_STALE_FLAG",
+            "  }",
+            "  public String evaluate(int x) {",
+            "    if (x == 1) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addInputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
+            "}")
+        .addOutputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
+            "}");
+
+    bcr.doTest();
+  }
+
+  @Test
+  public void testEmptyFlagRemovesAnnotatedMethodsControl() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "EmptyFlagRemovesAnnotatedMethods.java",
+            "package com.uber.piranha;",
+            "class EmptyFlagRemovesAnnotatedMethods {",
+            "  enum TestExperimentName {",
+            "    SAMPLE_STALE_FLAG",
+            "  }",
+            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "EmptyFlagRemovesAnnotatedMethods.java",
+            "package com.uber.piranha;",
+            "class EmptyFlagRemovesAnnotatedMethods {",
+            "  enum TestExperimentName {",
+            "    SAMPLE_STALE_FLAG",
+            "  }",
+            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addInputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
+            "}")
+        .addOutputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
+            "}");
+
+    bcr.doTest();
+  }
 }
