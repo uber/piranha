@@ -805,7 +805,7 @@ public class XPFlagCleaner extends BugChecker
         for (ExpressionTree et : at.getArguments()) {
           if (et.getKind() == Kind.ASSIGNMENT) {
             AssignmentTree assn = (AssignmentTree) et;
-            if (assn.getExpression().toString().endsWith(xpFlagName)) {
+            if (!xpFlagName.equals(EMPTY) && assn.getExpression().toString().endsWith(xpFlagName)) {
               Description.Builder builder = buildDescription(tree);
               SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
               if (isTreated) {
