@@ -612,7 +612,8 @@ public class XPFlagCleaner extends BugChecker
       Tree importIdentifier = importTree.getQualifiedIdentifier();
       if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
         MemberSelectTree memberSelectTree = (MemberSelectTree) importIdentifier;
-        if (memberSelectTree.getIdentifier().toString().endsWith(xpFlagName)
+        if ((!xpFlagName.equals(EMPTY)
+                && memberSelectTree.getIdentifier().toString().endsWith(xpFlagName))
             || (treatmentGroupsEnum != null
                 && memberSelectTree.getExpression().toString().startsWith(treatmentGroupsEnum))) {
           return buildDescription(importTree)
