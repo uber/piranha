@@ -966,7 +966,8 @@ public class XPFlagCleaner extends BugChecker
         // might.
         if (elseStatement != null && elseStatement.getKind().equals(Kind.IF)) {
           // Copy the initial if condition (don't mark as needing update yet)
-          replacementPrefix += "if " + visitorState.getSourceForNode(subIfTree.getCondition());
+          replacementPrefix +=
+              "if " + visitorState.getSourceForNode(subIfTree.getCondition()) + " ";
           replacementPrefix +=
               visitorState.getSourceForNode(subIfTree.getThenStatement()) + " else ";
           // Then recurse on the else case
