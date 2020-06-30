@@ -2161,4 +2161,54 @@ public class XPFlagCleanerTest {
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());
   }
+
+  @Test
+  public void testEmptyFlagRemovesStaticImports() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "EmptyFlagRemovesStaticImports.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.Constants.ONE;",
+            "class EmptyFlagRemovesStaticImports {",
+            "  public String evaluate(int x) {",
+            "    if (x == ONE) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "}")
+        .addOutputLines(
+            "EmptyFlagRemovesStaticImports.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.Constants.ONE;",
+            "class EmptyFlagRemovesStaticImports {",
+            "  public String evaluate(int x) {",
+            "    if (x == ONE) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "}")
+        .addInputLines(
+            "Constants.java",
+            "package com.uber.piranha;",
+            "class Constants {",
+            "  public static int ONE = 1;",
+            "}")
+        .addOutputLines(
+            "Constants.java",
+            "package com.uber.piranha;",
+            "class Constants {",
+            "  public static int ONE = 1;",
+            "}");
+
+    bcr.doTest();
+  }
 }
