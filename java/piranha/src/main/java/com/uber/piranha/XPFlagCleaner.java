@@ -15,6 +15,7 @@ package com.uber.piranha;
 
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 
+import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
@@ -65,12 +66,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-/** @author murali@uber.com (Murali Krishna Ramanathan) */
+/**
+ * This is the core PiranhaJava checker and code rewriting class.
+ *
+ * <p>This checker iterates over the AST of each compilation unit, performing the following steps:
+ * a) Replaces occurrences of flag checking APIs with boolean constants based on Piranha's
+ * configuration and flag name arguments, and removes outdated flag setting operations. b)
+ * Simplifies boolean expressions including these new constants. c) Deletes code that has become
+ * unreachable due to conditional guards which can no longer evaluate to true. d) Deletes outdated
+ * enums and classes representing the removed flags and/or their treatment conditions.
+ *
+ * <p>In some cases, Piranha/XPFlagCleaner will want to delete a whole file. Since EP has no
+ * facilities for creating a patch that removes an entire file, it will instead replace its contents
+ * by an empty enum/class and add a special comment indicating it must be removed. Automated scripts
+ * using this code can then perform the actual file deletion previous to creating a PR or diff.
+ *
+ * @author murali@uber.com (Murali Krishna Ramanathan)
+ */
 @AutoService(BugChecker.class)
 @BugPattern(
     name = "Piranha",
@@ -92,15 +110,16 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.VariableTreeMatcher,
         BugChecker.MethodTreeMatcher {
 
+  private static final String PIRANHA_DEFAULT_URL = "https://github.com/uber/piranha";
+
   /**
-   * Do not try to auto-delete imports with these common/generic names, as multiple treament groups
+   * Do not try to auto-delete imports with these common/generic names, as multiple treatment groups
    * for different flags are likely to re-use these names.
    */
   private static final ImmutableSet<String> COMMON_GROUP_NAMES =
       ImmutableSet.of("control", "enabled", "disabled", "treatment", "treated");
 
   private static final int DONTCARE = -1;
-  private static final int ZERO = 0;
   private static final String TRUE = "true";
   private static final String FALSE = "false";
   private static final String EMPTY = "";
@@ -112,7 +131,7 @@ public class XPFlagCleaner extends BugChecker
   private boolean initialized = false;
 
   private boolean disabled = false;
-  private ErrorProneFlags flags = null;
+  @Nullable private ErrorProneFlags flags = null;
 
   private String xpFlagName = "_xpflag_dummy";
 
@@ -132,9 +151,11 @@ public class XPFlagCleaner extends BugChecker
     UNKNOWN
   }
 
-  private Symbol xpSym = null;
+  @Nullable private Symbol xpSym = null;
   private boolean isTreated = true;
   private String treatmentGroup = "";
+
+  @Nullable
   private String treatmentGroupsEnum = null; // FQN of the enum containing the treatment group names
 
   /**
@@ -157,14 +178,14 @@ public class XPFlagCleaner extends BugChecker
   private ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
   private final HashSet<String> handledAnnotations = new HashSet<>();
-  private String linkURL;
+  private String linkURL = PIRANHA_DEFAULT_URL;
 
   /** State used to track usage counts and delete corresponding declarations if needed. */
-  private TreePath cuPath = null;
+  @Nullable private TreePath cuPath = null;
 
   private boolean countsCollected = false;
-  private ImmutableMap<Symbol, UsageCounter.CounterData> usageCounts = null;
-  private Map<Symbol, Integer> deletedUsages = null;
+  @Nullable private ImmutableMap<Symbol, UsageCounter.CounterData> usageCounts = null;
+  @Nullable private Map<Symbol, Integer> deletedUsages = null;
 
   /**
    * Copied from NullAway comment. Error Prone requires us to have an empty constructor for each
@@ -178,6 +199,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   @SuppressWarnings("unchecked") // Needed for JSON parsing.
+  @Initializer
   void init(ErrorProneFlags flags) throws PiranhaConfigurationException {
     Optional<String> s = flags.get("Piranha:FlagName");
     if (s.isPresent()) {
@@ -202,7 +224,10 @@ public class XPFlagCleaner extends BugChecker
         JSONObject propertiesJson =
             (JSONObject)
                 parser.parse(Files.newBufferedReader(configFilePath, StandardCharsets.UTF_8));
-        linkURL = (String) propertiesJson.get("linkURL");
+        final String linkURLKey = "linkURL";
+        if (propertiesJson.containsKey(linkURLKey)) {
+          linkURL = (String) propertiesJson.get(linkURLKey);
+        }
         if (propertiesJson.get("annotations") != null) {
           handledAnnotations.addAll((List<String>) propertiesJson.get("annotations"));
         }
@@ -257,6 +282,7 @@ public class XPFlagCleaner extends BugChecker
   // We call this lazily only when needed, meaning when a symbol usage is first deleted for this
   // Compilation Unit.
   private void computeSymbolCounts(VisitorState visitorState) {
+    Preconditions.checkNotNull(cuPath, "Compilation Unit TreePath should be set by this point.");
     Preconditions.checkArgument(
         !countsCollected, "This shouldn't be called more than once per Compilation Unit");
     deletedUsages = new LinkedHashMap<>();
@@ -271,6 +297,8 @@ public class XPFlagCleaner extends BugChecker
     if (!countsCollected) {
       computeSymbolCounts(visitorState);
     }
+    Preconditions.checkNotNull(usageCounts, "The code above should set usage counts info");
+    Preconditions.checkNotNull(deletedUsages, "The code above should set deleted usages info");
     if (!usageCounts.containsKey(symbol)) {
       // Not a variable tracked by UsageCounter or UsageCheckers
       return;
@@ -303,6 +331,10 @@ public class XPFlagCleaner extends BugChecker
   public Description matchCompilationUnit(
       CompilationUnitTree compilationUnitTree, VisitorState visitorState) {
     if (!initialized && !disabled) {
+      Preconditions.checkNotNull(
+          flags,
+          "The configuration-aware constructor should have been called at this point, and flags set to "
+              + "a non-null value.");
       try {
         init(flags);
       } catch (PiranhaConfigurationException pe) {
@@ -394,7 +426,7 @@ public class XPFlagCleaner extends BugChecker
   /**
    * Checks for {@link Symbol} and the flag name
    *
-   * @param argSym
+   * @param argSym a symbol
    * @return True if matches. Otherwise false
    */
   private boolean isSymbolAndMatchesFlagName(Symbol argSym) {
@@ -404,19 +436,21 @@ public class XPFlagCleaner extends BugChecker
   /**
    * Checks for {@link com.sun.tools.javac.code.Symbol.VarSymbol} and the flag name
    *
-   * @param argSym
+   * @param argSym a symbol
    * @return True if matches. Otherwise false
    */
   private boolean isVarSymbolAndMatchesFlagName(Symbol argSym) {
-    return argSym instanceof Symbol.VarSymbol
-        && ((Symbol.VarSymbol) argSym).getConstantValue() != null
-        && ((Symbol.VarSymbol) argSym).getConstantValue().equals(xpFlagName);
+    if (argSym instanceof Symbol.VarSymbol) {
+      Object constantValue = ((Symbol.VarSymbol) argSym).getConstantValue();
+      return constantValue != null && constantValue.equals(xpFlagName);
+    }
+    return false;
   }
 
   /**
    * Checks for {@link LiteralTree} and the flag name
    *
-   * @param arg
+   * @param arg an expression tree
    * @return True if matches. Otherwise false
    */
   private boolean isLiteralTreeAndMatchesFlagName(ExpressionTree arg) {
@@ -606,6 +640,8 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  // Likely worth fixing, not sure of a better way to match import FQNs:
+  @SuppressWarnings("TreeToString")
   @Override
   public Description matchImport(ImportTree importTree, VisitorState visitorState) {
     if (importTree.isStatic()) {
@@ -662,6 +698,12 @@ public class XPFlagCleaner extends BugChecker
     return updateCode(x, tree, tree, state);
   }
 
+  // Pretty sure the Tree.toString() API is our best option here, but be aware of the issues listed
+  // in: https://errorprone.info/bugpattern/TreeToString
+  // e.g. comments and whitespace might be removed, which could be retrieved through
+  // `VisitorState#getSourceForNode`
+  // (but that makes the actual AST rewriting harder).
+  @SuppressWarnings("TreeToString")
   @Override
   public Description matchBinary(BinaryTree tree, VisitorState state) {
     if (overLaps(tree, state)) {
@@ -697,6 +739,8 @@ public class XPFlagCleaner extends BugChecker
     }
 
     if (deletedSubTree != null) {
+      Preconditions.checkNotNull(
+          remainingSubTree, "deletedSubTree != null => remainingSubTree !=null here.");
       Description.Builder builder = buildDescription(tree);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
       fixBuilder.replace(tree, remainingSubTree.toString());
@@ -804,7 +848,10 @@ public class XPFlagCleaner extends BugChecker
         for (ExpressionTree et : at.getArguments()) {
           if (et.getKind() == Kind.ASSIGNMENT) {
             AssignmentTree assn = (AssignmentTree) et;
-            if (assn.getExpression().toString().endsWith(xpFlagName)) {
+            if (ASTHelpers.getSymbol(assn.getExpression())
+                .getQualifiedName()
+                .toString()
+                .endsWith(xpFlagName)) {
               Description.Builder builder = buildDescription(tree);
               SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
               if (isTreated) {
@@ -833,9 +880,9 @@ public class XPFlagCleaner extends BugChecker
     }
     ExpressionTree et = tree.getCondition();
     Value x = evalExpr(et, state);
-    boolean update = false;
     String replacementString = EMPTY;
 
+    boolean update = false;
     ExpressionTree removedBranch = null;
     if (x.equals(Value.TRUE)) {
       update = true;
@@ -848,6 +895,7 @@ public class XPFlagCleaner extends BugChecker
     }
 
     if (update) {
+      Preconditions.checkNotNull(removedBranch, "update => removedBranch != null here.");
       Description.Builder builder = buildDescription(tree);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
       fixBuilder.replace(tree, stripBraces(replacementString));
@@ -918,7 +966,8 @@ public class XPFlagCleaner extends BugChecker
         // might.
         if (elseStatement != null && elseStatement.getKind().equals(Kind.IF)) {
           // Copy the initial if condition (don't mark as needing update yet)
-          replacementPrefix += "if " + visitorState.getSourceForNode(subIfTree.getCondition());
+          replacementPrefix +=
+              "if " + visitorState.getSourceForNode(subIfTree.getCondition()) + " ";
           replacementPrefix +=
               visitorState.getSourceForNode(subIfTree.getThenStatement()) + " else ";
           // Then recurse on the else case
