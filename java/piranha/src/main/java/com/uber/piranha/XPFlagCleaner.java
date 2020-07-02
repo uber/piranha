@@ -181,7 +181,7 @@ public class XPFlagCleaner extends BugChecker
   void init(ErrorProneFlags flags) throws PiranhaConfigurationException {
     Optional<String> s = flags.get("Piranha:FlagName");
     if (s.isPresent()) {
-      xpFlagName = s.get();
+      if (!EMPTY.equals(s.get().trim())) xpFlagName = s.get();
       isTreated = flags.getBoolean("Piranha:IsTreated").orElse(true);
       treatmentGroup = flags.get("Piranha:TreatmentGroup").orElse("").toLowerCase();
     } else {
@@ -612,8 +612,7 @@ public class XPFlagCleaner extends BugChecker
       Tree importIdentifier = importTree.getQualifiedIdentifier();
       if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
         MemberSelectTree memberSelectTree = (MemberSelectTree) importIdentifier;
-        if ((!xpFlagName.equals(EMPTY)
-                && memberSelectTree.getIdentifier().toString().endsWith(xpFlagName))
+        if (memberSelectTree.getIdentifier().toString().endsWith(xpFlagName)
             || (treatmentGroupsEnum != null
                 && memberSelectTree.getExpression().toString().startsWith(treatmentGroupsEnum))) {
           return buildDescription(importTree)
@@ -805,7 +804,7 @@ public class XPFlagCleaner extends BugChecker
         for (ExpressionTree et : at.getArguments()) {
           if (et.getKind() == Kind.ASSIGNMENT) {
             AssignmentTree assn = (AssignmentTree) et;
-            if (!xpFlagName.equals(EMPTY) && assn.getExpression().toString().endsWith(xpFlagName)) {
+            if (assn.getExpression().toString().endsWith(xpFlagName)) {
               Description.Builder builder = buildDescription(tree);
               SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
               if (isTreated) {
