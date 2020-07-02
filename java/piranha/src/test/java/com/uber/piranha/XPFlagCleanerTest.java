@@ -2132,7 +2132,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -2166,9 +2166,8 @@ public class XPFlagCleanerTest {
             "package com.uber.piranha;",
             "class Constants {",
             "  public static int ONE = 1;",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -2182,7 +2181,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -2236,9 +2235,8 @@ public class XPFlagCleanerTest {
             "@Target({ElementType.METHOD})",
             "@interface ToggleTesting {",
             "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 
   @Test
@@ -2252,7 +2250,7 @@ public class XPFlagCleanerTest {
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
     bcr = addHelperClasses(bcr);
     bcr.addInputLines(
@@ -2298,8 +2296,7 @@ public class XPFlagCleanerTest {
             "@Target({ElementType.METHOD})",
             "@interface ToggleTesting {",
             "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
-            "}");
-
-    bcr.doTest();
+            "}")
+        .doTest();
   }
 }
