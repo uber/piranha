@@ -18,6 +18,7 @@ import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
 import java.io.IOException;
 import java.util.Arrays;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -2298,5 +2299,19 @@ public class XPFlagCleanerTest {
             "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
             "}")
         .doTest();
+  }
+
+  @Test
+  public void testPiranhaConfigErrorWhenFlagNotProvided() {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    try {
+      new XPFlagCleaner(b.build()).init(b.build());
+      Assert.fail("Piranha:FlagName missing");
+    } catch (PiranhaConfigurationException e) {
+    }
   }
 }
