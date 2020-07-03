@@ -18,7 +18,6 @@ import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
 import java.io.IOException;
 import java.util.Arrays;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -2172,7 +2171,7 @@ public class XPFlagCleanerTest {
   }
 
   @Test
-  public void testEmptyFlagRemovesAnnotatedMethodsTreatment() throws IOException {
+  public void testEmptyFlagRemovesAnnotatedMethods() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "");
@@ -2241,77 +2240,16 @@ public class XPFlagCleanerTest {
   }
 
   @Test
-  public void testEmptyFlagRemovesAnnotatedMethodsControl() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "");
-    b.putFlag("Piranha:IsTreated", "false");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "EmptyFlagRemovesAnnotatedMethods.java",
-            "package com.uber.piranha;",
-            "class EmptyFlagRemovesAnnotatedMethods {",
-            "  enum TestExperimentName {",
-            "    SAMPLE_STALE_FLAG",
-            "  }",
-            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
-            "  public void x () {}",
-            "}")
-        .addOutputLines(
-            "EmptyFlagRemovesAnnotatedMethods.java",
-            "package com.uber.piranha;",
-            "class EmptyFlagRemovesAnnotatedMethods {",
-            "  enum TestExperimentName {",
-            "    SAMPLE_STALE_FLAG",
-            "  }",
-            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
-            "  public void x () {}",
-            "}")
-        .addInputLines(
-            "ToggleTesting.java",
-            "package com.uber.piranha;",
-            "import java.lang.annotation.ElementType;",
-            "import java.lang.annotation.Retention;",
-            "import java.lang.annotation.RetentionPolicy;",
-            "import java.lang.annotation.Target;",
-            "@Retention(RetentionPolicy.RUNTIME)",
-            "@Target({ElementType.METHOD})",
-            "@interface ToggleTesting {",
-            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
-            "}")
-        .addOutputLines(
-            "ToggleTesting.java",
-            "package com.uber.piranha;",
-            "import java.lang.annotation.ElementType;",
-            "import java.lang.annotation.Retention;",
-            "import java.lang.annotation.RetentionPolicy;",
-            "import java.lang.annotation.Target;",
-            "@Retention(RetentionPolicy.RUNTIME)",
-            "@Target({ElementType.METHOD})",
-            "@interface ToggleTesting {",
-            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void testPiranhaConfigErrorWhenFlagNotProvided() {
+  public void testPiranhaConfigErrorWhenFlagNotProvided() throws Exception {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "config/properties.json");
 
-    try {
-      new XPFlagCleaner(b.build()).init(b.build());
-      Assert.fail("Piranha:FlagName missing");
-    } catch (PiranhaConfigurationException e) {
-    }
+    expectedEx.expect(PiranhaConfigurationException.class);
+    expectedEx.expectMessage("Piranha:FlagName is missing");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
   }
 }
