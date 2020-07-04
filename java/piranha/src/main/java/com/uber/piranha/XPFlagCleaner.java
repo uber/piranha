@@ -203,7 +203,7 @@ public class XPFlagCleaner extends BugChecker
   void init(ErrorProneFlags flags) throws PiranhaConfigurationException {
     Optional<String> s = flags.get("Piranha:FlagName");
     if (s.isPresent()) {
-      xpFlagName = s.get();
+      if (!EMPTY.equals(s.get().trim())) xpFlagName = s.get();
       isTreated = flags.getBoolean("Piranha:IsTreated").orElse(true);
       treatmentGroup = flags.get("Piranha:TreatmentGroup").orElse("").toLowerCase();
     } else {

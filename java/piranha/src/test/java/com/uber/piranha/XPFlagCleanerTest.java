@@ -2120,4 +2120,152 @@ public class XPFlagCleanerTest {
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());
   }
+
+  /**
+   * [https://github.com/uber/piranha/issues/44]
+   *
+   * <p>This test ensures static imports are not removed by piranha if an empty flag is passed in
+   * config
+   */
+  @Test
+  public void testEmptyFlagDoesNotRemoveStaticImports() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "EmptyFlagRemovesStaticImports.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.Constants.ONE;",
+            "class EmptyFlagRemovesStaticImports {",
+            "  public String evaluate(int x) {",
+            "    if (x == ONE) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "}")
+        .addOutputLines(
+            "EmptyFlagRemovesStaticImports.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.Constants.ONE;",
+            "class EmptyFlagRemovesStaticImports {",
+            "  public String evaluate(int x) {",
+            "    if (x == ONE) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "}")
+        .addInputLines(
+            "Constants.java",
+            "package com.uber.piranha;",
+            "class Constants {",
+            "  public static int ONE = 1;",
+            "}")
+        .addOutputLines(
+            "Constants.java",
+            "package com.uber.piranha;",
+            "class Constants {",
+            "  public static int ONE = 1;",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * [https://github.com/uber/piranha/issues/44]
+   *
+   * <p>This test ensures annotated methods are not removed by piranha if an empty flag is passed in
+   * config
+   */
+  @Test
+  public void testEmptyFlagDoesNotRemoveAnnotatedMethods() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "EmptyFlagRemovesAnnotatedMethods.java",
+            "package com.uber.piranha;",
+            "class EmptyFlagRemovesAnnotatedMethods {",
+            "  enum TestExperimentName {",
+            "    SAMPLE_STALE_FLAG",
+            "  }",
+            "  public String evaluate(int x) {",
+            "    if (x == 1) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "EmptyFlagRemovesAnnotatedMethods.java",
+            "package com.uber.piranha;",
+            "class EmptyFlagRemovesAnnotatedMethods {",
+            "  enum TestExperimentName {",
+            "    SAMPLE_STALE_FLAG",
+            "  }",
+            "  public String evaluate(int x) {",
+            "    if (x == 1) { return \"yes\"; }",
+            "    return \"no\";",
+            "  }",
+            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addInputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
+            "}")
+        .addOutputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * This test ensures 'PiranhaConfigurationException' is thrown if the 'Piranha:FlagName' is
+   * missing/not-provided in the config
+   */
+  @Test
+  public void testPiranhaConfigErrorWhenFlagNotProvided() throws Exception {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    expectedEx.expect(PiranhaConfigurationException.class);
+    expectedEx.expectMessage("Piranha:FlagName is missing");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
 }
