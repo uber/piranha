@@ -2121,8 +2121,14 @@ public class XPFlagCleanerTest {
     flagCleaner.init(b.build());
   }
 
+  /**
+   * [https://github.com/uber/piranha/issues/44]
+   *
+   * <p>This test ensures static imports are not removed by piranha if an empty flag is passed in
+   * config
+   */
   @Test
-  public void testEmptyFlagRemovesStaticImports() throws IOException {
+  public void testEmptyFlagDoesNotRemoveStaticImports() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "");
@@ -2170,8 +2176,14 @@ public class XPFlagCleanerTest {
         .doTest();
   }
 
+  /**
+   * [https://github.com/uber/piranha/issues/44]
+   *
+   * <p>This test ensures annotated methods are not removed by piranha if an empty flag is passed in
+   * config
+   */
   @Test
-  public void testEmptyFlagRemovesAnnotatedMethods() throws IOException {
+  public void testEmptyFlagDoesNotRemoveAnnotatedMethods() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "");
@@ -2239,6 +2251,10 @@ public class XPFlagCleanerTest {
         .doTest();
   }
 
+  /**
+   * This test ensures 'PiranhaConfigurationException' is thrown if the 'Piranha:FlagName' is
+   * missing/not-provided in the config
+   */
   @Test
   public void testPiranhaConfigErrorWhenFlagNotProvided() throws Exception {
 
