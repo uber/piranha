@@ -1,11 +1,11 @@
 package com.uber.piranha;
 
 import com.google.common.collect.ImmutableMap;
-import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
-/** A class repesenting a method configuration record from properties.json */
+/** A class representing a method configuration record from properties.json */
 final class PiranhaMethodRecord {
 
   // Allowed fields for a method property in the config file.
@@ -81,6 +81,7 @@ final class PiranhaMethodRecord {
    * @param key - key to check the corresponding value
    * @return String if value is a non-empty string, null otherwise
    */
+  @Nullable
   private static String getValueStringFromMap(Map<String, Object> map, String key) {
     Object value = map.get(key);
     if (value instanceof String && !value.equals("")) {
@@ -96,6 +97,7 @@ final class PiranhaMethodRecord {
    * @param map - map corresponding to a method property
    * @return argumentIndex if argument index is a non-negative integer, null otherwise
    */
+  @Nullable
   private static Integer getArgumentIndexFromMap(Map<String, Object> map) {
     Object value = map.get(ARGUMENT_INDEX_KEY);
     if (value instanceof Long) {
@@ -114,7 +116,8 @@ final class PiranhaMethodRecord {
    * @param methodPropertyEntry The decoded json entry (as a Map of property names to values)
    * @param isArgumentIndexOptional Whether argumentIdx should be treated as optional
    * @return A PiranhaMethodRecord corresponding to the given map/json record.
-   * @throws ParseException
+   * @throws PiranhaConfigurationException if there was any issue reading or parsing the
+   *     configuration file.
    */
   static PiranhaMethodRecord parseFromJSONPropertyEntryMap(
       Map<String, Object> methodPropertyEntry, boolean isArgumentIndexOptional)
