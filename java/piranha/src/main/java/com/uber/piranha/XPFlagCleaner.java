@@ -90,7 +90,8 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.ReturnTreeMatcher,
         BugChecker.UnaryTreeMatcher,
         BugChecker.VariableTreeMatcher,
-        BugChecker.MethodTreeMatcher {
+        BugChecker.MethodTreeMatcher,
+        BugChecker.ParenthesizedTreeMatcher {
 
   /**
    * Do not try to auto-delete imports with these common/generic names, as multiple treament groups
@@ -699,22 +700,9 @@ public class XPFlagCleaner extends BugChecker
     if (deletedSubTree != null) {
       Description.Builder builder = buildDescription(tree);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
-      boolean loneCondition =
-          (checkLoneCondition(tree.getLeftOperand(), state, remainingSubTree.toString())
-              || checkLoneCondition(tree.getRightOperand(), state, remainingSubTree.toString()));
-      if (loneCondition && isTreated) {
-        // strip parenthesis
-        int end = state.getEndPosition(tree);
-        while (state.getSourceCode().charAt(end) != ')') end++;
-        int start = end - state.getSourceForNode(tree).length();
-        while (state.getSourceCode().charAt(start) != '(') start--;
-        fixBuilder.replace(start, end + 1, remainingSubTree.toString());
-      } else {
-        fixBuilder.replace(tree, remainingSubTree.toString());
-      }
+      fixBuilder.replace(tree, remainingSubTree.toString());
       decrementAllSymbolUsages(deletedSubTree, state, fixBuilder);
       builder.addFix(fixBuilder.build());
-
       endPos = state.getEndPosition(tree);
       return builder.build();
     }
@@ -722,20 +710,52 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
-  /**
-   * This method checks if the input (binary) expression tree is equivalent to the final result.
-   * Note that to avoid incorrect removal of parenthesis, we check if the expression is again not a
-   * binary expression.
-   *
-   * @param tree expression tree
-   * @param state visitor state
-   * @param remaining expression after removal
-   * @return true if parenthesis are redundant
-   */
-  private boolean checkLoneCondition(ExpressionTree tree, VisitorState state, String remaining) {
-    return (state.getSourceForNode(tree).equals(remaining)
-        && (!tree.getKind().equals(Kind.CONDITIONAL_OR)
-            && !tree.getKind().equals(Kind.CONDITIONAL_AND)));
+  @Override
+  public Description matchParenthesized(ParenthesizedTree tree, VisitorState state) {
+    if (overLaps(tree, state)) {
+      return Description.NO_MATCH;
+    }
+
+    ExpressionTree expression = tree.getExpression();
+    if (Kind.CONDITIONAL_AND.equals(expression.getKind())
+        || Kind.CONDITIONAL_OR.equals(expression.getKind())) {
+      BinaryTree btree = (BinaryTree) expression;
+      Value l = evalExpr(btree.getLeftOperand(), state);
+      Value r = evalExpr(btree.getRightOperand(), state);
+      ExpressionTree remainingSubTree = null;
+      Tree deletionTree = null;
+
+      if (Kind.CONDITIONAL_OR.equals(expression.getKind())) {
+        if (Value.FALSE.equals(r) && Kind.IDENTIFIER.equals(btree.getLeftOperand().getKind())) {
+          remainingSubTree = btree.getLeftOperand();
+        } else if (Value.FALSE.equals(l)
+            && Kind.IDENTIFIER.equals(btree.getRightOperand().getKind())) {
+          remainingSubTree = btree.getRightOperand();
+        }
+      }
+
+      if (Kind.CONDITIONAL_AND.equals(expression.getKind())) {
+        if (Value.TRUE.equals(r) && Kind.IDENTIFIER.equals(btree.getLeftOperand().getKind())) {
+          remainingSubTree = btree.getLeftOperand();
+        } else if (Value.TRUE.equals(l)
+            && Kind.IDENTIFIER.equals(btree.getRightOperand().getKind())) {
+          remainingSubTree = btree.getRightOperand();
+        }
+      }
+
+      if (null != remainingSubTree) {
+        Description.Builder builder = buildDescription(expression);
+        SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+        deletionTree =
+            Kind.IF.equals(state.getPath().getParentPath().getLeaf().getKind()) ? expression : tree;
+        fixBuilder.replace(deletionTree, remainingSubTree.toString());
+        builder.addFix(fixBuilder.build());
+        endPos = state.getEndPosition(tree);
+        return builder.build();
+      }
+    }
+
+    return Description.NO_MATCH;
   }
 
   @Override
