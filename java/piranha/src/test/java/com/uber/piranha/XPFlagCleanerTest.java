@@ -2121,101 +2121,6 @@ public class XPFlagCleanerTest {
     flagCleaner.init(b.build());
   }
 
-  /** This test checks that redundant parenthesis are removed from code */
-  @Test
-  public void testStripRedundantParenthesisWithNoSpaceControl() throws IOException {
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            "}")
-        .addInputLines(
-            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
-            " private XPTest experimentation;",
-            " public void foo (boolean x, boolean y) {",
-            "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
-            " private XPTest experimentation;",
-            " public void foo (boolean x, boolean y) {",
-            "   if (x || y) { System.out.println(\"if block\"); }",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  /**
-   * This test checks that redundant parenthesis are removed from code even if there are additional
-   * space characters around
-   */
-  @Test
-  public void testStripRedundantParenthesisWithSpaceControl() throws IOException {
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            "}")
-        .addInputLines(
-            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
-            " private XPTest experimentation;",
-            " public void foo (boolean x, boolean y) {",
-            "   if (x || (   y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)   )) { System.out.println(\"if block\"); }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
-            " private XPTest experimentation;",
-            " public void foo (boolean x, boolean y) {",
-            "   if (x || y) { System.out.println(\"if block\"); }",
-            " }",
-            "}")
-        .doTest();
-  }
-
   /**
    * [https://github.com/uber/piranha/issues/44]
    *
@@ -2345,6 +2250,24 @@ public class XPFlagCleanerTest {
   }
 
   /**
+   * This test ensures 'PiranhaConfigurationException' is thrown if the 'Piranha:FlagName' is
+   * missing/not-provided in the config
+   */
+  @Test
+  public void testPiranhaConfigErrorWhenFlagNotProvided() throws Exception {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    expectedEx.expect(PiranhaConfigurationException.class);
+    expectedEx.expectMessage("Piranha:FlagName is missing");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
+
+  /**
    * This test checks that redundant parenthesis are removed from code when code from treatment
    * branch is not selected
    */
@@ -2393,21 +2316,98 @@ public class XPFlagCleanerTest {
         .doTest();
   }
 
-  /**
-   * This test ensures 'PiranhaConfigurationException' is thrown if the 'Piranha:FlagName' is
-   * missing/not-provided in the config
-   */
+  /** This test checks that redundant parenthesis are removed from code */
   @Test
-  public void testPiranhaConfigErrorWhenFlagNotProvided() throws Exception {
-
+  public void testStripRedundantParenthesisWithNoSpaceControl() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
     b.putFlag("Piranha:Config", "config/properties.json");
 
-    expectedEx.expect(PiranhaConfigurationException.class);
-    expectedEx.expectMessage("Piranha:FlagName is missing");
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
-    XPFlagCleaner flagCleaner = new XPFlagCleaner();
-    flagCleaner.init(b.build());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * This test checks that redundant parenthesis are removed from code even if there are additional
+   * space characters around
+   */
+  @Test
+  public void testStripRedundantParenthesisWithSpaceControl() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (   y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)   )) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            "}")
+        .doTest();
   }
 }
