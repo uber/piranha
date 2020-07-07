@@ -2336,7 +2336,7 @@ public class XPFlagCleanerTest {
 
   /** This test checks that redundant parenthesis are removed from code */
   @Test
-  public void testStripRedundantParenthesisWithNoSpaceControl() throws IOException {
+  public void testStripRedundantParenthesisTreatment() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
     b.putFlag("Piranha:IsTreated", "true");
@@ -2393,55 +2393,6 @@ public class XPFlagCleanerTest {
             " }",
             " public void bax (boolean x, boolean y, boolean z) {",
             "   if (x && (y || z)) { System.out.println(\"if block\"); }",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  /**
-   * This test checks that redundant parenthesis are removed from code even if there are additional
-   * space characters around
-   */
-  @Test
-  public void testStripRedundantParenthesisWithSpaceControl() throws IOException {
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            "}")
-        .addInputLines(
-            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
-            " private XPTest experimentation;",
-            " public void foo (boolean x, boolean y) {",
-            "   if (x || (   y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)   )) { System.out.println(\"if block\"); }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
-            " private XPTest experimentation;",
-            " public void foo (boolean x, boolean y) {",
-            "   if (x || y) { System.out.println(\"if block\"); }",
             " }",
             "}")
         .doTest();
