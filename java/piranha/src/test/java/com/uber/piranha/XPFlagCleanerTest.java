@@ -2303,6 +2303,15 @@ public class XPFlagCleanerTest {
             " public void foo (boolean x, boolean y) {",
             "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
             " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   if (x && (y && !experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
             "}")
         .addOutputLines(
             "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
@@ -2311,6 +2320,15 @@ public class XPFlagCleanerTest {
             " private XPTest experimentation;",
             " public void foo (boolean x, boolean y) {",
             "   if (x) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "    ",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   if (x && y) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && y) { System.out.println(\"if block\"); }",
             " }",
             "}")
         .doTest();
@@ -2349,6 +2367,15 @@ public class XPFlagCleanerTest {
             " public void foo (boolean x, boolean y) {",
             "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
             " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   if (x && (y && !experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
             "}")
         .addOutputLines(
             "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
@@ -2357,6 +2384,15 @@ public class XPFlagCleanerTest {
             " private XPTest experimentation;",
             " public void foo (boolean x, boolean y) {",
             "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && z)) { System.out.println(\"if block\"); }",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   ",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && (y || z)) { System.out.println(\"if block\"); }",
             " }",
             "}")
         .doTest();
