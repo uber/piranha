@@ -130,7 +130,6 @@ public class XPFlagCleaner extends BugChecker
    */
   private boolean initialized = false;
 
-  private boolean disabled = false;
   @Nullable private ErrorProneFlags flags = null;
 
   private String xpFlagName = "_xpflag_dummy";
@@ -330,16 +329,12 @@ public class XPFlagCleaner extends BugChecker
   @Override
   public Description matchCompilationUnit(
       CompilationUnitTree compilationUnitTree, VisitorState visitorState) {
-    if (!initialized && !disabled) {
+    if (!initialized) {
       Preconditions.checkNotNull(
           flags,
           "The configuration-aware constructor should have been called at this point, and flags set to "
               + "a non-null value.");
-      try {
-        init(flags);
-      } catch (PiranhaConfigurationException pe) {
-        disabled = true;
-      }
+      init(flags);
     }
     if (countsCollected) {
       // Clear out this info
@@ -367,7 +362,7 @@ public class XPFlagCleaner extends BugChecker
       }
       MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
       String methodName = mst.getIdentifier().toString();
-      if (!disabled && configMethodProperties.containsKey(methodName)) {
+      if (configMethodProperties.containsKey(methodName)) {
         return getXPAPI(mit, configMethodProperties.get(methodName));
       }
     }
