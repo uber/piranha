@@ -44,5 +44,5 @@ guard let firstCommandLauncher = filteredCommandLaunchers.first else {
 do {
     try firstCommandLauncher.launch(CommandLine.arguments)
 } catch {
-    showError("Failed to launch command.")
+    showError("Failed to launch command: \(error)")
 }
