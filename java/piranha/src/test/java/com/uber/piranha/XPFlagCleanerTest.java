@@ -2213,10 +2213,8 @@ public class XPFlagCleanerTest {
   @Test
   public void testPiranhaCrashOnNoConfig() {
     // Error Prone turns Runtime Exceptions inside EP into blocks of text (including the exception
-    // trace)
-    // inside a new AssertionError exception. This is actually looking for
-    // PiranhaConfigurationException
-    // inside XPFlagCleaner.
+    // trace) inside a new AssertionError exception. This is actually looking for
+    // PiranhaConfigurationException inside XPFlagCleaner.
     expectedEx.expect(AssertionError.class);
     expectedEx.expectMessage(
         "An unhandled exception was thrown by the Error Prone static analysis plugin");
@@ -2244,10 +2242,8 @@ public class XPFlagCleanerTest {
   @Test
   public void testPiranhaCrashOnOldConfig() {
     // Error Prone turns Runtime Exceptions inside EP into blocks of text (including the exception
-    // trace)
-    // inside a new AssertionError exception. This is actually looking for
-    // PiranhaConfigurationException
-    // inside XPFlagCleaner.
+    // trace) inside a new AssertionError exception. This is actually looking for
+    // PiranhaConfigurationException inside XPFlagCleaner.
     expectedEx.expect(AssertionError.class);
     expectedEx.expectMessage(
         "An unhandled exception was thrown by the Error Prone static analysis plugin");
