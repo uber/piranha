@@ -108,7 +108,8 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.ReturnTreeMatcher,
         BugChecker.UnaryTreeMatcher,
         BugChecker.VariableTreeMatcher,
-        BugChecker.MethodTreeMatcher {
+        BugChecker.MethodTreeMatcher,
+        BugChecker.ParenthesizedTreeMatcher {
 
   private static final String PIRANHA_DEFAULT_URL = "https://github.com/uber/piranha";
 
@@ -746,9 +747,56 @@ public class XPFlagCleaner extends BugChecker
       fixBuilder.replace(tree, remainingSubTree.toString());
       decrementAllSymbolUsages(deletedSubTree, state, fixBuilder);
       builder.addFix(fixBuilder.build());
-
       endPos = state.getEndPosition(tree);
       return builder.build();
+    }
+
+    return Description.NO_MATCH;
+  }
+
+  @Override
+  public Description matchParenthesized(ParenthesizedTree tree, VisitorState state) {
+    if (overLaps(tree, state)) {
+      return Description.NO_MATCH;
+    }
+
+    ExpressionTree expression = tree.getExpression();
+    if (Kind.CONDITIONAL_AND.equals(expression.getKind())
+        || Kind.CONDITIONAL_OR.equals(expression.getKind())) {
+      BinaryTree btree = (BinaryTree) expression;
+      Value l = evalExpr(btree.getLeftOperand(), state);
+      Value r = evalExpr(btree.getRightOperand(), state);
+      ExpressionTree remainingSubTree = null;
+      Tree deletionTree = null;
+
+      if (Kind.CONDITIONAL_OR.equals(expression.getKind())) {
+        if (Value.FALSE.equals(r) && Kind.IDENTIFIER.equals(btree.getLeftOperand().getKind())) {
+          remainingSubTree = btree.getLeftOperand();
+        } else if (Value.FALSE.equals(l)
+            && Kind.IDENTIFIER.equals(btree.getRightOperand().getKind())) {
+          remainingSubTree = btree.getRightOperand();
+        }
+      }
+
+      if (Kind.CONDITIONAL_AND.equals(expression.getKind())) {
+        if (Value.TRUE.equals(r) && Kind.IDENTIFIER.equals(btree.getLeftOperand().getKind())) {
+          remainingSubTree = btree.getLeftOperand();
+        } else if (Value.TRUE.equals(l)
+            && Kind.IDENTIFIER.equals(btree.getRightOperand().getKind())) {
+          remainingSubTree = btree.getRightOperand();
+        }
+      }
+
+      if (null != remainingSubTree) {
+        Description.Builder builder = buildDescription(expression);
+        SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+        deletionTree =
+            Kind.IF.equals(state.getPath().getParentPath().getLeaf().getKind()) ? expression : tree;
+        fixBuilder.replace(deletionTree, remainingSubTree.toString());
+        builder.addFix(fixBuilder.build());
+        endPos = state.getEndPosition(tree);
+        return builder.build();
+      }
     }
 
     return Description.NO_MATCH;
