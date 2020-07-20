@@ -2218,8 +2218,8 @@ public class XPFlagCleanerTest {
     expectedEx.expect(AssertionError.class);
     expectedEx.expectMessage(
         "An unhandled exception was thrown by the Error Prone static analysis plugin");
-    expectedEx.expectMessage(
-        "PiranhaConfigurationException: Error reading config file. java.io.IOException: Provided config file not found");
+    expectedEx.expectMessage("PiranhaConfigurationException: Error reading config file");
+    expectedEx.expectMessage("java.io.IOException: Provided config file not found");
 
     CompilationTestHelper compilationHelper =
         CompilationTestHelper.newInstance(XPFlagCleaner.class, getClass());
