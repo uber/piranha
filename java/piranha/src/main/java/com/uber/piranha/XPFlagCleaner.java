@@ -253,7 +253,8 @@ public class XPFlagCleaner extends BugChecker
         }
         configMethodProperties = builder.build();
       } catch (IOException fnfe) {
-        throw new PiranhaConfigurationException("Error reading config file. " + fnfe);
+        throw new PiranhaConfigurationException(
+            "Error reading config file " + Paths.get(configFile).toAbsolutePath() + " : " + fnfe);
       } catch (ParseException pe) {
         String extraWarning = "";
         if (configFile.endsWith(".properties")) {
