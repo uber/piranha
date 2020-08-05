@@ -117,7 +117,7 @@ const keep_comments = (args.keep_comments != null);
 
 const ast = recast.parse(fs.readFileSync(filename, 'utf-8')).program;
 
-const engine = new refactor.RefactorEngine(ast, properties, behaviour, flagname, max_cleanup_steps, true, keep_comments);
+const engine = new refactor.RefactorEngine(ast, properties, behaviour, flagname, max_cleanup_steps, true, keep_comments, filename);
 engine.refactorPipeline();
 
 var out_file = args.output;

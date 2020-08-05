@@ -1,5 +1,6 @@
 var estraverse = require('estraverse'); // Convenient API for AST traversal                       
 const winston = require('winston'); // logger
+const colors = require('colors');
 
 class RefactorEngine {
     constructor(ast, 
@@ -8,7 +9,8 @@ class RefactorEngine {
                 flagname, 
                 max_cleanup_steps, 
                 print_to_console = false, 
-                keep_comments = false) {
+                keep_comments = false,
+                filename = null) {
         this.ast = ast;
         this.properties = properties;
         this.flagname = flagname;
@@ -17,6 +19,7 @@ class RefactorEngine {
         this.keep_comments = keep_comments;
         this.behaviour = behaviour;
         this.changed = false;
+        this.filename = filename;
     }
         
     trueLiteral() { 
@@ -200,8 +203,6 @@ class RefactorEngine {
                 }
             }
         }
-
-        // How are comments preserved when parent.body does not exist?
     }
 
     moveLeadingCommentsToSibling(node, parent) {
@@ -621,7 +622,9 @@ class RefactorEngine {
         this.finalizeLiterals();
 
         if (this.print_to_console) {
-            if (!this.changed) {
+            if (!this.changed && iterations == 1) {
+                console.log(colors.red(`Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}`));
+            } else if (!this.changed) {
                 console.log(`Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.`);
             } else {
                 console.log(`Terminated before fixed point in ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code.`);
