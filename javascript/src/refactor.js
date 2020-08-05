@@ -622,10 +622,12 @@ class RefactorEngine {
         this.finalizeLiterals();
 
         if (this.print_to_console) {
-            if (!this.changed && iterations == 1) {
-                console.log(colors.red(`Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}`));
-            } else if (!this.changed) {
-                console.log(`Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.`);
+            if (!this.changed) {
+                if (iterations == 1 && this.max_cleanup_steps != 1) {
+                    console.log(colors.yellow(`Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}`));
+                } else {
+                    console.log(`Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.`);
+                }
             } else {
                 console.log(`Terminated before fixed point in ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code.`);
             }                       

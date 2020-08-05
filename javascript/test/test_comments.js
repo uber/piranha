@@ -132,7 +132,7 @@ describe('comments', () => {
     });
 
     describe('#moveCommentsToConsequent', () => {
-        it("should attach leading comments to previous sibling", () => {
+        it("should attach comments of IfStatement to its consequent", () => {
             let code = `//a\nif(true){var a = true;}else{var b = true;}//b`;
 
             let ast = recast.parse(code).program;
@@ -144,7 +144,7 @@ describe('comments', () => {
     });
 
     describe('#moveCommentsToAlternate', () => {
-        it("should attach leading comments to previous sibling", () => {
+        it("should attach comments of IfStatement to its alternate", () => {
             let code = `//a\nif(false){var a = true;}else{var b = true;}//b`;
 
             let ast = recast.parse(code).program;
@@ -156,7 +156,7 @@ describe('comments', () => {
     });
 
     describe('#moveCommentsToExtremeChildren', () => {
-        it("should attach leading comments to previous sibling", () => {
+        it("should attach comments of BlockStatement to extreme children", () => {
             let code = `//a\n{\n\tvar a = true;\n}//b`;
 
             let ast = recast.parse(code).program;
@@ -165,10 +165,8 @@ describe('comments', () => {
             let comm = ast.body[0].body[0].comments;
             assert(comm.length == 2 && comm[0].value == 'a' && comm[1].value == 'b');
         });
-    });
 
-    describe('#moveCommentsToExtremeChildren', () => {
-        it("should attach leading comments to previous sibling", () => {
+        it("should attach comments to parents if body is empty", () => {
             let code = `//a\n{\n\t//c\n}//b`;
 
             let ast = recast.parse(code).program;
@@ -179,7 +177,7 @@ describe('comments', () => {
         });
     });
 
-    describe('#moveCommentsToExtremeChildren', () => {
+    describe('#preserveCommentsBasedOnOption', () => {
         it("should attach comments based on option", () => {
             let code = `{\n\t//a\n\tvar a = true; //b\n\t//c\n\tvar b = true; //d\n\t//e\n\tvar c = true; //f\n}`;
 
