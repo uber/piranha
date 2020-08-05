@@ -107,31 +107,32 @@ class RefactorEngine {
         }
     }
 
-    // ! anag004: add tests for these functions handling comments
-
-    // Separate leading and trailing comments into two lists
+    // Separate leading, trailing and remaining comments into three lists
     collateCommentsByPosition(node) {
         var collatedComments = [
             [], // leading 
-            []  // trailing
+            [], // trailing
+            []  // remaining
         ]
 
         if (node.comments == null) {
             return collatedComments;
         }
             
-        return node.comments.reduce(([leadingList, trailingList], comment) => {
+        return node.comments.reduce(([leadingList, trailingList, remainingList], comment) => {
             if (comment.leading) {
                 leadingList.push(comment);
-            } else {
+            } else if (comment.trailing) {
                 trailingList.push(comment);
+            } else {
+                remainingList.push(comment);
             }
 
-            return [leadingList, trailingList];
+            return [leadingList, trailingList, remainingList];
         }, collatedComments);
     }
 
-    attachCommentsAtEnd(node, newComments) {
+    attachCommentsAtBeginning(node, newComments) {
         if (!Array.isArray(newComments) || newComments.length === 0) {
             return;
         }
@@ -144,7 +145,7 @@ class RefactorEngine {
         node.comments = [...newComments];
     }
 
-    attachCommentsAtBeginning(node, newComments) {
+    attachCommentsAtEnd(node, newComments) {
         if (!Array.isArray(newComments) || newComments.length === 0) {
             return;
         }
@@ -154,18 +155,18 @@ class RefactorEngine {
         }
             
         node.comments.push(...newComments);
-        node.comments = [...node.comments];
     }
 
     flipCommentPosition(comment) {
-        comment.leading = !comment.leading;
-        comment.trailing = !comment.trailing;
-
+        if (comment.leading || comment.trailing) {
+            comment.leading = !comment.leading;
+            comment.trailing = !comment.trailing;
+        }
         return comment;
     }
 
     moveAllCommentsToSiblings(node, parent) {
-        if (parent.body !== undefined && Array.isArray(parent.body)) {
+        if ('body' in parent && Array.isArray(parent.body)) {
             var nodeIndex = parent.body.indexOf(node);
             var previousSiblingIndex = nodeIndex !== 0 ? nodeIndex - 1 : null
             var nextSiblingIndex = nodeIndex !== parent.body.length - 1 ? nodeIndex + 1 : null;
@@ -176,31 +177,31 @@ class RefactorEngine {
             if (previousSiblingIndex != null) {
                 if (nodeIndex === parent.body.length - 1) {
                     let consolidatedComments = leadingComments.map(this.flipCommentPosition);
-                    consolidatedComments.concat(trailingComments);
+                    consolidatedComments = consolidatedComments.concat(trailingComments);
 
-                    this.attachCommentsAtBeginning(parent.body[previousSiblingIndex], consolidatedComments);
+                    this.attachCommentsAtEnd(parent.body[previousSiblingIndex], consolidatedComments);
                 } else {
                     let consolidatedComments = leadingComments.map(this.flipCommentPosition);
 
-                    this.attachCommentsAtBeginning(parent.body[previousSiblingIndex], consolidatedComments);
+                    this.attachCommentsAtEnd(parent.body[previousSiblingIndex], consolidatedComments);
                 }
             }
 
             if (nextSiblingIndex != null) {
                 if (nodeIndex === 0) {
                     let consolidatedComments = leadingComments;
-                    consolidatedComments.concat(trailingComments.map(this.flipCommentPosition));
+                    consolidatedComments = consolidatedComments.concat(trailingComments.map(this.flipCommentPosition));
 
-                    this.attachCommentsAtEnd(parent.body[nextSiblingIndex], consolidatedComments);
+                    this.attachCommentsAtBeginning(parent.body[nextSiblingIndex], consolidatedComments);
                 } else {
                     let consolidatedComments = trailingComments.map(this.flipCommentPosition);
 
-                    this.attachCommentsAtEnd(parent.body[nextSiblingIndex], consolidatedComments);
+                    this.attachCommentsAtBeginning(parent.body[nextSiblingIndex], consolidatedComments);
                 }
             }
         }
 
-        // ! anag004: How are comments preserved when parent.body does not exist?
+        // How are comments preserved when parent.body does not exist?
     }
 
     moveLeadingCommentsToSibling(node, parent) {
@@ -209,14 +210,14 @@ class RefactorEngine {
             var previousSiblingIndex = nodeIndex !== 0 ? nodeIndex - 1 : null
             var nextSiblingIndex = nodeIndex !== parent.body.length - 1 ? nodeIndex + 1 : null;
 
-            let leadingComments = this.collateCommentsByPosition(node)[0];
+            let [leadingComments] = this.collateCommentsByPosition(node);
 
             if (nextSiblingIndex != null) {
-                this.attachCommentsAtEnd(parent.body[nextSiblingIndex], leadingComments);
+                this.attachCommentsAtBeginning(parent.body[nextSiblingIndex], leadingComments);
             } else if (previousSiblingIndex != null) {
                 var consolidatedComments = leadingComments.map(this.flipCommentPosition);
 
-                this.attachCommentsAtBeginning(parent.body[previousSiblingIndex], consolidatedComments);
+                this.attachCommentsAtEnd(parent.body[previousSiblingIndex], consolidatedComments);
             }   
         }
     }
@@ -225,25 +226,28 @@ class RefactorEngine {
         let leadingComments, trailingComments;
         [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
         
-        this.attachCommentsAtEnd(node.consequent, leadingComments);
-        this.attachCommentsAtBeginning(node.consequent, trailingComments);
+        this.attachCommentsAtBeginning(node.consequent, leadingComments);
+        this.attachCommentsAtEnd(node.consequent, trailingComments);
     }
 
     moveCommentsToAlternate(node) {
         let leadingComments, trailingComments;
         [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
         
-        this.attachCommentsAtEnd(node.alternate, leadingComments);
-        this.attachCommentsAtBeginning(node.alternate, trailingComments);
+        this.attachCommentsAtBeginning(node.alternate, leadingComments);
+        this.attachCommentsAtEnd(node.alternate, trailingComments);
     }
 
-    moveCommentsToExtremeChildren(node) {
+    moveCommentsToExtremeChildren(node, parent, keep_comments) {
         let leadingComments, trailingComments;
         [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
 
-        // ! anag004 What happens when a block statement is empty (eg. `{}`)
-        this.attachCommentsAtEnd(node.body[0], leadingComments);
-        this.attachCommentsAtBeginning(node.body[node.body.length - 1], trailingComments);
+        if (node.body.length !== 0) {
+            this.attachCommentsAtBeginning(node.body[0], leadingComments);
+            this.attachCommentsAtEnd(node.body[node.body.length - 1], trailingComments);
+        } else if (keep_comments) {
+            this.attachCommentsAtEnd(parent, node.comments);
+        }
     }
     
     preserveCommentsBasedOnOption(node, parent, keep_comments) {
@@ -362,9 +366,7 @@ class RefactorEngine {
         estraverse.traverse(this.ast, {
             leave: function(node, parent) {
                 if (node.type === "BlockStatement" && (parent.type === "BlockStatement" || parent.type === "Program")) {
-                    if (node.body != null) {
-                        engine.moveCommentsToExtremeChildren(node);
-                    }
+                    engine.moveCommentsToExtremeChildren(node, parent, engine.keep_comments);
                     var nodeIndex = parent.body.indexOf(node);
                     parent.body.splice(nodeIndex, 1, ...node.body);
                 }
