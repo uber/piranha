@@ -1,4 +1,4 @@
-// Contributed by Ananye Agarwal (anag004) and Sarthak Behara (s7rthak). The authors are from the Indian Institute of Technology, Delhi (IIT Delhi). 
+// Contributed by Ananye Agarwal (anag004) and Sarthak Behera (s7rthak). The authors are from the Indian Institute of Technology, Delhi (IIT Delhi). 
 
 const refactor = require('./refactor'); // functions to carry out different steps of the refactoring scheme
 const fs = require('fs'); // Read and write files
