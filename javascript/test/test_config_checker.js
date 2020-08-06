@@ -49,7 +49,7 @@ describe("config_checker", () => {
           true
         )
       ).to.throw(
-        `{"methodName":"isToggleEnabled","flagType":"treated"} in test/wrong_properties/wrong_properties2.json doesn't have all required keys`
+        `{"methodName":"isToggleEnabled","flagType":"treated"} in test/wrong_properties/wrong_properties2.json doesn't have 'argumentIndex'`
       );
     });
 
