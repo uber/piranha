@@ -1,5 +1,5 @@
 # PiranhaJS
-![Node.js CI](https://github.com/anag004/piranha/workflows/Node.js%20CI/badge.svg) ![Lint](https://github.com/anag004/piranha/workflows/Lint/badge.svg)
+![Node.js CI](https://github.com/uber/piranha/workflows/Node.js%20CI/badge.svg) ![Lint](https://github.com/uber/piranha/workflows/Lint/badge.svg)
 
 Piranha scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base. This is the ECMAScript variant of Piranha implemented as a Node.js app. 
 
