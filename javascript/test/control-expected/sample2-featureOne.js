@@ -1,11 +1,11 @@
 const b = isToggleDisabled(featureTwo);
 
-if (!false && isToggleDisabled(featureTwo)) { 
+if (!false && isToggleDisabled(featureTwo)) {
   // This is the first comment
-  console.log("New feature featureTwo is running")
+  console.log("New feature featureTwo is running");
 } else {
   // This is another comment
-  console.log("Old feature oldFeat2 is running")
+  console.log("Old feature oldFeat2 is running");
 }
 
 if (false) {
@@ -16,7 +16,7 @@ if (false) {
   console.log("Old feature oldFeat1 is running");
 }
 
-if (!(!isToggleDisabled(featureTwo))) {
+if (!!isToggleDisabled(featureTwo)) {
   // This is the fourth comment
   console.log("New Feature featureTwo is running");
 } else {

@@ -1,15 +1,16 @@
-function get(){
+function get() {
   return isToggleDisabled(featureOne);
 }
 
-const a = isToggleDisabled(featureOne), b = isToggleDisabled(featureTwo);
+const a = isToggleDisabled(featureOne),
+  b = isToggleDisabled(featureTwo);
 
-if (!false && (isToggleDisabled(featureTwo)) && isToggleDisabled(featureOne)) { 
+if (!false && isToggleDisabled(featureTwo) && isToggleDisabled(featureOne)) {
   // This is the first comment
-  console.log("New feature featureTwo is running")
+  console.log("New feature featureTwo is running");
 } else {
   // This is another comment
-  console.log("Old feature oldFeat2 is running")
+  console.log("Old feature oldFeat2 is running");
 }
 
 if (false || isFlagTreated(featureOne)) {
@@ -20,7 +21,7 @@ if (false || isFlagTreated(featureOne)) {
   console.log("Old feature oldFeat1 is running");
 }
 
-if (!(!isToggleDisabled(featureTwo))) {
+if (!!isToggleDisabled(featureTwo)) {
   // This is the fourth comment
   console.log("New Feature featureTwo is running");
 } else {

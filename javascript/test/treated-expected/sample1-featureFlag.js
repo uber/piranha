@@ -7,9 +7,9 @@ import "module3";
 const module4 = require("module4");
 const module5 = require("module5");
 
-for(var i = 0; i == 0; i++){
-    // Simple flag cleanup in conditional
-    f1();
+for (var i = 0; i == 0; i++) {
+  // Simple flag cleanup in conditional
+  f1();
 }
 
 // Deep clean of flag
