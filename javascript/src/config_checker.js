@@ -12,49 +12,56 @@
  * limitations under the License.
  */
 
-const path = require("path");
+const path = require('path');
 const colors = require('colors');
 const fs = require('fs');
 
 module.exports = {
-  parseProperties: function (properties_json) {
-    let properties;
-    let properties_abs_path = path.resolve(properties_json);
+    parseProperties: function (properties_json) {
+        let properties;
+        let properties_abs_path = path.resolve(properties_json);
 
-    if (!fs.existsSync(properties_json)) {
-        throw new Error(`File ${properties_json} not found`);
-    }
+        if (!fs.existsSync(properties_json)) {
+            throw new Error(`File ${properties_json} not found`);
+        }
 
-    try {
-      properties = require(properties_abs_path);
-    } catch (err) {
-      if (err instanceof SyntaxError) {
-        throw new Error(`${properties_json} does not follow JSON syntax`);
-      } else {
-        console.error(colors.red('Something went wrong, check below error'));
-        throw err;
-      }
-    }
+        try {
+            let properties_in_json = fs.readFileSync(properties_abs_path);
+            properties = JSON.parse(properties_in_json);
+        } catch (err) {
+            if (err instanceof SyntaxError) {
+                throw new Error(
+                    `${properties_json} does not follow JSON syntax`,
+                );
+            } else {
+                console.error(
+                    colors.red('Something went wrong, check below error'),
+                );
+                throw err;
+            }
+        }
 
-    if (!("methodProperties" in properties)) {
-      throw new Error(
-        `The methodProperties property is missing in ${properties_json}`
-      );
-    } else {
-      var missingMethod = properties.methodProperties.find(
-        (prop) => !("methodName", "flagType", "argumentIndex" in prop)
-      );
+        if (!('methodProperties' in properties)) {
+            throw new Error(
+                `The methodProperties property is missing in ${properties_json}`,
+            );
+        } else {
+            var missingMethod = properties.methodProperties.find(
+                (prop) => !('methodName', 'flagType', 'argumentIndex' in prop),
+            );
 
-      if (missingMethod != null) {
-        let requiredKeys = ["methodName", "flagType", "argumentIndex"];
-        let missingKey = requiredKeys.find(key => !(key in missingMethod));
-        missingMethod = JSON.stringify(missingMethod);
-        throw new Error(
-          `${missingMethod} in ${properties_json} doesn't have '${missingKey}'`
-        );
-      }
-    }
+            if (missingMethod != null) {
+                let requiredKeys = ['methodName', 'flagType', 'argumentIndex'];
+                let missingKey = requiredKeys.find(
+                    (key) => !(key in missingMethod),
+                );
+                missingMethod = JSON.stringify(missingMethod);
+                throw new Error(
+                    `${missingMethod} in ${properties_json} doesn't have '${missingKey}'`,
+                );
+            }
+        }
 
-    return properties;
-  },
+        return properties;
+    },
 };
