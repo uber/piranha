@@ -102,7 +102,8 @@ class RefactorEngine {
     }
   }
 
-  // Check if a function with return statement at the end of function body is redundant, i.e returns piranhaLiteral
+  // Given a candidate function, check if it is redundant, i.e returns a piranhaLiteral
+  // The argument `func` refers to a function with a single return statement at the end of its body
   checkAndAddRedundantFunction(func, name, redundantFunctions) {
     if (func.body === null || func.body.body == null) {
       return false;
