@@ -10,6 +10,6 @@ module.exports = {
         ecmaVersion: 11,
     },
     rules: {
-        'eol-last': 'always',
+        // 'eol-last': 'always',
     },
 };
