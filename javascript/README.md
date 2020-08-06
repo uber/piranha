@@ -146,10 +146,10 @@ See the suite of tests in `test/test_refactor.js` and `test/test_integration.js`
 
 It can be convenient to run piranha as a shell command from any location. This can be done by creating an alias.
 
-From the *piranha/javascript* directory, run the following shell commands (for the bash shell).
+From the `piranha/javascript` directory, run the following shell commands (for the bash shell).
 
 ```
-printf "alias piranha='node `realpath src/piranha.js`'" >> ~/.bashrc
+printf "alias piranhajs='node `realpath src/piranha.js`'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
