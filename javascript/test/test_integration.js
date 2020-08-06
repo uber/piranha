@@ -42,10 +42,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureFlag';
             const behaviour = true;
-            const expected_code = fs.readFileSync(
-                './test/treated-expected/sample-featureFlag.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/treated-expected/sample-featureFlag.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -61,9 +58,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -72,10 +67,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureFlag';
             const behaviour = false;
-            const expected_code = fs.readFileSync(
-                './test/control-expected/sample-featureFlag.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/control-expected/sample-featureFlag.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -92,9 +84,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
     });
@@ -105,10 +95,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureFlag';
             const behaviour = true;
-            const expected_code = fs.readFileSync(
-                './test/treated-expected/sample1-featureFlag.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/treated-expected/sample1-featureFlag.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -125,9 +112,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -136,10 +121,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureFlag';
             const behaviour = false;
-            const expected_code = fs.readFileSync(
-                './test/control-expected/sample1-featureFlag.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/control-expected/sample1-featureFlag.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -156,9 +138,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
     });
@@ -169,10 +149,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureOne';
             const behaviour = true;
-            const expected_code = fs.readFileSync(
-                './test/treated-expected/sample2-featureOne.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/treated-expected/sample2-featureOne.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -189,9 +166,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -200,10 +175,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureOne';
             const behaviour = false;
-            const expected_code = fs.readFileSync(
-                './test/control-expected/sample2-featureOne.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/control-expected/sample2-featureOne.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -220,9 +192,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -231,10 +201,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureTwo';
             const behaviour = true;
-            const expected_code = fs.readFileSync(
-                './test/treated-expected/sample2-featureTwo.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/treated-expected/sample2-featureTwo.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -251,9 +218,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -262,10 +227,7 @@ describe('piranha', () => {
             const ast = recast.parse(code).program;
             const flagname = 'featureTwo';
             const behaviour = false;
-            const expected_code = fs.readFileSync(
-                './test/control-expected/sample2-featureTwo.js',
-                'utf-8',
-            );
+            const expected_code = fs.readFileSync('./test/control-expected/sample2-featureTwo.js', 'utf-8');
 
             const engine = new refactor.RefactorEngine(
                 ast,
@@ -282,9 +244,7 @@ describe('piranha', () => {
             assert(!checkForPiranhaLiterals(ast));
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
     });

@@ -47,20 +47,17 @@ requiredArgs.addArgument(['-p', '--properties'], {
 });
 
 parser.addArgument(['-o', '--output'], {
-    help:
-        'Destination of the refactored output. File is modified in-place by default.',
+    help: 'Destination of the refactored output. File is modified in-place by default.',
     defaultValue: '',
 });
 
 parser.addArgument(['-t', '--treated'], {
-    help:
-        'If this option is supplied, the flag is treated, otherwise it is control.',
+    help: 'If this option is supplied, the flag is treated, otherwise it is control.',
     nargs: 'OPTIONAL',
 });
 
 parser.addArgument(['-n', '--max_cleanup_steps'], {
-    help:
-        'The number of times literals should be simplified. Runs until fixed point by default.',
+    help: 'The number of times literals should be simplified. Runs until fixed point by default.',
     type: parseInt,
 });
 
@@ -108,9 +105,7 @@ if (args.debug != null) {
         }),
     );
 
-    refactor.logger.add(
-        new winston.transports.File({ filename: `combined_${timestamp}.log` }),
-    );
+    refactor.logger.add(new winston.transports.File({ filename: `combined_${timestamp}.log` }));
 }
 
 const keep_comments = args.keep_comments != null;

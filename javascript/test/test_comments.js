@@ -24,11 +24,7 @@ describe('comments', () => {
             let ast = recast.parse(code).program;
             let engine = new refactor.RefactorEngine(ast);
             let leadingComments, trailingComments, remainingComments;
-            [
-                leadingComments,
-                trailingComments,
-                remainingComments,
-            ] = engine.collateCommentsByPosition(ast.body[0]);
+            [leadingComments, trailingComments, remainingComments] = engine.collateCommentsByPosition(ast.body[0]);
             assert(
                 leadingComments.length == 1 &&
                     leadingComments[0].value == 'a' &&
@@ -45,11 +41,7 @@ describe('comments', () => {
             let ast = recast.parse(code).program;
             let engine = new refactor.RefactorEngine(ast);
             let leadingComments, trailingComments, remainingComments;
-            [
-                leadingComments,
-                trailingComments,
-                remainingComments,
-            ] = engine.collateCommentsByPosition(ast.body[0]);
+            [leadingComments, trailingComments, remainingComments] = engine.collateCommentsByPosition(ast.body[0]);
             assert(
                 leadingComments.length == 1 &&
                     leadingComments[0].value == 'a' &&
@@ -132,12 +124,7 @@ describe('comments', () => {
             engine.moveAllCommentsToSiblings(ast.body[0].body[1], ast.body[0]);
             let comm0 = ast.body[0].body[0].comments;
             let comm2 = ast.body[0].body[2].comments;
-            assert(
-                comm0.length == 3 &&
-                    comm2.length == 3 &&
-                    comm0[2].value == 'c' &&
-                    comm2[0].value == 'd',
-            );
+            assert(comm0.length == 3 && comm2.length == 3 && comm0[2].value == 'c' && comm2[0].value == 'd');
         });
 
         it('should attach leading and trailing comments to next sibling if previous sibling is missing', () => {
@@ -147,11 +134,7 @@ describe('comments', () => {
             let engine = new refactor.RefactorEngine(ast);
             engine.moveAllCommentsToSiblings(ast.body[0].body[0], ast.body[0]);
             let comm1 = ast.body[0].body[1].comments;
-            assert(
-                comm1.length == 4 &&
-                    comm1[0].value == 'a' &&
-                    comm1[1].value == 'b',
-            );
+            assert(comm1.length == 4 && comm1[0].value == 'a' && comm1[1].value == 'b');
         });
 
         it('should attach leading and trailing comments to previous sibling if next sibling is missing', () => {
@@ -161,11 +144,7 @@ describe('comments', () => {
             let engine = new refactor.RefactorEngine(ast);
             engine.moveAllCommentsToSiblings(ast.body[0].body[2], ast.body[0]);
             let comm1 = ast.body[0].body[1].comments;
-            assert(
-                comm1.length == 4 &&
-                    comm1[2].value == 'e' &&
-                    comm1[3].value == 'f',
-            );
+            assert(comm1.length == 4 && comm1[2].value == 'e' && comm1[3].value == 'f');
         });
     });
 
@@ -175,15 +154,10 @@ describe('comments', () => {
 
             let ast = recast.parse(code).program;
             let engine = new refactor.RefactorEngine(ast);
-            engine.moveLeadingCommentsToSibling(
-                ast.body[0].body[1],
-                ast.body[0],
-            );
+            engine.moveLeadingCommentsToSibling(ast.body[0].body[1], ast.body[0]);
             let comm0 = ast.body[0].body[0].comments;
             let comm2 = ast.body[0].body[2].comments;
-            assert(
-                comm0.length == 2 && comm2.length == 3 && comm2[0].value == 'c',
-            );
+            assert(comm0.length == 2 && comm2.length == 3 && comm2[0].value == 'c');
         });
 
         it('should attach leading comments to next sibling if previous sibling is missing', () => {
@@ -191,10 +165,7 @@ describe('comments', () => {
 
             let ast = recast.parse(code).program;
             let engine = new refactor.RefactorEngine(ast);
-            engine.moveLeadingCommentsToSibling(
-                ast.body[0].body[2],
-                ast.body[0],
-            );
+            engine.moveLeadingCommentsToSibling(ast.body[0].body[2], ast.body[0]);
             let comm1 = ast.body[0].body[1].comments;
             assert(comm1.length == 3 && comm1[2].value == 'e');
         });
@@ -208,11 +179,7 @@ describe('comments', () => {
             let engine = new refactor.RefactorEngine(ast);
             engine.moveCommentsToConsequent(ast.body[0]);
             let comm = ast.body[0].consequent.comments;
-            assert(
-                comm.length == 2 &&
-                    comm[0].value == 'a' &&
-                    comm[1].value == 'b',
-            );
+            assert(comm.length == 2 && comm[0].value == 'a' && comm[1].value == 'b');
         });
     });
 
@@ -224,11 +191,7 @@ describe('comments', () => {
             let engine = new refactor.RefactorEngine(ast);
             engine.moveCommentsToAlternate(ast.body[0]);
             let comm = ast.body[0].alternate.comments;
-            assert(
-                comm.length == 2 &&
-                    comm[0].value == 'a' &&
-                    comm[1].value == 'b',
-            );
+            assert(comm.length == 2 && comm[0].value == 'a' && comm[1].value == 'b');
         });
     });
 
@@ -240,11 +203,7 @@ describe('comments', () => {
             let engine = new refactor.RefactorEngine(ast);
             engine.moveCommentsToExtremeChildren(ast.body[0], ast, true);
             let comm = ast.body[0].body[0].comments;
-            assert(
-                comm.length == 2 &&
-                    comm[0].value == 'a' &&
-                    comm[1].value == 'b',
-            );
+            assert(comm.length == 2 && comm[0].value == 'a' && comm[1].value == 'b');
         });
 
         it('should attach comments to parents if body is empty', () => {
@@ -254,12 +213,7 @@ describe('comments', () => {
             let engine = new refactor.RefactorEngine(ast);
             engine.moveCommentsToExtremeChildren(ast.body[0], ast, true);
             let comm = ast.body[0].comments;
-            assert(
-                comm.length == 3 &&
-                    comm[0].value == 'a' &&
-                    comm[1].value == 'c' &&
-                    comm[2].value == 'b',
-            );
+            assert(comm.length == 3 && comm[0].value == 'a' && comm[1].value == 'c' && comm[2].value == 'b');
         });
     });
 
@@ -269,19 +223,10 @@ describe('comments', () => {
 
             let ast = recast.parse(code).program;
             let engine = new refactor.RefactorEngine(ast);
-            engine.preserveCommentsBasedOnOption(
-                ast.body[0].body[1],
-                ast.body[0],
-                true,
-            );
+            engine.preserveCommentsBasedOnOption(ast.body[0].body[1], ast.body[0], true);
             let comm0 = ast.body[0].body[0].comments;
             let comm2 = ast.body[0].body[2].comments;
-            assert(
-                comm0.length == 3 &&
-                    comm2.length == 3 &&
-                    comm0[2].value == 'c' &&
-                    comm2[0].value == 'd',
-            );
+            assert(comm0.length == 3 && comm2.length == 3 && comm0[2].value == 'c' && comm2[0].value == 'd');
         });
 
         it('should attach comments based on option', () => {
@@ -289,16 +234,10 @@ describe('comments', () => {
 
             let ast = recast.parse(code).program;
             let engine = new refactor.RefactorEngine(ast);
-            engine.preserveCommentsBasedOnOption(
-                ast.body[0].body[1],
-                ast.body[0],
-                false,
-            );
+            engine.preserveCommentsBasedOnOption(ast.body[0].body[1], ast.body[0], false);
             let comm0 = ast.body[0].body[0].comments;
             let comm2 = ast.body[0].body[2].comments;
-            assert(
-                comm0.length == 2 && comm2.length == 3 && comm2[0].value == 'c',
-            );
+            assert(comm0.length == 2 && comm2.length == 3 && comm2[0].value == 'c');
         });
     });
 });

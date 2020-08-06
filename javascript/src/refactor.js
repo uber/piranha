@@ -144,20 +144,17 @@ class RefactorEngine {
             return collatedComments;
         }
 
-        return node.comments.reduce(
-            ([leadingList, trailingList, remainingList], comment) => {
-                if (comment.leading) {
-                    leadingList.push(comment);
-                } else if (comment.trailing) {
-                    trailingList.push(comment);
-                } else {
-                    remainingList.push(comment);
-                }
+        return node.comments.reduce(([leadingList, trailingList, remainingList], comment) => {
+            if (comment.leading) {
+                leadingList.push(comment);
+            } else if (comment.trailing) {
+                trailingList.push(comment);
+            } else {
+                remainingList.push(comment);
+            }
 
-                return [leadingList, trailingList, remainingList];
-            },
-            collatedComments,
-        );
+            return [leadingList, trailingList, remainingList];
+        }, collatedComments);
     }
 
     attachCommentsAtBeginning(node, newComments) {
@@ -197,60 +194,34 @@ class RefactorEngine {
         if ('body' in parent && Array.isArray(parent.body)) {
             var nodeIndex = parent.body.indexOf(node);
             var previousSiblingIndex = nodeIndex !== 0 ? nodeIndex - 1 : null;
-            var nextSiblingIndex =
-                nodeIndex !== parent.body.length - 1 ? nodeIndex + 1 : null;
+            var nextSiblingIndex = nodeIndex !== parent.body.length - 1 ? nodeIndex + 1 : null;
 
             let leadingComments, trailingComments;
-            [
-                leadingComments,
-                trailingComments,
-            ] = this.collateCommentsByPosition(node);
+            [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
 
             if (previousSiblingIndex != null) {
                 if (nodeIndex === parent.body.length - 1) {
-                    let consolidatedComments = leadingComments.map(
-                        this.flipCommentPosition,
-                    );
-                    consolidatedComments = consolidatedComments.concat(
-                        trailingComments,
-                    );
+                    let consolidatedComments = leadingComments.map(this.flipCommentPosition);
+                    consolidatedComments = consolidatedComments.concat(trailingComments);
 
-                    this.attachCommentsAtEnd(
-                        parent.body[previousSiblingIndex],
-                        consolidatedComments,
-                    );
+                    this.attachCommentsAtEnd(parent.body[previousSiblingIndex], consolidatedComments);
                 } else {
-                    let consolidatedComments = leadingComments.map(
-                        this.flipCommentPosition,
-                    );
+                    let consolidatedComments = leadingComments.map(this.flipCommentPosition);
 
-                    this.attachCommentsAtEnd(
-                        parent.body[previousSiblingIndex],
-                        consolidatedComments,
-                    );
+                    this.attachCommentsAtEnd(parent.body[previousSiblingIndex], consolidatedComments);
                 }
             }
 
             if (nextSiblingIndex != null) {
                 if (nodeIndex === 0) {
                     let consolidatedComments = leadingComments;
-                    consolidatedComments = consolidatedComments.concat(
-                        trailingComments.map(this.flipCommentPosition),
-                    );
+                    consolidatedComments = consolidatedComments.concat(trailingComments.map(this.flipCommentPosition));
 
-                    this.attachCommentsAtBeginning(
-                        parent.body[nextSiblingIndex],
-                        consolidatedComments,
-                    );
+                    this.attachCommentsAtBeginning(parent.body[nextSiblingIndex], consolidatedComments);
                 } else {
-                    let consolidatedComments = trailingComments.map(
-                        this.flipCommentPosition,
-                    );
+                    let consolidatedComments = trailingComments.map(this.flipCommentPosition);
 
-                    this.attachCommentsAtBeginning(
-                        parent.body[nextSiblingIndex],
-                        consolidatedComments,
-                    );
+                    this.attachCommentsAtBeginning(parent.body[nextSiblingIndex], consolidatedComments);
                 }
             }
         }
@@ -260,34 +231,23 @@ class RefactorEngine {
         if ('body' in parent && Array.isArray(parent.body)) {
             var nodeIndex = parent.body.indexOf(node);
             var previousSiblingIndex = nodeIndex !== 0 ? nodeIndex - 1 : null;
-            var nextSiblingIndex =
-                nodeIndex !== parent.body.length - 1 ? nodeIndex + 1 : null;
+            var nextSiblingIndex = nodeIndex !== parent.body.length - 1 ? nodeIndex + 1 : null;
 
             let [leadingComments] = this.collateCommentsByPosition(node);
 
             if (nextSiblingIndex != null) {
-                this.attachCommentsAtBeginning(
-                    parent.body[nextSiblingIndex],
-                    leadingComments,
-                );
+                this.attachCommentsAtBeginning(parent.body[nextSiblingIndex], leadingComments);
             } else if (previousSiblingIndex != null) {
-                var consolidatedComments = leadingComments.map(
-                    this.flipCommentPosition,
-                );
+                var consolidatedComments = leadingComments.map(this.flipCommentPosition);
 
-                this.attachCommentsAtEnd(
-                    parent.body[previousSiblingIndex],
-                    consolidatedComments,
-                );
+                this.attachCommentsAtEnd(parent.body[previousSiblingIndex], consolidatedComments);
             }
         }
     }
 
     moveCommentsToConsequent(node) {
         let leadingComments, trailingComments;
-        [leadingComments, trailingComments] = this.collateCommentsByPosition(
-            node,
-        );
+        [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
 
         this.attachCommentsAtBeginning(node.consequent, leadingComments);
         this.attachCommentsAtEnd(node.consequent, trailingComments);
@@ -295,9 +255,7 @@ class RefactorEngine {
 
     moveCommentsToAlternate(node) {
         let leadingComments, trailingComments;
-        [leadingComments, trailingComments] = this.collateCommentsByPosition(
-            node,
-        );
+        [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
 
         this.attachCommentsAtBeginning(node.alternate, leadingComments);
         this.attachCommentsAtEnd(node.alternate, trailingComments);
@@ -305,16 +263,11 @@ class RefactorEngine {
 
     moveCommentsToExtremeChildren(node, parent, keep_comments) {
         let leadingComments, trailingComments;
-        [leadingComments, trailingComments] = this.collateCommentsByPosition(
-            node,
-        );
+        [leadingComments, trailingComments] = this.collateCommentsByPosition(node);
 
         if (node.body.length !== 0) {
             this.attachCommentsAtBeginning(node.body[0], leadingComments);
-            this.attachCommentsAtEnd(
-                node.body[node.body.length - 1],
-                trailingComments,
-            );
+            this.attachCommentsAtEnd(node.body[node.body.length - 1], trailingComments);
         } else if (keep_comments) {
             this.attachCommentsAtEnd(parent, node.comments);
         }
@@ -341,17 +294,11 @@ class RefactorEngine {
             enter: function (node) {
                 if (node.type === 'CallExpression') {
                     if (methodHashMap.has(node.callee.name)) {
-                        const argumentIndex = methodHashMap.get(
-                            node.callee.name,
-                        ).argumentIndex;
+                        const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
                         const nodeArgument = node.arguments[argumentIndex];
 
-                        if (
-                            nodeArgument.type === 'Identifier' &&
-                            nodeArgument.name === engine.flagname
-                        ) {
-                            const flagType = methodHashMap.get(node.callee.name)
-                                .flagType;
+                        if (nodeArgument.type === 'Identifier' && nodeArgument.name === engine.flagname) {
+                            const flagType = methodHashMap.get(node.callee.name).flagType;
                             engine.changed = true;
 
                             if (
@@ -386,20 +333,12 @@ class RefactorEngine {
 
                     if (engine.isPiranhaLiteral(expression1)) {
                         engine.changed = true;
-                        return engine.reduceLogicalExpression(
-                            expression1,
-                            expression2,
-                            node.operator,
-                        );
+                        return engine.reduceLogicalExpression(expression1, expression2, node.operator);
                     }
 
                     if (engine.isPiranhaLiteral(expression2)) {
                         engine.changed = true;
-                        return engine.reduceLogicalExpression(
-                            expression2,
-                            expression1,
-                            node.operator,
-                        );
+                        return engine.reduceLogicalExpression(expression2, expression1, node.operator);
                     }
                 } else if (
                     node.type === 'UnaryExpression' &&
@@ -429,8 +368,7 @@ class RefactorEngine {
         estraverse.replace(this.ast, {
             leave: function (node) {
                 if (
-                    (node.type === 'IfStatement' ||
-                        node.type === 'ConditionalExpression') &&
+                    (node.type === 'IfStatement' || node.type === 'ConditionalExpression') &&
                     engine.isPiranhaLiteral(node.test)
                 ) {
                     if (node.test.value === true) {
@@ -459,16 +397,8 @@ class RefactorEngine {
         // Flatten any nested blocks introduced in the previous step by moving their contents to their parent
         estraverse.traverse(this.ast, {
             leave: function (node, parent) {
-                if (
-                    node.type === 'BlockStatement' &&
-                    (parent.type === 'BlockStatement' ||
-                        parent.type === 'Program')
-                ) {
-                    engine.moveCommentsToExtremeChildren(
-                        node,
-                        parent,
-                        engine.keep_comments,
-                    );
+                if (node.type === 'BlockStatement' && (parent.type === 'BlockStatement' || parent.type === 'Program')) {
+                    engine.moveCommentsToExtremeChildren(node, parent, engine.keep_comments);
                     var nodeIndex = parent.body.indexOf(node);
                     parent.body.splice(nodeIndex, 1, ...node.body);
                 }
@@ -495,18 +425,12 @@ class RefactorEngine {
                             engine.isPiranhaLiteral(declaration.init) &&
                             typeof declaration.init.value === 'boolean'
                         ) {
-                            assignments[declaration.id.name] =
-                                declaration.init.value;
+                            assignments[declaration.id.name] = declaration.init.value;
                         }
                     }
                 } else if (node.type === 'AssignmentExpression') {
-                    if (
-                        node.right &&
-                        engine.isPiranhaLiteral(node.right) &&
-                        typeof node.right.value === 'boolean'
-                    ) {
-                        if (node.left.name !== undefined)
-                            assignments[node.left.name] = node.right.value;
+                    if (node.right && engine.isPiranhaLiteral(node.right) && typeof node.right.value === 'boolean') {
+                        if (node.left.name !== undefined) assignments[node.left.name] = node.right.value;
                     }
                 }
             },
@@ -530,16 +454,9 @@ class RefactorEngine {
                         engine.changed = true;
                         return this.remove();
                     }
-                } else if (
-                    node.type === 'ExpressionStatement' &&
-                    node.expression.type === 'AssignmentExpression'
-                ) {
+                } else if (node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression') {
                     if (node.expression.left.name in assignments) {
-                        engine.preserveCommentsBasedOnOption(
-                            node,
-                            parent,
-                            engine.keep_comments,
-                        );
+                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
                         engine.changed = true;
                         return this.remove();
                     }
@@ -560,11 +477,7 @@ class RefactorEngine {
             leave: function (node, parent) {
                 if (node.type === 'VariableDeclaration') {
                     if (node.declarations.length === 0) {
-                        engine.preserveCommentsBasedOnOption(
-                            node,
-                            parent,
-                            engine.keep_comments,
-                        );
+                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
                         engine.changed = true;
                         return this.remove();
                     }
@@ -629,55 +542,24 @@ class RefactorEngine {
 
         estraverse.traverse(this.ast, {
             enter: function (node, parent) {
-                if (
-                    node.type === 'FunctionDeclaration' &&
-                    singleReturnFunctions[node.id.name]
-                ) {
-                    if (
-                        !engine.checkAndAddRedundantFunction(
-                            node,
-                            node.id.name,
-                            redundantFunctions,
-                        )
-                    ) {
+                if (node.type === 'FunctionDeclaration' && singleReturnFunctions[node.id.name]) {
+                    if (!engine.checkAndAddRedundantFunction(node, node.id.name, redundantFunctions)) {
                         this.skip();
                     }
                 } else if (node.type === 'FunctionExpression') {
-                    if (
-                        parent.type === 'VariableDeclarator' &&
-                        singleReturnFunctions[parent.id.name]
-                    ) {
-                        if (
-                            !engine.checkAndAddRedundantFunction(
-                                node,
-                                parent.id.name,
-                                redundantFunctions,
-                            )
-                        ) {
+                    if (parent.type === 'VariableDeclarator' && singleReturnFunctions[parent.id.name]) {
+                        if (!engine.checkAndAddRedundantFunction(node, parent.id.name, redundantFunctions)) {
                             this.skip();
                         }
                     }
                 } else if (node.type === 'ArrowFunctionExpression') {
-                    if (
-                        parent.type === 'VariableDeclarator' &&
-                        singleReturnFunctions[parent.id.name] !== undefined
-                    ) {
+                    if (parent.type === 'VariableDeclarator' && singleReturnFunctions[parent.id.name] !== undefined) {
                         if (node.body.type !== 'BlockStatement') {
-                            if (
-                                engine.isPiranhaLiteral(node.body) &&
-                                typeof node.body.value === 'boolean'
-                            ) {
-                                redundantFunctions[parent.id.name] =
-                                    node.body.value;
+                            if (engine.isPiranhaLiteral(node.body) && typeof node.body.value === 'boolean') {
+                                redundantFunctions[parent.id.name] = node.body.value;
                             }
                         } else {
-                            if (
-                                !engine.checkAndAddRedundantFunction(
-                                    node,
-                                    parent.id.name,
-                                    redundantFunctions,
-                                )
-                            ) {
+                            if (!engine.checkAndAddRedundantFunction(node, parent.id.name, redundantFunctions)) {
                                 this.skip();
                             }
                         }
@@ -698,26 +580,17 @@ class RefactorEngine {
 
         estraverse.replace(this.ast, {
             enter: function (node, parent) {
-                if (
-                    node.type === 'FunctionDeclaration' &&
-                    node.id.name in pruneList
-                ) {
+                if (node.type === 'FunctionDeclaration' && node.id.name in pruneList) {
                     if (engine.keep_comments) {
                         engine.moveAllCommentsToSiblings(node, parent);
                     }
 
                     engine.changed = true;
                     this.remove();
-                } else if (
-                    node.type === 'VariableDeclarator' &&
-                    node.id.name in pruneList
-                ) {
+                } else if (node.type === 'VariableDeclarator' && node.id.name in pruneList) {
                     engine.changed = true;
                     this.remove();
-                } else if (
-                    node.type === 'CallExpression' &&
-                    node.callee.name in pruneList
-                ) {
+                } else if (node.type === 'CallExpression' && node.callee.name in pruneList) {
                     if (pruneList[node.callee.name]) {
                         engine.changed = true;
                         return engine.trueLiteral();
@@ -729,15 +602,8 @@ class RefactorEngine {
             },
 
             leave: function (node, parent) {
-                if (
-                    node.type === 'VariableDeclaration' &&
-                    node.declarations.length === 0
-                ) {
-                    engine.preserveCommentsBasedOnOption(
-                        node,
-                        parent,
-                        engine.keep_comments,
-                    );
+                if (node.type === 'VariableDeclaration' && node.declarations.length === 0) {
+                    engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
                     engine.changed = true;
                     this.remove();
                 }
@@ -779,9 +645,7 @@ class RefactorEngine {
             this.pruneVarReferences(redundantVarnames);
 
             var functionsWithSingleReturn = this.getFunctionsWithSingleReturn();
-            var redundantFunctions = this.getRedundantFunctions(
-                functionsWithSingleReturn,
-            );
+            var redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
             this.pruneFuncReferences(redundantFunctions);
 
             iterations++;
@@ -799,9 +663,7 @@ class RefactorEngine {
                     );
                 } else {
                     console.log(
-                        `Took ${iterations} ${
-                            iterations == 1 ? 'pass' : 'passes'
-                        } over the code to reach fixed point.`,
+                        `Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.`,
                     );
                 }
             } else {

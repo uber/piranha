@@ -30,21 +30,15 @@ module.exports = {
             properties = JSON.parse(properties_in_json);
         } catch (err) {
             if (err instanceof SyntaxError) {
-                throw new Error(
-                    `${properties_json} does not follow JSON syntax`,
-                );
+                throw new Error(`${properties_json} does not follow JSON syntax`);
             } else {
-                console.error(
-                    colors.red('Something went wrong, check below error'),
-                );
+                console.error(colors.red('Something went wrong, check below error'));
                 throw err;
             }
         }
 
         if (!('methodProperties' in properties)) {
-            throw new Error(
-                `The methodProperties property is missing in ${properties_json}`,
-            );
+            throw new Error(`The methodProperties property is missing in ${properties_json}`);
         } else {
             var missingMethod = properties.methodProperties.find(
                 (prop) => !('methodName', 'flagType', 'argumentIndex' in prop),
@@ -52,13 +46,9 @@ module.exports = {
 
             if (missingMethod != null) {
                 let requiredKeys = ['methodName', 'flagType', 'argumentIndex'];
-                let missingKey = requiredKeys.find(
-                    (key) => !(key in missingMethod),
-                );
+                let missingKey = requiredKeys.find((key) => !(key in missingMethod));
                 missingMethod = JSON.stringify(missingMethod);
-                throw new Error(
-                    `${missingMethod} in ${properties_json} doesn't have '${missingKey}'`,
-                );
+                throw new Error(`${missingMethod} in ${properties_json} doesn't have '${missingKey}'`);
             }
         }
 

@@ -1,16 +1,17 @@
 {
-  "arrowParens": "always",
-  "bracketSpacing": true,
-  "semi": true,
-  "singleQuote": true,
-  "tabWidth": 4,
-  "trailingComma": "all",
-  "overrides": [
-    {
-      "files": "*.md",
-      "options": {
-        "singleQuote": false
-      }
-    }
-  ]
+    "arrowParens": "always",
+    "bracketSpacing": true,
+    "semi": true,
+    "singleQuote": true,
+    "tabWidth": 4,
+    "printWidth": 120,
+    "trailingComma": "all",
+    "overrides": [
+        {
+            "files": "*.md",
+            "options": {
+                "singleQuote": false
+            }
+        }
+    ]
 }

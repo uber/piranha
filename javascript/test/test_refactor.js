@@ -29,12 +29,7 @@ describe('refactor', () => {
             const code = 'isFlagTreated(testFlag)';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
 
             assert(ast.body[0].expression.createdByPiranha !== undefined);
@@ -45,12 +40,7 @@ describe('refactor', () => {
             const expected_code = `if (true) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.finalizeLiterals();
 
@@ -59,9 +49,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
     });
@@ -72,12 +60,7 @@ describe('refactor', () => {
             const expected_code = `if (f()) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -87,9 +70,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -98,12 +79,7 @@ describe('refactor', () => {
             const expected_code = `if (false) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -113,9 +89,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -124,12 +98,7 @@ describe('refactor', () => {
             const expected_code = `if (true) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -139,9 +108,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -150,12 +117,7 @@ describe('refactor', () => {
             const expected_code = `if (f()) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -165,9 +127,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -176,12 +136,7 @@ describe('refactor', () => {
             const expected_code = `if (true) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -191,9 +146,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -202,12 +155,7 @@ describe('refactor', () => {
             const expected_code = `if (false) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -217,9 +165,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -228,12 +174,7 @@ describe('refactor', () => {
             const expected_code = `if (true) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -243,9 +184,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -254,12 +193,7 @@ describe('refactor', () => {
             const expected_code = `if (f() && g()) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -269,9 +203,7 @@ describe('refactor', () => {
             assert(!engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -280,12 +212,7 @@ describe('refactor', () => {
             const expected_code = `if (f() && true) {} else {}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.evalBoolExpressions();
             engine.finalizeLiterals();
@@ -295,9 +222,7 @@ describe('refactor', () => {
             assert(!engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
     });
@@ -308,12 +233,7 @@ describe('refactor', () => {
             const expected_code = `if (true) {f(); h();} else {g()}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -322,9 +242,7 @@ describe('refactor', () => {
             assert(!engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -333,12 +251,7 @@ describe('refactor', () => {
             const expected_code = `f();h();`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -347,9 +260,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -358,12 +269,7 @@ describe('refactor', () => {
             const expected_code = `f();h();`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -372,9 +278,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -383,12 +287,7 @@ describe('refactor', () => {
             const expected_code = `f();`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -397,9 +296,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -408,12 +305,7 @@ describe('refactor', () => {
             const expected_code = `g();g_();`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -422,9 +314,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -433,12 +323,7 @@ describe('refactor', () => {
             const expected_code = `j();`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -447,9 +332,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -458,12 +341,7 @@ describe('refactor', () => {
             const expected_code = `j();`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -472,9 +350,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -483,12 +359,7 @@ describe('refactor', () => {
             const expected_code = `g()`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -497,9 +368,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -508,12 +377,7 @@ describe('refactor', () => {
             const expected_code = `if (f1())\n  {f2();} else\n  {g();}`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -522,9 +386,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -533,12 +395,7 @@ describe('refactor', () => {
             const expected_code = code;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -548,9 +405,7 @@ describe('refactor', () => {
             assert(!engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
 
@@ -559,12 +414,7 @@ describe('refactor', () => {
             const expected_code = `var b = "hi";`;
             const ast = recast.parse(code).program;
 
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
             engine.finalizeLiterals();
@@ -574,9 +424,7 @@ describe('refactor', () => {
             assert(engine.changed);
             assert(
                 expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_code,
-                )}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
+                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
             );
         });
     });
@@ -586,103 +434,63 @@ describe('refactor', () => {
             const code = `a = isFlagTreated(testFlag); var b = isFlagTreated(testFlag);`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
 
             const assignments = engine.getRedundantVarnames();
             const expected_assignments = { a: true, b: true };
 
-            assert(
-                JSON.stringify(expected_assignments) ===
-                    JSON.stringify(assignments),
-            );
+            assert(JSON.stringify(expected_assignments) === JSON.stringify(assignments));
         });
 
         it('should return const variables which are set to a stale flag', () => {
             const code = `const a = isFlagTreated(testFlag); var b; b = isFlagTreated(testFlag);`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
 
             const assignments = engine.getRedundantVarnames();
             const expected_assignments = { a: true, b: true };
 
-            assert(
-                JSON.stringify(expected_assignments) ===
-                    JSON.stringify(assignments),
-            );
+            assert(JSON.stringify(expected_assignments) === JSON.stringify(assignments));
         });
 
         it('should not include variables initialized to null', () => {
             const code = `var b = null`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             const assignments = engine.getRedundantVarnames();
             const expected_assignments = {};
 
-            assert(
-                JSON.stringify(expected_assignments) ===
-                    JSON.stringify(assignments),
-            );
+            assert(JSON.stringify(expected_assignments) === JSON.stringify(assignments));
         });
 
         it('should not include uninitialized variables', () => {
             const code = `var b`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
 
             const assignments = engine.getRedundantVarnames();
             const expected_assignments = {};
 
-            assert(
-                JSON.stringify(expected_assignments) ===
-                    JSON.stringify(assignments),
-            );
+            assert(JSON.stringify(expected_assignments) === JSON.stringify(assignments));
         });
 
         it('should return list of variable names which are set to a stale flag', () => {
             const code = `var b = true`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
 
             const assignments = engine.getRedundantVarnames();
             const expected_assignments = {};
 
-            assert(
-                JSON.stringify(expected_assignments) ===
-                    JSON.stringify(assignments),
-            );
+            assert(JSON.stringify(expected_assignments) === JSON.stringify(assignments));
         });
     });
 
@@ -692,12 +500,7 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.pruneVarReferences(engine.getRedundantVarnames());
             engine.finalizeLiterals();
@@ -714,12 +517,7 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.pruneVarReferences(engine.getRedundantVarnames());
             engine.finalizeLiterals();
@@ -735,12 +533,7 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.pruneVarReferences(engine.getRedundantVarnames());
             engine.finalizeLiterals();
@@ -756,12 +549,7 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.pruneVarReferences(engine.getRedundantVarnames());
             engine.finalizeLiterals();
@@ -779,24 +567,16 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            const redundant_functions = engine.getRedundantFunctions(
-                engine.getFunctionsWithSingleReturn(),
-            );
+            const redundant_functions = engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn());
             const expected_functions = { a: true };
 
             assert(
-                JSON.stringify(expected_functions) ===
-                    JSON.stringify(redundant_functions),
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_functions,
-                )}\nREFACTORED : ${JSON.stringify(redundant_functions)}`,
+                JSON.stringify(expected_functions) === JSON.stringify(redundant_functions),
+                `\nEXPECTED : ${JSON.stringify(expected_functions)}\nREFACTORED : ${JSON.stringify(
+                    redundant_functions,
+                )}`,
             );
         });
 
@@ -805,24 +585,16 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            const redundant_functions = engine.getRedundantFunctions(
-                engine.getFunctionsWithSingleReturn(),
-            );
+            const redundant_functions = engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn());
             const expected_functions = { a: true };
 
             assert(
-                JSON.stringify(expected_functions) ===
-                    JSON.stringify(redundant_functions),
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_functions,
-                )}\nREFACTORED : ${JSON.stringify(redundant_functions)}`,
+                JSON.stringify(expected_functions) === JSON.stringify(redundant_functions),
+                `\nEXPECTED : ${JSON.stringify(expected_functions)}\nREFACTORED : ${JSON.stringify(
+                    redundant_functions,
+                )}`,
             );
         });
 
@@ -831,23 +603,13 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            const redundant_functions = engine.getRedundantFunctions(
-                engine.getFunctionsWithSingleReturn(),
-            );
+            const redundant_functions = engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn());
 
             const expected_functions = { a: true };
 
-            assert(
-                JSON.stringify(expected_functions) ===
-                    JSON.stringify(redundant_functions),
-            );
+            assert(JSON.stringify(expected_functions) === JSON.stringify(redundant_functions));
         });
 
         it('should get a list of redundant functions which return literal.', () => {
@@ -855,26 +617,18 @@ describe('refactor', () => {
             const flagname = 'testFlag';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.reduceIfStatements();
-            const redundant_functions = engine.getRedundantFunctions(
-                engine.getFunctionsWithSingleReturn(),
-            );
+            const redundant_functions = engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn());
 
             const expected_functions = {};
 
             assert(
-                JSON.stringify(expected_functions) ===
-                    JSON.stringify(redundant_functions),
-                `\nEXPECTED : ${JSON.stringify(
-                    expected_functions,
-                )}\nREFACTORED : ${JSON.stringify(redundant_functions)}`,
+                JSON.stringify(expected_functions) === JSON.stringify(redundant_functions),
+                `\nEXPECTED : ${JSON.stringify(expected_functions)}\nREFACTORED : ${JSON.stringify(
+                    redundant_functions,
+                )}`,
             );
         });
     });
@@ -884,18 +638,9 @@ describe('refactor', () => {
             const code = `function a(){ return true; } \n var b = a();`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            engine.pruneFuncReferences(
-                engine.getRedundantFunctions(
-                    engine.getFunctionsWithSingleReturn(),
-                ),
-            );
+            engine.pruneFuncReferences(engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn()));
             engine.finalizeLiterals();
 
             const refactored_code = recast.print(ast).code;
@@ -909,18 +654,9 @@ describe('refactor', () => {
             const code = `function a(){ return isFlagTreated(testFlag); } \n var b = a();`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            engine.pruneFuncReferences(
-                engine.getRedundantFunctions(
-                    engine.getFunctionsWithSingleReturn(),
-                ),
-            );
+            engine.pruneFuncReferences(engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn()));
             engine.finalizeLiterals();
 
             const refactored_code = recast.print(ast).code;
@@ -933,18 +669,9 @@ describe('refactor', () => {
             const code = `var a = () => isFlagTreated(testFlag) \n var b = a();`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            engine.pruneFuncReferences(
-                engine.getRedundantFunctions(
-                    engine.getFunctionsWithSingleReturn(),
-                ),
-            );
+            engine.pruneFuncReferences(engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn()));
             engine.finalizeLiterals();
 
             const refactored_code = recast.print(ast).code;
@@ -957,18 +684,9 @@ describe('refactor', () => {
             const code = `const a = function (){ return isFlagTreated(testFlag); }\nvar b = a();`;
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
-            engine.pruneFuncReferences(
-                engine.getRedundantFunctions(
-                    engine.getFunctionsWithSingleReturn(),
-                ),
-            );
+            engine.pruneFuncReferences(engine.getRedundantFunctions(engine.getFunctionsWithSingleReturn()));
             engine.finalizeLiterals();
 
             const refactored_code = recast.print(ast).code;
@@ -983,12 +701,7 @@ describe('refactor', () => {
             const code = 'isFlagTreated(testFlag)';
 
             let ast = recast.parse(code).program;
-            const engine = new refactor.RefactorEngine(
-                ast,
-                properties,
-                treated,
-                flagname,
-            );
+            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
             engine.flagAPIToLiteral();
             engine.finalizeLiterals();
 
