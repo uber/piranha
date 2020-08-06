@@ -13,6 +13,7 @@
  */
 
 const path = require("path");
+const fs = require("fs");
 
 module.exports = {
   parseProperties: function (properties_json) {
@@ -20,12 +21,15 @@ module.exports = {
     let properties_abs_path = path.resolve(properties_json);
 
     try {
-      properties = require(properties_abs_path);
+      var data = fs.readFileSync(properties_abs_path);
+      properties = JSON.parse(data);
     } catch (err) {
       if (err instanceof SyntaxError) {
         throw new Error(`${properties_json} does not follow JSON syntax`);
-      } else {
+      } else if (err.code == "ENOENT") {
         throw new Error(`File ${properties_json} not found`);
+      } else {
+        throw err;
       }
     }
 
