@@ -153,4 +153,11 @@ printf "alias piranhajs='node `realpath src/piranha.js`'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-Other shells have similar commands. For example, Mac users using zsh can replace `~/.bashrc` with `~/.zshrc`.
+Other shells have similar commands. Macs don't come preinstalled with the `realpath` utility. One way is to create an alias for `realpath` and run above commands.
+```
+alias realpath="python -c \"import os,sys; print os.path.realpath(sys.argv[1])\""
+```
+Another way is to install `coreutils` which contains `realpath` using `brew`. Make sure you have `Homebrew` installed before running below command.
+```
+brew install coreutils
+``` 
