@@ -12,6 +12,34 @@
  * limitations under the License.
  */
 
+/**
+ * This module contains Piranha's refactoring logic.
+ *
+ * Public API -
+ *
+ * RefactorEngine -
+ * Contains methods to carry out different steps of the refactoring process.
+ * Also has state variables and parameters shared across these methods.
+ *
+ * Exposed methods
+ *
+ * constructor
+ * @param {Object} ast - abstract syntax tree parsed from code
+ * @param {Object} properties - contains information about flag APIs and flag types parsed from a config file
+ * @param {Boolean} behaviour - specifies whether flag is treated or not
+ * @param {String} flagname - name of stale feature flag
+ * @param {number} max_cleanup_steps - the max number of times deep cleaning must be done
+ * @param {Boolean} print_to_console - should a message be printed after refactoring is done, default is false
+ * @param {Boolean} keep_comments - should all comments be retained, default is false
+ * @param {String} filename - the name of the source file, this argument is optional and only needed to print a helpful console message
+ *
+ * refactorPipeline
+ * Carries out the refactoring process and prints a helpful message at the end.
+ *
+ * logger
+ * A winston logger that can be configured to produce debugging output
+ */
+
 var estraverse = require('estraverse'); // Convenient API for AST traversal
 const winston = require('winston'); // logger
 const colors = require('colors');

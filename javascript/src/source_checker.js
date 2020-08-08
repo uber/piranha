@@ -12,6 +12,20 @@
  * limitations under the License.
  */
 
+/**
+ * This module checks the integrity of the source file.
+ * In particular, it checks if the file exists and has the correct format.
+ *
+ * Public API -
+ *
+ * checkSource -
+ * Checks the integrity of a JS source file and reads it to return its contents.
+ * Throws errors if the file cannot be accessed or has the incorrect format.
+ *
+ * @param {String} source_file - path to the *.js source file
+ * @returns {String} contents of source file
+ */
+
 const fs = require('fs');
 
 module.exports = {

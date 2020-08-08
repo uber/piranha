@@ -12,8 +12,21 @@
  * limitations under the License.
  */
 
+/**
+ * This module checks the integrity of the configuration file.
+ * In particular, it checks if the file exists and has the correct format.
+ *
+ * Public API -
+ *
+ * parseProperties -
+ * Checks the integrity of a JSON configuration file and parses it to return a JS Object.
+ * Throws errors if the file cannot be accessed or has the incorrect format.
+ *
+ * @param {String} properties_json - path to the *.json config file
+ * @returns {Object} parsed contents of config file
+ */
+
 const path = require('path');
-const colors = require('colors');
 const fs = require('fs');
 
 module.exports = {
@@ -32,7 +45,6 @@ module.exports = {
             if (err instanceof SyntaxError) {
                 throw new Error(`${properties_json} does not follow JSON syntax`);
             } else {
-                console.error(colors.red('Something went wrong, check below error'));
                 throw err;
             }
         }
