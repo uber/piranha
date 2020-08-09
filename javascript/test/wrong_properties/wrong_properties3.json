@@ -1,0 +1,19 @@
+{
+    "hi": [
+        {
+            "methodName": "isToggleDisabled",
+            "flagType": "control",
+            "argumentIndex": 0
+        },
+        {
+            "methodName": "isFlagTreated",
+            "flagType": "treated",
+            "argumentIndex": 0
+        },
+        {
+            "methodName": "isToggleEnabled",
+            "flagType": "treated",
+            "argumentIndex": 0
+        }
+    ]
+}

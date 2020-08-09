@@ -10,11 +10,12 @@ Feature flags are commonly used to enable gradual rollout or experiment with new
 
 Piranha is a tool to automatically refactor code related to stale flags. At a higher level, the input to the tool is the name of the flag and the expected behavior, after specifying a list of APIs related to flags in a properties file. Piranha will use these inputs to automatically refactor the code according to the expected behavior. 
 
-This repository contains three independent versions of Piranha, one for each of the three supported languages: Objective-C, Swift, and Java.
+This repository contains four independent versions of Piranha, one for each of the four supported languages: Java, JavaScript, Objective-C and Swift.
 
 To use/build each version, look under the corresponding [lang]/ directory and follow instructions in the corresponding [lang]/README.md file. Make sure to cd into that directory to build any related code following the instructions in the README. 
 
 - [PiranhaJava](java/README.md)
+- [PiranhaJS](javascript/README.md)
 - [PiranhaObjC](objc/README.md)
 - [PiranhaSwift](swift/README.md)
 
@@ -33,7 +34,7 @@ If you have any questions on how to use Piranha, please feel free to reach out t
 We'd love for you to contribute to Piranha!  Please note that once
 you create a pull request, you will be asked to sign our [Uber Contributor License Agreement](https://cla-assistant.io/uber/piranha).
 
-We are also looking for contributions to extend Piranha to other languages (C++, C#, JavaScript, Kotlin). 
+We are also looking for contributions to extend Piranha to other languages (C++, C#, Kotlin). 
 
 ## License
 Piranha is licensed under the Apache 2.0 license.  See the LICENSE file for more information.

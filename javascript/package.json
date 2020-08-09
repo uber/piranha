@@ -1,0 +1,37 @@
+{
+    "name": "piranhaJS",
+    "version": "1.0.0",
+    "description": "Overview of process to remove stale flags",
+    "main": "src/refactor.js",
+    "bin": "piranha.js",
+    "pkg": {
+        "assets": "config/properties.json"
+    },
+    "scripts": {
+        "test": "mocha",
+        "only-test": "mocha --inspect-brk test/test_refactor.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/anag004/piranhaJS.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/anag004/piranhaJS/issues"
+    },
+    "homepage": "https://github.com/anag004/piranhaJS#readme",
+    "dependencies": {
+        "argparse": "^1.0.10",
+        "chai": "^4.2.0",
+        "colors": "^1.4.0",
+        "estraverse": "^5.1.0",
+        "mocha": "^8.0.1",
+        "recast": "^0.19.1",
+        "winston": "^3.3.3"
+    },
+    "devDependencies": {
+        "eslint": "^7.6.0"
+    }
+}

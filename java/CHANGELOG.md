@@ -1,3 +1,11 @@
+Version 0.1.1
+-------------
+* Upgrade Error Prone dependency to 2.4.0 [#73]
+* Improvements to default formatting [#64] [#75]
+Add note recommending automated code formatting [#69]
+* Fail hard in the presence of configuration errors [#79]
+* (tooling) Enable NullAway for the PiranhaJava core [#62]
+
 Version 0.1.0
 -------------
 * [IMPORTANT] Switch config to structured properties.json [#39] 
