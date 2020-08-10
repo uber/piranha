@@ -1930,69 +1930,6 @@ public class XPFlagCleanerTest {
 
   /*
    * Uses "properties_test_invalid.json" instead of "properties.json".
-   * In it, the required top-level "methodProperties" is not present.
-   * As a result, refactoring will not be carried out, except for unreachable code.
-   * */
-  @Test
-  public void refactorUnreachableWhenInvalidConfigFile() throws IOException {
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
-            "     else { int b = 2;}",
-            "  if (experimentation.isFlagTreated(\"STALE_FLAG\")) { int c = 1; }",
-            "     else { int d = 2;}",
-            "  if (true) {",
-            "    int q = 1;",
-            "  }",
-            "  else {",
-            "    int w = 2;",
-            "  }",
-            "  if (false) {",
-            "    int e = 1;",
-            "  }",
-            "  else {",
-            "    int r = 2;",
-            "  }",
-            "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            "  }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  if (experimentation.isToggleEnabled(\"STALE_FLAG\")) { int a = 1; }",
-            "     else { int b = 2;}",
-            "  if (experimentation.isFlagTreated(\"STALE_FLAG\")) { int c = 1; }",
-            "     else { int d = 2;}",
-            "  int q = 1;",
-            "  int r = 2;",
-            "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            "  }",
-            "}")
-        .doTest();
-  }
-
-  /*
-   * Uses "properties_test_invalid.json" instead of "properties.json".
    * When "methodProperties" is not specified,
    * raise PiranhaConfigurationException with appropriate exception message.
    * */
@@ -2267,5 +2204,65 @@ public class XPFlagCleanerTest {
 
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());
+  }
+
+  /**
+   * This test ensures 'PiranhaConfigurationException' is propagated as en error if the
+   * configuration file is missing
+   */
+  @Test
+  public void testPiranhaCrashOnNoConfig() {
+    // Error Prone turns Runtime Exceptions inside EP into blocks of text (including the exception
+    // trace) inside a new AssertionError exception. This is actually looking for
+    // PiranhaConfigurationException inside XPFlagCleaner.
+    expectedEx.expect(AssertionError.class);
+    expectedEx.expectMessage(
+        "An unhandled exception was thrown by the Error Prone static analysis plugin");
+    expectedEx.expectMessage("PiranhaConfigurationException: Error reading config file");
+    expectedEx.expectMessage("java.io.IOException: Provided config file not found");
+
+    CompilationTestHelper compilationHelper =
+        CompilationTestHelper.newInstance(XPFlagCleaner.class, getClass());
+    compilationHelper
+        .setArgs(
+            Arrays.asList(
+                "-d",
+                temporaryFolder.getRoot().getAbsolutePath(),
+                "-XepOpt:Piranha:FlagName=noop",
+                "-XepOpt:Piranha:IsTreated=true",
+                "-XepOpt:Piranha:Config=src/test/resources/config/nonexistent_file"))
+        .addSourceLines("Dummy.java", "package com.uber.piranha;", "class Dummy {", "}")
+        .doTest();
+  }
+
+  /**
+   * This test ensures 'PiranhaConfigurationException' is propagated as en error if the
+   * configuration file is using the outdated .properties format
+   */
+  @Test
+  public void testPiranhaCrashOnOldConfig() {
+    // Error Prone turns Runtime Exceptions inside EP into blocks of text (including the exception
+    // trace) inside a new AssertionError exception. This is actually looking for
+    // PiranhaConfigurationException inside XPFlagCleaner.
+    expectedEx.expect(AssertionError.class);
+    expectedEx.expectMessage(
+        "An unhandled exception was thrown by the Error Prone static analysis plugin");
+    expectedEx.expectMessage(
+        "PiranhaConfigurationException: Invalid or incorrectly formatted config file. ");
+    expectedEx.expectMessage(
+        "WARNING: With version 0.1.0, PiranhaJava has changed its configuration file format to json");
+
+    CompilationTestHelper compilationHelper =
+        CompilationTestHelper.newInstance(XPFlagCleaner.class, getClass());
+    compilationHelper
+        .setArgs(
+            Arrays.asList(
+                "-d",
+                temporaryFolder.getRoot().getAbsolutePath(),
+                "-XepOpt:Piranha:FlagName=noop",
+                "-XepOpt:Piranha:IsTreated=true",
+                "-XepOpt:Piranha:Config=src/test/resources/config/invalid/piranha.properties"))
+        .addSourceLines("Dummy.java", "package com.uber.piranha;", "class Dummy {", "}")
+        .doTest();
   }
 }

@@ -23,7 +23,7 @@ sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 dependencies {
-  annotationProcessor "com.uber.piranha:piranha:0.1.0"
+  annotationProcessor "com.uber.piranha:piranha:0.1.1"
   errorprone "com.google.errorprone:error_prone_core:2.4.0"
   errorproneJavac "com.google.errorprone:javac:9+181-r4173-1"
 }
@@ -191,6 +191,8 @@ public class MyClass {
 
 This example is present in the [sample](https://github.com/uber/piranha/tree/master/java/sample/) directory. 
 
+IMPORTANT: Please note that the gradle build script included in that directory assumes that the sample will be built as part of the full Piranha Java build project (i.e. it depends on other gradle files within that project and assumes some setup done by them). If you wish to build the `sample` project as a standalone, you might need to recreate the `build.gradle` file included there using the instructions elsewhere in this readme.
+
 ### Maven Instructions
 
 * For the example Piranha configuration discussed above, follow steps given for the ErrorProne [example](https://github.com/google/error-prone/blob/master/examples/maven/pom.xml) to setup the `pom.xml` to run with ErrorProne.
@@ -215,7 +217,7 @@ This example is present in the [sample](https://github.com/uber/piranha/tree/mas
             <path>
               <groupId>com.uber.piranha</groupId>
               <artifactId>piranha</artifactId>
-              <version>0.1.0</version>
+              <version>0.1.1</version>
             </path>
             <path>
               <groupId>com.google.errorprone</groupId>
