@@ -1,7 +1,7 @@
 {
     "name": "piranhaJS",
-    "version": "1.0.0",
-    "description": "Overview of process to remove stale flags",
+    "version": "0.0.1",
+    "description": "Stale flag removal for JavaScript code",
     "main": "src/refactor.js",
     "bin": "piranha.js",
     "pkg": {
@@ -13,15 +13,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/anag004/piranhaJS.git"
+        "url": "git+https://github.com/uber/piranha.git"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/anag004/piranhaJS/issues"
+        "url": "https://github.com/uber/piranha/issues"
     },
-    "homepage": "https://github.com/anag004/piranhaJS#readme",
+    "homepage": "https://github.com/uber/piranha/blob/master/javascript/README.md",
     "dependencies": {
         "argparse": "^1.0.10",
         "chai": "^4.2.0",
