@@ -21,7 +21,7 @@
     "bugs": {
         "url": "https://github.com/uber/piranha/issues"
     },
-    "homepage": "https://github.com/uber/piranha#readme",
+    "homepage": "https://github.com/uber/piranha/blob/master/javascript/README.md",
     "dependencies": {
         "argparse": "^1.0.10",
         "chai": "^4.2.0",
