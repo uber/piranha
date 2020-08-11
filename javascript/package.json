@@ -11,7 +11,7 @@
         "test": "mocha",
         "only-test": "mocha --inspect-brk test/test_refactor.js",
         "prettier": "prettier --write './{src,test}/**/*.js'",
-        "format": "prettier --check './{src,test}/**/*.js'"
+        "check_format": "prettier --check './{src,test}/**/*.js'"
     },
     "husky": {
         "hooks": {

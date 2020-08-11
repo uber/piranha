@@ -20,5 +20,5 @@ jobs:
       - name: Format
         run: |
           npm ci
-          npm run format
+          npm run check_format
 
