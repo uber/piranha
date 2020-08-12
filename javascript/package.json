@@ -9,7 +9,19 @@
     },
     "scripts": {
         "test": "mocha",
-        "only-test": "mocha --inspect-brk test/test_refactor.js"
+        "only-test": "mocha --inspect-brk test/test_refactor.js",
+        "prettier": "prettier --write './{src,test}/**/*.js'",
+        "check_format": "prettier --check './{src,test}/**/*.js'"
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "lint-staged": {
+        "./{src,test}/**/*.js": [
+            "prettier --write"
+        ]
     },
     "repository": {
         "type": "git",
@@ -32,6 +44,9 @@
         "winston": "^3.3.3"
     },
     "devDependencies": {
-        "eslint": "^7.6.0"
+        "eslint": "^7.6.0",
+        "husky": "^4.2.5",
+        "lint-staged": "^10.2.11",
+        "prettier": "^2.0.5"
     }
 }
