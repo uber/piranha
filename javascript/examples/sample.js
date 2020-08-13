@@ -19,8 +19,6 @@ if (isFlagTreated(featureFlag)) {
     f2();
 }
 
-// ---------------------------------
-
 // String literal cleanup
 if (isFlagTreated('featureFlag')) {
     f1();

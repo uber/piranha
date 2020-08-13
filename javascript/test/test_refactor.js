@@ -35,20 +35,20 @@ describe('refactor', () => {
             assert(ast.body[0].expression.createdByPiranha !== undefined);
         });
 
-        const booleanLiteralReplacementSpecs = [
+        const boolean_literal_replacement_specs = [
             {
                 name: 'Identifier',
                 code: `if (isFlagTreated(testFlag)) {} else {}`,
-                expectedCode: 'if (true) {} else {}',
+                expected_code: 'if (true) {} else {}',
             },
             {
                 name: 'StringLiteral',
                 code: `if (isFlagTreated('testFlag')) {} else {}`,
-                expectedCode: 'if (true) {} else {}',
+                expected_code: 'if (true) {} else {}',
             },
         ];
 
-        booleanLiteralReplacementSpecs.forEach((spec) => {
+        boolean_literal_replacement_specs.forEach((spec) => {
             it(`should replace ${spec.name} calls to flag check APIs with boolean literals`, () => {
                 const ast = recast.parse(spec.code).program;
 
@@ -56,13 +56,13 @@ describe('refactor', () => {
                 engine.flagAPIToLiteral();
                 engine.finalizeLiterals();
 
-                const refactoredCode = recast.print(ast).code;
+                const refactored_code = recast.print(ast).code;
 
                 assert(engine.changed);
                 assert(
-                    spec.expectedCode === refactoredCode,
+                    spec.expected_code === refactored_code,
                     `\nEXPECTED : ${JSON.stringify(spec.expected_code)}\nREFACTORED : ${JSON.stringify(
-                        refactoredCode,
+                        refactored_code,
                     )}`,
                 );
             });
