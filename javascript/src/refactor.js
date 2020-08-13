@@ -332,7 +332,6 @@ class RefactorEngine {
                                 break;
                             case 'Literal':
                                 nodeArgumentIsFlag = nodeArgument.value === engine.flagname;
-                                console.log(nodeArgumentIsFlag, nodeArgument.value);
                                 break;
                         }
                         if (nodeArgumentIsFlag) {
