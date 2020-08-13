@@ -19,6 +19,13 @@ if (isFlagTreated(featureFlag)) {
     f2();
 }
 
+// String literal cleanup
+if (isFlagTreated('featureFlag')) {
+    f1();
+} else {
+    f2();
+}
+
 // Assignment cleanup
 var a = isToggleDisabled(featureFlag);
 if (a) {

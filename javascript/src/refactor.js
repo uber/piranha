@@ -325,7 +325,16 @@ class RefactorEngine {
                         const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
                         const nodeArgument = node.arguments[argumentIndex];
 
-                        if (nodeArgument.type === 'Identifier' && nodeArgument.name === engine.flagname) {
+                        let nodeArgumentIsFlag = false;
+                        switch (nodeArgument.type) {
+                            case 'Identifier':
+                                nodeArgumentIsFlag = nodeArgument.name === engine.flagname;
+                                break;
+                            case 'Literal':
+                                nodeArgumentIsFlag = nodeArgument.value === engine.flagname;
+                                break;
+                        }
+                        if (nodeArgumentIsFlag) {
                             const flagType = methodHashMap.get(node.callee.name).flagType;
                             engine.changed = true;
 

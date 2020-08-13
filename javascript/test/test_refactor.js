@@ -35,22 +35,37 @@ describe('refactor', () => {
             assert(ast.body[0].expression.createdByPiranha !== undefined);
         });
 
-        it('should replace calls to flag check APIs with boolean literals', () => {
-            const code = `if (isFlagTreated(testFlag)) {} else {}`;
-            const expected_code = `if (true) {} else {}`;
-            const ast = recast.parse(code).program;
+        const boolean_literal_replacement_specs = [
+            {
+                name: 'Identifier',
+                code: `if (isFlagTreated(testFlag)) {} else {}`,
+                expected_code: 'if (true) {} else {}',
+            },
+            {
+                name: 'StringLiteral',
+                code: `if (isFlagTreated('testFlag')) {} else {}`,
+                expected_code: 'if (true) {} else {}',
+            },
+        ];
 
-            const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
-            engine.flagAPIToLiteral();
-            engine.finalizeLiterals();
+        boolean_literal_replacement_specs.forEach((spec) => {
+            it(`should replace ${spec.name} calls to flag check APIs with boolean literals`, () => {
+                const ast = recast.parse(spec.code).program;
 
-            const refactored_code = recast.print(ast).code;
+                const engine = new refactor.RefactorEngine(ast, properties, treated, flagname);
+                engine.flagAPIToLiteral();
+                engine.finalizeLiterals();
 
-            assert(engine.changed);
-            assert(
-                expected_code === refactored_code,
-                `\nEXPECTED : ${JSON.stringify(expected_code)}\nREFACTORED : ${JSON.stringify(refactored_code)}`,
-            );
+                const refactored_code = recast.print(ast).code;
+
+                assert(engine.changed);
+                assert(
+                    spec.expected_code === refactored_code,
+                    `\nEXPECTED : ${JSON.stringify(spec.expected_code)}\nREFACTORED : ${JSON.stringify(
+                        refactored_code,
+                    )}`,
+                );
+            });
         });
     });
 
