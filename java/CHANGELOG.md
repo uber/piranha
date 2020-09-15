@@ -1,3 +1,9 @@
+Version 0.1.2
+-------------
+* Fix issue with code not being deleted across files [#99]
+* Add DisabledUnlessConfigured option [#97]
+* (repo) Update RELEASING.md instructions [#88]
+
 Version 0.1.1
 -------------
 * Upgrade Error Prone dependency to 2.4.0 [#73]
