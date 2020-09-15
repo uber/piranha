@@ -130,6 +130,15 @@ public class XPFlagCleaner extends BugChecker
    */
   private boolean initialized = false;
 
+  /**
+   * When no configuration whatsoever is provided, and -Xep:Piranha:DisabledUnlessConfigured=true,
+   * disable the checker silently. This is needed for some large multi-target builds which load the
+   * EP plug-in for a subset of targets (which makes a global `-Xep:Piranha:OFF` cause an error),
+   * but then pass the configuration to run it on a smaller subset (which will cause a
+   * PiranhaConfigurationException to be thrown for those targets in the set difference).
+   */
+  private boolean disabled = false;
+
   @Nullable private ErrorProneFlags flags = null;
 
   private String xpFlagName = "_xpflag_dummy";
@@ -201,6 +210,19 @@ public class XPFlagCleaner extends BugChecker
   @Initializer
   void init(ErrorProneFlags flags) throws PiranhaConfigurationException {
     Optional<String> s = flags.get("Piranha:FlagName");
+    Optional<String> f = flags.get("Piranha:Config");
+    if (!s.isPresent()
+        && !f.isPresent()
+        && flags.getBoolean("Piranha:DisabledUnlessConfigured").orElse(false)
+        && !flags.getBoolean("Piranha:IsTreated").isPresent()
+        && !flags.getBoolean("Piranha:TreatmentGroup").isPresent()
+        && this.defaultSeverity().equals(SUGGESTION)) {
+      // No configuration present at all, disable Piranha checker
+      disabled = true;
+      configMethodProperties = ImmutableMultimap.of();
+      return;
+    }
+
     if (s.isPresent()) {
       if (!EMPTY.equals(s.get().trim())) xpFlagName = s.get();
       isTreated = flags.getBoolean("Piranha:IsTreated").orElse(true);
@@ -209,7 +231,6 @@ public class XPFlagCleaner extends BugChecker
       throw new PiranhaConfigurationException("Piranha:FlagName is missing");
     }
 
-    Optional<String> f = flags.get("Piranha:Config");
     if (f.isPresent()) {
       String configFile = f.get();
 
@@ -337,6 +358,7 @@ public class XPFlagCleaner extends BugChecker
               + "a non-null value.");
       init(flags);
     }
+    if (disabled) return Description.NO_MATCH;
     if (countsCollected) {
       // Clear out this info
       countsCollected = false;
@@ -484,6 +506,7 @@ public class XPFlagCleaner extends BugChecker
    * Ensure that the appropriate XP API is also evaluated in the process.
    */
   private Value evalExpr(ExpressionTree tree, VisitorState state) {
+
     if (tree == null) {
       return Value.BOT;
     }
@@ -617,6 +640,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchClass(ClassTree classTree, VisitorState visitorState) {
+    if (disabled) return Description.NO_MATCH;
     Symbol.ClassSymbol classSymbol = ASTHelpers.getSymbol(classTree);
     if (classSymbol.getKind().equals(ElementKind.ENUM) && isTreatmentGroupEnum(classSymbol)) {
       treatmentGroupsEnum = classSymbol.fullname.toString();
@@ -640,6 +664,7 @@ public class XPFlagCleaner extends BugChecker
   @SuppressWarnings("TreeToString")
   @Override
   public Description matchImport(ImportTree importTree, VisitorState visitorState) {
+    if (disabled) return Description.NO_MATCH;
     if (importTree.isStatic()) {
       Tree importIdentifier = importTree.getQualifiedIdentifier();
       if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
@@ -668,6 +693,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchAssignment(AssignmentTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (tree.getExpression().getKind().equals(Kind.BOOLEAN_LITERAL) || overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -677,6 +703,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchUnary(UnaryTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -686,6 +713,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchMethodInvocation(MethodInvocationTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -702,6 +730,7 @@ public class XPFlagCleaner extends BugChecker
   @SuppressWarnings("TreeToString")
   @Override
   public Description matchBinary(BinaryTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -752,6 +781,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchExpressionStatement(ExpressionStatementTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -774,6 +804,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchReturn(ReturnTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -808,6 +839,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchVariable(VariableTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     Symbol sym = FindIdentifiers.findIdent(xpFlagName, state);
     // Check if this is the flag definition and remove it.
     if (sym != null && sym.isEnum() && sym.equals(ASTHelpers.getSymbol(tree))) {
@@ -835,6 +867,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchMethod(MethodTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
 
     for (String name : handledAnnotations) {
       AnnotationTree at =
@@ -871,6 +904,7 @@ public class XPFlagCleaner extends BugChecker
   @Override
   public Description matchConditionalExpression(
       ConditionalExpressionTree tree, VisitorState state) {
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -906,7 +940,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchIf(IfTree ifTree, VisitorState visitorState) {
-
+    if (disabled) return Description.NO_MATCH;
     if (overLaps(ifTree, visitorState)) {
       return Description.NO_MATCH;
     }
