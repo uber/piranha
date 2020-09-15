@@ -2265,4 +2265,80 @@ public class XPFlagCleanerTest {
         .addSourceLines("Dummy.java", "package com.uber.piranha;", "class Dummy {", "}")
         .doTest();
   }
+
+  @Test
+  public void testMultipleClonesAcrossFiles() throws IOException {
+    // This test mostly ensures we aren't persisting state (such as overlap check state) between
+    // compilation units in a way that will fail to clean similar code across multiple files.
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {", // Ideally we would remove this too, fix later
+            "}")
+        // Order is back to front: the following refactoring will fail before this commit (clearing
+        // endPos)...
+        .addInputLines(
+            "XPFlagCleanerSinglePositiveCase1.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class XPFlagCleanerSinglePositiveCase1 {",
+            " private XPTest experimentation;",
+            " public void foo() {",
+            "  // BUG: Diagnostic contains: Cleans stale XP flags",
+            "  if (experimentation.isToggleDisabled(STALE_FLAG)) {",
+            "     System.err.println(\"To be removed\");",
+            "  }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase1.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerSinglePositiveCase1 {",
+            " private XPTest experimentation;",
+            " public void foo() {",
+            " }",
+            "}")
+        // ... while this identical refactoring succeeds:
+        .addInputLines(
+            "XPFlagCleanerSinglePositiveCase2.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class XPFlagCleanerSinglePositiveCase2 {",
+            " private XPTest experimentation;",
+            " public void foo() {",
+            "  // BUG: Diagnostic contains: Cleans stale XP flags",
+            "  if (experimentation.isToggleDisabled(STALE_FLAG)) {",
+            "     System.err.println(\"To be removed\");",
+            "  }",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase2.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerSinglePositiveCase2 {",
+            " private XPTest experimentation;",
+            " public void foo() {",
+            " }",
+            "}")
+        .doTest();
+  }
 }
