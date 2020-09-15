@@ -19,7 +19,7 @@ import SwiftSyntax
 
 // groupname is optional. the other arguments are necessary
 class StaleFlagCleanerLauncher: CommandLauncher {
-    let command: Command = .cleanupStaleFlags
+     let command: Command = .cleanupStaleFlags
 
     func launch(_ args: [String]) throws {
         var sourceFile = URL(fileURLWithPath: "")

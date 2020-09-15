@@ -127,6 +127,8 @@ class SwiftExamples {
     private let fieldY: Bool
     private let fieldZ: Bool
 
+    private lazy var fieldA: Bool = !cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
+
     func test_expressions() {
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
@@ -196,6 +198,12 @@ class SwiftExamples {
         y = cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
         y = cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) && x
         y = cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) || x
+        
+        if fieldA {
+            print("1")
+        } else {
+            print("2")
+        }
 
         guard cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) else {
             print("not treated / control")
@@ -215,7 +223,7 @@ class SwiftExamples {
         xyz = getParam(abc)
         getParam(p1)
         getParam(p2)
-        getParam(xyz) 
+        getParam(xyz)
     }
 
 
@@ -484,9 +492,8 @@ class SwiftExamples {
         }
 
         var v = cachedExperiments?.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) ?? false
-        v = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_experiment) ?? false
-
-        v = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_second_experiment) ?? false
+        v1 = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_experiment) ?? false
+        v2 = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_second_experiment) ?? false
     }
 
     private let conj1: Bool
@@ -505,7 +512,7 @@ class SwiftExamples {
     private var shouldDoSomething: Bool {
         return cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
     }
-
+    
     private let engineeringFlags: [ExperimentNamesLoyalty] = [
         .loyalty_credits_purchase_selection_rib_refactor,
         .loyalty_card_banner_impression_fix,

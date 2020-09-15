@@ -52,6 +52,9 @@ class XPFlagCleaner: SyntaxRewriter {
 
     private var configFile: URL
     private var configurationParsed: Bool = false
+    
+    private var SELFDOT: String = "self."
+    private var UNKNOWN: String = "unknown"
 
     private var flagAPIArr: [FlagAPI] = []
     private var valueMap = [String: Value]()
@@ -156,8 +159,8 @@ class XPFlagCleaner: SyntaxRewriter {
     }
 
     // given an argument list, get the argument at a specified index
-    private func argument(arglist args: FunctionCallArgumentListSyntax,
-                          _ index: Int) -> FunctionCallArgumentSyntax? {
+    private func argument(arglist args: TupleExprElementListSyntax,
+                          _ index: Int) -> TupleExprElementSyntax? {
         for (loopindex, argument) in args.enumerated() {
             if loopindex == index {
                 return argument
@@ -183,7 +186,7 @@ class XPFlagCleaner: SyntaxRewriter {
                        name: String, at index: Int) -> Bool {
         if node.argumentList.count > 0,
             let argument = argument(arglist: node.argumentList, index),
-            let expr = argument.expression as? MemberAccessExprSyntax,
+            let expr = MemberAccessExprSyntax.init(Syntax(argument.expression)),
             expr.name.description == name {
             return true
         }
@@ -218,7 +221,7 @@ class XPFlagCleaner: SyntaxRewriter {
         var lastNodeIsReturn = false
         for statement in stmts {
             result = result.appending(statement)
-            if statement.item is ReturnStmtSyntax {
+            if let _ = ReturnStmtSyntax.init(statement.item) {
                 lastNodeIsReturn = true
                 break
             }
@@ -277,74 +280,72 @@ class XPFlagCleaner: SyntaxRewriter {
         if isDeepCleanPass, let value = deepCleanMap[string(of: node)] {
             return value
         }
-
+       
         // if the expression is previously evaluated in the current pass, return the value
         if let value = valueMap[node.description] {
             return value
         }
-
-        switch node {
-        // handles "true" or "false"
-        case let node as BooleanLiteralExprSyntax:
-            if node.booleanLiteral.tokenKind == TokenKind.trueKeyword {
+        
+        if let booleanNode = BooleanLiteralExprSyntax.init(node) {
+            // handles "true" or "false"
+            if booleanNode.booleanLiteral.tokenKind == TokenKind.trueKeyword {
                 return Value.isTrue
             }
             return Value.isFalse
-
-        // handles negation
-        case let node as PrefixOperatorExprSyntax:
-            if node.operatorToken?.tokenKind == TokenKind.prefixOperator("!") {
-                let value = evaluate(expression: node.postfixExpression)
+        }
+        else if let prefixOperatorNode = PrefixOperatorExprSyntax.init(node) {
+            // handles negation
+            if prefixOperatorNode.operatorToken?.tokenKind == TokenKind.prefixOperator("!") {
+                let value = evaluate(expression: Syntax(prefixOperatorNode.postfixExpression))
                 if value == Value.isTrue {
-                    return cache(expression: node, with: Value.isFalse)
+                    return cache(expression: Syntax(prefixOperatorNode), with: Value.isFalse)
                 } else if value == Value.isFalse {
-                    return cache(expression: node, with: Value.isTrue)
+                    return cache(expression: Syntax(prefixOperatorNode), with: Value.isTrue)
                 }
             }
-            return cache(expression: node, with: Value.isBot)
-
-        // handles condition element lists
-        case let node as ConditionElementListSyntax:
-            for element in node {
+            return cache(expression: Syntax(prefixOperatorNode), with: Value.isBot)
+        } else if let initializerNode = InitializerClauseSyntax.init(node) {
+            if let _ = BooleanLiteralExprSyntax.init(Syntax(initializerNode.value)) {
+                return Value.isBot
+            }
+            return evaluate(expression: Syntax(initializerNode.value))
+        } else if let conditionElementListNode = ConditionElementListSyntax.init(node) {
+            // handles condition element lists
+            for element in conditionElementListNode {
                 let value = evaluate(expression: element.condition)
                 // if there is only one element in the condition, just return its value
                 // if there are multiple elements and one of them is false, return that
-                if node.count == 1 || value == Value.isFalse {
-                    return cache(expression: node, with: value)
+                if conditionElementListNode.count == 1 || value == Value.isFalse {
+                    return cache(expression: Syntax(conditionElementListNode), with: value)
                 }
             }
-
-        // handles flag API calls
-        case let node as FunctionCallExprSyntax:
-            let api = flagApiType(of: node)
+        } else if let functionCallExprNode = FunctionCallExprSyntax.init(node) {
+            // handles flag API calls
+            let api = flagApiType(of: functionCallExprNode)
             var value = Value.isBot
             if (api == API.isTreated) || (api == API.isInTreatmentGroup) {
                 value = (isTreated ? Value.isTrue : Value.isFalse)
             } else if (api == API.isInControlGroup) || (api == API.isControl) {
                 value = (isTreated ? Value.isFalse : Value.isTrue)
             }
-            return cache(expression: node, with: value)
-
-        // handles sequence expressions
-        // examples include:
-        // a && b || c && d
-        // a = b && c || d
-        // a ?? b, etc
-        case let node as SequenceExprSyntax:
-            return cache(expression: node, with: evaluate(sequence: node))
-
-        // handle (a)
-        case let node as TupleExprSyntax:
+            return cache(expression: Syntax(functionCallExprNode), with: value)
+        } else if let sequenceExprNode = SequenceExprSyntax.init(node) {
+            // handles sequence expressions
+            // examples include:
+            // a && b || c && d
+            // a = b && c || d
+            // a ?? b, etc
+            return cache(expression: sequenceExprNode._syntaxNode, with: evaluate(sequence: sequenceExprNode))
+        } else if let tupleExprNode = TupleExprSyntax.init(node) {
+            // handle (a)
             // TODO: Is there a better way of getting the first element from this collection?
-            if let firstChild = node.elementList.first(where: { $0.indexInParent == 0 }) {
-                return cache(expression: node, with: evaluate(expression: firstChild.expression))
+            if let firstChild = tupleExprNode.elementList.first(where: { $0.indexInParent == 0 }) {
+                return cache(expression: Syntax(tupleExprNode), with: evaluate(expression: Syntax(firstChild.expression)))
             }
-
-        // for all other cases, cache bot val
-        default:
+        } else {
+            // for all other cases, cache bot val
             return cache(expression: node, with: Value.isBot)
         }
-
         return Value.isBot
     }
 
@@ -352,15 +353,18 @@ class XPFlagCleaner: SyntaxRewriter {
     private func evaluate(sequence expr: SequenceExprSyntax) -> Value {
         if expr.elements.count == 1,
             let onlyElement = element(from: expr.elements, at: 0) {
-            return evaluate(expression: onlyElement)
+            return evaluate(expression: Syntax(onlyElement))
         }
 
         for (index, expression) in expr.elements.enumerated() {
-            if expression is AssignmentExprSyntax || expression is TernaryExprSyntax {
+            if let _ = AssignmentExprSyntax.init(Syntax(expression)) {
+                return Value.isBot
+            }
+            if let _ = TernaryExprSyntax.init(Syntax(expression)) {
                 return Value.isBot
             }
 
-            if let binaryExpr = expression as? BinaryOperatorExprSyntax {
+            if let binaryExpr = BinaryOperatorExprSyntax.init(Syntax(expression)) {
                 let opKind = findOperator(from: binaryExpr)
                 if opKind == Operator.and || opKind == Operator.or {
                     let lhs = prefix(from: expr.elements, upto: index)
@@ -370,7 +374,7 @@ class XPFlagCleaner: SyntaxRewriter {
                         return result
                     }
                 } else if opKind == Operator.nilcoalesc {
-                    return evaluate(expression: element(from: expr.elements, at: 0)!)
+                    return evaluate(expression: Syntax(element(from: expr.elements, at: 0)!))
                 }
             }
         }
@@ -379,8 +383,8 @@ class XPFlagCleaner: SyntaxRewriter {
 
     // evaluate a binary expression, given lhs value, rhs value and the operation kind
     private func evaluate(lhs: ExprListSyntax, rhs: ExprListSyntax, kind opKind: Operator) -> Value {
-        let lhsVal = evaluate(expression: SyntaxFactory.makeSequenceExpr(elements: lhs))
-        let rhsVal = evaluate(expression: SyntaxFactory.makeSequenceExpr(elements: rhs))
+        let lhsVal = evaluate(expression: Syntax(SyntaxFactory.makeSequenceExpr(elements: lhs)))
+        let rhsVal = evaluate(expression: Syntax(SyntaxFactory.makeSequenceExpr(elements: rhs)))
 
         if opKind == Operator.or {
             if lhsVal == Value.isTrue || rhsVal == Value.isTrue {
@@ -411,11 +415,11 @@ class XPFlagCleaner: SyntaxRewriter {
         let value = flagName + ".rawValue"
 
         for statement in node.statements {
-            if let returnNode = statement.item as? ReturnStmtSyntax {
+            if let returnNode = ReturnStmtSyntax.init(statement.item) {
                 if returnNode.description.contains(key) || returnNode.description.contains(value) {
                     return true
                 }
-            } else if let ifNode = statement.item as? IfStmtSyntax {
+            } else if let ifNode = IfStmtSyntax.init(statement.item) {
                 if ifNode.description.contains(key) || ifNode.description.contains(value) {
                     return true
                 }
@@ -430,9 +434,9 @@ class XPFlagCleaner: SyntaxRewriter {
 
         // evaluate the sequence. if it is a bot, explore possibility of further simplification within itself
         // e.g., a && true is a bot, but can be reduced to a
-        let value = evaluate(expression: sequence)
+        let value = evaluate(expression: Syntax(sequence))
         if value == Value.isBot,
-            let updated = simplify(node: sequence) as? SequenceExprSyntax {
+            let updated = SequenceExprSyntax.init(Syntax(simplify(node: sequence))) {
             return (updated.elements, value)
         }
         // unable to do any further simplification
@@ -489,7 +493,7 @@ class XPFlagCleaner: SyntaxRewriter {
             }
         }
 
-        let v = evaluate(expression: node.conditionExpression)
+        let v = evaluate(expression: Syntax(node.conditionExpression))
         switch v {
         case Value.isTrue:
             result = result.appending(node.firstChoice)
@@ -500,21 +504,33 @@ class XPFlagCleaner: SyntaxRewriter {
         }
         return result
     }
+    
+    private func updateFieldMap(with key: String) {
+        fieldMap[key] = true
+        fieldMap[SELFDOT + key] = true
+    }
+    
+    private func updateDeepCleanMap(with key: String, value val: Value) {
+        shouldDeepClean = true
+        deepCleanMap[key] = val
+        deepCleanMap[SELFDOT + key] = val
+    }
 
     // Used for simplifying assignments
     // This function needs to be refactored, especially the DeepCleanPass parts
     private func simplify(assignment exprlist: ExprListSyntax) -> ExprListSyntax {
         let lhs = element(from: exprlist, at: 0)!
-
         if isDeepCleanPass {
             var key: String?
-            if let memberAccessExpr = lhs as? MemberAccessExprSyntax {
-                key = string(of: memberAccessExpr)
-            } else if let identifierExpr = lhs as? IdentifierExprSyntax {
-                key = "self." + string(of: identifierExpr)
+            if let memberAccessExpr = MemberAccessExprSyntax.init(Syntax(lhs)) {
+                key = string(of: Syntax(memberAccessExpr))
+            } else if let identifierExpr = IdentifierExprSyntax.init(Syntax(lhs)) {
+                key = SELFDOT + string(of: Syntax(identifierExpr))
             }
 
-            if let key = key, deepCleanMap.keys.contains(key) {
+            if deepCleanMap.keys.contains(key ?? UNKNOWN) {
+                // FIXME: currently, refactors even new definitions in the deep clean pass if the
+                // variable was simplified in the previous pass.
                 return SyntaxFactory.makeBlankExprList()
             }
         }
@@ -523,7 +539,7 @@ class XPFlagCleaner: SyntaxRewriter {
         for (loopindex, expr) in exprlist.enumerated() {
             // the rhs of the assignment containing the closureexpression.
             if loopindex > 1 {
-                if let closureExpr = expr as? ClosureExprSyntax,
+                if let closureExpr = ClosureExprSyntax.init(Syntax(expr)),
                     evaluate(node: closureExpr) {
                     // if the closure expression evaluates to true,
                     // (i.e., contains the flag name .asString/.rawValue)
@@ -539,37 +555,35 @@ class XPFlagCleaner: SyntaxRewriter {
         // The resultant refactoring will delete the entire assignment
         if rhs.count == 1 {
             if let node = element(from: exprlist, at: 2),
-                let callExpr = node as? FunctionCallExprSyntax {
+                let callExpr = FunctionCallExprSyntax.init(Syntax(node)) {
                 if flagApiType(of: callExpr) == API.isTesting {
                     return SyntaxFactory.makeBlankExprList()
                 } else {
-                    let rhsValue = evaluate(expression: node)
-
+                    let rhsValue = evaluate(expression: Syntax(node))
+                  
                     // if it is the initial pass, then update the deepCleanMap because there is
                     // an assignment that evaluated to true or false, and all accesses of that
                     // lhs should also be evaluated appropriately for further cleanup
                     if !isDeepCleanPass, rhsValue != Value.isBot {
-                        if let memberAccessExpr = lhs as? MemberAccessExprSyntax {
+                        if let memberAccessExpr = MemberAccessExprSyntax.init(Syntax(lhs)) {
                             shouldDeepClean = true
 
                             // TODO: Comment on why each key is being put in the deepCleanMap
-                            var key = string(of: memberAccessExpr)
+                            var key = string(of: Syntax(memberAccessExpr))
                             deepCleanMap[key] = rhsValue // put in qualified fieldName
 
-                            key = string(of: memberAccessExpr.name)
+                            key = string(of: Syntax(memberAccessExpr.name))
                             deepCleanMap[key] = rhsValue // put in fieldName
-                        } else if let identifierExpr = lhs as? IdentifierExprSyntax {
-                            shouldDeepClean = true
-
-                            let key = string(of: identifierExpr)
-                            deepCleanMap[key] = rhsValue
-                            deepCleanMap["self." + key] = rhsValue
+                        } else if let identifierExpr = IdentifierExprSyntax.init(Syntax(lhs)) {
+                            let key = string(of: Syntax(identifierExpr))
+                            updateDeepCleanMap(with: key, value: rhsValue)
                         }
                     }
                 }
             }
         }
 
+        
         if let assignment = element(from: exprlist, at: 1) {
             let rhsSequence = SyntaxFactory.makeSequenceExpr(elements: rhs)
             return SyntaxFactory.makeExprList([lhs, assignment, simplify(node: rhsSequence)])
@@ -581,26 +595,26 @@ class XPFlagCleaner: SyntaxRewriter {
 
     // helper to handle seq expression
     private func simplify(node: SequenceExprSyntax) -> ExprSyntax {
-        let value = evaluate(expression: node)
+        let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword())
+            return ExprSyntax.init(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword()))
         case Value.isFalse:
-            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword())
+            return ExprSyntax.init(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword()))
         case Value.isBot:
             var result = SyntaxFactory.makeBlankExprList()
-
             for (index, expr) in node.elements.enumerated() {
-                if let _ = expr as? AssignmentExprSyntax {
+                if InitializerClauseSyntax.init(Syntax(expr)) != nil ||
+                AssignmentExprSyntax.init(Syntax(expr)) != nil {
                     result = simplify(assignment: node.elements)
                     if result.count == 0 {
-                        return SyntaxFactory.makeBlankSequenceExpr()
+                        return ExprSyntax.init(SyntaxFactory.makeBlankSequenceExpr())
                     }
-                } else if let binaryExpr = expr as? BinaryOperatorExprSyntax {
+                } else if let binaryExpr = BinaryOperatorExprSyntax.init(Syntax(expr)) {
                     let opKind = findOperator(from: binaryExpr)
                     result = simplify(exprlist: node.elements, containing: opKind, at: index)
                     return super.visit(node.withElements(result))
-                } else if let ternaryExpr = expr as? TernaryExprSyntax {
+                } else if let ternaryExpr = TernaryExprSyntax.init(Syntax(expr)) {
                     result = simplify(exprlist: node.elements, ternary: ternaryExpr, at: index)
                     return super.visit(node.withElements(result))
                 }
@@ -649,10 +663,11 @@ class XPFlagCleaner: SyntaxRewriter {
         }
         return super.visit(newNode)
     }
+    
 
-    override func visit(_ node: EnumDeclSyntax) -> DeclSyntax {
+   override func visit(_ node: EnumDeclSyntax) -> DeclSyntax {
         if node.identifier.description == flagName {
-            return SyntaxFactory.makeBlankEnumDecl()
+            return DeclSyntax.init(SyntaxFactory.makeBlankEnumDecl())
         }
         return super.visit(node)
     }
@@ -686,7 +701,7 @@ class XPFlagCleaner: SyntaxRewriter {
 
         // TODO: Is there a better way of getting the first element from this sequence?
         if let firstElement = node.elements.first(where: { $0.indexInParent == 0 }),
-            flagName == string(of: firstElement),
+            flagName == string(of: Syntax(firstElement)),
             let indexInParent = indexInParent {
             caseIndex = indexInParent + 1
             if let leadingTrivia = node.leadingTrivia, !leadingTrivia.first.debugDescription.contains("\n") {
@@ -703,7 +718,7 @@ class XPFlagCleaner: SyntaxRewriter {
               // comment2
               case stale_flag
              */
-            return SyntaxFactory.makeBlankEnumCaseDecl()
+            return DeclSyntax.init(SyntaxFactory.makeBlankEnumCaseDecl())
         }
 
         // this will handle the leading trivia for the next token.
@@ -746,11 +761,9 @@ class XPFlagCleaner: SyntaxRewriter {
         // update the list of possible fields that is used to filter the deepCleanMap
         if !isDeepCleanPass {
             for member in node.members {
-                if let variableDecl = member.decl as? VariableDeclSyntax {
+                if let variableDecl = VariableDeclSyntax.init(Syntax(member.decl)) {
                     for binding in variableDecl.bindings {
-                        let key = string(of: binding.pattern)
-                        fieldMap[key] = true
-                        fieldMap["self." + key] = true
+                        updateFieldMap(with: string(of: Syntax(binding.pattern)))
                     }
                 }
             }
@@ -760,19 +773,26 @@ class XPFlagCleaner: SyntaxRewriter {
 
     override func visit(_ node: VariableDeclSyntax) -> DeclSyntax {
         for binding in node.bindings {
-            if isDeepCleanPass, deepCleanMap.keys.contains("self." + string(of: binding.pattern)) {
-                return SyntaxFactory.makeBlankVariableDecl()
+            if isDeepCleanPass, deepCleanMap.keys.contains(SELFDOT + string(of: Syntax(binding.pattern))) {
+                return visit(SyntaxFactory.makeBlankVariableDecl())
             }
 
             if let rhs = binding.initializer {
-                if let value = rhs.value as? FunctionCallExprSyntax {
-                    if (flagApiType(of: value) == API.isTesting) || (evaluate(expression: value) != Value.isBot) {
-                        return SyntaxFactory.makeBlankVariableDecl()
+                let rhsValue = evaluate(expression: Syntax(rhs))
+                if rhsValue != Value.isBot {
+                    let key = string(of: Syntax(binding.pattern))
+                    updateFieldMap(with: key)
+                    updateDeepCleanMap(with: key, value: rhsValue)
+                    return visit(SyntaxFactory.makeBlankVariableDecl())
+                }
+                if let value = FunctionCallExprSyntax.init(Syntax(rhs.value)) {
+                    if (flagApiType(of: value) == API.isTesting) || (evaluate(expression: Syntax(rhs.value)) != Value.isBot) {
+                        return visit(SyntaxFactory.makeBlankVariableDecl())
                     }
                 }
-                if let value = rhs.value as? MemberAccessExprSyntax,
+                if let value = MemberAccessExprSyntax.init(Syntax(rhs.value)),
                     value.description.hasSuffix(flagName) {
-                    return SyntaxFactory.makeBlankVariableDecl()
+                    return visit(SyntaxFactory.makeBlankVariableDecl())
                 }
             }
         }
@@ -780,12 +800,12 @@ class XPFlagCleaner: SyntaxRewriter {
     }
 
     override func visit(_ node: FunctionCallExprSyntax) -> ExprSyntax {
-        let value = evaluate(expression: node)
+        let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword())
+            return visit(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword()))
         case Value.isFalse:
-            return SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword())
+            return visit(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword()))
         case Value.isBot:
             return super.visit(node)
         }
@@ -796,23 +816,23 @@ class XPFlagCleaner: SyntaxRewriter {
         var lastNodeIsReturn = false
 
         for statement in node {
-            if let ifNode = statement.item as? IfStmtSyntax {
-                let value = evaluate(expression: ifNode.conditions)
-
+            if let ifNode = IfStmtSyntax.init(statement.item) {
+                let value = evaluate(expression: Syntax(ifNode.conditions))
                 switch value {
                 case Value.isBot: newBody = newBody.appending(statement)
                 case Value.isTrue:
                     (newBody, lastNodeIsReturn) = append(node: newBody, with: ifNode.body.statements)
                 case Value.isFalse:
-                    if let elseBody = ifNode.elseBody as? CodeBlockSyntax {
+                    if let elseBodyNode = ifNode.elseBody,
+                       let elseBody = CodeBlockSyntax.init(Syntax(elseBodyNode)) {
                         (newBody, lastNodeIsReturn) = append(node: newBody, with: elseBody.statements)
                     }
                 }
                 if lastNodeIsReturn {
                     return super.visit(newBody)
                 }
-            } else if let guardNode = statement.item as? GuardStmtSyntax {
-                let value = evaluate(expression: guardNode.conditions)
+            } else if let guardNode = GuardStmtSyntax.init(statement.item) {
+                let value = evaluate(expression: Syntax(guardNode.conditions))
                 switch value {
                 case Value.isBot: newBody = newBody.appending(statement)
                 case Value.isTrue:
@@ -823,7 +843,8 @@ class XPFlagCleaner: SyntaxRewriter {
                         return super.visit(newBody)
                     }
                 }
-            } else if let callNode = statement.item as? FunctionCallExprSyntax, flagApiType(of: callNode) == API.isTesting {
+            } else if let callNode = FunctionCallExprSyntax.init(statement.item),
+                flagApiType(of: callNode) == API.isTesting {
                 // do nothing, as the test API needs to be discarded
             } else {
                 newBody = newBody.appending(statement)
@@ -852,6 +873,6 @@ class XPFlagCleaner: SyntaxRewriter {
     }
 
     func deepClean() -> Bool {
-        shouldDeepClean
+        return shouldDeepClean
     }
 }

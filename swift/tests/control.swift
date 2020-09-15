@@ -139,6 +139,7 @@ class SwiftExamples {
         y = false
         y = false
         y = x
+        print("1")
         print("not treated / control")
         return
     }
@@ -245,10 +246,9 @@ class SwiftExamples {
             print("control1")
         }
 
-        var v = false
-        v = true
+        v1 = true
 
-        v = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_second_experiment) ?? false
+        v2 = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_second_experiment) ?? false
     }
 
     private let conj1: Bool
