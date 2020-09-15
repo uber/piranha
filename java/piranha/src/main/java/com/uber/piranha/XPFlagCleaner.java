@@ -359,6 +359,7 @@ public class XPFlagCleaner extends BugChecker
       init(flags);
     }
     if (disabled) return Description.NO_MATCH;
+    endPos = DONTCARE; // Important: reset end position for calculating overlaps between files/CUs
     if (countsCollected) {
       // Clear out this info
       countsCollected = false;
