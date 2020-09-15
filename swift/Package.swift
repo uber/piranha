@@ -25,7 +25,7 @@ let package = Package(
         .macOS(.v10_14),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-syntax.git", .exact("0.50100.0")),
+        .package(url: "https://github.com/apple/swift-syntax.git", .exact("0.50200.0")),
     ],
     targets: [
         .target(

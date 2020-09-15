@@ -174,9 +174,10 @@ class SwiftExamples {
         y = true
         y = x
         y = true
-
+        print("2")
+        
         print("treated")
-
+      
         while true {
 
         }
@@ -330,10 +331,9 @@ class SwiftExamples {
             print("control1")
         }
 
-        var v = true
-        v = false
+        v1 = false
 
-        v = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_second_experiment) ?? false
+        v2 = cachedExperiments?.isInControlGroup(forExperiment: ExperimentNamesSwift.test_second_experiment) ?? false
     }
 
     private let conj1: Bool
