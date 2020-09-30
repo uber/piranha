@@ -45,6 +45,7 @@ import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewArrayTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
@@ -866,6 +867,10 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  private boolean isCheckedXPFlagName(ExpressionTree tree) {
+    return ASTHelpers.getSymbol(tree).getQualifiedName().toString().endsWith(xpFlagName);
+  }
+
   @Override
   public Description matchMethod(MethodTree tree, VisitorState state) {
     if (disabled) return Description.NO_MATCH;
@@ -878,16 +883,67 @@ public class XPFlagCleaner extends BugChecker
         for (ExpressionTree et : at.getArguments()) {
           if (et.getKind() == Kind.ASSIGNMENT) {
             AssignmentTree assn = (AssignmentTree) et;
-            if (ASTHelpers.getSymbol(assn.getExpression())
-                .getQualifiedName()
-                .toString()
-                .endsWith(xpFlagName)) {
+            Kind assnExprKind = assn.getExpression().getKind();
+            boolean deleteAnnotation = false;
+            boolean deleteMethod = false;
+            switch (assnExprKind) {
+              case IDENTIFIER: // Fallthrough
+              case MEMBER_SELECT:
+                if (isCheckedXPFlagName(assn.getExpression())) {
+                  if (isTreated) {
+                    deleteAnnotation = true;
+                  } else {
+                    deleteMethod = true;
+                  }
+                }
+                break;
+              case NEW_ARRAY:
+                // For each in the array
+                NewArrayTree arrayExpression = (NewArrayTree) assn.getExpression();
+                if (arrayExpression.getInitializers().size() == 1) {
+                  // Array contains a single XP flag, treat as a direct assignment.
+                  if (isCheckedXPFlagName(arrayExpression.getInitializers().get(0))) {
+                    if (isTreated) {
+                      deleteAnnotation = true;
+                    } else {
+                      deleteMethod = true;
+                    }
+                  }
+                } else {
+                  // Method is testing multiple XP flags
+                  for (ExpressionTree expr : arrayExpression.getInitializers()) {
+                    if (isCheckedXPFlagName(expr)) {
+                      if (isTreated) {
+                        // Special: delete just this flag from the array list, leave the annotation
+                        return buildDescription(tree).addFix(SuggestedFix.delete(expr)).build();
+                      } else {
+                        deleteMethod = true;
+                      }
+                      break;
+                    }
+                  }
+                }
+                break;
+              default:
+                throw new Error(
+                    "Unexpected value type inside treated field of ExperimentTest annotation: "
+                        + state.getSourceForNode(assn)
+                        + " (kind: "
+                        + assnExprKind.toString()
+                        + ")");
+            }
+            Preconditions.checkArgument(
+                !(deleteAnnotation && deleteMethod),
+                "Confused clean up action: XP dependent tests should either be cleaned up by removing "
+                    + "the method or editing the annotation, not both.");
+            if (deleteAnnotation || deleteMethod) {
               Description.Builder builder = buildDescription(tree);
               SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
-              if (isTreated) {
+              if (deleteAnnotation) {
                 fixBuilder.delete(at);
                 decrementAllSymbolUsages(at, state, fixBuilder);
               } else {
+                // deleteMethod == true
                 fixBuilder.delete(tree);
                 decrementAllSymbolUsages(tree, state, fixBuilder);
               }
