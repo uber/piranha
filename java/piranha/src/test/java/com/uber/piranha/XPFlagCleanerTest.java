@@ -2341,4 +2341,187 @@ public class XPFlagCleanerTest {
             "}")
         .doTest();
   }
+
+  private BugCheckerRefactoringTestHelper addToggleTestingAnnotationHelperClass(
+      BugCheckerRefactoringTestHelper bcr) {
+    return bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG,",
+            " OTHER_FLAG_1,",
+            " OTHER_FLAG_2,",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG_1,",
+            " OTHER_FLAG_2,",
+            "}")
+        .addInputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            "}")
+        .addOutputLines(
+            "ToggleTesting.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "@Retention(RetentionPolicy.RUNTIME)",
+            "@Target({ElementType.METHOD})",
+            "@interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            "}");
+  }
+
+  @Test
+  public void testAnnotatedTestMethodsSimpleNameImportTreated() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @ToggleTesting(treated = STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  public void x () {}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testAnnotatedTestMethodsSimpleNameImportControl() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @ToggleTesting(treated = STALE_FLAG)",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testAnnotatedTestMethodsArrayExpressionTreated() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @ToggleTesting(treated = {OTHER_FLAG_1, STALE_FLAG})",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @ToggleTesting(treated = {OTHER_FLAG_1})",
+            "  public void x () {}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testAnnotatedTestMethodsArrayExpressionControl() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @ToggleTesting(treated = {OTHER_FLAG_1, STALE_FLAG})",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            // Ideally should be removed too: (GJF will do it, though :) )
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "}")
+        .doTest();
+  }
 }
