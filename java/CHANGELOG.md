@@ -1,3 +1,8 @@
+Version 0.1.3
+-------------
+* Support array expressions in ExperimentTest annotations [#100]
+   - Fixes crash when processing `@ExperimentTest(treated={...})`
+
 Version 0.1.2
 -------------
 * Fix issue with code not being deleted across files [#99]
@@ -8,7 +13,7 @@ Version 0.1.1
 -------------
 * Upgrade Error Prone dependency to 2.4.0 [#73]
 * Improvements to default formatting [#64] [#75]
-Add note recommending automated code formatting [#69]
+   - Add note recommending automated code formatting [#69]
 * Fail hard in the presence of configuration errors [#79]
 * (tooling) Enable NullAway for the PiranhaJava core [#62]
 
