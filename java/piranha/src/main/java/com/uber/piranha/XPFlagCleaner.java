@@ -672,6 +672,10 @@ public class XPFlagCleaner extends BugChecker
       if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
         MemberSelectTree memberSelectTree = (MemberSelectTree) importIdentifier;
         String[] fullyQualifiedNameParts = memberSelectTree.getIdentifier().toString().split("\\.");
+        Preconditions.checkArgument(
+            fullyQualifiedNameParts.length > 0,
+            "String.split should never produce a zero-length array. "
+                + "The worst case should be the original string wrapped in a length 1 array.");
         String importSimpleName = fullyQualifiedNameParts[fullyQualifiedNameParts.length - 1];
         if (importSimpleName.equals(xpFlagName)
             || (treatmentGroupsEnum != null
