@@ -671,7 +671,13 @@ public class XPFlagCleaner extends BugChecker
       Tree importIdentifier = importTree.getQualifiedIdentifier();
       if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
         MemberSelectTree memberSelectTree = (MemberSelectTree) importIdentifier;
-        if (memberSelectTree.getIdentifier().toString().endsWith(xpFlagName)
+        String[] fullyQualifiedNameParts = memberSelectTree.getIdentifier().toString().split("\\.");
+        Preconditions.checkArgument(
+            fullyQualifiedNameParts.length > 0,
+            "String.split should never produce a zero-length array. "
+                + "The worst case should be the original string wrapped in a length 1 array.");
+        String importSimpleName = fullyQualifiedNameParts[fullyQualifiedNameParts.length - 1];
+        if (importSimpleName.equals(xpFlagName)
             || (treatmentGroupsEnum != null
                 && memberSelectTree.getExpression().toString().startsWith(treatmentGroupsEnum))) {
           return buildDescription(importTree)
@@ -868,7 +874,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   private boolean isCheckedXPFlagName(ExpressionTree tree) {
-    return ASTHelpers.getSymbol(tree).getQualifiedName().toString().endsWith(xpFlagName);
+    return ASTHelpers.getSymbol(tree).getSimpleName().contentEquals(xpFlagName);
   }
 
   @Override
