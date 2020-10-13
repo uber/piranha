@@ -870,7 +870,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   private boolean isCheckedXPFlagName(ExpressionTree tree) {
-    return ASTHelpers.getSymbol(tree).getQualifiedName().toString().endsWith(xpFlagName);
+    return ASTHelpers.getSymbol(tree).getSimpleName().contentEquals(xpFlagName);
   }
 
   @Override
