@@ -2524,4 +2524,51 @@ public class XPFlagCleanerTest {
             "}")
         .doTest();
   }
+
+  @Test
+  public void testIgnoresPrefixMatchFlag() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG,",
+            " OTHER_STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_STALE_FLAG",
+            "}")
+        .addInputLines(
+            "TestClassFullMatch.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class TestClassFullMatch { }")
+        .addOutputLines(
+            "TestClassFullMatch.java", "package com.uber.piranha;", "class TestClassFullMatch { }")
+        .addInputLines(
+            "TestClassPartialMatch.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_STALE_FLAG;",
+            "class TestClassPartialMatch { }")
+        .addOutputLines(
+            "TestClassPartialMatch.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_STALE_FLAG;",
+            "class TestClassPartialMatch { }")
+        .doTest();
+  }
 }
