@@ -1,3 +1,7 @@
+Version 0.1.4
+-------------
+* Fix XP flag symbol matching on imports. [#102]
+
 Version 0.1.3
 -------------
 * Support array expressions in ExperimentTest annotations [#100]
