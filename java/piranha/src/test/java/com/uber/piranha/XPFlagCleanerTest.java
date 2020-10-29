@@ -137,6 +137,7 @@ public class XPFlagCleanerTest {
             " private XPTest experimentation;",
             " public String groupToString() {",
             "  // BUG: Diagnostic contains: Cleans stale XP flags",
+            "  org.mockito.Mockito.when(experimentation.isToggleDisabled(STALE_FLAG)).thenReturn(false);",
             "  if (experimentation.isToggleDisabled(STALE_FLAG)) { return \"\"; }",
             "  else if (experimentation.isToggleInGroup(",
             "            STALE_FLAG,GROUP_A)) { ",

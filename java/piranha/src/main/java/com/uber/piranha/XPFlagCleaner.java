@@ -69,6 +69,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -186,6 +187,8 @@ public class XPFlagCleaner extends BugChecker
    */
   private ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
+  private ImmutableMultimap<String, PiranhaMethodRecord> configTestMethodProperties;
+
   private final HashSet<String> handledAnnotations = new HashSet<>();
   private String linkURL = PIRANHA_DEFAULT_URL;
 
@@ -221,6 +224,7 @@ public class XPFlagCleaner extends BugChecker
       // No configuration present at all, disable Piranha checker
       disabled = true;
       configMethodProperties = ImmutableMultimap.of();
+      configTestMethodProperties = ImmutableMultimap.of();
       return;
     }
 
@@ -274,6 +278,19 @@ public class XPFlagCleaner extends BugChecker
           builder.put(methodRecord.getMethodName(), methodRecord);
         }
         configMethodProperties = builder.build();
+
+        // Add test method configuration
+        Set<Map<String, Object>> testMethodProperties = new HashSet<>();
+        if (propertiesJson.get("testMethodProperties") != null) {
+          testMethodProperties.addAll((List<Map<String, Object>>) propertiesJson.get("testMethodProperties"));
+        }
+        ImmutableMultimap.Builder<String, PiranhaMethodRecord> testPropertiesBuilder = new ImmutableMultimap.Builder<>();
+        for (Map<String, Object> testMethodProperty : testMethodProperties) {
+          PiranhaMethodRecord methodRecord = PiranhaMethodRecord.parseFromJSONPropertyEntryMap(testMethodProperty, isArgumentIndexOptional);
+          testPropertiesBuilder.put(methodRecord.getMethodName(), methodRecord);
+        }
+        configTestMethodProperties = testPropertiesBuilder.build();
+
       } catch (IOException fnfe) {
         throw new PiranhaConfigurationException(
             "Error reading config file " + Paths.get(configFile).toAbsolutePath() + " : " + fnfe);
@@ -293,6 +310,7 @@ public class XPFlagCleaner extends BugChecker
         // Already in the right format, re-throw
         throw pce;
       } catch (Exception e) {
+        e.getStackTrace();
         throw new PiranhaConfigurationException("Some other exception thrown while parsing config");
       }
     } else {
@@ -880,6 +898,45 @@ public class XPFlagCleaner extends BugChecker
   @Override
   public Description matchMethod(MethodTree tree, VisitorState state) {
     if (disabled) return Description.NO_MATCH;
+
+    if (!configTestMethodProperties.isEmpty() && tree != null && tree.getBody() != null && tree.getBody().getStatements() != null) {
+      List<? extends StatementTree> bt = tree.getBody().getStatements();
+      for (StatementTree st : bt) {
+        if (st != null && st.getKind().equals(Kind.EXPRESSION_STATEMENT)) {
+          ExpressionStatementTree est = (ExpressionStatementTree) st;
+          if (est != null && est.getExpression() instanceof  MethodInvocationTree) {
+            MethodInvocationTree mit = (MethodInvocationTree) est.getExpression();
+            if (mit != null && mit.getKind().equals(Kind.METHOD_INVOCATION)) {
+              ExpressionTree exp = ((MemberSelectTree) mit.getMethodSelect()).getExpression();
+              if (exp != null && exp.getKind().equals(Kind.METHOD_INVOCATION)) {
+                ExpressionTree exp2 = ((MethodInvocationTree)exp).getMethodSelect();
+                if (exp2 != null && exp2.getKind().equals(Kind.MEMBER_SELECT)) {
+                  String methodName = ((MemberSelectTree) exp2).getIdentifier().toString();
+                  if (configTestMethodProperties.containsKey(methodName)) {
+                    ImmutableCollection<PiranhaMethodRecord> methodRecords = configTestMethodProperties.get(methodName);
+                    for (PiranhaMethodRecord methodRecord : methodRecords) {
+                      Optional<Integer> optionalArgumentIdx = methodRecord.getArgumentIdx();
+                      if (optionalArgumentIdx.isPresent()) {
+                        Value value = evalExpr(((MethodInvocationTree) exp).getArguments().get(optionalArgumentIdx.get()), state);
+                        if (value == Value.TRUE || value == Value.FALSE) {
+                          Description.Builder builder = buildDescription(est);
+                          SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+                          fixBuilder.delete(est);
+                          decrementAllSymbolUsages(est, state, fixBuilder);
+                          builder.addFix(fixBuilder.build());
+                          endPos = state.getEndPosition(est);
+                          return builder.build();
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     for (String name : handledAnnotations) {
       AnnotationTree at =

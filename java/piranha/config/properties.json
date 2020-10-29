@@ -41,5 +41,12 @@
   "linkURL": "<provide_your_url>",
   "annotations": [
     "ToggleTesting"
+  ],
+  "testMethodProperties" : [
+    {
+      "methodName": "when",
+      "flagType": "empty",
+      "argumentIndex": 0
+    }
   ]
 }
