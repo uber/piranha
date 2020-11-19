@@ -185,10 +185,16 @@ class XPFlagCleaner: SyntaxRewriter {
     private func match(in node: FunctionCallExprSyntax,
                        name: String, at index: Int) -> Bool {
         if node.argumentList.count > 0,
-            let argument = argument(arglist: node.argumentList, index),
-            let expr = MemberAccessExprSyntax.init(Syntax(argument.expression)),
-            expr.name.description == name {
-            return true
+            let argument = argument(arglist: node.argumentList, index) {
+            if let expr = MemberAccessExprSyntax.init(Syntax(argument.expression)),
+               expr.name.description == name {
+               return true
+            }
+            if let expr = StringLiteralExprSyntax.init(Syntax(argument.expression)) {
+                if name == expr.description.replacingOccurrences(of: "\"", with: "") {
+                   return true
+               }
+            }
         }
         return false
     }

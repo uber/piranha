@@ -52,6 +52,7 @@ extension ParamManager {
 protocol CachedExperimenting {
     func isInControlGroup(forExperiment experimentKey: ExperimentKeying) -> Bool
     func isTreated(forExperiment experimentKey: ExperimentKeying) -> Bool
+    func isTreated(for experimentKey: String) -> Bool
     func addTreatedExperiment(forExperiment experimentKey: ExperimentKeying) -> Bool
     func removeTreatedExperiment(forExperiment experimentKey: ExperimentKeying) -> Bool
     func isInTreatmentGroup(treatmentGroup treatmentGroupKey: TreatmentGroupKeying, forExperiment experimentKey: ExperimentKeying) -> Bool
@@ -265,6 +266,10 @@ class SwiftExamples {
     // Test for T2606011
     private var shouldDoSomething: Bool {
         return false
+    }
+
+    func testStringFlag() {
+        print("string constant 2")
     }
 
     private let engineeringFlags: [ExperimentNamesLoyalty] = [
