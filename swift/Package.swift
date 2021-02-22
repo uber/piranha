@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 /**
  *    Copyright (c) 2019 Uber Technologies, Inc.
@@ -22,10 +22,10 @@ import PackageDescription
 let package = Package(
     name: "Piranha",
     platforms: [
-        .macOS(.v10_14),
+        .macOS(.v10_15),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-syntax.git", .exact("0.50200.0")),
+        .package(name: "SwiftSyntax", url: "https://github.com/apple/swift-syntax.git", .exact("0.50300.0")), 
     ],
     targets: [
         .target(
