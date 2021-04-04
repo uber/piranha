@@ -35,6 +35,7 @@ let package = Package(
         .testTarget(
             name: "PiranhaTests",
             dependencies: ["Piranha"],
-            path: "tests"),
+            path: "tests",
+            exclude: ["InputSampleFiles/"])
     ]
 )
