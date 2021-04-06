@@ -35,6 +35,7 @@ dependencies {
     implementation deps.build.googleJsonSimple
 
     testCompile deps.test.junit4
+    testCompile 'org.mockito:mockito-core:2.7.22'
     testCompile deps.test.daggerAnnotations
     testCompile(deps.build.errorProneTestHelpers) {
         exclude group: "junit", module: "junit"
