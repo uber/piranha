@@ -40,6 +40,17 @@
   ],
   "linkURL": "<provide_your_url>",
   "annotations": [
-    "ToggleTesting"
+    "ToggleTesting",
+    {
+        "name" : "NewToggleTreated",
+        "flag" : "$value",
+        "treated" : "true",
+        "group" : "$group"
+    },
+    {
+        "name" : "NewToggleControl",
+        "flag" : "$value",
+        "treated" : "false"
+    }
   ]
 }
