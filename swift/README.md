@@ -14,7 +14,7 @@ Piranha scans source files to delete code related to stale feature flags leading
 Piranha Swift can be configured to recognize different flag APIs and flag behaviours by specifying a `.properties` file and the appropriate command line options. 
 
 ```
-USAGE: piranha-command cleanup-stale-flags [--source-file <source-file>] [--config-file <config-file>] --flag <flag> [--group-name <group-name>] [--treated]
+USAGE: <piranha_exe> cleanup-stale-flags [--source-file <source-file>] [--config-file <config-file>] --flag <flag> [--group-name <group-name>] [--treated]
 
 OPTIONS:
   -s, --source-file <source-file>
