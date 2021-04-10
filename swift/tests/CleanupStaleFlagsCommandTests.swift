@@ -12,8 +12,6 @@ import ArgumentParser
 
 final class CleanupStaleFlagsCommandTest: XCTestCase {
     
-    private var sut: CleanupStaleFlagsCommand!
-    
     func test_commandName() {
         XCTAssertEqual(CleanupStaleFlagsCommand._commandName,
                        "cleanup-stale-flags")
