@@ -2526,6 +2526,180 @@ public class XPFlagCleanerTest {
         .doTest();
   }
 
+  private BugCheckerRefactoringTestHelper addToggleTreatedAndControlAnnotationHelperClasses(
+      BugCheckerRefactoringTestHelper bcr) {
+    return bcr.addInputLines(
+            "NewToggleTreatedSet.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Target;",
+            "@Target({ElementType.METHOD})",
+            "public @interface NewToggleTreatedSet {",
+            "    NewToggleTreated[] value();",
+            "}")
+        .addOutputLines(
+            "NewToggleTreatedSet.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Target;",
+            "@Target({ElementType.METHOD})",
+            "public @interface NewToggleTreatedSet {",
+            "    NewToggleTreated[] value();",
+            "}")
+        .addInputLines(
+            "NewToggleControlSet.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Target;",
+            "@Target({ElementType.METHOD})",
+            "public @interface NewToggleControlSet {",
+            "    NewToggleControl[] value();",
+            "}")
+        .addOutputLines(
+            "NewToggleControlSet.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Target;",
+            "@Target({ElementType.METHOD})",
+            "public @interface NewToggleControlSet {",
+            "    NewToggleControl[] value();",
+            "}")
+        .addInputLines(
+            "NewToggleTreated.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Repeatable;",
+            "import java.lang.annotation.Target;",
+            "@Repeatable(NewToggleTreatedSet.class)",
+            "@Target({ElementType.METHOD})",
+            "@interface NewToggleTreated {",
+            "  String[] value();",
+            "}")
+        .addOutputLines(
+            "NewToggleTreated.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Repeatable;",
+            "import java.lang.annotation.Target;",
+            "@Repeatable(NewToggleTreatedSet.class)",
+            "@Target({ElementType.METHOD})",
+            "@interface NewToggleTreated {",
+            "  String[] value();",
+            "}")
+        .addInputLines(
+            "NewToggleControl.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Repeatable;",
+            "import java.lang.annotation.Target;",
+            "@Repeatable(NewToggleControlSet.class)",
+            "@Target({ElementType.METHOD})",
+            "@interface NewToggleControl {",
+            "  String[] value();",
+            "}")
+        .addOutputLines(
+            "NewToggleControl.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Repeatable;",
+            "import java.lang.annotation.Target;",
+            "@Repeatable(NewToggleControlSet.class)",
+            "@Target({ElementType.METHOD})",
+            "@interface NewToggleControl {",
+            "  String[] value();",
+            "}");
+  }
+
+  @Test
+  public void testAnnotatedTestMethodsWithCustomSpecTreated() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr =
+        addToggleTreatedAndControlAnnotationHelperClasses(
+            bcr); // Adds @NewToggleTreated and @NewToggleControl
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @NewToggleTreated(\"STALE_FLAG\")",
+            "  public void x () {}",
+            "  @NewToggleControl(\"STALE_FLAG\")",
+            "  public void y () {}",
+            "  @NewToggleTreated(\"STALE_FLAG\")",
+            "  @NewToggleTreated(\"OTHER_FLAG_1\")",
+            "  public void z () {}",
+            "  @NewToggleControl(\"STALE_FLAG\")",
+            "  @NewToggleTreated(\"OTHER_FLAG_1\")",
+            "  public void w () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  public void x () {}",
+            "  @NewToggleTreated(\"OTHER_FLAG_1\")",
+            "  public void z () {}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testAnnotatedTestMethodsWithCustomSpecControl() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr =
+        addToggleTreatedAndControlAnnotationHelperClasses(
+            bcr); // Adds @NewToggleTreated and @NewToggleControl
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @NewToggleTreated(\"STALE_FLAG\")",
+            "  public void x () {}",
+            "  @NewToggleControl(\"STALE_FLAG\")",
+            "  public void y () {}",
+            "  @NewToggleTreated(\"STALE_FLAG\")",
+            "  @NewToggleTreated(\"OTHER_FLAG_1\")",
+            "  public void z () {}",
+            "  @NewToggleControl(\"STALE_FLAG\")",
+            "  @NewToggleTreated(\"OTHER_FLAG_1\")",
+            "  public void w () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  public void y () {}",
+            "  @NewToggleTreated(\"OTHER_FLAG_1\")",
+            "  public void w () {}",
+            "}")
+        .doTest();
+  }
+
   @Test
   public void testIgnoresPrefixMatchFlag() throws IOException {
 

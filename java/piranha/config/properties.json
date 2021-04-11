@@ -44,8 +44,7 @@
     {
         "name" : "NewToggleTreated",
         "flag" : "$value",
-        "treated" : "true",
-        "group" : "$group"
+        "treated" : "true"
     },
     {
         "name" : "NewToggleControl",
