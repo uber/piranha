@@ -20,7 +20,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
@@ -54,6 +53,11 @@ import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
+import com.uber.piranha.config.Config;
+import com.uber.piranha.config.PiranhaConfigurationException;
+import com.uber.piranha.config.PiranhaMethodRecord;
+import com.uber.piranha.testannotations.AnnotationArgument;
+import com.uber.piranha.testannotations.ResolvedTestAnnotation;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -142,7 +146,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   /** Identify the appropriate API for experiments */
-  enum API {
+  public enum API {
     IS_TREATED,
     IS_CONTROL,
     IS_TREATMENT_GROUP_CHECK,
@@ -811,53 +815,32 @@ public class XPFlagCleaner extends BugChecker
     // annotation doesn't
     // need to be deleted
     List<ExpressionTree> deletableIdentifiers = new ArrayList<>();
-    ImmutableMultimap<String, PiranhaTestAnnotationSpecRecord> testAnnotationSpecs =
-        config.getTestAnnotationSpecs();
-    for (String name : testAnnotationSpecs.keySet()) {
-      AnnotationTree at =
-          ASTHelpers.getAnnotationWithSimpleName(tree.getModifiers().getAnnotations(), name);
-
-      if (at != null) {
-        // ToDo: Do we really need support for multiple specs for the same annotation name?
-        for (PiranhaTestAnnotationSpecRecord spec : testAnnotationSpecs.get(name)) {
-          Optional<PiranhaTestAnnotationSpecRecord.Resolved> optionalResolved =
-              spec.resolveSpec(at);
-          if (!optionalResolved.isPresent()) {
-            continue;
-          }
-          PiranhaTestAnnotationSpecRecord.Resolved resolved = optionalResolved.get();
-          Set<PiranhaTestAnnotationSpecRecord.AnnotationArgument> matchedFlagsWorkingSet =
-              new HashSet<>();
-          for (PiranhaTestAnnotationSpecRecord.AnnotationArgument testedFlag : resolved.flags) {
-            if (testedFlag.value.equals(xpFlagName)) {
-              if (isTreated == resolved.treated) {
-                // Annotation requests the same treatment state as what Piranha is setting the flag
-                // to
-                matchedFlagsWorkingSet.add(testedFlag);
-              } else {
-                // Annotation (and therefore test method) requests a different (now impossible)
-                // treatment, compared to
-                // what Piranha is setting the flag to.
-                deleteMethod = true;
-              }
-            }
-          }
-          // Should we delete the full annotation, or specific flags within it, depends if all
-          // relevant annotations have
-          // been matched or not:
-          if (matchedFlagsWorkingSet.size() == resolved.flags.size()) {
-            deletableAnnotations.add(at);
+    for (ResolvedTestAnnotation resolved : config.resolveTestAnnotations(tree, state)) {
+      Set<AnnotationArgument> matchedFlagsWorkingSet = new HashSet<>();
+      for (AnnotationArgument testedFlag : resolved.getFlags()) {
+        if (testedFlag.getValue().equals(xpFlagName)) {
+          if (isTreated == resolved.isTreated()) {
+            // Annotation requests the same treatment state as what Piranha is setting the flag to
+            matchedFlagsWorkingSet.add(testedFlag);
           } else {
-            // Only remove the matched flag references, but preserve the annotation and its
-            // references to remaining
-            // flags
-            matchedFlagsWorkingSet
-                .stream()
-                .forEach(arg -> deletableIdentifiers.add(arg.sourceTree));
+            // Annotation (and therefore test method) requests a different (now impossible)
+            // treatment, compared to what Piranha is setting the flag to.
+            deleteMethod = true;
           }
-          matchedFlagsWorkingSet.clear();
         }
       }
+      // Should we delete the full annotation, or specific flags within it? Depends if all
+      // relevant annotations have been matched or not:
+      if (matchedFlagsWorkingSet.size() == resolved.getFlags().size()) {
+        deletableAnnotations.add(resolved.getSourceTree());
+      } else {
+        // Only remove the matched flag references, but preserve the annotation and its
+        // references to remaining flags
+        matchedFlagsWorkingSet
+            .stream()
+            .forEach(arg -> deletableIdentifiers.add(arg.getSourceTree()));
+      }
+      matchedFlagsWorkingSet.clear();
     }
     // Early exit for no changes required:
     if (!deleteMethod && deletableAnnotations.size() == 0 && deletableIdentifiers.size() == 0) {

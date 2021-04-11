@@ -16,6 +16,7 @@ package com.uber.piranha;
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
+import com.uber.piranha.config.PiranhaConfigurationException;
 import java.io.IOException;
 import java.util.Arrays;
 import org.junit.Before;

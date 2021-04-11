@@ -1,12 +1,13 @@
-package com.uber.piranha;
+package com.uber.piranha.config;
 
 import com.google.common.collect.ImmutableMap;
+import com.uber.piranha.XPFlagCleaner;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** A class representing a method configuration record from properties.json */
-final class PiranhaMethodRecord {
+public final class PiranhaMethodRecord {
 
   // Allowed fields for a method property in the config file.
   // Entered under the top-level "methodProperties" in properties.json.

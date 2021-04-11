@@ -1,8 +1,12 @@
-package com.uber.piranha;
+package com.uber.piranha.config;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.VisitorState;
+import com.sun.source.tree.MethodTree;
+import com.uber.piranha.testannotations.ResolvedTestAnnotation;
+import com.uber.piranha.testannotations.TestAnnotationResolver;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,7 +19,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 /** Information provided in the properties.json config file. */
-final class Config {
+public final class Config {
   // Default value when no properties.json file is provided or the linkURL field is missing
   private static final String DEFAULT_PIRANHA_URL = "https://github.com/uber/piranha";
 
@@ -34,21 +38,20 @@ final class Config {
   private final ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
   /**
-   * testAnnotationSpecs is a map where key is the annotation name and the value is an object
-   * encoding the specification of a testing annotations understood by Piranha, including how to
-   * parse: a) the flag being tested, b) whether the test is requesting the flag in treatment or
-   * control mode, c) (optionally) whether a particular treatment group is being specified
+   * testAnnotationResolver abstracts away Piranha's logic for configuring and resolving different
+   * kinds of annotations used to specify which flags (and treatment conditions for flags) are being
+   * tested by a particular unit test.
    */
-  private final ImmutableMultimap<String, PiranhaTestAnnotationSpecRecord> testAnnotationSpecs;
+  private final TestAnnotationResolver testAnnotationResolver;
 
   private final String linkURL;
 
   private Config(
       ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties,
-      ImmutableMultimap<String, PiranhaTestAnnotationSpecRecord> testAnnotationSpecs,
+      TestAnnotationResolver testAnnotationResolver,
       String linkURL) {
     this.configMethodProperties = configMethodProperties;
-    this.testAnnotationSpecs = testAnnotationSpecs;
+    this.testAnnotationResolver = testAnnotationResolver;
     this.linkURL = linkURL;
   }
 
@@ -58,15 +61,17 @@ final class Config {
         : ImmutableSet.of();
   }
 
-  public ImmutableMultimap<String, PiranhaTestAnnotationSpecRecord> getTestAnnotationSpecs() {
-    return testAnnotationSpecs;
+  public ImmutableSet<ResolvedTestAnnotation> resolveTestAnnotations(
+      MethodTree tree, VisitorState state) {
+    return testAnnotationResolver.resolveAllForMethod(tree, state);
   }
 
   public String getLinkURL() {
     return linkURL;
   }
 
-  static Config fromJSONFile(String configFile, boolean isArgumentIndexOptional)
+  @SuppressWarnings("unchecked") // Not sure is there is a way to do checked parsing of JSONObject
+  public static Config fromJSONFile(String configFile, boolean isArgumentIndexOptional)
       throws PiranhaConfigurationException {
     try {
       Path configFilePath = Paths.get(configFile);
@@ -78,8 +83,7 @@ final class Config {
       String linkURL = DEFAULT_PIRANHA_URL;
       ImmutableMultimap.Builder<String, PiranhaMethodRecord> methodsBuilder =
           ImmutableMultimap.builder();
-      ImmutableMultimap.Builder<String, PiranhaTestAnnotationSpecRecord> annotationsBuilder =
-          ImmutableMultimap.builder();
+      TestAnnotationResolver.Builder annotationResolverBuilder = TestAnnotationResolver.builder();
 
       JSONParser parser = new JSONParser();
       JSONObject propertiesJson =
@@ -90,12 +94,10 @@ final class Config {
       }
       if (propertiesJson.get(ANNOTATIONS_KEY) != null) {
         for (Object annotationJSON : (List<Object>) propertiesJson.get(ANNOTATIONS_KEY)) {
-          // ToDo: Two cases, String and Map<String, Object>
-          PiranhaTestAnnotationSpecRecord annotSpec;
           if (annotationJSON instanceof String) {
-            annotSpec = PiranhaTestAnnotationSpecRecord.fromName((String) annotationJSON);
+            annotationResolverBuilder.addFromName((String) annotationJSON);
           } else if (annotationJSON instanceof JSONObject) {
-            annotSpec = PiranhaTestAnnotationSpecRecord.fromJSONObject((JSONObject) annotationJSON);
+            annotationResolverBuilder.addFromJSONObject((JSONObject) annotationJSON);
           } else {
             throw new PiranhaConfigurationException(
                 "Unexpected annotation specification format inside "
@@ -103,7 +105,6 @@ final class Config {
                     + " : "
                     + annotationJSON.toString());
           }
-          annotationsBuilder.put(annotSpec.getAnnotationName(), annotSpec);
         }
       }
       if (propertiesJson.get(METHODS_KEY) != null) {
@@ -117,7 +118,7 @@ final class Config {
       } else {
         throw new PiranhaConfigurationException("methodProperties not found.");
       }
-      return new Config(methodsBuilder.build(), annotationsBuilder.build(), linkURL);
+      return new Config(methodsBuilder.build(), annotationResolverBuilder.build(), linkURL);
     } catch (IOException fnfe) {
       throw new PiranhaConfigurationException(
           "Error reading config file " + Paths.get(configFile).toAbsolutePath() + " : " + fnfe);
@@ -141,7 +142,8 @@ final class Config {
     }
   }
 
-  static Config emptyConfig() {
-    return new Config(ImmutableMultimap.of(), ImmutableMultimap.of(), DEFAULT_PIRANHA_URL);
+  public static Config emptyConfig() {
+    return new Config(
+        ImmutableMultimap.of(), TestAnnotationResolver.builder().build(), DEFAULT_PIRANHA_URL);
   }
 }
