@@ -198,8 +198,8 @@ public final class TestAnnotationResolver {
           if (resolvedSpec.isPresent()) {
             matchFound = true;
             builder.add(resolvedSpec.get());
-            break; // First match found is sufficient, assume specs of the same name are
-                   // incompatible.
+            // First match found is sufficient, assume specs of the same name are incompatible
+            break;
           }
         }
         if (!matchFound) {
