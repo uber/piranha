@@ -2,6 +2,7 @@ package com.uber.piranha.testannotations;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -13,6 +14,7 @@ import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewArrayTree;
 import com.sun.source.tree.Tree;
+import com.uber.piranha.config.Config;
 import com.uber.piranha.config.PiranhaConfigurationException;
 import java.util.HashSet;
 import java.util.Optional;
@@ -20,6 +22,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.json.simple.JSONObject;
 
+/**
+ * A class to resolve experiment flag testing annotations into their canonical {@link
+ * ResolvedTestAnnotation} form.
+ *
+ * <p>This class abstracts away the process of searching for test annotations matching the
+ * specifications from Piranha's json configuration file, and transforming them into a single
+ * canonical form understood by the core Piranha logic.
+ *
+ * <p>Can be constructed from the specifications in the configuration file using {@link
+ * TestAnnotationResolver.Builder}.
+ */
 public final class TestAnnotationResolver {
 
   // We just need this to be an unique string which can never clash with a flag or group name, it's
@@ -36,6 +49,7 @@ public final class TestAnnotationResolver {
    */
   private final ImmutableMultimap<String, TestAnnotationSpecRecord> testAnnotationSpecs;
 
+  // Instantiate using Builder.
   private TestAnnotationResolver(
       ImmutableMultimap<String, TestAnnotationSpecRecord> testAnnotationSpecs) {
     this.testAnnotationSpecs = testAnnotationSpecs;
@@ -100,7 +114,7 @@ public final class TestAnnotationResolver {
     ImmutableMultimap<String, AnnotationArgument> fields = parseAnnotationArguments(at);
     Set<String> relevantFieldParsingErrors = new HashSet<String>();
     // Process flag id(s)
-    ImmutableSet.Builder<AnnotationArgument> flagIdsBuilder = ImmutableSet.builder();
+    ImmutableList.Builder<AnnotationArgument> flagIdsBuilder = ImmutableList.builder();
     String flagIdentifierOrField = spec.getFlagIdentifierOrField();
     if (TestAnnotationSpecRecord.isFieldReference(flagIdentifierOrField)) {
       // Annotation field reference
@@ -156,7 +170,7 @@ public final class TestAnnotationResolver {
       treated = treatedValueOrField.equals("true");
     }
     // Process treatment group, if any
-    ImmutableSet.Builder<AnnotationArgument> groupsBuilder = ImmutableSet.builder();
+    ImmutableList.Builder<AnnotationArgument> groupsBuilder = ImmutableList.builder();
     Optional<String> groupValueOrField = spec.getGroupValueOrField();
     if (groupValueOrField.isPresent()) {
       // ToDo: implement
@@ -181,6 +195,16 @@ public final class TestAnnotationResolver {
         new ResolvedTestAnnotation(flagIdsBuilder.build(), treated, groupsBuilder.build(), at));
   }
 
+  /**
+   * Resolve all experiment flag test annotations found on the given method.
+   *
+   * <p>Should be called through {@link Config#resolveTestAnnotations(MethodTree, VisitorState)}.
+   *
+   * @param tree the AST tree representing the annotated method
+   * @param state the visitor state (for AST to source code resolution)
+   * @return All annotations on tree which represent flag test annotations, properly resolved to
+   *     {@link ResolvedTestAnnotation} records.
+   */
   public ImmutableSet<ResolvedTestAnnotation> resolveAllForMethod(
       MethodTree tree, VisitorState state) {
     ImmutableSet.Builder<ResolvedTestAnnotation> builder = ImmutableSet.builder();
@@ -224,6 +248,7 @@ public final class TestAnnotationResolver {
     return new Builder();
   }
 
+  /** Builder for {@link TestAnnotationResolver} */
   public static final class Builder {
     private final ImmutableMultimap.Builder<String, TestAnnotationSpecRecord> inner =
         ImmutableMultimap.builder();
@@ -232,15 +257,31 @@ public final class TestAnnotationResolver {
       // Empty constructor
     }
 
-    public void addFromName(String name) {
+    /**
+     * Add an annotation specification by name alone, using the default (PiranhaJava 0.1.4) shape.
+     *
+     * @param name the annotation's name.
+     */
+    public void addSpecFromName(String name) {
       inner.put(name, TestAnnotationSpecRecord.fromName(name));
     }
 
-    public void addFromJSONObject(JSONObject jsonObject) throws PiranhaConfigurationException {
+    /**
+     * Add an annotation specification from a record in Piranha's json configuration file.
+     *
+     * @param jsonObject the json dictionary representing the annotation specification.
+     * @throws PiranhaConfigurationException if the specification doesn't match the expected format.
+     */
+    public void addSpecFromJSONObject(JSONObject jsonObject) throws PiranhaConfigurationException {
       TestAnnotationSpecRecord record = TestAnnotationSpecRecord.fromJSONObject(jsonObject);
       inner.put(record.getAnnotationName(), record);
     }
 
+    /**
+     * Retrieve a new/empty builder.
+     *
+     * @return the builder.
+     */
     public TestAnnotationResolver build() {
       return new TestAnnotationResolver(inner.build());
     }

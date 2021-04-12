@@ -812,8 +812,7 @@ public class XPFlagCleaner extends BugChecker
     boolean deleteMethod = false;
     List<AnnotationTree> deletableAnnotations = new ArrayList<>();
     // Deletable identifiers used as part of the argument to an annotation, for when the entire
-    // annotation doesn't
-    // need to be deleted
+    // annotation doesn't need to be deleted
     List<ExpressionTree> deletableIdentifiers = new ArrayList<>();
     for (ResolvedTestAnnotation resolved : config.resolveTestAnnotations(tree, state)) {
       Set<AnnotationArgument> matchedFlagsWorkingSet = new HashSet<>();
@@ -830,7 +829,7 @@ public class XPFlagCleaner extends BugChecker
         }
       }
       // Should we delete the full annotation, or specific flags within it? Depends if all
-      // relevant annotations have been matched or not:
+      // flags mentioned within the annotation have been matched or not:
       if (matchedFlagsWorkingSet.size() == resolved.getFlags().size()) {
         deletableAnnotations.add(resolved.getSourceTree());
       } else {
@@ -855,11 +854,9 @@ public class XPFlagCleaner extends BugChecker
       decrementAllSymbolUsages(tree, state, fixBuilder);
     } else {
       // Otherwise, we might still need to clean up individual obsolete test annotations and flag
-      // references within
-      // multi-flag annotations.
+      // references within multi-flag annotations.
       // Note that the AST elements referenced by deletableAnnotations and deletableIdentifiers
-      // should not overlap,
-      // given the logic above.
+      // should not overlap, given the logic above, so deleting each independently is safe.
       for (ExpressionTree expr : deletableIdentifiers) {
         fixBuilder.delete(expr);
         decrementAllSymbolUsages(expr, state, fixBuilder);

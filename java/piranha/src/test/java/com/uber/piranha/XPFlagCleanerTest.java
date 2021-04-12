@@ -1942,7 +1942,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid.json");
 
     expectedEx.expect(PiranhaConfigurationException.class);
-    expectedEx.expectMessage("methodProperties not found.");
+    expectedEx.expectMessage("methodProperties not found, required.");
 
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());

@@ -46,6 +46,8 @@ public final class Config {
 
   private final String linkURL;
 
+  // Constructor is private, a Config object can be generated using the class' static methods,
+  // in particular Config.fromJSONFile([properties.json])
   private Config(
       ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties,
       TestAnnotationResolver testAnnotationResolver,
@@ -55,21 +57,59 @@ public final class Config {
     this.linkURL = linkURL;
   }
 
+  /**
+   * Return all configuration method records matching a given method name.
+   *
+   * @param methodName the method name to search
+   * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
+   *     definition in the piranha json configuration file matching {@code methodName}.
+   */
   public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(String methodName) {
     return configMethodProperties.containsKey(methodName)
         ? configMethodProperties.get(methodName)
         : ImmutableSet.of();
   }
 
+  /**
+   * Resolve all experiment flag test annotations found on the given method.
+   *
+   * <p>Resolution involves searching for annotations matching the annotation specifications in the
+   * Piranha json configuration file, and then using those specifications to abstract away the
+   * particular field names, types, and general shape of the actual annotation into a canonical
+   * {@link ResolvedTestAnnotation} record.
+   *
+   * @param tree the AST tree representing the annotated method
+   * @param state the visitor state (for AST to source code resolution)
+   * @return All annotations on tree which represent flag test annotations, properly resolved to
+   *     {@link ResolvedTestAnnotation} records.
+   */
   public ImmutableSet<ResolvedTestAnnotation> resolveTestAnnotations(
       MethodTree tree, VisitorState state) {
     return testAnnotationResolver.resolveAllForMethod(tree, state);
   }
 
+  /**
+   * Get the link url from the Piranha json configuration file.
+   *
+   * @return The string value of {@code linkURL} in the json configuration file.
+   */
   public String getLinkURL() {
     return linkURL;
   }
 
+  /**
+   * Parse a Piranha json configuration file into a Config object.
+   *
+   * <p>This is the canonical way of producing a Config object for Piranha to use.
+   *
+   * @param configFile The full path to Piranha's properties.json or piranha.json
+   * @param isArgumentIndexOptional Whether the argument index for method records is to be
+   *     considered optional (defaulting to 0) when parsing the json configuration. Set to {@code
+   *     false} for stricter configuration parsing.
+   * @return A {@link Config} instance matching the information in the given config file.
+   * @throws PiranhaConfigurationException If the file passed doesn't contain a valid Piranha json
+   *     configuration.
+   */
   @SuppressWarnings("unchecked") // Not sure is there is a way to do checked parsing of JSONObject
   public static Config fromJSONFile(String configFile, boolean isArgumentIndexOptional)
       throws PiranhaConfigurationException {
@@ -77,6 +117,8 @@ public final class Config {
       Path configFilePath = Paths.get(configFile);
       boolean configFileExists = configFilePath.toFile().exists();
       if (!configFileExists) {
+        // We will catch this with other IOExceptions and wrap it around as
+        // PiranhaConfigurationException (See catch block)
         throw new IOException("Provided config file not found");
       }
 
@@ -95,9 +137,9 @@ public final class Config {
       if (propertiesJson.get(ANNOTATIONS_KEY) != null) {
         for (Object annotationJSON : (List<Object>) propertiesJson.get(ANNOTATIONS_KEY)) {
           if (annotationJSON instanceof String) {
-            annotationResolverBuilder.addFromName((String) annotationJSON);
+            annotationResolverBuilder.addSpecFromName((String) annotationJSON);
           } else if (annotationJSON instanceof JSONObject) {
-            annotationResolverBuilder.addFromJSONObject((JSONObject) annotationJSON);
+            annotationResolverBuilder.addSpecFromJSONObject((JSONObject) annotationJSON);
           } else {
             throw new PiranhaConfigurationException(
                 "Unexpected annotation specification format inside "
@@ -116,7 +158,7 @@ public final class Config {
           methodsBuilder.put(methodRecord.getMethodName(), methodRecord);
         }
       } else {
-        throw new PiranhaConfigurationException("methodProperties not found.");
+        throw new PiranhaConfigurationException("methodProperties not found, required.");
       }
       return new Config(methodsBuilder.build(), annotationResolverBuilder.build(), linkURL);
     } catch (IOException fnfe) {
@@ -135,13 +177,22 @@ public final class Config {
       throw new PiranhaConfigurationException(
           "Invalid or incorrectly formatted config file. " + pe + extraWarning);
     } catch (PiranhaConfigurationException pce) {
-      // Already in the right format, re-throw
+      // Already in the right format, re-throw, to avoid falling on catch-all below.
       throw pce;
     } catch (Exception e) {
       throw new PiranhaConfigurationException("Some other exception thrown while parsing config");
     }
   }
 
+  /**
+   * Returns an empty {@link Config} object, used to instantiate Piranha when checking is
+   * <b>disabled</b>.
+   *
+   * <p>The empty {@link Config} lists no known methods, no known test annotations, and gives
+   * Piranha's default reference URL.
+   *
+   * @return An empty {@link Config} object.
+   */
   public static Config emptyConfig() {
     return new Config(
         ImmutableMultimap.of(), TestAnnotationResolver.builder().build(), DEFAULT_PIRANHA_URL);

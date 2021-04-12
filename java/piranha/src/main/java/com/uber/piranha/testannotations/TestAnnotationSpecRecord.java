@@ -5,7 +5,12 @@ import java.util.Locale;
 import java.util.Optional;
 import org.json.simple.JSONObject;
 
-/** A class representing an annotation configuration record from properties.json */
+/**
+ * A class representing an annotation configuration record from properties.json
+ *
+ * <p>Visibility is package private as these should only be used by {@link TestAnnotationResolver},
+ * with the core of Piranha using only the {@link ResolvedTestAnnotation} records instead.
+ */
 final class TestAnnotationSpecRecord {
 
   // Allowed fields for an annotation property in the config file.
@@ -51,9 +56,16 @@ final class TestAnnotationSpecRecord {
     return groupValueOrField;
   }
 
-  // Abstract away checking that a value in the configuration file refers to a field.
-  // Configuration convention is that a string like `$foo` refers to an annotation field named
-  // `foo`.
+  /**
+   * Abstract away checking that a value in the configuration file refers to a field.
+   *
+   * <p>Configuration convention is that a string like {@code "$foo"} refers to an annotation field
+   * named {@code foo}.
+   *
+   * @param specValue the string representation of the annotation spec value.
+   * @return {@code true} if this value represents a reference to a field in an annotation, {@code
+   *     false} otherwise.
+   */
   public static boolean isFieldReference(String specValue) {
     return specValue.startsWith("$");
   }
