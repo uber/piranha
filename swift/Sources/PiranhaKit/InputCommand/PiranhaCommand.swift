@@ -32,7 +32,7 @@ struct CleanupStaleFlagsCommand: ParsableCommand {
     
     @Option(name: [.customShort("s"),
                    .long],
-            help: "Input Source File that needs to run piranha",
+            help: "Input source file for Piranha",
             transform: { URL(fileURLWithPath: $0)})
     var sourceFile: URL?
     
