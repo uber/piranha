@@ -14,13 +14,6 @@
  *    limitations under the License.
  */
 
-import Foundation
+import PiranhaKit
 
-enum Command: String {
-    case cleanupStaleFlags = "cleanup-stale-flags"
-}
-
-protocol CommandLauncher {
-    var command: Command { get }
-    func launch(_ args: [String]) throws
-}
+PiranhaCommand.main()

@@ -25,17 +25,25 @@ let package = Package(
         .macOS(.v10_15),
     ],
     dependencies: [
-        .package(name: "SwiftSyntax", url: "https://github.com/apple/swift-syntax.git", .exact("0.50300.0")), 
+        .package(name: "SwiftSyntax",
+                 url: "https://github.com/apple/swift-syntax.git",
+                 .exact("0.50300.0")),
+        .package(url: "https://github.com/apple/swift-argument-parser",
+                 from: "0.4.0"),
     ],
     targets: [
         .target(
             name: "Piranha",
-            dependencies: ["SwiftSyntax"], 
-            path: "src"),
+            dependencies: ["PiranhaKit"]),
+        .target(
+            name: "PiranhaKit",
+            dependencies: ["SwiftSyntax",
+                           .product(name: "ArgumentParser",
+                                    package: "swift-argument-parser")]),
         .testTarget(
             name: "PiranhaTests",
-            dependencies: ["Piranha"],
-            path: "tests",
+            dependencies: ["PiranhaKit"],
+            path: "Tests",
             exclude: ["InputSampleFiles/"])
     ]
 )
