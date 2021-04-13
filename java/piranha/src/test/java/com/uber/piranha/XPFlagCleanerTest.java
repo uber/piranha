@@ -2526,6 +2526,40 @@ public class XPFlagCleanerTest {
         .doTest();
   }
 
+  @Test
+  public void testAnnotatedTestMethodsClearEmptyTestAnnotation() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = addHelperClasses(bcr);
+    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  @ToggleTesting(treated = {STALE_FLAG})",
+            "  public void x () {}",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "class TestClass {",
+            "  public void foo () {}",
+            "  public void x () {}",
+            "}")
+        .doTest();
+  }
+
   private BugCheckerRefactoringTestHelper addToggleTreatedAndControlAnnotationHelperClasses(
       BugCheckerRefactoringTestHelper bcr) {
     return bcr.addInputLines(
