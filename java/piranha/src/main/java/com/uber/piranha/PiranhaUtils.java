@@ -13,9 +13,16 @@
  */
 package com.uber.piranha;
 
+import com.google.errorprone.util.ASTHelpers;
+import com.sun.source.tree.ExpressionTree;
+
 public class PiranhaUtils {
   public static final String DELETE_REQUEST_COMMENT =
       "//[PIRANHA_DELETE_FILE_SEQ] Delete this class.\n";
 
   public static final String HELPER_CLASS = "// [PIRANHA_STALE_PLUGIN_HELPER_CLASS]";
+
+  public static String expressionToSimpleName(ExpressionTree tree) {
+    return ASTHelpers.getSymbol(tree).getSimpleName().toString();
+  }
 }

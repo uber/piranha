@@ -20,7 +20,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.BugPattern;
 import com.google.errorprone.ErrorProneFlags;
@@ -45,7 +44,6 @@ import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
-import com.sun.source.tree.NewArrayTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
@@ -55,11 +53,12 @@ import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import com.uber.piranha.config.Config;
+import com.uber.piranha.config.PiranhaConfigurationException;
+import com.uber.piranha.config.PiranhaMethodRecord;
+import com.uber.piranha.testannotations.AnnotationArgument;
+import com.uber.piranha.testannotations.ResolvedTestAnnotation;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -69,9 +68,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * This is the core PiranhaJava checker and code rewriting class.
@@ -110,8 +106,6 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.UnaryTreeMatcher,
         BugChecker.VariableTreeMatcher,
         BugChecker.MethodTreeMatcher {
-
-  private static final String PIRANHA_DEFAULT_URL = "https://github.com/uber/piranha";
 
   /**
    * Do not try to auto-delete imports with these common/generic names, as multiple treatment groups
@@ -152,7 +146,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   /** Identify the appropriate API for experiments */
-  enum API {
+  public enum API {
     IS_TREATED,
     IS_CONTROL,
     IS_TREATMENT_GROUP_CHECK,
@@ -176,18 +170,9 @@ public class XPFlagCleaner extends BugChecker
   /**
    * Information provided in the properties.json config file.
    *
-   * <p>configMethodsMap is a map where key is method name and value is a list where each item in
-   * the list is a map that corresponds to each method property from properties.json. In most cases,
-   * the list would have only one element. But if someone reuses the same method name with different
-   * returnType/receiverType/argumentIndex, the list would have each method property map as one
-   * element.
-   *
    * <p>Can't be final due to init() method, but should not be assigned anywhere else
    */
-  private ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
-
-  private final HashSet<String> handledAnnotations = new HashSet<>();
-  private String linkURL = PIRANHA_DEFAULT_URL;
+  private Config config;
 
   /** State used to track usage counts and delete corresponding declarations if needed. */
   @Nullable private TreePath cuPath = null;
@@ -220,7 +205,7 @@ public class XPFlagCleaner extends BugChecker
         && this.defaultSeverity().equals(SUGGESTION)) {
       // No configuration present at all, disable Piranha checker
       disabled = true;
-      configMethodProperties = ImmutableMultimap.of();
+      this.config = Config.emptyConfig();
       return;
     }
 
@@ -234,67 +219,12 @@ public class XPFlagCleaner extends BugChecker
 
     if (f.isPresent()) {
       String configFile = f.get();
-
-      try {
-        Path configFilePath = Paths.get(configFile);
-        boolean configFileExists = configFilePath.toFile().exists();
-        if (!configFileExists) {
-          throw new IOException("Provided config file not found");
-        }
-        JSONParser parser = new JSONParser();
-        JSONObject propertiesJson =
-            (JSONObject)
-                parser.parse(Files.newBufferedReader(configFilePath, StandardCharsets.UTF_8));
-        final String linkURLKey = "linkURL";
-        if (propertiesJson.containsKey(linkURLKey)) {
-          linkURL = (String) propertiesJson.get(linkURLKey);
-        }
-        if (propertiesJson.get("annotations") != null) {
-          handledAnnotations.addAll((List<String>) propertiesJson.get("annotations"));
-        }
-        Set<Map<String, Object>> methodProperties = new HashSet<>();
-        if (propertiesJson.get("methodProperties") != null) {
-          methodProperties.addAll(
-              (List<Map<String, Object>>) propertiesJson.get("methodProperties"));
-        } else {
-          throw new PiranhaConfigurationException("methodProperties not found.");
-        }
-        Optional<String> argumentIndexOptional = flags.get("Piranha:ArgumentIndexOptional");
-        boolean isArgumentIndexOptional = false;
-        if (argumentIndexOptional.isPresent()
-            && TRUE.equalsIgnoreCase(argumentIndexOptional.get())) {
-          isArgumentIndexOptional = true;
-        }
-        ImmutableMultimap.Builder<String, PiranhaMethodRecord> builder =
-            new ImmutableMultimap.Builder<>();
-        for (Map<String, Object> methodProperty : methodProperties) {
-          PiranhaMethodRecord methodRecord =
-              PiranhaMethodRecord.parseFromJSONPropertyEntryMap(
-                  methodProperty, isArgumentIndexOptional);
-          builder.put(methodRecord.getMethodName(), methodRecord);
-        }
-        configMethodProperties = builder.build();
-      } catch (IOException fnfe) {
-        throw new PiranhaConfigurationException(
-            "Error reading config file " + Paths.get(configFile).toAbsolutePath() + " : " + fnfe);
-      } catch (ParseException pe) {
-        String extraWarning = "";
-        if (configFile.endsWith(".properties")) {
-          // Ends in space to make link clickable on terminal.
-          extraWarning =
-              "\nWARNING: With version 0.1.0, PiranhaJava has changed its configuration file format to json "
-                  + "(properties.json), but it looks you are passing the old piranha.properties format. Please "
-                  + "migrate your configuration to json. "
-                  + "See. https://github.com/uber/piranha/blob/master/java/README.md ";
-        }
-        throw new PiranhaConfigurationException(
-            "Invalid or incorrectly formatted config file. " + pe + extraWarning);
-      } catch (PiranhaConfigurationException pce) {
-        // Already in the right format, re-throw
-        throw pce;
-      } catch (Exception e) {
-        throw new PiranhaConfigurationException("Some other exception thrown while parsing config");
+      Optional<String> argumentIndexOptional = flags.get("Piranha:ArgumentIndexOptional");
+      boolean isArgumentIndexOptional = false;
+      if (argumentIndexOptional.isPresent() && TRUE.equalsIgnoreCase(argumentIndexOptional.get())) {
+        isArgumentIndexOptional = true;
       }
+      this.config = Config.fromJSONFile(configFile, isArgumentIndexOptional);
     } else {
       throw new PiranhaConfigurationException("Piranha:Config is missing");
     }
@@ -373,7 +303,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public String linkUrl() {
-    return linkURL;
+    return this.config.getLinkURL();
   }
 
   /* Returns the appropriate XP API, if any, as given by the expression */
@@ -387,8 +317,10 @@ public class XPFlagCleaner extends BugChecker
       }
       MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
       String methodName = mst.getIdentifier().toString();
-      if (configMethodProperties.containsKey(methodName)) {
-        return getXPAPI(mit, configMethodProperties.get(methodName));
+      ImmutableCollection<PiranhaMethodRecord> methodRecords =
+          this.config.getMethodRecordsForName(methodName);
+      if (methodRecords.size() > 0) {
+        return getXPAPI(mit, methodRecords);
       }
     }
     return API.UNKNOWN;
@@ -873,95 +805,69 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
-  private boolean isCheckedXPFlagName(ExpressionTree tree) {
-    return ASTHelpers.getSymbol(tree).getSimpleName().contentEquals(xpFlagName);
-  }
-
   @Override
   public Description matchMethod(MethodTree tree, VisitorState state) {
     if (disabled) return Description.NO_MATCH;
 
-    for (String name : handledAnnotations) {
-      AnnotationTree at =
-          ASTHelpers.getAnnotationWithSimpleName(tree.getModifiers().getAnnotations(), name);
-
-      if (at != null) {
-        for (ExpressionTree et : at.getArguments()) {
-          if (et.getKind() == Kind.ASSIGNMENT) {
-            AssignmentTree assn = (AssignmentTree) et;
-            Kind assnExprKind = assn.getExpression().getKind();
-            boolean deleteAnnotation = false;
-            boolean deleteMethod = false;
-            switch (assnExprKind) {
-              case IDENTIFIER: // Fallthrough
-              case MEMBER_SELECT:
-                if (isCheckedXPFlagName(assn.getExpression())) {
-                  if (isTreated) {
-                    deleteAnnotation = true;
-                  } else {
-                    deleteMethod = true;
-                  }
-                }
-                break;
-              case NEW_ARRAY:
-                // For each in the array
-                NewArrayTree arrayExpression = (NewArrayTree) assn.getExpression();
-                if (arrayExpression.getInitializers().size() == 1) {
-                  // Array contains a single XP flag, treat as a direct assignment.
-                  if (isCheckedXPFlagName(arrayExpression.getInitializers().get(0))) {
-                    if (isTreated) {
-                      deleteAnnotation = true;
-                    } else {
-                      deleteMethod = true;
-                    }
-                  }
-                } else {
-                  // Method is testing multiple XP flags
-                  for (ExpressionTree expr : arrayExpression.getInitializers()) {
-                    if (isCheckedXPFlagName(expr)) {
-                      if (isTreated) {
-                        // Special: delete just this flag from the array list, leave the annotation
-                        return buildDescription(tree).addFix(SuggestedFix.delete(expr)).build();
-                      } else {
-                        deleteMethod = true;
-                      }
-                      break;
-                    }
-                  }
-                }
-                break;
-              default:
-                throw new Error(
-                    "Unexpected value type inside treated field of ExperimentTest annotation: "
-                        + state.getSourceForNode(assn)
-                        + " (kind: "
-                        + assnExprKind.toString()
-                        + ")");
-            }
-            Preconditions.checkArgument(
-                !(deleteAnnotation && deleteMethod),
-                "Confused clean up action: XP dependent tests should either be cleaned up by removing "
-                    + "the method or editing the annotation, not both.");
-            if (deleteAnnotation || deleteMethod) {
-              Description.Builder builder = buildDescription(tree);
-              SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
-              if (deleteAnnotation) {
-                fixBuilder.delete(at);
-                decrementAllSymbolUsages(at, state, fixBuilder);
-              } else {
-                // deleteMethod == true
-                fixBuilder.delete(tree);
-                decrementAllSymbolUsages(tree, state, fixBuilder);
-              }
-              builder.addFix(fixBuilder.build());
-              return builder.build();
-            }
+    boolean deleteMethod = false;
+    List<AnnotationTree> deletableAnnotations = new ArrayList<>();
+    // Deletable identifiers used as part of the argument to an annotation, for when the entire
+    // annotation doesn't need to be deleted
+    List<ExpressionTree> deletableIdentifiers = new ArrayList<>();
+    for (ResolvedTestAnnotation resolved : config.resolveTestAnnotations(tree, state)) {
+      Set<AnnotationArgument> matchedFlagsWorkingSet = new HashSet<>();
+      for (AnnotationArgument testedFlag : resolved.getFlags()) {
+        if (testedFlag.getValue().equals(xpFlagName)) {
+          if (isTreated == resolved.isTreated()) {
+            // Annotation requests the same treatment state as what Piranha is setting the flag to
+            matchedFlagsWorkingSet.add(testedFlag);
+          } else {
+            // Annotation (and therefore test method) requests a different (now impossible)
+            // treatment, compared to what Piranha is setting the flag to.
+            deleteMethod = true;
           }
         }
       }
+      // Should we delete the full annotation, or specific flags within it? Depends if all
+      // flags mentioned within the annotation have been matched or not:
+      if (matchedFlagsWorkingSet.size() == resolved.getFlags().size()) {
+        deletableAnnotations.add(resolved.getSourceTree());
+      } else {
+        // Only remove the matched flag references, but preserve the annotation and its
+        // references to remaining flags
+        matchedFlagsWorkingSet
+            .stream()
+            .forEach(arg -> deletableIdentifiers.add(arg.getSourceTree()));
+      }
+      matchedFlagsWorkingSet.clear();
     }
-
-    return Description.NO_MATCH;
+    // Early exit for no changes required:
+    if (!deleteMethod && deletableAnnotations.size() == 0 && deletableIdentifiers.size() == 0) {
+      return Description.NO_MATCH;
+    }
+    // Process refactoring
+    Description.Builder builder = buildDescription(tree);
+    SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
+    // Check first if the whole method must go away
+    if (deleteMethod) {
+      fixBuilder.delete(tree);
+      decrementAllSymbolUsages(tree, state, fixBuilder);
+    } else {
+      // Otherwise, we might still need to clean up individual obsolete test annotations and flag
+      // references within multi-flag annotations.
+      // Note that the AST elements referenced by deletableAnnotations and deletableIdentifiers
+      // should not overlap, given the logic above, so deleting each independently is safe.
+      for (ExpressionTree expr : deletableIdentifiers) {
+        fixBuilder.delete(expr);
+        decrementAllSymbolUsages(expr, state, fixBuilder);
+      }
+      for (AnnotationTree at : deletableAnnotations) {
+        fixBuilder.delete(at);
+        decrementAllSymbolUsages(at, state, fixBuilder);
+      }
+    }
+    builder.addFix(fixBuilder.build());
+    return builder.build();
   }
 
   @Override
