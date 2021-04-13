@@ -14,6 +14,7 @@ import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewArrayTree;
 import com.sun.source.tree.Tree;
+import com.uber.piranha.PiranhaUtils;
 import com.uber.piranha.config.Config;
 import com.uber.piranha.config.PiranhaConfigurationException;
 import java.util.HashSet;
@@ -66,7 +67,7 @@ public final class TestAnnotationResolver {
     for (ExpressionTree et : at.getArguments()) {
       if (et.getKind() == Tree.Kind.ASSIGNMENT) {
         AssignmentTree assn = (AssignmentTree) et;
-        String key = "$" + ASTHelpers.getSymbol(assn.getVariable()).getSimpleName().toString();
+        String key = "$" + PiranhaUtils.expressionToSimpleName(assn.getVariable());
         ExpressionTree assnExpression = assn.getExpression();
         Tree.Kind assnExprKind = assnExpression.getKind();
         switch (assnExprKind) {
@@ -75,8 +76,7 @@ public final class TestAnnotationResolver {
             builder.put(
                 key,
                 new AnnotationArgument(
-                    ASTHelpers.getSymbol(assnExpression).getSimpleName().toString(),
-                    assnExpression));
+                    PiranhaUtils.expressionToSimpleName(assnExpression), assnExpression));
             break;
           case STRING_LITERAL: // Fallthrough
           case BOOLEAN_LITERAL:
@@ -94,9 +94,7 @@ public final class TestAnnotationResolver {
                     key, new AnnotationArgument(((LiteralTree) expr).getValue().toString(), expr));
               } else {
                 builder.put(
-                    key,
-                    new AnnotationArgument(
-                        ASTHelpers.getSymbol(expr).getSimpleName().toString(), expr));
+                    key, new AnnotationArgument(PiranhaUtils.expressionToSimpleName(expr), expr));
               }
             }
             break;
