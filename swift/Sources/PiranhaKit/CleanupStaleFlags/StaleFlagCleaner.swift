@@ -128,8 +128,7 @@ class XPFlagCleaner: SyntaxRewriter {
     private func flagApiType(of node: FunctionCallExprSyntax) -> Method.FlagType? {
         for method in config.methods {
             if node.calledExpression.description.hasSuffix(method.methodName),
-               method.flagIndex != nil,
-                match(in: node, name: flagName, at: method.flagIndex!) {
+                match(in: node, name: flagName, at: method.flagIndex) {
                 var foundMatch = true
                 // if there is a groupIndex and it doesn't match with groupName,
                 if method.groupIndex != nil, !match(in: node, name: groupName, at: method.groupIndex!) {
@@ -249,14 +248,11 @@ class XPFlagCleaner: SyntaxRewriter {
             }
         } else if let functionCallExprNode = FunctionCallExprSyntax.init(node) {
             // handles flag API calls
-            guard let api = flagApiType(of: functionCallExprNode) else {
-                return cache(expression: Syntax(functionCallExprNode),
-                             with: Value.isBot)
-            }
             var value = Value.isBot
-            if api == .treated || api == .treatmentGroup {
+            let api = flagApiType(of: functionCallExprNode)
+            if api == .treated  {
                 value = (isTreated ? Value.isTrue : Value.isFalse)
-            } else if api == .controlGroup || api == .control {
+            } else if api == .control {
                 value = (isTreated ? Value.isFalse : Value.isTrue)
             }
             return cache(expression: Syntax(functionCallExprNode), with: value)

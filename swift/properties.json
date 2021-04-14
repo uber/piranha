@@ -7,12 +7,12 @@
         },
         {
             "methodName": "isInControlGroup",
-            "flagType": "controlGroup",
+            "flagType": "control",
             "flagIndex": 0
         },
         {
             "methodName": "isInTreatmentGroup",
-            "flagType": "treatmentGroup",
+            "flagType": "treated",
             "flagIndex": 1,
             "groupIndex": 0
         },

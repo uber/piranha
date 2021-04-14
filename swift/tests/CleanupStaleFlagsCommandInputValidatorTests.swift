@@ -1,5 +1,5 @@
 /**
- *    Copyright (c) 2019 Uber Technologies, Inc.
+ *    Copyright (c) 2021 Uber Technologies, Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Please provide valid source file path")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
@@ -70,7 +70,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Please provide valid config file path")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
@@ -90,7 +90,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Please provide valid flag name")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
@@ -113,7 +113,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Invalid configuration")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
@@ -132,7 +132,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
             XCTFail("No error is expected for valid input but received: \(error.message)")
         } catch let error {
             // then
-            XCTFail("No error is expected for valid input but receieved: \(error.localizedDescription)")
+            XCTFail("No error is expected for valid input but received: \(error.localizedDescription)")
         }
     }
 }

@@ -24,17 +24,15 @@ struct PiranhaConfig: Codable {
     let methods: [Method]
 }
 
-struct Method: Codable {
+struct Method: Codable, Equatable {
     let methodName: String
     let flagType: FlagType
-    let flagIndex: Int?
+    let flagIndex: Int
     let groupIndex: Int?
     
     enum FlagType: String, Codable {
         case treated
         case control
-        case controlGroup
-        case treatmentGroup
         case testing
     }
 }
