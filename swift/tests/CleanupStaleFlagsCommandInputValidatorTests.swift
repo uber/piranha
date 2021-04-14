@@ -98,7 +98,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
         // given
         fileManager.fileExistsHandler = { _ in true }
         configProvider.configHandler = { _ in
-            throw ValidationError("Inalid configuration")
+            throw ValidationError("Invalid configuration")
         }
         
         // when
@@ -110,7 +110,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
         } catch let error as ValidationError {
             // then
             XCTAssertEqual(error.message,
-                           "Inalid configuration")
+                           "Invalid configuration")
         } catch let error {
             // then
             XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
