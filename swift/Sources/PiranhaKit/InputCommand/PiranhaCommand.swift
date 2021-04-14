@@ -65,12 +65,13 @@ struct CleanupStaleFlagsCommand: ParsableCommand {
     
     func run() throws {
         guard let sourceFileURL = sourceFile,
-              let configFileURL = configFile else {
+              let config = try configFile?.config() else {
             // This ideally shouldn't happen since validation runs before the run phase that ensures that invariant is satisfied.
             throw ValidationError("Invalid file paths")
         }
         let parsed = try SyntaxParser.parse(sourceFileURL)
-        let cleaner = XPFlagCleaner(with: configFileURL,
+        
+        let cleaner = XPFlagCleaner(with: config,
                                     flag: flag,
                                     behavior: treated,
                                     group: groupName ?? "")
@@ -86,3 +87,16 @@ struct CleanupStaleFlagsCommand: ParsableCommand {
         print(refactoredOutput, terminator: "")
     }
 }
+
+extension URL {
+    func config() throws -> PiranhaConfig {
+        do {
+            let properties = try Data(contentsOf: self)
+            return try JSONDecoder().decode(PiranhaConfig.self,
+                                            from: properties)
+        } catch {
+            throw ValidationError("Invalid configuration")
+        }
+    }
+}
+

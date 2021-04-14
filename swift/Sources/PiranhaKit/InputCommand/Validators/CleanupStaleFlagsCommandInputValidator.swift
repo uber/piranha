@@ -33,6 +33,8 @@ struct CleanupStaleFlagsCommandInputValidator {
             throw ValidationError("Please provide valid config file path")
         }
         
+        _ = try configFileURL.config()
+        
         
         guard !flag.isEmpty else {
             throw ValidationError("Please provide valid flag name")
