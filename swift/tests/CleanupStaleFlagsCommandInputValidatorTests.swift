@@ -21,8 +21,15 @@ import ArgumentParser
 
 final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
     
-    private let sut = CleanupStaleFlagsCommandInputValidator()
+    private var sut: CleanupStaleFlagsCommandInputValidator!
     private let fileManager = MockFileManager()
+    private let configProvider = MockPiranhaConfigProvider()
+    
+    override func setUp() {
+        super.setUp()
+        configProvider.configHandler = { _ in PiranhaConfig(methods: []) }
+        sut = CleanupStaleFlagsCommandInputValidator(configProvider: configProvider)
+    }
     
     func test_validateInput_invalidSourceFileURL() {
         // given
@@ -67,7 +74,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
         }
     }
     
-    func test_validateInput_validFileURLs_emptyFlagName() {
+    func test_validateInput_validFileURLs_validConfig_emptyFlagName() {
         // given
         fileManager.fileExistsHandler = { _ in true }
         
@@ -81,6 +88,29 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
             // then
             XCTAssertEqual(error.message,
                            "Please provide valid flag name")
+        } catch let error {
+            // then
+            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+        }
+    }
+    
+    func test_validateInput_validFileURLs_invalidConfig_emptyFlagName() {
+        // given
+        fileManager.fileExistsHandler = { _ in true }
+        configProvider.configHandler = { _ in
+            throw ValidationError("Inalid configuration")
+        }
+        
+        // when
+        do {
+            try sut.validateInput(sourceFileURL: URL(fileURLWithPath: "sourceFileURLPath"),
+                                  configFileURL: URL(fileURLWithPath: "configFileURLPath"),
+                                  flag: "",
+                                  fileManager: fileManager)
+        } catch let error as ValidationError {
+            // then
+            XCTAssertEqual(error.message,
+                           "Inalid configuration")
         } catch let error {
             // then
             XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
@@ -108,11 +138,19 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
 }
 
 
-private class MockFileManager: FileManager {
+private final class MockFileManager: FileManager {
     
     var fileExistsHandler: ((_ path: String) -> Bool)!
     
     override func fileExists(atPath path: String) -> Bool {
         fileExistsHandler(URL(string: path)!.lastPathComponent)
+    }
+}
+
+private final class MockPiranhaConfigProvider: PiranhaConfigProviding {
+    var configHandler: ((_ url: URL) throws -> PiranhaConfig)!
+    
+    func config(fromFileAtURL url: URL) throws -> PiranhaConfig {
+        try configHandler(url)
     }
 }

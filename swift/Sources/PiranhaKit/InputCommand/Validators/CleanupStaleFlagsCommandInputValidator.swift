@@ -19,6 +19,12 @@ import ArgumentParser
 
 struct CleanupStaleFlagsCommandInputValidator {
     
+    private let configProvider: PiranhaConfigProviding
+    
+    init(configProvider: PiranhaConfigProviding = PiranhaConfigProviderDefaultImpl()) {
+        self.configProvider = configProvider
+    }
+    
     func validateInput(sourceFileURL: URL?,
                        configFileURL: URL?,
                        flag: String,
@@ -33,7 +39,7 @@ struct CleanupStaleFlagsCommandInputValidator {
             throw ValidationError("Please provide valid config file path")
         }
         
-        _ = try configFileURL.config()
+        _ = try configProvider.config(fromFileAtURL: configFileURL)
         
         
         guard !flag.isEmpty else {
