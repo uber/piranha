@@ -150,7 +150,7 @@ private final class MockFileManager: FileManager {
 private final class MockPiranhaConfigProvider: PiranhaConfigProviding {
     var configHandler: ((_ url: URL) throws -> PiranhaConfig)!
     
-    func config(fromFileAtURL url: URL) throws -> PiranhaConfig {
+    func config(fromFileURL url: URL) throws -> PiranhaConfig {
         try configHandler(url)
     }
 }

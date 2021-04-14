@@ -69,7 +69,7 @@ struct CleanupStaleFlagsCommand: ParsableCommand {
             // This ideally shouldn't happen since validation runs before the run phase that ensures that invariant is satisfied.
             throw ValidationError("Invalid file paths")
         }
-        let config = try PiranhaConfigProviderDefaultImpl().config(fromFileAtURL: configFileURL)
+        let config = try PiranhaConfigProviderDefaultImpl().config(fromFileURL: configFileURL)
         
         let parsed = try SyntaxParser.parse(sourceFileURL)
         

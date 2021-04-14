@@ -18,12 +18,12 @@ import ArgumentParser
 import Foundation
 
 protocol PiranhaConfigProviding {
-    func config(fromFileAtURL url: URL) throws -> PiranhaConfig
+    func config(fromFileURL url: URL) throws -> PiranhaConfig
 }
 
 struct PiranhaConfigProviderDefaultImpl: PiranhaConfigProviding {
     
-    func config(fromFileAtURL url: URL) throws -> PiranhaConfig {
+    func config(fromFileURL url: URL) throws -> PiranhaConfig {
         do {
             let properties = try Data(contentsOf: url)
             return try JSONDecoder().decode(PiranhaConfig.self,
