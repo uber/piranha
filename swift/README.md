@@ -18,7 +18,7 @@ USAGE: <piranha_exe> cleanup-stale-flags [--source-file <source-file>] [--config
 
 OPTIONS:
   -s, --source-file <source-file>
-                          Input Source File that needs to run piranha 
+                          Input source file for Piranha
   -c, --config-file <config-file>
                           Path of configuration file for Piranha 
   -f, --flag <flag>       Name of the stale flag 
@@ -26,6 +26,68 @@ OPTIONS:
   -t, --treated           If this option is supplied, the flag is treated, otherwise it is control. 
   -h, --help              Show help information.
 ```
+
+### Example 
+
+Consider the following properties file `properties.json`.
+
+```json
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "flagIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "flagIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "flagIndex": 0
+    }
+  ]
+}
+```
+
+This specifies a list of flag APIs each of which return a boolean value. It is assumed that a method returns `true` iff the `flagType` specified in the properties file matches the flag behaviour specified at runtime. For example, if the flag behavior is `treated`, `isFlagTreated(flag)` will return `true` and `isToggleDisabled(flag)` will return `false`.
+
+The following code in `Examples/sample.swift` contains the stale flag `featureFlag`
+
+```swift
+// Simple flag cleanup in conditional
+if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.featureFlag) {
+    f1();
+ } else {
+    f2();
+ }
+
+// Assignment cleanup
+var a = isToggleDisabled(ExperimentNamesSwift.featureFlag)
+if(a) {
+   f1()
+} else {
+   f2()
+}
+
+```
+When this file is run through Piranha with the command 
+
+```
+piranha_exe cleanup-stale-flags -c properties.json -s Examples/sample.swift -f featureFlag --treated
+```
+
+It yields the following output:
+
+```swift
+f1()
+f2()
+```
+
+Note that code-style and comments are preserved wherever possible by default.
 
 
 
