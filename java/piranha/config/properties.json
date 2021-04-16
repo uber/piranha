@@ -19,12 +19,12 @@
     },
     {
       "methodName": "putToggleEnabled",
-      "flagType": "empty",
+      "flagType": "set_treated",
       "argumentIndex": 0
     },
     {
       "methodName": "putToggleDisabled",
-      "flagType": "empty",
+      "flagType": "set_control",
       "argumentIndex": 0
     },
     {
@@ -51,5 +51,9 @@
         "flag" : "$value",
         "treated" : "false"
     }
-  ]
+  ],
+  "cleanupOptions": {
+    "tests.clean_by_setters_heuristic.enabled" : true,
+    "tests.clean_by_setters_heuristic.linesLimit" : 100
+  }
 }

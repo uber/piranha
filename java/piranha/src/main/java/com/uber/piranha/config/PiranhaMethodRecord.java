@@ -69,6 +69,8 @@ public final class PiranhaMethodRecord {
     ImmutableMap.Builder<String, XPFlagCleaner.API> builder = new ImmutableMap.Builder<>();
     builder.put("treated", XPFlagCleaner.API.IS_TREATED);
     builder.put("control", XPFlagCleaner.API.IS_CONTROL);
+    builder.put("set_treated", XPFlagCleaner.API.SET_TREATED);
+    builder.put("set_control", XPFlagCleaner.API.SET_CONTROL);
     builder.put("empty", XPFlagCleaner.API.DELETE_METHOD);
     builder.put("treatmentGroup", XPFlagCleaner.API.IS_TREATMENT_GROUP_CHECK);
     return builder.build();
