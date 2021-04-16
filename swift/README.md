@@ -11,7 +11,7 @@ Piranha scans source files to delete code related to stale feature flags leading
 
 ## Usage
 
-Piranha Swift can be configured to recognize different flag APIs and flag behaviours by specifying a `.properties` file and the appropriate command line options. 
+Piranha Swift can be configured to recognize different flag APIs and flag behaviours by specifying a `properties.json` file and the appropriate command line options. 
 
 ```
 USAGE: <piranha_exe> cleanup-stale-flags [--source-file <source-file>] [--config-file <config-file>] --flag <flag> [--group-name <group-name>] [--treated]
@@ -77,7 +77,7 @@ if(a) {
 When this file is run through Piranha with the command 
 
 ```
-piranha_exe cleanup-stale-flags -c properties.json -s Examples/sample.swift -f featureFlag --treated
+<piranha_exe> cleanup-stale-flags -c properties.json -s Examples/sample.swift -f featureFlag --treated
 ```
 
 It yields the following output:
