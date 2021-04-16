@@ -11,7 +11,7 @@ trap "cleanup" INT TERM EXIT
 piranha_exe=artifact/piranha/bin/Piranha
 
 tempfile=mktemp
-$piranha_exe cleanup-stale-flags -c piranha.properties -s tests/InputSampleFiles/testfile.swift -f test_experiment --treated > "$tempfile"
+$piranha_exe cleanup-stale-flags -c properties.json -s tests/InputSampleFiles/testfile.swift -f test_experiment --treated > "$tempfile"
 CHANGES=$(diff -wB $tempfile tests/InputSampleFiles/treated.swift)
 
 if [ "$CHANGES" != "" ]
@@ -22,7 +22,7 @@ then
 fi
 
 
-$piranha_exe cleanup-stale-flags -c piranha.properties -s tests/InputSampleFiles/testfile.swift -f test_experiment > "$tempfile"
+$piranha_exe cleanup-stale-flags -c properties.json -s tests/InputSampleFiles/testfile.swift -f test_experiment > "$tempfile"
 CHANGES=$(diff -wB $tempfile tests/InputSampleFiles/control.swift)
 
 if [ "$CHANGES" != "" ]

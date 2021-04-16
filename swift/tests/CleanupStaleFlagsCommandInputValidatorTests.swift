@@ -1,5 +1,5 @@
 /**
- *    Copyright (c) 2019 Uber Technologies, Inc.
+ *    Copyright (c) 2021 Uber Technologies, Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -21,8 +21,15 @@ import ArgumentParser
 
 final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
     
-    private let sut = CleanupStaleFlagsCommandInputValidator()
+    private var sut: CleanupStaleFlagsCommandInputValidator!
     private let fileManager = MockFileManager()
+    private let configProvider = MockPiranhaConfigProvider()
+    
+    override func setUp() {
+        super.setUp()
+        configProvider.configHandler = { _ in PiranhaConfig(methods: []) }
+        sut = CleanupStaleFlagsCommandInputValidator(configProvider: configProvider)
+    }
     
     func test_validateInput_invalidSourceFileURL() {
         // given
@@ -40,7 +47,7 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Please provide valid source file path")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
@@ -63,11 +70,11 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Please provide valid config file path")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
-    func test_validateInput_validFileURLs_emptyFlagName() {
+    func test_validateInput_validFileURLs_validConfig_emptyFlagName() {
         // given
         fileManager.fileExistsHandler = { _ in true }
         
@@ -83,7 +90,30 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
                            "Please provide valid flag name")
         } catch let error {
             // then
-            XCTFail("Only ValidatorError is expected from CleanupStaleFlagsCommandInputValidator but receieved: \(error.localizedDescription)")
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
+        }
+    }
+    
+    func test_validateInput_validFileURLs_invalidConfig_emptyFlagName() {
+        // given
+        fileManager.fileExistsHandler = { _ in true }
+        configProvider.configHandler = { _ in
+            throw ValidationError("Invalid configuration")
+        }
+        
+        // when
+        do {
+            try sut.validateInput(sourceFileURL: URL(fileURLWithPath: "sourceFileURLPath"),
+                                  configFileURL: URL(fileURLWithPath: "configFileURLPath"),
+                                  flag: "",
+                                  fileManager: fileManager)
+        } catch let error as ValidationError {
+            // then
+            XCTAssertEqual(error.message,
+                           "Invalid configuration")
+        } catch let error {
+            // then
+            XCTFail("Only ValidationError is expected from CleanupStaleFlagsCommandInputValidator but received: \(error.localizedDescription)")
         }
     }
     
@@ -102,17 +132,25 @@ final class CleanupStaleFlagsCommandInputValidatorTest: XCTestCase {
             XCTFail("No error is expected for valid input but received: \(error.message)")
         } catch let error {
             // then
-            XCTFail("No error is expected for valid input but receieved: \(error.localizedDescription)")
+            XCTFail("No error is expected for valid input but received: \(error.localizedDescription)")
         }
     }
 }
 
 
-private class MockFileManager: FileManager {
+private final class MockFileManager: FileManager {
     
     var fileExistsHandler: ((_ path: String) -> Bool)!
     
     override func fileExists(atPath path: String) -> Bool {
         fileExistsHandler(URL(string: path)!.lastPathComponent)
+    }
+}
+
+private final class MockPiranhaConfigProvider: PiranhaConfigProviding {
+    var configHandler: ((_ url: URL) throws -> PiranhaConfig)!
+    
+    func config(fromFileURL url: URL) throws -> PiranhaConfig {
+        try configHandler(url)
     }
 }

@@ -18,23 +18,7 @@ import Foundation
 import SwiftSyntax
 
 class XPFlagCleaner: SyntaxRewriter {
-    // specifies the type of APIs
-    enum API {
-        case isTreated
-        case isControl
-        case isInControlGroup
-        case isInTreatmentGroup
-        case isTesting
-        case isUnknown
-    }
-
-    struct FlagAPI {
-        var api: String
-        var type: API
-        var flagIndex: Int?
-        var groupIndex: Int?
-    }
-
+    
     // specifies the value returned by evaluating the expression
     private enum Value {
         case isTrue
@@ -50,13 +34,11 @@ class XPFlagCleaner: SyntaxRewriter {
         case unknown
     }
 
-    private var configFile: URL
-    private var configurationParsed: Bool = false
+    private let config: PiranhaConfig
     
-    private var SELFDOT: String = "self."
-    private var UNKNOWN: String = "unknown"
+    private let SELFDOT: String = "self."
+    private let UNKNOWN: String = "unknown"
 
-    private var flagAPIArr: [FlagAPI] = []
     private var valueMap = [String: Value]()
     private var deepCleanMap = [String: Value]()
     private var fieldMap = [String: Bool]()
@@ -71,74 +53,17 @@ class XPFlagCleaner: SyntaxRewriter {
     private var isDeepCleanPass: Bool
     private var shouldDeepClean: Bool
 
-    init(with configFile: URL, flag flagName: String, behavior isTreated: Bool, group groupName: String) {
-        self.configFile = configFile
+    init(with config: PiranhaConfig,
+         flag flagName: String,
+         behavior isTreated: Bool,
+         group groupName: String) {
+        self.config = config
         self.flagName = flagName
         self.isTreated = isTreated
         self.groupName = groupName
 
         isDeepCleanPass = false
         shouldDeepClean = false
-    }
-
-    /* Format of config file
-     apiType1=api1(_,flagName,groupName,_);api2(flagName,...)
-     apiType2=api2(_,_,groupName)
-     ...
-     */
-
-    private func parseConfiguration() {
-        configurationParsed = true
-        var flagIndex: Int?
-        var groupIndex: Int?
-        var type: API
-
-        do {
-            let configText = try String(contentsOf: configFile, encoding: .utf8)
-            // each line contains some apiType.
-            let lineArr = configText.components(separatedBy: .newlines)
-            for line in lineArr {
-                let lineInfo = line.components(separatedBy: "=")
-                guard lineInfo.count >= 2 else { break }
-
-                switch lineInfo[0] {
-                case "treatedMethods": type = API.isTreated
-                case "controlGroupMethods": type = API.isInControlGroup
-                case "treatmentGroupMethods": type = API.isInTreatmentGroup
-                case "testingMethods": type = API.isTesting
-                default: type = API.isUnknown
-                }
-
-                // for each method defined for this api type,
-                // extract the funcName, flagIndex (where flagName is present) and
-                // groupIndex (if groupName is present) and then add this to
-                // the flagAPIarr containing the configuration
-                for method in lineInfo[1].components(separatedBy: ";") {
-                    let funcInfo = method.components(separatedBy: "(")
-                    guard funcInfo.count >= 2 else { break }
-                    let funcName = funcInfo[0]
-                    let parameters = funcInfo[1].components(separatedBy: ")")[0].components(separatedBy: ",")
-                    flagIndex = nil
-                    groupIndex = nil
-
-                    for (loopindex, parameter) in parameters.enumerated() {
-                        switch parameter {
-                        case "flagName": flagIndex = loopindex
-                        case "groupName": groupIndex = loopindex
-                        default:
-                            if parameter != "_" {
-                                print("Incorrect configuration")
-                                exit(-1)
-                            }
-                        }
-                    }
-                    flagAPIArr.append(FlagAPI(api: funcName, type: type, flagIndex: flagIndex, groupIndex: groupIndex))
-                }
-            }
-        } catch {
-            print("Configuration error.")
-            exit(-1)
-        }
     }
 
     // checks for the binary operator to handle and/or
@@ -200,25 +125,21 @@ class XPFlagCleaner: SyntaxRewriter {
     }
 
     // gets the type of the flag API
-    private func flagApiType(of node: FunctionCallExprSyntax) -> API {
-        if !configurationParsed {
-            parseConfiguration()
-        }
-        for element in flagAPIArr {
-            if node.calledExpression.description.hasSuffix(element.api),
-                element.flagIndex != nil,
-                match(in: node, name: flagName, at: element.flagIndex!) {
+    private func flagApiType(of node: FunctionCallExprSyntax) -> Method.FlagType? {
+        for method in config.methods {
+            if node.calledExpression.description.hasSuffix(method.methodName),
+                match(in: node, name: flagName, at: method.flagIndex) {
                 var foundMatch = true
                 // if there is a groupIndex and it doesn't match with groupName,
-                if element.groupIndex != nil, !match(in: node, name: groupName, at: element.groupIndex!) {
+                if method.groupIndex != nil, !match(in: node, name: groupName, at: method.groupIndex!) {
                     foundMatch = false
                 }
                 if foundMatch {
-                    return element.type
+                    return method.flagType
                 }
             }
         }
-        return API.isUnknown
+        return nil
     }
 
     // appends the input statements to the result node and returns the updated result node along with information on whether the last node is a return
@@ -327,11 +248,11 @@ class XPFlagCleaner: SyntaxRewriter {
             }
         } else if let functionCallExprNode = FunctionCallExprSyntax.init(node) {
             // handles flag API calls
-            let api = flagApiType(of: functionCallExprNode)
             var value = Value.isBot
-            if (api == API.isTreated) || (api == API.isInTreatmentGroup) {
+            let api = flagApiType(of: functionCallExprNode)
+            if api == .treated  {
                 value = (isTreated ? Value.isTrue : Value.isFalse)
-            } else if (api == API.isInControlGroup) || (api == API.isControl) {
+            } else if api == .control {
                 value = (isTreated ? Value.isFalse : Value.isTrue)
             }
             return cache(expression: Syntax(functionCallExprNode), with: value)
@@ -562,7 +483,7 @@ class XPFlagCleaner: SyntaxRewriter {
         if rhs.count == 1 {
             if let node = element(from: exprlist, at: 2),
                 let callExpr = FunctionCallExprSyntax.init(Syntax(node)) {
-                if flagApiType(of: callExpr) == API.isTesting {
+                if flagApiType(of: callExpr) == .testing {
                     return SyntaxFactory.makeBlankExprList()
                 } else {
                     let rhsValue = evaluate(expression: Syntax(node))
@@ -792,7 +713,7 @@ class XPFlagCleaner: SyntaxRewriter {
                     return visit(SyntaxFactory.makeBlankVariableDecl())
                 }
                 if let value = FunctionCallExprSyntax.init(Syntax(rhs.value)) {
-                    if (flagApiType(of: value) == API.isTesting) || (evaluate(expression: Syntax(rhs.value)) != Value.isBot) {
+                    if (flagApiType(of: value) == .testing) || (evaluate(expression: Syntax(rhs.value)) != Value.isBot) {
                         return visit(SyntaxFactory.makeBlankVariableDecl())
                     }
                 }
@@ -850,7 +771,7 @@ class XPFlagCleaner: SyntaxRewriter {
                     }
                 }
             } else if let callNode = FunctionCallExprSyntax.init(statement.item),
-                flagApiType(of: callNode) == API.isTesting {
+                      flagApiType(of: callNode) == .testing {
                 // do nothing, as the test API needs to be discarded
             } else {
                 newBody = newBody.appending(statement)

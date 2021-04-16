@@ -69,8 +69,11 @@ struct CleanupStaleFlagsCommand: ParsableCommand {
             // This ideally shouldn't happen since validation runs before the run phase that ensures that invariant is satisfied.
             throw ValidationError("Invalid file paths")
         }
+        let config = try PiranhaConfigProviderDefaultImpl().config(fromFileURL: configFileURL)
+        
         let parsed = try SyntaxParser.parse(sourceFileURL)
-        let cleaner = XPFlagCleaner(with: configFileURL,
+        
+        let cleaner = XPFlagCleaner(with: config,
                                     flag: flag,
                                     behavior: treated,
                                     group: groupName ?? "")
