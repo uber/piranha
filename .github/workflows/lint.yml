@@ -9,6 +9,8 @@ on:
 jobs:
   eslint:
     runs-on: ubuntu-latest
+    env: 
+        HUSKY_SKIP_INSTALL: 1
     steps:
       - uses: actions/checkout@v2
       - uses: hallee/eslint-action@1.0.3
