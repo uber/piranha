@@ -36,11 +36,18 @@ public final class Config {
       "tests.clean_by_setters_heuristic.enabled";
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_LIMIT =
       "tests.clean_by_setters_heuristic.linesLimit";
+  private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
+      "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
   private static final ImmutableSet<String> ALL_OPTS =
-      ImmutableSet.of(OPT_TESTS_CLEAN_BY_SETTERS_ENABLED, OPT_TESTS_CLEAN_BY_SETTERS_LIMIT);
+      ImmutableSet.of(
+          OPT_TESTS_CLEAN_BY_SETTERS_ENABLED,
+          OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
+          OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
 
   /* Defaults for named clean up options */
+  private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
   private static final long DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT = 100;
+  private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
    * configMethodsMap is a map where key is method name and value is a list where each item in the
@@ -131,13 +138,21 @@ public final class Config {
    * @return a boolean representing whether this type of clean up is enabled or not.
    */
   public boolean shouldCleanTestMethodsByContent() {
-    return cleanupOptions.containsKey(OPT_TESTS_CLEAN_BY_SETTERS_ENABLED);
+    return (boolean)
+        cleanupOptions.getOrDefault(
+            OPT_TESTS_CLEAN_BY_SETTERS_ENABLED, DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED);
   }
 
   public long testMethodCleanupSizeLimit() {
     return (long)
         cleanupOptions.getOrDefault(
             OPT_TESTS_CLEAN_BY_SETTERS_LIMIT, DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT);
+  }
+
+  public boolean shouldIgnoreOtherSettersWhenCleaningTests() {
+    return (boolean)
+        cleanupOptions.getOrDefault(
+            OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS, DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
   }
 
   // End of OPT_* retrieval methods
@@ -168,7 +183,8 @@ public final class Config {
   }
 
   private static void validateConfigOptsValue(String valK, Object v) {
-    if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)) {
+    if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)
+        || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)) {
       requireType(valK, v, Boolean.class);
     } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
       requireType(valK, v, Long.class);

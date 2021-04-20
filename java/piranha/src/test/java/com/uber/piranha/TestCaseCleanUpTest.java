@@ -756,4 +756,81 @@ public class TestCaseCleanUpTest {
             "}")
         .doTest();
   }
+
+  @Test
+  public void testCleanBySettersHeuristicIgnoreSettersForOtherFlags() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag(
+        "Piranha:Config",
+        "src/test/resources/config/properties_test_clean_by_setters_ignore_others.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr = addExperimentFlagEnums(bcr); // Adds STALE_FLAG, etc enums
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag_treated() {",
+            "     experimentation.putToggleEnabled(STALE_FLAG);",
+            "     System.err.println(\"To be removed\");",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag_control() {",
+            "     experimentation.putToggleDisabled(STALE_FLAG);",
+            "     System.err.println(\"Call above removed\");",
+            "  }",
+            "  @Test",
+            "  public void test_OtherFlag_treated() {",
+            "     experimentation.putToggleEnabled(OTHER_FLAG_1);",
+            "     System.err.println(\"Not removed\");",
+            "  }",
+            "  @Test",
+            "  public void test_OtherFlag_control() {",
+            "     experimentation.putToggleDisabled(OTHER_FLAG_1);",
+            "     System.err.println(\"Not removed\");",
+            "  }",
+            "  @Test",
+            "  public void test_BothFlags_treated() {",
+            "     experimentation.putToggleEnabled(STALE_FLAG);",
+            "     experimentation.putToggleEnabled(OTHER_FLAG_1);",
+            "     System.err.println(\"Call removed\");",
+            "  }",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag_control() {",
+            "     System.err.println(\"Call above removed\");",
+            "  }",
+            "  @Test",
+            "  public void test_OtherFlag_treated() {",
+            "     experimentation.putToggleEnabled(OTHER_FLAG_1);",
+            "     System.err.println(\"Not removed\");",
+            "  }",
+            "  @Test",
+            "  public void test_OtherFlag_control() {",
+            "     experimentation.putToggleDisabled(OTHER_FLAG_1);",
+            "     System.err.println(\"Not removed\");",
+            "  }",
+            "}")
+        .doTest();
+  }
 }

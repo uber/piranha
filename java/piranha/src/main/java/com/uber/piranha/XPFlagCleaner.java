@@ -914,12 +914,15 @@ public class XPFlagCleaner extends BugChecker
       // Skip, test method too large.
       return false;
     }
-    if (counters.topLevelObsoleteSetters > 0
-        && counters.topLevelObsoleteSetters == counters.allSetters) {
-      // All calls to flag setting methods in this test are in the top level scope and setting the
-      // flag to a now
-      // impossible value. The whole test should be deleted as per this heuristic.
-      return true;
+    if (counters.topLevelObsoleteSetters > 0) {
+      if (config.shouldIgnoreOtherSettersWhenCleaningTests()) {
+        // Ignore other setter calls
+        return true;
+      } else if (counters.topLevelObsoleteSetters == counters.allSetters) {
+        // All calls to flag setting methods in this test are in the top level scope and setting the
+        // flag to a now impossible value. The whole test should be deleted as per this heuristic.
+        return true;
+      }
     }
     // Heuristic doesn't match, unsafe to clean
     return false;
