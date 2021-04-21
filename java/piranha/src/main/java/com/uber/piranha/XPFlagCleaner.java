@@ -896,7 +896,7 @@ public class XPFlagCleaner extends BugChecker
    *       </ol>
    *   <li>The method has no other calls for set_treated/set_control API methods for other flags or
    *       conditions
-   *   <li>The method length does not exceed tests.clean_by_setters_heuristic.linesLimit (long unit
+   *   <li>The method length does not exceed tests.clean_by_setters_heuristic.lines_limit (long unit
    *       tests are more likely to be testing multiple things)
    *       <ol>
    *

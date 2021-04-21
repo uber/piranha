@@ -35,7 +35,7 @@ public final class Config {
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_ENABLED =
       "tests.clean_by_setters_heuristic.enabled";
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_LIMIT =
-      "tests.clean_by_setters_heuristic.linesLimit";
+      "tests.clean_by_setters_heuristic.lines_limit";
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
       "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
   private static final ImmutableSet<String> ALL_OPTS =

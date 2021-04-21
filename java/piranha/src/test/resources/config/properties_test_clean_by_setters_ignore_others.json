@@ -55,6 +55,6 @@
   "cleanupOptions": {
     "tests.clean_by_setters_heuristic.enabled" : true,
     "tests.clean_by_setters_heuristic.ignore_other_flag_sets" : true,
-    "tests.clean_by_setters_heuristic.linesLimit" : 100
+    "tests.clean_by_setters_heuristic.lines_limit" : 100
   }
 }
