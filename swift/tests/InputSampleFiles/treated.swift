@@ -132,6 +132,7 @@ class SwiftExamples {
         if x, y {
             print("x")
         }
+
         print("treated")
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment_suffix) {
