@@ -562,14 +562,14 @@ class XPFlagCleaner: SyntaxRewriter {
         }
 
         var result = SyntaxFactory.makeBlankConditionElementList()
-
+        
         for expr in node {
             let value = evaluate(expression: expr.condition)
             if value != Value.isTrue {
                 result = result.appending(expr)
             }
         }
-
+        result.removeLastTrailingCommaIfNeeded()
         return super.visit(result)
     }
 

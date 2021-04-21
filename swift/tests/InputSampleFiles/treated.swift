@@ -120,6 +120,10 @@ class SwiftExamples {
     private let fieldZ: Bool
 
     func test_expressions() {
+        
+        if x {
+            print("x")
+        }
         print("treated")
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment_suffix) {
