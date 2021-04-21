@@ -72,8 +72,9 @@ The required top-level field is `methodProperties`.
 Within that, there is an array of JSON objects, having the required fields `methodName`, `flagType` and `argumentIndex`.
 The optional fields are `returnType`, `receiverType`.
 
-The `flagType` with `treated` are the APIs which correspond to the treatment behavior of the flag, `control` correspond to the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when the `IsTreated` Piranha argument is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`. 
-The `flagType` with `empty` specifies the APIs which need to be discarded from the code. For example, if `enableFlag` is listed as a method in properties.json, with `flagType=empty`, a statement `enableFlag(SAMPLE_STALE_FLAG);` will be deleted from the code. 
+The `flagType` of `treated` are the APIs which correspond to checking for the treatment behavior of the flag, `control` correspond to checking for the control behavior of the flag. In the above example, the API `flagEnabled` corresponds to treatment behavior. Hence, when the `IsTreated` Piranha argument is set to `true`, `flagEnabled(SAMPLE_STALE_FLAG)` will be evaluated to `true`. Similarly, `flagDisabled(SAMPLE_STALE_FLAG)` which corresponds to the control behavior will evaluate to `false`.
+The `flagType` of `set_treated` and `set_control` represent APIs that force the value of the flag (to `treated` or `control`, respectively). These APIs are often used as part of testing, and Piranha includes (optional) logic to remove unit tests which set the value of removed flags to an impossible treatment condition (see `cleanupOptions` in the example `properties.json`). Elsewhere in the code, these calls will simply be removed with the flag.
+The `flagType` of `empty` specifies the APIs which need to be discarded from the code. For example, if `refreshFlag` is listed as a method in properties.json, with `flagType=empty`, a statement `refreshFlag(SAMPLE_STALE_FLAG);` will be deleted from the code.
 
 The `argumentIndex` field specifies where to look for the flag name (given by `-XepOpt:Piranha:FlagName`) in the method's arguments. We follow 0 based indexing.
 If your toggle methods take no arguments, or if you want to delete all occurrences of a given `methodName` irrespective of their arguments, you can set the `Piranha:ArgumentIndexOptional` to `true` to make specifying `argumentIndex` optional.
@@ -93,7 +94,7 @@ will be refactored to
 public void some_unit_test() { ... }
 ```
 
-when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `false`. 
+when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `false`.
 
 Finally, the setting `linkURL` in the properties file is to provide a URL describing the Piranha tooling and any custom configurations associated with the codebase. 
 
@@ -145,11 +146,16 @@ where `properties.json` contains the following,
       },
       {
         "methodName": "enableFlag",
-        "flagType": "empty",
+        "flagType": "set_treated",
         "argumentIndex": 0
       },
       {
         "methodName": "disableFlag",
+        "flagType": "set_control",
+        "argumentIndex": 0
+      },
+      {
+        "methodName": "refreshFlag",
         "flagType": "empty",
         "argumentIndex": 0
       }
