@@ -131,6 +131,10 @@ class SwiftExamples {
     private lazy var fieldA: Bool = !cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
 
     func test_expressions() {
+        
+        if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("x")
+        }
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
             print("treated")
