@@ -21,7 +21,7 @@ import XCTest
 
 final class ConditionElementListSyntaxExtensionsTests: XCTestCase {
     
-    func test_removeLastTrailingCommaIfNeeded_trailingCommaPresent() {
+    func test_removeLastTrailingCommaIfNeeded_singleCondition_trailingCommaPresent() {
         // given
         var result = SyntaxFactory.makeBlankConditionElementList()
         let condition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("x")._syntaxNode,
@@ -39,7 +39,7 @@ final class ConditionElementListSyntaxExtensionsTests: XCTestCase {
         XCTAssertEqual(result.description, "x")
     }
     
-    func test_removeLastTrailingCommaIfNeeded_trailingCommaNotPresent() {
+    func test_removeLastTrailingCommaIfNeeded_singleCondition_trailingCommaNotPresent() {
         // given
         var result = SyntaxFactory.makeBlankConditionElementList()
         let condition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("x")._syntaxNode,
@@ -54,5 +54,75 @@ final class ConditionElementListSyntaxExtensionsTests: XCTestCase {
         
         // then
         XCTAssertEqual(result.description, "x")
+    }
+    
+    func test_removeLastTrailingCommaIfNeeded_multipleConditions_trailingCommaPresent() {
+        // given
+        var result = SyntaxFactory.makeBlankConditionElementList()
+        let xCondition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("x")._syntaxNode,
+                                                            trailingComma: nil)
+        let yCondition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("y")._syntaxNode,
+                                                            trailingComma: nil)
+        let zCondition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("z")._syntaxNode,
+                                                            trailingComma: nil)
+        
+        result = result.appending(.init({ (builder) in
+            builder.useCondition(xCondition._syntaxNode)
+            builder.useTrailingComma(SyntaxFactory.makeCommaToken(leadingTrivia: .zero,
+                                                                  trailingTrivia: .spaces(1)))
+        }))
+        
+        result = result.appending(.init({ (builder) in
+            builder.useCondition(yCondition._syntaxNode)
+            builder.useTrailingComma(SyntaxFactory.makeCommaToken(leadingTrivia: .zero,
+                                                                  trailingTrivia: .spaces(1)))
+        }))
+        
+        result = result.appending(.init({ (builder) in
+            builder.useCondition(zCondition._syntaxNode)
+            builder.useTrailingComma(SyntaxFactory.makeCommaToken(leadingTrivia: .zero))
+        }))
+        
+        XCTAssertEqual(result.description, "x, y, z,")
+        
+        // when
+        result.removeLastTrailingCommaIfNeeded()
+        
+        // then
+        XCTAssertEqual(result.description, "x, y, z")
+    }
+    
+    func test_removeLastTrailingCommaIfNeeded_multipleConditions_trailingCommaNotPresent() {
+        // given
+        var result = SyntaxFactory.makeBlankConditionElementList()
+        let xCondition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("x")._syntaxNode,
+                                                            trailingComma: nil)
+        let yCondition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("y")._syntaxNode,
+                                                            trailingComma: nil)
+        let zCondition = SyntaxFactory.makeConditionElement(condition: SyntaxFactory.makeIdentifier("z")._syntaxNode,
+                                                            trailingComma: nil)
+        result = result.appending(.init({ (builder) in
+            builder.useCondition(xCondition._syntaxNode)
+            builder.useTrailingComma(SyntaxFactory.makeCommaToken(leadingTrivia: .zero,
+                                                                  trailingTrivia: .spaces(1)))
+        }))
+        
+        result = result.appending(.init({ (builder) in
+            builder.useCondition(yCondition._syntaxNode)
+            builder.useTrailingComma(SyntaxFactory.makeCommaToken(leadingTrivia: .zero,
+                                                                  trailingTrivia: .spaces(1)))
+        }))
+        
+        result = result.appending(.init({ (builder) in
+            builder.useCondition(zCondition._syntaxNode)
+        }))
+        
+        XCTAssertEqual(result.description, "x, y, z")
+        
+        // when
+        result.removeLastTrailingCommaIfNeeded()
+        
+        // then
+        XCTAssertEqual(result.description, "x, y, z")
     }
 }
