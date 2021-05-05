@@ -21,8 +21,9 @@ jobs:
             java: 8
           - os: ubuntu-latest
             java: 11
-          - os: windows-latest
-            java: 8
+          # Windows is unsupported for now
+          # - os: windows-latest
+          #   java: 8
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -37,7 +38,7 @@ jobs:
         with:
           build-root-directory: ./java
           wrapper-directory: ./java
-          arguments: verGJF build
+          arguments: verGJF build --stacktrace --debug
       - name: Report jacoco coverage
         uses: eskatos/gradle-command-action@v1
         env:
