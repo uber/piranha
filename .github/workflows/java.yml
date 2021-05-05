@@ -7,10 +7,6 @@ on:
     branches:
       - master
 
-defaults:
-  run:
-    working-directory: java
-
 jobs:
   build:
     name: "JDK ${{ matrix.java }} on ${{ matrix.os }}"
@@ -40,11 +36,13 @@ jobs:
         uses: eskatos/gradle-command-action@v1
         with:
           arguments: verGJF build
+        working-directory: java
       - name: Report jacoco coverage
         uses: eskatos/gradle-command-action@v1
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         with:
           arguments: jacocoTestReport coverallsJacoco
+        working-directory: java
         continue-on-error: true
-        if: runner.os == 'Linux' && matrix.java == '8' && github.repository == 'uber/NullAway'
+        if: runner.os == 'Linux' && matrix.java == '8' && github.repository == 'uber/piranha'
