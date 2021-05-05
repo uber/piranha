@@ -19,6 +19,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 plugins {
   id "com.github.sherter.google-java-format" version "0.7.1"
   id "net.ltgt.errorprone" version "0.6" apply false
+  id "com.github.nbaztec.coveralls-jacoco" version "1.2.5" apply false
 }
 
 repositories {
