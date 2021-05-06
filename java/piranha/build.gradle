@@ -86,5 +86,5 @@ jacocoTestReport {
 }
 
 coverallsJacoco {
-    reportPath = "java/piranha/build/reports/jacoco/test/jacocoTestReport.xml"
+    reportPath = "${project.projectDir}/build/reports/jacoco/test/jacocoTestReport.xml"
 }

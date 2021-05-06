@@ -12,8 +12,6 @@ matrix:
         - cd java/
       script:
         - ./gradlew verGJF build
-      after_success:
-        - ./gradlew jacocoTestReport coveralls
       cache:
         directories:
           - $HOME/.gradle
