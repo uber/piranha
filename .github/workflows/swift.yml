@@ -1,0 +1,28 @@
+# GitHub CI workflow for PiranhaSwift
+
+name: Swift CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: "PiranhaSwift using ${{ matrix.xcode }} on ${{ matrix.os }}"
+    strategy:
+        matrix:
+          include:
+          - os: macos-latest
+            xcode: Xcode_12.2
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out Piranha sources
+        uses: actions/checkout@v2
+      - name: Build and test
+        run: |
+           cd swift/
+           sh package.sh
+           sh test.sh
+        env:
+           DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
