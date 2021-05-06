@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Check out Piranha sources
         uses: actions/checkout@v2
-            - name: Build and test
+      - name: Build and test
         run: |
            cd swift/
            sh package.sh
