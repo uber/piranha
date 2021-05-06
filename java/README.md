@@ -1,5 +1,7 @@
 # PiranhaJava
 
+[![Coverage Status](https://coveralls.io/repos/github/uber/piranha/badge.svg?branch=master)](https://coveralls.io/github/uber/piranha?branch=master)
+
 ## Installation
 
 ### Overview
