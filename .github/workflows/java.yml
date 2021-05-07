@@ -38,7 +38,7 @@ jobs:
         with:
           build-root-directory: ./java
           wrapper-directory: ./java
-          arguments: verGJF build --stacktrace
+          arguments: verGJF build
       - name: Report jacoco coverage
         uses: eskatos/gradle-command-action@v1
         env:
