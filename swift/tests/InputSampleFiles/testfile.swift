@@ -135,6 +135,14 @@ class SwiftExamples {
         if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
             print("x")
         }
+        
+        if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment), y {
+            print("x")
+        }
+        
+        if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) && y {
+            print("x")
+        }
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
             print("treated")
@@ -510,7 +518,7 @@ class SwiftExamples {
         self.conj2 = cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix) &&
                         cachedexperiments.isTreated(forexperiment: ExperimentNamesSwift.test_experiment)
 
-        self.conj3 = cachedexperiments.isTreated(forexperiment: ExperimentNamesSwift.test_experiment) || cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix) 
+        self.conj3 = cachedexperiments.isTreated(forexperiment: ExperimentNamesSwift.test_experiment) || cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix)
     }
 
     // Test for T2606011
