@@ -1,6 +1,8 @@
 package com.uber.piranha.config;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
@@ -27,6 +29,25 @@ public final class Config {
   private static final String LINK_URL_KEY = "linkURL";
   private static final String ANNOTATIONS_KEY = "annotations";
   private static final String METHODS_KEY = "methodProperties";
+  private static final String CLEANUP_OPTS_KEY = "cleanupOptions";
+
+  /* Named clean up options within the cleanupOptions property, all are optional */
+  private static final String OPT_TESTS_CLEAN_BY_SETTERS_ENABLED =
+      "tests.clean_by_setters_heuristic.enabled";
+  private static final String OPT_TESTS_CLEAN_BY_SETTERS_LIMIT =
+      "tests.clean_by_setters_heuristic.lines_limit";
+  private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
+      "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
+  private static final ImmutableSet<String> ALL_OPTS =
+      ImmutableSet.of(
+          OPT_TESTS_CLEAN_BY_SETTERS_ENABLED,
+          OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
+          OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
+
+  /* Defaults for named clean up options */
+  private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
+  private static final long DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT = 100;
+  private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
    * configMethodsMap is a map where key is method name and value is a list where each item in the
@@ -44,6 +65,13 @@ public final class Config {
    */
   private final TestAnnotationResolver testAnnotationResolver;
 
+  /**
+   * cleanupOptions stores the misc cleanup configuration options stored in the cleanupOptions
+   * section of properties.json. These are generally a set of heuristics for Piranha to use in
+   * particular scenarios.
+   */
+  private final ImmutableMap<String, Object> cleanupOptions;
+
   private final String linkURL;
 
   // Constructor is private, a Config object can be generated using the class' static methods,
@@ -51,9 +79,11 @@ public final class Config {
   private Config(
       ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties,
       TestAnnotationResolver testAnnotationResolver,
+      ImmutableMap<String, Object> cleanupOptions,
       String linkURL) {
     this.configMethodProperties = configMethodProperties;
     this.testAnnotationResolver = testAnnotationResolver;
+    this.cleanupOptions = cleanupOptions;
     this.linkURL = linkURL;
   }
 
@@ -95,6 +125,72 @@ public final class Config {
    */
   public String getLinkURL() {
     return linkURL;
+  }
+
+  // Start of OPT_* retrieval methods
+
+  /**
+   * Whether or not Piranha should try to clean up unit test methods based on the API calls inside
+   * the method.
+   *
+   * <p>Generally, this will be based on instances of set_treated and set_control API methods
+   *
+   * @return a boolean representing whether this type of clean up is enabled or not.
+   */
+  public boolean shouldCleanTestMethodsByContent() {
+    return (boolean)
+        cleanupOptions.getOrDefault(
+            OPT_TESTS_CLEAN_BY_SETTERS_ENABLED, DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED);
+  }
+
+  public long testMethodCleanupSizeLimit() {
+    return (long)
+        cleanupOptions.getOrDefault(
+            OPT_TESTS_CLEAN_BY_SETTERS_LIMIT, DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT);
+  }
+
+  public boolean shouldIgnoreOtherSettersWhenCleaningTests() {
+    return (boolean)
+        cleanupOptions.getOrDefault(
+            OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS, DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
+  }
+
+  // End of OPT_* retrieval methods
+
+  private static String validateConfigOptsKey(Object k) {
+    if (!(k instanceof String)) {
+      throw new PiranhaConfigurationException(
+          String.format(
+              "Invalid key inside cleanupOptions: %s (clean up option keys must be strings)",
+              k.toString()));
+    }
+    if (!ALL_OPTS.contains(k)) {
+      throw new PiranhaConfigurationException(
+          String.format(
+              "Unrecognized key inside cleanupOptions: %s (not a valid Piranha cleanup option)",
+              k.toString()));
+    }
+    return (String) k;
+  }
+
+  private static void requireType(String valK, Object v, Class<? extends Object> klass) {
+    if (!klass.isInstance(v)) {
+      throw new PiranhaConfigurationException(
+          String.format(
+              "Invalid value %s for key %s inside cleanupOptions (expected type %s)",
+              v.toString(), valK, klass.toString()));
+    }
+  }
+
+  private static void validateConfigOptsValue(String valK, Object v) {
+    if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)
+        || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)) {
+      requireType(valK, v, Boolean.class);
+    } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
+      requireType(valK, v, Long.class);
+    } else {
+      Preconditions.checkArgument(false, "Default case should be unreachable.");
+    }
   }
 
   /**
@@ -160,7 +256,22 @@ public final class Config {
       } else {
         throw new PiranhaConfigurationException("methodProperties not found, required.");
       }
-      return new Config(methodsBuilder.build(), annotationResolverBuilder.build(), linkURL);
+      ImmutableMap.Builder<String, Object> cleanupOptionsBuilder = ImmutableMap.builder();
+      final Object configOptsObj = propertiesJson.get(CLEANUP_OPTS_KEY);
+      if (configOptsObj != null && configOptsObj instanceof JSONObject) {
+        final JSONObject configOpts = (JSONObject) configOptsObj;
+        configOpts.forEach(
+            (k, v) -> {
+              String valK = validateConfigOptsKey(k);
+              validateConfigOptsValue(valK, v);
+              cleanupOptionsBuilder.put(valK, v);
+            });
+      }
+      return new Config(
+          methodsBuilder.build(),
+          annotationResolverBuilder.build(),
+          cleanupOptionsBuilder.build(),
+          linkURL);
     } catch (IOException fnfe) {
       throw new PiranhaConfigurationException(
           "Error reading config file " + Paths.get(configFile).toAbsolutePath() + " : " + fnfe);
@@ -195,6 +306,9 @@ public final class Config {
    */
   public static Config emptyConfig() {
     return new Config(
-        ImmutableMultimap.of(), TestAnnotationResolver.builder().build(), DEFAULT_PIRANHA_URL);
+        ImmutableMultimap.of(),
+        TestAnnotationResolver.builder().build(),
+        ImmutableMap.of(),
+        DEFAULT_PIRANHA_URL);
   }
 }

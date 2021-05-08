@@ -150,6 +150,8 @@ public class XPFlagCleaner extends BugChecker
     IS_TREATED,
     IS_CONTROL,
     IS_TREATMENT_GROUP_CHECK,
+    SET_TREATED,
+    SET_CONTROL,
     DELETE_METHOD,
     UNKNOWN
   }
@@ -180,6 +182,10 @@ public class XPFlagCleaner extends BugChecker
   private boolean countsCollected = false;
   @Nullable private ImmutableMap<Symbol, UsageCounter.CounterData> usageCounts = null;
   @Nullable private Map<Symbol, Integer> deletedUsages = null;
+
+  // Set to skip refactoring under a given path (e.g. because we have deleted the entire AST under
+  // that path)
+  @Nullable private TreePath skipWithinPath = null;
 
   /**
    * Copied from NullAway comment. Error Prone requires us to have an empty constructor for each
@@ -229,6 +235,16 @@ public class XPFlagCleaner extends BugChecker
       throw new PiranhaConfigurationException("Piranha:Config is missing");
     }
     initialized = true;
+  }
+
+  private boolean shouldSkip(VisitorState state) {
+    return disabled
+        || (skipWithinPath != null && PiranhaUtils.isPrefixPath(skipWithinPath, state.getPath()));
+  }
+
+  // When deleting a large block of code, skip scanning statements/expressions within that path
+  private void skipWithin(TreePath path) {
+    skipWithinPath = path;
   }
 
   // We call this lazily only when needed, meaning when a symbol usage is first deleted for this
@@ -574,7 +590,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchClass(ClassTree classTree, VisitorState visitorState) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(visitorState)) return Description.NO_MATCH;
     Symbol.ClassSymbol classSymbol = ASTHelpers.getSymbol(classTree);
     if (classSymbol.getKind().equals(ElementKind.ENUM) && isTreatmentGroupEnum(classSymbol)) {
       treatmentGroupsEnum = classSymbol.fullname.toString();
@@ -598,7 +614,7 @@ public class XPFlagCleaner extends BugChecker
   @SuppressWarnings("TreeToString")
   @Override
   public Description matchImport(ImportTree importTree, VisitorState visitorState) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(visitorState)) return Description.NO_MATCH;
     if (importTree.isStatic()) {
       Tree importIdentifier = importTree.getQualifiedIdentifier();
       if (importIdentifier.getKind().equals(Kind.MEMBER_SELECT)) {
@@ -633,7 +649,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchAssignment(AssignmentTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (tree.getExpression().getKind().equals(Kind.BOOLEAN_LITERAL) || overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -643,7 +659,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchUnary(UnaryTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -653,7 +669,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchMethodInvocation(MethodInvocationTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -670,7 +686,7 @@ public class XPFlagCleaner extends BugChecker
   @SuppressWarnings("TreeToString")
   @Override
   public Description matchBinary(BinaryTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -721,7 +737,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchExpressionStatement(ExpressionStatementTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -729,7 +745,9 @@ public class XPFlagCleaner extends BugChecker
     if (tree.getExpression().getKind().equals(Kind.METHOD_INVOCATION)) {
       MethodInvocationTree mit = (MethodInvocationTree) tree.getExpression();
       API api = getXPAPI(mit);
-      if (api.equals(API.DELETE_METHOD)) {
+      if (api.equals(API.DELETE_METHOD)
+          || api.equals(API.SET_TREATED)
+          || api.equals(API.SET_CONTROL)) {
         Description.Builder builder = buildDescription(tree);
         SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
         fixBuilder.delete(tree);
@@ -744,7 +762,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchReturn(ReturnTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -779,7 +797,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchVariable(VariableTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     Symbol sym = FindIdentifiers.findIdent(xpFlagName, state);
     // Check if this is the flag definition and remove it.
     if (sym != null && sym.isEnum() && sym.equals(ASTHelpers.getSymbol(tree))) {
@@ -805,41 +823,158 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  private void recursiveScanTestMethodStats(
+      BlockTree blockTree, TestMethodCounters counters, int depth) {
+    for (StatementTree statement : blockTree.getStatements()) {
+      if (statement.getKind().equals(Tree.Kind.BLOCK)) {
+        recursiveScanTestMethodStats(blockTree, counters, depth + 1);
+      } else if (statement.getKind().equals(Kind.EXPRESSION_STATEMENT)) {
+        counters.statements += 1;
+        ExpressionTree expr = ((ExpressionStatementTree) statement).getExpression();
+        if (!expr.getKind().equals(Kind.METHOD_INVOCATION)) {
+          continue;
+        }
+        MethodInvocationTree mit = (MethodInvocationTree) expr;
+        if (!mit.getMethodSelect().getKind().equals(Tree.Kind.MEMBER_SELECT)) {
+          continue; // Can't resolve to API call
+        }
+        MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+        String methodName = mst.getIdentifier().toString();
+        // We scan for config method records of type SET_* here directly, since getXPAPI(...) will
+        // resolve
+        // only when the flag name matches, and we want to verify that no calls are being made to
+        // set
+        // unrelated flags (i.e. count them in counters.allSetters).
+        for (PiranhaMethodRecord methodRecord : config.getMethodRecordsForName(methodName)) {
+          if (methodRecord.getApiType().equals(XPFlagCleaner.API.SET_TREATED)) {
+            counters.allSetters += 1;
+            // If the test is asking for the flag in treated condition, but we are setting it to
+            // control (in a top level statement), then this test is obsolete.
+            // Remember that we are scanning for all setters, however, so now we must check that
+            // call is for the
+            // flag being passed to Piranha.
+            if (!isTreated && depth == 0) {
+              if (getXPAPI(mit).equals(API.SET_TREATED)) {
+                counters.topLevelObsoleteSetters += 1;
+              }
+            }
+          } else if (methodRecord.getApiType().equals(XPFlagCleaner.API.SET_CONTROL)) {
+            counters.allSetters += 1;
+            // Analogous to the case above, but now we are checking if the test is asking for the
+            // flag in the control
+            // condition, while we are setting it to treated everywhere
+            if (isTreated && depth == 0) {
+              if (getXPAPI(mit).equals(API.SET_CONTROL)) {
+                counters.topLevelObsoleteSetters += 1;
+              }
+            }
+          }
+        }
+      } else {
+        counters.statements += 1;
+      }
+    }
+  }
+
+  /**
+   * This method implements the clean up heuristic requested by the
+   * tests.clean_by_setters_heuristic.enabled option.
+   *
+   * <p>The heuristic uses calls to set_treated/set_control API methods.
+   *
+   * <p>Under this heuristic, a test method is cleaned up iff:
+   *
+   * <ol>
+   *   <li>The method has a call to a set_treated/set_control API method as a top-level (unnested)
+   *       statement, where:
+   *       <ol>
+   *         <li>The flag being set matches the flag being cleaned up by Piranha
+   *         <li>The test is checking for the opposite of the treatment condition being set (i.e.
+   *             set_treated for a flag being refactored globally as control, or set_control for a
+   *             flag being globally refactored as treated)
+   *         <li>This call can be repeated
+   *       </ol>
+   *   <li>The method has no other calls for set_treated/set_control API methods for other flags or
+   *       conditions
+   *   <li>The method length does not exceed tests.clean_by_setters_heuristic.lines_limit (long unit
+   *       tests are more likely to be testing multiple things)
+   *       <ol>
+   *
+   * @param tree A method tree that has already been detected as being an unit test method.
+   * @return whether the method should be deleted based on the heuristic above.
+   */
+  private boolean shouldCleanBySetters(MethodTree tree) {
+    // This assumes that the method was already detected as a unit test and the corresponding
+    // heuristic is enabled
+    TestMethodCounters counters = new TestMethodCounters();
+    // Count statements, all setter calls, and relevant top-level obsolete setters for the current
+    // flag
+    recursiveScanTestMethodStats(tree.getBody(), counters, 0);
+    if (config.testMethodCleanupSizeLimit() < counters.statements) {
+      // Skip, test method too large.
+      return false;
+    }
+    if (counters.topLevelObsoleteSetters > 0) {
+      if (config.shouldIgnoreOtherSettersWhenCleaningTests()) {
+        // Ignore other setter calls
+        return true;
+      } else if (counters.topLevelObsoleteSetters == counters.allSetters) {
+        // All calls to flag setting methods in this test are in the top level scope and setting the
+        // flag to a now impossible value. The whole test should be deleted as per this heuristic.
+        return true;
+      }
+    }
+    // Heuristic doesn't match, unsafe to clean
+    return false;
+  }
+
   @Override
   public Description matchMethod(MethodTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
 
     boolean deleteMethod = false;
     List<AnnotationTree> deletableAnnotations = new ArrayList<>();
     // Deletable identifiers used as part of the argument to an annotation, for when the entire
     // annotation doesn't need to be deleted
     List<ExpressionTree> deletableIdentifiers = new ArrayList<>();
-    for (ResolvedTestAnnotation resolved : config.resolveTestAnnotations(tree, state)) {
-      Set<AnnotationArgument> matchedFlagsWorkingSet = new HashSet<>();
-      for (AnnotationArgument testedFlag : resolved.getFlags()) {
-        if (testedFlag.getValue().equals(xpFlagName)) {
-          if (isTreated == resolved.isTreated()) {
-            // Annotation requests the same treatment state as what Piranha is setting the flag to
-            matchedFlagsWorkingSet.add(testedFlag);
-          } else {
-            // Annotation (and therefore test method) requests a different (now impossible)
-            // treatment, compared to what Piranha is setting the flag to.
-            deleteMethod = true;
+    final ImmutableSet<ResolvedTestAnnotation> resolvedTestAnnotations =
+        config.resolveTestAnnotations(tree, state);
+    if (resolvedTestAnnotations.size() != 0) {
+      // If there are any test annotations for this method, then we clean up based on those. We do
+      // this even if
+      // the method is not otherwise a recognized test method (e.g. marked @Test) and we ignore all
+      // other
+      // applicable clean up heuristics
+      for (ResolvedTestAnnotation resolved : resolvedTestAnnotations) {
+        Set<AnnotationArgument> matchedFlagsWorkingSet = new HashSet<>();
+        for (AnnotationArgument testedFlag : resolved.getFlags()) {
+          if (testedFlag.getValue().equals(xpFlagName)) {
+            if (isTreated == resolved.isTreated()) {
+              // Annotation requests the same treatment state as what Piranha is setting the flag to
+              matchedFlagsWorkingSet.add(testedFlag);
+            } else {
+              // Annotation (and therefore test method) requests a different (now impossible)
+              // treatment, compared to what Piranha is setting the flag to.
+              deleteMethod = true;
+            }
           }
         }
+        // Should we delete the full annotation, or specific flags within it? Depends if all
+        // flags mentioned within the annotation have been matched or not:
+        if (matchedFlagsWorkingSet.size() == resolved.getFlags().size()) {
+          deletableAnnotations.add(resolved.getSourceTree());
+        } else {
+          // Only remove the matched flag references, but preserve the annotation and its
+          // references to remaining flags
+          matchedFlagsWorkingSet
+              .stream()
+              .forEach(arg -> deletableIdentifiers.add(arg.getSourceTree()));
+        }
+        matchedFlagsWorkingSet.clear();
       }
-      // Should we delete the full annotation, or specific flags within it? Depends if all
-      // flags mentioned within the annotation have been matched or not:
-      if (matchedFlagsWorkingSet.size() == resolved.getFlags().size()) {
-        deletableAnnotations.add(resolved.getSourceTree());
-      } else {
-        // Only remove the matched flag references, but preserve the annotation and its
-        // references to remaining flags
-        matchedFlagsWorkingSet
-            .stream()
-            .forEach(arg -> deletableIdentifiers.add(arg.getSourceTree()));
-      }
-      matchedFlagsWorkingSet.clear();
+    } else if (config.shouldCleanTestMethodsByContent()
+        && PiranhaUtils.isUnitTestMethod(tree, state)) {
+      deleteMethod = shouldCleanBySetters(tree);
     }
     // Early exit for no changes required:
     if (!deleteMethod && deletableAnnotations.size() == 0 && deletableIdentifiers.size() == 0) {
@@ -852,6 +987,7 @@ public class XPFlagCleaner extends BugChecker
     if (deleteMethod) {
       fixBuilder.delete(tree);
       decrementAllSymbolUsages(tree, state, fixBuilder);
+      skipWithin(state.getPath()); // Deleting full method, skip refactorings within it
     } else {
       // Otherwise, we might still need to clean up individual obsolete test annotations and flag
       // references within multi-flag annotations.
@@ -873,7 +1009,7 @@ public class XPFlagCleaner extends BugChecker
   @Override
   public Description matchConditionalExpression(
       ConditionalExpressionTree tree, VisitorState state) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(state)) return Description.NO_MATCH;
     if (overLaps(tree, state)) {
       return Description.NO_MATCH;
     }
@@ -909,7 +1045,7 @@ public class XPFlagCleaner extends BugChecker
 
   @Override
   public Description matchIf(IfTree ifTree, VisitorState visitorState) {
-    if (disabled) return Description.NO_MATCH;
+    if (shouldSkip(visitorState)) return Description.NO_MATCH;
     if (overLaps(ifTree, visitorState)) {
       return Description.NO_MATCH;
     }
@@ -1046,5 +1182,21 @@ public class XPFlagCleaner extends BugChecker
       return statements.size() > 0 && statements.get(statements.size() - 1) instanceof ReturnTree;
     }
     return false;
+  }
+
+  /**
+   * A small tuple of counters for scanning unit tests to be deleted by the setters heuristic. See
+   * {@link #shouldCleanBySetters(MethodTree)}
+   */
+  private static final class TestMethodCounters {
+    public long statements;
+    public int topLevelObsoleteSetters;
+    public int allSetters;
+
+    public TestMethodCounters() {
+      this.statements = 0;
+      this.topLevelObsoleteSetters = 0;
+      this.allSetters = 0;
+    }
   }
 }
