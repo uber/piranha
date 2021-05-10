@@ -120,6 +120,19 @@ class SwiftExamples {
     private let fieldZ: Bool
 
     func test_expressions() {
+        
+        if x {
+            print("x")
+        }
+        
+        if x, y {
+            print("x")
+        }
+        
+        if x, y {
+            print("x")
+        }
+
         print("treated")
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment_suffix) {
@@ -343,7 +356,7 @@ class SwiftExamples {
 
     func test_T2282603() {
         self.conj1 = cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_second_experiment)
-        self.conj2 = cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix) 
+        self.conj2 = cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix)
         self.conj3 = true
     }
 
