@@ -47,5 +47,5 @@ jobs:
           build-root-directory: ./java
           wrapper-directory: ./java
           arguments: jacocoTestReport coverallsJacoco
-        continue-on-error: false
+        continue-on-error: true
         if: runner.os == 'Linux' && matrix.java == '8' && github.repository == 'uber/piranha'
