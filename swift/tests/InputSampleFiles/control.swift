@@ -267,6 +267,10 @@ class SwiftExamples {
     private var shouldDoSomething: Bool {
         return false
     }
+    
+    private func testAsString() -> Bool {
+        return false
+    }
 
     func testStringFlag() {
         print("string constant 2")
