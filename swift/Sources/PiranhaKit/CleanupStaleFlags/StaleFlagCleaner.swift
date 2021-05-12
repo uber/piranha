@@ -636,10 +636,15 @@ class XPFlagCleaner: SyntaxRewriter {
             flagName == string(of: Syntax(firstElement)),
             let indexInParent = indexInParent {
             caseIndex = indexInParent + 1
-            if let leadingTrivia = node.leadingTrivia, !leadingTrivia.first.debugDescription.contains("\n") {
+            if let leadingTrivia = node.leadingTrivia,
+               let firstLeadingTrivia = leadingTrivia.first,
+               !firstLeadingTrivia.isNewLine {
                 previousTrivia = []
-                for i in leadingTrivia.prefix(1) {
+                for i in leadingTrivia {
                     previousTrivia = previousTrivia.appending(i) // saves comment1
+                    if case .newlines = i {
+                        break
+                    }
                 }
             }
             /* this gets rid of the leading trivia for the current decl
@@ -663,8 +668,7 @@ class XPFlagCleaner: SyntaxRewriter {
             previousTrivia = []
         }
         if caseIndex == indexInParent,
-            let leadingTrivia = node.leadingTrivia,
-            !leadingTrivia.first.debugDescription.contains("\n") {
+            let leadingTrivia = node.leadingTrivia {
             var updatedTrivia: Trivia = []
 
             // update any previous trivia from the deleted node
@@ -674,7 +678,7 @@ class XPFlagCleaner: SyntaxRewriter {
             }
             // remove the first trivia piece and leave the rest
             // drops " //comment3" and adds "//comment4"
-            for trivia in leadingTrivia.dropFirst() {
+            for trivia in leadingTrivia.dropFirst() { 
                 updatedTrivia = updatedTrivia.appending(trivia)
             }
             /* update the keyword
@@ -806,5 +810,15 @@ class XPFlagCleaner: SyntaxRewriter {
 
     func deepClean() -> Bool {
         return shouldDeepClean
+    }
+}
+
+
+private extension TriviaPiece {
+    var isNewLine: Bool {
+        guard case TriviaPiece.newlines(_) = self else {
+            return false
+        }
+        return true
     }
 }
