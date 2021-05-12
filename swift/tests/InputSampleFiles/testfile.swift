@@ -525,6 +525,10 @@ class SwiftExamples {
     private var shouldDoSomething: Bool {
         return cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
     }
+    
+    private func testAsString() -> Bool {
+        return cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment.asString)
+    }
 
 
     func testStringFlag() {

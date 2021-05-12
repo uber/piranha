@@ -364,6 +364,10 @@ class SwiftExamples {
     private var shouldDoSomething: Bool {
         return true
     }
+    
+    private func testAsString() -> Bool {
+        return true
+    }
 
     func testStringFlag() {
        print("string constant 1")
