@@ -32,6 +32,9 @@ enum ExperimentNamesSwift: String, ExperimentKeying {
     
     case random_flag //comment6
     case test_experiment1 // comment7
+    
+    case random_flag //comment8
+    case test_experiment1 // comment9
 
     var asString: String {
         return String(describing: self)
