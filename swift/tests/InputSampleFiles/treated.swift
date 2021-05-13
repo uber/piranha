@@ -386,4 +386,18 @@ class SwiftExamples {
         .loyalty_credits_purchase_addon_explicit_layout,
         .loyalty_stack_view_migration
     ]
+    
+    private func labelledNameAccess() -> Bool {
+       return true
+    }
+    
+    private func labelledNameAccess_nested() -> Bool {
+        
+        func test() -> Bool {
+            let xpName = ExperimentNamesSwift.test_experiment1
+            return cachedExperiments.isTreated(forExperiment: xpName)
+        }
+       someObject.isEnabled = true
+       return true
+    }
 }

@@ -45,6 +45,8 @@ class XPFlagCleaner: SyntaxRewriter {
 
     private var previousTrivia: Trivia = []
     private var caseIndex: Int?
+    
+    private var scopes = [Scope]()
 
     private let flagName: String
     private let groupName: String
@@ -120,6 +122,11 @@ class XPFlagCleaner: SyntaxRewriter {
                     return true
                 }
             }
+            
+            if let expr = ExprSyntax.init(Syntax(argument.expression)),
+               labelReplacementAllowed(forIdentifier: expr.description) {
+                return true
+            }
             if let expr = StringLiteralExprSyntax.init(Syntax(argument.expression)) {
                 if name == expr.description.replacingOccurrences(of: "\"", with: "") {
                    return true
@@ -127,6 +134,20 @@ class XPFlagCleaner: SyntaxRewriter {
             }
         }
         return false
+    }
+    
+    override func visitPre(_ node: Syntax) {
+        if let _ = node.asProtocol(DeclSyntaxProtocol.self) as? FunctionDeclSyntax {
+            scopes.append(Scope())
+        }
+        super.visitPre(node)
+    }
+    
+    override func visitPost(_ node: Syntax) {
+        if let _ = node.asProtocol(DeclSyntaxProtocol.self) as? FunctionDeclSyntax {
+            scopes.removeLast()
+        }
+        super.visitPost(node)
     }
 
     // gets the type of the flag API
@@ -213,6 +234,9 @@ class XPFlagCleaner: SyntaxRewriter {
             return value
         }
        
+        if let value = scopeResolvedValue(for: node) {
+            return value
+        }
         // if the expression is previously evaluated in the current pass, return the value
         if let value = valueMap[node.description] {
             return value
@@ -279,6 +303,19 @@ class XPFlagCleaner: SyntaxRewriter {
             return cache(expression: node, with: Value.isBot)
         }
         return Value.isBot
+    }
+    
+    private func scopeResolvedValue(for node: Syntax) -> Value? {
+        guard let functionCallExprNode = FunctionCallExprSyntax.init(node) else {
+            return nil
+        }
+        let api = flagApiType(of: functionCallExprNode)
+        if api == .treated  {
+            return (isTreated ? Value.isTrue : Value.isFalse)
+        } else if api == .control {
+            return (isTreated ? Value.isFalse : Value.isTrue)
+        }
+        return nil
     }
 
     // evaluate a given sequence
@@ -714,6 +751,8 @@ class XPFlagCleaner: SyntaxRewriter {
             }
 
             if let rhs = binding.initializer {
+                updateScope(withIdentifier: binding.pattern.description.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
+                            havingValue: false)
                 let rhsValue = evaluate(expression: Syntax(rhs))
                 if rhsValue != Value.isBot {
                     let key = string(of: Syntax(binding.pattern))
@@ -728,6 +767,8 @@ class XPFlagCleaner: SyntaxRewriter {
                 }
                 if let value = MemberAccessExprSyntax.init(Syntax(rhs.value)),
                     value.description.hasSuffix(flagName) {
+                    updateScope(withIdentifier: binding.pattern.description.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
+                                havingValue: true)
                     return visit(SyntaxFactory.makeBlankVariableDecl())
                 }
             }
@@ -820,5 +861,35 @@ private extension TriviaPiece {
             return false
         }
         return true
+    }
+}
+
+private extension XPFlagCleaner {
+    
+    
+    final class Scope {
+        // True signifies that the replacement can happen and false signifies that replacement shouldn't happen.
+        var labelVariableMap: [String: Bool] = [:]
+    }
+    
+    
+    private func updateScope(withIdentifier identifier: String,
+                             havingValue value: Bool) {
+        guard let scope = scopes.last else { return }
+        scope.labelVariableMap[identifier] = value
+    }
+    
+    private func labelReplacementAllowed(forIdentifier identifier: String) -> Bool {
+        for scope in scopes.reversed() {
+            /// If the closest scope label is found that allows replacement, return true.
+            if scope.labelVariableMap[identifier] == true {
+                return true
+            }
+            /// If the closest scope label is found that doesn't allow replacement, return false.
+            if scope.labelVariableMap[identifier] == false {
+                return false
+            }
+        }
+        return false
     }
 }
