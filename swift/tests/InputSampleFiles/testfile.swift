@@ -576,4 +576,28 @@ class SwiftExamples {
        someObject.isEnabled = cachedExperiments.isTreated(forExperiment: xpName)
        return cachedExperiments.isTreated(forExperiment: xpName)
     }
+    
+    private func ifElseLadder_1() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_2() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
 }
