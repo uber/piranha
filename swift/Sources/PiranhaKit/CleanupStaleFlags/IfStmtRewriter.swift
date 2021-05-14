@@ -99,8 +99,9 @@ final class IfElseStmtRewriter: SyntaxRewriter {
         } else {
             /// Matching the trivia to the if keyword.
             var statements = codeBlock.statements
-            let firstModified = statements.first?.withLeadingTrivia(node.ifKeyword.leadingTrivia)
-            statements = statements.replacing(childAt: 0, with: firstModified!)
+            if let firstModified = statements.first?.withLeadingTrivia(node.ifKeyword.leadingTrivia) {
+                statements = statements.replacing(childAt: 0, with: firstModified)
+            }
             let leading = SyntaxFactory.makeToken(.identifier(""),
                                                   presence: .present,
                                                   leadingTrivia: Trivia.init(pieces: []),
