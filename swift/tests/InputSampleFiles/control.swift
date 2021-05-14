@@ -343,4 +343,26 @@ class SwiftExamples {
             print("4")
         }
     }
+    
+    private func ifElseLadder_5() {
+        if x {
+           print("1")
+        } else if y {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_6() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
 }

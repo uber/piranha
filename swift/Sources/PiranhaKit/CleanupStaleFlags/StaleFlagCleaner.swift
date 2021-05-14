@@ -570,9 +570,13 @@ class XPFlagCleaner: SyntaxRewriter {
         let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            return ExprSyntax.init(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("true"),
+                                                                                                                  presence: .present))
+            return ExprSyntax.init(booleanLiteralExpr)
         case Value.isFalse:
-            return ExprSyntax.init(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("false"),
+                                                                                                                  presence: .present))
+            return ExprSyntax.init(booleanLiteralExpr)
         case Value.isBot:
             var result = SyntaxFactory.makeBlankExprList()
             for (index, expr) in node.elements.enumerated() {
@@ -785,10 +789,12 @@ class XPFlagCleaner: SyntaxRewriter {
         let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("true"), presence: .present))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("true"),
+                                                                                                                  presence: .present))
             return visit(booleanLiteralExpr)
         case Value.isFalse:
-            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("false"), presence: .present))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("false"),
+                                                                                                                  presence: .present))
             return visit(booleanLiteralExpr)
         case Value.isBot:
             return super.visit(node)
