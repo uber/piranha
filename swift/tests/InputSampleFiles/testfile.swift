@@ -576,4 +576,86 @@ class SwiftExamples {
        someObject.isEnabled = cachedExperiments.isTreated(forExperiment: xpName)
        return cachedExperiments.isTreated(forExperiment: xpName)
     }
+    
+    private func ifElseLadder_1() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_2() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_3() {
+        if x {
+            print("1")
+        } else if true {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_4() {
+        if x {
+            print("1")
+        } else if false {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_5() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.test_experiment) || y {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_6() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.test_experiment) && y {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_7() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.test_experiment) && someCondition {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        }
+    }
 }

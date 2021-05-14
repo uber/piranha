@@ -84,7 +84,12 @@ struct CleanupStaleFlagsCommand: ParsableCommand {
             cleaner.setNextPass()
             refactoredOutput = cleaner.visit(parsed)
         }
-        
+
+        let reducers: [SyntaxRewriter] = [IfElseStmtRewriter()]
+        refactoredOutput = reducers.reduce(refactoredOutput,
+                                           { (previousOutput, rewriter) -> Syntax in
+            rewriter.visit(refactoredOutput)
+        })
         // swiftlint:disable:next custom_rules
         print(refactoredOutput, terminator: "")
     }
