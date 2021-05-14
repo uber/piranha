@@ -37,10 +37,22 @@ final class IfElseStmtRewriter: SyntaxRewriter {
     
     private func reduceFalseTreeIfApplicable(_ node: IfStmtSyntax) -> IfStmtSyntax {
         guard node.conditions.count == 1,
-              node.conditions.first?.description.trimmingCharacters(in: .whitespacesAndNewlines) == "false" else {
+              let firstCondition = node.conditions.first,
+              firstCondition.description.trimmingCharacters(in: .whitespacesAndNewlines) == "false",
+              let booleanLiteralExpr = BooleanLiteralExprSyntax(firstCondition.condition) else {
             /// Since this doesn't meet the false cleanup criteria, therefore returning.
             return node
         }
+        
+        if case .identifier = booleanLiteralExpr.booleanLiteral.tokenKind {
+            return reduceFalseTree(node)
+        } else {
+            // TokenKind.falseKeyword and others are not considerd by this reducer since we want to limit the scope to Piranha related reduced expressions.
+            return node
+        }
+    }
+    
+    private func reduceFalseTree(_ node: IfStmtSyntax) -> IfStmtSyntax {
         /// Processing else block if present.
         if let _ = node.elseKeyword,
            let elseBody = node.elseBody {
@@ -107,13 +119,24 @@ final class IfElseStmtRewriter: SyntaxRewriter {
     // If the condition is true, no other if else condition(s) below this node  will be executed hence the following blocks will be cleaned-up.
     private func reduceTrueTreeIfApplicable(_ node: IfStmtSyntax) -> IfStmtSyntax {
         guard node.conditions.count == 1,
-              node.conditions.first?.description.trimmingCharacters(in: .whitespacesAndNewlines) == "true" else {
+              let firstCondition = node.conditions.first,
+              node.conditions.first?.description.trimmingCharacters(in: .whitespacesAndNewlines) == "true",
+              let booleanLiteralExpr = BooleanLiteralExprSyntax(firstCondition.condition) else {
             /// Since this doesn't meet the true cleanup criteria, therefore returning.
             return node
         }
-        var statement = SyntaxFactory.makeBlankIfStmt()
-        statement = statement.withBody(codeBlockFor(node: node,
-                                              referenceCodeBlock: node.body))
+        if case .identifier = booleanLiteralExpr.booleanLiteral.tokenKind {
+            return reduceTrueTree(node)
+        } else {
+            //  TokenKind.trueKeyword and others are not considerd by this reducer since we want to limit the scope to Piranha related reduced expressions.
+            return node
+        }
+    }
+    
+    private func reduceTrueTree(_ node: IfStmtSyntax) -> IfStmtSyntax  {
+        let statement = SyntaxFactory.makeBlankIfStmt()
+            .withBody(codeBlockFor(node: node,
+                                   referenceCodeBlock: node.body))
         return statement
     }
 }

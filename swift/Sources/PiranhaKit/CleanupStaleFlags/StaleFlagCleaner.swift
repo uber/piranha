@@ -247,6 +247,9 @@ class XPFlagCleaner: SyntaxRewriter {
             if booleanNode.booleanLiteral.tokenKind == TokenKind.trueKeyword {
                 return Value.isTrue
             }
+            if case .identifier("true") = booleanNode.booleanLiteral.tokenKind {
+                return Value.isTrue
+            }
             return Value.isFalse
         }
         else if let prefixOperatorNode = PrefixOperatorExprSyntax.init(node) {
@@ -776,13 +779,17 @@ class XPFlagCleaner: SyntaxRewriter {
         return super.visit(node)
     }
 
+    
+    var replacements: [BooleanLiteralExprSyntax] = []
     override func visit(_ node: FunctionCallExprSyntax) -> ExprSyntax {
         let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            return visit(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("true"), presence: .present))
+            return visit(booleanLiteralExpr)
         case Value.isFalse:
-            return visit(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("false"), presence: .present))
+            return visit(booleanLiteralExpr)
         case Value.isBot:
             return super.visit(node)
         }

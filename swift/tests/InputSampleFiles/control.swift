@@ -323,4 +323,24 @@ class SwiftExamples {
             print("4")
         }
     }
+    
+    private func ifElseLadder_3() {
+        if x {
+            print("1")
+        } else if true {
+            print("2")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_4() {
+        if x {
+            print("1")
+        } else if false {
+            print("2")
+        } else {
+            print("4")
+        }
+    }
 }
