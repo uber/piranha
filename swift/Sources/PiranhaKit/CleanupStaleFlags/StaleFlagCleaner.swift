@@ -680,9 +680,7 @@ class XPFlagCleaner: SyntaxRewriter {
             flagName == string(of: Syntax(firstElement)),
             let indexInParent = indexInParent {
             caseIndex = indexInParent + 1
-            if let leadingTrivia = node.leadingTrivia,
-               let firstLeadingTrivia = leadingTrivia.first,
-               !firstLeadingTrivia.isNewLine {
+            if let leadingTrivia = node.leadingTrivia {
                 previousTrivia = []
                 for i in leadingTrivia {
                     previousTrivia = previousTrivia.appending(i) // saves comment1
@@ -864,16 +862,6 @@ class XPFlagCleaner: SyntaxRewriter {
 
     func deepClean() -> Bool {
         return shouldDeepClean
-    }
-}
-
-
-private extension TriviaPiece {
-    var isNewLine: Bool {
-        guard case TriviaPiece.newlines(_) = self else {
-            return false
-        }
-        return true
     }
 }
 
