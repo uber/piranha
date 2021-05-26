@@ -385,4 +385,23 @@ class SwiftExamples {
             print("3")
         }
     }
+
+    func test_equality() {
+        print("y1")
+        print("y2")
+        print("x3")
+        if false == p1 {
+            print("x4")
+        } else {
+            print("y4")
+        }
+        print("y5")
+        if true == p1 {
+           print("x6")
+        } else {
+           print("y6")
+        }
+
+    }
+
 }
