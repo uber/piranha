@@ -31,6 +31,7 @@ class XPFlagCleaner: SyntaxRewriter {
         case and
         case or
         case nilcoalesc
+        case equality
         case unknown
     }
 
@@ -81,6 +82,8 @@ class XPFlagCleaner: SyntaxRewriter {
             return Operator.or
         } else if opTokenKind == TokenKind.spacedBinaryOperator("??") {
             return Operator.nilcoalesc
+        } else if opTokenKind == TokenKind.spacedBinaryOperator("==") {
+            return Operator.equality
         }
         return Operator.unknown
     }
@@ -338,7 +341,9 @@ class XPFlagCleaner: SyntaxRewriter {
 
             if let binaryExpr = BinaryOperatorExprSyntax.init(Syntax(expression)) {
                 let opKind = findOperator(from: binaryExpr)
-                if opKind == Operator.and || opKind == Operator.or {
+                if opKind == Operator.and ||
+                   opKind == Operator.or ||
+                   opKind == Operator.equality {
                     let lhs = prefix(from: expr.elements, upto: index)
                     let rhs = suffix(from: expr.elements, after: index)
                     let result = evaluate(lhs: lhs, rhs: rhs, kind: opKind)
@@ -371,6 +376,10 @@ class XPFlagCleaner: SyntaxRewriter {
             }
             if lhsVal == Value.isFalse || rhsVal == Value.isFalse {
                 return Value.isFalse
+            }
+        } else if opKind == Operator.equality {
+            if lhsVal != Value.isBot && rhsVal != Value.isBot {
+                return (lhsVal == rhsVal) ? Value.isTrue : Value.isFalse
             }
         }
 

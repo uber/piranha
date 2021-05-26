@@ -675,4 +675,44 @@ class SwiftExamples {
             print("3")
         }
     }
+
+    func test_equality() {
+
+        if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) == true {
+            print("x1")
+        } else {
+            print("y1")
+        }
+
+        if true == cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("x2")
+        } else {
+            print("y2")
+        }
+
+        if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) == false {
+            print("x3")
+        } else {
+            print("y3")
+        }
+
+        if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) == p1 {
+            print("x4")
+        } else {
+            print("y4")
+        }
+
+        if true == (cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) && true) {
+            print("x5")
+        } else {
+            print("y5")
+        }
+
+        if true == p1 {
+           print("x6")
+        } else {
+           print("y6")
+        }
+    }
+
 }
