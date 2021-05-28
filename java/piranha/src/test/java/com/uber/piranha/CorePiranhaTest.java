@@ -499,4 +499,36 @@ public class CorePiranhaTest {
             "class TestClassPartialMatch { }")
         .doTest();
   }
+
+  @Test
+  public void testEnumWithTrailingSemicolon() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG,",
+            " STALE_FLAG;",
+            " public void foo() {}",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG;",
+            " public void foo() {}",
+            "}")
+        .doTest();
+  }
 }

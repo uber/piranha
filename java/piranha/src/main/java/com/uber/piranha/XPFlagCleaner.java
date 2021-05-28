@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
 
@@ -808,8 +809,30 @@ public class XPFlagCleaner extends BugChecker
       // trailing "," if present on the parent.
       String enumAsStr = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
       String varAsStrWithComma = tree.getName().toString() + ",";
-      if (enumAsStr.contains(varAsStrWithComma)) {
+      String varAsStrWithSemiColon = tree.getName().toString() + ";";
+      if (Pattern.compile("\\b" + varAsStrWithComma).matcher(enumAsStr).find()) {
         return buildDescription(tree).addFix(SuggestedFix.replace(tree, "", 0, 1)).build();
+      } else if (Pattern.compile("\\b" + varAsStrWithSemiColon).matcher(enumAsStr).find()) {
+        // Complicated calculation to remove backwards from this enum field, pushing the ';' back on
+        // the previous enum field, if any. Otherwise, delete the full statement.
+        final int varTreeStartIdx = enumAsStr.indexOf(varAsStrWithSemiColon);
+        int deleteStartIdx = varTreeStartIdx;
+        char c = enumAsStr.charAt(deleteStartIdx);
+        while (c != ',' && c != ';' && c != '{') {
+          deleteStartIdx -= 1;
+          c = enumAsStr.charAt(deleteStartIdx);
+        }
+        // negative offset up to and including the comma, bracket or semicolon
+        int offset = deleteStartIdx - varTreeStartIdx;
+        if (c == ';' || c == '{') {
+          // Don't delete the previous bracket or semicolon, but do delete the trailing semicolon
+          return buildDescription(tree)
+              .addFix(SuggestedFix.replace(tree, "", offset + 1, 1))
+              .build();
+        } else {
+          // Previous separator is a comma, erase it and push back the `;`
+          return buildDescription(tree).addFix(SuggestedFix.replace(tree, "", offset, 0)).build();
+        }
       } else {
         // Fallback for single/last enum variable detection
         return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
