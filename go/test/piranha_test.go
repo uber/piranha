@@ -41,7 +41,7 @@ func TestFiles(t *testing.T) {
 		{"./input/testSwitch.go", "./output/treated/testSwitch.go"},
 		{"./input/deepClean.go", "./output/treated/deepClean.go"},
 	}
-	// running each files as like they are running with this command
+	// running each file as if they are running with this command
 	// For one Pass
 	// ../piranha -p ../properties.json -s "{filename}" -f staleFlag -o ./treatedFiles/$(basename {filename}) -treated
 	var argsOnePass []string
@@ -133,7 +133,7 @@ func TestFiles(t *testing.T) {
 			}
 		}
 		if FileNotMatched {
-			t.Errorf("Files didn't matched, see above output")
+			t.Errorf("Files didn't match, see above output")
 		} else {
 			fmt.Println("File Matched Sucessfully")
 		}

@@ -16,4 +16,4 @@ Optional arguments:
 			otherwise it is control.
 		-o OUTPUT: Destination of the refactored output from piranha. If -o is not provided, then the source file is updated in place.
 ```
-3. To do a test run, run piranha on `example/testExample.go`. Run `./piranha -p properties.json -s ./example/testExample.go -o ./example/treatedExample.go -f staleFlag` command in root directory. You will get your refracted file as `/example/treatedExample.go`.
+3. To do a test run, run piranha on `example/testExample.go`. Run `./piranha -p properties.json -s ./example/testExample.go -o ./example/treatedExample.go -f staleFlag` command in root directory. You will get your refactored file as `/example/treatedExample.go`.
