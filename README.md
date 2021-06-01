@@ -14,6 +14,7 @@ This repository contains four independent versions of Piranha, one for each of t
 
 To use/build each version, look under the corresponding [lang]/ directory and follow instructions in the corresponding [lang]/README.md file. Make sure to cd into that directory to build any related code following the instructions in the README. 
 
+- [PiranhaGo](go/README.md)
 - [PiranhaJava](java/README.md)
 - [PiranhaJS](javascript/README.md)
 - [PiranhaObjC](objc/README.md)

@@ -1,0 +1,19 @@
+{
+    "methodProperties": [
+      {
+        "methodName": "treatedBehaviour",
+        "flagType": "treated",
+        "argumentIndex": 0
+      },
+      {
+        "methodName": "controlBehaviour",
+        "flagType": "control",
+        "argumentIndex": 0
+      },
+      {
+        "methodName": "commonBehaviour",
+        "flagType": "treated",
+        "argumentIndex": 1
+      }
+    ]
+  }
