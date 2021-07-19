@@ -1,0 +1,38 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "putToggleEnabled",
+      "flagType": "empty",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "putToggleDisabled",
+      "flagType": "empty",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "includeEvent",
+      "flagType": "empty",
+      "argumentIndex": 0
+    }
+  ],
+  "linkURL": "<provide_your_url>",
+  "annotations": [
+    "ToggleTesting"
+  ]
+}

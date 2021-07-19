@@ -1,0 +1,33 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "flagDisabled",
+      "flagType": "control",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "treated",
+      "flagType": "treated",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "flagEnabled",
+      "flagType": "treated",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "enableFlag",
+      "flagType": "empty",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "disableFlag",
+      "flagType": "empty",
+      "argumentIndex": 0
+    }
+  ],
+  "linkURL": "<provide_your_url>",
+  "annotations": [
+    "FlagTesting"
+  ]
+}

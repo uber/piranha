@@ -1,0 +1,10 @@
+pluginManagement {
+
+    repositories {
+        jcenter()
+        gradlePluginPortal()
+    }
+}
+
+include ':piranha'
+include ':sample'

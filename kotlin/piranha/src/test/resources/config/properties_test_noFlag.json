@@ -1,0 +1,12 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control"
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated"
+    }
+  ]
+}

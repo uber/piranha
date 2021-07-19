@@ -1,0 +1,29 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "receiverType": "com.uber.piranha.XPTest"
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "receiverType": "com.uber.piranha.XPTest"
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "receiverType": "UNICORN"
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "receiverType": "UNICORN"
+    },
+    {
+      "methodName": "isNonexistentToggleEnabled",
+      "flagType": "treated",
+      "receiverType": "com.uber.piranha.XPTest"
+    }
+  ]
+}

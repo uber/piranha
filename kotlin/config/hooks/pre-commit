@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+REPO_ROOT_DIR="$(git rev-parse --show-toplevel)"
+
+# todo: raditya this need to change by using ktfmt
+pushd "${REPO_ROOT_DIR}/kotlin" > /dev/null
+files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.kt" | sed -e 's/^kotlin\///') || true)
+if [ ! -z "${files}" ]; then
+    comma_files=$(echo "$files" | paste -s -d "," -)
+    "${REPO_ROOT_DIR}/kotlin/gradlew" goJF -DgoogleJavaFormat.include="$comma_files" &>/dev/null
+    git add $(echo "$files" | paste -s -d " " -)
+fi
+popd > /dev/null

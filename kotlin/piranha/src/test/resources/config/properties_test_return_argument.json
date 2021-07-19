@@ -1,0 +1,76 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "returnType": "boolean",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 1
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "argumentIndex": 1
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 99999
+    },
+    {
+      "methodName": "isToggleEnabledWithMultipleArguments",
+      "flagType": "treated",
+      "returnType": "UNICORN",
+      "argumentIndex": 99999
+    }
+  ]
+}
