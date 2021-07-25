@@ -28,27 +28,27 @@ func (ge GoExamples) storeuseBefore() {
 		ge.basicFeature value may get affected by stale feature flag.
 	*/
 	if ge.basicFeature {
-		fmt.Println("Hi basicFeature")
+		fmt.Println("then-branch of `ge.basicFeature`")
 	}
 	if ge.localService {
-		fmt.Println("hi localService")
+		fmt.Println("then-branch of `ge.localService`")
 	}
 	if ge.newFeatures {
-		fmt.Println("hi newFeatures")
+		fmt.Println("then-branch of `ge.newFeatures`")
 	}
 
 	if !ge.localService {
-		fmt.Println("not localService")
+		fmt.Println("then-branch of `!ge.localService`")
 	} else {
-		fmt.Println("localService")
+		fmt.Println("else-branch of `!ge.localService`")
 	}
 
 	if ge.localService && ge.newFeatures {
-		fmt.Println("localService and newFeatures")
+		fmt.Println("then-branch of `ge.localService && ge.newFeatures`")
 	}
 
 	if ge.newFeatures {
-		fmt.Println("newFeatures")
+		fmt.Println("then-branch of `ge.newFeatures`")
 	}
 }
 
@@ -64,42 +64,42 @@ func (ge *GoExamples) storeuseInit() {
 	pointerfieldY := &ge.localService
 
 	if ge.basicFeature {
-		fmt.Println("I initialised basicFeature")
+		fmt.Println("then-branch of `ge.basicFeature`")
 	}
 
 	if ge.localService {
-		fmt.Println("I initialised localService")
+		fmt.Println("then-branch of `ge.localService`")
 	}
 
 	//testing pointer. I think need more test cases like this
 	if *pointerfieldX || !*pointerfieldY {
-		fmt.Println("pointers to be treated/not treated")
+		fmt.Println("then-branch of `*pointerfieldX || !*pointerfieldY`")
 	}
 }
 
 func (ge GoExamples) storeuseAfter() {
 	// I love basicFeature
 	if ge.basicFeature {
-		fmt.Println("Hi basicFeature again")
+		fmt.Println("then-branch of `ge.basicFeature`")
 	}
 	if ge.localService {
-		fmt.Println("hi localService again")
+		fmt.Println("then-branch of `ge.localService`")
 	}
 	if ge.newFeatures {
-		fmt.Println("hi newFeatures again")
+		fmt.Println("then-branch of `ge.newFeatures`")
 	}
 
 	if !ge.localService {
-		fmt.Println("not localService again")
+		fmt.Println("then-branch of `!ge.localService`")
 	} else {
-		fmt.Println("localService again")
+		fmt.Println("else-branch of `!ge.localService`")
 	}
 
 	if ge.localService && ge.newFeatures {
-		fmt.Println("localService and newFeatures again")
+		fmt.Println("then-branch of `ge.localService && ge.newFeatures`")
 	}
 
 	if ge.newFeatures {
-		fmt.Println("newFeatures again")
+		fmt.Println("then-branch of `ge.newFeatures`")
 	}
 }

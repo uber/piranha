@@ -16,34 +16,34 @@ package testfiles
 import "fmt"
 
 func testSwitch(ge GoExamples) {
-	fmt.Println("defaulter 1")
+	fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(staleFlag); os`")
 
 	switch os := ge.flagMthds.treatedBehaviour(newFlag); os {
 	case true:
-		fmt.Println("mike treat 2")
+		fmt.Println("1st case of `os := ge.flagMthds.treatedBehaviour(newFlag); os`")
 	default:
-		fmt.Println("defaulter 2")
+		fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(newFlag); os`")
 	}
 
-	fmt.Println("mike treat 3")
-	fmt.Println("mike treat 4")
+	fmt.Println("1st case of `!ge.flagMthds.treatedBehaviour(staleFlag)`")
+	fmt.Println("1st case of `os := ge.flagMthds.controlBehaviour(staleFlag); os`")
 
 	x := true
 	y := false
 
-	fmt.Println("defaulter 5")
-	fmt.Println("mike control 6")
+	fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(staleFlag) && (x || y); os`")
+	fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(staleFlag); os && (x || y)`")
 
 	switch os := true; x || y {
 	case true:
-		fmt.Println("mike treat 7")
+		fmt.Println("1st case of `os := ge.flagMthds.controlBehaviour(staleFlag); os && (x || y)`")
 	default:
-		fmt.Println("mike control 7")
+		fmt.Println("default case of `os := ge.flagMthds.controlBehaviour(staleFlag); os && (x || y)`")
 	}
 
-	print("treated")
+	print("1st case of `ge.flagMthds.treatedBehaviour(staleFlag) || x || y`")
 	x = true
-	fmt.Println("all are true")
+	fmt.Println("1st case of `ge.flagMthds.controlBehaviour(staleFlag) && x && y`")
 
 	/*
 		If you are familiar with go progamming then you probably know that
@@ -76,22 +76,23 @@ func testSwitch(ge GoExamples) {
 		Do:
 		Then remove it from the switch statement in refactored output.
 	*/
+
 	x = true
 	y = false
 
 	// Switch 1
 	switch {
 	case x:
-		fmt.Println("switch test 1")
+		fmt.Println("switch 1 test `ge.flagMthds.treatedBehaviour(staleFlag) || x`")
 	default:
-		fmt.Println("switch test 6")
+		fmt.Println("switch 1 test `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 	}
 
-	fmt.Println("switch test 13")
+	fmt.Println("switch 2 test `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 
 	// Switch 3
 	switch {
 	case y && x:
-		fmt.Println("switch test 16")
+		fmt.Println("switch 3 `ge.flagMthds.controlBehaviour(staleFlag) && y && x`")
 	}
 }

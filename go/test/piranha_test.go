@@ -23,23 +23,79 @@ import (
 	"github.com/PiranhaGo/src"
 )
 
+func compFiles(file1 string, file2 string) bool {
+	FileNotMatched := false
+	corrFile, err := os.Open(file2)
+	if err != nil {
+		fmt.Println("File reading error of correct file", err)
+		return false
+	}
+	treatFile, err := os.Open(file1)
+	if err != nil {
+		fmt.Println("File reading error of treat file", err)
+		return false
+	}
+
+	corrScan := bufio.NewScanner(corrFile)
+	treatScan := bufio.NewScanner(treatFile)
+
+	lineNumcorrFile := 0
+	lineNumtreatFile := 0
+
+	endOfcorrFile := false
+	endOftreatFile := false
+	for corrScan.Scan() {
+		// Scanning
+		treatScan.Scan()
+		lineNumcorrFile++
+		lineNumtreatFile++
+		for corrScan.Text() == "" {
+			if !corrScan.Scan() {
+				endOfcorrFile = true
+				break
+			}
+			lineNumcorrFile++
+		}
+		for treatScan.Text() == "" {
+			if !treatScan.Scan() {
+				endOftreatFile = true
+				break
+			}
+			lineNumtreatFile++
+		}
+		if endOfcorrFile || endOftreatFile {
+			break
+		}
+
+		// Matching
+		if corrScan.Text() != treatScan.Text() {
+			fmt.Print("\n")
+			fmt.Print("Line ", lineNumcorrFile, ": ", corrScan.Text())
+			fmt.Print("\n")
+			fmt.Print("Line ", lineNumtreatFile, ": ", treatScan.Text())
+			fmt.Print("\n")
+			FileNotMatched = true
+			break
+		}
+		if FileNotMatched {
+			break
+		}
+	}
+	return FileNotMatched
+}
+
 // TestFiles :This will test the output from the correct output
 func TestFiles(t *testing.T) {
 	tables := []struct {
-		input  string
-		output string
+		input         string
+		outputControl string
+		outputTreated string
 	}{
-		{"./input/init.go", "./output/control/init.go"},
-		{"./input/testExpressions.go", "./output/control/testExpressions.go"},
-		{"./input/testConditional.go", "./output/control/testConditional.go"},
-		{"./input/testSwitch.go", "./output/control/testSwitch.go"},
-		{"./input/deepClean.go", "./output/control/deepClean.go"},
-
-		{"./input/init.go", "./output/treated/init.go"},
-		{"./input/testExpressions.go", "./output/treated/testExpressions.go"},
-		{"./input/testConditional.go", "./output/treated/testConditional.go"},
-		{"./input/testSwitch.go", "./output/treated/testSwitch.go"},
-		{"./input/deepClean.go", "./output/treated/deepClean.go"},
+		{"./input/init.go", "./output/control/init.go", "./output/treated/init.go"},
+		{"./input/testExpressions.go", "./output/control/testExpressions.go", "./output/treated/testExpressions.go"},
+		{"./input/testConditional.go", "./output/control/testConditional.go", "./output/treated/testConditional.go"},
+		{"./input/testSwitch.go", "./output/control/testSwitch.go", "./output/treated/testSwitch.go"},
+		{"./input/deepClean.go", "./output/control/deepClean.go", "./output/treated/deepClean.go"},
 	}
 	// running each file as if they are running with this command
 	// For one Pass
@@ -53,85 +109,47 @@ func TestFiles(t *testing.T) {
 	argsOnePass = append(argsOnePass, "staleFlag")
 	argsOnePass = append(argsOnePass, "-o")
 	argsOnePass = append(argsOnePass, "{filename}")
+	argsOnePass = append(argsOnePass, "-mode")
+	argsOnePass = append(argsOnePass, "{MODE_NAME}")
 
 	fmt.Print("Output format: \n")
 	fmt.Print("Line <Line number>: <output from correct file>\n")
 	fmt.Print("Line <Line number>: <output from treated file>\n")
 	fmt.Print("\n")
 	fmt.Print("Starting Tests \n")
-	for ind, table := range tables {
-		if ind == 5 {
-			argsOnePass = append(argsOnePass, "-treated")
-		}
+
+	fmt.Print("Testing with -mode treated\n\n")
+	var FileNotMatched bool
+	for _, table := range tables {
 		argsOnePass[3] = table.input
 		argsOnePass[7] = "temp.go"
+		argsOnePass[9] = "treated"
+		fmt.Print("Matching with: ")
+		fmt.Println(table.outputTreated)
 		src.RunPiranha(argsOnePass)
 
-		fmt.Print("Testing ")
-		if ind < 5 {
-			fmt.Print("without -treated\n")
+		FileNotMatched = compFiles("temp.go", table.outputTreated)
+		if FileNotMatched {
+			t.Errorf("Files didn't match, see above output")
 		} else {
-			fmt.Print("with -treated\n")
+			fmt.Println("File Matched Sucessfully")
 		}
+		fmt.Println()
+		del := os.Remove("temp.go")
+		if del != nil {
+			log.Fatal(del)
+		}
+	}
+	fmt.Print("Testing with -mode control\n")
+	for _, table := range tables {
+		argsOnePass[3] = table.input
+		argsOnePass[7] = "temp.go"
+		argsOnePass[9] = "control"
 		fmt.Print("Matching with: ")
-		fmt.Println(table.output)
-		FileNotMatched := false
-		corrFile, err := os.Open(table.output)
-		if err != nil {
-			fmt.Println("File reading error of correct file", err)
-			return
-		}
-		treatFile, err := os.Open("temp.go")
-		if err != nil {
-			fmt.Println("File reading error of treat file", err)
-			return
-		}
+		fmt.Println(table.outputControl)
+		src.RunPiranha(argsOnePass)
 
-		corrScan := bufio.NewScanner(corrFile)
-		treatScan := bufio.NewScanner(treatFile)
-
-		lineNumcorrFile := 0
-		lineNumtreatFile := 0
-
-		endOfcorrFile := false
-		endOftreatFile := false
-		for corrScan.Scan() {
-			// Scanning
-			treatScan.Scan()
-			lineNumcorrFile++
-			lineNumtreatFile++
-			for corrScan.Text() == "" {
-				if !corrScan.Scan() {
-					endOfcorrFile = true
-					break
-				}
-				lineNumcorrFile++
-			}
-			for treatScan.Text() == "" {
-				if !treatScan.Scan() {
-					endOftreatFile = true
-					break
-				}
-				lineNumtreatFile++
-			}
-			if endOfcorrFile || endOftreatFile {
-				break
-			}
-
-			// Matching
-			if corrScan.Text() != treatScan.Text() {
-				fmt.Print("\n")
-				fmt.Print("Line ", lineNumcorrFile, ": ", corrScan.Text())
-				fmt.Print("\n")
-				fmt.Print("Line ", lineNumtreatFile, ": ", treatScan.Text())
-				fmt.Print("\n")
-				FileNotMatched = true
-				break
-			}
-			if FileNotMatched {
-				break
-			}
-		}
+		FileNotMatched = compFiles("temp.go", table.outputControl)
 		if FileNotMatched {
 			t.Errorf("Files didn't match, see above output")
 		} else {

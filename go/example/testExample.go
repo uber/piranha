@@ -19,51 +19,51 @@ func testExpressions(ge GoExamples) {
 	var x, y bool = false, false
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) || x {
-		fmt.Println("treated || of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) || x`")
 	} else {
-		fmt.Println("control || of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) || x`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && x {
-		fmt.Println("treated && of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && x`")
 	} else {
-		fmt.Println("control && of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && x`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && (x || y) {
-		fmt.Println("treated && of || of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x || y)`")
 	} else {
-		fmt.Println("control && of || of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x || y)`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && (x && y) {
-		fmt.Println("treated && of && of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x && y)`")
 	} else {
-		fmt.Println("control && of && of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x && y)`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && y == x {
-		fmt.Println("treated && equals of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && y == x`")
 	} else {
-		fmt.Println("control && equals of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && y == x`")
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) || y == x {
-		fmt.Println("treated || equals of controlBehaviour")
+		fmt.Println("then-braanch of `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 	} else {
-		fmt.Println("control || equals of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) && y && x {
-		fmt.Println("treated && and && of controlBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag) && y && x`")
 	} else {
-		fmt.Println("control && and && of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) && y && x`")
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) || y || x {
-		fmt.Println("treated || && || of controlBehaviour")
+		fmt.Println("then-braanch of `ge.flagMthds.controlBehaviour(staleFlag) || y || x`")
 	} else {
-		fmt.Println("control || && || of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) || y || x`")
 	}
 
 }

@@ -18,44 +18,44 @@ import "fmt"
 func testIfConditionalAndInitExpressions(ge GoExamples) {
 	// Treated Control behaviour will be governed by three or more flags
 	if ge.flagMthds.treatedBehaviour(localFlag) && globalFeature(globalFlag) {
-		fmt.Println("treat1")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && ge.flagMthds.treatedBehaviour(localFlag) && globalFeature(globalFlag)`")
 	} else {
-		fmt.Println("control1")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && ge.flagMthds.treatedBehaviour(localFlag) && globalFeature(globalFlag)`")
 	}
 
 	if globalFeature(globalFlag) && ge.flagMthds.treatedBehaviour(localFlag) {
-		fmt.Println("treat2")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && globalFeature(globalFlag) && ge.flagMthds.treatedBehaviour(localFlag)`")
 	} else {
-		fmt.Println("control2")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && globalFeature(globalFlag) && ge.flagMthds.treatedBehaviour(localFlag)`")
 	}
 
 	if globalFeature(globalFlag) && ge.flagMthds.treatedBehaviour(localFlag) {
-		fmt.Println("treat3")
+		fmt.Println("then-branch of `globalFeature(globalFlag) && ge.flagMthds.treatedBehaviour(staleFlag) && ge.flagMthds.treatedBehaviour(localFlag)`")
 	} else {
-		fmt.Println("control3")
+		fmt.Println("else-branch of `globalFeature(globalFlag) && ge.flagMthds.treatedBehaviour(staleFlag) && ge.flagMthds.treatedBehaviour(localFlag)`")
 	}
 
-	fmt.Println("treat1 with ||")
+	fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) || ge.flagMthds.treatedBehaviour(localFlag) || globalFeature(globalFlag)`")
 
 	if ge.flagMthds.controlBehaviour(localFlag) || globalFeature(globalFlag) {
-		fmt.Println("treat4")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag) || ge.flagMthds.controlBehaviour(localFlag) || globalFeature(globalFlag)`")
 	} else {
-		fmt.Println("control4")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) || ge.flagMthds.controlBehaviour(localFlag) || globalFeature(globalFlag)`")
 	}
 
 	if globalFeature(globalFlag) || ge.flagMthds.controlBehaviour(localFlag) {
-		fmt.Println("treat5")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag) || globalFeature(globalFlag) || ge.flagMthds.controlBehaviour(localFlag)`")
 	} else {
-		fmt.Println("control5")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) || globalFeature(globalFlag) || ge.flagMthds.controlBehaviour(localFlag)`")
 	}
 
 	if globalFeature(globalFlag) || ge.flagMthds.controlBehaviour(localFlag) {
-		fmt.Println("treat6")
+		fmt.Println("then-branch of `globalFeature(globalFlag) || ge.flagMthds.controlBehaviour(staleFlag) || ge.flagMthds.controlBehaviour(localFlag)`")
 	} else {
-		fmt.Println("control6")
+		fmt.Println("else-branch of `globalFeature(globalFlag) || ge.flagMthds.controlBehaviour(staleFlag) || ge.flagMthds.controlBehaviour(localFlag)`")
 	}
 
-	fmt.Println("control4 with &&")
+	fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) && ge.flagMthds.controlBehaviour(localFlag) && globalFeature(globalFlag)`")
 
 	//comment1
 	a := true //comment2
@@ -63,18 +63,14 @@ func testIfConditionalAndInitExpressions(ge GoExamples) {
 	b := ge.flagMthds.treatedBehaviour(newFlag) //comment4
 	//comment5
 	if b {
-		fmt.Println("treat4 on a && b")
+		fmt.Println("then-branch of `a && b`")
 	} else {
-		fmt.Println("control4 on a && b")
+		fmt.Println("else-branch of `a && b`")
 	}
 
-	fmt.Println("treat5 on a || b")
-
-	fmt.Println("treat6 with v")
-
+	fmt.Println("then-branch of `a || b`")
+	fmt.Println("then-branch of `v := ge.flagMthds.treatedBehaviour(staleFlag); v`")
 	b = b && !b
-	fmt.Println("treat7 with v")
-
-	fmt.Println("control8 with v")
-
+	fmt.Println("then-branch of `v := ge.flagMthds.treatedBehaviour(staleFlag); v == true`")
+	fmt.Println("else-branch of `v := ge.flagMthds.treatedBehaviour(staleFlag); v != true`")
 }

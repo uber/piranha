@@ -17,9 +17,9 @@ import "fmt"
 
 func testExpressions(ge GoExamples) {
 	if ge.flagMthds.treatedBehaviour(staleFlag) {
-		fmt.Println("treated behaviour of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag)`")
 	} else {
-		fmt.Println("control behaviour of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag)`")
 	}
 
 	//global feature is not in properties right now. So this should not get treated
@@ -30,58 +30,58 @@ func testExpressions(ge GoExamples) {
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) {
-		fmt.Println("treated behaviour of controlBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag)`")
 	} else {
-		fmt.Println("control behaviour of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag)`")
 	}
 	var x, y bool = false, false
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) || x {
-		fmt.Println("treated || of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) || x`")
 	} else {
-		fmt.Println("control || of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) || x`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && x {
-		fmt.Println("treated && of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && x`")
 	} else {
-		fmt.Println("control && of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && x`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && (x || y) {
-		fmt.Println("treated && of || of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x || y)`")
 	} else {
-		fmt.Println("control && of || of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x || y)`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && (x && y) {
-		fmt.Println("treated && of && of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x && y)`")
 	} else {
-		fmt.Println("control && of && of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && (x && y)`")
 	}
 
 	if ge.flagMthds.treatedBehaviour(staleFlag) && y == x {
-		fmt.Println("treated && equals of treatedBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && y == x`")
 	} else {
-		fmt.Println("control && equals of treatedBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.treatedBehaviour(staleFlag) && y == x`")
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) || y == x {
-		fmt.Println("treated || equals of controlBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 	} else {
-		fmt.Println("control || equals of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) && y && x {
-		fmt.Println("treated && and && of controlBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag) && y && x`")
 	} else {
-		fmt.Println("control && and && of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) && y && x`")
 	}
 
 	if ge.flagMthds.controlBehaviour(staleFlag) || y || x {
-		fmt.Println("treated || && || of controlBehaviour")
+		fmt.Println("then-branch of `ge.flagMthds.controlBehaviour(staleFlag) || y || x`")
 	} else {
-		fmt.Println("control || && || of controlBehaviour")
+		fmt.Println("else-branch of `ge.flagMthds.controlBehaviour(staleFlag) || y || x`")
 	}
 
 	y = ge.flagMthds.treatedBehaviour(staleFlag)
@@ -89,9 +89,9 @@ func testExpressions(ge GoExamples) {
 	y = ge.flagMthds.treatedBehaviour(staleFlag) || x
 
 	if y {
-		fmt.Println("y cleaned, so treated behaviour")
+		fmt.Println("y cleaned, so then-branch of y") 
 	} else {
-		fmt.Println("y cleaned, so you see control behaviour")
+		fmt.Println("y cleaned, so else-branch of y")
 	}
 
 	y = ge.flagMthds.treatedBehaviour(staleFlag) && y == x
@@ -99,9 +99,9 @@ func testExpressions(ge GoExamples) {
 	y = ge.flagMthds.treatedBehaviour(staleFlag)
 
 	if y {
-		fmt.Println("y not cleaned, so treated behaviour")
+		fmt.Println("y not cleaned, so then-branch of y")
 	} else {
-		fmt.Println("y not cleaned, so control behaviour")
+		fmt.Println("y not cleaned, so else-branch of y")
 	}
 
 }

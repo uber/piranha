@@ -16,43 +16,39 @@ package testfiles
 import "fmt"
 
 func testSwitch(ge GoExamples) {
-
-	fmt.Println("mike treat 1")
+	fmt.Println("1st case of `os := ge.flagMthds.treatedBehaviour(staleFlag); os`")
 
 	switch os := ge.flagMthds.treatedBehaviour(newFlag); os {
 	case true:
-		fmt.Println("mike treat 2")
+		fmt.Println("1st case of `os := ge.flagMthds.treatedBehaviour(newFlag); os`")
 	default:
-		fmt.Println("defaulter 2")
+		fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(newFlag); os`")
 	}
 
-	fmt.Println("defaulter 3")
-
-	fmt.Println("defaulter 4")
+	fmt.Println("default case of `!ge.flagMthds.treatedBehaviour(staleFlag)`")
+	fmt.Println("default case of `os := ge.flagMthds.controlBehaviour(staleFlag); os`")
 
 	x := true
 	y := false
 
 	switch os := (x || y); os {
 	case true:
-		fmt.Println("mike treat 5")
+		fmt.Println("1st case of `os := ge.flagMthds.treatedBehaviour(staleFlag) && (x || y); os`")
 	default:
-		fmt.Println("defaulter 5")
+		fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(staleFlag) && (x || y); os`")
 	}
 
 	switch os := true; x || y {
 	case true:
-		fmt.Println("mike treat 6")
+		fmt.Println("1st case of `os := ge.flagMthds.treatedBehaviour(staleFlag); os && (x || y)`")
 	default:
-		fmt.Println("mike control 6")
+		fmt.Println("default case of `os := ge.flagMthds.treatedBehaviour(staleFlag); os && (x || y)`")
 	}
 
-	fmt.Println("mike control 7")
-
-	print("treated")
+	fmt.Println("default case of `os := ge.flagMthds.controlBehaviour(staleFlag); os && (x || y)`")
+	print("1st case of `ge.flagMthds.treatedBehaviour(staleFlag) || x || y`")
 	x = y
-
-	fmt.Println("someone is false")
+	fmt.Println("default case of `ge.flagMthds.controlBehaviour(staleFlag) && x && y`")
 
 	/*
 		If you are familiar with go progamming then you probably know that
@@ -89,23 +85,23 @@ func testSwitch(ge GoExamples) {
 	x = true
 	y = false
 
-	fmt.Println("switch test 1")
+	fmt.Println("switch 1 test `ge.flagMthds.treatedBehaviour(staleFlag) || x`")
 
 	// Switch 2
 	switch {
 	case x:
-		fmt.Println("switch test 9")
+		fmt.Println("switch 2 test `ge.flagMthds.treatedBehaviour(staleFlag) && x`")
 	case (x || y):
-		fmt.Println("switch test 10")
+		fmt.Println("switch 2 test `ge.flagMthds.treatedBehaviour(staleFlag) && (x || y)`")
 	case (x && y):
-		fmt.Println("switch test 11")
+		fmt.Println("switch 2 test `ge.flagMthds.treatedBehaviour(staleFlag) && (x && y)`")
 	case y == x:
-		fmt.Println("switch test 12")
+		fmt.Println("switch 2 test `ge.flagMthds.treatedBehaviour(staleFlag) && y == x`")
 		x = y || ge.flagMthds.treatedBehaviour(newFlag)
 	case y == x:
-		fmt.Println("switch test 13")
+		fmt.Println("switch 2 test `ge.flagMthds.controlBehaviour(staleFlag) || y == x`")
 	case y || x:
-		fmt.Println("switch test 15")
+		fmt.Println("switch 2 test `ge.flagMthds.controlBehaviour(staleFlag) || y || x`")
 	}
 
 }
