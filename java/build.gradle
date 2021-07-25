@@ -15,15 +15,24 @@
  */
 
 import net.ltgt.gradle.errorprone.CheckSeverity
+buildscript {
+    repositories {
+        mavenCentral()
+        google() // For Gradle 4.0+
+    }
 
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.5.0'
+    }
+}
 plugins {
-  id "com.github.sherter.google-java-format" version "0.7.1"
+  id "com.github.sherter.google-java-format" version "0.8"
   id "net.ltgt.errorprone" version "0.6" apply false
+  id "com.github.nbaztec.coveralls-jacoco" version "1.2.5" apply false
 }
 
 repositories {
-  // to get the google-java-format jar and dependencies
-  jcenter()
+    mavenCentral()
 }
 
 apply from: "gradle/dependencies.gradle"

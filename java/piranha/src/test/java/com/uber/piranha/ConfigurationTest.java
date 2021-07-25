@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019 Uber Technologies, Inc.
+ * Copyright (c) 2019-2021 Uber Technologies, Inc.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -16,9 +16,9 @@ package com.uber.piranha;
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
+import com.uber.piranha.config.PiranhaConfigurationException;
 import java.io.IOException;
 import java.util.Arrays;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -26,447 +26,15 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+/**
+ * Test cases related to Piranha configuration. Particularly parsing and handling of the
+ * properties.json configuration file.
+ */
 @RunWith(JUnit4.class)
-public class XPFlagCleanerTest {
+public class ConfigurationTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
-  /*
-   * Used to test exception handling in init method.
-   * */
+  /** Used to test exception handling in init method. */
   @Rule public ExpectedException expectedEx = ExpectedException.none();
-
-  private CompilationTestHelper compilationHelper;
-
-  @Before
-  public void setup() {
-    compilationHelper =
-        CompilationTestHelper.newInstance(XPFlagCleaner.class, getClass())
-            .setArgs(Arrays.asList("-d", temporaryFolder.getRoot().getAbsolutePath()));
-  }
-
-  @Test
-  public void test_xpflagsPositiveCases() {
-    compilationHelper
-        .setArgs(
-            Arrays.asList(
-                "-d",
-                temporaryFolder.getRoot().getAbsolutePath(),
-                "-XepOpt:Piranha:FlagName=STALE_FLAG",
-                "-XepOpt:Piranha:IsTreated=true",
-                "-XepOpt:Piranha:Config=config/properties.json"))
-        .addSourceFile("XPFlagCleanerPositiveCases.java")
-        .doTest();
-  }
-
-  @Test
-  public void test_xpflagsNegativeCases() {
-    compilationHelper
-        .setArgs(
-            Arrays.asList(
-                "-d",
-                temporaryFolder.getRoot().getAbsolutePath(),
-                "-XepOpt:Piranha:FlagName=STALE_FLAG",
-                "-XepOpt:Piranha:IsTreated=true",
-                "-XepOpt:Piranha:Config=config/properties.json"))
-        .addSourceFile("XPFlagCleanerNegativeCases.java")
-        .doTest();
-  }
-
-  @Test
-  public void positiveTreatment() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
-        .addInput("XPFlagCleanerPositiveCases.java")
-        .addOutput("XPFlagCleanerPositiveCasesTreatment.java")
-        .doTest();
-  }
-
-  @Test
-  public void positiveSpecificTreatmentGroup() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:TreatmentGroup", "GROUP_A");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {", // Ideally we would remove this too, fix later
-            "}")
-        .addInputLines(
-            "TestExperimentGroups.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentGroups {",
-            " GROUP_A,",
-            " GROUP_B,",
-            "}")
-        .addOutputLines(
-            "TestExperimentGroups.java",
-            "package com.uber.piranha;",
-            "//[PIRANHA_DELETE_FILE_SEQ] Delete this class if not automatically removed.",
-            "enum TestExperimentGroups { }")
-        .addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "import static com.uber.piranha.TestExperimentGroups.GROUP_A;",
-            "import static com.uber.piranha.TestExperimentGroups.GROUP_B;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String groupToString() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG)) { return \"\"; }",
-            "  else if (experimentation.isToggleInGroup(",
-            "            STALE_FLAG,GROUP_A)) { ",
-            "    return \"A\";",
-            "  } else if (experimentation.isToggleInGroup(",
-            "            STALE_FLAG,GROUP_B)) { ",
-            "    return \"B\";",
-            "  } else { return \"C\"; }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String groupToString() {",
-            "  return \"A\";",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void dontRemoveGenericallyNamedTreatmentGroups() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:TreatmentGroup", "TREATED");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {", // Ideally we would remove this too, fix later
-            "}")
-        .addInputLines(
-            "TestExperimentGroups.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentGroups {",
-            " TREATED,",
-            " CONTROL,",
-            "}")
-        .addOutputLines(
-            "TestExperimentGroups.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentGroups {",
-            " TREATED,",
-            " CONTROL,",
-            "}")
-        .addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "import static com.uber.piranha.TestExperimentGroups.TREATED;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String groupToString() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG)) { return \"\"; }",
-            "  else if (experimentation.isToggleInGroup(",
-            "            STALE_FLAG,TREATED)) { ",
-            "    return \"Treated\";",
-            "  } else { return \"Controll\"; }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentGroups.TREATED;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String groupToString() {",
-            "  return \"Treated\";",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void positiveControl() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "false");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
-        .addInput("XPFlagCleanerPositiveCases.java")
-        .addOutput("XPFlagCleanerPositiveCasesControl.java")
-        .doTest();
-  }
-
-  private BugCheckerRefactoringTestHelper addHelperClasses(BugCheckerRefactoringTestHelper bcr)
-      throws IOException {
-    return bcr.addInput("XPTest.java").expectUnchanged();
-  }
-
-  @Test
-  public void positiveRemoveImport() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {", // Ideally we would remove this too, fix later
-            "}")
-        .addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName" + ".STALE_FLAG;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public boolean return_contains_stale_flag() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  return experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG);",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public boolean return_contains_stale_flag() {",
-            "  return true;",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void negative() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath())
-        .addInput("XPFlagCleanerNegativeCases.java")
-        .expectUnchanged()
-        .doTest();
-  }
-
-  @Test
-  public void positiveCaseWithFlagNameAsVariable() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            "private static final String STALE_FLAG_CONSTANTS = \"STALE_FLAG\";",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  return \"Y\";",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void positiveCaseWithFlagNameAsStringLiteral() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  if (experimentation.isToggleDisabled(\"STALE_FLAG\")) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  return \"Y\";",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void negativeCaseWithFlagNameAsStringLiteral() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  if (experimentation.isToggleDisabled(\"NOT_STALE_FLAG\")) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  if (experimentation.isToggleDisabled(\"NOT_STALE_FLAG\")) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void negativeCaseWithFlagNameAsVariable() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            "private static final String STALE_FLAG_CONSTANTS = \"NOT_STALE_FLAG\";",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase {",
-            "private static final String STALE_FLAG_CONSTANTS = \"NOT_STALE_FLAG\";",
-            " private XPTest experimentation;",
-            " public String evaluate() {",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG_CONSTANTS)) { return \"X\"; }",
-            "     else { return \"Y\";}",
-            " }",
-            "}")
-        .doTest();
-  }
 
   @Test
   public void runPiranhaWithFewProperties() throws IOException {
@@ -504,7 +72,7 @@ public class XPFlagCleanerTest {
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -553,7 +121,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -603,7 +171,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -650,7 +218,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -696,7 +264,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -755,7 +323,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -812,7 +380,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -864,7 +432,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -916,7 +484,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -972,7 +540,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1032,7 +600,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1087,7 +655,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1145,7 +713,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1199,7 +767,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1257,7 +825,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1315,7 +883,7 @@ public class XPFlagCleanerTest {
     // can be removed after Piranha implements two pass analysis
     bcr = bcr.allowBreakingChanges();
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1370,7 +938,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1432,7 +1000,7 @@ public class XPFlagCleanerTest {
     // can be removed after Piranha implements two pass analysis
     bcr = bcr.allowBreakingChanges();
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1487,7 +1055,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1551,7 +1119,7 @@ public class XPFlagCleanerTest {
     // can be removed after Piranha implements two pass analysis
     bcr = bcr.allowBreakingChanges();
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1608,7 +1176,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1663,7 +1231,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1722,7 +1290,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1778,7 +1346,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1832,7 +1400,7 @@ public class XPFlagCleanerTest {
 
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1890,7 +1458,7 @@ public class XPFlagCleanerTest {
     // can be removed after Piranha implements two pass analysis
     bcr = bcr.allowBreakingChanges();
 
-    bcr = addHelperClasses(bcr);
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
     bcr.addInputLines(
             "XPFlagCleanerSinglePositiveCase.java",
             "package com.uber.piranha;",
@@ -1941,7 +1509,7 @@ public class XPFlagCleanerTest {
     b.putFlag("Piranha:Config", "src/test/resources/config/invalid/properties_test_invalid.json");
 
     expectedEx.expect(PiranhaConfigurationException.class);
-    expectedEx.expectMessage("methodProperties not found.");
+    expectedEx.expectMessage("methodProperties not found, required.");
 
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());
@@ -2059,136 +1627,6 @@ public class XPFlagCleanerTest {
   }
 
   /**
-   * [https://github.com/uber/piranha/issues/44]
-   *
-   * <p>This test ensures static imports are not removed by piranha if an empty flag is passed in
-   * config
-   */
-  @Test
-  public void testEmptyFlagDoesNotRemoveStaticImports() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "EmptyFlagRemovesStaticImports.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.Constants.ONE;",
-            "class EmptyFlagRemovesStaticImports {",
-            "  public String evaluate(int x) {",
-            "    if (x == ONE) { return \"yes\"; }",
-            "    return \"no\";",
-            "  }",
-            "}")
-        .addOutputLines(
-            "EmptyFlagRemovesStaticImports.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.Constants.ONE;",
-            "class EmptyFlagRemovesStaticImports {",
-            "  public String evaluate(int x) {",
-            "    if (x == ONE) { return \"yes\"; }",
-            "    return \"no\";",
-            "  }",
-            "}")
-        .addInputLines(
-            "Constants.java",
-            "package com.uber.piranha;",
-            "class Constants {",
-            "  public static int ONE = 1;",
-            "}")
-        .addOutputLines(
-            "Constants.java",
-            "package com.uber.piranha;",
-            "class Constants {",
-            "  public static int ONE = 1;",
-            "}")
-        .doTest();
-  }
-
-  /**
-   * [https://github.com/uber/piranha/issues/44]
-   *
-   * <p>This test ensures annotated methods are not removed by piranha if an empty flag is passed in
-   * config
-   */
-  @Test
-  public void testEmptyFlagDoesNotRemoveAnnotatedMethods() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "EmptyFlagRemovesAnnotatedMethods.java",
-            "package com.uber.piranha;",
-            "class EmptyFlagRemovesAnnotatedMethods {",
-            "  enum TestExperimentName {",
-            "    SAMPLE_STALE_FLAG",
-            "  }",
-            "  public String evaluate(int x) {",
-            "    if (x == 1) { return \"yes\"; }",
-            "    return \"no\";",
-            "  }",
-            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
-            "  public void x () {}",
-            "}")
-        .addOutputLines(
-            "EmptyFlagRemovesAnnotatedMethods.java",
-            "package com.uber.piranha;",
-            "class EmptyFlagRemovesAnnotatedMethods {",
-            "  enum TestExperimentName {",
-            "    SAMPLE_STALE_FLAG",
-            "  }",
-            "  public String evaluate(int x) {",
-            "    if (x == 1) { return \"yes\"; }",
-            "    return \"no\";",
-            "  }",
-            "  @ToggleTesting(treated = TestExperimentName.SAMPLE_STALE_FLAG)",
-            "  public void x () {}",
-            "}")
-        .addInputLines(
-            "ToggleTesting.java",
-            "package com.uber.piranha;",
-            "import java.lang.annotation.ElementType;",
-            "import java.lang.annotation.Retention;",
-            "import java.lang.annotation.RetentionPolicy;",
-            "import java.lang.annotation.Target;",
-            "@Retention(RetentionPolicy.RUNTIME)",
-            "@Target({ElementType.METHOD})",
-            "@interface ToggleTesting {",
-            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
-            "}")
-        .addOutputLines(
-            "ToggleTesting.java",
-            "package com.uber.piranha;",
-            "import java.lang.annotation.ElementType;",
-            "import java.lang.annotation.Retention;",
-            "import java.lang.annotation.RetentionPolicy;",
-            "import java.lang.annotation.Target;",
-            "@Retention(RetentionPolicy.RUNTIME)",
-            "@Target({ElementType.METHOD})",
-            "@interface ToggleTesting {",
-            "  EmptyFlagRemovesAnnotatedMethods.TestExperimentName treated();",
-            "}")
-        .doTest();
-  }
-
-  /**
    * This test ensures 'PiranhaConfigurationException' is thrown if the 'Piranha:FlagName' is
    * missing/not-provided in the config
    */
@@ -2263,312 +1701,6 @@ public class XPFlagCleanerTest {
                 "-XepOpt:Piranha:IsTreated=true",
                 "-XepOpt:Piranha:Config=src/test/resources/config/invalid/piranha.properties"))
         .addSourceLines("Dummy.java", "package com.uber.piranha;", "class Dummy {", "}")
-        .doTest();
-  }
-
-  @Test
-  public void testMultipleClonesAcrossFiles() throws IOException {
-    // This test mostly ensures we aren't persisting state (such as overlap check state) between
-    // compilation units in a way that will fail to clean similar code across multiple files.
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {", // Ideally we would remove this too, fix later
-            "}")
-        // Order is back to front: the following refactoring will fail before this commit (clearing
-        // endPos)...
-        .addInputLines(
-            "XPFlagCleanerSinglePositiveCase1.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "class XPFlagCleanerSinglePositiveCase1 {",
-            " private XPTest experimentation;",
-            " public void foo() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG)) {",
-            "     System.err.println(\"To be removed\");",
-            "  }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase1.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase1 {",
-            " private XPTest experimentation;",
-            " public void foo() {",
-            " }",
-            "}")
-        // ... while this identical refactoring succeeds:
-        .addInputLines(
-            "XPFlagCleanerSinglePositiveCase2.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "class XPFlagCleanerSinglePositiveCase2 {",
-            " private XPTest experimentation;",
-            " public void foo() {",
-            "  // BUG: Diagnostic contains: Cleans stale XP flags",
-            "  if (experimentation.isToggleDisabled(STALE_FLAG)) {",
-            "     System.err.println(\"To be removed\");",
-            "  }",
-            " }",
-            "}")
-        .addOutputLines(
-            "XPFlagCleanerSinglePositiveCase2.java",
-            "package com.uber.piranha;",
-            "class XPFlagCleanerSinglePositiveCase2 {",
-            " private XPTest experimentation;",
-            " public void foo() {",
-            " }",
-            "}")
-        .doTest();
-  }
-
-  private BugCheckerRefactoringTestHelper addToggleTestingAnnotationHelperClass(
-      BugCheckerRefactoringTestHelper bcr) {
-    return bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG,",
-            " OTHER_FLAG_1,",
-            " OTHER_FLAG_2,",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " OTHER_FLAG_1,",
-            " OTHER_FLAG_2,",
-            "}")
-        .addInputLines(
-            "ToggleTesting.java",
-            "package com.uber.piranha;",
-            "import java.lang.annotation.ElementType;",
-            "import java.lang.annotation.Retention;",
-            "import java.lang.annotation.RetentionPolicy;",
-            "import java.lang.annotation.Target;",
-            "@Retention(RetentionPolicy.RUNTIME)",
-            "@Target({ElementType.METHOD})",
-            "@interface ToggleTesting {",
-            "  TestExperimentName[] treated();",
-            "}")
-        .addOutputLines(
-            "ToggleTesting.java",
-            "package com.uber.piranha;",
-            "import java.lang.annotation.ElementType;",
-            "import java.lang.annotation.Retention;",
-            "import java.lang.annotation.RetentionPolicy;",
-            "import java.lang.annotation.Target;",
-            "@Retention(RetentionPolicy.RUNTIME)",
-            "@Target({ElementType.METHOD})",
-            "@interface ToggleTesting {",
-            "  TestExperimentName[] treated();",
-            "}");
-  }
-
-  @Test
-  public void testAnnotatedTestMethodsSimpleNameImportTreated() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
-    bcr.addInputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "  @ToggleTesting(treated = STALE_FLAG)",
-            "  public void x () {}",
-            "}")
-        .addOutputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "  public void x () {}",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void testAnnotatedTestMethodsSimpleNameImportControl() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "false");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
-    bcr.addInputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "  @ToggleTesting(treated = STALE_FLAG)",
-            "  public void x () {}",
-            "}")
-        .addOutputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void testAnnotatedTestMethodsArrayExpressionTreated() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "true");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
-    bcr.addInputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "  @ToggleTesting(treated = {OTHER_FLAG_1, STALE_FLAG})",
-            "  public void x () {}",
-            "}")
-        .addOutputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "  @ToggleTesting(treated = {OTHER_FLAG_1})",
-            "  public void x () {}",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void testAnnotatedTestMethodsArrayExpressionControl() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "false");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr = addToggleTestingAnnotationHelperClass(bcr); // Adds @ToggleTesting
-    bcr.addInputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "  @ToggleTesting(treated = {OTHER_FLAG_1, STALE_FLAG})",
-            "  public void x () {}",
-            "}")
-        .addOutputLines(
-            "TestClass.java",
-            "package com.uber.piranha;",
-            // Ideally should be removed too: (GJF will do it, though :) )
-            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
-            "class TestClass {",
-            "  public void foo () {}",
-            "}")
-        .doTest();
-  }
-
-  @Test
-  public void testIgnoresPrefixMatchFlag() throws IOException {
-
-    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", "STALE_FLAG");
-    b.putFlag("Piranha:IsTreated", "false");
-    b.putFlag("Piranha:Config", "config/properties.json");
-
-    BugCheckerRefactoringTestHelper bcr =
-        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
-    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-
-    bcr = addHelperClasses(bcr);
-    bcr.addInputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " STALE_FLAG,",
-            " OTHER_STALE_FLAG",
-            "}")
-        .addOutputLines(
-            "TestExperimentName.java",
-            "package com.uber.piranha;",
-            "public enum TestExperimentName {",
-            " OTHER_STALE_FLAG",
-            "}")
-        .addInputLines(
-            "TestClassFullMatch.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
-            "class TestClassFullMatch { }")
-        .addOutputLines(
-            "TestClassFullMatch.java", "package com.uber.piranha;", "class TestClassFullMatch { }")
-        .addInputLines(
-            "TestClassPartialMatch.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.OTHER_STALE_FLAG;",
-            "class TestClassPartialMatch { }")
-        .addOutputLines(
-            "TestClassPartialMatch.java",
-            "package com.uber.piranha;",
-            "import static com.uber.piranha.TestExperimentName.OTHER_STALE_FLAG;",
-            "class TestClassPartialMatch { }")
         .doTest();
   }
 }

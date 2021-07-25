@@ -1,12 +1,13 @@
-package com.uber.piranha;
+package com.uber.piranha.config;
 
 import com.google.common.collect.ImmutableMap;
+import com.uber.piranha.XPFlagCleaner;
 import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** A class representing a method configuration record from properties.json */
-final class PiranhaMethodRecord {
+public final class PiranhaMethodRecord {
 
   // Allowed fields for a method property in the config file.
   // Entered under the top-level "methodProperties" in properties.json.
@@ -68,6 +69,8 @@ final class PiranhaMethodRecord {
     ImmutableMap.Builder<String, XPFlagCleaner.API> builder = new ImmutableMap.Builder<>();
     builder.put("treated", XPFlagCleaner.API.IS_TREATED);
     builder.put("control", XPFlagCleaner.API.IS_CONTROL);
+    builder.put("set_treated", XPFlagCleaner.API.SET_TREATED);
+    builder.put("set_control", XPFlagCleaner.API.SET_CONTROL);
     builder.put("empty", XPFlagCleaner.API.DELETE_METHOD);
     builder.put("treatmentGroup", XPFlagCleaner.API.IS_TREATMENT_GROUP_CHECK);
     return builder.build();

@@ -42,19 +42,19 @@
   "annotations": [
     "ToggleTesting",
     {
-        "name" : "NewToggleTreated",
-        "flag" : "$value",
-        "treated" : "true"
+      "name" : "NewToggleTreated",
+      "flag" : "$value",
+      "treated" : "true"
     },
     {
-        "name" : "NewToggleControl",
-        "flag" : "$value",
-        "treated" : "false"
+      "name" : "NewToggleControl",
+      "flag" : "$value",
+      "treated" : "false"
     }
   ],
   "cleanupOptions": {
     "tests.clean_by_setters_heuristic.enabled" : true,
-    "tests.clean_by_setters_heuristic.ignore_other_flag_sets" : false,
+    "tests.clean_by_setters_heuristic.ignore_other_flag_sets" : true,
     "tests.clean_by_setters_heuristic.lines_limit" : 100
   }
 }

@@ -31,12 +31,12 @@ dependencies {
 tasks.withType(JavaCompile) {
   options.errorprone {
       check("Piranha", CheckSeverity.WARN)
+      option("Piranha:FlagName", "SAMPLE_STALE_FLAG")
+      option("Piranha:IsTreated", "true")
+      option("Piranha:Config", "${project.projectDir}/config/properties.json")
   }
   options.errorprone.errorproneArgs << "-XepPatchChecks:Piranha"
   options.errorprone.errorproneArgs << "-XepPatchLocation:IN_PLACE"
-  options.errorprone.errorproneArgs << "-XepOpt:Piranha:FlagName=SAMPLE_STALE_FLAG"
-  options.errorprone.errorproneArgs << "-XepOpt:Piranha:IsTreated=true"
-  options.errorprone.errorproneArgs << "-XepOpt:Piranha:Config=config/properties.json"
 }
 
 compileJava.doFirst {

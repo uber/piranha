@@ -18,23 +18,7 @@ import Foundation
 import SwiftSyntax
 
 class XPFlagCleaner: SyntaxRewriter {
-    // specifies the type of APIs
-    enum API {
-        case isTreated
-        case isControl
-        case isInControlGroup
-        case isInTreatmentGroup
-        case isTesting
-        case isUnknown
-    }
-
-    struct FlagAPI {
-        var api: String
-        var type: API
-        var flagIndex: Int?
-        var groupIndex: Int?
-    }
-
+    
     // specifies the value returned by evaluating the expression
     private enum Value {
         case isTrue
@@ -47,22 +31,23 @@ class XPFlagCleaner: SyntaxRewriter {
         case and
         case or
         case nilcoalesc
+        case equality
         case unknown
     }
 
-    private var configFile: URL
-    private var configurationParsed: Bool = false
+    private let config: PiranhaConfig
     
-    private var SELFDOT: String = "self."
-    private var UNKNOWN: String = "unknown"
+    private let SELFDOT: String = "self."
+    private let UNKNOWN: String = "unknown"
 
-    private var flagAPIArr: [FlagAPI] = []
     private var valueMap = [String: Value]()
     private var deepCleanMap = [String: Value]()
     private var fieldMap = [String: Bool]()
 
     private var previousTrivia: Trivia = []
     private var caseIndex: Int?
+    
+    private var scopes = [Scope]()
 
     private let flagName: String
     private let groupName: String
@@ -71,74 +56,17 @@ class XPFlagCleaner: SyntaxRewriter {
     private var isDeepCleanPass: Bool
     private var shouldDeepClean: Bool
 
-    init(with configFile: URL, flag flagName: String, behavior isTreated: Bool, group groupName: String) {
-        self.configFile = configFile
+    init(with config: PiranhaConfig,
+         flag flagName: String,
+         behavior isTreated: Bool,
+         group groupName: String) {
+        self.config = config
         self.flagName = flagName
         self.isTreated = isTreated
         self.groupName = groupName
 
         isDeepCleanPass = false
         shouldDeepClean = false
-    }
-
-    /* Format of config file
-     apiType1=api1(_,flagName,groupName,_);api2(flagName,...)
-     apiType2=api2(_,_,groupName)
-     ...
-     */
-
-    private func parseConfiguration() {
-        configurationParsed = true
-        var flagIndex: Int?
-        var groupIndex: Int?
-        var type: API
-
-        do {
-            let configText = try String(contentsOf: configFile, encoding: .utf8)
-            // each line contains some apiType.
-            let lineArr = configText.components(separatedBy: .newlines)
-            for line in lineArr {
-                let lineInfo = line.components(separatedBy: "=")
-                guard lineInfo.count >= 2 else { break }
-
-                switch lineInfo[0] {
-                case "treatedMethods": type = API.isTreated
-                case "controlGroupMethods": type = API.isInControlGroup
-                case "treatmentGroupMethods": type = API.isInTreatmentGroup
-                case "testingMethods": type = API.isTesting
-                default: type = API.isUnknown
-                }
-
-                // for each method defined for this api type,
-                // extract the funcName, flagIndex (where flagName is present) and
-                // groupIndex (if groupName is present) and then add this to
-                // the flagAPIarr containing the configuration
-                for method in lineInfo[1].components(separatedBy: ";") {
-                    let funcInfo = method.components(separatedBy: "(")
-                    guard funcInfo.count >= 2 else { break }
-                    let funcName = funcInfo[0]
-                    let parameters = funcInfo[1].components(separatedBy: ")")[0].components(separatedBy: ",")
-                    flagIndex = nil
-                    groupIndex = nil
-
-                    for (loopindex, parameter) in parameters.enumerated() {
-                        switch parameter {
-                        case "flagName": flagIndex = loopindex
-                        case "groupName": groupIndex = loopindex
-                        default:
-                            if parameter != "_" {
-                                print("Incorrect configuration")
-                                exit(-1)
-                            }
-                        }
-                    }
-                    flagAPIArr.append(FlagAPI(api: funcName, type: type, flagIndex: flagIndex, groupIndex: groupIndex))
-                }
-            }
-        } catch {
-            print("Configuration error.")
-            exit(-1)
-        }
     }
 
     // checks for the binary operator to handle and/or
@@ -154,6 +82,8 @@ class XPFlagCleaner: SyntaxRewriter {
             return Operator.or
         } else if opTokenKind == TokenKind.spacedBinaryOperator("??") {
             return Operator.nilcoalesc
+        } else if opTokenKind == TokenKind.spacedBinaryOperator("==") {
+            return Operator.equality
         }
         return Operator.unknown
     }
@@ -186,9 +116,19 @@ class XPFlagCleaner: SyntaxRewriter {
                        name: String, at index: Int) -> Bool {
         if node.argumentList.count > 0,
             let argument = argument(arglist: node.argumentList, index) {
-            if let expr = MemberAccessExprSyntax.init(Syntax(argument.expression)),
-               expr.name.description == name {
-               return true
+            if let expr = MemberAccessExprSyntax.init(Syntax(argument.expression)) {
+                if expr.name.description == name {
+                    return true
+                }
+                if expr.name.description == "asString",
+                   expr.dot.previousToken?.description == name {
+                    return true
+                }
+            }
+            
+            if let expr = ExprSyntax.init(Syntax(argument.expression)),
+               labelReplacementAllowed(forIdentifier: expr.description) {
+                return true
             }
             if let expr = StringLiteralExprSyntax.init(Syntax(argument.expression)) {
                 if name == expr.description.replacingOccurrences(of: "\"", with: "") {
@@ -198,27 +138,37 @@ class XPFlagCleaner: SyntaxRewriter {
         }
         return false
     }
+    
+    override func visitPre(_ node: Syntax) {
+        if let _ = node.asProtocol(DeclSyntaxProtocol.self) as? FunctionDeclSyntax {
+            scopes.append(Scope())
+        }
+        super.visitPre(node)
+    }
+    
+    override func visitPost(_ node: Syntax) {
+        if let _ = node.asProtocol(DeclSyntaxProtocol.self) as? FunctionDeclSyntax {
+            scopes.removeLast()
+        }
+        super.visitPost(node)
+    }
 
     // gets the type of the flag API
-    private func flagApiType(of node: FunctionCallExprSyntax) -> API {
-        if !configurationParsed {
-            parseConfiguration()
-        }
-        for element in flagAPIArr {
-            if node.calledExpression.description.hasSuffix(element.api),
-                element.flagIndex != nil,
-                match(in: node, name: flagName, at: element.flagIndex!) {
+    private func flagApiType(of node: FunctionCallExprSyntax) -> Method.FlagType? {
+        for method in config.methods {
+            if node.calledExpression.description.hasSuffix(method.methodName),
+                match(in: node, name: flagName, at: method.flagIndex) {
                 var foundMatch = true
                 // if there is a groupIndex and it doesn't match with groupName,
-                if element.groupIndex != nil, !match(in: node, name: groupName, at: element.groupIndex!) {
+                if method.groupIndex != nil, !match(in: node, name: groupName, at: method.groupIndex!) {
                     foundMatch = false
                 }
                 if foundMatch {
-                    return element.type
+                    return method.flagType
                 }
             }
         }
-        return API.isUnknown
+        return nil
     }
 
     // appends the input statements to the result node and returns the updated result node along with information on whether the last node is a return
@@ -287,6 +237,9 @@ class XPFlagCleaner: SyntaxRewriter {
             return value
         }
        
+        if let value = scopeResolvedValue(for: node) {
+            return value
+        }
         // if the expression is previously evaluated in the current pass, return the value
         if let value = valueMap[node.description] {
             return value
@@ -295,6 +248,9 @@ class XPFlagCleaner: SyntaxRewriter {
         if let booleanNode = BooleanLiteralExprSyntax.init(node) {
             // handles "true" or "false"
             if booleanNode.booleanLiteral.tokenKind == TokenKind.trueKeyword {
+                return Value.isTrue
+            }
+            if case .identifier("true") = booleanNode.booleanLiteral.tokenKind {
                 return Value.isTrue
             }
             return Value.isFalse
@@ -327,11 +283,11 @@ class XPFlagCleaner: SyntaxRewriter {
             }
         } else if let functionCallExprNode = FunctionCallExprSyntax.init(node) {
             // handles flag API calls
-            let api = flagApiType(of: functionCallExprNode)
             var value = Value.isBot
-            if (api == API.isTreated) || (api == API.isInTreatmentGroup) {
+            let api = flagApiType(of: functionCallExprNode)
+            if api == .treated  {
                 value = (isTreated ? Value.isTrue : Value.isFalse)
-            } else if (api == API.isInControlGroup) || (api == API.isControl) {
+            } else if api == .control {
                 value = (isTreated ? Value.isFalse : Value.isTrue)
             }
             return cache(expression: Syntax(functionCallExprNode), with: value)
@@ -354,6 +310,19 @@ class XPFlagCleaner: SyntaxRewriter {
         }
         return Value.isBot
     }
+    
+    private func scopeResolvedValue(for node: Syntax) -> Value? {
+        guard let functionCallExprNode = FunctionCallExprSyntax.init(node) else {
+            return nil
+        }
+        let api = flagApiType(of: functionCallExprNode)
+        if api == .treated  {
+            return (isTreated ? Value.isTrue : Value.isFalse)
+        } else if api == .control {
+            return (isTreated ? Value.isFalse : Value.isTrue)
+        }
+        return nil
+    }
 
     // evaluate a given sequence
     private func evaluate(sequence expr: SequenceExprSyntax) -> Value {
@@ -372,7 +341,9 @@ class XPFlagCleaner: SyntaxRewriter {
 
             if let binaryExpr = BinaryOperatorExprSyntax.init(Syntax(expression)) {
                 let opKind = findOperator(from: binaryExpr)
-                if opKind == Operator.and || opKind == Operator.or {
+                if opKind == Operator.and ||
+                   opKind == Operator.or ||
+                   opKind == Operator.equality {
                     let lhs = prefix(from: expr.elements, upto: index)
                     let rhs = suffix(from: expr.elements, after: index)
                     let result = evaluate(lhs: lhs, rhs: rhs, kind: opKind)
@@ -405,6 +376,10 @@ class XPFlagCleaner: SyntaxRewriter {
             }
             if lhsVal == Value.isFalse || rhsVal == Value.isFalse {
                 return Value.isFalse
+            }
+        } else if opKind == Operator.equality {
+            if lhsVal != Value.isBot && rhsVal != Value.isBot {
+                return (lhsVal == rhsVal) ? Value.isTrue : Value.isFalse
             }
         }
 
@@ -562,7 +537,7 @@ class XPFlagCleaner: SyntaxRewriter {
         if rhs.count == 1 {
             if let node = element(from: exprlist, at: 2),
                 let callExpr = FunctionCallExprSyntax.init(Syntax(node)) {
-                if flagApiType(of: callExpr) == API.isTesting {
+                if flagApiType(of: callExpr) == .testing {
                     return SyntaxFactory.makeBlankExprList()
                 } else {
                     let rhsValue = evaluate(expression: Syntax(node))
@@ -604,9 +579,13 @@ class XPFlagCleaner: SyntaxRewriter {
         let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            return ExprSyntax.init(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("true"),
+                                                                                                                  presence: .present))
+            return ExprSyntax.init(booleanLiteralExpr)
         case Value.isFalse:
-            return ExprSyntax.init(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("false"),
+                                                                                                                  presence: .present))
+            return ExprSyntax.init(booleanLiteralExpr)
         case Value.isBot:
             var result = SyntaxFactory.makeBlankExprList()
             for (index, expr) in node.elements.enumerated() {
@@ -641,14 +620,14 @@ class XPFlagCleaner: SyntaxRewriter {
         }
 
         var result = SyntaxFactory.makeBlankConditionElementList()
-
+        
         for expr in node {
             let value = evaluate(expression: expr.condition)
             if value != Value.isTrue {
                 result = result.appending(expr)
             }
         }
-
+        result.removeLastTrailingCommaIfNeeded()
         return super.visit(result)
     }
 
@@ -710,10 +689,13 @@ class XPFlagCleaner: SyntaxRewriter {
             flagName == string(of: Syntax(firstElement)),
             let indexInParent = indexInParent {
             caseIndex = indexInParent + 1
-            if let leadingTrivia = node.leadingTrivia, !leadingTrivia.first.debugDescription.contains("\n") {
+            if let leadingTrivia = node.leadingTrivia {
                 previousTrivia = []
-                for i in leadingTrivia.prefix(1) {
+                for i in leadingTrivia {
                     previousTrivia = previousTrivia.appending(i) // saves comment1
+                    if case .newlines = i {
+                        break
+                    }
                 }
             }
             /* this gets rid of the leading trivia for the current decl
@@ -737,8 +719,7 @@ class XPFlagCleaner: SyntaxRewriter {
             previousTrivia = []
         }
         if caseIndex == indexInParent,
-            let leadingTrivia = node.leadingTrivia,
-            !leadingTrivia.first.debugDescription.contains("\n") {
+            let leadingTrivia = node.leadingTrivia {
             var updatedTrivia: Trivia = []
 
             // update any previous trivia from the deleted node
@@ -748,7 +729,7 @@ class XPFlagCleaner: SyntaxRewriter {
             }
             // remove the first trivia piece and leave the rest
             // drops " //comment3" and adds "//comment4"
-            for trivia in leadingTrivia.dropFirst() {
+            for trivia in leadingTrivia.dropFirst() { 
                 updatedTrivia = updatedTrivia.appending(trivia)
             }
             /* update the keyword
@@ -784,6 +765,8 @@ class XPFlagCleaner: SyntaxRewriter {
             }
 
             if let rhs = binding.initializer {
+                updateScope(withIdentifier: binding.pattern.description.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
+                            havingValue: false)
                 let rhsValue = evaluate(expression: Syntax(rhs))
                 if rhsValue != Value.isBot {
                     let key = string(of: Syntax(binding.pattern))
@@ -792,12 +775,14 @@ class XPFlagCleaner: SyntaxRewriter {
                     return visit(SyntaxFactory.makeBlankVariableDecl())
                 }
                 if let value = FunctionCallExprSyntax.init(Syntax(rhs.value)) {
-                    if (flagApiType(of: value) == API.isTesting) || (evaluate(expression: Syntax(rhs.value)) != Value.isBot) {
+                    if (flagApiType(of: value) == .testing) || (evaluate(expression: Syntax(rhs.value)) != Value.isBot) {
                         return visit(SyntaxFactory.makeBlankVariableDecl())
                     }
                 }
                 if let value = MemberAccessExprSyntax.init(Syntax(rhs.value)),
                     value.description.hasSuffix(flagName) {
+                    updateScope(withIdentifier: binding.pattern.description.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
+                                havingValue: true)
                     return visit(SyntaxFactory.makeBlankVariableDecl())
                 }
             }
@@ -805,13 +790,19 @@ class XPFlagCleaner: SyntaxRewriter {
         return super.visit(node)
     }
 
+    
+    var replacements: [BooleanLiteralExprSyntax] = []
     override func visit(_ node: FunctionCallExprSyntax) -> ExprSyntax {
         let value = evaluate(expression: Syntax(node))
         switch value {
         case Value.isTrue:
-            return visit(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeTrueKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("true"),
+                                                                                                                  presence: .present))
+            return visit(booleanLiteralExpr)
         case Value.isFalse:
-            return visit(SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeFalseKeyword()))
+            let booleanLiteralExpr = SyntaxFactory.makeBooleanLiteralExpr(booleanLiteral: SyntaxFactory.makeToken(.identifier("false"),
+                                                                                                                  presence: .present))
+            return visit(booleanLiteralExpr)
         case Value.isBot:
             return super.visit(node)
         }
@@ -850,7 +841,7 @@ class XPFlagCleaner: SyntaxRewriter {
                     }
                 }
             } else if let callNode = FunctionCallExprSyntax.init(statement.item),
-                flagApiType(of: callNode) == API.isTesting {
+                      flagApiType(of: callNode) == .testing {
                 // do nothing, as the test API needs to be discarded
             } else {
                 newBody = newBody.appending(statement)
@@ -880,5 +871,35 @@ class XPFlagCleaner: SyntaxRewriter {
 
     func deepClean() -> Bool {
         return shouldDeepClean
+    }
+}
+
+private extension XPFlagCleaner {
+    
+    
+    final class Scope {
+        // True signifies that the replacement can happen and false signifies that replacement shouldn't happen.
+        var labelVariableMap: [String: Bool] = [:]
+    }
+    
+    
+    private func updateScope(withIdentifier identifier: String,
+                             havingValue value: Bool) {
+        guard let scope = scopes.last else { return }
+        scope.labelVariableMap[identifier] = value
+    }
+    
+    private func labelReplacementAllowed(forIdentifier identifier: String) -> Bool {
+        for scope in scopes.reversed() {
+            /// If the closest scope label is found that allows replacement, return true.
+            if scope.labelVariableMap[identifier] == true {
+                return true
+            }
+            /// If the closest scope label is found that doesn't allow replacement, return false.
+            if scope.labelVariableMap[identifier] == false {
+                return false
+            }
+        }
+        return false
     }
 }

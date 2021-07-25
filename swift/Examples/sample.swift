@@ -1,5 +1,5 @@
 /**
- *    Copyright (c) 2019 Uber Technologies, Inc.
+ *    Copyright (c) 2021 Uber Technologies, Inc.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -14,13 +14,19 @@
  *    limitations under the License.
  */
 
-import Foundation
 
-enum Command: String {
-    case cleanupStaleFlags = "cleanup-stale-flags"
-}
 
-protocol CommandLauncher {
-    var command: Command { get }
-    func launch(_ args: [String]) throws
+// Simple flag cleanup in conditional
+if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.featureFlag) {
+    f1();
+ } else {
+    f2();
+ }
+
+// Assignment cleanup
+var a = isToggleDisabled(ExperimentNamesSwift.featureFlag)
+if(a) {
+   f1()
+} else {
+   f2()
 }

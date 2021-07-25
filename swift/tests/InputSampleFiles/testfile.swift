@@ -32,6 +32,33 @@ enum ExperimentNamesSwift: String, ExperimentKeying {
     //comment4
     case test_experiment_suffix //comment5
     case test_second_experiment
+    
+    case random_flag //comment6
+    case test_experiment
+    case test_experiment1 // comment7
+    
+    case random_flag //comment8
+    // comment 8.1
+    /// comment 8.2
+    case test_experiment // comment 8.3
+    case test_experiment1 // comment9
+
+    case random1
+    case random2
+    case test_experiment
+    case random3
+    case random4
+
+    case random6
+
+    case test_experiment
+    case random7
+
+    case random8
+    case test_experiment
+
+    case random9
+
 
     var asString: String {
         return String(describing: self)
@@ -131,6 +158,18 @@ class SwiftExamples {
     private lazy var fieldA: Bool = !cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
 
     func test_expressions() {
+        
+        if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("x")
+        }
+        
+        if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment), y {
+            print("x")
+        }
+        
+        if x, cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) && y {
+            print("x")
+        }
 
         if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
             print("treated")
@@ -506,12 +545,16 @@ class SwiftExamples {
         self.conj2 = cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix) &&
                         cachedexperiments.isTreated(forexperiment: ExperimentNamesSwift.test_experiment)
 
-        self.conj3 = cachedexperiments.isTreated(forexperiment: ExperimentNamesSwift.test_experiment) || cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix) 
+        self.conj3 = cachedexperiments.isTreated(forexperiment: ExperimentNamesSwift.test_experiment) || cachedexperiments.isInControlGroup(forexperiment: ExperimentNamesSwift.test_experiment_suffix)
     }
 
     // Test for T2606011
     private var shouldDoSomething: Bool {
         return cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment)
+    }
+    
+    private func testAsString() -> Bool {
+        return cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment.asString)
     }
 
 
@@ -534,4 +577,142 @@ class SwiftExamples {
         .loyalty_credits_purchase_addon_explicit_layout,
         .loyalty_stack_view_migration
     ]
+    
+    private func labelledNameAccess() -> Bool {
+       let xpName = ExperimentNamesSwift.test_experiment
+       return cachedExperiments.isTreated(forExperiment: xpName)
+    }
+    
+    private func labelledNameAccess_nested() -> Bool {
+       let xpName = ExperimentNamesSwift.test_experiment
+        
+        func test() -> Bool {
+            let xpName = ExperimentNamesSwift.test_experiment1
+            return cachedExperiments.isTreated(forExperiment: xpName)
+        }
+       someObject.isEnabled = cachedExperiments.isTreated(forExperiment: xpName)
+       return cachedExperiments.isTreated(forExperiment: xpName)
+    }
+    
+    private func ifElseLadder_1() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_2() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_3() {
+        if x {
+            print("1")
+        } else if true {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_4() {
+        if x {
+            print("1")
+        } else if false {
+            print("2")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_5() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.test_experiment) || y {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_6() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.test_experiment) && y {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_7() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.test_experiment) && someCondition {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        }
+    }
+
+    func test_equality() {
+
+        if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) == true {
+            print("x1")
+        } else {
+            print("y1")
+        }
+
+        if true == cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) {
+            print("x2")
+        } else {
+            print("y2")
+        }
+
+        if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) == false {
+            print("x3")
+        } else {
+            print("y3")
+        }
+
+        if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) == p1 {
+            print("x4")
+        } else {
+            print("y4")
+        }
+
+        if true == (cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment) && true) {
+            print("x5")
+        } else {
+            print("y5")
+        }
+
+        if true == p1 {
+           print("x6")
+        } else {
+           print("y6")
+        }
+    }
+
 }

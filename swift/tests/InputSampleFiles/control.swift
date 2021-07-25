@@ -29,6 +29,24 @@ enum ExperimentNamesSwift: String, ExperimentKeying {
     //comment4
     case test_experiment_suffix //comment5
     case test_second_experiment
+    
+    case random_flag //comment6
+    case test_experiment1 // comment7
+    
+    case random_flag //comment8
+    case test_experiment1 // comment9
+
+    case random1
+    case random2
+    case random3
+    case random4
+
+    case random6
+
+    case random7
+
+    case random8
+    case random9
 
     var asString: String {
         return String(describing: self)
@@ -267,6 +285,10 @@ class SwiftExamples {
     private var shouldDoSomething: Bool {
         return false
     }
+    
+    private func testAsString() -> Bool {
+        return false
+    }
 
     func testStringFlag() {
         print("string constant 2")
@@ -279,4 +301,107 @@ class SwiftExamples {
         .loyalty_credits_purchase_addon_explicit_layout,
         .loyalty_stack_view_migration
     ]
+    
+    private func labelledNameAccess() -> Bool {
+       return false
+    }
+    
+    private func labelledNameAccess_nested() -> Bool {
+        
+        func test() -> Bool {
+            let xpName = ExperimentNamesSwift.test_experiment1
+            return cachedExperiments.isTreated(forExperiment: xpName)
+        }
+       someObject.isEnabled = false
+       return false
+    }
+    
+    private func ifElseLadder_1() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_2() {
+        if x {
+            print("1")
+        } else if cachedExperiments.isTreated(forExperiment: ExperimentNamesSwift.test_experiment1) {
+            print("2")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_3() {
+        if x {
+            print("1")
+        } else if true {
+            print("2")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_4() {
+        if x {
+            print("1")
+        } else if false {
+            print("2")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_5() {
+        if x {
+           print("1")
+        } else if y {
+            print("2")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_6() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        } else {
+            print("4")
+        }
+    }
+    
+    private func ifElseLadder_7() {
+        if x {
+           print("1")
+        } else if cachedExperiments.isTreated(ExperimentNamesSwift.randomExperiment) || z {
+            print("3")
+        }
+    }
+
+    func test_equality() {
+        print("y1")
+        print("y2")
+        print("x3")
+        if false == p1 {
+            print("x4")
+        } else {
+            print("y4")
+        }
+        print("y5")
+        if true == p1 {
+           print("x6")
+        } else {
+           print("y6")
+        }
+
+    }
+
 }
