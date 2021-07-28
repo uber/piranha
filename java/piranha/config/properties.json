@@ -52,6 +52,12 @@
         "treated" : "false"
     }
   ],
+  "enumProperties": [
+    {
+      "enumName": "TestExperimentName",
+      "argumentIndex": 0
+    }
+  ],
   "cleanupOptions": {
     "tests.clean_by_setters_heuristic.enabled" : true,
     "tests.clean_by_setters_heuristic.ignore_other_flag_sets" : false,

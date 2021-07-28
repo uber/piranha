@@ -1,10 +1,25 @@
+/**
+ * Copyright (c) 2021 Uber Technologies, Inc.
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.uber.piranha.config;
+
+import static com.uber.piranha.config.PiranhaRecord.getArgumentIndexFromMap;
+import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
 import com.google.common.collect.ImmutableMap;
 import com.uber.piranha.XPFlagCleaner;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /** A class representing a method configuration record from properties.json */
 public final class PiranhaMethodRecord {
@@ -77,42 +92,6 @@ public final class PiranhaMethodRecord {
   }
 
   /**
-   * Utility method. Checks whether the value associated to a given map and given key is a non-empty
-   * string.
-   *
-   * @param map - map corresponding to a method property
-   * @param key - key to check the corresponding value
-   * @return String if value is a non-empty string, null otherwise
-   */
-  @Nullable
-  private static String getValueStringFromMap(Map<String, Object> map, String key) {
-    Object value = map.get(key);
-    if (value instanceof String && !value.equals("")) {
-      return String.valueOf(value);
-    }
-    return null;
-  }
-
-  /**
-   * Utility method. Checks whether the argumentIndex key of a method property map is a non-negative
-   * integer.
-   *
-   * @param map - map corresponding to a method property
-   * @return argumentIndex if argument index is a non-negative integer, null otherwise
-   */
-  @Nullable
-  private static Integer getArgumentIndexFromMap(Map<String, Object> map) {
-    Object value = map.get(ARGUMENT_INDEX_KEY);
-    if (value instanceof Long) {
-      int argumentIndex = ((Long) value).intValue();
-      if (argumentIndex >= 0) {
-        return argumentIndex;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Parse the entry for a single method from piranha.json that has been previously decoded into a
    * map
    *
@@ -127,7 +106,7 @@ public final class PiranhaMethodRecord {
       throws PiranhaConfigurationException {
     String methodName = getValueStringFromMap(methodPropertyEntry, METHOD_NAME_KEY);
     String flagType = getValueStringFromMap(methodPropertyEntry, FLAG_TYPE_KEY);
-    Integer argumentIndexInteger = getArgumentIndexFromMap(methodPropertyEntry);
+    Integer argumentIndexInteger = getArgumentIndexFromMap(methodPropertyEntry, ARGUMENT_INDEX_KEY);
     if (methodName == null) {
       throw new PiranhaConfigurationException(
           "methodProperty is missing mandatory methodName field. Check:\n" + methodPropertyEntry);

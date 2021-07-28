@@ -1,0 +1,15 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "putToggleEnabled",
+      "flagType": "set_treated",
+      "argumentIndex": 0
+    }
+  ],
+  "enumProperties": [
+    {
+      "enumName": "TestExperimentName",
+      "argumentIndex": 1
+    }
+  ]
+}

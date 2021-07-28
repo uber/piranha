@@ -1,3 +1,16 @@
+/**
+ * Copyright (c) 2021 Uber Technologies, Inc.
+ *
+ * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * <p>http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ * express or implied. See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.uber.piranha.config;
 
 import com.google.common.base.Preconditions;
@@ -30,6 +43,7 @@ public final class Config {
   private static final String ANNOTATIONS_KEY = "annotations";
   private static final String METHODS_KEY = "methodProperties";
   private static final String CLEANUP_OPTS_KEY = "cleanupOptions";
+  private static final String ENUMS_KEY = "enumProperties";
 
   /* Named clean up options within the cleanupOptions property, all are optional */
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_ENABLED =
@@ -59,6 +73,14 @@ public final class Config {
   private final ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
   /**
+   * configEnumProperties is a map where key is enum name and value is a list where each item in the
+   * list is a map that corresponds to each enum property from properties.json. In most cases, the
+   * list would have only one element. But if someone reuses the same enum name with different
+   * argumentIndex, the list would have each enum property map as one element.
+   */
+  private final ImmutableMultimap<String, PiranhaEnumRecord> configEnumProperties;
+
+  /**
    * testAnnotationResolver abstracts away Piranha's logic for configuring and resolving different
    * kinds of annotations used to specify which flags (and treatment conditions for flags) are being
    * tested by a particular unit test.
@@ -78,10 +100,12 @@ public final class Config {
   // in particular Config.fromJSONFile([properties.json])
   private Config(
       ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties,
+      ImmutableMultimap<String, PiranhaEnumRecord> configEnumProperties,
       TestAnnotationResolver testAnnotationResolver,
       ImmutableMap<String, Object> cleanupOptions,
       String linkURL) {
     this.configMethodProperties = configMethodProperties;
+    this.configEnumProperties = configEnumProperties;
     this.testAnnotationResolver = testAnnotationResolver;
     this.cleanupOptions = cleanupOptions;
     this.linkURL = linkURL;
@@ -97,6 +121,29 @@ public final class Config {
   public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(String methodName) {
     return configMethodProperties.containsKey(methodName)
         ? configMethodProperties.get(methodName)
+        : ImmutableSet.of();
+  }
+
+  /**
+   * Returns whether any configuration enum records exist. Useful for skipping logic if enum
+   * properties are not configured.
+   *
+   * @return Whether any "enumProperties" records were configured
+   */
+  public boolean hasEnumRecords() {
+    return !configEnumProperties.isEmpty();
+  }
+
+  /**
+   * Return all configuration enum records matching a given enum name.
+   *
+   * @param enumName the enum name to search
+   * @return A collection of {@link PiranhaEnumRecord} objects, representing each enum definition in
+   *     the piranha json configuration file matching {@code enumName}.
+   */
+  public ImmutableCollection<PiranhaEnumRecord> getEnumRecordsForName(String enumName) {
+    return configEnumProperties.containsKey(enumName)
+        ? configEnumProperties.get(enumName)
         : ImmutableSet.of();
   }
 
@@ -221,6 +268,8 @@ public final class Config {
       String linkURL = DEFAULT_PIRANHA_URL;
       ImmutableMultimap.Builder<String, PiranhaMethodRecord> methodsBuilder =
           ImmutableMultimap.builder();
+      ImmutableMultimap.Builder<String, PiranhaEnumRecord> enumsBuilder =
+          ImmutableMultimap.builder();
       TestAnnotationResolver.Builder annotationResolverBuilder = TestAnnotationResolver.builder();
 
       JSONParser parser = new JSONParser();
@@ -256,6 +305,15 @@ public final class Config {
       } else {
         throw new PiranhaConfigurationException("methodProperties not found, required.");
       }
+      if (propertiesJson.get(ENUMS_KEY) != null) {
+        for (Map<String, Object> enumProperty :
+            (List<Map<String, Object>>) propertiesJson.get(ENUMS_KEY)) {
+          PiranhaEnumRecord enumRecord =
+              PiranhaEnumRecord.parseFromJSONPropertyEntryMap(
+                  enumProperty, isArgumentIndexOptional);
+          enumsBuilder.put(enumRecord.getEnumName(), enumRecord);
+        }
+      }
       ImmutableMap.Builder<String, Object> cleanupOptionsBuilder = ImmutableMap.builder();
       final Object configOptsObj = propertiesJson.get(CLEANUP_OPTS_KEY);
       if (configOptsObj != null && configOptsObj instanceof JSONObject) {
@@ -269,6 +327,7 @@ public final class Config {
       }
       return new Config(
           methodsBuilder.build(),
+          enumsBuilder.build(),
           annotationResolverBuilder.build(),
           cleanupOptionsBuilder.build(),
           linkURL);
@@ -306,6 +365,7 @@ public final class Config {
    */
   public static Config emptyConfig() {
     return new Config(
+        ImmutableMultimap.of(),
         ImmutableMultimap.of(),
         TestAnnotationResolver.builder().build(),
         ImmutableMap.of(),
