@@ -14,11 +14,31 @@ limitations under the License.
 package main
 
 import (
-	"os"
+	"flag"
 
 	"github.com/PiranhaGo/src"
 )
 
 func main() {
-	src.RunPiranha(os.Args)
+	var sourceFile, configFile, flagName, outputFileName, modeName string
+	var isTreated = false
+
+	// get configFile
+	flag.StringVar(&configFile, "p", "PROPERTIES", "Configuration file (json format) for Piranha.")
+	// get sourceFile
+	flag.StringVar(&sourceFile, "s", "SOURCE_FILE", "Path of the file to be refactored.")
+	// get flagName
+	flag.StringVar(&flagName, "f", "STALE_FLAG", "Name of the stale flag.")
+	// check treatedMode
+	flag.StringVar(&modeName, "mode", "MODE_NAME", "If MODE_NAME=treated, then flag is treated, otherwise MODE_NAME=control, it is control.")
+	if modeName == "treated" {
+		isTreated = true
+	}
+	// get outputFileName
+	flag.StringVar(&outputFileName, "o", "OUTPUT", "Destination of the refactored output from piranha. If -o is not provided, then the source file is updated in place.")
+
+	flag.Parse()
+	
+	
+	src.RunPiranha(sourceFile, configFile, flagName, outputFileName, isTreated)
 }

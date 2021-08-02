@@ -100,17 +100,9 @@ func TestFiles(t *testing.T) {
 	// running each file as if they are running with this command
 	// For one Pass
 	// ../piranha -p ../properties.json -s "{filename}" -f staleFlag -o ./treatedFiles/$(basename {filename}) -treated
-	var argsOnePass []string
-	argsOnePass = append(argsOnePass, "-p")
-	argsOnePass = append(argsOnePass, "../properties.json")
-	argsOnePass = append(argsOnePass, "-s")
-	argsOnePass = append(argsOnePass, "{filename}")
-	argsOnePass = append(argsOnePass, "-f")
-	argsOnePass = append(argsOnePass, "staleFlag")
-	argsOnePass = append(argsOnePass, "-o")
-	argsOnePass = append(argsOnePass, "{filename}")
-	argsOnePass = append(argsOnePass, "-mode")
-	argsOnePass = append(argsOnePass, "{MODE_NAME}")
+	var configFile = "../properties.json"
+	var flagName = "staleFlag"
+	var isTreated bool
 
 	fmt.Print("Output format: \n")
 	fmt.Print("Line <Line number>: <output from correct file>\n")
@@ -119,14 +111,12 @@ func TestFiles(t *testing.T) {
 	fmt.Print("Starting Tests \n")
 
 	fmt.Print("Testing with -mode treated\n\n")
+	isTreated = true
 	var FileNotMatched bool
 	for _, table := range tables {
-		argsOnePass[3] = table.input
-		argsOnePass[7] = "temp.go"
-		argsOnePass[9] = "treated"
 		fmt.Print("Matching with: ")
 		fmt.Println(table.outputTreated)
-		src.RunPiranha(argsOnePass)
+		src.RunPiranha(table.input, configFile, flagName, "temp.go", isTreated)
 
 		FileNotMatched = compFiles("temp.go", table.outputTreated)
 		if FileNotMatched {
@@ -141,13 +131,11 @@ func TestFiles(t *testing.T) {
 		}
 	}
 	fmt.Print("Testing with -mode control\n")
+	isTreated=false
 	for _, table := range tables {
-		argsOnePass[3] = table.input
-		argsOnePass[7] = "temp.go"
-		argsOnePass[9] = "control"
 		fmt.Print("Matching with: ")
 		fmt.Println(table.outputControl)
-		src.RunPiranha(argsOnePass)
+		src.RunPiranha(table.input, configFile, flagName, "temp.go", isTreated)
 
 		FileNotMatched = compFiles("temp.go", table.outputControl)
 		if FileNotMatched {

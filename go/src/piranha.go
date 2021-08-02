@@ -38,80 +38,38 @@ Optional arguments:
 		-h: Show the options and exit.
 		-o OUTPUT: Destination of the refactored output from piranha. If -o is not provided, then the source file is updated in place.
 */
-func help() {
-	//Help message
-	fmt.Println(
-		"Usage: ./piranha [-h] -p PROPERTIES -s SOURCE_FILE -f STALE_FLAG -mode MODE_NAME [-o OUTPUT]",
-		"\nRequired arguments:",
-		"\n\t\t\t-s SOURCE_FILE: Path of the file to be refactored.",
-		"\n\t\t\t-p PROPERTIES: Configuration file (json format) for Piranha.",
-		"\n\t\t\t-f STALE_FLAG: Name of the stale flag.",
-		"\n\t\t\t-mode MODE_NAME: If MODE_NAME=treated, then flag is treated,",
-		"\n\t\t\totherwise MODE_NAME=control, it is control.",
-		"\nOptional arguments:",
-		"\n\t\t\t-h: Show the options and exit.",
-		"\n\t\t\t-o OUTPUT: Destination of the refactored output from piranha.",
-		"\n\t\t\tIf -o is not provided, then the source file is updated in place.")
+func reportArgumentError(arg string) {
+	if arg == "configFile" {
+		fmt.Println("Please provide configuration file of json format.")
+	} else if arg == "sourceFile" {
+		fmt.Println("Please provide source file of go format.")
+	}
+	fmt.Println("For more info, run ./piranha -h.")
 }
 
 // RunPiranha : the main function for the piranha tool
-func RunPiranha(inArgs []string) {
-	var sourceFile, configFile, flagName, outputFileName string
-	var isTreated = false
-	sizeOfArgs := len(inArgs)
-	if len(inArgs) < 2 {
-		help()
-		return
-	}
-	for index, arg := range inArgs {
-		switch arg {
-		case "-h":
-			help()
-			return
-		case "-p":
-			if index+1 < sizeOfArgs {
-				configFile = inArgs[index+1]
-				if !strings.HasSuffix(configFile, ".json") {
-					return
-				}
-			}
-		case "-s":
-			if index+1 < sizeOfArgs {
-				sourceFile = inArgs[index+1]
-				if !strings.HasSuffix(sourceFile, ".go") {
-					return
-				}
-			}
-		case "-f":
-			if index+1 < sizeOfArgs {
-				flagName = inArgs[index+1]
-			}
-		case "-mode":
-			if index+1 < sizeOfArgs {
-				if inArgs[index+1] == "treated" {
-					isTreated = true
-				}
-			}
-		case "-o":
-			if index+1 < sizeOfArgs {
-				outputFileName = inArgs[index+1]
-			}
-		default:
-			break
-		}
-	}
-
-	if flagName == "" {
+func RunPiranha(sourceFile string, configFile string, flagName string, outputFileName string, isTreated bool) {
+	if flagName == "STALE_FLAG" {
 		fmt.Println("Please provide a flag.")
 	}
-	if sourceFile == "" {
+	if sourceFile == "SOURCE_FILE" {
 		fmt.Println("Please provide a source file that is to be refactored.")
 	}
-	if configFile == "" {
+	if configFile == "PROPERTIES" {
 		fmt.Println("Please provide a config file. See README for more instructions.")
 	}
-	if flagName == "" || sourceFile == "" || configFile == "" {
+	if flagName == "STALE_FLAG" || sourceFile == "SOURCE_FILE" || configFile == "PROPERTIES" {
 		fmt.Println("For more info, run ./piranha -h.")
+		return
+	}
+
+	if !strings.HasSuffix(configFile, ".json") {
+		reportArgumentError("configFile")
+		return
+	}
+
+	if !strings.HasSuffix(sourceFile, ".go") {
+		reportArgumentError("sourceFile")
 		return
 	}
 
