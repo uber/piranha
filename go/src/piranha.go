@@ -39,10 +39,17 @@ Optional arguments:
 		-o OUTPUT: Destination of the refactored output from piranha. If -o is not provided, then the source file is updated in place.
 */
 func reportArgumentError(arg string) {
-	if arg == "configFile" {
+	switch arg {
+	case "configFileSuffix":
 		fmt.Println("Please provide configuration file of json format.")
-	} else if arg == "sourceFile" {
+	case "sourceFileSuffix":
 		fmt.Println("Please provide source file of go format.")
+	case "flagName":
+		fmt.Println("Please provide a flag.")
+	case "configFile":
+		fmt.Println("Please provide a config file. See README for more instructions.")
+	case "sourceFile":
+		fmt.Println("Please provide a source file that is to be refactored.")
 	}
 	fmt.Println("For more info, run ./piranha -h.")
 }
@@ -50,26 +57,25 @@ func reportArgumentError(arg string) {
 // RunPiranha : the main function for the piranha tool
 func RunPiranha(sourceFile string, configFile string, flagName string, outputFileName string, isTreated bool) {
 	if flagName == "STALE_FLAG" {
-		fmt.Println("Please provide a flag.")
-	}
-	if sourceFile == "SOURCE_FILE" {
-		fmt.Println("Please provide a source file that is to be refactored.")
-	}
-	if configFile == "PROPERTIES" {
-		fmt.Println("Please provide a config file. See README for more instructions.")
-	}
-	if flagName == "STALE_FLAG" || sourceFile == "SOURCE_FILE" || configFile == "PROPERTIES" {
-		fmt.Println("For more info, run ./piranha -h.")
+		reportArgumentError("flagName")
 		return
 	}
-
-	if !strings.HasSuffix(configFile, ".json") {
+	if sourceFile == "SOURCE_FILE" {
+		reportArgumentError("sourceFile")
+		return
+	}
+	if configFile == "PROPERTIES" {
 		reportArgumentError("configFile")
 		return
 	}
 
+	if !strings.HasSuffix(configFile, ".json") {
+		reportArgumentError("sourceFileSuffix")
+		return
+	}
+
 	if !strings.HasSuffix(sourceFile, ".go") {
-		reportArgumentError("sourceFile")
+		reportArgumentError("sourceFileSuffix")
 		return
 	}
 
@@ -82,17 +88,13 @@ func RunPiranha(sourceFile string, configFile string, flagName string, outputFil
 	var cleaner staleFlagCleaner
 	cleaner.init(configFile, flagName, isTreated)
 	newRoot := cleaner.run(parsed)
-	////////////////////////
-	// For debugging purpose. It prints out the ast.
-	// spew.Dump(newRoot)
-	///////////////////////
 
 	if outputFileName == "" {
 		outputFileName = sourceFile
 	}
-	outputFile, err := os.Create(outputFileName)
+	outputFile, _ := os.Create(outputFileName)
 	/*
-		Here we are typecasting newRoot to dst.File.It is safe because the root of AST
+		Here we are typecasting newRoot to dst.File. It is safe because the root of AST
 		always starts with the dst.File type.
 	*/
 	decorator.Fprint(outputFile, newRoot.(*dst.File))
