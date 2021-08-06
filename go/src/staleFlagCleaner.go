@@ -22,69 +22,64 @@ import (
 
 	/*
 		We have used dst package instead of official go ast package because ast package
-		does not keep positions of comment in place. So, we use dst package which keeps
-		the positions of comment in place. It is similiar to ast package and have same
-		functions as ast. So you can use documentation of ast to see the details of helper
-		functions.
+		does not keep positions of comments, we use dst package which keeps the positions 
+		of comment in place. It is similiar to the ast package and have same functions as ast. 
+		So you can use documentation of ast to see the details of helper functions.
 	*/
 	"github.com/dave/dst"
 	"github.com/dave/dst/dstutil"
 )
 
-// API : For the type of API
+// API describes the type of API.
 type API int
 
 const (
-	isTreated API = iota
-	isControl
-	isTesting
-	isUnknown
+	_isTreated API = iota
+	_isControl
+	_isTesting
+	_isUnknown
 )
 
-// Methods : For json it is
+// Methods describes the parent field of the json format.
 type Methods struct {
 	Methods []FlagAPI `json:"methodProperties"`
 }
 
-// FlagAPI : for getting the type from config file
+// FlagAPI denotes the field values in json format.
 type FlagAPI struct {
 	MethodName string `json:"methodName"`
 	OfType     string `json:"flagType"`
 	FlagIndex  int    `json:"argumentIndex"`
 }
 
-// Value : This is made to not confuse with true and false in code
+// Value is made to not confuse with true and false in code.
 type Value int
 
 const (
 	isTrue Value = iota
 	isFalse
-	// This will be returned when you don't have to find true or false
-	isBot
+	// This will be returned when you don't have to find true or false.
+	isUndefined
 )
 
-// Operator : To get the boolean operators
-type Operator int
-
-const (
-	and Operator = iota
-	or
-	not
+// Some useful global variables
+var (
+	treated = "treated"
+	control = "control"
 )
-
-// Some useful global variable
-var treated, control string = "treated", "control"
-var strTrue, strFalse string = "true", "false"
+var (
+	strTrue = "true"
+	strFalse = "false"
+)
 
 // Implementing this as whole class
 type staleFlagCleaner struct {
 	configFile string
-	FlagAPIArr []FlagAPI
 	methods    Methods
 
 	/*
-		Here valueMap contains those which came from the stale function output.
-		It means that this will used for cleaning in Deep Clean Pass
+		Here valueMap contains those variable names whose value are affected by the stale function output.
+		It means that this will used for cleaning in Deep Clean Pass.
 	*/
 	valueMap map[string]Value
 	functype map[string]FlagAPI
@@ -108,7 +103,7 @@ func (sfc *staleFlagCleaner) ParseJSON() {
 	jsonFile, err := os.Open(sfc.configFile)
 
 	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
+		log.Fatalf("failed opening file: %v", err)
 		os.Exit(-1)
 	}
 
@@ -152,15 +147,15 @@ func (sfc *staleFlagCleaner) flagTypeAPI(callExpr *dst.CallExpr) API {
 		if element.FlagIndex == flagIndex {
 			switch element.OfType {
 			case treated:
-				return isTreated
+				return _isTreated
 			case control:
-				return isControl
+				return _isControl
 			default:
-				return isUnknown
+				return _isUnknown
 			}
 		}
 	}
-	return isUnknown
+	return _isUnknown
 }
 
 /* This function will evaluate all expression nodes here */
@@ -183,13 +178,13 @@ func (sfc *staleFlagCleaner) evaluateExprNode(exprNode dst.Expr) Value {
 		// Get the type of API
 		typeOfAPI := sfc.flagTypeAPI(exprUnderConsideration)
 		// Hardcoding the output of some API types
-		if typeOfAPI == isTreated {
+		if typeOfAPI == _isTreated {
 			if sfc.isTreated {
 				return isTrue
 			}
 			return isFalse
 		}
-		if typeOfAPI == isControl {
+		if typeOfAPI == _isControl {
 			if sfc.isTreated {
 				return isFalse
 			}
@@ -199,7 +194,7 @@ func (sfc *staleFlagCleaner) evaluateExprNode(exprNode dst.Expr) Value {
 	case *dst.BinaryExpr:
 		valX := sfc.evaluateExprNode(exprUnderConsideration.X)
 		valY := sfc.evaluateExprNode(exprUnderConsideration.Y)
-		if valX != isBot || valY != isBot {
+		if valX != isUndefined || valY != isUndefined {
 			switch exprUnderConsideration.Op {
 			case token.LAND: //stands for &&
 				if valX == isFalse || valY == isFalse {
@@ -216,7 +211,7 @@ func (sfc *staleFlagCleaner) evaluateExprNode(exprNode dst.Expr) Value {
 					return isFalse
 				}
 			case token.EQL:
-				if valX != isBot && valY != isBot {
+				if valX != isUndefined && valY != isUndefined {
 					if valX == valY {
 						return isTrue
 					}
@@ -268,7 +263,7 @@ func (sfc *staleFlagCleaner) evaluateExprNode(exprNode dst.Expr) Value {
 		//Do nothing for now
 	}
 
-	return isBot
+	return isUndefined
 }
 
 // This is the pre function of the dstutil.Apply
@@ -297,7 +292,7 @@ func (sfc *staleFlagCleaner) checkForBoolLiterals(value dst.Expr) bool {
 
 /*
 Below function have this aim:
-If Value is isBot or it is a bool literal, then we are not adding that to valueMap
+If Value is isUndefined or it is a bool literal, then we are not adding that to valueMap
 if not then will add to valueMap.
 This signifies whether variable has effect of flag or not.
 */
@@ -306,7 +301,7 @@ func (sfc *staleFlagCleaner) updateValueMapPost(name dst.Expr, value dst.Expr) {
 	doNotDelLiterals := sfc.checkForBoolLiterals(value)
 	switch d := name.(type) {
 	case *dst.Ident:
-		if valOfExpr == isBot || doNotDelLiterals {
+		if valOfExpr == isUndefined || doNotDelLiterals {
 			if _, ok := sfc.valueMap[d.Name]; ok {
 				delete(sfc.valueMap, d.Name)
 			}
@@ -316,7 +311,7 @@ func (sfc *staleFlagCleaner) updateValueMapPost(name dst.Expr, value dst.Expr) {
 	case *dst.SelectorExpr:
 		switch ident := d.X.(type) {
 		case *dst.Ident:
-			if valOfExpr == isBot || doNotDelLiterals {
+			if valOfExpr == isUndefined || doNotDelLiterals {
 				if _, ok := sfc.valueMap[ident.Name+"."+d.Sel.Name]; ok {
 					delete(sfc.valueMap, ident.Name+"."+d.Sel.Name)
 				}
@@ -336,7 +331,7 @@ It will deal with *dst.ValueSpec. Values of variable stored in valueMap
 will be deleted from node.
 */
 func (sfc *staleFlagCleaner) DelValStmt(names *[]*dst.Ident, values *[]dst.Expr) bool {
-	valOfExpr := isBot
+	valOfExpr := isUndefined
 	delCallExpr := false
 	doNotDelLiterals := false
 	for ind := 0; ind < len((*names)); ind++ {
@@ -348,7 +343,7 @@ func (sfc *staleFlagCleaner) DelValStmt(names *[]*dst.Ident, values *[]dst.Expr)
 			sfc.updateValueMapPost((*names)[ind], (*values)[ind])
 		}
 
-		if (valOfExpr != isBot && !doNotDelLiterals) || (*names)[ind].Name == sfc.flagName || delCallExpr {
+		if (valOfExpr != isUndefined && !doNotDelLiterals) || (*names)[ind].Name == sfc.flagName || delCallExpr {
 			if len((*values)) != 0 {
 				var trueIdent dst.Ident
 				if valOfExpr == isTrue {
@@ -362,12 +357,9 @@ func (sfc *staleFlagCleaner) DelValStmt(names *[]*dst.Ident, values *[]dst.Expr)
 				return true
 			}
 		}
-		valOfExpr = isBot
+		valOfExpr = isUndefined
 	}
-	if len((*names)) == 0 {
-		return true
-	}
-	return false
+	return len((*names)) == 0
 }
 
 /*
@@ -375,7 +367,7 @@ It will deal with *dst.AssignStmt. Values of variable stored in valueMap
 will be deleted from node.
 */
 func (sfc *staleFlagCleaner) DelAssStmt(names *[]dst.Expr, values *[]dst.Expr) bool {
-	valOfExpr := isBot
+	valOfExpr := isUndefined
 	delCallExpr := false
 	doNotDelLiterals := false
 	for ind := 0; ind < len((*names)); ind++ {
@@ -388,7 +380,7 @@ func (sfc *staleFlagCleaner) DelAssStmt(names *[]dst.Expr, values *[]dst.Expr) b
 		// Need to see what to do with this thing
 		sfc.updateValueMapPost((*names)[ind], (*values)[ind])
 
-		if (valOfExpr != isBot && !doNotDelLiterals) || delCallExpr {
+		if (valOfExpr != isUndefined && !doNotDelLiterals) || delCallExpr {
 			var trueIdent dst.Ident
 			if valOfExpr == isTrue {
 				trueIdent.Name = strTrue
@@ -401,10 +393,7 @@ func (sfc *staleFlagCleaner) DelAssStmt(names *[]dst.Expr, values *[]dst.Expr) b
 			}
 		}
 	}
-	if len((*names)) == 0 {
-		return true
-	}
-	return false
+	return len((*names)) == 0
 }
 
 // This is the post function of the dstutil.Apply
@@ -453,7 +442,7 @@ func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 		// Init of Ifstmt will get handled in assignStmt
 		// Now evaluate the cond. Cond is already refactored due to pre-order traversal.
 		cond := sfc.evaluateExprNode(d.Cond)
-		if cond != isBot {
+		if cond != isUndefined {
 			if cond == isFalse {
 				if d.Else != nil {
 					for _, a := range d.Else.(*dst.BlockStmt).List {
@@ -472,7 +461,7 @@ func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 		// Init of switchstmt will get handled in assignStmt
 		if d.Tag != nil {
 			valExpr := sfc.evaluateExprNode(d.Tag)
-			if valExpr != isBot {
+			if valExpr != isUndefined {
 				notfoundCase := false
 				for _, exprstmt := range d.Body.List {
 					if exprstmt.(*dst.CaseClause).List != nil { //nil means default case
@@ -502,15 +491,15 @@ func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 		} else {
 			//now switch is like elseif statements so do accordingly
 			needDeletion := false
-			isBotAbove := false
+			isUndefinedAbove := false
 			for ind := 0; ind < len(d.Body.List); ind++ {
 				exprstmt := d.Body.List[ind]
 				if exprstmt.(*dst.CaseClause).List != nil {
 					valCaseClause := sfc.evaluateExprNode(exprstmt.(*dst.CaseClause).List[0])
 					if valCaseClause == isTrue {
 						//this has to go out as switch is going to delete
-						//On the condition that there was no expression above whose value is isBot.
-						if !isBotAbove {
+						//On the condition that there was no expression above whose value is isUndefined.
+						if !isUndefinedAbove {
 							for _, bodyEle := range exprstmt.(*dst.CaseClause).Body {
 								n.InsertBefore(bodyEle)
 							}
@@ -534,7 +523,7 @@ func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 						}
 					} else {
 						// so now value is bot
-						isBotAbove = true
+						isUndefinedAbove = true
 					}
 				}
 			}
@@ -546,8 +535,8 @@ func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 	case *dst.BinaryExpr:
 		valX := sfc.evaluateExprNode(d.X)
 		valY := sfc.evaluateExprNode(d.Y)
-		if valX == isBot || valY == isBot {
-			if valX == isBot && valY == isBot {
+		if valX == isUndefined || valY == isUndefined {
+			if valX == isUndefined && valY == isUndefined {
 				//do nothing
 			} else {
 				//now one of them is not bot
@@ -568,7 +557,7 @@ func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 					newNode := n.Node()
 					var trueIdent dst.Ident
 					// either valX is not bot or valY. both cannot be bot at the same time as we checked out above
-					if valX != isBot {
+					if valX != isUndefined {
 						if valX == isTrue {
 							trueIdent.Name = strTrue
 						} else {
