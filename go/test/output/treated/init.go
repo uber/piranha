@@ -43,8 +43,7 @@ func (flgMthd FlagMethods) commonBehaviour(str string, flag2 PropFlag) bool {
 
 // GoExamples : This will act as a class
 type GoExamples struct {
-	flagMthds FlagMethods
-
+	flagMthds                                              FlagMethods
 	localService, globalService, newFeatures, basicFeature bool
 }
 

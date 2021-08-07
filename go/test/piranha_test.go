@@ -81,6 +81,8 @@ func compFiles(file1 string, file2 string) bool {
 			break
 		}
 	}
+	corrFile.Close()
+	treatFile.Close()
 	return FileNotMatched
 }
 

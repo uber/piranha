@@ -15,15 +15,15 @@ package src
 
 import (
 	"encoding/json"
+	"fmt"
 	"go/token"
 	"io/ioutil"
-	"log"
 	"os"
 
 	/*
 		We have used dst package instead of official go ast package because ast package
-		does not keep positions of comments, we use dst package which keeps the positions 
-		of comment in place. It is similiar to the ast package and have same functions as ast. 
+		does not keep positions of comments, we use dst package which keeps the positions
+		of comment in place. It is similiar to the ast package and have same functions as ast.
 		So you can use documentation of ast to see the details of helper functions.
 	*/
 	"github.com/dave/dst"
@@ -68,9 +68,18 @@ var (
 	control = "control"
 )
 var (
-	strTrue = "true"
+	strTrue  = "true"
 	strFalse = "false"
 )
+
+// Defining a error class in here
+type initError struct {
+	errStr string
+}
+
+func (je *initError) Error() string {
+	return fmt.Sprintf("staleFlagCleaner initialization error: %s", je.errStr)
+}
 
 // Implementing this as whole class
 type staleFlagCleaner struct {
@@ -88,51 +97,45 @@ type staleFlagCleaner struct {
 	isTreated bool
 }
 
-func (sfc *staleFlagCleaner) init(configFile string, flagName string, isTreated bool) {
+func (sfc *staleFlagCleaner) init(configFile string, flagName string, isTreated bool) error {
 	sfc.configFile = configFile
 	sfc.flagName = flagName
 	sfc.isTreated = isTreated
 	sfc.valueMap = make(map[string]Value)
 	sfc.functype = make(map[string]FlagAPI)
-	sfc.ParseJSON()
+	err := sfc.ParseJSON()
+	return err
 }
 
 // Parse json
-func (sfc *staleFlagCleaner) ParseJSON() {
+func (sfc *staleFlagCleaner) ParseJSON() error {
 
 	jsonFile, err := os.Open(sfc.configFile)
-
 	if err != nil {
-		log.Fatalf("failed opening file: %v", err)
-		os.Exit(-1)
+		return &initError{"Failed opening the config file."}
 	}
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return &initError{"Failed processing the config file, unable to read it."}
+	}
 
 	// we unmarshal our byteArray which contains our
 	// jsonFile's content into 'methodProperties' which we defined above
-	json.Unmarshal(byteValue, &sfc.methods)
+	err = json.Unmarshal(byteValue, &sfc.methods)
+	if err != nil {
+		return &initError{"Failed processing the config file, unable to unmarshal json file."}
+	}
 	// store it in a hashmap
 	for _, element := range sfc.methods.Methods {
 		sfc.functype[element.MethodName] = element
 	}
+	return nil
 }
 
 // Gets the type of the flagAPI
 func (sfc *staleFlagCleaner) flagTypeAPI(callExpr *dst.CallExpr) API {
 	var apiName string
-	var flagIndex int // -1 if flag or group not here
-	flagIndex = -1
-
-	for ind, expr := range callExpr.Args {
-		switch arg := expr.(type) {
-		case *dst.Ident:
-			if arg.Name == sfc.flagName {
-				flagIndex = ind
-				break
-			}
-		}
-	}
 
 	switch d := callExpr.Fun.(type) {
 	case *dst.Ident:
@@ -144,14 +147,19 @@ func (sfc *staleFlagCleaner) flagTypeAPI(callExpr *dst.CallExpr) API {
 	}
 
 	if element, ok := sfc.functype[apiName]; ok {
-		if element.FlagIndex == flagIndex {
-			switch element.OfType {
-			case treated:
-				return _isTreated
-			case control:
-				return _isControl
-			default:
-				return _isUnknown
+		if element.FlagIndex < len(callExpr.Args) {
+			switch arg := callExpr.Args[element.FlagIndex].(type) {
+			case *dst.Ident:
+				if arg.Name == sfc.flagName {
+					switch element.OfType {
+					case treated:
+						return _isTreated
+					case control:
+						return _isControl
+					default:
+						return _isUnknown
+					}
+				}
 			}
 		}
 	}
@@ -292,8 +300,8 @@ func (sfc *staleFlagCleaner) checkForBoolLiterals(value dst.Expr) bool {
 
 /*
 Below function have this aim:
-If Value is isUndefined or it is a bool literal, then we are not adding that to valueMap
-if not then will add to valueMap.
+If Value is isUndefined or it is a bool literal, then we are not adding that to valueMap,
+otherwise we will add it to valueMap.
 This signifies whether variable has effect of flag or not.
 */
 func (sfc *staleFlagCleaner) updateValueMapPost(name dst.Expr, value dst.Expr) {
@@ -409,7 +417,6 @@ This wiil be used to delete the nodes and storing the values of expressions.
 func (sfc *staleFlagCleaner) post(n *dstutil.Cursor) bool {
 	switch d := n.Node().(type) {
 	case *dst.ValueSpec:
-		//need for loop here to delete the specific varible in
 		delVal := sfc.DelValStmt(&d.Names, &d.Values)
 		if delVal {
 			n.Delete()

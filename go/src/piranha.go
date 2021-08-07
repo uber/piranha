@@ -86,7 +86,11 @@ func RunPiranha(sourceFile string, configFile string, flagName string, outputFil
 	}
 
 	var cleaner staleFlagCleaner
-	cleaner.init(configFile, flagName, isTreated)
+	err = cleaner.init(configFile, flagName, isTreated)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	newRoot := cleaner.run(parsed)
 
 	if outputFileName == "" {
