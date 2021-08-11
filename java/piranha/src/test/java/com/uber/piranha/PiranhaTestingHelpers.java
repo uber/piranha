@@ -32,7 +32,6 @@ public final class PiranhaTestingHelpers {
             "package com.uber.piranha;",
             "public enum TestExperimentName {",
             " STALE_FLAG(\"stale.flag\"),",
-            // TODO: Fix needed to handle cleanup of final constant with semicolon
             " OTHER_FLAG(\"other\");",
             " private final String key;",
             " public String getKey() {",
