@@ -109,7 +109,7 @@ when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `
 An optional top-level field is `enumProperties`.
 Within that, there is an array of JSON objects, having the required fields `enumName` and `argumentIndex`.
 
-What this field does, is if you specify an enum class name, Piranha will remove enum constants that have a constructor with an argument that matches your `FlagName` value, along with their usages.
+What this field does, is if you specify an enum class name, Piranha will remove enum constants that have a constructor with a string argument that matches your `FlagName` value, along with their usages.
 
 For example, if your `FlagName` is set to `stale.flag`, and `TestExperimentName` is configured in `enumProperties` with an `argumentIndex` of `0`:
 

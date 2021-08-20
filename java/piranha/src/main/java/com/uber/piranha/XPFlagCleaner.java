@@ -419,35 +419,40 @@ public class XPFlagCleaner extends BugChecker
     }
 
     Symbol sym;
-    if (argTree.getKind() == Kind.IDENTIFIER) {
-      // Case 1: Unqualified enum constant (e.g. "STALE_FLAG")
-      sym = ASTHelpers.getSymbol(argTree);
-    } else if (argTree.getKind() == Kind.MEMBER_SELECT) {
-      // Case 2: Qualified enum name (e.g. "TestExperimentName.STALE_FLAG")
-      MemberSelectTree memberTree = (MemberSelectTree) argTree;
-      sym = ASTHelpers.getSymbol(memberTree);
-    } else if (argTree.getKind() == Kind.METHOD_INVOCATION) {
-      // Because the enum constant itself is being removed, we can remove any method called from
-      // that enum constant and not only specific, configured ones
-      MethodInvocationTree methodTree = (MethodInvocationTree) argTree;
-      if (methodTree.getMethodSelect().getKind() != Kind.MEMBER_SELECT) {
+    switch (argTree.getKind()) {
+      case IDENTIFIER:
+        // Case 1: Unqualified enum constant (e.g. "STALE_FLAG")
+        sym = ASTHelpers.getSymbol(argTree);
+        break;
+      case MEMBER_SELECT:
+        // Case 2: Qualified enum name (e.g. "TestExperimentName.STALE_FLAG")
+        MemberSelectTree memberTree = (MemberSelectTree) argTree;
+        sym = ASTHelpers.getSymbol(memberTree);
+        break;
+      case METHOD_INVOCATION:
+        // Because the enum constant itself is being removed, we can remove any method called from
+        // that enum constant and not only specific, configured ones
+        MethodInvocationTree methodTree = (MethodInvocationTree) argTree;
+        if (methodTree.getMethodSelect().getKind() != Kind.MEMBER_SELECT) {
+          return false;
+        }
+        MemberSelectTree methodMemberTree = (MemberSelectTree) methodTree.getMethodSelect();
+        if (methodMemberTree.getExpression().getKind() == Kind.IDENTIFIER) {
+          // Case 3: Unqualified enum constant with method call (e.g. "STALE_FLAG.getKey()")
+          IdentifierTree identifier = (IdentifierTree) methodMemberTree.getExpression();
+          sym = ASTHelpers.getSymbol(identifier);
+        } else if (methodMemberTree.getExpression().getKind() == Kind.MEMBER_SELECT) {
+          // Case 4: Qualified enum name with method call (e.g.
+          // "TestExperimentName.STALE_FLAG.getKey()")
+          MemberSelectTree memberTreeExpression =
+              (MemberSelectTree) methodMemberTree.getExpression();
+          sym = ASTHelpers.getSymbol(memberTreeExpression);
+        } else {
+          return false;
+        }
+        break;
+      default:
         return false;
-      }
-      MemberSelectTree memberTree = (MemberSelectTree) methodTree.getMethodSelect();
-      if (memberTree.getExpression().getKind() == Kind.IDENTIFIER) {
-        // Case 3: Unqualified enum constant with method call (e.g. "STALE_FLAG.getKey()")
-        IdentifierTree identifier = (IdentifierTree) memberTree.getExpression();
-        sym = ASTHelpers.getSymbol(identifier);
-      } else if (memberTree.getExpression().getKind() == Kind.MEMBER_SELECT) {
-        // Case 4: Qualified enum name with method call (e.g.
-        // "TestExperimentName.STALE_FLAG.getKey()")
-        MemberSelectTree memberTreeExpression = (MemberSelectTree) memberTree.getExpression();
-        sym = ASTHelpers.getSymbol(memberTreeExpression);
-      } else {
-        return false;
-      }
-    } else {
-      return false;
     }
 
     if (sym.getKind() != ElementKind.ENUM_CONSTANT) {
@@ -483,9 +488,21 @@ public class XPFlagCleaner extends BugChecker
       return enumsMatchingConstructorArgsCache.get(enumWithClassSymbol);
     }
 
+    // TODO: Find constructor arguments purely through the symbol table; without the need for state
+    //       Then, we will be able remove the following exception
     ClassTree enumClassTree = ASTHelpers.findClass(classSymbol, state);
     if (enumClassTree == null) {
-      return false;
+      throw new PiranhaRuntimeException(
+          "Detected enum constant of class "
+              + classSymbol.className()
+              + ", which is mentioned by"
+              + " Piranha's configuration as part of enumProperties. However, enum definition source"
+              + " is not available when looking at this usage (this can happen when cleaning up flags"
+              + " across build targets)."
+              + "\n\nIf you are trying to use Piranha to clean up enum flags based on the string"
+              + " argument to their constructor (e.g. using enumProperties), the current"
+              + " implementation will fail to match flag usages on a separate target as that"
+              + " containing the enum source, resulting in partial clean up.");
     }
 
     List<? extends ExpressionTree> constructorArguments =
@@ -980,8 +997,8 @@ public class XPFlagCleaner extends BugChecker
   }
 
   /**
-   * Returns if an enum constructor with arguments, contains the {@link XPFlagCleaner#xpFlagName}
-   * value
+   * Returns true if an enum constructor with arguments contains the {@link
+   * XPFlagCleaner#xpFlagName} value
    */
   private boolean enumConstructorArgsContainsFlagName(
       List<? extends ExpressionTree> constructorArguments,
