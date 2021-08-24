@@ -38,12 +38,14 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ConditionalExpressionTree;
 import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.ImportTree;
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.ParenthesizedTree;
 import com.sun.source.tree.ReturnTree;
 import com.sun.source.tree.StatementTree;
@@ -55,17 +57,21 @@ import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
 import com.uber.piranha.config.Config;
 import com.uber.piranha.config.PiranhaConfigurationException;
+import com.uber.piranha.config.PiranhaEnumRecord;
 import com.uber.piranha.config.PiranhaMethodRecord;
 import com.uber.piranha.testannotations.AnnotationArgument;
 import com.uber.piranha.testannotations.ResolvedTestAnnotation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
 
@@ -162,6 +168,10 @@ public class XPFlagCleaner extends BugChecker
 
   @Nullable
   private String treatmentGroupsEnum = null; // FQN of the enum containing the treatment group names
+
+  /** Caches results for enums with matching constructor args */
+  private final Map<EnumWithClassSymbol, Boolean> enumsMatchingConstructorArgsCache =
+      new HashMap<>();
 
   /**
    * when source is refactored, this specifies the end position for the refactoring until the
@@ -323,7 +333,7 @@ public class XPFlagCleaner extends BugChecker
   }
 
   /* Returns the appropriate XP API, if any, as given by the expression */
-  private API getXPAPI(ExpressionTree et) {
+  private API getXPAPI(ExpressionTree et, VisitorState state) {
     et = ASTHelpers.stripParentheses(et);
     Kind k = et.getKind();
     if (k.equals(Tree.Kind.METHOD_INVOCATION)) {
@@ -336,14 +346,16 @@ public class XPFlagCleaner extends BugChecker
       ImmutableCollection<PiranhaMethodRecord> methodRecords =
           this.config.getMethodRecordsForName(methodName);
       if (methodRecords.size() > 0) {
-        return getXPAPI(mit, methodRecords);
+        return getXPAPI(mit, state, methodRecords);
       }
     }
     return API.UNKNOWN;
   }
 
   private API getXPAPI(
-      MethodInvocationTree mit, ImmutableCollection<PiranhaMethodRecord> methodRecordsForName) {
+      MethodInvocationTree mit,
+      VisitorState state,
+      ImmutableCollection<PiranhaMethodRecord> methodRecordsForName) {
     for (PiranhaMethodRecord methodRecord : methodRecordsForName) {
       // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
@@ -353,7 +365,7 @@ public class XPFlagCleaner extends BugChecker
         if (argumentIndex < mit.getArguments().size()) {
           ExpressionTree argTree = mit.getArguments().get(argumentIndex);
           Symbol argSym = ASTHelpers.getSymbol(argTree);
-          if (!isArgumentMatchesFlagName(argTree, argSym)) {
+          if (!isArgumentMatchesFlagName(argTree, state, argSym)) {
             continue;
           }
         } else {
@@ -385,10 +397,130 @@ public class XPFlagCleaner extends BugChecker
     return API.UNKNOWN;
   }
 
-  private boolean isArgumentMatchesFlagName(ExpressionTree argTree, Symbol argSym) {
+  private boolean isArgumentMatchesFlagName(
+      ExpressionTree argTree, VisitorState state, Symbol argSym) {
     return (isLiteralTreeAndMatchesFlagName(argTree)
         || isVarSymbolAndMatchesFlagName(argSym)
-        || isSymbolAndMatchesFlagName(argSym));
+        || isSymbolAndMatchesFlagName(argSym)
+        || isMatchingEnumFieldValue(argTree, state));
+  }
+
+  /*
+   * Matches on an enum in an expression tree. Covers the following 4 cases:
+   * 1. Unqualified import enum constant (e.g. "STALE_FLAG")
+   * 2. Qualified enum name (e.g. "TestExperimentName.STALE_FLAG")
+   * 3. Unqualified enum constant with method call (e.g. "STALE_FLAG.getKey()")
+   * 4. Qualified enum name with method call (e.g. "TestExperimentName.STALE_FLAG.getKey()")
+   */
+  private boolean isMatchingEnumFieldValue(ExpressionTree argTree, VisitorState state) {
+    // Skip if no enum records are configured, to avoid excessive AST lookups
+    if (!this.config.hasEnumRecords()) {
+      return false;
+    }
+
+    Symbol sym;
+    switch (argTree.getKind()) {
+      case IDENTIFIER:
+        // Case 1: Unqualified enum constant (e.g. "STALE_FLAG")
+        sym = ASTHelpers.getSymbol(argTree);
+        break;
+      case MEMBER_SELECT:
+        // Case 2: Qualified enum name (e.g. "TestExperimentName.STALE_FLAG")
+        MemberSelectTree memberTree = (MemberSelectTree) argTree;
+        sym = ASTHelpers.getSymbol(memberTree);
+        break;
+      case METHOD_INVOCATION:
+        // Because the enum constant itself is being removed, we can remove any method called from
+        // that enum constant and not only specific, configured ones
+        MethodInvocationTree methodTree = (MethodInvocationTree) argTree;
+        if (methodTree.getMethodSelect().getKind() != Kind.MEMBER_SELECT) {
+          return false;
+        }
+        MemberSelectTree methodMemberTree = (MemberSelectTree) methodTree.getMethodSelect();
+        if (methodMemberTree.getExpression().getKind() == Kind.IDENTIFIER) {
+          // Case 3: Unqualified enum constant with method call (e.g. "STALE_FLAG.getKey()")
+          IdentifierTree identifier = (IdentifierTree) methodMemberTree.getExpression();
+          sym = ASTHelpers.getSymbol(identifier);
+        } else if (methodMemberTree.getExpression().getKind() == Kind.MEMBER_SELECT) {
+          // Case 4: Qualified enum name with method call (e.g.
+          // "TestExperimentName.STALE_FLAG.getKey()")
+          MemberSelectTree memberTreeExpression =
+              (MemberSelectTree) methodMemberTree.getExpression();
+          sym = ASTHelpers.getSymbol(memberTreeExpression);
+        } else {
+          return false;
+        }
+        break;
+      default:
+        return false;
+    }
+
+    if (sym.getKind() != ElementKind.ENUM_CONSTANT) {
+      return false;
+    }
+
+    Symbol.ClassSymbol enclosingClass = ASTHelpers.enclosingClass(sym);
+
+    return isEnumConstantMatchingFlagName(sym.getSimpleName().toString(), enclosingClass, state);
+  }
+
+  /**
+   * Finds whether the current enum constant contains the flag string in its constructor arguments.
+   * Must also have a valid configuration record corresponding to this enum in order to return true.
+   *
+   * @param enumName Unqualified enum constant name (e.g. STALE_FLAG)
+   * @param classSymbol Enum class symbol for the corresponding constant
+   * @param state Used to find enum class in AST
+   */
+  public boolean isEnumConstantMatchingFlagName(
+      String enumName, Symbol.ClassSymbol classSymbol, VisitorState state) {
+
+    // Skip any enums that have no configuration
+    ImmutableCollection<PiranhaEnumRecord> enumRecords =
+        this.config.getEnumRecordsForName(classSymbol.getSimpleName().toString());
+    if (enumRecords.isEmpty()) {
+      return false;
+    }
+
+    // Check cached matches
+    EnumWithClassSymbol enumWithClassSymbol = new EnumWithClassSymbol(enumName, classSymbol);
+    if (enumsMatchingConstructorArgsCache.containsKey(enumWithClassSymbol)) {
+      return enumsMatchingConstructorArgsCache.get(enumWithClassSymbol);
+    }
+
+    // TODO: Find constructor arguments purely through the symbol table; without the need for state
+    //       Then, we will be able remove the following exception
+    ClassTree enumClassTree = ASTHelpers.findClass(classSymbol, state);
+    if (enumClassTree == null) {
+      throw new PiranhaRuntimeException(
+          "Detected enum constant of class "
+              + classSymbol.className()
+              + ", which is mentioned by"
+              + " Piranha's configuration as part of enumProperties. However, enum definition source"
+              + " is not available when looking at this usage (this can happen when cleaning up flags"
+              + " across build targets)."
+              + "\n\nIf you are trying to use Piranha to clean up enum flags based on the string"
+              + " argument to their constructor (e.g. using enumProperties), the current"
+              + " implementation will fail to match flag usages on a separate target as that"
+              + " containing the enum source, resulting in partial clean up.");
+    }
+
+    List<? extends ExpressionTree> constructorArguments =
+        enumClassTree
+            .getMembers()
+            .stream()
+            .filter(member -> member.getKind() == Kind.VARIABLE)
+            .map(member -> ((VariableTree) member))
+            .filter(member -> member.getName().toString().equals(enumName))
+            .map(VariableTree::getInitializer)
+            .filter(Objects::nonNull)
+            .filter(initializer -> initializer.getKind() == Kind.NEW_CLASS)
+            .flatMap(enumConstructor -> ((NewClassTree) enumConstructor).getArguments().stream())
+            .collect(Collectors.toList());
+
+    boolean result = enumConstructorArgsContainsFlagName(constructorArguments, enumRecords);
+    enumsMatchingConstructorArgsCache.put(enumWithClassSymbol, result);
+    return result;
   }
 
   /**
@@ -491,7 +623,7 @@ public class XPFlagCleaner extends BugChecker
     }
 
     if (k.equals(Kind.METHOD_INVOCATION)) {
-      API api = getXPAPI(tree);
+      API api = getXPAPI(tree, state);
       if (api.equals(API.IS_TREATED)) {
         return isTreated ? Value.TRUE : Value.FALSE;
       } else if (api.equals(API.IS_CONTROL)) {
@@ -641,6 +773,18 @@ public class XPFlagCleaner extends BugChecker
                 .addFix(SuggestedFix.replace(importTree, "", 0, 1))
                 .build();
           }
+        } else {
+          // Check if this import matches an enum whose field value matches the flag name to remove
+          String enumName = memberSelectTree.getIdentifier().toString();
+          Symbol importSymbol = ASTHelpers.getSymbol(memberSelectTree.getExpression());
+
+          if (importSymbol.getKind().equals(ElementKind.ENUM)
+              && isEnumConstantMatchingFlagName(
+                  enumName, (Symbol.ClassSymbol) importSymbol, visitorState)) {
+            return buildDescription(importTree)
+                .addFix(SuggestedFix.replace(importTree, "", 0, 1))
+                .build();
+          }
         }
       }
     }
@@ -744,7 +888,7 @@ public class XPFlagCleaner extends BugChecker
 
     if (tree.getExpression().getKind().equals(Kind.METHOD_INVOCATION)) {
       MethodInvocationTree mit = (MethodInvocationTree) tree.getExpression();
-      API api = getXPAPI(mit);
+      API api = getXPAPI(mit, state);
       if (api.equals(API.DELETE_METHOD)
           || api.equals(API.SET_TREATED)
           || api.equals(API.SET_CONTROL)) {
@@ -798,36 +942,97 @@ public class XPFlagCleaner extends BugChecker
   @Override
   public Description matchVariable(VariableTree tree, VisitorState state) {
     if (shouldSkip(state)) return Description.NO_MATCH;
-    Symbol sym = FindIdentifiers.findIdent(xpFlagName, state);
+
+    Symbol identifier = FindIdentifiers.findIdent(xpFlagName, state);
+
     // Check if this is the flag definition and remove it.
-    if (sym != null && sym.isEnum() && sym.equals(ASTHelpers.getSymbol(tree))) {
-      xpSym = sym;
-      // Remove the flag symbol. This only works because the error prone patch is applied once
-      // after all files have been analyzed, otherwise targets that use the flag but haven't been
-      // cleaned up would be broken. We use replace with a position adjustment, to get rid of the
-      // trailing "," if present on the parent.
-      String enumAsStr = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
-      String varAsStrWithComma = tree.getName().toString() + ",";
-      if (enumAsStr.contains(varAsStrWithComma)) {
-        return buildDescription(tree).addFix(SuggestedFix.replace(tree, "", 0, 1)).build();
-      } else {
-        // Fallback for single/last enum variable detection
-        return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
-      }
-    } else if (sym == null
-        && tree != null
+    if (identifier != null
+        && identifier.isEnum()
+        && identifier.equals(ASTHelpers.getSymbol(tree))) {
+      xpSym = identifier;
+      return removeEnumValue(tree, state, tree.getName().toString());
+    } else if (identifier == null
         && ASTHelpers.getSymbol(tree) != null
         && xpFlagName.equals(ASTHelpers.getSymbol(tree).getConstantValue())) {
       return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
     }
+
+    Symbol sym = ASTHelpers.getSymbol(tree);
+
+    // Also checks if this is the flag definition. However, this is for the case where xpFlagName
+    // does not match the enum constant itself, but instead, a String value in the enum constructor
+    // (e.g. STALE_FLAG("stale.flag"), where xpFlagName is "stale.flag")
+    if (sym != null && sym.isEnum() && tree.getInitializer().getKind() == Tree.Kind.NEW_CLASS) {
+      // Enum constructor
+      NewClassTree nct = (NewClassTree) tree.getInitializer();
+      String enumClassName = sym.enclClass().getSimpleName().toString();
+      ImmutableCollection<PiranhaEnumRecord> enumRecords =
+          this.config.getEnumRecordsForName(enumClassName);
+
+      boolean containsFlagName =
+          enumConstructorArgsContainsFlagName(nct.getArguments(), enumRecords);
+      if (containsFlagName) {
+        return removeEnumValue(tree, state, state.getSourceForNode(tree));
+      }
+    }
+
     return Description.NO_MATCH;
   }
 
+  /**
+   * Remove the flag symbol. This only works because the error prone patch is applied once after all
+   * files have been analyzed, otherwise targets that use the flag but haven't been cleaned up would
+   * be broken. We use replace with a position adjustment, to get rid of the trailing "," if present
+   * on the parent.
+   */
+  private Description removeEnumValue(VariableTree tree, VisitorState state, String varName) {
+    String enumAsStr = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
+    String varAsStrWithComma = varName + ",";
+    if (enumAsStr != null && enumAsStr.contains(varAsStrWithComma)) {
+      return buildDescription(tree).addFix(SuggestedFix.replace(tree, "", 0, 1)).build();
+    } else {
+      // Fallback for single/last enum variable detection
+      return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
+    }
+  }
+
+  /**
+   * Returns true if an enum constructor with arguments contains the {@link
+   * XPFlagCleaner#xpFlagName} value
+   */
+  private boolean enumConstructorArgsContainsFlagName(
+      List<? extends ExpressionTree> constructorArguments,
+      ImmutableCollection<PiranhaEnumRecord> enumRecordsForName) {
+    for (PiranhaEnumRecord enumRecord : enumRecordsForName) {
+      // when argumentIndex is specified, if the enum's constructor argument at
+      // argIndex doesn't match xpFlagName, skip to next enum property map
+      Optional<Integer> optionalArgumentIdx = enumRecord.getArgumentIdx();
+      if (optionalArgumentIdx.isPresent()) {
+        int argumentIndex = optionalArgumentIdx.get();
+        if (argumentIndex < constructorArguments.size()) {
+          ExpressionTree argument = constructorArguments.get(argumentIndex);
+          if (argument.getKind() == Kind.STRING_LITERAL) {
+            return ((LiteralTree) argument).getValue().equals(xpFlagName);
+          }
+        }
+      } else {
+        // when argumentIndex is not specified, if we find ANY constructor
+        // argument that matches flag name, return a match
+        return constructorArguments
+            .stream()
+            .filter(argument -> argument.getKind() == Kind.STRING_LITERAL)
+            .map(argument -> ((LiteralTree) argument).getValue())
+            .anyMatch(argument -> argument.equals(xpFlagName));
+      }
+    }
+    return false;
+  }
+
   private void recursiveScanTestMethodStats(
-      BlockTree blockTree, TestMethodCounters counters, int depth) {
+      BlockTree blockTree, VisitorState state, TestMethodCounters counters, int depth) {
     for (StatementTree statement : blockTree.getStatements()) {
       if (statement.getKind().equals(Tree.Kind.BLOCK)) {
-        recursiveScanTestMethodStats(blockTree, counters, depth + 1);
+        recursiveScanTestMethodStats(blockTree, state, counters, depth + 1);
       } else if (statement.getKind().equals(Kind.EXPRESSION_STATEMENT)) {
         counters.statements += 1;
         ExpressionTree expr = ((ExpressionStatementTree) statement).getExpression();
@@ -854,7 +1059,7 @@ public class XPFlagCleaner extends BugChecker
             // call is for the
             // flag being passed to Piranha.
             if (!isTreated && depth == 0) {
-              if (getXPAPI(mit).equals(API.SET_TREATED)) {
+              if (getXPAPI(mit, state).equals(API.SET_TREATED)) {
                 counters.topLevelObsoleteSetters += 1;
               }
             }
@@ -864,7 +1069,7 @@ public class XPFlagCleaner extends BugChecker
             // flag in the control
             // condition, while we are setting it to treated everywhere
             if (isTreated && depth == 0) {
-              if (getXPAPI(mit).equals(API.SET_CONTROL)) {
+              if (getXPAPI(mit, state).equals(API.SET_CONTROL)) {
                 counters.topLevelObsoleteSetters += 1;
               }
             }
@@ -903,13 +1108,13 @@ public class XPFlagCleaner extends BugChecker
    * @param tree A method tree that has already been detected as being an unit test method.
    * @return whether the method should be deleted based on the heuristic above.
    */
-  private boolean shouldCleanBySetters(MethodTree tree) {
+  private boolean shouldCleanBySetters(MethodTree tree, VisitorState state) {
     // This assumes that the method was already detected as a unit test and the corresponding
     // heuristic is enabled
     TestMethodCounters counters = new TestMethodCounters();
     // Count statements, all setter calls, and relevant top-level obsolete setters for the current
     // flag
-    recursiveScanTestMethodStats(tree.getBody(), counters, 0);
+    recursiveScanTestMethodStats(tree.getBody(), state, counters, 0);
     if (config.testMethodCleanupSizeLimit() < counters.statements) {
       // Skip, test method too large.
       return false;
@@ -974,7 +1179,7 @@ public class XPFlagCleaner extends BugChecker
       }
     } else if (config.shouldCleanTestMethodsByContent()
         && PiranhaUtils.isUnitTestMethod(tree, state)) {
-      deleteMethod = shouldCleanBySetters(tree);
+      deleteMethod = shouldCleanBySetters(tree, state);
     }
     // Early exit for no changes required:
     if (!deleteMethod && deletableAnnotations.size() == 0 && deletableIdentifiers.size() == 0) {
@@ -1186,7 +1391,7 @@ public class XPFlagCleaner extends BugChecker
 
   /**
    * A small tuple of counters for scanning unit tests to be deleted by the setters heuristic. See
-   * {@link #shouldCleanBySetters(MethodTree)}
+   * {@link #shouldCleanBySetters(MethodTree, VisitorState)}
    */
   private static final class TestMethodCounters {
     public long statements;

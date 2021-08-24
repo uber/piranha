@@ -65,6 +65,14 @@ The properties file has the following template:
       },
       ...
     ],
+  "enumProperties":
+    [
+      {
+        "enumName": "TestExperimentName",
+        "argumentIndex": 0
+      },
+      ...
+    ],
   "linkURL": "<provide_your_url>",
   "annotations": ["ToggleTesting"]
 }
@@ -97,6 +105,33 @@ public void some_unit_test() { ... }
 ```
 
 when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `false`.
+
+An optional top-level field is `enumProperties`.
+Within that, there is an array of JSON objects, having the required fields `enumName` and `argumentIndex`.
+
+What this field does, is if you specify an enum class name, Piranha will remove enum constants that have a constructor with a string argument that matches your `FlagName` value, along with their usages.
+
+For example, if your `FlagName` is set to `stale.flag`, and `TestExperimentName` is configured in `enumProperties` with an `argumentIndex` of `0`:
+
+```java
+public enum TestExperimentName {
+  STALE_FLAG("stale.flag"),
+  OTHER_FLAG("other");
+  ...
+}
+```
+
+will be refactored to
+
+
+```java
+public enum TestExperimentName {
+  OTHER_FLAG("other");
+  ...
+}
+```
+
+Additionally, usages of `STALE_FLAG` will be removed as if the enum itself had been passed as the flag to be cleaned by Piranha, rather than the string `"stale.flag"`
 
 Finally, the setting `linkURL` in the properties file is to provide a URL describing the Piranha tooling and any custom configurations associated with the codebase. 
 

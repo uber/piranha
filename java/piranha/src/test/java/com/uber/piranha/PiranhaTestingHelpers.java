@@ -23,4 +23,39 @@ public final class PiranhaTestingHelpers {
       BugCheckerRefactoringTestHelper bcr) throws IOException {
     return bcr.addInput("XPTest.java").expectUnchanged();
   }
+
+  public static BugCheckerRefactoringTestHelper addExperimentFlagEnumsWithConstructor(
+      BugCheckerRefactoringTestHelper bcr, boolean hasEnumConfiguration) {
+    BugCheckerRefactoringTestHelper.ExpectOutput inputLines =
+        bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG(\"stale.flag\"),",
+            // TODO: Fix needed to handle cleanup of final constant with semicolon
+            " OTHER_FLAG(\"other\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}");
+    return hasEnumConfiguration
+        ? inputLines.addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG(\"other\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        : inputLines.expectUnchanged();
+  }
 }
