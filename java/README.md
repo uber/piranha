@@ -65,6 +65,13 @@ The properties file has the following template:
       },
       ...
     ],
+  "testMethodProperties": [
+    {
+      "methodName": "when",
+      "argumentIndex": 0
+    },
+    ...
+  ],
   "enumProperties":
     [
       {
@@ -106,7 +113,13 @@ public void some_unit_test() { ... }
 
 when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `false`.
 
-An optional top-level field is `enumProperties`.
+An optional top-level field is `testMethodProperties`.
+
+Within that, there is an array of JSON objects, having the required fields `methodName` and `argumentIndex`. The both behave the same as the fields with the same name in `methodProperties`.
+
+What this field does, is that if we find one of the `methodProperties` fields inside a method that matches one of the methods in `testMethodProperties`, we remove that method. This is useful for removing `mock()` wrappers or `assert()` calls that are no longer useful after a flag is cleaned up.
+
+Another optional top-level field is `enumProperties`.
 Within that, there is an array of JSON objects, having the required fields `enumName` and `argumentIndex`.
 
 What this field does, is if you specify an enum class name, Piranha will remove enum constants that have a constructor with a string argument that matches your `FlagName` value, along with their usages.

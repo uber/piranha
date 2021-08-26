@@ -38,6 +38,20 @@
       "argumentIndex": 0
     }
   ],
+  "testMethodProperties": [
+    {
+      "methodName": "mock",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "accept",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "expect",
+      "argumentIndex": 1
+    }
+  ],
   "linkURL": "<provide_your_url>",
   "annotations": [
     "ToggleTesting",

@@ -41,7 +41,8 @@ public final class Config {
   /* Names of top-level fields within properties.json */
   private static final String LINK_URL_KEY = "linkURL";
   private static final String ANNOTATIONS_KEY = "annotations";
-  private static final String METHODS_KEY = "methodProperties";
+  private static final String FLAG_METHODS_KEY = "methodProperties";
+  private static final String TEST_METHODS_KEY = "testMethodProperties";
   private static final String CLEANUP_OPTS_KEY = "cleanupOptions";
   private static final String ENUMS_KEY = "enumProperties";
 
@@ -64,13 +65,22 @@ public final class Config {
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
-   * configMethodsMap is a map where key is method name and value is a list where each item in the
-   * list is a map that corresponds to each method property from properties.json. In most cases, the
-   * list would have only one element. But if someone reuses the same method name with different
+   * configMethodProperties is a map where key is method name and value is a list where each item in
+   * the list is a map that corresponds to each method property from properties.json. In most cases,
+   * the list would have only one element. But if someone reuses the same method name with different
    * returnType/receiverType/argumentIndex, the list would have each method property map as one
    * element.
    */
-  private final ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
+  private final ImmutableMultimap<String, PiranhaFlagMethodRecord> configMethodProperties;
+
+  /**
+   * configTestMethodProperties is a map where key is method name and value is a list where each
+   * item in the list is a map that corresponds to each test method property from properties.json.
+   * In most cases, the list would have only one element. But if someone reuses the same method name
+   * with different returnType/receiverType/argumentIndex, the list would have each method property
+   * map as one element.
+   */
+  private final ImmutableMultimap<String, PiranhaTestMethodRecord> configTestMethodProperties;
 
   /**
    * configEnumProperties is a map where key is enum name and value is a list where each item in the
@@ -99,12 +109,14 @@ public final class Config {
   // Constructor is private, a Config object can be generated using the class' static methods,
   // in particular Config.fromJSONFile([properties.json])
   private Config(
-      ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties,
+      ImmutableMultimap<String, PiranhaFlagMethodRecord> configMethodProperties,
+      ImmutableMultimap<String, PiranhaTestMethodRecord> configTestMethodProperties,
       ImmutableMultimap<String, PiranhaEnumRecord> configEnumProperties,
       TestAnnotationResolver testAnnotationResolver,
       ImmutableMap<String, Object> cleanupOptions,
       String linkURL) {
     this.configMethodProperties = configMethodProperties;
+    this.configTestMethodProperties = configTestMethodProperties;
     this.configEnumProperties = configEnumProperties;
     this.testAnnotationResolver = testAnnotationResolver;
     this.cleanupOptions = cleanupOptions;
@@ -115,12 +127,26 @@ public final class Config {
    * Return all configuration method records matching a given method name.
    *
    * @param methodName the method name to search
-   * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
+   * @return A collection of {@link PiranhaFlagMethodRecord} objects, representing each method
    *     definition in the piranha json configuration file matching {@code methodName}.
    */
-  public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(String methodName) {
+  public ImmutableCollection<PiranhaFlagMethodRecord> getMethodRecordsForName(String methodName) {
     return configMethodProperties.containsKey(methodName)
         ? configMethodProperties.get(methodName)
+        : ImmutableSet.of();
+  }
+
+  /**
+   * Return all configuration test method records matching a given method name.
+   *
+   * @param methodName the method name to search
+   * @return A collection of {@link PiranhaTestMethodRecord} objects, representing each method
+   *     definition in the piranha json configuration file matching {@code methodName}.
+   */
+  public ImmutableCollection<PiranhaTestMethodRecord> getTestMethodRecordsForName(
+      String methodName) {
+    return configTestMethodProperties.containsKey(methodName)
+        ? configTestMethodProperties.get(methodName)
         : ImmutableSet.of();
   }
 
@@ -266,7 +292,9 @@ public final class Config {
       }
 
       String linkURL = DEFAULT_PIRANHA_URL;
-      ImmutableMultimap.Builder<String, PiranhaMethodRecord> methodsBuilder =
+      ImmutableMultimap.Builder<String, PiranhaFlagMethodRecord> methodsBuilder =
+          ImmutableMultimap.builder();
+      ImmutableMultimap.Builder<String, PiranhaTestMethodRecord> testMethodsBuilder =
           ImmutableMultimap.builder();
       ImmutableMultimap.Builder<String, PiranhaEnumRecord> enumsBuilder =
           ImmutableMultimap.builder();
@@ -294,16 +322,25 @@ public final class Config {
           }
         }
       }
-      if (propertiesJson.get(METHODS_KEY) != null) {
+      if (propertiesJson.get(FLAG_METHODS_KEY) != null) {
         for (Map<String, Object> methodProperty :
-            (List<Map<String, Object>>) propertiesJson.get(METHODS_KEY)) {
-          PiranhaMethodRecord methodRecord =
-              PiranhaMethodRecord.parseFromJSONPropertyEntryMap(
+            (List<Map<String, Object>>) propertiesJson.get(FLAG_METHODS_KEY)) {
+          PiranhaFlagMethodRecord methodRecord =
+              PiranhaFlagMethodRecord.parseFromJSONPropertyEntryMap(
                   methodProperty, isArgumentIndexOptional);
           methodsBuilder.put(methodRecord.getMethodName(), methodRecord);
         }
       } else {
         throw new PiranhaConfigurationException("methodProperties not found, required.");
+      }
+      if (propertiesJson.get(TEST_METHODS_KEY) != null) {
+        for (Map<String, Object> methodProperty :
+            (List<Map<String, Object>>) propertiesJson.get(TEST_METHODS_KEY)) {
+          PiranhaTestMethodRecord methodRecord =
+              PiranhaTestMethodRecord.parseFromJSONPropertyEntryMap(
+                  methodProperty, isArgumentIndexOptional);
+          testMethodsBuilder.put(methodRecord.getMethodName(), methodRecord);
+        }
       }
       if (propertiesJson.get(ENUMS_KEY) != null) {
         for (Map<String, Object> enumProperty :
@@ -327,6 +364,7 @@ public final class Config {
       }
       return new Config(
           methodsBuilder.build(),
+          testMethodsBuilder.build(),
           enumsBuilder.build(),
           annotationResolverBuilder.build(),
           cleanupOptionsBuilder.build(),
@@ -365,6 +403,7 @@ public final class Config {
    */
   public static Config emptyConfig() {
     return new Config(
+        ImmutableMultimap.of(),
         ImmutableMultimap.of(),
         ImmutableMultimap.of(),
         TestAnnotationResolver.builder().build(),

@@ -58,7 +58,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.uber.piranha.config.Config;
 import com.uber.piranha.config.PiranhaConfigurationException;
 import com.uber.piranha.config.PiranhaEnumRecord;
-import com.uber.piranha.config.PiranhaMethodRecord;
+import com.uber.piranha.config.PiranhaFlagMethodRecord;
 import com.uber.piranha.testannotations.AnnotationArgument;
 import com.uber.piranha.testannotations.ResolvedTestAnnotation;
 import java.util.ArrayList;
@@ -344,7 +344,7 @@ public class XPFlagCleaner extends BugChecker
       }
       MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
       String methodName = mst.getIdentifier().toString();
-      ImmutableCollection<PiranhaMethodRecord> methodRecords =
+      ImmutableCollection<PiranhaFlagMethodRecord> methodRecords =
           this.config.getMethodRecordsForName(methodName);
       if (methodRecords.size() > 0) {
         return getXPAPI(mit, state, methodRecords);
@@ -356,8 +356,8 @@ public class XPFlagCleaner extends BugChecker
   private API getXPAPI(
       MethodInvocationTree mit,
       VisitorState state,
-      ImmutableCollection<PiranhaMethodRecord> methodRecordsForName) {
-    for (PiranhaMethodRecord methodRecord : methodRecordsForName) {
+      ImmutableCollection<PiranhaFlagMethodRecord> methodRecordsForName) {
+    for (PiranhaFlagMethodRecord methodRecord : methodRecordsForName) {
       // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
       Optional<Integer> optionalArgumentIdx = methodRecord.getArgumentIdx();
@@ -1192,7 +1192,7 @@ public class XPFlagCleaner extends BugChecker
         // only when the flag name matches, and we want to verify that no calls are being made to
         // set
         // unrelated flags (i.e. count them in counters.allSetters).
-        for (PiranhaMethodRecord methodRecord : config.getMethodRecordsForName(methodName)) {
+        for (PiranhaFlagMethodRecord methodRecord : config.getMethodRecordsForName(methodName)) {
           if (methodRecord.getApiType().equals(XPFlagCleaner.API.SET_TREATED)) {
             counters.allSetters += 1;
             // If the test is asking for the flag in treated condition, but we are setting it to
