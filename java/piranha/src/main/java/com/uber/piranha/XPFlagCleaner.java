@@ -59,6 +59,7 @@ import com.uber.piranha.config.Config;
 import com.uber.piranha.config.PiranhaConfigurationException;
 import com.uber.piranha.config.PiranhaEnumRecord;
 import com.uber.piranha.config.PiranhaFlagMethodRecord;
+import com.uber.piranha.config.PiranhaTestMethodRecord;
 import com.uber.piranha.testannotations.AnnotationArgument;
 import com.uber.piranha.testannotations.ResolvedTestAnnotation;
 import java.util.ArrayList;
@@ -880,6 +881,31 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  private boolean matchTestMethod(MethodInvocationTree methodTree, VisitorState state) {
+    Symbol receiverSymbol = ASTHelpers.getSymbol(methodTree.getMethodSelect());
+    String methodName = receiverSymbol.getSimpleName().toString();
+    for (PiranhaTestMethodRecord methodRecord : config.getTestMethodRecordsForName(methodName)) {
+      Optional<Integer> argumentIdx = methodRecord.getArgumentIdx();
+      if (argumentIdx.isPresent()) {
+        if (methodTree.getArguments().size() > argumentIdx.get()) {
+          ExpressionTree argTree = methodTree.getArguments().get(argumentIdx.get());
+          API api = getXPAPI(argTree, state);
+          if (api != API.UNKNOWN) {
+            return true;
+          }
+        }
+      } else {
+        for (ExpressionTree argTree : methodTree.getArguments()) {
+          API api = getXPAPI(argTree, state);
+          if (api != API.UNKNOWN) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   @Override
   public Description matchExpressionStatement(ExpressionStatementTree tree, VisitorState state) {
     if (shouldSkip(state)) return Description.NO_MATCH;
@@ -887,12 +913,29 @@ public class XPFlagCleaner extends BugChecker
       return Description.NO_MATCH;
     }
 
+    boolean updateCode = false;
+
     if (tree.getExpression().getKind().equals(Kind.METHOD_INVOCATION)) {
       MethodInvocationTree mit = (MethodInvocationTree) tree.getExpression();
+      ExpressionTree receiver = ASTHelpers.getReceiver(mit);
+      if (receiver == null) {
+        if (matchTestMethod(mit, state)) {
+          updateCode = true;
+        }
+      } else if (receiver.getKind() == Kind.METHOD_INVOCATION) {
+        if (matchTestMethod((MethodInvocationTree) receiver, state)) {
+          updateCode = true;
+        }
+      }
+
       API api = getXPAPI(mit, state);
       if (api.equals(API.DELETE_METHOD)
           || api.equals(API.SET_TREATED)
           || api.equals(API.SET_CONTROL)) {
+        updateCode = true;
+      }
+
+      if (updateCode) {
         Description.Builder builder = buildDescription(tree);
         SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
         fixBuilder.delete(tree);
