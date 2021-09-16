@@ -1002,7 +1002,7 @@ public class XPFlagCleaner extends BugChecker
   /** Represents the character at the end of an enum constant */
   enum EnumEnding {
     // Ignore the result of the trailing enum character, whether we know what it is or not
-    IGNORE,
+    IGNORE(null),
     COMMA(","),
     SEMICOLON(";"),
     NONE("");
@@ -1011,10 +1011,6 @@ public class XPFlagCleaner extends BugChecker
     @Nullable
     String getChar() {
       return endingChar;
-    }
-
-    EnumEnding() {
-      this.endingChar = null;
     }
 
     EnumEnding(@Nullable final String endingChar) {
@@ -1078,10 +1074,12 @@ public class XPFlagCleaner extends BugChecker
 
     VariableTree nextConstant = enumConstants.get(index + 1);
     String nextEnumConstantSource = state.getSourceForNode(nextConstant);
-    String nextEnumSource = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
+    // The enclosingEnumSource is the source code of the enum that will contain both the current
+    // enum constant and the next enum constant
+    String enclosingEnumSource = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
 
     // We need access to the source to remove the enum constant in the first place
-    if (nextEnumConstantSource == null || nextEnumSource == null) {
+    if (nextEnumConstantSource == null || enclosingEnumSource == null) {
       return EnumEnding.IGNORE;
     }
 
@@ -1106,9 +1104,9 @@ public class XPFlagCleaner extends BugChecker
 
     String varAsStrWithComma = nextEnumConstantSource + ",";
     String varAsStrWithSemicolon = nextEnumConstantSource + ";";
-    if (nextEnumSource.contains(varAsStrWithComma)) {
+    if (enclosingEnumSource.contains(varAsStrWithComma)) {
       return EnumEnding.COMMA;
-    } else if (nextEnumSource.contains(varAsStrWithSemicolon)) {
+    } else if (enclosingEnumSource.contains(varAsStrWithSemicolon)) {
       return EnumEnding.SEMICOLON;
     } else {
       return EnumEnding.NONE;
