@@ -34,6 +34,464 @@ public class EnumConstantTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   /**
+   * Test for cleaning up the first enum constant in a list of enum constants.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveFirstEnumConstant() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG,",
+            " OTHER_FLAG_1,",
+            " OTHER_FLAG_2;",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG_1,",
+            " OTHER_FLAG_2;",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for cleaning up an enum in the middle of the list of enum constants, matching on the enum
+   * constant.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveMiddleEnumConstant() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG_1,",
+            " STALE_FLAG,",
+            " OTHER_FLAG_2;",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG_1,",
+            " OTHER_FLAG_2;",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for cleaning up an enum in the middle of the list of enum constants, matching on the
+   * constructor argument value.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveMiddleEnumConstantWithNonConstantMembers() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG_1(\"other.1\"),",
+            " STALE_FLAG(\"stale.flag\"),",
+            " OTHER_FLAG_2(\"other.2\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG_1(\"other.1\"),",
+            " OTHER_FLAG_2(\"other.2\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when the last enum constant is removed on an enum with a custom constructor, matching
+   * on the enum constant.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumConstantWithNonConstantMembersByEnumConstant() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG(\"other\"),",
+            " STALE_FLAG(\"stale.flag\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG(\"other\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when the last enum constant is removed on an enum with a custom constructor, matching
+   * on the constructor argument value.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumConstantWithNonConstantMembersByConstructorValue() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG(\"other\"),",
+            " STALE_FLAG(\"stale.flag\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG(\"other\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when the last enum constant is removed, and there are comments between enum constants.
+   *
+   * <p>Piranha doesn't know if it can associate the prior comment with the stale flag, so to be
+   * safe, we leave it.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumConstantWithNonConstantMembersWithComments() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " // This is another flag!",
+            " OTHER_FLAG(\"other\"),",
+            " // This flag is stale!",
+            " STALE_FLAG(\"stale.flag\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " // This is another flag!",
+            " OTHER_FLAG(\"other\");",
+            // Piranha doesn't know if it can associate this comment with the stale flag, so to be
+            // safe, we leave it
+            " // This flag is stale!",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentName(final String key) {",
+            "  this.key = key;",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when the last enum constant is removed, and has no trailing character.
+   *
+   * <p>We match to the pre-existing pattern of the removed constant and the remaining constant has
+   * its comma removed.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumConstantWithoutTrailingCharacter() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG,",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when the last enum constant with an unnecessary trailing comma is removed.
+   *
+   * <p>Even though the comma is not necessary, we match to the pre-existing pattern of the removed
+   * enum
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumConstantWithTrailingComma() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG,",
+            " STALE_FLAG,",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            // Matches the same pattern as the previous last enum
+            " OTHER_FLAG,",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when an enum constant which is not last with an unnecessary trailing semicolon is
+   * removed.
+   *
+   * <p>The semicolon on the last enum constant should be preserved.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveFirstEnumConstantWithUnneededTrailingSemicolon() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG,",
+            " OTHER_FLAG;",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG;",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test for when the last enum constant with an unnecessary trailing semicolon is removed.
+   *
+   * <p>Even though the semicolon is not necessary, we match to the pre-existing pattern of the
+   * removed enum
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumWithUnneededTrailingSemicolon() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG,",
+            " STALE_FLAG;",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            // Matches the same pattern as the previous last enum
+            " OTHER_FLAG;",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to see if a trailing semicolon on an enum constant that does require it, remains
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveLastEnumWithNeededTrailingSemicolon() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG,",
+            " STALE_FLAG;",
+            " TestExperimentName() {",
+            "  System.out.println(\"Hello World\");",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG;",
+            " TestExperimentName() {",
+            "  System.out.println(\"Hello World\");",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
    * Test to check that Java enum constants are removed when they have a constructor with an
    * argument that matches the flag value, for an untreated flag
    *
@@ -222,6 +680,171 @@ public class EnumConstantTest {
             "     experimentation.putToggleEnabled(OTHER_FLAG.getKey());",
             "     System.err.println(\"Not removed\");",
             "  }",
+            "}")
+        .doTest();
+  }
+
+  /** Test to cleanup an enum with only one remaining enum constant */
+  @Test
+  public void testRemoveEnumWithSingleConstant() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup an enum with only one remaining enum constant, where that constant ends in a
+   * comma
+   */
+  @Test
+  public void testRemoveEnumWithSingleConstantWithComma() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG,",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup an enum with only one remaining enum constant, where that constant ends in a
+   * semi-colon
+   */
+  @Test
+  public void testRemoveEnumWithSingleConstantWithSemicolon() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG;",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup an enum with only one remaining enum constant to be cleaned up in an enum with
+   * fields or methods other than enum constants. We do not remove the enum class, but we make sure
+   * to leave a semi-colon before the non-enum-constant fields and methods to keep the class as
+   * valid compilable Java code
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveEnumWithSingleConstantWithNonEnumConstantMembers() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG;",
+            " private String key;",
+            " TestExperimentName() {",
+            "  this.key = \"Hello World\";",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " ;",
+            " private String key;",
+            " TestExperimentName() {",
+            "  this.key = \"Hello World\";",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /** This is to make sure we don't confuse enum constant constructors with other constructors */
+  @Test
+  public void testRemoveEnumWithNonEnumConstantConstructor() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG,",
+            " STALE_FLAG;",
+            " private Object obj = new Object();",
+            " TestExperimentName() {",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " OTHER_FLAG;",
+            " private Object obj = new Object();",
+            " TestExperimentName() {",
+            " }",
             "}")
         .doTest();
   }

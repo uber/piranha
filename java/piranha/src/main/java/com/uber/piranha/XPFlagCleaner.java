@@ -72,6 +72,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
 
@@ -950,7 +951,8 @@ public class XPFlagCleaner extends BugChecker
         && identifier.isEnum()
         && identifier.equals(ASTHelpers.getSymbol(tree))) {
       xpSym = identifier;
-      return removeEnumValue(tree, state, tree.getName().toString());
+      return removeEnumValue(
+          tree, state, state.getSourceForNode(tree), isOnlyEnumConstant(xpSym, state));
     } else if (identifier == null
         && ASTHelpers.getSymbol(tree) != null
         && xpFlagName.equals(ASTHelpers.getSymbol(tree).getConstantValue())) {
@@ -972,26 +974,166 @@ public class XPFlagCleaner extends BugChecker
       boolean containsFlagName =
           enumConstructorArgsContainsFlagName(nct.getArguments(), enumRecords);
       if (containsFlagName) {
-        return removeEnumValue(tree, state, state.getSourceForNode(tree));
+        return removeEnumValue(
+            tree, state, state.getSourceForNode(tree), isOnlyEnumConstant(sym, state));
       }
+    }
+
+    // We also match the enum constant previous to the one being removed in some cases,
+    // to fix delimiters.
+    if (sym != null && sym.isEnum()) {
+      EnumEnding enumEnding = getEndingOfLastEnumConstantIfRemoved(sym, state);
+
+      if (enumEnding == EnumEnding.IGNORE) {
+        return Description.NO_MATCH;
+      }
+
+      // The next enum constant in the list will be removed by Piranha
+      // Let's replace the current enum constant's ending with the previous one
+      return buildDescription(tree)
+          .addFix(
+              SuggestedFix.replace(tree, state.getSourceForNode(tree) + enumEnding.getChar(), 0, 1))
+          .build();
     }
 
     return Description.NO_MATCH;
   }
 
+  /** Represents the character at the end of an enum constant */
+  enum EnumEnding {
+    // Ignore the result of the trailing enum character, whether we know what it is or not
+    IGNORE(null),
+    COMMA(","),
+    SEMICOLON(";"),
+    NONE("");
+    @Nullable final String endingChar;
+
+    @Nullable
+    String getChar() {
+      return endingChar;
+    }
+
+    EnumEnding(@Nullable final String endingChar) {
+      this.endingChar = endingChar;
+    }
+  }
+
+  private Stream<VariableTree> getEnumConstants(ClassTree enumClassTree) {
+    return enumClassTree
+        .getMembers()
+        .stream()
+        .filter(member -> member.getKind() == Kind.VARIABLE)
+        .map(member -> ((VariableTree) member))
+        .filter(member -> ASTHelpers.getSymbol(member).getKind() == ElementKind.ENUM_CONSTANT);
+  }
+
+  private boolean isOnlyEnumConstant(Symbol enumSym, VisitorState state) {
+    ClassTree enumClassTree = ASTHelpers.findClass(enumSym.enclClass(), state);
+
+    if (enumClassTree == null) {
+      return false;
+    }
+
+    // True if there is only a single enum constant for this enum
+    return getEnumConstants(enumClassTree).count() == 1;
+  }
+
+  /**
+   * This "looks ahead" at the next enum constant in an enum definition to see if it will be cleaned
+   * up by Piranha. That way, we can know what kind of character to append to the end of the
+   * previous enum constant after the last one is removed. This is important for enums that have non
+   * enum constant members after their enum constants, such as constructors, methods, and fields.
+   */
+  private EnumEnding getEndingOfLastEnumConstantIfRemoved(Symbol enumSym, VisitorState state) {
+    ClassTree enumClassTree = ASTHelpers.findClass(enumSym.enclClass(), state);
+
+    if (enumClassTree == null) {
+      return EnumEnding.IGNORE;
+    }
+
+    // Find enum initializer members only
+    List<VariableTree> enumConstants = getEnumConstants(enumClassTree).collect(Collectors.toList());
+
+    // Get second to last index
+    //
+    // The reason to get the second to last index, is that we need to alter the second to last enum
+    // constant ending if the last constant is being removed, as the second to last enum constant
+    // will now become the last constant.
+    //
+    // In Java, the last enum constant is be required to have a different ending than other enum
+    // constants in the enum if the enum has non-enum constant members
+    //
+    // We do not need to alter any other enum constants because they will either never become the
+    // last constant [0 ... size - 3] or will be removed [size - 1].
+    int index = enumConstants.size() - 2;
+
+    // Check if the second to last enum is the current enum being processed
+    if (index < 0 || !enumConstants.get(index).getName().equals(enumSym.getSimpleName())) {
+      return EnumEnding.IGNORE;
+    }
+
+    VariableTree nextConstant = enumConstants.get(index + 1);
+    String nextEnumConstantSource = state.getSourceForNode(nextConstant);
+    // The enclosingEnumSource is the source code of the enum that will contain both the current
+    // enum constant and the next enum constant
+    String enclosingEnumSource = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
+
+    // We need access to the source to remove the enum constant in the first place
+    if (nextEnumConstantSource == null || enclosingEnumSource == null) {
+      return EnumEnding.IGNORE;
+    }
+
+    // Make sure the last enum constant in the member list will actually be removed and cleaned up
+    // If not, we don't want to alter the prior enum constant
+    //
+    // These are the same checks that would run from the point in the AST were we at the enum
+    // constant that is being removed instead of the enum constant right before. We're skipping
+    // around the tree a bit here.
+    //
+    // The reason for re-checking if we are going to clean up the last enum constant when we
+    // encounter the second to last enum constant, rather than doing the check when we encounter the
+    // last enum constant, is because we are altering the syntax of the second to last enum
+    // constant. It is easier to add a SuggestedFix with the design of error-prone's BugChecker at
+    // the time you encounter that piece of code you are altering, than to attempt to add a fix
+    // outside of encountering that piece of code in the syntax tree traversal.
+    if (!(xpFlagName.equals(nextConstant.getName().toString())
+        || isEnumConstantMatchingFlagName(
+            nextConstant.getName().toString(), enumSym.enclClass(), state))) {
+      return EnumEnding.IGNORE;
+    }
+
+    String varAsStrWithComma = nextEnumConstantSource + ",";
+    String varAsStrWithSemicolon = nextEnumConstantSource + ";";
+    if (enclosingEnumSource.contains(varAsStrWithComma)) {
+      return EnumEnding.COMMA;
+    } else if (enclosingEnumSource.contains(varAsStrWithSemicolon)) {
+      return EnumEnding.SEMICOLON;
+    } else {
+      return EnumEnding.NONE;
+    }
+  }
+
   /**
    * Remove the flag symbol. This only works because the error prone patch is applied once after all
    * files have been analyzed, otherwise targets that use the flag but haven't been cleaned up would
-   * be broken. We use replace with a position adjustment, to get rid of the trailing "," if present
-   * on the parent.
+   * be broken. We use replace with a position adjustment, to get rid of the trailing "," or ";" if
+   * present on the parent.
    */
-  private Description removeEnumValue(VariableTree tree, VisitorState state, String varName) {
+  private Description removeEnumValue(
+      VariableTree tree, VisitorState state, String varName, boolean isSingleEnumConstant) {
     String enumAsStr = state.getSourceForNode(state.getPath().getParentPath().getLeaf());
     String varAsStrWithComma = varName + ",";
-    if (enumAsStr != null && enumAsStr.contains(varAsStrWithComma)) {
+    String varAsStrWithSemicolon = varName + ";";
+    if (enumAsStr != null
+        && (enumAsStr.contains(varAsStrWithComma)
+            || (enumAsStr.contains(varAsStrWithSemicolon) && !isSingleEnumConstant))) {
       return buildDescription(tree).addFix(SuggestedFix.replace(tree, "", 0, 1)).build();
     } else {
       // Fallback for single/last enum variable detection
+      //
+      // Also if we remove the only enum constant left, and the last enum constant ends in a
+      // semi-colon, we will leave that semi-colon to make sure we still have compilable Java if
+      // there are non-enum-constant fields or methods in the enum class
       return buildDescription(tree).addFix(SuggestedFix.delete(tree)).build();
     }
   }
