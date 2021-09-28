@@ -18,6 +18,7 @@ import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** An interface representing a method configuration record from properties.json */
 public interface PiranhaMethodRecord {
@@ -60,6 +61,7 @@ public interface PiranhaMethodRecord {
     return flagType;
   }
 
+  @Nullable
   static Integer parseArgumentIndexFromJSON(
       String propertyName, Map<String, Object> methodPropertyEntry, boolean isArgumentIndexOptional)
       throws PiranhaConfigurationException {
