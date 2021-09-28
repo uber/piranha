@@ -115,7 +115,7 @@ when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `
 
 An optional top-level field is `testMethodProperties`.
 
-Within that, there is an array of JSON objects, having the required fields `methodName` and `argumentIndex`. The both behave the same as the fields with the same name in `methodProperties`.
+Within that, there is an array of JSON objects, having the required fields `methodName` and `argumentIndex`. They both behave the same as the fields with the same name in `methodProperties`.
 
 What this field does, is that if we find one of the `methodProperties` fields inside a method that matches one of the methods in `testMethodProperties`, we remove that method. This is useful for removing `mock()` wrappers or `assert()` calls that are no longer useful after a flag is cleaned up.
 
