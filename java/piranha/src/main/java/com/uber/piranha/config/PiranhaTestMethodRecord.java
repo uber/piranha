@@ -13,7 +13,8 @@
  */
 package com.uber.piranha.config;
 
-import static com.uber.piranha.config.PiranhaRecord.getArgumentIndexFromMap;
+import static com.uber.piranha.config.PiranhaMethodRecord.parseArgumentIndexFromJSON;
+import static com.uber.piranha.config.PiranhaMethodRecord.parseMethodNameFromJSON;
 import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
 import java.util.Map;
@@ -21,15 +22,8 @@ import java.util.Optional;
 
 /** A class representing a test method configuration record from properties.json */
 public final class PiranhaTestMethodRecord implements PiranhaMethodRecord {
-
-  // Allowed fields for a test method property in the config file.
-  // Entered under the top-level "testMethodProperties" in properties.json.
-  // By default, methodName and argumentIndex fields are mandatory.
-  // The returnType and receiverType fields are optional.
-  private static final String METHOD_NAME_KEY = "methodName";
-  private static final String ARGUMENT_INDEX_KEY = "argumentIndex";
-  private static final String RETURN_TYPE_STRING = "returnType";
-  private static final String RECEIVER_TYPE_STRING = "receiverType";
+  // Used for generating exception messages
+  private static final String PROPERTY_NAME = "testMethodProperty";
 
   private final String methodName;
   private final Optional<Integer> argumentIdx;
@@ -80,30 +74,17 @@ public final class PiranhaTestMethodRecord implements PiranhaMethodRecord {
   static PiranhaTestMethodRecord parseFromJSONPropertyEntryMap(
       Map<String, Object> methodPropertyEntry, boolean isArgumentIndexOptional)
       throws PiranhaConfigurationException {
-    String methodName = getValueStringFromMap(methodPropertyEntry, METHOD_NAME_KEY);
-    Integer argumentIndexInteger = getArgumentIndexFromMap(methodPropertyEntry, ARGUMENT_INDEX_KEY);
-    if (methodName == null) {
-      throw new PiranhaConfigurationException(
-          "testMethodProperty is missing mandatory methodName field. Check:\n"
-              + methodPropertyEntry);
-    } else if (!isArgumentIndexOptional && argumentIndexInteger == null) {
-      throw new PiranhaConfigurationException(
-          "testMethodProperty did not have argumentIndex. By default, Piranha requires an argument index for flag "
-              + "APIs, to which the flag name/symbol will be passed. This is to avoid over-deletion of all "
-              + "occurrences of a flag API method. If you are sure you want to delete all instances of the "
-              + "method below, consider using Piranha:ArgumentIndexOptional=true to override this behavior. "
-              + "Check:\n"
-              + methodPropertyEntry);
-    } else if (argumentIndexInteger != null && argumentIndexInteger < 0) {
-      throw new PiranhaConfigurationException(
-          "Invalid argumentIndex field. Arguments are zero indexed. Check:\n"
-              + methodPropertyEntry);
-    }
+
+    String methodName = parseMethodNameFromJSON(PROPERTY_NAME, methodPropertyEntry);
+    Integer argumentIndexInteger =
+        parseArgumentIndexFromJSON(PROPERTY_NAME, methodPropertyEntry, isArgumentIndexOptional);
+    String receiverType = getValueStringFromMap(methodPropertyEntry, RECEIVER_TYPE_STRING);
+    String returnType = getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING);
 
     return new PiranhaTestMethodRecord(
         methodName,
         Optional.ofNullable(argumentIndexInteger),
-        Optional.ofNullable(getValueStringFromMap(methodPropertyEntry, RECEIVER_TYPE_STRING)),
-        Optional.ofNullable(getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING)));
+        Optional.ofNullable(receiverType),
+        Optional.ofNullable(returnType));
   }
 }
