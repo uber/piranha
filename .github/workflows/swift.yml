@@ -9,20 +9,22 @@ on:
 
 jobs:
   build:
-    name: "PiranhaSwift using ${{ matrix.xcode }} on ${{ matrix.os }}"
+    runs-on: macos-11
     strategy:
         matrix:
-          include:
-          - os: macos-latest
-            xcode: Xcode_12.2
-    runs-on: ${{ matrix.os }}
+          xcode: ['13.0']
+    name: "PiranhaSwift using ${{ matrix.xcode }} on ${{ matrix.os }}"
     steps:
       - name: Check out Piranha sources
         uses: actions/checkout@v2
+      - name: Set Xcode ${{ matrix.xcode }}
+        run: |
+         sudo xcode-select -s /Applications/Xcode_13.0_beta.app
+         xcodebuild -version
+         swift --version
+         swift package --version
       - name: Build and test
         run: |
            cd swift/
            sh package.sh
            sh test.sh
-        env:
-           DEVELOPER_DIR: "/Applications/${{ matrix.xcode }}.app/Contents/Developer"
