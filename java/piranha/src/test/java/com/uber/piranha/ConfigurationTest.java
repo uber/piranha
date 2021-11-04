@@ -13,6 +13,8 @@
  */
 package com.uber.piranha;
 
+import static com.uber.piranha.PiranhaTestingHelpers.addExperimentFlagEnumsWithConstructor;
+
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
@@ -1624,6 +1626,126 @@ public class ConfigurationTest {
 
     XPFlagCleaner flagCleaner = new XPFlagCleaner();
     flagCleaner.init(b.build());
+  }
+
+  /**
+   * Uses "properties_test_without_enum.json" instead of "properties.json". In it, there is no
+   * "enumProperties" specified. Thus, we do not remove the enum constant with the matching
+   * "stale.flag" constructor, STALE_FLAG.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/141">Issue #141</a>
+   */
+  @Test
+  public void testConfigWithoutRemoveEnumMatch() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_test_without_enum.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = addExperimentFlagEnumsWithConstructor(bcr, false); // Adds STALE_FLAG, etc enums
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "XPFlagCleanerRemoveMatchingEnum.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class XPFlagCleanerRemoveMatchingEnum {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag_treated() {",
+            "     experimentation.putToggleEnabled(STALE_FLAG.getKey());",
+            "  }",
+            "}")
+        .expectUnchanged()
+        .doTest();
+    ;
+  }
+
+  /**
+   * Uses "properties_test_with_enum_no_match.json" instead of "properties.json". In it, there is an
+   * "enumProperties" specified, but it is for a different enum class than tested here. Thus, we do
+   * not remove the enum constant with the matching "stale.flag" constructor, STALE_FLAG.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/141">Issue #141</a>
+   */
+  @Test
+  public void testConfigWithEnumNoMatch() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag(
+        "Piranha:Config", "src/test/resources/config/properties_test_with_enum_no_match.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = addExperimentFlagEnumsWithConstructor(bcr, false); // Adds STALE_FLAG, etc enums
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+
+    bcr.addInputLines(
+            "XPFlagCleanerRemoveMatchingEnum.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class XPFlagCleanerRemoveMatchingEnum {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag_treated() {",
+            "     experimentation.putToggleEnabled(STALE_FLAG.getKey());",
+            "  }",
+            "}")
+        .expectUnchanged()
+        .doTest();
+    ;
+  }
+
+  /**
+   * Uses "properties_test_with_enum_wrong_arg.json" instead of "properties.json". In it, there is
+   * an "enumProperties" specified, but it is for the wrong constructor argument index. Thus, we do
+   * not remove the enum constant with the matching "stale.flag" constructor, STALE_FLAG.
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/141">Issue #141</a>
+   */
+  @Test
+  public void testConfigWithEnumWrongArg() throws Exception {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag(
+        "Piranha:Config", "src/test/resources/config/properties_test_with_enum_wrong_arg.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = addExperimentFlagEnumsWithConstructor(bcr, false); // Adds STALE_FLAG, etc enums
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+
+    bcr.addInputLines(
+            "XPFlagCleanerRemoveMatchingEnum.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "class XPFlagCleanerRemoveMatchingEnum {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag_treated() {",
+            "     experimentation.putToggleEnabled(STALE_FLAG.getKey());",
+            "  }",
+            "}")
+        .expectUnchanged()
+        .doTest();
+    ;
   }
 
   /**
