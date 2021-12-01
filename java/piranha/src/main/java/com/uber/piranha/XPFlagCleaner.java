@@ -14,6 +14,13 @@
 package com.uber.piranha;
 
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
+import static com.google.errorprone.matchers.ChildMultiMatcher.MatchType.ALL;
+import static com.google.errorprone.matchers.Matchers.allOf;
+import static com.google.errorprone.matchers.Matchers.instanceMethod;
+import static com.google.errorprone.matchers.Matchers.methodInvocation;
+import static com.google.errorprone.matchers.Matchers.receiverOfInvocation;
+import static com.google.errorprone.matchers.Matchers.staticMethod;
+import static com.google.errorprone.matchers.Matchers.toType;
 
 import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
@@ -27,6 +34,7 @@ import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
+import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.FindIdentifiers;
 import com.sun.source.tree.AnnotationTree;
@@ -71,6 +79,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -683,27 +692,45 @@ public class XPFlagCleaner extends BugChecker
    */
   private Description updateCode(
       Value v, ExpressionTree tree, ExpressionTree expr, VisitorState state) {
-    boolean update = false;
-    String replacementString = "";
-
-    if (v.equals(Value.TRUE)) {
-      update = true;
-      replacementString = TRUE;
-    } else if (v.equals(Value.FALSE)) {
-      update = true;
-      replacementString = FALSE;
-    }
-
-    if (update) {
-      Description.Builder builder = buildDescription(tree);
-      SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
-      fixBuilder.replace(expr, replacementString);
+    if (v.equals(Value.TRUE) || v.equals(Value.FALSE)) {
+      SuggestedFix.Builder fixBuilder = handleSpecificAPIPatterns(state);
+      if (fixBuilder.isEmpty()) {
+        String replacementString = v.equals(Value.TRUE) ? TRUE : FALSE;
+        fixBuilder = SuggestedFix.builder().replace(expr, replacementString);
+        endPos = state.getEndPosition(expr);
+      }
       decrementAllSymbolUsages(expr, state, fixBuilder);
-      builder.addFix(fixBuilder.build());
-      endPos = state.getEndPosition(expr);
-      return builder.build();
+      return buildDescription(tree).addFix(fixBuilder.build()).build();
     }
     return Description.NO_MATCH;
+  }
+
+  private static final String MOCKITO_QN = "org.mockito.Mockito";
+  private static final String MOCKITO_WHEN = "when";
+  private static final Pattern MOCKITO_THEN = Pattern.compile("then\\W*\\w*");
+
+  private final Matcher<Tree> MOCKITO_UNNECESSARY_MOCKING_PATTERN =
+      toType(
+          MethodInvocationTree.class,
+          allOf(
+              instanceMethod().anyClass().withNameMatching(MOCKITO_THEN),
+              receiverOfInvocation(
+                  methodInvocation(
+                      staticMethod().onClass(MOCKITO_QN).named(MOCKITO_WHEN),
+                      ALL,
+                      (argument, vs) -> {
+                        Value value = evalExpr(argument, vs);
+                        return value == Value.TRUE || value == Value.FALSE;
+                      }))));
+
+  private SuggestedFix.Builder handleSpecificAPIPatterns(VisitorState state) {
+    ExpressionStatementTree stmt =
+        ASTHelpers.findEnclosingNode(state.getPath(), ExpressionStatementTree.class);
+    if (stmt != null && MOCKITO_UNNECESSARY_MOCKING_PATTERN.matches(stmt.getExpression(), state)) {
+      endPos = state.getEndPosition(stmt);
+      return SuggestedFix.builder().delete(stmt);
+    }
+    return SuggestedFix.builder();
   }
 
   private boolean isTreatmentGroupEnum(Symbol.ClassSymbol enumSym) {

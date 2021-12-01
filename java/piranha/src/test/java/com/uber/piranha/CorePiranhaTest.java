@@ -499,4 +499,87 @@ public class CorePiranhaTest {
             "class TestClassPartialMatch { }")
         .doTest();
   }
+
+  @Test
+  public void testRemoveSpecificAPIpatterns() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import static org.mockito.Mockito.when;",
+            "import org.mockito.invocation.InvocationOnMock;",
+            "import org.mockito.stubbing.Answer;",
+            "import org.mockito.stubbing.OngoingStubbing;",
+            "class MockitoTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "  Answer ans = new Answer<Integer>() {\n"
+                + "      public Integer answer(InvocationOnMock invocation) throws Throwable {\n"
+                + "        return (Integer) invocation.getArguments()[0];\n"
+                + "      }};",
+            "  when(experimentation.isToggleDisabled(\"STALE_FLAG\")).thenReturn(false);",
+            "  when(experimentation.isToggleEnabled(\"STALE_FLAG\")).thenThrow(new RuntimeException());",
+            "  when(experimentation.isToggleDisabled(\"STALE_FLAG\")).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"STALE_FLAG\")).then(ans);",
+            "  boolean b1 = someWrapper(when(experimentation.isToggleDisabled(\"STALE_FLAG\")).thenCallRealMethod());",
+            "  boolean b2 = someWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod());",
+            "  someWhenWrapper(when(experimentation.isToggleDisabled(\"STALE_FLAG\"))).thenCallRealMethod();",
+            "  someWhenWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\"))).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenReturn(false);",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenThrow(new RuntimeException());",
+            "  when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).then(ans);",
+            "  when(foobar()).thenReturn(false);",
+            "  when(foobar()).thenAnswer(ans);",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import static org.mockito.Mockito.when;",
+            "import org.mockito.invocation.InvocationOnMock;",
+            "import org.mockito.stubbing.Answer;",
+            "import org.mockito.stubbing.OngoingStubbing;",
+            "class MockitoTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "  Answer ans = new Answer<Integer>() {\n"
+                + "      public Integer answer(InvocationOnMock invocation) throws Throwable {\n"
+                + "        return (Integer) invocation.getArguments()[0];\n"
+                + "      }};",
+            "",
+            "",
+            "",
+            "",
+            "  boolean b1 = someWrapper(when(true).thenCallRealMethod());",
+            "  boolean b2 = someWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod());",
+            "  someWhenWrapper(when(true)).thenCallRealMethod();",
+            "  someWhenWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\"))).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenReturn(false);",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenThrow(new RuntimeException());",
+            "  when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).then(ans);",
+            "  when(foobar()).thenReturn(false);",
+            "  when(foobar()).thenAnswer(ans);",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
+            "}")
+        .doTest();
+    //        OngoingStubbing<Boolean> w =  when(true).the;
+  }
 }
