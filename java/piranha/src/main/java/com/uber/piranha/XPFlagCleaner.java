@@ -769,6 +769,7 @@ public class XPFlagCleaner extends BugChecker
   private SuggestedFix.Builder handleSpecificAPIPatterns(VisitorState state) {
     ExpressionStatementTree stmt =
         ASTHelpers.findEnclosingNode(state.getPath(), ExpressionStatementTree.class);
+
     if (stmt != null
         && (MOCKITO_UNNECESSARY_MOCKING_PATTERN.matches(stmt.getExpression(), state)
             || EASYMOCK_PATTERN.matches(stmt.getExpression(), state)
