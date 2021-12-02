@@ -38,6 +38,7 @@ dependencies {
     testCompile deps.test.junit4
     testCompile deps.test.daggerAnnotations
     testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.1.0'
+    testImplementation group: 'org.easymock', name: 'easymock', version: '4.3'
     testCompile(deps.build.errorProneTestHelpers) {
         exclude group: "junit", module: "junit"
     }

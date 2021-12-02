@@ -16,6 +16,8 @@ package com.uber.piranha;
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
 import static com.google.errorprone.matchers.ChildMultiMatcher.MatchType.ALL;
 import static com.google.errorprone.matchers.Matchers.allOf;
+import static com.google.errorprone.matchers.Matchers.anyOf;
+import static com.google.errorprone.matchers.Matchers.contains;
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
 import static com.google.errorprone.matchers.Matchers.methodInvocation;
 import static com.google.errorprone.matchers.Matchers.receiverOfInvocation;
@@ -705,9 +707,50 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  private static final String EASYMOCK_QN = "org.easymock.EasyMock";
+  private static final String EASYMOCK_EXPECT = "expect";
+  private static final Pattern EASYMOCK_AND = Pattern.compile("and\\W*\\w*");
+  private static final String EASYMOCK_ANYTIMES = "anyTimes";
+  private static final String EASYMOCK_TIMES = "times";
+  private static final String EASYMOCK_ONCE = "once";
+  private static final String EASYMOCK_ATLEASTONCE = "atLeastOnce";
+  private static final String EASYMOCK_ASSTUB = "asStub";
+
   private static final String MOCKITO_QN = "org.mockito.Mockito";
   private static final String MOCKITO_WHEN = "when";
   private static final Pattern MOCKITO_THEN = Pattern.compile("then\\W*\\w*");
+
+  private static final String JUNIT_ASSERT_QN = "org.junit.Assert";
+  private static final String JUNIT_ASSERTTRUE = "assertTrue";
+  private static final String JUNIT_ASSERTFALSE = "assertFalse";
+
+  private final Matcher<Tree> JUNIT_ASSERT_PATTERN =
+      toType(
+          MethodInvocationTree.class,
+          anyOf(
+              staticMethod().onClass(JUNIT_ASSERT_QN).named(JUNIT_ASSERTTRUE),
+              staticMethod().onClass(JUNIT_ASSERT_QN).named(JUNIT_ASSERTFALSE)));
+
+  private final Matcher<Tree> EASYMOCK_PATTERN =
+      toType(
+          MethodInvocationTree.class,
+          allOf(
+              anyOf(
+                  instanceMethod().anyClass().withNameMatching(EASYMOCK_AND),
+                  instanceMethod().anyClass().named(EASYMOCK_ANYTIMES),
+                  instanceMethod().anyClass().named(EASYMOCK_ONCE),
+                  instanceMethod().anyClass().named(EASYMOCK_TIMES),
+                  instanceMethod().anyClass().named(EASYMOCK_ASSTUB),
+                  instanceMethod().anyClass().named(EASYMOCK_ATLEASTONCE)),
+              contains(
+                  ExpressionTree.class,
+                  methodInvocation(
+                      staticMethod().onClass(EASYMOCK_QN).named(EASYMOCK_EXPECT),
+                      ALL,
+                      (argument, vs) -> {
+                        Value value = evalExpr(argument, vs);
+                        return value == Value.TRUE || value == Value.FALSE;
+                      }))));
 
   private final Matcher<Tree> MOCKITO_UNNECESSARY_MOCKING_PATTERN =
       toType(
@@ -726,7 +769,10 @@ public class XPFlagCleaner extends BugChecker
   private SuggestedFix.Builder handleSpecificAPIPatterns(VisitorState state) {
     ExpressionStatementTree stmt =
         ASTHelpers.findEnclosingNode(state.getPath(), ExpressionStatementTree.class);
-    if (stmt != null && MOCKITO_UNNECESSARY_MOCKING_PATTERN.matches(stmt.getExpression(), state)) {
+    if (stmt != null
+        && (MOCKITO_UNNECESSARY_MOCKING_PATTERN.matches(stmt.getExpression(), state)
+            || EASYMOCK_PATTERN.matches(stmt.getExpression(), state)
+            || JUNIT_ASSERT_PATTERN.matches(stmt.getExpression(), state))) {
       endPos = state.getEndPosition(stmt);
       return SuggestedFix.builder().delete(stmt);
     }
