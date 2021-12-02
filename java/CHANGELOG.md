@@ -1,3 +1,9 @@
+Version 0.1.5
+-------------
+* Remove enum constants with field matching flag value. [#142]
+* Properly clean up enum constants ending with semicolon. [#147]
+* Deleting statements using specific Mockito API patterns. [#155]
+
 Version 0.1.4
 -------------
 * Fix XP flag symbol matching on imports. [#102]
