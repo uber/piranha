@@ -16,7 +16,10 @@ package com.uber.piranha.config;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-/** Utility methods used by {@link PiranhaEnumRecord} and {@link PiranhaMethodRecord} classes */
+/**
+ * Utility methods used by {@link PiranhaEnumRecord}, {@link PiranhaFlagMethodRecord}, and {@link
+ * PiranhaTestMethodRecord} classes
+ */
 public class PiranhaRecord {
   /**
    * Utility method. Checks whether the value associated to a given map and given key is a non-empty

@@ -833,4 +833,196 @@ public class TestCaseCleanUpTest {
             "}")
         .doTest();
   }
+
+  /**
+   * Tests the removal of extraneous test methods after a feature flag is removed. An example of
+   * this might be an attempt to mock the result of a feature flag call such as
+   * mock(experimentation.isToggleEnabled(STALE_FLAG));
+   */
+  @Test
+  public void testTestMethodRemoval() throws IOException {
+    ErrorProneFlags.Builder bFlag = ErrorProneFlags.builder();
+    bFlag.putFlag("Piranha:FlagName", "STALE_FLAG");
+    bFlag.putFlag("Piranha:IsTreated", "false");
+    bFlag.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(bFlag.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr = addExperimentFlagEnums(bcr); // Adds STALE_FLAG, etc enums
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Before;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "import static com.uber.piranha.TestMethods.mock;",
+            "import static com.uber.piranha.TestMethods.mockable;",
+            "import static com.uber.piranha.TestMethods.keepMe;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Before",
+            "  public void setUp() {",
+            "     mock(experimentation.isToggleDisabled(STALE_FLAG)).thenReturn(false);",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag1() {",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG));",
+            "     mock(mockable());",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "     keepMe(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag() {",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "  }",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Before;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestMethods.mock;",
+            "import static com.uber.piranha.TestMethods.mockable;",
+            "import static com.uber.piranha.TestMethods.keepMe;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Before",
+            "  public void setUp() {",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag1() {",
+            "     mock(mockable());",
+            "     keepMe(false).thenReturn(true);",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag() {",
+            "  }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Unfortunately, test method removal isn't smart enough to clean up imports without requiring a
+   * second pass. This test ensures the imports still exist. However, there are tools that exist
+   * that can be run to remove unused imports.
+   */
+  @Test
+  public void testTestMethodRemovalKeepImports() throws IOException {
+    ErrorProneFlags.Builder bFlag = ErrorProneFlags.builder();
+    bFlag.putFlag("Piranha:FlagName", "STALE_FLAG");
+    bFlag.putFlag("Piranha:IsTreated", "false");
+    bFlag.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(bFlag.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr = addExperimentFlagEnums(bcr); // Adds STALE_FLAG, etc enums
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Before;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "import static com.uber.piranha.TestMethods.mock;",
+            "import static com.uber.piranha.TestMethods.keepMe;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Before",
+            "  public void setUp() {",
+            "     mock(experimentation.isToggleDisabled(STALE_FLAG)).thenReturn(false);",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag1() {",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG));",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "     keepMe(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag() {",
+            "     mock(experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "  }",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Before;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestMethods.mock;",
+            "import static com.uber.piranha.TestMethods.keepMe;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Before",
+            "  public void setUp() {",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag1() {",
+            "     keepMe(false).thenReturn(true);",
+            "  }",
+            "  @Test",
+            "  public void test_StaleFlag() {",
+            "  }",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * A test when specifying a particular index when cleaning a test method. This test will ensure
+   * that only methods that have the flag method in the right index AND that that flag method
+   * matches a flag will be cleaned up.
+   */
+  @Test
+  public void testTestOverloadedMethodRemoval() throws IOException {
+    ErrorProneFlags.Builder bFlag = ErrorProneFlags.builder();
+    bFlag.putFlag("Piranha:FlagName", "STALE_FLAG");
+    bFlag.putFlag("Piranha:IsTreated", "false");
+    bFlag.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(bFlag.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr = addExperimentFlagEnums(bcr); // Adds STALE_FLAG, etc enums
+    bcr.addInputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "import static com.uber.piranha.TestExperimentName.STALE_FLAG;",
+            "import static com.uber.piranha.TestMethods.expect;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag1() {",
+            "     expect(experimentation.isToggleEnabled(STALE_FLAG));",
+            "     expect(true, experimentation.isToggleEnabled(STALE_FLAG)).thenReturn(true);",
+            "     expect(true, experimentation.isToggleEnabled(OTHER_FLAG_1)).thenReturn(true);",
+            "  }",
+            "}")
+        .addOutputLines(
+            "TestClass.java",
+            "package com.uber.piranha;",
+            "import org.junit.Test;",
+            "import static com.uber.piranha.TestExperimentName.OTHER_FLAG_1;",
+            "import static com.uber.piranha.TestMethods.expect;",
+            "class TestClass {",
+            "  private XPTest experimentation;",
+            "  @Test",
+            "  public void test_StaleFlag1() {",
+            "     expect(false);",
+            "     expect(true, experimentation.isToggleEnabled(OTHER_FLAG_1)).thenReturn(true);",
+            "  }",
+            "}")
+        .doTest();
+  }
 }
