@@ -38,6 +38,28 @@
       "argumentIndex": 0
     }
   ],
+  "unnecessaryTestMethodProperties" : [
+    {
+      "methodName": "when",
+      "argumentIndex": 0,
+      "recieverType":"org.mockito.Mockito"
+    },
+    {
+      "methodName": "expect",
+      "argumentIndex": 0,
+      "recieverType":"org.easymock.EasyMock"
+    },
+    {
+      "methodName": "assertTrue",
+      "argumentIndex": 0,
+      "recieverType":"org.junit.Assert"
+    },
+    {
+      "methodName": "assertFalse",
+      "argumentIndex": 0,
+      "recieverType":"org.junit.Assert"
+    }
+  ],
   "linkURL": "<provide_your_url>",
   "annotations": [
     "ToggleTesting",

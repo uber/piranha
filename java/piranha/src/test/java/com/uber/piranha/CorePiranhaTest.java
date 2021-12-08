@@ -596,7 +596,7 @@ public class CorePiranhaTest {
             "",
             "  boolean b1 = someWrapper(when(true).thenCallRealMethod());",
             "  boolean b2 = someWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod());",
-            "  someWhenWrapper(when(true)).thenCallRealMethod();",
+            "",
             "  someWhenWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\"))).thenCallRealMethod();",
             "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenReturn(false);",
             "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenThrow(new RuntimeException());",

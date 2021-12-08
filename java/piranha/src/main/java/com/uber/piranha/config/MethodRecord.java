@@ -16,46 +16,61 @@ package com.uber.piranha.config;
 import static com.uber.piranha.config.PiranhaRecord.getArgumentIndexFromMap;
 import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
-import com.google.common.collect.ImmutableMap;
-import com.uber.piranha.XPFlagCleaner;
 import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalInt;
 import javax.annotation.Nullable;
 
 /** A class representing a method configuration record from properties.json */
-public final class PiranhaMethodRecord extends MethodRecord {
+public class MethodRecord {
+
+  // Allowed fields for a method property in the config file.
+  // Entered under the top-level "methodProperties" in properties.json.
+  // By default, the flagType, methodName and argumentIndex fields are mandatory.
+  // The returnType and receiverType fields are optional.
+  protected static final String FLAG_TYPE_KEY = "flagType";
+  protected static final String METHOD_NAME_KEY = "methodName";
+  protected static final String ARGUMENT_INDEX_KEY = "argumentIndex";
+  protected static final String RETURN_TYPE_STRING = "returnType";
+  protected static final String RECEIVER_TYPE_STRING = "receiverType";
 
   /**
    * Holds the mapping of flagType string to API. Eg: "treated" -> API.IS_TREATED. Is initialized
    * once and then accessed without updating.
    */
-  private static final ImmutableMap<String, XPFlagCleaner.API> flagTypeToAPIMap =
-      initializeFlagTypeToAPIMap();
+  private final String methodName;
 
-  private final XPFlagCleaner.API apiType;
+  @Nullable private final Integer argumentIdx;
+  @Nullable private final String receiverType;
+  @Nullable private final String returnType;
+  //  @Nullable
+  //  private final boolean isStatic;
 
-  PiranhaMethodRecord(
+  MethodRecord(
       String methodName,
-      String flagTypeString,
       @Nullable Integer argumentIdx,
       @Nullable String receiverType,
       @Nullable String returnType) {
-    super(methodName, argumentIdx, receiverType, returnType);
-    this.apiType = flagTypeToAPIMap.getOrDefault(flagTypeString, XPFlagCleaner.API.UNKNOWN);
+    this.methodName = methodName;
+    this.argumentIdx = argumentIdx;
+    this.receiverType = receiverType;
+    this.returnType = returnType;
   }
 
-  public XPFlagCleaner.API getApiType() {
-    return apiType;
+  public String getMethodName() {
+    return methodName;
   }
 
-  private static ImmutableMap<String, XPFlagCleaner.API> initializeFlagTypeToAPIMap() {
-    ImmutableMap.Builder<String, XPFlagCleaner.API> builder = new ImmutableMap.Builder<>();
-    builder.put("treated", XPFlagCleaner.API.IS_TREATED);
-    builder.put("control", XPFlagCleaner.API.IS_CONTROL);
-    builder.put("set_treated", XPFlagCleaner.API.SET_TREATED);
-    builder.put("set_control", XPFlagCleaner.API.SET_CONTROL);
-    builder.put("empty", XPFlagCleaner.API.DELETE_METHOD);
-    builder.put("treatmentGroup", XPFlagCleaner.API.IS_TREATMENT_GROUP_CHECK);
-    return builder.build();
+  public OptionalInt getArgumentIdx() {
+    return Optional.ofNullable(argumentIdx).map(OptionalInt::of).orElseGet(OptionalInt::empty);
+  }
+
+  public Optional<String> getReceiverType() {
+    return Optional.ofNullable(receiverType);
+  }
+
+  public Optional<String> getReturnType() {
+    return Optional.ofNullable(returnType);
   }
 
   /**
@@ -68,7 +83,7 @@ public final class PiranhaMethodRecord extends MethodRecord {
    * @throws PiranhaConfigurationException if there was any issue reading or parsing the
    *     configuration file.
    */
-  static PiranhaMethodRecord parseFromJSONPropertyEntryMap(
+  static MethodRecord parseFromJSONPropertyEntryMap(
       Map<String, Object> methodPropertyEntry, boolean isArgumentIndexOptional)
       throws PiranhaConfigurationException {
     String methodName = getValueStringFromMap(methodPropertyEntry, METHOD_NAME_KEY);
@@ -77,9 +92,6 @@ public final class PiranhaMethodRecord extends MethodRecord {
     if (methodName == null) {
       throw new PiranhaConfigurationException(
           "methodProperty is missing mandatory methodName field. Check:\n" + methodPropertyEntry);
-    } else if (flagType == null) {
-      throw new PiranhaConfigurationException(
-          "methodProperty is missing mandatory flagType field. Check:\n" + methodPropertyEntry);
     } else if (!isArgumentIndexOptional && argumentIndexInteger == null) {
       throw new PiranhaConfigurationException(
           "methodProperty did not have argumentIndex. By default, Piranha requires an argument index for flag "
@@ -94,9 +106,8 @@ public final class PiranhaMethodRecord extends MethodRecord {
               + methodPropertyEntry);
     }
 
-    return new PiranhaMethodRecord(
+    return new MethodRecord(
         methodName,
-        flagType,
         argumentIndexInteger,
         getValueStringFromMap(methodPropertyEntry, RECEIVER_TYPE_STRING),
         getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING));

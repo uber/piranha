@@ -14,15 +14,7 @@
 package com.uber.piranha;
 
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
-import static com.google.errorprone.matchers.ChildMultiMatcher.MatchType.ALL;
-import static com.google.errorprone.matchers.Matchers.allOf;
-import static com.google.errorprone.matchers.Matchers.anyOf;
-import static com.google.errorprone.matchers.Matchers.contains;
-import static com.google.errorprone.matchers.Matchers.instanceMethod;
-import static com.google.errorprone.matchers.Matchers.methodInvocation;
-import static com.google.errorprone.matchers.Matchers.receiverOfInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
-import static com.google.errorprone.matchers.Matchers.toType;
 
 import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
@@ -36,7 +28,6 @@ import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
-import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.FindIdentifiers;
 import com.sun.source.tree.AnnotationTree;
@@ -80,8 +71,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -371,9 +362,9 @@ public class XPFlagCleaner extends BugChecker
     for (PiranhaMethodRecord methodRecord : methodRecordsForName) {
       // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
-      Optional<Integer> optionalArgumentIdx = methodRecord.getArgumentIdx();
+      OptionalInt optionalArgumentIdx = methodRecord.getArgumentIdx();
       if (optionalArgumentIdx.isPresent()) {
-        int argumentIndex = optionalArgumentIdx.get().intValue();
+        int argumentIndex = optionalArgumentIdx.getAsInt();
         if (argumentIndex < mit.getArguments().size()) {
           ExpressionTree argTree = mit.getArguments().get(argumentIndex);
           Symbol argSym = ASTHelpers.getSymbol(argTree);
@@ -707,75 +698,27 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
-  private static final String EASYMOCK_QN = "org.easymock.EasyMock";
-  private static final String EASYMOCK_EXPECT = "expect";
-  private static final Pattern EASYMOCK_AND = Pattern.compile("and\\W*\\w*");
-  private static final String EASYMOCK_ANYTIMES = "anyTimes";
-  private static final String EASYMOCK_TIMES = "times";
-  private static final String EASYMOCK_ONCE = "once";
-  private static final String EASYMOCK_ATLEASTONCE = "atLeastOnce";
-  private static final String EASYMOCK_ASSTUB = "asStub";
-
-  private static final String MOCKITO_QN = "org.mockito.Mockito";
-  private static final String MOCKITO_WHEN = "when";
-  private static final Pattern MOCKITO_THEN = Pattern.compile("then\\W*\\w*");
-
-  private static final String JUNIT_ASSERT_QN = "org.junit.Assert";
-  private static final String JUNIT_ASSERTTRUE = "assertTrue";
-  private static final String JUNIT_ASSERTFALSE = "assertFalse";
-
-  private final Matcher<Tree> JUNIT_ASSERT_PATTERN =
-      toType(
-          MethodInvocationTree.class,
-          anyOf(
-              staticMethod().onClass(JUNIT_ASSERT_QN).named(JUNIT_ASSERTTRUE),
-              staticMethod().onClass(JUNIT_ASSERT_QN).named(JUNIT_ASSERTFALSE)));
-
-  private final Matcher<Tree> EASYMOCK_PATTERN =
-      toType(
-          MethodInvocationTree.class,
-          allOf(
-              anyOf(
-                  instanceMethod().anyClass().withNameMatching(EASYMOCK_AND),
-                  instanceMethod().anyClass().named(EASYMOCK_ANYTIMES),
-                  instanceMethod().anyClass().named(EASYMOCK_ONCE),
-                  instanceMethod().anyClass().named(EASYMOCK_TIMES),
-                  instanceMethod().anyClass().named(EASYMOCK_ASSTUB),
-                  instanceMethod().anyClass().named(EASYMOCK_ATLEASTONCE)),
-              contains(
-                  ExpressionTree.class,
-                  methodInvocation(
-                      staticMethod().onClass(EASYMOCK_QN).named(EASYMOCK_EXPECT),
-                      ALL,
-                      (argument, vs) -> {
-                        Value value = evalExpr(argument, vs);
-                        return value == Value.TRUE || value == Value.FALSE;
-                      }))));
-
-  private final Matcher<Tree> MOCKITO_UNNECESSARY_MOCKING_PATTERN =
-      toType(
-          MethodInvocationTree.class,
-          allOf(
-              instanceMethod().anyClass().withNameMatching(MOCKITO_THEN),
-              receiverOfInvocation(
-                  methodInvocation(
-                      staticMethod().onClass(MOCKITO_QN).named(MOCKITO_WHEN),
-                      ALL,
-                      (argument, vs) -> {
-                        Value value = evalExpr(argument, vs);
-                        return value == Value.TRUE || value == Value.FALSE;
-                      }))));
-
   private SuggestedFix.Builder handleSpecificAPIPatterns(VisitorState state) {
-    ExpressionStatementTree stmt =
+    MethodInvocationTree enclosingMit =
+        ASTHelpers.findEnclosingNode(state.getPath(), MethodInvocationTree.class);
+
+    ExpressionStatementTree enclosingEst =
         ASTHelpers.findEnclosingNode(state.getPath(), ExpressionStatementTree.class);
 
-    if (stmt != null
-        && (MOCKITO_UNNECESSARY_MOCKING_PATTERN.matches(stmt.getExpression(), state)
-            || EASYMOCK_PATTERN.matches(stmt.getExpression(), state)
-            || JUNIT_ASSERT_PATTERN.matches(stmt.getExpression(), state))) {
-      endPos = state.getEndPosition(stmt);
-      return SuggestedFix.builder().delete(stmt);
+    if (enclosingMit != null
+        && enclosingEst != null
+        && config
+            .getUnnecessaryTestMethodRecords()
+            .stream()
+            .map(
+                x ->
+                    x.getReceiverType()
+                        .map(r -> staticMethod().onClass(r))
+                        .orElseGet(() -> staticMethod().anyClass())
+                        .named(x.getMethodName()))
+            .anyMatch(matcher -> matcher.matches(enclosingMit, state))) {
+      endPos = state.getEndPosition(enclosingMit);
+      return SuggestedFix.builder().delete(enclosingEst);
     }
     return SuggestedFix.builder();
   }
