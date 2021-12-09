@@ -65,22 +65,23 @@ public final class Config {
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
-   * configMethodsMap is a map where key is method name and value is a list where each item in the
-   * list is a map that corresponds to each method property from properties.json. In most cases, the
-   * list would have only one element. But if someone reuses the same method name with different
+   * configMethodProperties is a map where key is method name and value is a list where each item in
+   * the list is a map that corresponds to each method property from properties.json. In most cases,
+   * the list would have only one element. But if someone reuses the same method name with different
    * returnType/receiverType/argumentIndex, the list would have each method property map as one
    * element.
    */
   private final ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
   /**
-   * TODO: Update this comment configMethodsMap is a map where key is method name and value is a
-   * list where each item in the list is a map that corresponds to each method property from
+   * unnecessaryTestMethodProperties is a map where key is method name and value is a list where
+   * each item in the list is a map that corresponds to each test method property from
    * properties.json. In most cases, the list would have only one element. But if someone reuses the
    * same method name with different returnType/receiverType/argumentIndex, the list would have each
-   * method property map as one element.
+   * method property map as one element. Often after the refactoring performed by Piranha, certain
+   * method invocations in test cases become unnecessary, need to be deleted.
    */
-  private ImmutableMultimap<String, MethodRecord> unnecessaryTestMethodProperties;
+  private final ImmutableMultimap<String, MethodRecord> unnecessaryTestMethodProperties;
   /**
    * configEnumProperties is a map where key is enum name and value is a list where each item in the
    * list is a map that corresponds to each enum property from properties.json. In most cases, the
@@ -135,10 +136,12 @@ public final class Config {
         : ImmutableSet.of();
   }
   /**
-   * TODO: Update comment Return all configuration method records matching a given method name.
+   * Return all the configured unnecessary test methods (corresponding to the
+   * unnecessaryTestMethodProperties field)
    *
-   * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
-   *     definition in the piranha json configuration file matching {@code methodName}.
+   * @return A collection of {@link MethodRecord} objects, representing each method definition in
+   *     the piranha json configuration file (unnecessaryTestMethodProperties field) matching {@code
+   *     methodName}.
    */
   public ImmutableCollection<MethodRecord> getUnnecessaryTestMethodRecords() {
     return unnecessaryTestMethodProperties.values();

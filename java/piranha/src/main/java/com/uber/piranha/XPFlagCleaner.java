@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2019 Uber Technologies, Inc.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -14,6 +14,7 @@
 package com.uber.piranha;
 
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
+import static com.google.errorprone.matchers.Matchers.instanceMethod;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 
 import com.facebook.infer.annotation.Initializer;
@@ -698,6 +699,14 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  /**
+   * This method picks up the unnecessary test method as configured in properties.json and converts
+   * them into a Error-prone AST Matcher and then deletes the containing AST statement.
+   *
+   * @param state
+   * @return Suggestion Fix for deleting the statement containing a unnecessary test method
+   *     invocation
+   */
   private SuggestedFix.Builder handleSpecificAPIPatterns(VisitorState state) {
     MethodInvocationTree enclosingMit =
         ASTHelpers.findEnclosingNode(state.getPath(), MethodInvocationTree.class);
@@ -711,11 +720,14 @@ public class XPFlagCleaner extends BugChecker
             .getUnnecessaryTestMethodRecords()
             .stream()
             .map(
-                x ->
-                    x.getReceiverType()
-                        .map(r -> staticMethod().onClass(r))
-                        .orElseGet(() -> staticMethod().anyClass())
-                        .named(x.getMethodName()))
+                mthd ->
+                    mthd.isStatic()
+                        ? mthd.getReceiverType()
+                            .map(r -> staticMethod().onClass(r))
+                            .orElseGet(() -> staticMethod().anyClass())
+                        : mthd.getReceiverType()
+                            .map(r -> instanceMethod().onExactClass(r))
+                            .orElseGet(() -> instanceMethod().anyClass()))
             .anyMatch(matcher -> matcher.matches(enclosingMit, state))) {
       endPos = state.getEndPosition(enclosingMit);
       return SuggestedFix.builder().delete(enclosingEst);

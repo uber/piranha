@@ -14,6 +14,7 @@
 package com.uber.piranha.config;
 
 import static com.uber.piranha.config.PiranhaRecord.getArgumentIndexFromMap;
+import static com.uber.piranha.config.PiranhaRecord.getValueBooleanFromMap;
 import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
 import com.google.common.collect.ImmutableMap;
@@ -38,8 +39,9 @@ public final class PiranhaMethodRecord extends MethodRecord {
       String flagTypeString,
       @Nullable Integer argumentIdx,
       @Nullable String receiverType,
-      @Nullable String returnType) {
-    super(methodName, argumentIdx, receiverType, returnType);
+      @Nullable String returnType,
+      @Nullable Boolean isStatic) {
+    super(methodName, argumentIdx, receiverType, returnType, isStatic);
     this.apiType = flagTypeToAPIMap.getOrDefault(flagTypeString, XPFlagCleaner.API.UNKNOWN);
   }
 
@@ -99,6 +101,7 @@ public final class PiranhaMethodRecord extends MethodRecord {
         flagType,
         argumentIndexInteger,
         getValueStringFromMap(methodPropertyEntry, RECEIVER_TYPE_STRING),
-        getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING));
+        getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING),
+        getValueBooleanFromMap(methodPropertyEntry, METHOD_IS_STATIC));
   }
 }

@@ -14,6 +14,7 @@
 package com.uber.piranha.config;
 
 import static com.uber.piranha.config.PiranhaRecord.getArgumentIndexFromMap;
+import static com.uber.piranha.config.PiranhaRecord.getValueBooleanFromMap;
 import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
 import java.util.Map;
@@ -33,6 +34,7 @@ public class MethodRecord {
   protected static final String ARGUMENT_INDEX_KEY = "argumentIndex";
   protected static final String RETURN_TYPE_STRING = "returnType";
   protected static final String RECEIVER_TYPE_STRING = "receiverType";
+  protected static final String METHOD_IS_STATIC = "isStatic";
 
   /**
    * Holds the mapping of flagType string to API. Eg: "treated" -> API.IS_TREATED. Is initialized
@@ -43,18 +45,19 @@ public class MethodRecord {
   @Nullable private final Integer argumentIdx;
   @Nullable private final String receiverType;
   @Nullable private final String returnType;
-  //  @Nullable
-  //  private final boolean isStatic;
+  private final Boolean isStatic;
 
   MethodRecord(
       String methodName,
       @Nullable Integer argumentIdx,
       @Nullable String receiverType,
-      @Nullable String returnType) {
+      @Nullable String returnType,
+      @Nullable Boolean isStatic) {
     this.methodName = methodName;
     this.argumentIdx = argumentIdx;
     this.receiverType = receiverType;
     this.returnType = returnType;
+    this.isStatic = isStatic != null && isStatic;
   }
 
   public String getMethodName() {
@@ -87,7 +90,6 @@ public class MethodRecord {
       Map<String, Object> methodPropertyEntry, boolean isArgumentIndexOptional)
       throws PiranhaConfigurationException {
     String methodName = getValueStringFromMap(methodPropertyEntry, METHOD_NAME_KEY);
-    String flagType = getValueStringFromMap(methodPropertyEntry, FLAG_TYPE_KEY);
     Integer argumentIndexInteger = getArgumentIndexFromMap(methodPropertyEntry, ARGUMENT_INDEX_KEY);
     if (methodName == null) {
       throw new PiranhaConfigurationException(
@@ -110,6 +112,11 @@ public class MethodRecord {
         methodName,
         argumentIndexInteger,
         getValueStringFromMap(methodPropertyEntry, RECEIVER_TYPE_STRING),
-        getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING));
+        getValueStringFromMap(methodPropertyEntry, RETURN_TYPE_STRING),
+        getValueBooleanFromMap(methodPropertyEntry, METHOD_IS_STATIC));
+  }
+
+  public boolean isStatic() {
+    return isStatic;
   }
 }
