@@ -42,25 +42,25 @@
     {
       "methodName": "when",
       "argumentIndex": 0,
-      "recieverType":"org.mockito.Mockito",
+      "receiverType":"org.mockito.Mockito",
       "isStatic": "true"
     },
     {
       "methodName": "expect",
       "argumentIndex": 0,
-      "recieverType":"org.easymock.EasyMock",
+      "receiverType":"org.easymock.EasyMock",
       "isStatic": "true"
     },
     {
       "methodName": "assertTrue",
       "argumentIndex": 0,
-      "recieverType":"org.junit.Assert",
+      "receiverType":"org.junit.Assert",
       "isStatic": "true"
     },
     {
       "methodName": "assertFalse",
       "argumentIndex": 0,
-      "recieverType":"org.junit.Assert",
+      "receiverType":"org.junit.Assert",
       "isStatic": "true"
     }
   ],

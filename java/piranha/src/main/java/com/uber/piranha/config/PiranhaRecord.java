@@ -29,8 +29,9 @@ public class PiranhaRecord {
   @Nullable
   static String getValueStringFromMap(Map<String, Object> map, String key) {
     Object value = map.get(key);
-    if (value instanceof String && !value.equals("")) {
-      return String.valueOf(value);
+    if (value instanceof String) {
+      String valueStr = String.valueOf(value);
+      if (!valueStr.isEmpty()) return valueStr;
     }
     return null;
   }

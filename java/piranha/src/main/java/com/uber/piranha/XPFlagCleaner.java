@@ -703,7 +703,7 @@ public class XPFlagCleaner extends BugChecker
    * This method picks up the unnecessary test method as configured in properties.json and converts
    * them into a Error-prone AST Matcher and then deletes the containing AST statement.
    *
-   * @param state
+   * @param state The visitor state of the statement to be handled
    * @return Suggestion Fix for deleting the statement containing a unnecessary test method
    *     invocation
    */
@@ -720,12 +720,14 @@ public class XPFlagCleaner extends BugChecker
             .getUnnecessaryTestMethodRecords()
             .stream()
             .map(
-                mthd ->
-                    mthd.isStatic()
-                        ? mthd.getReceiverType()
+                method ->
+                    method.isStatic()
+                        ? method
+                            .getReceiverType()
                             .map(r -> staticMethod().onClass(r))
                             .orElseGet(() -> staticMethod().anyClass())
-                        : mthd.getReceiverType()
+                        : method
+                            .getReceiverType()
                             .map(r -> instanceMethod().onExactClass(r))
                             .orElseGet(() -> instanceMethod().anyClass()))
             .anyMatch(matcher -> matcher.matches(enclosingMit, state))) {
