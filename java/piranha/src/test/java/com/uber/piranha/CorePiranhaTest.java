@@ -584,6 +584,207 @@ public class CorePiranhaTest {
   }
 
   @Test
+  public void testStripRedundantParenthesisControl() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   if (x && (y && !experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean bax1 (boolean x, boolean y, boolean z) {",
+            "   return x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)));",
+            " }",
+            " public void bax2 (boolean x, boolean y, boolean z) {",
+            "   boolean a = !(x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))));",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "    ",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   if (x && y) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && y) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean bax1 (boolean x, boolean y, boolean z) {",
+            "   return x && y;",
+            " }",
+            " public void bax2 (boolean x, boolean y, boolean z) {",
+            "   boolean a = !(x && y);",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /** This test checks that redundant parenthesis are removed from code */
+  @Test
+  public void testStripRedundantParenthesisTreatment() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            " STALE_FLAG",
+            "}")
+        .addOutputLines(
+            "TestExperimentName.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentName {",
+            "}")
+        .addInputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean foo1 (boolean x, boolean y) {",
+            "   return x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar1 (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && !(z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar2 (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   if (x && (y && !experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean bax_rmv (boolean x, boolean y, boolean z) {",
+            "   return x && (y || z || experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            " }",
+            " public boolean bax_rmv_all (boolean x, boolean y, boolean z) {",
+            "   return x && (y && z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            " }",
+            " public void bax1 (boolean w, boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && w)))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax2 (boolean w, boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && w)))) { boolean a = x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))); }",
+            " }",
+            " public boolean bax3 () {",
+            "   if(experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)){return true;} else {return false;}",
+            " }",
+            " public boolean bax4 () {",
+            "   boolean x = (!experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            "   if(experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)){return true;} else {return false;}",
+            " }",
+            " public boolean bax5 (boolean x) {",
+            "   return (x && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
+            "package com.uber.piranha;",
+            "class XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl {",
+            " private XPTest experimentation;",
+            " public void foo (boolean x, boolean y) {",
+            "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean foo1 (boolean x, boolean y) {",
+            "   return x || y;",
+            " }",
+            " public void bar (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && z)) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar1 (boolean x, boolean y, boolean z) {",
+            "   if (x && (y && !z)) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bar2 (boolean x, boolean y, boolean z) {",
+            "   if (x && y && z) { System.out.println(\"if block\"); }",
+            " }",
+            " public void baz (boolean x, boolean y) {",
+            "   ",
+            " }",
+            " public void bax (boolean x, boolean y, boolean z) {",
+            "   if (x && (y || z)) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean bax_rmv (boolean x, boolean y, boolean z) {",
+            "   return x;",
+            " }",
+            " public boolean bax_rmv_all (boolean x, boolean y, boolean z) {",
+            "   return x && y && z;",
+            " }",
+            " public void bax1 (boolean w, boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && w))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax2 (boolean w, boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && w))) { boolean a = x && (y || z); }",
+            " }",
+            " public boolean bax3 () {",
+            "   return true;",
+            " }",
+            " public boolean bax4 () {",
+            "   boolean x = (false);",
+            "   return true;",
+            " }",
+            " public boolean bax5 (boolean x) {",
+            "   return x;",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  @Test
   public void testRemoveSpecificAPIpatternsEasyMock() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
