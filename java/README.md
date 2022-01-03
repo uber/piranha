@@ -138,7 +138,7 @@ Finally, the setting `linkURL` in the properties file is to provide a URL descri
 Another top-level optional field is `unnecessaryTestMethodProperties`. Within that, there is an array of JSON objects, 
 having the fields `methodName`, `argumentIndex`, `receiverType`, `returnType` and `isStatic`.
 
-In practice, often the refactored code produced by `piranha` results in unnecessary method invocations. For instance, 
+The refactored code may contain unnecessary method invocations. For instance, 
 Piranha changes the statement `when(experimentation.isToggleDisabled("STALE_FLAG")).thenReturn(false);` to `when(true).thenReturn(false);`, 
 where the invocation `when(true)` is unnecessary, and could be deleted.
 This field (`unnecessaryTestMethodProperties`) is used to define such potentially unnecessary method invocations.

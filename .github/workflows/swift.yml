@@ -9,10 +9,10 @@ on:
 
 jobs:
   build:
-    runs-on: macos-11
+    runs-on: macos-latest
     strategy:
         matrix:
-          xcode: ['13.1']
+          xcode: ['13.0']
     name: "PiranhaSwift using ${{ matrix.xcode }} on ${{ matrix.os }}"
     steps:
       - name: Check out Piranha sources
