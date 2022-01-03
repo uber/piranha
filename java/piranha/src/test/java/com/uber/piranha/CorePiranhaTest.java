@@ -721,6 +721,16 @@ public class CorePiranhaTest {
             " public void bax2 (boolean w, boolean x, boolean y, boolean z) {",
             "   if (x && (y || (z && (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && w)))) { boolean a = x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))); }",
             " }",
+            " public boolean bax3 () {",
+            "   if(experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)){return true;} else {return false;}",
+            " }",
+            " public boolean bax4 () {",
+            "   boolean x = (!experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            "   if(experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)){return true;} else {return false;}",
+            " }",
+            " public boolean bax5 (boolean x) {",
+            "   return (x && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            " }",
             "}")
         .addOutputLines(
             "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
@@ -759,6 +769,16 @@ public class CorePiranhaTest {
             " }",
             " public void bax2 (boolean w, boolean x, boolean y, boolean z) {",
             "   if (x && (y || (z && w))) { boolean a = x && (y || z); }",
+            " }",
+            " public boolean bax3 () {",
+            "   return true;",
+            " }",
+            " public boolean bax4 () {",
+            "   boolean x = (false);",
+            "   return true;",
+            " }",
+            " public boolean bax5 (boolean x) {",
+            "   return x;",
             " }",
             "}")
         .doTest();
