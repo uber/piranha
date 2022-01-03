@@ -898,9 +898,11 @@ public class XPFlagCleaner extends BugChecker
     if (deletedSubTree != null) {
       Preconditions.checkNotNull(
           remainingSubTree, "deletedSubTree != null => remainingSubTree !=null here.");
-      Description.Builder builder = buildDescription(tree);
+      Tree parent = state.getPath().getParentPath().getLeaf();
+      Tree replacee = parent instanceof ParenthesizedTree ? parent : tree;
+      Description.Builder builder = buildDescription(replacee);
       SuggestedFix.Builder fixBuilder = SuggestedFix.builder();
-      fixBuilder.replace(tree, remainingSubTree.toString());
+      fixBuilder.replace(replacee, remainingSubTree.toString());
       decrementAllSymbolUsages(deletedSubTree, state, fixBuilder);
       builder.addFix(fixBuilder.build());
 
