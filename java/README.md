@@ -135,6 +135,14 @@ Additionally, usages of `STALE_FLAG` will be removed as if the enum itself had b
 
 Finally, the setting `linkURL` in the properties file is to provide a URL describing the Piranha tooling and any custom configurations associated with the codebase. 
 
+Another top-level optional field is `unnecessaryTestMethodProperties`. Within that, there is an array of JSON objects, 
+having the fields `methodName`, `argumentIndex`, `receiverType`, `returnType` and `isStatic`.
+
+The refactored code may contain unnecessary method invocations. For instance, 
+Piranha changes the statement `when(experimentation.isToggleDisabled("STALE_FLAG")).thenReturn(false);` to `when(true).thenReturn(false);`, 
+where the invocation `when(true)` is unnecessary, and could be deleted.
+This field (`unnecessaryTestMethodProperties`) is used to define such potentially unnecessary method invocations.
+Piranha will delete a statement if it invokes one of these pre-defined methods with a stale flag as an argument.  
 
 ## Example refactoring
 

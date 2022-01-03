@@ -29,8 +29,9 @@ public class PiranhaRecord {
   @Nullable
   static String getValueStringFromMap(Map<String, Object> map, String key) {
     Object value = map.get(key);
-    if (value instanceof String && !value.equals("")) {
-      return String.valueOf(value);
+    if (value instanceof String) {
+      String valueStr = String.valueOf(value);
+      if (!valueStr.isEmpty()) return valueStr;
     }
     return null;
   }
@@ -50,6 +51,23 @@ public class PiranhaRecord {
       if (argumentIndex >= 0) {
         return argumentIndex;
       }
+    }
+    return null;
+  }
+
+  /**
+   * Utility method. Checks whether the value associated to a given map and given key is a non-empty
+   * string.
+   *
+   * @param map - map corresponding to a method property
+   * @param key - key to check the corresponding value
+   * @return the corresponding boolean value
+   */
+  @Nullable
+  static Boolean getValueBooleanFromMap(Map<String, Object> map, String key) {
+    Object value = map.get(key);
+    if (value instanceof String && !value.equals("")) {
+      return Boolean.parseBoolean(String.valueOf(value));
     }
     return null;
   }

@@ -42,6 +42,7 @@ public final class Config {
   private static final String LINK_URL_KEY = "linkURL";
   private static final String ANNOTATIONS_KEY = "annotations";
   private static final String METHODS_KEY = "methodProperties";
+  private static final String UNNECESSARY_TEST_METHOD_KEY = "unnecessaryTestMethodProperties";
   private static final String CLEANUP_OPTS_KEY = "cleanupOptions";
   private static final String ENUMS_KEY = "enumProperties";
 
@@ -64,14 +65,23 @@ public final class Config {
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
-   * configMethodsMap is a map where key is method name and value is a list where each item in the
-   * list is a map that corresponds to each method property from properties.json. In most cases, the
-   * list would have only one element. But if someone reuses the same method name with different
+   * configMethodProperties is a map where key is method name and value is a list where each item in
+   * the list is a map that corresponds to each method property from properties.json. In most cases,
+   * the list would have only one element. But if someone reuses the same method name with different
    * returnType/receiverType/argumentIndex, the list would have each method property map as one
    * element.
    */
   private final ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties;
 
+  /**
+   * unnecessaryTestMethodProperties is a map where key is method name and value is a list where
+   * each item in the list is a map that corresponds to each test method property from
+   * properties.json. In most cases, the list would have only one element. But if someone reuses the
+   * same method name with different returnType/receiverType/argumentIndex, the list would have each
+   * method property map as one element. Often after the refactoring performed by Piranha, certain
+   * method invocations in test cases become unnecessary, need to be deleted.
+   */
+  private final ImmutableMultimap<String, MethodRecord> unnecessaryTestMethodProperties;
   /**
    * configEnumProperties is a map where key is enum name and value is a list where each item in the
    * list is a map that corresponds to each enum property from properties.json. In most cases, the
@@ -100,11 +110,13 @@ public final class Config {
   // in particular Config.fromJSONFile([properties.json])
   private Config(
       ImmutableMultimap<String, PiranhaMethodRecord> configMethodProperties,
+      ImmutableMultimap<String, MethodRecord> unnecessaryTestMethodProperties,
       ImmutableMultimap<String, PiranhaEnumRecord> configEnumProperties,
       TestAnnotationResolver testAnnotationResolver,
       ImmutableMap<String, Object> cleanupOptions,
       String linkURL) {
     this.configMethodProperties = configMethodProperties;
+    this.unnecessaryTestMethodProperties = unnecessaryTestMethodProperties;
     this.configEnumProperties = configEnumProperties;
     this.testAnnotationResolver = testAnnotationResolver;
     this.cleanupOptions = cleanupOptions;
@@ -122,6 +134,17 @@ public final class Config {
     return configMethodProperties.containsKey(methodName)
         ? configMethodProperties.get(methodName)
         : ImmutableSet.of();
+  }
+  /**
+   * Return all the configured unnecessary test methods (corresponding to the
+   * unnecessaryTestMethodProperties field)
+   *
+   * @return A collection of {@link MethodRecord} objects, representing each method definition in
+   *     the piranha json configuration file (unnecessaryTestMethodProperties field) matching {@code
+   *     methodName}.
+   */
+  public ImmutableCollection<MethodRecord> getUnnecessaryTestMethodRecords() {
+    return unnecessaryTestMethodProperties.values();
   }
 
   /**
@@ -266,7 +289,9 @@ public final class Config {
       }
 
       String linkURL = DEFAULT_PIRANHA_URL;
-      ImmutableMultimap.Builder<String, PiranhaMethodRecord> methodsBuilder =
+      ImmutableMultimap.Builder<String, MethodRecord> unnecessaryTestMethodsBuilder =
+          ImmutableMultimap.builder();
+      ImmutableMultimap.Builder<String, PiranhaMethodRecord> flagMethodsBuilder =
           ImmutableMultimap.builder();
       ImmutableMultimap.Builder<String, PiranhaEnumRecord> enumsBuilder =
           ImmutableMultimap.builder();
@@ -300,7 +325,15 @@ public final class Config {
           PiranhaMethodRecord methodRecord =
               PiranhaMethodRecord.parseFromJSONPropertyEntryMap(
                   methodProperty, isArgumentIndexOptional);
-          methodsBuilder.put(methodRecord.getMethodName(), methodRecord);
+          flagMethodsBuilder.put(methodRecord.getMethodName(), methodRecord);
+        }
+        if (propertiesJson.get(UNNECESSARY_TEST_METHOD_KEY) != null) {
+          for (Map<String, Object> methodProperty :
+              (List<Map<String, Object>>) propertiesJson.get(UNNECESSARY_TEST_METHOD_KEY)) {
+            MethodRecord methodRecord =
+                MethodRecord.parseFromJSONPropertyEntryMap(methodProperty, isArgumentIndexOptional);
+            unnecessaryTestMethodsBuilder.put(methodRecord.getMethodName(), methodRecord);
+          }
         }
       } else {
         throw new PiranhaConfigurationException("methodProperties not found, required.");
@@ -326,7 +359,8 @@ public final class Config {
             });
       }
       return new Config(
-          methodsBuilder.build(),
+          flagMethodsBuilder.build(),
+          unnecessaryTestMethodsBuilder.build(),
           enumsBuilder.build(),
           annotationResolverBuilder.build(),
           cleanupOptionsBuilder.build(),
@@ -365,6 +399,7 @@ public final class Config {
    */
   public static Config emptyConfig() {
     return new Config(
+        ImmutableMultimap.of(),
         ImmutableMultimap.of(),
         ImmutableMultimap.of(),
         TestAnnotationResolver.builder().build(),

@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-11
+    runs-on: macos-latest
     strategy:
         matrix:
           xcode: ['13.1']
@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Set Xcode ${{ matrix.xcode }}
         run: |
-         sudo xcode-select -s /Applications/Xcode_13.1.app
+         sudo xcode-select -s /Applications/Xcode_13.0.app
          xcodebuild -version
          swift --version
          swift package --version

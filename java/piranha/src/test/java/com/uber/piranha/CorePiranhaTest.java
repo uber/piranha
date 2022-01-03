@@ -501,7 +501,7 @@ public class CorePiranhaTest {
   }
 
   @Test
-  public void testRemoveSpecificAPIpatterns() throws IOException {
+  public void testRemoveSpecificAPIpatternsMockito() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", "STALE_FLAG");
@@ -564,9 +564,10 @@ public class CorePiranhaTest {
             "",
             "",
             "",
+            "",
             "  boolean b1 = someWrapper(when(true).thenCallRealMethod());",
             "  boolean b2 = someWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod());",
-            "  someWhenWrapper(when(true)).thenCallRealMethod();",
+            "",
             "  someWhenWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\"))).thenCallRealMethod();",
             "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenReturn(false);",
             "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenThrow(new RuntimeException());",
@@ -580,6 +581,250 @@ public class CorePiranhaTest {
             " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
             "}")
         .doTest();
-    //        OngoingStubbing<Boolean> w =  when(true).the;
+  }
+
+  @Test
+  public void testRemoveSpecificAPIpatternsEasyMock() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import org.easymock.EasyMock;",
+            "class EasyMockTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"STALE_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true).times(5);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"STALE_FLAG\")).andReturn(true).times(5, 6);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"STALE_FLAG\")).andReturn(true).once();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true).atLeastOnce();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true);",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).asStub();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(foobar()).andReturn(true).times(5);",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).times(5, 6);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).once();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).atLeastOnce();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import org.easymock.EasyMock;",
+            "class EasyMockTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(foobar()).andReturn(true).times(5);",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).times(5, 6);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).once();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).atLeastOnce();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testRemoveSpecificAPIpatternsJUnit() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import static org.junit.Assert.assertFalse;",
+            "import static org.junit.Assert.assertTrue;",
+            "class JUnitTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "  assertFalse(experimentation.isToggleDisabled(\"STALE_FLAG\"));",
+            "  assertTrue(experimentation.isToggleEnabled(\"STALE_FLAG\"));",
+            "  assertFalse(experimentation.isToggleEnabled(\"OTHER_FLAG\"));",
+            "  assertTrue(experimentation.isToggleDisabled(\"OTHER_FLAG\"));",
+            "  assertTrue(foobar());",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import static org.junit.Assert.assertFalse;",
+            "import static org.junit.Assert.assertTrue;",
+            "class JUnitTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "",
+            "",
+            "  assertFalse(experimentation.isToggleEnabled(\"OTHER_FLAG\"));",
+            "  assertTrue(experimentation.isToggleDisabled(\"OTHER_FLAG\"));",
+            "  assertTrue(foobar());",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testRemoveSpecificAPIpatterns() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import static org.mockito.Mockito.when;",
+            "import org.mockito.invocation.InvocationOnMock;",
+            "import org.mockito.stubbing.Answer;",
+            "import org.mockito.stubbing.OngoingStubbing;",
+            "import org.easymock.EasyMock;",
+            "import static org.junit.Assert.assertFalse;",
+            "import static org.junit.Assert.assertTrue;",
+            "class MockitoTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "// Mockito Test Scenarios",
+            "  Answer ans = new Answer<Integer>() {\n"
+                + "      public Integer answer(InvocationOnMock invocation) throws Throwable {\n"
+                + "        return (Integer) invocation.getArguments()[0];\n"
+                + "      }};",
+            "  when(experimentation.isToggleDisabled(\"STALE_FLAG\")).thenReturn(false);",
+            "  when(experimentation.isToggleEnabled(\"STALE_FLAG\")).thenThrow(new RuntimeException());",
+            "  when(experimentation.isToggleDisabled(\"STALE_FLAG\")).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"STALE_FLAG\")).then(ans);",
+            "  boolean b1 = someWrapper(when(experimentation.isToggleDisabled(\"STALE_FLAG\")).thenCallRealMethod());",
+            "  boolean b2 = someWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod());",
+            "  someWhenWrapper(when(experimentation.isToggleDisabled(\"STALE_FLAG\"))).thenCallRealMethod();",
+            "  someWhenWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\"))).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenReturn(false);",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenThrow(new RuntimeException());",
+            "  when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).then(ans);",
+            "  when(foobar()).thenReturn(false);",
+            "  when(foobar()).thenAnswer(ans);",
+            "// Easymock Test scenarios",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"STALE_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true).times(5);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"STALE_FLAG\")).andReturn(true).times(5, 6);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"STALE_FLAG\")).andReturn(true).once();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true).atLeastOnce();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).andReturn(true);",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"STALE_FLAG\")).asStub();",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(foobar()).andReturn(true).times(5);",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).times(5, 6);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).once();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).atLeastOnce();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            "// JUnit Assert Test scearios",
+            "  assertFalse(experimentation.isToggleDisabled(\"STALE_FLAG\"));",
+            "  assertTrue(experimentation.isToggleEnabled(\"STALE_FLAG\"));",
+            "  assertFalse(experimentation.isToggleEnabled(\"OTHER_FLAG\"));",
+            "  assertTrue(experimentation.isToggleDisabled(\"OTHER_FLAG\"));",
+            "  assertTrue(foobar());",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "import static org.mockito.Mockito.when;",
+            "import org.mockito.invocation.InvocationOnMock;",
+            "import org.mockito.stubbing.Answer;",
+            "import org.mockito.stubbing.OngoingStubbing;",
+            "import org.easymock.EasyMock;",
+            "import static org.junit.Assert.assertFalse;",
+            "import static org.junit.Assert.assertTrue;",
+            "class MockitoTest {",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "// Mockito Test Scenarios",
+            "  Answer ans = new Answer<Integer>() {\n"
+                + "      public Integer answer(InvocationOnMock invocation) throws Throwable {\n"
+                + "        return (Integer) invocation.getArguments()[0];\n"
+                + "      }};",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "  boolean b1 = someWrapper(when(true).thenCallRealMethod());",
+            "  boolean b2 = someWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod());",
+            "",
+            "  someWhenWrapper(when(experimentation.isToggleDisabled(\"OTHER_FLAG\"))).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenReturn(false);",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).thenThrow(new RuntimeException());",
+            "  when(experimentation.isToggleDisabled(\"OTHER_FLAG\")).thenCallRealMethod();",
+            "  when(experimentation.isToggleEnabled(\"OTHER_FLAG\")).then(ans);",
+            "  when(foobar()).thenReturn(false);",
+            "  when(foobar()).thenAnswer(ans);",
+            "// Easymock Test scenarios",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            "  EasyMock.expect(foobar()).andReturn(true).times(5);",
+            "  EasyMock.expect(experimentation.isToggleEnabled(\"OTHER_FLAG\")).andReturn(true).times(5, 6);",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).once();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).atLeastOnce();",
+            "  EasyMock.expect(experimentation.isToggleDisabled(\"OTHER_FLAG\")).andReturn(true).anyTimes();",
+            "// JUnit Assert Test scearios",
+            "",
+            "",
+            "  assertFalse(experimentation.isToggleEnabled(\"OTHER_FLAG\"));",
+            "  assertTrue(experimentation.isToggleDisabled(\"OTHER_FLAG\"));",
+            "  assertTrue(foobar());",
+            " }",
+            " public boolean foobar() { return true;}",
+            " public boolean someWrapper(Object obj) { return true;}",
+            " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
+            "}")
+        .doTest();
   }
 }

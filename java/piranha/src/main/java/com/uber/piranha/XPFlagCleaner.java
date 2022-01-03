@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2019 Uber Technologies, Inc.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -14,13 +14,8 @@
 package com.uber.piranha;
 
 import static com.google.errorprone.BugPattern.SeverityLevel.SUGGESTION;
-import static com.google.errorprone.matchers.ChildMultiMatcher.MatchType.ALL;
-import static com.google.errorprone.matchers.Matchers.allOf;
 import static com.google.errorprone.matchers.Matchers.instanceMethod;
-import static com.google.errorprone.matchers.Matchers.methodInvocation;
-import static com.google.errorprone.matchers.Matchers.receiverOfInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
-import static com.google.errorprone.matchers.Matchers.toType;
 
 import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
@@ -34,7 +29,6 @@ import com.google.errorprone.VisitorState;
 import com.google.errorprone.bugpatterns.BugChecker;
 import com.google.errorprone.fixes.SuggestedFix;
 import com.google.errorprone.matchers.Description;
-import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.google.errorprone.util.FindIdentifiers;
 import com.sun.source.tree.AnnotationTree;
@@ -78,8 +72,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -369,9 +363,9 @@ public class XPFlagCleaner extends BugChecker
     for (PiranhaMethodRecord methodRecord : methodRecordsForName) {
       // when argumentIndex is specified, if mit's argument at argIndex doesn't match xpFlagName,
       // skip to next method property map
-      Optional<Integer> optionalArgumentIdx = methodRecord.getArgumentIdx();
+      OptionalInt optionalArgumentIdx = methodRecord.getArgumentIdx();
       if (optionalArgumentIdx.isPresent()) {
-        int argumentIndex = optionalArgumentIdx.get().intValue();
+        int argumentIndex = optionalArgumentIdx.getAsInt();
         if (argumentIndex < mit.getArguments().size()) {
           ExpressionTree argTree = mit.getArguments().get(argumentIndex);
           Symbol argSym = ASTHelpers.getSymbol(argTree);
@@ -705,30 +699,40 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
-  private static final String MOCKITO_QN = "org.mockito.Mockito";
-  private static final String MOCKITO_WHEN = "when";
-  private static final Pattern MOCKITO_THEN = Pattern.compile("then\\W*\\w*");
-
-  private final Matcher<Tree> MOCKITO_UNNECESSARY_MOCKING_PATTERN =
-      toType(
-          MethodInvocationTree.class,
-          allOf(
-              instanceMethod().anyClass().withNameMatching(MOCKITO_THEN),
-              receiverOfInvocation(
-                  methodInvocation(
-                      staticMethod().onClass(MOCKITO_QN).named(MOCKITO_WHEN),
-                      ALL,
-                      (argument, vs) -> {
-                        Value value = evalExpr(argument, vs);
-                        return value == Value.TRUE || value == Value.FALSE;
-                      }))));
-
+  /**
+   * This method picks up the unnecessary test method as configured in properties.json and converts
+   * them into a Error-prone AST Matcher and then deletes the containing AST statement.
+   *
+   * @param state The visitor state of the statement to be handled
+   * @return Suggestion Fix for deleting the statement containing a unnecessary test method
+   *     invocation
+   */
   private SuggestedFix.Builder handleSpecificAPIPatterns(VisitorState state) {
-    ExpressionStatementTree stmt =
+    MethodInvocationTree enclosingMit =
+        ASTHelpers.findEnclosingNode(state.getPath(), MethodInvocationTree.class);
+
+    ExpressionStatementTree enclosingEst =
         ASTHelpers.findEnclosingNode(state.getPath(), ExpressionStatementTree.class);
-    if (stmt != null && MOCKITO_UNNECESSARY_MOCKING_PATTERN.matches(stmt.getExpression(), state)) {
-      endPos = state.getEndPosition(stmt);
-      return SuggestedFix.builder().delete(stmt);
+
+    if (enclosingMit != null
+        && enclosingEst != null
+        && config
+            .getUnnecessaryTestMethodRecords()
+            .stream()
+            .map(
+                method ->
+                    method.isStatic()
+                        ? method
+                            .getReceiverType()
+                            .map(r -> staticMethod().onClass(r))
+                            .orElseGet(() -> staticMethod().anyClass())
+                        : method
+                            .getReceiverType()
+                            .map(r -> instanceMethod().onExactClass(r))
+                            .orElseGet(() -> instanceMethod().anyClass()))
+            .anyMatch(matcher -> matcher.matches(enclosingMit, state))) {
+      endPos = state.getEndPosition(enclosingMit);
+      return SuggestedFix.builder().delete(enclosingEst);
     }
     return SuggestedFix.builder();
   }
