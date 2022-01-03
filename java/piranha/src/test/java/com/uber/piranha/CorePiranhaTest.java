@@ -624,6 +624,9 @@ public class CorePiranhaTest {
             " public void bax (boolean x, boolean y, boolean z) {",
             "   if (x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
             " }",
+            " public boolean bax1 (boolean x, boolean y, boolean z) {",
+            "   return x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)));",
+            " }",
             "}")
         .addOutputLines(
             "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
@@ -641,6 +644,9 @@ public class CorePiranhaTest {
             " }",
             " public void bax (boolean x, boolean y, boolean z) {",
             "   if (x && y) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean bax1 (boolean x, boolean y, boolean z) {",
+            "   return x && y;",
             " }",
             "}")
         .doTest();
@@ -679,6 +685,9 @@ public class CorePiranhaTest {
             " public void foo (boolean x, boolean y) {",
             "   if (x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) { System.out.println(\"if block\"); }",
             " }",
+            " public boolean foo1 (boolean x, boolean y) {",
+            "   return x || (y && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG));",
+            " }",
             " public void bar (boolean x, boolean y, boolean z) {",
             "   if (x && (y && (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)))) { System.out.println(\"if block\"); }",
             " }",
@@ -697,6 +706,9 @@ public class CorePiranhaTest {
             " public void bax1 (boolean w, boolean x, boolean y, boolean z) {",
             "   if (x && (y || (z && (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && w)))) { System.out.println(\"if block\"); }",
             " }",
+            " public void bax2 (boolean w, boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && w)))) { boolean a = x && (y || (z && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))); }",
+            " }",
             "}")
         .addOutputLines(
             "XPFlagCleanerStripRedundantParenthesisWithNoSpaceControl.java",
@@ -705,6 +717,9 @@ public class CorePiranhaTest {
             " private XPTest experimentation;",
             " public void foo (boolean x, boolean y) {",
             "   if (x || y) { System.out.println(\"if block\"); }",
+            " }",
+            " public boolean foo1 (boolean x, boolean y) {",
+            "   return x || y;",
             " }",
             " public void bar (boolean x, boolean y, boolean z) {",
             "   if (x && (y && z)) { System.out.println(\"if block\"); }",
@@ -723,6 +738,9 @@ public class CorePiranhaTest {
             " }",
             " public void bax1 (boolean w, boolean x, boolean y, boolean z) {",
             "   if (x && (y || (z && w))) { System.out.println(\"if block\"); }",
+            " }",
+            " public void bax2 (boolean w, boolean x, boolean y, boolean z) {",
+            "   if (x && (y || (z && w))) { boolean a = x && (y || z); }",
             " }",
             "}")
         .doTest();
