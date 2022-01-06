@@ -75,6 +75,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.lang.model.element.ElementKind;
@@ -1374,7 +1375,7 @@ public class XPFlagCleaner extends BugChecker
       // Note that the AST elements referenced by deletableAnnotations and deletableIdentifiers
       // should not overlap, given the logic above, so deleting each independently is safe.
       for (ExpressionTree expr : deletableIdentifiers) {
-        fixBuilder.delete(expr);
+        fixBuilder = deleteExprWithComma(state, tree, expr, resolvedTestAnnotations, fixBuilder);
         decrementAllSymbolUsages(expr, state, fixBuilder);
       }
       for (AnnotationTree at : deletableAnnotations) {
@@ -1562,6 +1563,39 @@ public class XPFlagCleaner extends BugChecker
       return statements.size() > 0 && statements.get(statements.size() - 1) instanceof ReturnTree;
     }
     return false;
+  }
+
+  /** removes enum in annotation and the comma if there is more than one enum in it */
+  private SuggestedFix.Builder deleteExprWithComma(
+      VisitorState state,
+      Tree tree,
+      ExpressionTree expressionTree,
+      ImmutableSet<ResolvedTestAnnotation> resolvedTestAnnotations,
+      SuggestedFix.Builder fixBuilder) {
+    for (ResolvedTestAnnotation resolvedTestAnnotation : resolvedTestAnnotations) {
+      if (resolvedTestAnnotation.getFlags().size() > 1) {
+        // the index is used to know if we have to remove the comma after or before the enum
+        int index =
+            IntStream.range(0, resolvedTestAnnotation.getFlags().size())
+                .filter(i -> resolvedTestAnnotation.getFlags().get(i).getValue().equals(xpFlagName))
+                .findFirst()
+                .orElse(-1);
+        if (index != -1) {
+          String replacementString = state.getSourceForNode(tree);
+          if (index == resolvedTestAnnotation.getFlags().size() - 1) {
+            replacementString =
+                replacementString.replace(", " + state.getSourceForNode(expressionTree), "");
+          } else {
+            replacementString =
+                replacementString.replace(state.getSourceForNode(expressionTree) + ", ", "");
+          }
+          fixBuilder.replace(tree, replacementString);
+        }
+      } else {
+        fixBuilder.delete(expressionTree);
+      }
+    }
+    return fixBuilder;
   }
 
   /**
