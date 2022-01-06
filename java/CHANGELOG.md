@@ -1,3 +1,8 @@
+Version 0.1.6
+-------------
+* Delete statements using EasyMock and JUnit API [#156]
+* Handling the unnecessary parentheses [#158]
+
 Version 0.1.5
 -------------
 * Remove enum constants with field matching flag value. [#142]
