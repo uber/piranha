@@ -14,9 +14,13 @@
 package com.uber.piranha;
 
 import com.google.errorprone.VisitorState;
+import com.google.errorprone.matchers.ChildMultiMatcher;
+import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.NewClassTree;
+import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 
 public class PiranhaUtils {
@@ -43,5 +47,46 @@ public class PiranhaUtils {
       path = path.getParentPath();
     }
     return false;
+  }
+
+  public static class NewClassArgument implements Matcher<NewClassTree> {
+    private final int position;
+    private final Matcher<ExpressionTree> argumentMatcher;
+
+    public NewClassArgument(int position, Matcher<ExpressionTree> argumentMatcher) {
+      this.position = position;
+      this.argumentMatcher = argumentMatcher;
+    }
+
+    @Override
+    public boolean matches(NewClassTree newClassTree, VisitorState state) {
+      if (newClassTree.getArguments().size() <= position) {
+        return false;
+      }
+      return argumentMatcher.matches(newClassTree.getArguments().get(position), state);
+    }
+  }
+
+  public static class NewClassHasArguments extends ChildMultiMatcher<NewClassTree, ExpressionTree> {
+
+    public NewClassHasArguments(MatchType matchType, Matcher<ExpressionTree> nodeMatcher) {
+      super(matchType, nodeMatcher);
+    }
+
+    @Override
+    protected Iterable<? extends ExpressionTree> getChildNodes(
+        NewClassTree newClassTree, VisitorState state) {
+      return newClassTree.getArguments();
+    }
+  }
+
+  public static Matcher<VariableTree> variableNameInitializer(
+      String name, Matcher<ExpressionTree> expressionTreeMatcher) {
+    return (variableTree, state) -> {
+      ExpressionTree initializer = variableTree.getInitializer();
+      return variableTree.getName().toString().equals(name)
+          && initializer != null
+          && expressionTreeMatcher.matches(initializer, state);
+    };
   }
 }
