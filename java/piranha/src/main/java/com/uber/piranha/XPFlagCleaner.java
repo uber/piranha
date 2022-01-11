@@ -374,6 +374,7 @@ public class XPFlagCleaner extends BugChecker
 
   private Matcher<MethodInvocationTree> methodRecordMatcher(
       MethodRecord methodRecord, VisitorState state) {
+
     return allOf(
         (methodRecord.isStatic() ? staticMethod().anyClass() : instanceMethod().anyClass())
             .named(methodRecord.getMethodName()),
@@ -402,9 +403,10 @@ public class XPFlagCleaner extends BugChecker
             enumRecords
                 .stream()
                 .anyMatch(
-                    er ->
-                        er.getArgumentIdx()
-                            .map(idx -> new NewClassArgument(idx, matchFlag).matches(nct, st))
+                    enumRecord ->
+                        enumRecord
+                            .getArgumentIdx()
+                            .map(index -> new NewClassArgument(index, matchFlag).matches(nct, st))
                             .orElseGet(
                                 () ->
                                     new NewClassHasArguments(AT_LEAST_ONE, matchFlag)
@@ -442,16 +444,12 @@ public class XPFlagCleaner extends BugChecker
    */
 
   private Matcher<ExpressionTree> isMatchingEnumFieldValue(VisitorState state) {
-    return anyOf(
+    Matcher<ExpressionTree> enumFieldValueMatcher =
         symbolMatcher(
             (sym, st) ->
                 isEnumConstantMatchingFlagName(
-                    sym.getSimpleName().toString(), ASTHelpers.enclosingClass(sym), state)),
-        contains(
-            symbolMatcher(
-                (sym, st) ->
-                    isEnumConstantMatchingFlagName(
-                        sym.getSimpleName().toString(), ASTHelpers.enclosingClass(sym), state))));
+                    sym.getSimpleName().toString(), ASTHelpers.enclosingClass(sym), state));
+    return anyOf(enumFieldValueMatcher, contains(ExpressionTree.class, enumFieldValueMatcher));
   }
 
   /**
