@@ -28,10 +28,6 @@ import static com.google.errorprone.matchers.Matchers.staticMethod;
 import static com.google.errorprone.matchers.Matchers.symbolMatcher;
 import static com.google.errorprone.matchers.Matchers.toType;
 import static com.uber.piranha.PiranhaUtils.DELETE_REQUEST_COMMENT;
-import static com.uber.piranha.PiranhaUtils.NewClassArgument;
-import static com.uber.piranha.PiranhaUtils.NewClassHasArguments;
-import static com.uber.piranha.PiranhaUtils.isUnitTestMethod;
-import static com.uber.piranha.PiranhaUtils.variableNameInitializer;
 
 import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
@@ -406,10 +402,13 @@ public class XPFlagCleaner extends BugChecker
                     enumRecord ->
                         enumRecord
                             .getArgumentIdx()
-                            .map(index -> new NewClassArgument(index, matchFlag).matches(nct, st))
+                            .map(
+                                index ->
+                                    PiranhaUtils.newClassHasArgument(index, matchFlag)
+                                        .matches(nct, st))
                             .orElseGet(
                                 () ->
-                                    new NewClassHasArguments(AT_LEAST_ONE, matchFlag)
+                                    PiranhaUtils.newClassHasArgument(AT_LEAST_ONE, matchFlag)
                                         .matches(nct, st))));
   }
 
@@ -496,7 +495,7 @@ public class XPFlagCleaner extends BugChecker
     Matcher<Tree> matchVarDeclWithNewClassInitPassingFlag =
         contains(
             VariableTree.class,
-            variableNameInitializer(
+            PiranhaUtils.variableNameInitializer(
                 enumName, enumConstructorArgsContainsFlagNameMatcher(enumRecords)));
 
     boolean result = matchVarDeclWithNewClassInitPassingFlag.matches(enumClassTree, state);
@@ -1290,13 +1289,12 @@ public class XPFlagCleaner extends BugChecker
         } else {
           // Only remove the matched flag references, but preserve the annotation and its
           // references to remaining flags
-          matchedFlagsWorkingSet
-              .stream()
-              .forEach(arg -> deletableIdentifiers.add(arg.getSourceTree()));
+          matchedFlagsWorkingSet.forEach(arg -> deletableIdentifiers.add(arg.getSourceTree()));
         }
         matchedFlagsWorkingSet.clear();
       }
-    } else if (config.shouldCleanTestMethodsByContent() && isUnitTestMethod(tree, state)) {
+    } else if (config.shouldCleanTestMethodsByContent()
+        && PiranhaUtils.isUnitTestMethod(tree, state)) {
       deleteMethod = shouldCleanBySetters(tree, state);
     }
     // Early exit for no changes required:

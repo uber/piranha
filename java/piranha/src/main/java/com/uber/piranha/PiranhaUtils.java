@@ -49,7 +49,49 @@ public class PiranhaUtils {
     return false;
   }
 
-  public static class NewClassArgument implements Matcher<NewClassTree> {
+  /**
+   * Returns a matcher for the argument passed to a new class creation.
+   *
+   * @param index of the argument to be matched
+   * @param argMatcher The matcher for the argument
+   * @return Returns true of the argument at index matches argMatcher, otherwise false.
+   */
+  public static Matcher<NewClassTree> newClassHasArgument(
+      int index, Matcher<ExpressionTree> argMatcher) {
+    return new NewClassArgument(index, argMatcher);
+  }
+
+  /**
+   * Returns a matcher for the arguments passed to a new class creation.
+   *
+   * @param matchType - all, any, none
+   * @param argMatcher The matcher for the argument
+   * @return Returns true if any (or all or none) arguments match, otherwise false.
+   */
+  public static Matcher<NewClassTree> newClassHasArgument(
+      ChildMultiMatcher.MatchType matchType, Matcher<ExpressionTree> argMatcher) {
+    return new NewClassHasArguments(matchType, argMatcher);
+  }
+
+  /**
+   * Returns a matcher for a variable declaration statement.
+   *
+   * @param name of the variable
+   * @param expressionTreeMatcher Matcher for the RHS
+   * @return Returns true if the name and expressionTreeMatcher match a variable declaration
+   *     statement
+   */
+  public static Matcher<VariableTree> variableNameInitializer(
+      String name, Matcher<ExpressionTree> expressionTreeMatcher) {
+    return (variableTree, state) -> {
+      ExpressionTree initializer = variableTree.getInitializer();
+      return variableTree.getName().toString().equals(name)
+          && initializer != null
+          && expressionTreeMatcher.matches(initializer, state);
+    };
+  }
+
+  private static class NewClassArgument implements Matcher<NewClassTree> {
     private final int position;
     private final Matcher<ExpressionTree> argumentMatcher;
 
@@ -67,7 +109,8 @@ public class PiranhaUtils {
     }
   }
 
-  public static class NewClassHasArguments extends ChildMultiMatcher<NewClassTree, ExpressionTree> {
+  private static class NewClassHasArguments
+      extends ChildMultiMatcher<NewClassTree, ExpressionTree> {
 
     public NewClassHasArguments(MatchType matchType, Matcher<ExpressionTree> nodeMatcher) {
       super(matchType, nodeMatcher);
@@ -78,15 +121,5 @@ public class PiranhaUtils {
         NewClassTree newClassTree, VisitorState state) {
       return newClassTree.getArguments();
     }
-  }
-
-  public static Matcher<VariableTree> variableNameInitializer(
-      String name, Matcher<ExpressionTree> expressionTreeMatcher) {
-    return (variableTree, state) -> {
-      ExpressionTree initializer = variableTree.getInitializer();
-      return variableTree.getName().toString().equals(name)
-          && initializer != null
-          && expressionTreeMatcher.matches(initializer, state);
-    };
   }
 }
