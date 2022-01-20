@@ -24,7 +24,9 @@ import static com.google.errorprone.matchers.Matchers.receiverOfInvocation;
 import static com.google.errorprone.matchers.Matchers.staticMethod;
 import static com.google.errorprone.matchers.Matchers.symbolMatcher;
 import static com.google.errorprone.matchers.Matchers.toType;
-import static com.uber.piranha.PiranhaUtils.*;
+import static com.uber.piranha.PiranhaUtils.DELETE_REQUEST_COMMENT;
+import static com.uber.piranha.PiranhaUtils.memberSelectExpression;
+import static com.uber.piranha.PiranhaUtils.newClassHasArgument;
 
 import com.facebook.infer.annotation.Initializer;
 import com.google.auto.service.AutoService;
