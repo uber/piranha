@@ -65,8 +65,8 @@ public class PiranhaUtils {
   /**
    * Returns a matcher for the expression member select expresion
    *
-   * @param matcher
-   * @return
+   * @param matcher matcher for the member select expression
+   * @return a matcher for the member select expression to be appled
    */
   public static Matcher<ExpressionTree> memberSelectExpression(Matcher<ExpressionTree> matcher) {
     return new MemberSelectExpression(matcher);
