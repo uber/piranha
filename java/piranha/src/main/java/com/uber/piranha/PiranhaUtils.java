@@ -18,6 +18,7 @@ import com.google.errorprone.matchers.ChildMultiMatcher;
 import com.google.errorprone.matchers.Matcher;
 import com.google.errorprone.util.ASTHelpers;
 import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.NewClassTree;
 import com.sun.source.tree.VariableTree;
@@ -62,9 +63,19 @@ public class PiranhaUtils {
   }
 
   /**
+   * Returns a matcher for the expression member select expresion
+   *
+   * @param matcher
+   * @return
+   */
+  public static Matcher<ExpressionTree> memberSelectExpression(Matcher<ExpressionTree> matcher) {
+    return new MemberSelectExpression(matcher);
+  }
+
+  /**
    * Returns a matcher for the arguments passed to a new class creation.
    *
-   * @param matchType - all, any, none
+   * @param matchType - ALL, AT_LEAST_ONE, LAST
    * @param argMatcher The matcher for the argument
    * @return Returns true if any (or all or none) arguments match, otherwise false.
    */
@@ -91,11 +102,26 @@ public class PiranhaUtils {
     };
   }
 
+  private static class MemberSelectExpression implements Matcher<ExpressionTree> {
+    private Matcher<ExpressionTree> expressionTreeMatcher;
+
+    MemberSelectExpression(Matcher<ExpressionTree> expressionTreeMatcher) {
+      this.expressionTreeMatcher = expressionTreeMatcher;
+    }
+
+    @Override
+    public boolean matches(ExpressionTree expressionTree, VisitorState state) {
+      return expressionTree instanceof MemberSelectTree
+          && expressionTreeMatcher.matches(
+              ((MemberSelectTree) expressionTree).getExpression(), state);
+    }
+  }
+
   private static class NewClassArgument implements Matcher<NewClassTree> {
     private final int position;
     private final Matcher<ExpressionTree> argumentMatcher;
 
-    public NewClassArgument(int position, Matcher<ExpressionTree> argumentMatcher) {
+    NewClassArgument(int position, Matcher<ExpressionTree> argumentMatcher) {
       this.position = position;
       this.argumentMatcher = argumentMatcher;
     }
@@ -112,7 +138,7 @@ public class PiranhaUtils {
   private static class NewClassHasArguments
       extends ChildMultiMatcher<NewClassTree, ExpressionTree> {
 
-    public NewClassHasArguments(MatchType matchType, Matcher<ExpressionTree> nodeMatcher) {
+    NewClassHasArguments(MatchType matchType, Matcher<ExpressionTree> nodeMatcher) {
       super(matchType, nodeMatcher);
     }
 
