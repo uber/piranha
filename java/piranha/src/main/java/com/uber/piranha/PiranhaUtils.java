@@ -77,7 +77,7 @@ public class PiranhaUtils {
    *
    * @param matchType - ALL, AT_LEAST_ONE, LAST
    * @param argMatcher The matcher for the argument
-   * @return Returns true if any (or all or none) arguments match, otherwise false.
+   * @return Returns true if ALL, AT_LEAST_ONE, or LAST arguments match, otherwise false.
    */
   public static Matcher<NewClassTree> newClassHasArgument(
       ChildMultiMatcher.MatchType matchType, Matcher<ExpressionTree> argMatcher) {

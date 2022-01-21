@@ -85,6 +85,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -369,32 +370,37 @@ public class XPFlagCleaner extends BugChecker
 
   private boolean methodRecordMatcher(
       MethodRecord methodRecord, VisitorState state, MethodInvocationTree mit) {
-
-    return // Method name must match methodRecord.getMethodName()
-    (methodRecord.isStatic() ? staticMethod().anyClass() : instanceMethod().anyClass())
+    // Method name must match methodRecord.getMethodName()
+    boolean nameMatches =
+        (methodRecord.isStatic() ? staticMethod().anyClass() : instanceMethod().anyClass())
             .named(methodRecord.getMethodName())
-            .matches(mit, state)
-        // Method's receiver must match record's receiver type (if any)
-        && methodRecord
-            .getReceiverType()
-            .map(
-                type ->
-                    receiverOfInvocation((receiver, st) -> isSameType(type).matches(receiver, st))
-                        .matches(mit, state))
-            .orElse(true)
+            .matches(mit, state);
+    if (nameMatches) {
+      // Method's receiver must match record's receiver type (if any)
+      boolean receiverTypeMatches =
+          !methodRecord.getReceiverType().isPresent()
+              || receiverOfInvocation(
+                      (receiver, st) ->
+                          isSameType(methodRecord.getReceiverType().get()).matches(receiver, st))
+                  .matches(mit, state);
+      if (receiverTypeMatches) {
         // Method must have flag at argument index specified by record (if any)
-        && methodRecord
-            .getArgumentIdx()
-            .map(
-                idx ->
-                    argument(idx, (arg, st) -> isArgumentMatchesFlagName(arg, state))
-                        .matches(mit, state))
-            .orElse(true)
-        // Method's return must match record's return type (if any)
-        && methodRecord
-            .getReturnType()
-            .map(typeString -> Matchers.isSameType(typeString).matches(mit, state))
-            .orElse(true);
+        boolean argumentMatchesFlagName =
+            !methodRecord.getArgumentIdx().isPresent()
+                || argument(
+                        methodRecord.getArgumentIdx().get(),
+                        (arg, st) -> isArgumentMatchesFlagName(arg, state))
+                    .matches(mit, state);
+        if (argumentMatchesFlagName) {
+          // Method's return must match record's return type (if any)
+          return methodRecord
+              .getReturnType()
+              .map(typeString -> isSameType(typeString).matches(mit, state))
+              .orElse(true);
+        }
+      }
+    }
+    return false;
   }
 
   private Matcher<ExpressionTree> enumConstructorArgsContainsFlagNameMatcher(
@@ -406,18 +412,16 @@ public class XPFlagCleaner extends BugChecker
 
     return toType(
         NewClassTree.class,
-        (nct, st) ->
-            enumRecords
-                .stream()
-                .anyMatch(
-                    enumRecord ->
-                        enumRecord
-                            .getArgumentIdx()
-                            .map(index -> newClassHasArgument(index, matchFlag).matches(nct, st))
-                            .orElseGet(
-                                () ->
-                                    newClassHasArgument(AT_LEAST_ONE, matchFlag)
-                                        .matches(nct, st))));
+        (nct, st) -> {
+          Predicate<PiranhaEnumRecord> matchPiranhaEnumRecord =
+              enumRecord ->
+                  enumRecord
+                      .getArgumentIdx()
+                      .map(index -> newClassHasArgument(index, matchFlag).matches(nct, st))
+                      .orElseGet(
+                          () -> newClassHasArgument(AT_LEAST_ONE, matchFlag).matches(nct, st));
+          return enumRecords.stream().anyMatch(matchPiranhaEnumRecord);
+        });
   }
 
   private API getXPAPI(
@@ -434,10 +438,10 @@ public class XPFlagCleaner extends BugChecker
 
   private boolean isArgumentMatchesFlagName(ExpressionTree arg, VisitorState state) {
     Symbol argSym = ASTHelpers.getSymbol(arg);
-    return isLiteralTreeAndMatchesFlagName(arg)
-        || isVarSymbolAndMatchesFlagName(argSym)
-        || isSymbolAndMatchesFlagName(argSym)
-        || (this.config.hasEnumRecords() && isMatchingEnumFieldValue(arg, state));
+    if (isLiteralTreeAndMatchesFlagName(arg)) return true;
+    if (isVarSymbolAndMatchesFlagName(argSym)) return true;
+    if (isSymbolAndMatchesFlagName(argSym)) return true;
+    return this.config.hasEnumRecords() && isMatchingEnumFieldValue(arg, state);
   }
 
   /*
@@ -448,13 +452,13 @@ public class XPFlagCleaner extends BugChecker
    * 4. Qualified enum name with method call (e.g. "TestExperimentName.STALE_FLAG.getKey()")
    */
   private boolean isMatchingEnumFieldValue(ExpressionTree tree, VisitorState state) {
-    // Handles - Unqualified import enum constant
+    // Handles the first two scenarios.
     Matcher<ExpressionTree> enumFieldValueMatcher =
         symbolMatcher(
             (sym, st) ->
                 isEnumConstantMatchingFlagName(
                     sym.getSimpleName().toString(), ASTHelpers.enclosingClass(sym), state));
-    // Handles - the other three scenarios
+    // Handles the last two scenarios.
     return anyOf(
             enumFieldValueMatcher,
             Matchers.methodInvocation(
