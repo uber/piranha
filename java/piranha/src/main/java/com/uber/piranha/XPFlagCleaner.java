@@ -376,7 +376,9 @@ public class XPFlagCleaner extends BugChecker
         (methodRecord.isStatic() ? staticMethod().anyClass() : instanceMethod().anyClass())
             .named(methodRecord.getMethodName())
             .matches(mit, state);
-    if (!nameMatches) return false;
+    if (!nameMatches) {
+      return false;
+    }
 
     // Method's receiver must match record's receiver type (if any)
     boolean receiverTypeMatches =
@@ -385,7 +387,9 @@ public class XPFlagCleaner extends BugChecker
                     (receiver, st) ->
                         isSameType(methodRecord.getReceiverType().get()).matches(receiver, st))
                 .matches(mit, state);
-    if (!receiverTypeMatches) return false;
+    if (!receiverTypeMatches) {
+      return false;
+    }
 
     // Method must have flag at argument index specified by record (if any)
     boolean argumentMatchesFlagName =
@@ -394,14 +398,14 @@ public class XPFlagCleaner extends BugChecker
                     methodRecord.getArgumentIdx().get(),
                     (arg, st) -> isArgumentMatchesFlagName(arg, state))
                 .matches(mit, state);
-    if (!argumentMatchesFlagName) return false;
+    if (!argumentMatchesFlagName) {
+      return false;
+    }
 
     // Method's return must match record's return type (if any)
     boolean returnTypeMatches =
-        methodRecord
-            .getReturnType()
-            .map(typeString -> isSameType(typeString).matches(mit, state))
-            .orElse(true);
+        !methodRecord.getReturnType().isPresent()
+            || isSameType(methodRecord.getReturnType().get()).matches(mit, state);
     return returnTypeMatches;
   }
 
