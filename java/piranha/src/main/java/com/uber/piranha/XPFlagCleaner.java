@@ -397,7 +397,7 @@ public class XPFlagCleaner extends BugChecker
     if (!argumentMatchesFlagName) return false;
 
     // Method's return must match record's return type (if any)
-    Boolean returnTypeMatches =
+    boolean returnTypeMatches =
         methodRecord
             .getReturnType()
             .map(typeString -> isSameType(typeString).matches(mit, state))
