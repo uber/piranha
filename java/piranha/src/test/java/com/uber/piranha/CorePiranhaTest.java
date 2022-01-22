@@ -13,11 +13,19 @@
  */
 package com.uber.piranha;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.joining;
+
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1027,5 +1035,191 @@ public class CorePiranhaTest {
             " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
             "}")
         .doTest();
+  }
+
+  public void transformAndCreateNewPropertyFile(
+      String srcProp, String trgtProp, String stale_flag, boolean isTreated) throws IOException {
+
+    String[] temp = stale_flag.split("_");
+    String methodPropertiesToAdd =
+        "{\n"
+            + "      \"methodName\": \"$flagName$.getValue\",\n"
+            + "      \"flagType\": \"treated\",\n"
+            + "      \"returnType\": \"boolean\"\n"
+            + "    },";
+    String annotationPropertiesToAdd =
+        "{\n"
+            + "      \"name\" : \"BoolParam\",\n"
+            + "      \"flag\" : \"$key\",\n"
+            + "      \"treated\" : \"$notIsTreated$\"\n"
+            + "    },";
+    String flagNameCamelCase =
+        temp[0]
+            + Arrays.stream(temp, 1, temp.length)
+                .map(str -> str.substring(0, 1).toUpperCase() + str.substring(1))
+                .collect(joining());
+    String newContent =
+        Files.readAllLines(Paths.get(srcProp))
+            .stream()
+            .map(
+                x ->
+                    x.replace(
+                        "\"methodProperties\": [",
+                        "\"methodProperties\": [" + methodPropertiesToAdd))
+            .map(
+                x ->
+                    x.replace(
+                        "\"annotations\": [", "\"annotations\": [" + annotationPropertiesToAdd))
+            .map(x -> x.replace("$flagName$", flagNameCamelCase))
+            .map(x -> x.replace("$notIsTreated$", String.valueOf(!isTreated)))
+            .collect(joining("\n"));
+    Path trgt = Paths.get(trgtProp);
+    Files.deleteIfExists(trgt);
+    Files.write(trgt, newContent.getBytes(UTF_8), StandardOpenOption.CREATE);
+  }
+
+  @Test
+  public void testMethodChainTreated() throws IOException {
+    String stale_flag = "stale_flag";
+    String isTreated = "true";
+    String srcProp = "config/properties.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", stale_flag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.addInput("Parameter.java").expectUnchanged();
+    bcr = bcr.addInput("BoolParameter.java").expectUnchanged();
+    bcr.addInputLines(
+            "SomeParam.java",
+            "package com.uber.piranha;",
+            "interface SomeParam  {",
+            " @BoolParam(key = \"other_flag\")",
+            " BoolParameter otherFlag();",
+            " @BoolParam(key = \"stale_flag\")",
+            " BoolParameter staleFlag();",
+            " static SomeParam create(Parameter cp){",
+            "  return null;",
+            " }",
+            "}")
+        .addOutputLines(
+            "SomeParam.java",
+            "package com.uber.piranha;",
+            "interface SomeParam  {",
+            " @BoolParam(key = \"other_flag\")",
+            " BoolParameter otherFlag();",
+            "",
+            "",
+            " static SomeParam create(Parameter cp){",
+            "  return null;",
+            " }",
+            "}")
+        .addInputLines(
+            "MethodChainTest.java",
+            "package com.uber.piranha;",
+            "public class MethodChainTest{",
+            " public static void foobar(Parameter cp){",
+            " SomeParam sp = SomeParam.create(cp);",
+            "  if(sp.staleFlag().getValue()){",
+            "    System.out.println();",
+            "   }",
+            "  System.out.println(\"done!\");",
+            " }",
+            "}")
+        .addOutputLines(
+            "MethodChainTest.java",
+            "package com.uber.piranha;",
+            "public class MethodChainTest{",
+            " public static void foobar(Parameter cp){",
+            " SomeParam sp = SomeParam.create(cp);",
+            "  System.out.println();",
+            "  System.out.println(\"done!\");",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  String trgtProp = "config/properties-test-rt.json";
+
+  @Test
+  public void testMethodChainControl() throws IOException {
+    String stale_flag = "stale_flag";
+    String isTreated = "false";
+    String srcProp = "config/properties.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", stale_flag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.addInput("BoolParam.java").expectUnchanged();
+    bcr = bcr.addInput("BoolParameter.java").expectUnchanged();
+
+    bcr.addInputLines(
+            "SomeParam.java",
+            "package com.uber.piranha;",
+            "interface SomeParam  {",
+            " @BoolParam(key = \"other_flag\")",
+            " BoolParameter otherFlag();",
+            " @BoolParam(key = \"stale_flag\")",
+            " BoolParameter staleFlag();",
+            " static SomeParam create(Parameter cp){",
+            "  return null;",
+            " }",
+            "}")
+        .addOutputLines(
+            "SomeParam.java",
+            "package com.uber.piranha;",
+            "interface SomeParam  {",
+            " @BoolParam(key = \"other_flag\")",
+            " BoolParameter otherFlag();",
+            "",
+            "",
+            " static SomeParam create(Parameter cp){",
+            "  return null;",
+            " }",
+            "}")
+        .addInputLines(
+            "MethodChainTest.java",
+            "package com.uber.piranha;",
+            "public class MethodChainTest{",
+            " public static void foobar(Parameter cp){",
+            " SomeParam sp = SomeParam.create(cp);",
+            "  if(sp.staleFlag().getValue()){",
+            "    System.out.println();",
+            "   }",
+            "  System.out.println(\"done!\");",
+            " }",
+            "}")
+        .addOutputLines(
+            "MethodChainTest.java",
+            "package com.uber.piranha;",
+            "public class MethodChainTest{",
+            " public static void foobar(Parameter cp){",
+            " SomeParam sp = SomeParam.create(cp);",
+            "",
+            "",
+            "  System.out.println(\"done!\");",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Files.deleteIfExists(Paths.get(trgtProp));
   }
 }

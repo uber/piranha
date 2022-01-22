@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
+import com.sun.source.tree.MemberSelectTree;
+import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.uber.piranha.testannotations.ResolvedTestAnnotation;
 import com.uber.piranha.testannotations.TestAnnotationResolver;
@@ -126,14 +128,26 @@ public final class Config {
   /**
    * Return all configuration method records matching a given method name.
    *
-   * @param methodName the method name to search
+   * @param mit Method invocation AST
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
    *     definition in the piranha json configuration file matching {@code methodName}.
    */
-  public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(String methodName) {
-    return configMethodProperties.containsKey(methodName)
-        ? configMethodProperties.get(methodName)
-        : ImmutableSet.of();
+  public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(
+      MethodInvocationTree mit) {
+    MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+    String methodName = mst.getIdentifier().toString();
+    if (configMethodProperties.containsKey(methodName))
+      return configMethodProperties.get(methodName);
+    if (mst.getExpression() instanceof MethodInvocationTree) {
+      MethodInvocationTree expression = (MethodInvocationTree) mst.getExpression();
+      if (expression.getMethodSelect() instanceof MemberSelectTree) {
+        MemberSelectTree chained_mst = (MemberSelectTree) expression.getMethodSelect();
+        String chained_methodName = chained_mst.getIdentifier() + "." + methodName;
+        if (configMethodProperties.containsKey(chained_methodName))
+          return configMethodProperties.get(chained_methodName);
+      }
+    }
+    return ImmutableSet.of();
   }
   /**
    * Return all the configured unnecessary test methods (corresponding to the

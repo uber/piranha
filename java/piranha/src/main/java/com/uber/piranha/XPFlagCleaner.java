@@ -357,10 +357,8 @@ public class XPFlagCleaner extends BugChecker
       if (!mit.getMethodSelect().getKind().equals(Kind.MEMBER_SELECT)) {
         return API.UNKNOWN;
       }
-      MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
-      String methodName = mst.getIdentifier().toString();
       ImmutableCollection<PiranhaMethodRecord> methodRecords =
-          this.config.getMethodRecordsForName(methodName);
+          this.config.getMethodRecordsForName(mit);
       if (methodRecords.size() > 0) {
         return getXPAPI(mit, state, methodRecords);
       }
@@ -370,16 +368,6 @@ public class XPFlagCleaner extends BugChecker
 
   private boolean methodRecordMatcher(
       MethodRecord methodRecord, VisitorState state, MethodInvocationTree mit) {
-
-    // Method name must match methodRecord.getMethodName()
-    boolean nameMatches =
-        (methodRecord.isStatic() ? staticMethod().anyClass() : instanceMethod().anyClass())
-            .named(methodRecord.getMethodName())
-            .matches(mit, state);
-    if (!nameMatches) {
-      return false;
-    }
-
     // Method's receiver must match record's receiver type (if any)
     boolean receiverTypeMatches =
         !methodRecord.getReceiverType().isPresent()
@@ -1178,14 +1166,12 @@ public class XPFlagCleaner extends BugChecker
         if (!mit.getMethodSelect().getKind().equals(Tree.Kind.MEMBER_SELECT)) {
           continue; // Can't resolve to API call
         }
-        MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
-        String methodName = mst.getIdentifier().toString();
         // We scan for config method records of type SET_* here directly, since getXPAPI(...) will
         // resolve
         // only when the flag name matches, and we want to verify that no calls are being made to
         // set
         // unrelated flags (i.e. count them in counters.allSetters).
-        for (PiranhaMethodRecord methodRecord : config.getMethodRecordsForName(methodName)) {
+        for (PiranhaMethodRecord methodRecord : config.getMethodRecordsForName(mit)) {
           if (methodRecord.getApiType().equals(XPFlagCleaner.API.SET_TREATED)) {
             counters.allSetters += 1;
             // If the test is asking for the flag in treated condition, but we are setting it to
