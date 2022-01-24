@@ -1042,22 +1042,32 @@ public class CorePiranhaTest {
 
     String[] temp = stale_flag.split("_");
     String methodPropertiesToAdd =
-        "{\n"
-            + "      \"methodName\": \"$flagName$.getValue\",\n"
-            + "      \"flagType\": \"treated\",\n"
-            + "      \"returnType\": \"boolean\"\n"
-            + "    },\n"
-            + "    {\n"
-            + "      \"methodName\": \"put\",\n"
-            + "      \"flagType\": \"empty\",\n"
-            + "      \"argumentIndex\": 1\n"
-            + "    },\n";
+        String.join(
+            "\n",
+            "{",
+            "      \"methodName\": \"$flagName$.getValue\",",
+            "      \"flagType\": \"treated\",",
+            "      \"returnType\": \"boolean\"",
+            "    },",
+            "    {",
+            "      \"methodName\": \"put\",",
+            "      \"flagType\": \"empty\",",
+            "      \"argumentIndex\": 1",
+            "    },",
+            "");
     String annotationPropertiesToAdd =
-        "{\n"
-            + "      \"name\" : \"BoolParam\",\n"
-            + "      \"flag\" : \"$key\",\n"
-            + "      \"treated\" : \"$notIsTreated$\"\n"
-            + "    },";
+        String.join(
+            "\n",
+            "{",
+            "      \"name\" : \"BoolParam\",",
+            "      \"flag\" : \"$key\",",
+            "      \"treated\" : \"$notIsTreated$\"",
+            "    },",
+            "{",
+            "        \"name\" : \"PVal\",",
+            "        \"flag\" : \"$key\",",
+            "        \"treated\" : \"$val\"",
+            "    }");
     String flagNameCamelCase =
         temp[0]
             + Arrays.stream(temp, 1, temp.length)
@@ -1152,6 +1162,27 @@ public class CorePiranhaTest {
             " cp.put(\"\", \"other_flag\",true);",
             " }",
             "}")
+        .addInputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"true\")",
+            " public void testSomethingTreated(){",
+            "  System.out.println();",
+            " }",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"false\")",
+            " public void testSomethingControl(){",
+            "  System.out.println();",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " public void testSomethingTreated(){",
+            "  System.out.println();",
+            " }",
+            "}")
         .doTest();
   }
 
@@ -1226,6 +1257,27 @@ public class CorePiranhaTest {
             "",
             "  System.out.println(\"done!\");",
             " cp.put(\"\", \"other_flag\",true);",
+            " }",
+            "}")
+        .addInputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"true\")",
+            " public void testSomethingTreated(){",
+            "  System.out.println();",
+            " }",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"false\")",
+            " public void testSomethingControl(){",
+            "  System.out.println();",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " public void testSomethingControl(){",
+            "  System.out.println();",
             " }",
             "}")
         .doTest();
