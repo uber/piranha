@@ -1145,6 +1145,9 @@ public class CorePiranhaTest {
             "  if(sp.staleFlag().getValue()){",
             "    System.out.println();",
             "   }",
+            "  if(!sp.staleFlag().getValue()){",
+            "    System.out.println();",
+            "   }",
             "  System.out.println(\"done!\");",
             " cp.put(\"\", \"stale_flag\",true);",
             " cp.put(\"\", \"stale_flag\",false);",
@@ -1186,7 +1189,94 @@ public class CorePiranhaTest {
         .doTest();
   }
 
+  @Test
+  public void testTestAnnotationsTreated() throws IOException {
+    String stale_flag = "stale_flag";
+    String isTreated = "true";
+    String srcProp = "config/properties.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", stale_flag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.addInput("Parameter.java").expectUnchanged();
+    bcr = bcr.addInput("BoolParameter.java").expectUnchanged();
+    bcr.addInputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"true\")",
+            " public void testSomethingTreated(){",
+            "  System.out.println();",
+            " }",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"false\")",
+            " public void testSomethingControl(){",
+            "  System.out.println();",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " public void testSomethingTreated(){",
+            "  System.out.println();",
+            " }",
+            "}")
+        .doTest();
+  }
+
   String trgtProp = "config/properties-test-rt.json";
+
+  @Test
+  public void testTestAnnotationsControl() throws IOException {
+    String stale_flag = "stale_flag";
+    String isTreated = "false";
+    String srcProp = "config/properties.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", stale_flag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = bcr.addInput("BoolParam.java").expectUnchanged();
+    bcr = bcr.addInput("BoolParameter.java").expectUnchanged();
+
+    bcr.addInputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"true\")",
+            " public void testSomethingTreated(){",
+            "  System.out.println();",
+            " }",
+            " @PVal(ns=\"\", key=\"stale_flag\", val=\"false\")",
+            " public void testSomethingControl(){",
+            "  System.out.println();",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestMethodChainTest.java",
+            "package com.uber.piranha;",
+            "class TestMethodChainTest{",
+            " public void testSomethingControl(){",
+            "  System.out.println();",
+            " }",
+            "}")
+        .doTest();
+  }
 
   @Test
   public void testMethodChainControl() throws IOException {
@@ -1242,6 +1332,9 @@ public class CorePiranhaTest {
             "    System.out.println();",
             "   }",
             "  System.out.println(\"done!\");",
+            "  if(!sp.staleFlag().getValue()){",
+            "    System.out.println();",
+            "   }",
             " cp.put(\"\", \"stale_flag\",true);",
             " cp.put(\"\", \"stale_flag\",false);",
             " cp.put(\"\", \"other_flag\",true);",
@@ -1256,28 +1349,10 @@ public class CorePiranhaTest {
             "",
             "",
             "  System.out.println(\"done!\");",
+            "    System.out.println();",
+            "",
+            "",
             " cp.put(\"\", \"other_flag\",true);",
-            " }",
-            "}")
-        .addInputLines(
-            "TestMethodChainTest.java",
-            "package com.uber.piranha;",
-            "class TestMethodChainTest{",
-            " @PVal(ns=\"\", key=\"stale_flag\", val=\"true\")",
-            " public void testSomethingTreated(){",
-            "  System.out.println();",
-            " }",
-            " @PVal(ns=\"\", key=\"stale_flag\", val=\"false\")",
-            " public void testSomethingControl(){",
-            "  System.out.println();",
-            " }",
-            "}")
-        .addOutputLines(
-            "TestMethodChainTest.java",
-            "package com.uber.piranha;",
-            "class TestMethodChainTest{",
-            " public void testSomethingControl(){",
-            "  System.out.println();",
             " }",
             "}")
         .doTest();
