@@ -1131,6 +1131,9 @@ public class CorePiranhaTest {
             "    System.out.println();",
             "   }",
             "  System.out.println(\"done!\");",
+            " cp.put(\"\", \"stale_flag\",true);",
+            " cp.put(\"\", \"stale_flag\",false);",
+            " cp.put(\"\", \"other_flag\",true);",
             " }",
             "}")
         .addOutputLines(
@@ -1141,6 +1144,7 @@ public class CorePiranhaTest {
             " SomeParam sp = SomeParam.create(cp);",
             "  System.out.println();",
             "  System.out.println(\"done!\");",
+            " cp.put(\"\", \"other_flag\",true);",
             " }",
             "}")
         .doTest();
@@ -1202,6 +1206,9 @@ public class CorePiranhaTest {
             "    System.out.println();",
             "   }",
             "  System.out.println(\"done!\");",
+            " cp.put(\"\", \"stale_flag\",true);",
+            " cp.put(\"\", \"stale_flag\",false);",
+            " cp.put(\"\", \"other_flag\",true);",
             " }",
             "}")
         .addOutputLines(
@@ -1213,6 +1220,7 @@ public class CorePiranhaTest {
             "",
             "",
             "  System.out.println(\"done!\");",
+            " cp.put(\"\", \"other_flag\",true);",
             " }",
             "}")
         .doTest();
