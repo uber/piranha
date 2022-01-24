@@ -25,7 +25,7 @@ sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 dependencies {
-  annotationProcessor "com.uber.piranha:piranha:0.1.5"
+  annotationProcessor "com.uber.piranha:piranha:0.1.6"
   errorprone "com.google.errorprone:error_prone_core:2.4.0"
   errorproneJavac "com.google.errorprone:javac:9+181-r4173-1"
 }
@@ -268,7 +268,7 @@ IMPORTANT: Please note that the gradle build script included in that directory a
             <path>
               <groupId>com.uber.piranha</groupId>
               <artifactId>piranha</artifactId>
-              <version>0.1.5</version>
+              <version>0.1.6</version>
             </path>
             <path>
               <groupId>com.google.errorprone</groupId>

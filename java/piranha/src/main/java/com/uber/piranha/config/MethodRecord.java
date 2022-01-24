@@ -19,7 +19,6 @@ import static com.uber.piranha.config.PiranhaRecord.getValueStringFromMap;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalInt;
 import javax.annotation.Nullable;
 
 /** A class representing a method configuration record from properties.json */
@@ -64,8 +63,8 @@ public class MethodRecord {
     return methodName;
   }
 
-  public OptionalInt getArgumentIdx() {
-    return Optional.ofNullable(argumentIdx).map(OptionalInt::of).orElseGet(OptionalInt::empty);
+  public Optional<Integer> getArgumentIdx() {
+    return Optional.ofNullable(argumentIdx);
   }
 
   public Optional<String> getReceiverType() {
