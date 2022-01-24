@@ -57,6 +57,7 @@ import com.sun.source.tree.UnaryTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.tree.JCTree;
 import com.uber.piranha.config.Config;
 import com.uber.piranha.config.PiranhaConfigurationException;
 import com.uber.piranha.config.PiranhaEnumRecord;
@@ -1375,7 +1376,7 @@ public class XPFlagCleaner extends BugChecker
       // Note that the AST elements referenced by deletableAnnotations and deletableIdentifiers
       // should not overlap, given the logic above, so deleting each independently is safe.
       for (ExpressionTree expr : deletableIdentifiers) {
-        fixBuilder = deleteExprWithComma(state, tree, expr, resolvedTestAnnotations, fixBuilder);
+        fixBuilder = deleteExprWithComma(state, expr, resolvedTestAnnotations, fixBuilder);
         decrementAllSymbolUsages(expr, state, fixBuilder);
       }
       for (AnnotationTree at : deletableAnnotations) {
@@ -1568,34 +1569,61 @@ public class XPFlagCleaner extends BugChecker
   /** removes enum in annotation and the comma if there is more than one enum in it */
   private SuggestedFix.Builder deleteExprWithComma(
       VisitorState state,
-      Tree tree,
       ExpressionTree expressionTree,
       ImmutableSet<ResolvedTestAnnotation> resolvedTestAnnotations,
       SuggestedFix.Builder fixBuilder) {
     for (ResolvedTestAnnotation resolvedTestAnnotation : resolvedTestAnnotations) {
-      if (resolvedTestAnnotation.getFlags().size() > 1) {
-        // the index is used to know if we have to remove the comma after or before the enum
-        int index =
-            IntStream.range(0, resolvedTestAnnotation.getFlags().size())
-                .filter(i -> resolvedTestAnnotation.getFlags().get(i).getValue().equals(xpFlagName))
-                .findFirst()
-                .orElse(-1);
-        if (index != -1) {
-          String replacementString = state.getSourceForNode(tree);
-          if (index == resolvedTestAnnotation.getFlags().size() - 1) {
-            replacementString =
-                replacementString.replace(", " + state.getSourceForNode(expressionTree), "");
-          } else {
-            replacementString =
-                replacementString.replace(state.getSourceForNode(expressionTree) + ", ", "");
-          }
-          fixBuilder.replace(tree, replacementString);
-        }
-      } else {
-        fixBuilder.delete(expressionTree);
+
+      // remove the comma before or after the enum depending on the index
+      int index =
+          IntStream.range(0, resolvedTestAnnotation.getFlags().size())
+              .filter(i -> resolvedTestAnnotation.getFlags().get(i).getValue().equals(xpFlagName))
+              .findFirst()
+              .orElse(-1);
+      if (index != -1) {
+        JCTree node = (JCTree) resolvedTestAnnotation.getSourceTree();
+        int startAbsolute = node.getStartPosition();
+        int lower = ((JCTree) expressionTree).getStartPosition() - startAbsolute;
+        int upper = state.getEndPosition(expressionTree) - startAbsolute;
+        CharSequence source = state.getSourceForNode(node);
+
+        lower = getLower(source, lower, index, resolvedTestAnnotation.getFlags().size());
+
+        upper = getUpper(source, upper);
+
+        fixBuilder.replace(startAbsolute + lower, startAbsolute + upper, "");
       }
     }
     return fixBuilder;
+  }
+
+  private int getLower(CharSequence source, int lower, int index, int flagSize) {
+    while (lower >= 0
+        && source.charAt(lower) != '{'
+        && source.charAt(lower) != '='
+        && source.charAt(lower) != ',') {
+      lower--;
+    }
+    // do not remove { or = neither the comma when it is not the last enum
+    if (source.charAt(lower) == '{'
+        || source.charAt(lower) == '='
+        || (index != flagSize - 1 && source.charAt(lower) == ',')) {
+      lower++;
+    }
+    return lower;
+  }
+
+  private int getUpper(CharSequence source, int upper) {
+    while (upper < source.length()
+        && source.charAt(upper) != ','
+        && source.charAt(upper) != '}'
+        && source.charAt(upper) != ')') {
+      upper++;
+    }
+    if (source.charAt(upper) == ',') {
+      upper++;
+    }
+    return upper;
   }
 
   /**
