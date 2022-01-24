@@ -6,11 +6,6 @@
       "argumentIndex": 0
     },
     {
-      "methodName": "put",
-      "flagType": "empty",
-      "argumentIndex": 1
-    },
-    {
       "methodName": "isFlagTreated",
       "flagType": "treated",
       "returnType": "boolean",

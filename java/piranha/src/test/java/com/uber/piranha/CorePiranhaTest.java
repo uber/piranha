@@ -1046,7 +1046,12 @@ public class CorePiranhaTest {
             + "      \"methodName\": \"$flagName$.getValue\",\n"
             + "      \"flagType\": \"treated\",\n"
             + "      \"returnType\": \"boolean\"\n"
-            + "    },";
+            + "    },\n"
+            + "    {\n"
+            + "      \"methodName\": \"put\",\n"
+            + "      \"flagType\": \"empty\",\n"
+            + "      \"argumentIndex\": 1\n"
+            + "    },\n";
     String annotationPropertiesToAdd =
         "{\n"
             + "      \"name\" : \"BoolParam\",\n"
