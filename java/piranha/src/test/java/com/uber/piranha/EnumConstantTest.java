@@ -848,4 +848,358 @@ public class EnumConstantTest {
             "}")
         .doTest();
   }
+
+  /** Test to cleanup an enum in annotation. Should remove the entire line */
+  @Test
+  public void testRemoveEnumFromAnnotationShouldRemoveAnnotation() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  STALE_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = TestExperimentName.STALE_FLAG)",
+            " public void annotation_test() {}",
+            "}")
+        .addOutputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " public void annotation_test() {}",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup the first enum in annotation. Should remove the enum and the comma after it and
+   * keep the annotation and the other enum
+   */
+  @Test
+  public void testRemoveFirstEnumFromAnnotationRemovingCommaAndKeepingOtherEnum() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  STALE_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.STALE_FLAG, TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .addOutputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup the enum in the middle of the annotation. Should remove the enum and the comma
+   * after it and keep the annotation and the other enums
+   */
+  @Test
+  public void testRemoveEnumInTheMiddleFromAnnotationRemovingCommaAndKeepingOthersEnums() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG,",
+            "  STALE_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG, TestExperimentName.STALE_FLAG, TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .addOutputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG, TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup the enum in the middle of the annotation without space between the annotation.
+   * Should remove the enum and the comma after it and keep the annotation and the other enums
+   */
+  @Test
+  public void
+      testRemoveEnumInTheMiddleWithoutSpacesFromAnnotationRemovingCommaAndKeepingOthersEnums() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG,",
+            "  STALE_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG,TestExperimentName.STALE_FLAG,TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .addOutputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG,TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup the enum in the middle of the annotation separate the enums by new line. Should
+   * remove the enum and the comma after it and keep the annotation and the other enums
+   */
+  @Test
+  public void
+      testRemoveEnumInTheMiddleSeparateByNewLineFromAnnotationRemovingCommaAndKeepingOthersEnums() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG,",
+            "  STALE_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG, TestExperimentName.STALE_FLAG,\r\nTestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .addOutputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG,\r\nTestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .doTest();
+  }
+
+  /**
+   * Test to cleanup the enum at the end of the annotation. Should remove the enum and the comma
+   * before it and keep the annotation and the other enums
+   */
+  @Test
+  public void testRemoveEnumAtTheEndFromAnnotationRemovingCommaAndKeepingOthersEnums() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG,",
+            "  STALE_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG, TestExperimentName.OTHER_FLAG, TestExperimentName.STALE_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .addOutputLines(
+            "TestEnumInAnnotation.java",
+            "package com.uber.piranha;",
+            "import java.lang.annotation.ElementType;",
+            "import java.lang.annotation.Retention;",
+            "import java.lang.annotation.RetentionPolicy;",
+            "import java.lang.annotation.Target;",
+            "class TestEnumInAnnotation {",
+            " enum TestExperimentName {",
+            "  OTHER_FLAG,",
+            "  ANOTHER_FLAG;",
+            " }",
+            " @Retention(RetentionPolicy.RUNTIME)",
+            " @Target({ElementType.METHOD})",
+            " @interface ToggleTesting {",
+            "  TestExperimentName[] treated();",
+            " }",
+            " @ToggleTesting(treated = {TestExperimentName.ANOTHER_FLAG, TestExperimentName.OTHER_FLAG})",
+            " public void annotation_test() {}",
+            "}")
+        .doTest();
+  }
 }
