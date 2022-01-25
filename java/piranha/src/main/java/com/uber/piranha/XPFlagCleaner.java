@@ -1556,16 +1556,11 @@ public class XPFlagCleaner extends BugChecker
   }
 
   private int getLower(CharSequence source, int lower, int index, int flagSize) {
-    while (lower >= 0
-        && source.charAt(lower) != '{'
-        && source.charAt(lower) != '='
-        && source.charAt(lower) != ',') {
+    while (lower >= 0 && source.charAt(lower) != '{' && source.charAt(lower) != ',') {
       lower--;
     }
     // do not remove { or = neither the comma when it is not the last enum
-    if (source.charAt(lower) == '{'
-        || source.charAt(lower) == '='
-        || (index != flagSize - 1 && source.charAt(lower) == ',')) {
+    if (source.charAt(lower) == '{' || (index != flagSize - 1 && source.charAt(lower) == ',')) {
       lower++;
     }
     return lower;
