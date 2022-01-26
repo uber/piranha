@@ -15,7 +15,14 @@ class XPMethodChainCases {
     SomeParam sp = SomeParam.create(cp);
 
     System.out.println("!!!");
+    // Does not match API
+    if (sp.otherFlag().getValue()) {
+      System.out.println("!!!");
+    }
 
+    if (sp.otherFlag().getValue()) {
+      System.out.println("!!!");
+    }
     SomeParamRev spr = SomeParamRev.create(cp);
 
     if (spr.getValue().staleFlag()) {
@@ -45,30 +52,6 @@ class XPMethodChainCases {
     @PVal(ns = "", key = "other_flag", val = "false")
     public void testSomethingOther() {
       System.out.println();
-    }
-  }
-
-  interface SomeOtherInterface {
-    SomeParam staleFlag();
-
-    static SomeOtherInterface create(Parameter cp) {
-      return null;
-    }
-  }
-
-  interface OverlappingNameInterface {
-    public boolean staleFlag();
-
-    static OverlappingNameInterface create(Parameter cp) {
-      return null;
-    }
-  }
-
-  interface SomeParamRev {
-    OverlappingNameInterface getValue();
-
-    static SomeParamRev create(Parameter cp) {
-      return null;
     }
   }
 }

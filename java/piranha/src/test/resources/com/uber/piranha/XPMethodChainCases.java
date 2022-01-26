@@ -25,6 +25,16 @@ class XPMethodChainCases {
     if (!sp.staleFlag().getValue()) {
       System.out.println("!!!");
     }
+    // Does not match API
+    if (sp.otherFlag().getValue()) {
+      System.out.println("!!!");
+    }
+    if (sp.otherFlag().getValue() && sp.staleFlag().getValue()) {
+      System.out.println("!!!");
+    }
+    if (sp.otherFlag().getValue() || sp.staleFlag().getValue()) {
+      System.out.println("!!!");
+    }
     SomeParamRev spr = SomeParamRev.create(cp);
     // Does not match API- is reverse order
     if (spr.getValue().staleFlag()) {
@@ -65,30 +75,6 @@ class XPMethodChainCases {
     @PVal(ns = "", key = "other_flag", val = "false")
     public void testSomethingOther() {
       System.out.println();
-    }
-  }
-  // Mock APIs to create corner case scenarios
-  interface SomeOtherInterface {
-    SomeParam staleFlag();
-
-    static SomeOtherInterface create(Parameter cp) {
-      return null;
-    }
-  }
-
-  interface OverlappingNameInterface {
-    public boolean staleFlag();
-
-    static OverlappingNameInterface create(Parameter cp) {
-      return null;
-    }
-  }
-
-  interface SomeParamRev {
-    OverlappingNameInterface getValue();
-
-    static SomeParamRev create(Parameter cp) {
-      return null;
     }
   }
 }

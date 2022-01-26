@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
+import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
@@ -55,15 +56,18 @@ public final class Config {
       "tests.clean_by_setters_heuristic.lines_limit";
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
       "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
+  private static final String ALLOW_METHOD_CHAIN = "allow_method_chain";
   private static final ImmutableSet<String> ALL_OPTS =
       ImmutableSet.of(
           OPT_TESTS_CLEAN_BY_SETTERS_ENABLED,
           OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
-          OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
+          OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS,
+          ALLOW_METHOD_CHAIN);
 
   /* Defaults for named clean up options */
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
   private static final long DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT = 100;
+  private static final boolean DEFAULT_ALLOW_METHOD_CHAIN = false;
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
@@ -126,12 +130,11 @@ public final class Config {
   }
 
   /**
-   * Return all configuration method records matching a given method name. A method record name
-   * field can be used to express a single method invocation or a chain of two method invocations. A
-   * chain of method invocations can be expressed by joining the name of the chained methods (from
-   * left to right) with a `.`. For instance, the name `isToggle` will match a invocation like -
-   * :[1].isToggle(:[2])), and the name `stale_flag.getValue` will match a invocation like -
-   * :[1].stale_flag(:[2]).getValue(:[3]).
+   * Return all configuration method records matching the name of the given method invocation tree.
+   * If the cleanup option "allow_method_chain" is set to true, returns all configurations method
+   * record matching the name of the given method invocation and its receiver method invocation. For
+   * instance, the invocation `exp.stale_flag().getValue()` will match the method record with name
+   * as "stale_flag.getValue". Note: This method only supports matching a method chain of length 2.
    *
    * @param mit Method invocation AST
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
@@ -139,21 +142,37 @@ public final class Config {
    */
   public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(
       MethodInvocationTree mit) {
-    MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
-    String methodName = mst.getIdentifier().toString();
-    if (configMethodProperties.containsKey(methodName))
+    String methodName = getMethodName(mit);
+    if (configMethodProperties.containsKey(methodName)) {
       return configMethodProperties.get(methodName);
-    if (mst.getExpression() instanceof MethodInvocationTree) {
-      MethodInvocationTree expression = (MethodInvocationTree) mst.getExpression();
-      if (expression.getMethodSelect() instanceof MemberSelectTree) {
-        MemberSelectTree chainedMST = (MemberSelectTree) expression.getMethodSelect();
-        String chainedMethodName = chainedMST.getIdentifier() + "." + methodName;
-        if (configMethodProperties.containsKey(chainedMethodName))
+    }
+    if (allowMethodChain() && mit.getMethodSelect() instanceof MemberSelectTree) {
+      ExpressionTree mstExpr = ((MemberSelectTree) mit.getMethodSelect()).getExpression();
+      if (mstExpr instanceof MethodInvocationTree) {
+        String chainedMethodName = getMethodName((MethodInvocationTree) mstExpr) + "." + methodName;
+        if (configMethodProperties.containsKey(chainedMethodName)) {
           return configMethodProperties.get(chainedMethodName);
+        }
       }
     }
     return ImmutableSet.of();
   }
+
+  /**
+   * Returns name of the method invocation
+   *
+   * @param mit Method invocation tree
+   * @return a string representing the name of the method invocation
+   */
+  public String getMethodName(MethodInvocationTree mit) {
+    if (mit.getMethodSelect() instanceof MemberSelectTree) {
+      MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+      return mst.getIdentifier().toString();
+    }
+    // scenario when there is no receiver, like foo("bar")
+    return mit.getMethodSelect().toString();
+  }
+
   /**
    * Return all the configured unnecessary test methods (corresponding to the
    * unnecessaryTestMethodProperties field)
@@ -244,6 +263,10 @@ public final class Config {
             OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS, DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
   }
 
+  public boolean allowMethodChain() {
+    return (boolean) cleanupOptions.getOrDefault(ALLOW_METHOD_CHAIN, DEFAULT_ALLOW_METHOD_CHAIN);
+  }
+
   // End of OPT_* retrieval methods
 
   private static String validateConfigOptsKey(Object k) {
@@ -273,7 +296,8 @@ public final class Config {
 
   private static void validateConfigOptsValue(String valK, Object v) {
     if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)
-        || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)) {
+        || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)
+        || ALLOW_METHOD_CHAIN.equals(valK)) {
       requireType(valK, v, Boolean.class);
     } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
       requireType(valK, v, Long.class);

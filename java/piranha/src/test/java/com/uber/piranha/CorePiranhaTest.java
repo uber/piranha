@@ -1041,33 +1041,6 @@ public class CorePiranhaTest {
       String srcProp, String trgtProp, String stale_flag, boolean isTreated) throws IOException {
 
     String[] temp = stale_flag.split("_");
-    String methodPropertiesToAdd =
-        String.join(
-            "\n",
-            "{",
-            "      \"methodName\": \"$flagName$.getValue\",",
-            "      \"flagType\": \"treated\",",
-            "      \"returnType\": \"boolean\"",
-            "    },",
-            "    {",
-            "      \"methodName\": \"put\",",
-            "      \"flagType\": \"empty\",",
-            "      \"argumentIndex\": 1",
-            "    },",
-            "");
-    String annotationPropertiesToAdd =
-        String.join(
-            "\n",
-            "{",
-            "      \"name\" : \"BoolParam\",",
-            "      \"flag\" : \"$key\",",
-            "      \"treated\" : \"$notIsTreated$\"",
-            "    },",
-            "{",
-            "        \"name\" : \"PVal\",",
-            "        \"flag\" : \"$key\",",
-            "        \"treated\" : \"$val\"",
-            "    }");
     String flagNameCamelCase =
         temp[0]
             + Arrays.stream(temp, 1, temp.length)
@@ -1076,15 +1049,6 @@ public class CorePiranhaTest {
     String newContent =
         Files.readAllLines(Paths.get(srcProp))
             .stream()
-            .map(
-                x ->
-                    x.replace(
-                        "\"methodProperties\": [",
-                        "\"methodProperties\": [" + methodPropertiesToAdd))
-            .map(
-                x ->
-                    x.replace(
-                        "\"annotations\": [", "\"annotations\": [" + annotationPropertiesToAdd))
             .map(x -> x.replace("$flagName$", flagNameCamelCase))
             .map(x -> x.replace("$notIsTreated$", String.valueOf(!isTreated)))
             .collect(joining("\n"));
@@ -1097,7 +1061,7 @@ public class CorePiranhaTest {
   public void testMethodChainTreated() throws IOException {
     String stale_flag = "stale_flag";
     String isTreated = "true";
-    String srcProp = "config/properties.json";
+    String srcProp = "src/test/resources/config/properties_method_chain.json";
     transformAndCreateNewPropertyFile(
         srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -1105,13 +1069,10 @@ public class CorePiranhaTest {
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
     b.putFlag("Piranha:Config", trgtProp);
-
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-    bcr = bcr.addInput("Parameter.java").expectUnchanged();
-    bcr = bcr.addInput("BoolParameter.java").expectUnchanged();
+    bcr = addMockAPIToNameSpace(bcr);
     bcr.addInput("XPMethodChainCases.java").addOutput("XPMethodChainCasesTreatment.java").doTest();
   }
 
@@ -1121,7 +1082,7 @@ public class CorePiranhaTest {
   public void testMethodChainControl() throws IOException {
     String stale_flag = "stale_flag";
     String isTreated = "false";
-    String srcProp = "config/properties.json";
+    String srcProp = "src/test/resources/config/properties_method_chain.json";
     transformAndCreateNewPropertyFile(
         srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -1129,15 +1090,23 @@ public class CorePiranhaTest {
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
     b.putFlag("Piranha:Config", trgtProp);
-
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
-
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
-    bcr = bcr.addInput("BoolParam.java").expectUnchanged();
-    bcr = bcr.addInput("BoolParameter.java").expectUnchanged();
-
+    bcr = addMockAPIToNameSpace(bcr);
     bcr.addInput("XPMethodChainCases.java").addOutput("XPMethodChainCasesControl.java").doTest();
+  }
+
+  private BugCheckerRefactoringTestHelper addMockAPIToNameSpace(
+      BugCheckerRefactoringTestHelper bcr) {
+    bcr = bcr.addInput("mock/PVal.java").expectUnchanged();
+    bcr = bcr.addInput("mock/Parameter.java").expectUnchanged();
+    bcr = bcr.addInput("mock/BoolParam.java").expectUnchanged();
+    bcr = bcr.addInput("mock/BoolParameter.java").expectUnchanged();
+    bcr = bcr.addInput("mock/SomeParamRev.java").expectUnchanged();
+    bcr = bcr.addInput("mock/OverlappingNameInterface.java").expectUnchanged();
+    bcr = bcr.addInput("mock/SomeOtherInterface.java").expectUnchanged();
+    return bcr;
   }
 
   @After
