@@ -366,6 +366,17 @@ public class XPFlagCleaner extends BugChecker
     return API.UNKNOWN;
   }
 
+  /**
+   * This method assumes that the method record's name and the method invocation tree's name match.
+   * The method reports a match if the receiver, relevant the argument index and the return type of
+   * the method record match to that of the method invocation tree. Note that these fields are
+   * optional.
+   *
+   * @param methodRecord candidate method record to match against
+   * @param state visitor state
+   * @param mit method invocation tree
+   * @return true if method record matches tree, otherwise false.
+   */
   private boolean methodRecordMatcher(
       MethodRecord methodRecord, VisitorState state, MethodInvocationTree mit) {
     // Method's receiver must match record's receiver type (if any)

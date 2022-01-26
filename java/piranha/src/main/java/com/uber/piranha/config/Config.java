@@ -126,7 +126,12 @@ public final class Config {
   }
 
   /**
-   * Return all configuration method records matching a given method name.
+   * Return all configuration method records matching a given method name. A method record name
+   * field can be used to express a single method invocation or a chain of two method invocations. A
+   * chain of method invocations can be expressed by joining the name of the chained methods (from
+   * left to right) with a `.`. For instance, the name `isToggle` will match a invocation like -
+   * :[1].isToggle(:[2])), and the name `stale_flag.getValue` will match a invocation like -
+   * :[1].stale_flag(:[2]).getValue(:[3]).
    *
    * @param mit Method invocation AST
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
@@ -141,10 +146,10 @@ public final class Config {
     if (mst.getExpression() instanceof MethodInvocationTree) {
       MethodInvocationTree expression = (MethodInvocationTree) mst.getExpression();
       if (expression.getMethodSelect() instanceof MemberSelectTree) {
-        MemberSelectTree chained_mst = (MemberSelectTree) expression.getMethodSelect();
-        String chained_methodName = chained_mst.getIdentifier() + "." + methodName;
-        if (configMethodProperties.containsKey(chained_methodName))
-          return configMethodProperties.get(chained_methodName);
+        MemberSelectTree chainedMST = (MemberSelectTree) expression.getMethodSelect();
+        String chainedMethodName = chainedMST.getIdentifier() + "." + methodName;
+        if (configMethodProperties.containsKey(chainedMethodName))
+          return configMethodProperties.get(chainedMethodName);
       }
     }
     return ImmutableSet.of();
