@@ -13,11 +13,19 @@
  */
 package com.uber.piranha;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.joining;
+
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1027,5 +1035,107 @@ public class CorePiranhaTest {
             " public OngoingStubbing<Boolean> someWhenWrapper(OngoingStubbing<Boolean> x) { return x;}",
             "}")
         .doTest();
+  }
+
+  public void transformAndCreateNewPropertyFile(
+      String srcProp, String trgtProp, String staleFlag, boolean isTreated) throws IOException {
+
+    String[] temp = staleFlag.split("_");
+    String flagNameCamelCase =
+        temp[0]
+            + Arrays.stream(temp, 1, temp.length)
+                .map(str -> str.substring(0, 1).toUpperCase() + str.substring(1))
+                .collect(joining());
+    String newContent =
+        Files.readAllLines(Paths.get(srcProp))
+            .stream()
+            .map(x -> x.replace("[flagName]", flagNameCamelCase))
+            .map(x -> x.replace("[notIsTreated]", String.valueOf(!isTreated)))
+            .collect(joining("\n"));
+    Path trgt = Paths.get(trgtProp);
+    Files.deleteIfExists(trgt);
+    Files.write(trgt, newContent.getBytes(UTF_8), StandardOpenOption.CREATE);
+  }
+
+  @Test
+  public void testMethodChainTreated() throws IOException {
+    String staleFlag = "stale_flag";
+    String isTreated = "true";
+    String srcProp = "src/test/resources/config/properties_method_chain.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", staleFlag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = addMockAPIToNameSpace(bcr);
+    bcr.addInput("XPMethodChainCases.java").addOutput("XPMethodChainCasesTreatment.java").doTest();
+  }
+
+  String trgtProp = "config/properties-test-rt.json";
+
+  @Test
+  public void testMethodChainControl() throws IOException {
+    String staleFlag = "stale_flag";
+    String isTreated = "false";
+    String srcProp = "src/test/resources/config/properties_method_chain.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", staleFlag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = addMockAPIToNameSpace(bcr);
+    bcr.addInput("XPMethodChainCases.java").addOutput("XPMethodChainCasesControl.java").doTest();
+  }
+
+  private BugCheckerRefactoringTestHelper addMockAPIToNameSpace(
+      BugCheckerRefactoringTestHelper bcr) {
+    bcr = bcr.addInput("mock/PVal.java").expectUnchanged();
+    bcr = bcr.addInput("mock/Parameter.java").expectUnchanged();
+    bcr = bcr.addInput("mock/BoolParam.java").expectUnchanged();
+    bcr = bcr.addInput("mock/BoolParameter.java").expectUnchanged();
+    bcr = bcr.addInput("mock/SomeParamRev.java").expectUnchanged();
+    bcr = bcr.addInput("mock/OverlappingNameInterface.java").expectUnchanged();
+    bcr = bcr.addInput("mock/SomeOtherInterface.java").expectUnchanged();
+    bcr = bcr.addInput("mock/StaticMthds.java").expectUnchanged();
+    return bcr;
+  }
+
+  // Deletes the abstract method declaration but does not delete the
+  // chained method usages
+  @Test
+  public void testMethodTestDoNotAllowsChainFlag() throws IOException {
+    String staleFlag = "stale_flag";
+    String isTreated = "false";
+    String srcProp = "src/test/resources/config/properties_method_chain_not_allow_chained.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", staleFlag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = addMockAPIToNameSpace(bcr);
+    bcr.addInput("XPMethodChainCases.java")
+        .addOutput("XPMethodChainCasesDoNotAllowMethodChain.java")
+        .allowBreakingChanges()
+        .doTest();
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    Files.deleteIfExists(Paths.get(trgtProp));
   }
 }

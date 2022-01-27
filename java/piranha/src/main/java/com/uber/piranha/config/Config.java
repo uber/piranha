@@ -19,6 +19,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
+import com.google.errorprone.matchers.Matchers;
+import com.sun.source.tree.ExpressionTree;
+import com.sun.source.tree.MemberSelectTree;
+import com.sun.source.tree.MethodInvocationTree;
 import com.sun.source.tree.MethodTree;
 import com.uber.piranha.testannotations.ResolvedTestAnnotation;
 import com.uber.piranha.testannotations.TestAnnotationResolver;
@@ -53,15 +57,18 @@ public final class Config {
       "tests.clean_by_setters_heuristic.lines_limit";
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
       "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
+  private static final String ALLOW_METHOD_CHAIN = "allow_method_chain";
   private static final ImmutableSet<String> ALL_OPTS =
       ImmutableSet.of(
           OPT_TESTS_CLEAN_BY_SETTERS_ENABLED,
           OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
-          OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
+          OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS,
+          ALLOW_METHOD_CHAIN);
 
   /* Defaults for named clean up options */
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
   private static final long DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT = 100;
+  private static final boolean DEFAULT_ALLOW_METHOD_CHAIN = false;
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
@@ -124,17 +131,59 @@ public final class Config {
   }
 
   /**
-   * Return all configuration method records matching a given method name.
+   * Return all configuration method records matching the name of the given method invocation tree.
+   * If the cleanup option "allow_method_chain" is set to true, returns all configurations method
+   * record matching the name of the given method invocation and its receiver method invocation. For
+   * instance, the invocation `exp.stale_flag().getValue()` will match the method record with name
+   * as "stale_flag.getValue". Note: This method only supports matching a method chain of length 2
+   * Moreover, it only matches chained invocations where the nested invocation is an instance method
+   * invocation (with a receiver). For instance, abc.stale_flag().getValue() and not
+   * stale_flag().getValue().
    *
-   * @param methodName the method name to search
+   * @param mit Method invocation AST
+   * @param state
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
    *     definition in the piranha json configuration file matching {@code methodName}.
    */
-  public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(String methodName) {
-    return configMethodProperties.containsKey(methodName)
-        ? configMethodProperties.get(methodName)
-        : ImmutableSet.of();
+  public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(
+      MethodInvocationTree mit, VisitorState state) {
+    String methodName = getMethodName(mit);
+    if (configMethodProperties.containsKey(methodName)) {
+      return configMethodProperties.get(methodName);
+    }
+    ExpressionTree methodSelect = mit.getMethodSelect();
+    if (allowMethodChain() && methodSelect instanceof MemberSelectTree) {
+      ExpressionTree mstExpr = ((MemberSelectTree) methodSelect).getExpression();
+      if (mstExpr instanceof MethodInvocationTree) {
+        MethodInvocationTree chainedMIT = (MethodInvocationTree) mstExpr;
+        String chainedMethodName = getMethodName(chainedMIT) + "." + methodName;
+        // This ensures that we only match instance method invocations like
+        // abc.stale_flag().getValue() and not stale_flag().getValue()
+        if (chainedMIT.getMethodSelect() instanceof MemberSelectTree
+            && Matchers.instanceMethod().anyClass().matches(chainedMIT, state)
+            && configMethodProperties.containsKey(chainedMethodName)) {
+          return configMethodProperties.get(chainedMethodName);
+        }
+      }
+    }
+    return ImmutableSet.of();
   }
+
+  /**
+   * Returns name of the method invocation
+   *
+   * @param mit Method invocation tree
+   * @return a string representing the name of the method invocation
+   */
+  public String getMethodName(MethodInvocationTree mit) {
+    if (mit.getMethodSelect() instanceof MemberSelectTree) {
+      MemberSelectTree mst = (MemberSelectTree) mit.getMethodSelect();
+      return mst.getIdentifier().toString();
+    }
+    // scenario when there is no receiver, like foo("bar")
+    return mit.getMethodSelect().toString();
+  }
+
   /**
    * Return all the configured unnecessary test methods (corresponding to the
    * unnecessaryTestMethodProperties field)
@@ -225,6 +274,10 @@ public final class Config {
             OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS, DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS);
   }
 
+  public boolean allowMethodChain() {
+    return (boolean) cleanupOptions.getOrDefault(ALLOW_METHOD_CHAIN, DEFAULT_ALLOW_METHOD_CHAIN);
+  }
+
   // End of OPT_* retrieval methods
 
   private static String validateConfigOptsKey(Object k) {
@@ -254,7 +307,8 @@ public final class Config {
 
   private static void validateConfigOptsValue(String valK, Object v) {
     if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)
-        || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)) {
+        || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)
+        || ALLOW_METHOD_CHAIN.equals(valK)) {
       requireType(valK, v, Boolean.class);
     } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
       requireType(valK, v, Long.class);
