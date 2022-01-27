@@ -1038,9 +1038,9 @@ public class CorePiranhaTest {
   }
 
   public void transformAndCreateNewPropertyFile(
-      String srcProp, String trgtProp, String stale_flag, boolean isTreated) throws IOException {
+      String srcProp, String trgtProp, String staleFlag, boolean isTreated) throws IOException {
 
-    String[] temp = stale_flag.split("_");
+    String[] temp = staleFlag.split("_");
     String flagNameCamelCase =
         temp[0]
             + Arrays.stream(temp, 1, temp.length)
