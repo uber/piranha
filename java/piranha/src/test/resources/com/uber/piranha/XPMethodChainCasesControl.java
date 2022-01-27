@@ -11,6 +11,17 @@ class XPMethodChainCases {
     }
   }
 
+  public BoolParameter staleFlag() {
+    return null;
+  }
+
+  public void testDontMatchNonInstanceNested() {
+    // Does not Match
+    if (staleFlag().getValue()) {
+      System.out.print("!!");
+    }
+  }
+
   public static void foobar(Parameter cp) {
     SomeParam sp = SomeParam.create(cp);
 
@@ -37,6 +48,11 @@ class XPMethodChainCases {
     if (sot.staleFlag() != null) {
       System.out.println("!!");
     }
+
+    if (StaticMthds.staleFlag().getValue()) {
+      System.out.print("!!");
+    }
+
     System.out.println("done!");
 
     cp.put("", "other_flag", true);

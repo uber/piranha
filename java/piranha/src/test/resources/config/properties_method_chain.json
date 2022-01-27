@@ -1,7 +1,7 @@
 {
   "methodProperties": [
     {
-      "methodName": "$flagName$.getValue",
+      "methodName": "[flagName].getValue",
       "flagType": "treated",
       "returnType": "boolean"
     },
@@ -15,7 +15,7 @@
     {
       "name": "BoolParam",
       "flag": "$key",
-      "treated": "$notIsTreated$"
+      "treated": "[notIsTreated]"
     },
     {
       "name": "PVal",

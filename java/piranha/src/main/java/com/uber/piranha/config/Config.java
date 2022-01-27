@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.VisitorState;
+import com.google.errorprone.matchers.Matchers;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -134,23 +135,33 @@ public final class Config {
    * If the cleanup option "allow_method_chain" is set to true, returns all configurations method
    * record matching the name of the given method invocation and its receiver method invocation. For
    * instance, the invocation `exp.stale_flag().getValue()` will match the method record with name
-   * as "stale_flag.getValue". Note: This method only supports matching a method chain of length 2.
+   * as "stale_flag.getValue". Note: This method only supports matching a method chain of length 2
+   * Moreover, it only matches chained invocations where the nested invocation is an instance method
+   * invocation (with a receiver). For instance, abc.stale_flag().getValue() and not
+   * stale_flag().getValue().
    *
    * @param mit Method invocation AST
+   * @param state
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
    *     definition in the piranha json configuration file matching {@code methodName}.
    */
   public ImmutableCollection<PiranhaMethodRecord> getMethodRecordsForName(
-      MethodInvocationTree mit) {
+      MethodInvocationTree mit, VisitorState state) {
     String methodName = getMethodName(mit);
     if (configMethodProperties.containsKey(methodName)) {
       return configMethodProperties.get(methodName);
     }
-    if (allowMethodChain() && mit.getMethodSelect() instanceof MemberSelectTree) {
-      ExpressionTree mstExpr = ((MemberSelectTree) mit.getMethodSelect()).getExpression();
+    ExpressionTree methodSelect = mit.getMethodSelect();
+    if (allowMethodChain() && methodSelect instanceof MemberSelectTree) {
+      ExpressionTree mstExpr = ((MemberSelectTree) methodSelect).getExpression();
       if (mstExpr instanceof MethodInvocationTree) {
-        String chainedMethodName = getMethodName((MethodInvocationTree) mstExpr) + "." + methodName;
-        if (configMethodProperties.containsKey(chainedMethodName)) {
+        MethodInvocationTree chainedMIT = (MethodInvocationTree) mstExpr;
+        String chainedMethodName = getMethodName(chainedMIT) + "." + methodName;
+        // This ensures that we only match instance method invocations like
+        // abc.stale_flag().getValue() and not stale_flag().getValue()
+        if (chainedMIT.getMethodSelect() instanceof MemberSelectTree
+            && Matchers.instanceMethod().anyClass().matches(chainedMIT, state)
+            && configMethodProperties.containsKey(chainedMethodName)) {
           return configMethodProperties.get(chainedMethodName);
         }
       }

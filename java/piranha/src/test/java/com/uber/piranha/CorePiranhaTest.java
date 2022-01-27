@@ -1049,8 +1049,8 @@ public class CorePiranhaTest {
     String newContent =
         Files.readAllLines(Paths.get(srcProp))
             .stream()
-            .map(x -> x.replace("$flagName$", flagNameCamelCase))
-            .map(x -> x.replace("$notIsTreated$", String.valueOf(!isTreated)))
+            .map(x -> x.replace("[flagName]", flagNameCamelCase))
+            .map(x -> x.replace("[notIsTreated]", String.valueOf(!isTreated)))
             .collect(joining("\n"));
     Path trgt = Paths.get(trgtProp);
     Files.deleteIfExists(trgt);
@@ -1059,13 +1059,13 @@ public class CorePiranhaTest {
 
   @Test
   public void testMethodChainTreated() throws IOException {
-    String stale_flag = "stale_flag";
+    String staleFlag = "stale_flag";
     String isTreated = "true";
     String srcProp = "src/test/resources/config/properties_method_chain.json";
     transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", stale_flag);
+    b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
     b.putFlag("Piranha:Config", trgtProp);
@@ -1080,13 +1080,13 @@ public class CorePiranhaTest {
 
   @Test
   public void testMethodChainControl() throws IOException {
-    String stale_flag = "stale_flag";
+    String staleFlag = "stale_flag";
     String isTreated = "false";
     String srcProp = "src/test/resources/config/properties_method_chain.json";
     transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, stale_flag, Boolean.parseBoolean(isTreated));
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
-    b.putFlag("Piranha:FlagName", stale_flag);
+    b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
     b.putFlag("Piranha:Config", trgtProp);
@@ -1106,6 +1106,7 @@ public class CorePiranhaTest {
     bcr = bcr.addInput("mock/SomeParamRev.java").expectUnchanged();
     bcr = bcr.addInput("mock/OverlappingNameInterface.java").expectUnchanged();
     bcr = bcr.addInput("mock/SomeOtherInterface.java").expectUnchanged();
+    bcr = bcr.addInput("mock/StaticMthds.java").expectUnchanged();
     return bcr;
   }
 

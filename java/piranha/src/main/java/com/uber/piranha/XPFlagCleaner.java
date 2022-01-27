@@ -358,7 +358,7 @@ public class XPFlagCleaner extends BugChecker
         return API.UNKNOWN;
       }
       ImmutableCollection<PiranhaMethodRecord> methodRecords =
-          this.config.getMethodRecordsForName(mit);
+          this.config.getMethodRecordsForName(mit, state);
       if (methodRecords.size() > 0) {
         return getXPAPI(mit, state, methodRecords);
       }
@@ -1182,7 +1182,7 @@ public class XPFlagCleaner extends BugChecker
         // only when the flag name matches, and we want to verify that no calls are being made to
         // set
         // unrelated flags (i.e. count them in counters.allSetters).
-        for (PiranhaMethodRecord methodRecord : config.getMethodRecordsForName(mit)) {
+        for (PiranhaMethodRecord methodRecord : config.getMethodRecordsForName(mit, state)) {
           if (methodRecord.getApiType().equals(XPFlagCleaner.API.SET_TREATED)) {
             counters.allSetters += 1;
             // If the test is asking for the flag in treated condition, but we are setting it to

@@ -15,6 +15,17 @@ class XPMethodChainCases {
     }
   }
 
+  public BoolParameter staleFlag() {
+    return null;
+  }
+  // should not match instance method where nested invocation is not a member select tree.
+  public void testDontMatchNonInstanceNested() {
+    // Does not Match
+    if (staleFlag().getValue()) {
+      System.out.print("!!");
+    }
+  }
+
   public static void foobar(Parameter cp) {
     SomeParam sp = SomeParam.create(cp);
     // Matches API
@@ -49,6 +60,11 @@ class XPMethodChainCases {
     if (sot.staleFlag() != null) {
       System.out.println("!!");
     }
+    // Does not Match - static method invocation
+    if (StaticMthds.staleFlag().getValue()) {
+      System.out.print("!!");
+    }
+
     System.out.println("done!");
     // Matches API
     cp.put("", "stale_flag", true);
