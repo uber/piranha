@@ -1,0 +1,29 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "[flagName].getValue",
+      "flagType": "treated",
+      "returnType": "boolean"
+    },
+    {
+      "methodName": "put",
+      "flagType": "empty",
+      "argumentIndex": 1
+    }
+  ],
+  "annotations": [
+    {
+      "name": "BoolParam",
+      "flag": "$key",
+      "treated": "[notIsTreated]"
+    },
+    {
+      "name": "PVal",
+      "flag": "$key",
+      "treated": "$val"
+    }
+  ],
+  "cleanupOptions": {
+    "allow_method_chain" : false
+  }
+}
