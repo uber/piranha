@@ -1,3 +1,9 @@
+Version 0.1.7
+-------------
+* Added support for matching chain of method invocations for XP APIs [#163]
+* Refactoring to use the Error-prone's matcher API [#162]
+* Fixed the bug relating to commas in the annotation argument list [#159]
+
 Version 0.1.6
 -------------
 * Delete statements using EasyMock and JUnit API [#156]
