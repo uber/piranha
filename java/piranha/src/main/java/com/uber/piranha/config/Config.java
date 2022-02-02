@@ -58,17 +58,23 @@ public final class Config {
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
       "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
   private static final String ALLOW_METHOD_CHAIN = "allow_method_chain";
+
+  private static final String ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT =
+      "allow_matching_method_invocation_as_argument";
+
   private static final ImmutableSet<String> ALL_OPTS =
       ImmutableSet.of(
           OPT_TESTS_CLEAN_BY_SETTERS_ENABLED,
           OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
           OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS,
-          ALLOW_METHOD_CHAIN);
+          ALLOW_METHOD_CHAIN,
+          ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT);
 
   /* Defaults for named clean up options */
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
   private static final long DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT = 100;
   private static final boolean DEFAULT_ALLOW_METHOD_CHAIN = false;
+  private static final boolean DEFAULT_ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT = false;
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
@@ -141,7 +147,7 @@ public final class Config {
    * stale_flag().getValue().
    *
    * @param mit Method invocation AST
-   * @param state
+   * @param state visitor state
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
    *     definition in the piranha json configuration file matching {@code methodName}.
    */
@@ -166,6 +172,23 @@ public final class Config {
         }
       }
     }
+    if (allowMatchingMethodInvocationAsArg() && methodSelect instanceof MemberSelectTree) {
+      List<? extends ExpressionTree> arguments = mit.getArguments();
+      for (int i = 0; i < arguments.size(); i++) {
+        ExpressionTree argument = arguments.get(i);
+        if (argument instanceof MethodInvocationTree) {
+          MethodInvocationTree argMehodInvocation = (MethodInvocationTree) argument;
+          String argumentMethodInvocationName =
+              methodName + "$" + i + "$" + getMethodName(argMehodInvocation);
+          if (argMehodInvocation.getMethodSelect() instanceof MemberSelectTree
+              && Matchers.instanceMethod().anyClass().matches(argMehodInvocation, state)
+              && configMethodProperties.containsKey(argumentMethodInvocationName)) {
+            return configMethodProperties.get(argumentMethodInvocationName);
+          }
+        }
+      }
+    }
+
     return ImmutableSet.of();
   }
 
@@ -278,6 +301,13 @@ public final class Config {
     return (boolean) cleanupOptions.getOrDefault(ALLOW_METHOD_CHAIN, DEFAULT_ALLOW_METHOD_CHAIN);
   }
 
+  public boolean allowMatchingMethodInvocationAsArg() {
+    return (boolean)
+        cleanupOptions.getOrDefault(
+            ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT,
+            DEFAULT_ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT);
+  }
+
   // End of OPT_* retrieval methods
 
   private static String validateConfigOptsKey(Object k) {
@@ -308,7 +338,8 @@ public final class Config {
   private static void validateConfigOptsValue(String valK, Object v) {
     if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)
         || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)
-        || ALLOW_METHOD_CHAIN.equals(valK)) {
+        || ALLOW_METHOD_CHAIN.equals(valK)
+        || ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT.equals(valK)) {
       requireType(valK, v, Boolean.class);
     } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
       requireType(valK, v, Long.class);

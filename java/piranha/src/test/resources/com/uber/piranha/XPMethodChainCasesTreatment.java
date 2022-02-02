@@ -54,8 +54,8 @@ class XPMethodChainCases {
 
     System.out.println("done!");
 
-    cp.put("", "other_flag", true);
-    cp.put("", "other_flag", false);
+    cp.put(sp.otherFlag(), true);
+    cp.put(sp.otherFlag(), false);
   }
 
   class TestMethodChainTest {

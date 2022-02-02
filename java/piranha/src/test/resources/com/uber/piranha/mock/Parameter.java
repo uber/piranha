@@ -2,5 +2,5 @@ package com.uber.piranha;
 
 public class Parameter {
 
-  public void put(String a, String flag, boolean b) {};
+  public void put(BoolParameter p, boolean b) {}
 }

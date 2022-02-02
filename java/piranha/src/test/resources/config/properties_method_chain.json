@@ -6,9 +6,8 @@
       "returnType": "boolean"
     },
     {
-      "methodName": "put",
-      "flagType": "empty",
-      "argumentIndex": 1
+      "methodName": "put$0$[flagName]",
+      "flagType": "empty"
     }
   ],
   "annotations": [
@@ -24,6 +23,7 @@
     }
   ],
   "cleanupOptions": {
-    "allow_method_chain" : true
+    "allow_method_chain" : true,
+    "allow_matching_method_invocation_as_argument" : true
   }
 }
