@@ -138,13 +138,22 @@ public final class Config {
 
   /**
    * Return all configuration method records matching the name of the given method invocation tree.
-   * If the cleanup option "allow_method_chain" is set to true, returns all configurations method
+   *
+   * <p>If the cleanup option "allow_method_chain" is set to true, returns all configurations method
    * record matching the name of the given method invocation and its receiver method invocation. For
    * instance, the invocation `exp.stale_flag().getValue()` will match the method record with name
    * as "stale_flag.getValue". Note: This method only supports matching a method chain of length 2
    * Moreover, it only matches chained invocations where the nested invocation is an instance method
    * invocation (with a receiver). For instance, abc.stale_flag().getValue() and not
    * stale_flag().getValue().
+   *
+   * <p>If the cleanup option "allow_matching_method_invocation_as_argument" is set to true, returns
+   * all configurations method record matching the name of the given method invocation and its
+   * argument which is also a method invocation. For instance, the invocation `cp.put(x.staleFlag(),
+   * true)` will match the method record with name as "put$0$stale_flag". The syntax for matching an
+   * method invocation with another method invocation passed as argument is
+   * [wrapper_method_name]$[arg_index]$[method_inv_name_passed_as_argument]. Note: This method only
+   * supports matching at most one argument.
    *
    * @param mit Method invocation AST
    * @param state visitor state
