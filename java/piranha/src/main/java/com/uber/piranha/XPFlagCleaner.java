@@ -55,6 +55,7 @@ import com.sun.source.tree.ExpressionStatementTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.IfTree;
 import com.sun.source.tree.ImportTree;
+import com.sun.source.tree.LambdaExpressionTree;
 import com.sun.source.tree.LiteralTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.MethodInvocationTree;
@@ -129,6 +130,7 @@ public class XPFlagCleaner extends BugChecker
         BugChecker.ReturnTreeMatcher,
         BugChecker.UnaryTreeMatcher,
         BugChecker.VariableTreeMatcher,
+        BugChecker.LambdaExpressionTreeMatcher,
         BugChecker.MethodTreeMatcher {
 
   /**
@@ -1023,6 +1025,32 @@ public class XPFlagCleaner extends BugChecker
     }
 
     return Description.NO_MATCH;
+  }
+
+  @Override
+  public Description matchLambdaExpression(LambdaExpressionTree tree, VisitorState visitorState) {
+    Tree lambdaBody = tree.getBody();
+    if (lambdaBody instanceof BlockTree) {
+      BlockTree bt = (BlockTree) lambdaBody;
+      if (bt.getStatements().size() == 1) {
+        StatementTree singleStmt = bt.getStatements().get(0);
+        ExpressionTree expr = null;
+        if (singleStmt instanceof ReturnTree) {
+          ReturnTree stmt = (ReturnTree) singleStmt;
+          expr = stmt.getExpression();
+        }
+        if (singleStmt instanceof ExpressionStatementTree) {
+          ExpressionStatementTree expStmt = (ExpressionStatementTree) singleStmt;
+          expr = expStmt.getExpression();
+        }
+        if (expr != null) {
+          return buildDescription(tree)
+              .addFix(SuggestedFix.replace(bt, visitorState.getSourceForNode(expr)))
+              .build();
+        }
+      }
+    }
+    return buildDescription(tree).build();
   }
 
   /** Represents the character at the end of an enum constant */

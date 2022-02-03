@@ -509,6 +509,91 @@ public class CorePiranhaTest {
   }
 
   @Test
+  public void testRemoveUnnecessaryBlockLambda() throws IOException {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:Config", "config/properties.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+
+    bcr.addInputLines(
+            "TestRemoveBlocks.java",
+            "package com.uber.piranha;",
+            "import java.util.function.Consumer;",
+            "import java.util.function.Supplier;",
+            "class TestRemoveBlocks {",
+            " private XPTest experimentation;",
+            " public void testMethod(){",
+            "   Consumer<String> someConsumer = (s) -> {",
+            "             if(experimentation.isToggleDisabled(\"STALE_FLAG\")){",
+            "                  System.out.println(s);",
+            "              } ",
+            "              else {",
+            "                    System.out.println(s + \"123\");",
+            "               }",
+            "          };",
+            "   Supplier<String> someSupplier = () -> {",
+            "             if(experimentation.isToggleDisabled(\"STALE_FLAG\")){",
+            "                  return  \"ABC\";",
+            "              } ",
+            "              else {",
+            "                    return  \"123\";",
+            "               }",
+            "          };",
+            "   Supplier<String> someSupplier1 = () -> {",
+            "             if(experimentation.isToggleDisabled(\"STALE_FLAG\")){",
+            "                  System.out.println(\"ABC\");",
+            "                  return  \"ABC\";",
+            "              } ",
+            "              else {",
+            "                  System.out.println(\"123\");",
+            "                   return  \"123\";",
+            "               }",
+            "          };",
+            "   Consumer<String> someConsumer1 = (s) -> {",
+            "             if(experimentation.isToggleDisabled(\"STALE_FLAG\")){",
+            "                  System.out.println(s);",
+            "              } ",
+            "              else {",
+            "                    System.out.println(s + \"123\");",
+            "               }",
+            "               System.out.println(\"No match\");",
+            "          };",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestRemoveBlocks.java",
+            "package com.uber.piranha;",
+            "import java.util.function.Consumer;",
+            "import java.util.function.Supplier;",
+            "class TestRemoveBlocks {",
+            " private XPTest experimentation;",
+            " public void testMethod(){",
+            "   Consumer<String> someConsumer = (s) -> {",
+            "                  System.out.println(s);",
+            "          };",
+            "   Supplier<String> someSupplier = () -> {",
+            "                  return \"ABC\";",
+            "          };",
+            "   Supplier<String> someSupplier1 = () -> {",
+            "                  System.out.println(\"ABC\");",
+            "                  return  \"ABC\";",
+            "          };",
+            "   Consumer<String> someConsumer1 = (s) -> {",
+            "               System.out.println(s);",
+            "               System.out.println(\"No match\");",
+            "          };",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  @Test
   public void testRemoveSpecificAPIpatternsMockito() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
