@@ -508,6 +508,7 @@ public class CorePiranhaTest {
         .doTest();
   }
 
+  // Tests for cleanup of unnecessary blocks in the body of a lambda expression.
   @Test
   public void testRemoveUnnecessaryBlockLambda() throws IOException {
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();

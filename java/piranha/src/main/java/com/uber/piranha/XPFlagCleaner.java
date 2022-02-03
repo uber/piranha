@@ -1027,11 +1027,15 @@ public class XPFlagCleaner extends BugChecker
     return Description.NO_MATCH;
   }
 
+  // This method removes unnecessary blocks from lambda expression bodies.
+  // This scenario is possible in case of single return statements and expression statements
+  // in the lambda body after Piranha removes the code related to stale flags.
   @Override
   public Description matchLambdaExpression(LambdaExpressionTree tree, VisitorState visitorState) {
     Tree lambdaBody = tree.getBody();
     if (lambdaBody instanceof BlockTree) {
       BlockTree bt = (BlockTree) lambdaBody;
+      // Block should contain only one statement
       if (bt.getStatements().size() == 1) {
         StatementTree singleStmt = bt.getStatements().get(0);
         ExpressionTree expr = null;
