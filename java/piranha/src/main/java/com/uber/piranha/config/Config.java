@@ -165,6 +165,8 @@ public final class Config {
       if (mstExpr instanceof MethodInvocationTree) {
         MethodInvocationTree chainedMIT = (MethodInvocationTree) mstExpr;
         String chainedMethodName = getMethodName(chainedMIT) + "." + methodName;
+        // This ensures that we only match instance method invocations like
+        // abc.stale_flag().getValue() and not stale_flag().getValue()
         if (chainedMIT.getMethodSelect() instanceof MemberSelectTree
             && Matchers.instanceMethod().anyClass().matches(chainedMIT, state)
             && configMethodProperties.containsKey(chainedMethodName))
@@ -174,9 +176,6 @@ public final class Config {
 
     return ImmutableSet.of();
   }
-
-  // This ensures that we only match instance method invocations like
-  // abc.stale_flag().getValue() and not stale_flag().getValue()
 
   /**
    * Returns name of the method invocation

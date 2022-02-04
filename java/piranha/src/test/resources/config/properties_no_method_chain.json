@@ -1,7 +1,7 @@
 {
   "methodProperties": [
     {
-      "methodName": "[flagName].getValue",
+      "methodName": "[flagMethodName].getValue",
       "flagType": "treated",
       "returnType": "boolean"
     },
@@ -25,6 +25,6 @@
   ],
   "cleanupOptions": {
     "allow_method_chain" : false,
-    "flag_method_name" : "[flagName]"
+    "flag_method_name" : "[flagMethodName]"
   }
 }

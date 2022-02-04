@@ -1049,7 +1049,7 @@ public class CorePiranhaTest {
     String newContent =
         Files.readAllLines(Paths.get(srcProp))
             .stream()
-            .map(x -> x.replace("[flagName]", flagNameCamelCase))
+            .map(x -> x.replace("[flagMethodName]", flagNameCamelCase))
             .map(x -> x.replace("[notIsTreated]", String.valueOf(!isTreated)))
             .collect(joining("\n"));
     Path trgt = Paths.get(trgtProp);

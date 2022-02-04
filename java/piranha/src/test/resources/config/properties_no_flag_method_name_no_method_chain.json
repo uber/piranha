@@ -1,7 +1,7 @@
 {
   "methodProperties": [
     {
-      "methodName": "[flagName].getValue",
+      "methodName": "[flagMethodName].getValue",
       "flagType": "treated",
       "returnType": "boolean"
     },
