@@ -150,10 +150,10 @@ public final class Config {
    * <p>If the cleanup option "allow_matching_method_invocation_as_argument" is set to true, returns
    * all configurations method record matching the name of the given method invocation and its
    * argument which is also a method invocation. For instance, the invocation `cp.put(x.staleFlag(),
-   * true)` will match the method record with name as "put$0$stale_flag". The syntax for matching an
+   * true)` will match the method record with name as "put$staleFlag". The syntax for matching an
    * method invocation with another method invocation passed as argument is
-   * [wrapper_method_name]$[arg_index]$[method_inv_name_passed_as_argument]. Note: This method only
-   * supports matching at most one argument.
+   * [wrapper_method_name]$[method_inv_name_passed_as_argument]. Note: This method only supports
+   * matching at most one argument.
    *
    * @param mit Method invocation AST
    * @param state visitor state
@@ -166,6 +166,8 @@ public final class Config {
     if (configMethodProperties.containsKey(methodName)) {
       return configMethodProperties.get(methodName);
     }
+
+    // Check if mit matches a method record for a method chain
     ExpressionTree methodSelect = mit.getMethodSelect();
     if (allowMethodChain() && methodSelect instanceof MemberSelectTree) {
       ExpressionTree mstExpr = ((MemberSelectTree) methodSelect).getExpression();
@@ -176,14 +178,14 @@ public final class Config {
           return configMethodProperties.get(chainedMethodName);
       }
     }
+
+    // check if mit matches a method record for method invocation containing
+    // argument which is a specific method invocation
     if (allowMatchingMethodInvocationAsArg() && methodSelect instanceof MemberSelectTree) {
-      List<? extends ExpressionTree> arguments = mit.getArguments();
-      for (int i = 0; i < arguments.size(); i++) {
-        ExpressionTree argument = arguments.get(i);
+      for (ExpressionTree argument : mit.getArguments()) {
         if (argument instanceof MethodInvocationTree) {
           MethodInvocationTree argMethodInvocation = (MethodInvocationTree) argument;
-          String argMethodInvocationName =
-              methodName + "$" + i + "$" + getMethodName(argMethodInvocation);
+          String argMethodInvocationName = methodName + "$" + getMethodName(argMethodInvocation);
           if (isInstanceMethodWithReceiverAndFoundInConfigs(
               argMethodInvocation, argMethodInvocationName, state))
             return configMethodProperties.get(argMethodInvocationName);

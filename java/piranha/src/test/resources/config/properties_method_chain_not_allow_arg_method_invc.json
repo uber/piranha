@@ -6,8 +6,9 @@
       "returnType": "boolean"
     },
     {
-      "methodName": "put$0$[flagName]",
-      "flagType": "empty"
+      "methodName": "put$[flagName]",
+      "flagType": "empty",
+      "argumentIndex" : 0
     }
   ],
   "annotations": [

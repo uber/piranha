@@ -25,6 +25,6 @@
   ],
   "cleanupOptions": {
     "allow_method_chain" : false,
-    "allow_matching_method_invocation_as_argument" : true
+    "allow_matching_method_invocation_as_argument" : false
   }
 }

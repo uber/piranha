@@ -6,10 +6,6 @@ class XPMethodChainCases {
     @BoolParam(key = "other_flag")
     BoolParameter otherFlag();
 
-    // Annotation and the abstract method should be removed
-    @BoolParam(key = "stale_flag")
-    BoolParameter staleFlag();
-
     static SomeParam create(Parameter cp) {
       return null;
     }
@@ -76,15 +72,8 @@ class XPMethodChainCases {
   }
 
   class TestMethodChainTest {
-    // Matches annotation
-    @PVal(ns = "", key = "stale_flag", val = "true")
-    public void testSomethingTreated() {
-      System.out.println();
-    }
 
-    // Matches annotation
-    @PVal(ns = "", key = "stale_flag", val = "false")
-    public void testSomethingControl() {
+    public void testSomethingTreated() {
       System.out.println();
     }
 

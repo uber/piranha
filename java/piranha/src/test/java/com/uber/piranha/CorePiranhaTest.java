@@ -1157,6 +1157,29 @@ public class CorePiranhaTest {
         .doTest();
   }
 
+  @Test
+  public void testMethodTestDoNotallowArgMatchingAndMethodChain() throws IOException {
+    String staleFlag = "stale_flag";
+    String isTreated = "true";
+    String srcProp =
+        "src/test/resources/config/properties_method_chain_not_allow_arg_matching_and_method_chain.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", staleFlag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = addMockAPIToNameSpace(bcr);
+    bcr.addInput("XPMethodChainCases.java")
+        .addOutput("XPMethodChainCasesDoNotallowArgMatchingAndMethodChain.java")
+        .allowBreakingChanges()
+        .doTest();
+  }
+
   @After
   public void cleanup() throws IOException {
     Files.deleteIfExists(Paths.get(trgtProp));
