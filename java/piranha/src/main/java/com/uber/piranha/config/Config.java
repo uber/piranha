@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -59,8 +60,7 @@ public final class Config {
       "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
   private static final String ALLOW_METHOD_CHAIN = "allow_method_chain";
 
-  private static final String ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT =
-      "allow_matching_method_invocation_as_argument";
+  private static final String FLAG_METHOD_NAME = "flag_method_name";
 
   private static final ImmutableSet<String> ALL_OPTS =
       ImmutableSet.of(
@@ -68,13 +68,12 @@ public final class Config {
           OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
           OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS,
           ALLOW_METHOD_CHAIN,
-          ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT);
+          FLAG_METHOD_NAME);
 
   /* Defaults for named clean up options */
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
   private static final long DEFAULT_TESTS_CLEAN_BY_SETTERS_LIMIT = 100;
   private static final boolean DEFAULT_ALLOW_METHOD_CHAIN = false;
-  private static final boolean DEFAULT_ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT = false;
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS = false;
 
   /**
@@ -147,14 +146,6 @@ public final class Config {
    * invocation (with a receiver). For instance, abc.stale_flag().getValue() and not
    * stale_flag().getValue().
    *
-   * <p>If the cleanup option "allow_matching_method_invocation_as_argument" is set to true, returns
-   * all configurations method record matching the name of the given method invocation and its
-   * argument which is also a method invocation. For instance, the invocation `cp.put(x.staleFlag(),
-   * true)` will match the method record with name as "put$staleFlag". The syntax for matching an
-   * method invocation with another method invocation passed as argument is
-   * [wrapper_method_name]$[method_inv_name_passed_as_argument]. Note: This method only supports
-   * matching at most one argument.
-   *
    * @param mit Method invocation AST
    * @param state visitor state
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
@@ -174,22 +165,10 @@ public final class Config {
       if (mstExpr instanceof MethodInvocationTree) {
         MethodInvocationTree chainedMIT = (MethodInvocationTree) mstExpr;
         String chainedMethodName = getMethodName(chainedMIT) + "." + methodName;
-        if (isInstanceMethodWithReceiverAndFoundInConfigs(chainedMIT, chainedMethodName, state))
+        if (chainedMIT.getMethodSelect() instanceof MemberSelectTree
+            && Matchers.instanceMethod().anyClass().matches(chainedMIT, state)
+            && configMethodProperties.containsKey(chainedMethodName))
           return configMethodProperties.get(chainedMethodName);
-      }
-    }
-
-    // check if mit matches a method record for method invocation containing
-    // argument which is a specific method invocation
-    if (allowMatchingMethodInvocationAsArg() && methodSelect instanceof MemberSelectTree) {
-      for (ExpressionTree argument : mit.getArguments()) {
-        if (argument instanceof MethodInvocationTree) {
-          MethodInvocationTree argMethodInvocation = (MethodInvocationTree) argument;
-          String argMethodInvocationName = methodName + "$" + getMethodName(argMethodInvocation);
-          if (isInstanceMethodWithReceiverAndFoundInConfigs(
-              argMethodInvocation, argMethodInvocationName, state))
-            return configMethodProperties.get(argMethodInvocationName);
-        }
       }
     }
 
@@ -198,12 +177,6 @@ public final class Config {
 
   // This ensures that we only match instance method invocations like
   // abc.stale_flag().getValue() and not stale_flag().getValue()
-  private boolean isInstanceMethodWithReceiverAndFoundInConfigs(
-      MethodInvocationTree mit, String mitName, VisitorState state) {
-    return mit.getMethodSelect() instanceof MemberSelectTree
-        && Matchers.instanceMethod().anyClass().matches(mit, state)
-        && configMethodProperties.containsKey(mitName);
-  }
 
   /**
    * Returns name of the method invocation
@@ -314,11 +287,8 @@ public final class Config {
     return (boolean) cleanupOptions.getOrDefault(ALLOW_METHOD_CHAIN, DEFAULT_ALLOW_METHOD_CHAIN);
   }
 
-  public boolean allowMatchingMethodInvocationAsArg() {
-    return (boolean)
-        cleanupOptions.getOrDefault(
-            ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT,
-            DEFAULT_ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT);
+  public Optional<String> getFlagMethodName() {
+    return Optional.ofNullable((String) cleanupOptions.get(FLAG_METHOD_NAME));
   }
 
   // End of OPT_* retrieval methods
@@ -351,11 +321,12 @@ public final class Config {
   private static void validateConfigOptsValue(String valK, Object v) {
     if (OPT_TESTS_CLEAN_BY_SETTERS_ENABLED.equals(valK)
         || OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS.equals(valK)
-        || ALLOW_METHOD_CHAIN.equals(valK)
-        || ALLOW_MATCHING_METHOD_INVOCATION_AS_ARGUMENT.equals(valK)) {
+        || ALLOW_METHOD_CHAIN.equals(valK)) {
       requireType(valK, v, Boolean.class);
     } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
       requireType(valK, v, Long.class);
+    } else if (FLAG_METHOD_NAME.equals(valK)) {
+      requireType(valK, v, String.class);
     } else {
       Preconditions.checkArgument(false, "Default case should be unreachable.");
     }

@@ -397,7 +397,8 @@ public class XPFlagCleaner extends BugChecker
         !methodRecord.getArgumentIdx().isPresent()
             || argument(
                     methodRecord.getArgumentIdx().get(),
-                    (arg, st) -> isArgumentMatchesFlagName(arg, methodRecord, state))
+                    (arg, st) ->
+                        isArgumentMatchesFlagName(arg, state) || isArgumentMatchesFlagMethod(arg))
                 .matches(mit, state);
     if (!argumentMatchesFlagName) {
       return false;
@@ -443,14 +444,20 @@ public class XPFlagCleaner extends BugChecker
     return API.UNKNOWN;
   }
 
-  private boolean isArgumentMatchesFlagName(
-      ExpressionTree arg, MethodRecord methodRecord, VisitorState state) {
+  // If the cleanup option is provided as 'flag_method_name', this method will check
+  // if the argument is a method invocation matches the provided flag method name.
+  private boolean isArgumentMatchesFlagMethod(ExpressionTree arg) {
+    return arg instanceof MethodInvocationTree
+        && config
+            .getFlagMethodName()
+            .map(
+                flagMethodName ->
+                    config.getMethodName((MethodInvocationTree) arg).equals(flagMethodName))
+            .orElse(false);
+  }
+
+  private boolean isArgumentMatchesFlagName(ExpressionTree arg, VisitorState state) {
     Symbol argSym = ASTHelpers.getSymbol(arg);
-    if (methodRecord.getMethodName().contains("$"))
-      return arg instanceof MethodInvocationTree
-          && config
-              .getMethodName((MethodInvocationTree) arg)
-              .equals(methodRecord.getMethodName().split("\\$")[1]);
     return isLiteralTreeAndMatchesFlagName(arg)
         || isVarSymbolAndMatchesFlagName(argSym)
         || isSymbolAndMatchesFlagName(argSym)

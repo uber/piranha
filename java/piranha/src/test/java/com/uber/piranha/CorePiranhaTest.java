@@ -1116,7 +1116,7 @@ public class CorePiranhaTest {
   public void testMethodTestDoNotAllowsChainFlag() throws IOException {
     String staleFlag = "stale_flag";
     String isTreated = "false";
-    String srcProp = "src/test/resources/config/properties_method_chain_not_allow_chained.json";
+    String srcProp = "src/test/resources/config/properties_no_method_chain.json";
     transformAndCreateNewPropertyFile(
         srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -1138,8 +1138,7 @@ public class CorePiranhaTest {
   public void testMethodTestDoNotAllowsMatchingArgMethodInvc() throws IOException {
     String staleFlag = "stale_flag";
     String isTreated = "true";
-    String srcProp =
-        "src/test/resources/config/properties_method_chain_not_allow_arg_method_invc.json";
+    String srcProp = "src/test/resources/config/properties_no_flag_method_name.json";
     transformAndCreateNewPropertyFile(
         srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -1162,7 +1161,7 @@ public class CorePiranhaTest {
     String staleFlag = "stale_flag";
     String isTreated = "true";
     String srcProp =
-        "src/test/resources/config/properties_method_chain_not_allow_arg_matching_and_method_chain.json";
+        "src/test/resources/config/properties_no_flag_method_name_no_method_chain.json";
     transformAndCreateNewPropertyFile(
         srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
