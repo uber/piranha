@@ -172,13 +172,8 @@ public final class Config {
       if (mstExpr instanceof MethodInvocationTree) {
         MethodInvocationTree chainedMIT = (MethodInvocationTree) mstExpr;
         String chainedMethodName = getMethodName(chainedMIT) + "." + methodName;
-        // This ensures that we only match instance method invocations like
-        // abc.stale_flag().getValue() and not stale_flag().getValue()
-        if (chainedMIT.getMethodSelect() instanceof MemberSelectTree
-            && Matchers.instanceMethod().anyClass().matches(chainedMIT, state)
-            && configMethodProperties.containsKey(chainedMethodName)) {
+        if (isInstanceMethodWithReceiverAndFoundInConfigs(chainedMIT, chainedMethodName, state))
           return configMethodProperties.get(chainedMethodName);
-        }
       }
     }
     if (allowMatchingMethodInvocationAsArg() && methodSelect instanceof MemberSelectTree) {
@@ -186,19 +181,26 @@ public final class Config {
       for (int i = 0; i < arguments.size(); i++) {
         ExpressionTree argument = arguments.get(i);
         if (argument instanceof MethodInvocationTree) {
-          MethodInvocationTree argMehodInvocation = (MethodInvocationTree) argument;
-          String argumentMethodInvocationName =
-              methodName + "$" + i + "$" + getMethodName(argMehodInvocation);
-          if (argMehodInvocation.getMethodSelect() instanceof MemberSelectTree
-              && Matchers.instanceMethod().anyClass().matches(argMehodInvocation, state)
-              && configMethodProperties.containsKey(argumentMethodInvocationName)) {
-            return configMethodProperties.get(argumentMethodInvocationName);
-          }
+          MethodInvocationTree argMethodInvocation = (MethodInvocationTree) argument;
+          String argMethodInvocationName =
+              methodName + "$" + i + "$" + getMethodName(argMethodInvocation);
+          if (isInstanceMethodWithReceiverAndFoundInConfigs(
+              argMethodInvocation, argMethodInvocationName, state))
+            return configMethodProperties.get(argMethodInvocationName);
         }
       }
     }
 
     return ImmutableSet.of();
+  }
+
+  // This ensures that we only match instance method invocations like
+  // abc.stale_flag().getValue() and not stale_flag().getValue()
+  private boolean isInstanceMethodWithReceiverAndFoundInConfigs(
+      MethodInvocationTree mit, String mitName, VisitorState state) {
+    return mit.getMethodSelect() instanceof MemberSelectTree
+        && Matchers.instanceMethod().anyClass().matches(mit, state)
+        && configMethodProperties.containsKey(mitName);
   }
 
   /**
