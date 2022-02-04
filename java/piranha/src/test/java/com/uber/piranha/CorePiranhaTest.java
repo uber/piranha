@@ -1049,7 +1049,7 @@ public class CorePiranhaTest {
     String newContent =
         Files.readAllLines(Paths.get(srcProp))
             .stream()
-            .map(x -> x.replace("[flagName]", flagNameCamelCase))
+            .map(x -> x.replace("[flagMethodName]", flagNameCamelCase))
             .map(x -> x.replace("[notIsTreated]", String.valueOf(!isTreated)))
             .collect(joining("\n"));
     Path trgt = Paths.get(trgtProp);
@@ -1116,7 +1116,7 @@ public class CorePiranhaTest {
   public void testMethodTestDoNotAllowsChainFlag() throws IOException {
     String staleFlag = "stale_flag";
     String isTreated = "false";
-    String srcProp = "src/test/resources/config/properties_method_chain_not_allow_chained.json";
+    String srcProp = "src/test/resources/config/properties_no_method_chain.json";
     transformAndCreateNewPropertyFile(
         srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -1130,6 +1130,51 @@ public class CorePiranhaTest {
     bcr = addMockAPIToNameSpace(bcr);
     bcr.addInput("XPMethodChainCases.java")
         .addOutput("XPMethodChainCasesDoNotAllowMethodChain.java")
+        .allowBreakingChanges()
+        .doTest();
+  }
+
+  @Test
+  public void testMethodTestDoNotAllowsMatchingArgMethodInvc() throws IOException {
+    String staleFlag = "stale_flag";
+    String isTreated = "true";
+    String srcProp = "src/test/resources/config/properties_no_flag_method_name.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", staleFlag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = addMockAPIToNameSpace(bcr);
+    bcr.addInput("XPMethodChainCases.java")
+        .addOutput("XPMethodChainCasesTreatmentDoNotAllowMatchingArgMethodInvc.java")
+        .allowBreakingChanges()
+        .doTest();
+  }
+
+  @Test
+  public void testMethodTestDoNotallowArgMatchingAndMethodChain() throws IOException {
+    String staleFlag = "stale_flag";
+    String isTreated = "true";
+    String srcProp =
+        "src/test/resources/config/properties_no_flag_method_name_no_method_chain.json";
+    transformAndCreateNewPropertyFile(
+        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", staleFlag);
+    b.putFlag("Piranha:IsTreated", isTreated);
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", trgtProp);
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = addMockAPIToNameSpace(bcr);
+    bcr.addInput("XPMethodChainCases.java")
+        .addOutput("XPMethodChainCasesDoNotallowArgMatchingAndMethodChain.java")
         .allowBreakingChanges()
         .doTest();
   }

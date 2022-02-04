@@ -397,7 +397,8 @@ public class XPFlagCleaner extends BugChecker
         !methodRecord.getArgumentIdx().isPresent()
             || argument(
                     methodRecord.getArgumentIdx().get(),
-                    (arg, st) -> isArgumentMatchesFlagName(arg, state))
+                    (arg, st) ->
+                        isArgumentMatchesFlagName(arg, state) || isArgumentMatchesFlagMethod(arg))
                 .matches(mit, state);
     if (!argumentMatchesFlagName) {
       return false;
@@ -441,6 +442,18 @@ public class XPFlagCleaner extends BugChecker
       }
     }
     return API.UNKNOWN;
+  }
+
+  // If the cleanup option 'flag_method_name' is provided, this method will check
+  // if the argument is a method invocation matches the provided flag method name.
+  private boolean isArgumentMatchesFlagMethod(ExpressionTree arg) {
+    return arg instanceof MethodInvocationTree
+        && config
+            .getFlagMethodName()
+            .map(
+                flagMethodName ->
+                    config.getMethodName((MethodInvocationTree) arg).equals(flagMethodName))
+            .orElse(false);
   }
 
   private boolean isArgumentMatchesFlagName(ExpressionTree arg, VisitorState state) {

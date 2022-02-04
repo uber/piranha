@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -58,12 +59,16 @@ public final class Config {
   private static final String OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS =
       "tests.clean_by_setters_heuristic.ignore_other_flag_sets";
   private static final String ALLOW_METHOD_CHAIN = "allow_method_chain";
+
+  private static final String FLAG_METHOD_NAME = "flag_method_name";
+
   private static final ImmutableSet<String> ALL_OPTS =
       ImmutableSet.of(
           OPT_TESTS_CLEAN_BY_SETTERS_ENABLED,
           OPT_TESTS_CLEAN_BY_SETTERS_LIMIT,
           OPT_TESTS_CLEAN_BY_SETTERS_IGNORE_OTHERS,
-          ALLOW_METHOD_CHAIN);
+          ALLOW_METHOD_CHAIN,
+          FLAG_METHOD_NAME);
 
   /* Defaults for named clean up options */
   private static final boolean DEFAULT_TESTS_CLEAN_BY_SETTERS_ENABLED = false;
@@ -132,7 +137,8 @@ public final class Config {
 
   /**
    * Return all configuration method records matching the name of the given method invocation tree.
-   * If the cleanup option "allow_method_chain" is set to true, returns all configurations method
+   *
+   * <p>If the cleanup option "allow_method_chain" is set to true, returns all configurations method
    * record matching the name of the given method invocation and its receiver method invocation. For
    * instance, the invocation `exp.stale_flag().getValue()` will match the method record with name
    * as "stale_flag.getValue". Note: This method only supports matching a method chain of length 2
@@ -141,7 +147,7 @@ public final class Config {
    * stale_flag().getValue().
    *
    * @param mit Method invocation AST
-   * @param state
+   * @param state visitor state
    * @return A collection of {@link PiranhaMethodRecord} objects, representing each method
    *     definition in the piranha json configuration file matching {@code methodName}.
    */
@@ -151,6 +157,8 @@ public final class Config {
     if (configMethodProperties.containsKey(methodName)) {
       return configMethodProperties.get(methodName);
     }
+
+    // Check if mit matches a method record for a method chain
     ExpressionTree methodSelect = mit.getMethodSelect();
     if (allowMethodChain() && methodSelect instanceof MemberSelectTree) {
       ExpressionTree mstExpr = ((MemberSelectTree) methodSelect).getExpression();
@@ -161,11 +169,11 @@ public final class Config {
         // abc.stale_flag().getValue() and not stale_flag().getValue()
         if (chainedMIT.getMethodSelect() instanceof MemberSelectTree
             && Matchers.instanceMethod().anyClass().matches(chainedMIT, state)
-            && configMethodProperties.containsKey(chainedMethodName)) {
+            && configMethodProperties.containsKey(chainedMethodName))
           return configMethodProperties.get(chainedMethodName);
-        }
       }
     }
+
     return ImmutableSet.of();
   }
 
@@ -278,6 +286,10 @@ public final class Config {
     return (boolean) cleanupOptions.getOrDefault(ALLOW_METHOD_CHAIN, DEFAULT_ALLOW_METHOD_CHAIN);
   }
 
+  public Optional<String> getFlagMethodName() {
+    return Optional.ofNullable((String) cleanupOptions.get(FLAG_METHOD_NAME));
+  }
+
   // End of OPT_* retrieval methods
 
   private static String validateConfigOptsKey(Object k) {
@@ -312,6 +324,8 @@ public final class Config {
       requireType(valK, v, Boolean.class);
     } else if (OPT_TESTS_CLEAN_BY_SETTERS_LIMIT.equals(valK)) {
       requireType(valK, v, Long.class);
+    } else if (FLAG_METHOD_NAME.equals(valK)) {
+      requireType(valK, v, String.class);
     } else {
       Preconditions.checkArgument(false, "Default case should be unreachable.");
     }

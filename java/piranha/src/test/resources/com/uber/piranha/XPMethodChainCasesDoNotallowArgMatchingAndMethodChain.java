@@ -63,6 +63,9 @@ class XPMethodChainCases {
 
     System.out.println("done!");
     // Matches API
+    cp.put(sp.staleFlag(), true);
+    cp.put(sp.staleFlag(), false);
+
     // Do not match API
     cp.put(sp.otherFlag(), true);
     cp.put(sp.otherFlag(), false);
@@ -70,10 +73,11 @@ class XPMethodChainCases {
 
   class TestMethodChainTest {
 
-    public void testSomethingControl() {
+    public void testSomethingTreated() {
       System.out.println();
     }
 
+    // Does not match annotation
     @PVal(ns = "", key = "other_flag", val = "false")
     public void testSomethingOther() {
       System.out.println();

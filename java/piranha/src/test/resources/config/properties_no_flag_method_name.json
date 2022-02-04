@@ -1,14 +1,14 @@
 {
   "methodProperties": [
     {
-      "methodName": "[flagName].getValue",
+      "methodName": "[flagMethodName].getValue",
       "flagType": "treated",
       "returnType": "boolean"
     },
     {
       "methodName": "put",
       "flagType": "empty",
-      "argumentIndex": 1
+      "argumentIndex" : 0
     }
   ],
   "annotations": [
@@ -24,6 +24,6 @@
     }
   ],
   "cleanupOptions": {
-    "allow_method_chain" : false
+    "allow_method_chain" : true
   }
 }

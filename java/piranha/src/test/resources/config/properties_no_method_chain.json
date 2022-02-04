@@ -24,7 +24,7 @@
     }
   ],
   "cleanupOptions": {
-    "allow_method_chain" : true,
+    "allow_method_chain" : false,
     "flag_method_name" : "[flagMethodName]"
   }
 }
