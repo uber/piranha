@@ -80,6 +80,19 @@ public class CorePiranhaTest {
   }
 
   @Test
+  public void test_doNotRunPiranha() {
+    compilationHelper
+        .setArgs(
+            Arrays.asList(
+                "-d",
+                temporaryFolder.getRoot().getAbsolutePath(),
+                "-XepOpt:Piranha:DisabledUnlessConfigured=true"))
+        .addSourceFile("XPFlagCleanerPositiveCases.java")
+        .expectNoDiagnostics()
+        .doTest();
+  }
+
+  @Test
   public void positiveTreatment() throws IOException {
 
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
@@ -902,6 +915,49 @@ public class CorePiranhaTest {
             " }",
             " public boolean foobar() { return true;}",
             " public boolean someWrapper(Object obj) { return true;}",
+            "}")
+        .doTest();
+  }
+
+  @Test
+  public void testRemoveSpecificAPIPatternsInstanceMethod() throws IOException {
+
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag(
+        "Piranha:Config", "src/test/resources/config/properties_unnecessary_instance_method.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+    bcr = PiranhaTestingHelpers.addHelperClasses(bcr);
+    bcr.addInputLines(
+            "TestObj.java",
+            "package com.uber.piranha;",
+            "class TestObj{",
+            "public void isTrue(boolean b) {}",
+            "}")
+        .expectUnchanged()
+        .addInputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "class JUnitTest {",
+            " private TestObj tobj;",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            "  tobj.isTrue(experimentation.isToggleDisabled(\"STALE_FLAG\"));",
+            " }",
+            "}")
+        .addOutputLines(
+            "XPFlagCleanerSinglePositiveCase.java",
+            "package com.uber.piranha;",
+            "class JUnitTest {",
+            " private TestObj tobj;",
+            " private XPTest experimentation;",
+            " public void evaluate() {",
+            " }",
             "}")
         .doTest();
   }
