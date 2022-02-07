@@ -1,0 +1,30 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "staleFlag.getValue",
+      "flagType": "treated",
+      "returnType": "boolean"
+    },
+    {
+      "methodName": "put",
+      "flagType": "empty",
+      "argumentIndex" : 0
+    }
+  ],
+  "annotations": [
+    {
+      "name": "BoolParam",
+      "flag": "$key",
+      "treated": "true"
+    },
+    {
+      "name": "PVal",
+      "flag": "$key",
+      "treated": "$val"
+    }
+  ],
+  "cleanupOptions": {
+    "allow_method_chain" : true,
+    "flag_method_name" : "staleFlag"
+  }
+}

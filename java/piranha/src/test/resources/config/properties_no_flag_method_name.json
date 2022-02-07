@@ -1,21 +1,21 @@
 {
   "methodProperties": [
     {
-      "methodName": "[flagName].getValue",
+      "methodName": "staleFlag.getValue",
       "flagType": "treated",
       "returnType": "boolean"
     },
     {
       "methodName": "put",
       "flagType": "empty",
-      "argumentIndex": 1
+      "argumentIndex" : 0
     }
   ],
   "annotations": [
     {
       "name": "BoolParam",
       "flag": "$key",
-      "treated": "[notIsTreated]"
+      "treated": "false"
     },
     {
       "name": "PVal",

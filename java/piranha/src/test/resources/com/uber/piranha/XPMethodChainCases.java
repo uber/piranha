@@ -67,11 +67,12 @@ class XPMethodChainCases {
 
     System.out.println("done!");
     // Matches API
-    cp.put("", "stale_flag", true);
-    cp.put("", "stale_flag", false);
+    cp.put(sp.staleFlag(), true);
+    cp.put(sp.staleFlag(), false);
+
     // Do not match API
-    cp.put("", "other_flag", true);
-    cp.put("", "other_flag", false);
+    cp.put(sp.otherFlag(), true);
+    cp.put(sp.otherFlag(), false);
   }
 
   class TestMethodChainTest {

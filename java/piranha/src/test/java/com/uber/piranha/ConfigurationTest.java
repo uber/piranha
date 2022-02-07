@@ -14,6 +14,8 @@
 package com.uber.piranha;
 
 import static com.uber.piranha.PiranhaTestingHelpers.addExperimentFlagEnumsWithConstructor;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
@@ -1824,5 +1826,20 @@ public class ConfigurationTest {
                 "-XepOpt:Piranha:Config=src/test/resources/config/invalid/piranha.properties"))
         .addSourceLines("Dummy.java", "package com.uber.piranha;", "class Dummy {", "}")
         .doTest();
+  }
+
+  @Test
+  public void test_wrongConfig() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/propetiesDoNotExist.json");
+    expectedEx.expect(PiranhaConfigurationException.class);
+    expectedEx.expectMessage(
+        allOf(
+            containsString("Error reading config file"),
+            containsString("Provided config file not found")));
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
   }
 }
