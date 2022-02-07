@@ -13,19 +13,11 @@
  */
 package com.uber.piranha;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.joining;
-
 import com.google.errorprone.BugCheckerRefactoringTestHelper;
 import com.google.errorprone.CompilationTestHelper;
 import com.google.errorprone.ErrorProneFlags;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1093,38 +1085,16 @@ public class CorePiranhaTest {
         .doTest();
   }
 
-  public void transformAndCreateNewPropertyFile(
-      String srcProp, String trgtProp, String staleFlag, boolean isTreated) throws IOException {
-
-    String[] temp = staleFlag.split("_");
-    String flagNameCamelCase =
-        temp[0]
-            + Arrays.stream(temp, 1, temp.length)
-                .map(str -> str.substring(0, 1).toUpperCase() + str.substring(1))
-                .collect(joining());
-    String newContent =
-        Files.readAllLines(Paths.get(srcProp))
-            .stream()
-            .map(x -> x.replace("[flagMethodName]", flagNameCamelCase))
-            .map(x -> x.replace("[notIsTreated]", String.valueOf(!isTreated)))
-            .collect(joining("\n"));
-    Path trgt = Paths.get(trgtProp);
-    Files.deleteIfExists(trgt);
-    Files.write(trgt, newContent.getBytes(UTF_8), StandardOpenOption.CREATE);
-  }
-
   @Test
-  public void testMethodChainTreated() throws IOException {
+  public void testMethodChainTreated() {
     String staleFlag = "stale_flag";
     String isTreated = "true";
-    String srcProp = "src/test/resources/config/properties_method_chain.json";
-    transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    String srcProp = "src/test/resources/config/properties_method_chain_treated.json";
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
-    b.putFlag("Piranha:Config", trgtProp);
+    b.putFlag("Piranha:Config", srcProp);
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -1132,20 +1102,16 @@ public class CorePiranhaTest {
     bcr.addInput("XPMethodChainCases.java").addOutput("XPMethodChainCasesTreatment.java").doTest();
   }
 
-  String trgtProp = "config/properties-test-rt.json";
-
   @Test
-  public void testMethodChainControl() throws IOException {
+  public void testMethodChainControl() {
     String staleFlag = "stale_flag";
     String isTreated = "false";
-    String srcProp = "src/test/resources/config/properties_method_chain.json";
-    transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
+    String srcProp = "src/test/resources/config/properties_method_chain_control.json";
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
-    b.putFlag("Piranha:Config", trgtProp);
+    b.putFlag("Piranha:Config", srcProp);
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -1173,13 +1139,11 @@ public class CorePiranhaTest {
     String staleFlag = "stale_flag";
     String isTreated = "false";
     String srcProp = "src/test/resources/config/properties_no_method_chain.json";
-    transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
-    b.putFlag("Piranha:Config", trgtProp);
+    b.putFlag("Piranha:Config", srcProp);
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -1191,17 +1155,15 @@ public class CorePiranhaTest {
   }
 
   @Test
-  public void testMethodTestDoNotAllowsMatchingArgMethodInvc() throws IOException {
+  public void testMethodTestDoNotAllowsMatchingArgMethodInvc() {
     String staleFlag = "stale_flag";
     String isTreated = "true";
     String srcProp = "src/test/resources/config/properties_no_flag_method_name.json";
-    transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
-    b.putFlag("Piranha:Config", trgtProp);
+    b.putFlag("Piranha:Config", srcProp);
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -1218,13 +1180,11 @@ public class CorePiranhaTest {
     String isTreated = "true";
     String srcProp =
         "src/test/resources/config/properties_no_flag_method_name_no_method_chain.json";
-    transformAndCreateNewPropertyFile(
-        srcProp, trgtProp, staleFlag, Boolean.parseBoolean(isTreated));
     ErrorProneFlags.Builder b = ErrorProneFlags.builder();
     b.putFlag("Piranha:FlagName", staleFlag);
     b.putFlag("Piranha:IsTreated", isTreated);
     b.putFlag("Piranha:ArgumentIndexOptional", "true");
-    b.putFlag("Piranha:Config", trgtProp);
+    b.putFlag("Piranha:Config", srcProp);
     BugCheckerRefactoringTestHelper bcr =
         BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
     bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
@@ -1233,10 +1193,5 @@ public class CorePiranhaTest {
         .addOutput("XPMethodChainCasesDoNotallowArgMatchingAndMethodChain.java")
         .allowBreakingChanges()
         .doTest();
-  }
-
-  @After
-  public void cleanup() throws IOException {
-    Files.deleteIfExists(Paths.get(trgtProp));
   }
 }

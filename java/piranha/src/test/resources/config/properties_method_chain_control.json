@@ -1,7 +1,7 @@
 {
   "methodProperties": [
     {
-      "methodName": "[flagMethodName].getValue",
+      "methodName": "staleFlag.getValue",
       "flagType": "treated",
       "returnType": "boolean"
     },
@@ -15,7 +15,7 @@
     {
       "name": "BoolParam",
       "flag": "$key",
-      "treated": "[notIsTreated]"
+      "treated": "true"
     },
     {
       "name": "PVal",
@@ -25,6 +25,6 @@
   ],
   "cleanupOptions": {
     "allow_method_chain" : true,
-    "flag_method_name" : "[flagMethodName]"
+    "flag_method_name" : "staleFlag"
   }
 }
