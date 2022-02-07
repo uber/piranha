@@ -1,0 +1,16 @@
+{
+  "methodProperties": [
+
+  ],
+  "linkURL": "<provide_your_url>",
+  "enumProperties": [
+    {
+      "enumName": "TestExperimentNameNoArg"
+    }
+  ],
+  "cleanupOptions": {
+    "tests.clean_by_setters_heuristic.enabled" : true,
+    "tests.clean_by_setters_heuristic.ignore_other_flag_sets" : false,
+    "tests.clean_by_setters_heuristic.lines_limit" : 100
+  }
+}

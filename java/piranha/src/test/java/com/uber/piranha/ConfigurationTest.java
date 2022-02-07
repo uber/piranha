@@ -1825,4 +1825,19 @@ public class ConfigurationTest {
         .addSourceLines("Dummy.java", "package com.uber.piranha;", "class Dummy {", "}")
         .doTest();
   }
+
+  @Test
+  public void test_wrongConfig() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "STALE_FLAG");
+    b.putFlag("Piranha:IsTreated", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/invalid/propetiesDoNotExist.json");
+
+    expectedEx.expect(PiranhaConfigurationException.class);
+    expectedEx.expectMessage(
+        "Error reading config file /Users/ketkara/repositories/open-source/piranha/java/piranha/src/test/resources/config/invalid/propetiesDoNotExist.json : java.io.IOException: Provided config file not found");
+
+    XPFlagCleaner flagCleaner = new XPFlagCleaner();
+    flagCleaner.init(b.build());
+  }
 }
