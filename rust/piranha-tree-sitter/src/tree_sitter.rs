@@ -7,13 +7,12 @@ pub fn get_edit(
     rewritten_snippet: &str,
 ) -> (String, InputEdit) {
     println!("{}", source_code.len());
-
     let new_source_code = [
         &source_code[..replace_range.start_byte],
         rewritten_snippet,
         &source_code[replace_range.end_byte..],
     ]
-        .concat();
+    .concat();
     let len_new_source_code_bytes = rewritten_snippet.as_bytes().len();
     let input = &source_code.as_bytes().to_vec();
     let edit = InputEdit {
@@ -21,14 +20,11 @@ pub fn get_edit(
         old_end_byte: replace_range.end_byte,
         new_end_byte: replace_range.start_byte + len_new_source_code_bytes,
         start_position: position_for_offset(input, replace_range.start_byte),
-        old_end_position : position_for_offset(input, replace_range.end_byte),
-        // start_position: Point::new(node.start_position().row, node.start_position().column),
-        // old_end_position: Point::new(node.end_position().row, node.end_position().column),
-        new_end_position: position_for_offset(input, replace_range.start_byte + len_new_source_code_bytes)
-        // new_end_position: Point::new(
-        //     node.start_position().row,
-        //     node.start_position().column + len_new_source_code_bytes,
-        // ),
+        old_end_position: position_for_offset(input, replace_range.end_byte),
+        new_end_position: position_for_offset(
+            input,
+            replace_range.start_byte + len_new_source_code_bytes,
+        ),
     };
     (new_source_code, edit)
 }
@@ -48,16 +44,16 @@ fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
 
 pub fn parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
     let mut parser = Parser::new();
-    parser.set_language(language).unwrap();
-    let tree = parser.parse(&source_code, None).unwrap();
+    parser.set_language(language).expect("Could not set language");
+    let tree = parser.parse(&source_code, None).expect("Could not parse code");
     (parser, tree)
 }
 
 pub fn get_language(language: &str) -> Option<Language> {
-    if language.eq_ignore_ascii_case("Java") {
-        return Option::Some(tree_sitter_java::language());
+    match language {
+        "Java" => Option::Some(tree_sitter_java::language()),
+        _ => None
     }
-    return None;
 }
 
 pub fn get_replace_node<'a>(
@@ -66,26 +62,26 @@ pub fn get_replace_node<'a>(
     captures: &'a [QueryCapture],
     source_code_bytes: &[u8],
 ) -> Option<Node<'a>> {
-    println!("Capture names = {}", query.capture_names().to_vec().join(", "));
-    for c in captures{
-        println!("Captured node {:?} {:?}", c.node.utf8_text(source_code_bytes), c.index);
+    println!(
+        "Capture names = {}",
+        query.capture_names().to_vec().join(", ")
+    );
+    for c in captures {
+        println!(
+            "Captured node {:?} {:?}",
+            c.node.utf8_text(source_code_bytes),
+            c.index
+        );
     }
     captures
         .iter()
         .filter(|c| {
             let capture_name = query
-                .capture_names()
-                .iter()
-                .nth(c.index as usize)
+                .capture_names().get(c.index as usize)
                 .expect("not found");
             return capture_name.eq(&rule.complete_capture_var);
         })
         .next()
-        .map(|_n|{_n.node})
+        .map(|_n| _n.node)
         .clone()
-}
-
-
-pub fn get_node_for_range<'a>(r: &Range, tree:&'a Tree) -> Option<Node<'a>> {
-    return tree.root_node().descendant_for_byte_range(r.start_byte, r.end_byte);
 }
