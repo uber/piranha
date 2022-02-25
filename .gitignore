@@ -9,3 +9,6 @@ swift/artifact
 swift/Piranha.xcodeproj
 swift/Package.resolved
 **/*.iml
+rust/piranha-tree-sitter/target
+rust/piranha-tree-sitter/Cargo.lock
+rust/piranha-tree-sitter/.idea
