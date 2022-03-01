@@ -7,8 +7,8 @@ fn test_simple_if() {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     print!("Manifest Dir {}", manifest_dir);
 
-
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static void main(String a[]){
     ab12.ba21();
@@ -17,9 +17,12 @@ public static void main(String a[]){
     }
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static void main(String a[]){
 ab12.ba21();
@@ -29,15 +32,16 @@ System.out.println(\"Hello World!\");
 
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
 #[test]
 fn test_simple_if_false() {
-
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static void main(String a[]){
     ab12.ba21();
@@ -48,9 +52,12 @@ public static void main(String a[]){
     }
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static void main(String a[]){
 ab12.ba21();
@@ -60,14 +67,16 @@ System.out.println(\"Hi World!\");
 
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
 #[test]
 fn test_simple_if_or() {
-
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static void main(String a[]){
     ab12.ba21();
@@ -81,9 +90,12 @@ public static void main(String a[]){
 
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static void main(String a[]){
 ab12.ba21();
@@ -96,15 +108,16 @@ System.out.println(\"Hello World!\");
 
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
 #[test]
 fn test_simple_if_and() {
-
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static void main(String a[]){
     ab12.ba21();
@@ -118,9 +131,12 @@ public static void main(String a[]){
 
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static void main(String a[]){
 ab12.ba21();
@@ -133,15 +149,16 @@ if(someCondition()){
 }
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
 #[test]
 fn test_complex_if_and() {
-
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static void main(String a[]){
     ab12.ba21();
@@ -155,9 +172,12 @@ public static void main(String a[]){
 
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static void main(String a[]){
 ab12.ba21();
@@ -170,15 +190,16 @@ if(something() && someCondition()){
 }
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
 #[test]
 fn test_complex_if_and_or() {
-
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static void main(String a[]){
     ab12.ba21();
@@ -192,9 +213,12 @@ public static void main(String a[]){
 
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static void main(String a[]){
 ab12.ba21();
@@ -207,13 +231,16 @@ if(something()){
 }
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
 #[test]
 fn test_simple_elide_after_return() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static int foobar(){
     ab12.ba21();
@@ -227,23 +254,28 @@ public static int foobar(){
     }
 }
 public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static int foobar(){
 ab12.ba21();
 return 10;
 }
     public void foo() {}
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
 #[test]
 fn test_simple_else_if_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static int remove_else_if(){
        if (extra_toggle) {
@@ -254,9 +286,12 @@ public static int remove_else_if(){
       return 2;
     }
 }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static int foobar(){
 if (extra_toggle) {
@@ -265,13 +300,16 @@ if (extra_toggle) {
       return 2;
     }
 }
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
 #[test]
 fn test_simple_else_if_no_block_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static int foobar(){
        if (extra_toggle)
@@ -282,9 +320,12 @@ public static int foobar(){
       return 2;
 
 }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static int foobar(){
 if (extra_toggle)
@@ -293,15 +334,16 @@ if (extra_toggle)
       return 2;
 
 }
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
-
 #[test]
 fn test_return_within_if_additional_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
 public static int foobar(){
        if (x == 0) {
@@ -339,9 +381,12 @@ public static int foobar(){
     }
     return 100;
 }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public static int foobar(){
 if (x == 0) {
@@ -364,13 +409,16 @@ if (x == 0) {
     return 100;
 
 }
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
 #[test]
 fn test_if_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
  public void conditional_contains_stale_flag() {
 
@@ -405,9 +453,12 @@ public class Foobar {
       System.out.println(\"Hi world\");
     }
   }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public void conditional_contains_stale_flag() {
     System.out.println(\"Hello World\");
@@ -424,14 +475,17 @@ public class Foobar {
   public void other_api_stale_flag() {
     System.out.println(\"Hello World\");
   }
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
 //  TODO temporal propagation of patterns
 #[test]
 fn test_assignments_containing_stale_flag_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
    public void assignments_containing_stale_flag() {
 
@@ -445,9 +499,12 @@ public class Foobar {
 
     tBool = exp.staleFlag().getVal() && (tBool || true);
   }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public void assignments_containing_stale_flag() {
     tBool = true;
@@ -461,29 +518,36 @@ public class Foobar {
     tBool = true;
   }
 
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
-
 #[test]
 fn test_condexp_contains_stale_flag_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
    public void condexp_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     tBool = exp.staleFlag().getVal() ? true : false;
   }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public void condexp_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     tBool = true;
   }
 
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
 
@@ -491,7 +555,8 @@ public class Foobar {
 // Eventually from the tests we shuld swap staleFlaag().getVal() to false
 #[test]
 fn test_or_compounded_with_not_piranha_test_case() {
-    let transform_sexp = _get_transform_sexp("package com.uber.piranha;
+    let transform_sexp = _get_transform_sexp(
+        "package com.uber.piranha;
 public class Foobar {
    public int or_compounded_with_not(int x, boolean extra_toggle) {
     if (extra_toggle || !e.staleFlag().getValN()) {
@@ -500,33 +565,33 @@ public class Foobar {
       return 1;
     }
   }
-}", "Java");
+}",
+        "Java",
+    );
 
-    let expected_sexp = _get_expected_sexp("package com.uber.piranha;
+    let expected_sexp = _get_expected_sexp(
+        "package com.uber.piranha;
 public class Foobar {
     public int or_compounded_with_not(int x, boolean extra_toggle) {
     return 0;
   }
 
-}", "Java");
+}",
+        "Java",
+    );
     assert_eq!(expected_sexp, transform_sexp)
 }
-
-
-
-
 
 fn _get_transform_sexp(input_src_code: &str, language: &str) -> String {
     let input = String::from(input_src_code);
     let (tree, _output) = transform(&input, language);
     let transform_sexp = tree.root_node().to_sexp();
-    println!("{}",_output.as_str());
+    println!("{}", _output.as_str());
     transform_sexp
 }
 
-
 fn _get_expected_sexp(expected_source_code: &str, language: &str) -> String {
-    let l = get_language(language).expect("Language not supported");
+    let l = get_language(language);
     let expected_code = String::from(expected_source_code);
     let (_p, t) = parse_code(l, &expected_code);
     let expected_sexp = t.root_node().to_sexp();

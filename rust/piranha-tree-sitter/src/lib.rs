@@ -5,131 +5,115 @@ mod tree_sitter;
 pub mod piranha {
     use super::configs::Rule;
     use super::tree_sitter as ts_utils;
-    use crate::configs::{java_rules::cleanup_rules, java_rules::piranha_rules};
+    use crate::configs::{java_rules::cleanup_rules, java_rules::get_xp_api_rules};
     use std::collections::HashMap;
     use std::str;
     use tree_sitter::{
-        Language, Node, Parser, Query, QueryCapture, QueryCursor, QueryMatch, Range, Tree,
+        Node, Parser, Query, QueryCapture, QueryCursor, Range, Tree     ,
     };
+    use crate::tree_sitter::get_node_captured_by_query;
 
     pub fn transform(input: &String, input_language: &str) -> (Tree, String) {
-        let language = ts_utils::get_language(input_language).expect("Language not supported");
-        let piranha_rules = piranha_rules();
+        let language = ts_utils::get_language(input_language);
+        let xp_api_rules = get_xp_api_rules();
         let mut source_code = input.clone();
         let (mut parser, mut tree) = ts_utils::parse_code(language, &source_code);
+        let cleanups = cleanup_rules();
         loop {
-            let moved_tree = tree;
-            let moved_source_code = source_code;
-            let mut all_captures_for_queries: Vec<(Range, String)> = get_replacements_for_tree(
-                &piranha_rules,
-                &moved_tree,
-                &moved_source_code,
-                language,
-            );
-
-            if let Some(piranha_capture_site) = all_captures_for_queries.pop() {
-                let (new_tree, new_source_code) = update_capture_sites(
-                    &mut parser,
-                    language,
-                    &moved_source_code,
-                    &moved_tree,
-                    piranha_capture_site,
-                );
+            if let Some(piranha_capture_site) =
+                scan_for_xp_api_usages(&xp_api_rules, &tree.root_node(), &source_code)
+            {
+                let (new_tree, new_source_code) =
+                    update_capture_sites(&mut parser, &source_code, &tree, piranha_capture_site, &cleanups);
                 tree = new_tree;
                 source_code = new_source_code;
-            }else{
-                return (moved_tree, moved_source_code);
+            } else {
+                return (tree, source_code);
             }
         }
     }
 
     fn update_capture_sites(
         parser: &mut Parser,
-        language: Language,
         source_code: &String,
         tree: &Tree,
-        piranha_site: (Range, String),
+        piranha_replacement: (Range, String), cleanup_rules: &Vec<Rule>,
     ) -> (Tree, String) {
-        let cleanup_rules = cleanup_rules();
-        let mut capture = Option::Some(piranha_site.clone());
+        let mut capture = Option::Some(piranha_replacement.clone());
         let mut curr_source_code = source_code.clone();
         let mut curr_tree = tree.clone();
-        while capture.is_some() {
-            let (replace_range, replacement) = capture.unwrap();
-            println!(
-                "Updating site {:?}",
-                str::from_utf8(
-                    &curr_source_code.as_bytes()[replace_range.start_byte..replace_range.end_byte]
-                )
-            );
 
-            // get the edit to be performed
-            let (new_source_code, edit) =
-                ts_utils::get_edit(&curr_source_code, replace_range, &replacement);
+        loop {
+            match capture {
+                None => return (curr_tree, curr_source_code),
 
-            curr_tree.edit(&edit);
-            // Update the remaining captures
-            let new_tree = parser.parse(&new_source_code, Some(&curr_tree)).unwrap();
+                Some((replace_range, replacement)) => {
+                    println!(
+                        "Updating site {:?}",
+                        str::from_utf8(
+                            &curr_source_code.as_bytes()
+                                [replace_range.start_byte..replace_range.end_byte]
+                        )
+                    );
 
-            let change_range = &curr_tree.changed_ranges(&new_tree).collect::<Vec<Range>>();
+                    let (new_source_code, edit) =
+                        ts_utils::get_edit(&curr_source_code, replace_range, &replacement);
 
-            if let Some(cr) = change_range.get(0){
+                    curr_tree.edit(&edit);
+                    // Update the remaining captures
 
-                curr_tree = new_tree;
-                curr_source_code = new_source_code;
-                let tree = &curr_tree;
+                    let new_tree = parser
+                        .parse(&new_source_code, Some(&curr_tree))
+                        .expect("Could not generate new tree!");
 
-                if let Some(changed_node) = tree
-                    .root_node()
-                    .descendant_for_byte_range(cr.start_byte, cr.end_byte){
+                    let change_range = &curr_tree
+                        .changed_ranges(&new_tree)
+                        .next()
+                        .expect("Could not get change range!");
 
-                    println!("FINDING PARENT!");
-                    if let Some(relevant_parent) =
-                    get_relevant_parent(language, &cleanup_rules, changed_node, &curr_source_code)
-                    {
-                        println!("FOUND PARENT!");
-                        capture = Some((relevant_parent.0.range(), relevant_parent.1));
-                    }else {
-                        println!("PARENT NOT FOUND!");
-                        capture = None;
+                    curr_tree = new_tree;
+                    curr_source_code = new_source_code;
+
+                    let changed_node = &curr_tree
+                        .root_node()
+                        .descendant_for_byte_range(change_range.start_byte, change_range.end_byte)
+                        .expect("No descendant found for range");
+
+                    capture = match get_relevant_parent(changed_node, &curr_source_code, cleanup_rules) {
+                        Some(relevant_parent) => {
+                            println!("Found a parent to be cleaned up!");
+                            Some((relevant_parent.0.range(), relevant_parent.1))
+                        }
+                        None => {
+                            println!("No parent found to be cleaned up!");
+                            None
+                        }
                     }
-                }else {
-                    panic!("Could not get descendant for the range")
                 }
-            }else {
-                panic!("Could not get change range!")
             }
-
-
         }
-
-        return (curr_tree, curr_source_code);
     }
 
     fn get_relevant_parent_helper<'a, 'b>(
-        language: Language,
         cleanup_rules: &Vec<Rule>,
-        changed_node: Node<'a>,
+        changed_node: &Node<'a>,
         new_source_code: &String,
         count: i8,
     ) -> Option<(Node<'a>, String)> {
         match count {
             0 => None,
             _ => {
-                let replacement = get_replacement_for_node(
+                if let Some(replacement) = get_replacement_for_node(
                     cleanup_rules,
-                    &changed_node,
-                    &new_source_code,
-                    language,
-                );
-                if replacement.is_some() {
-                    return Option::Some((changed_node, replacement.unwrap()));
+                    changed_node,
+                    &new_source_code.as_bytes(),
+                ) {
+                    return Option::Some((changed_node.clone(), replacement));
                 } else {
                     match changed_node.parent() {
                         Some(parent) => get_relevant_parent_helper(
-                            language,
                             cleanup_rules,
-                            parent,
+                            &parent,
                             new_source_code,
                             count - 1,
                         ),
@@ -141,22 +125,21 @@ pub mod piranha {
     }
 
     fn get_relevant_parent<'a>(
-        language: Language,
-        cleanup_rules: &Vec<Rule>,
-        changed_node: Node<'a>,
+        changed_node: &Node<'a>,
         new_source_code: &String,
+        rules: &Vec<Rule>,
     ) -> Option<(Node<'a>, String)> {
-        get_relevant_parent_helper(language, cleanup_rules, changed_node, new_source_code, 3)
+        // let cleanup_rules = rules;
+        get_relevant_parent_helper(rules, changed_node, new_source_code, 3)
     }
 
-    // This replaces comby rewrite.
+    // This is like comby rewrite.
     fn get_replacement(
         captures: &[QueryCapture],
         rule: &Rule,
         query: &Query,
         source_code_bytes: &[u8],
     ) -> String {
-
         let mut output = String::from(&rule.rewrite_template);
 
         let mut var_capture = HashMap::new();
@@ -165,14 +148,20 @@ pub mod piranha {
                 .capture_names()
                 .get(capture.index as usize)
                 .expect("Capture name not found!");
-            let code_snippet = capture.node.utf8_text(source_code_bytes).unwrap();
-            var_capture.entry(name)
+            let code_snippet = capture
+                .node
+                .utf8_text(source_code_bytes)
+                .expect("Could not get source code for node");
+            var_capture
+                .entry(name)
                 .or_insert_with(Vec::new)
                 .push(code_snippet);
         }
 
         for capture_name in query.capture_names() {
-            if rule.rewrite_template.contains(&format!("@{}", capture_name))
+            if rule
+                .rewrite_template
+                .contains(&format!("@{}", capture_name))
             {
                 output = match var_capture.get(capture_name).map(|v| v.join("\n")) {
                     Some(replacement) => {
@@ -185,45 +174,27 @@ pub mod piranha {
         return output;
     }
 
+    // Returns the replacement for the first rule that matches node.
     fn get_replacement_for_node<'a>(
         rules: &Vec<Rule>,
         node: &'a Node,
-        source_code: &String,
-        language: Language,
+        source_code_bytes: &[u8],
     ) -> Option<String> {
-        println!("{}", &source_code);
-        let source_code_bytes = source_code.as_bytes();
-
+        let source_code_bytes = source_code_bytes;
+        let mut cursor = QueryCursor::new();
         for rule in rules {
-            let query_str = rule.query.as_str();
-            let query = Query::new(language, query_str).unwrap();
-            let mut cursor = QueryCursor::new();
-            println!("Query str {:?}", query_str);
-            let matches = cursor
-                .matches(&query, node.clone(), |_n| {
-                    &source_code_bytes[_n.byte_range()]
-                })
-                .collect::<Vec<QueryMatch>>();
-            if matches.len() > 0 {
-                for query_match in matches {
-                    let captures: &[QueryCapture] = &query_match.captures;
-                    for c in captures {
-                        println!("{:?}, {:?}", c.node.utf8_text(source_code_bytes), c.index);
-                    }
-
-                    if let Some(replace_node) =
-                        ts_utils::get_replace_node(&query, &rule, captures, source_code_bytes)
-                    {
-                        println!("Replace node exp {}", replace_node.to_sexp());
-                        println!("Query node exp {}", node.to_sexp());
-                        if are_s_exp_same(node, &replace_node) {
-                            return Some(get_replacement(
-                                captures,
-                                &rule,
-                                &query,
-                                source_code_bytes,
-                            ));
-                        }
+            for query_match in cursor.matches(&rule.query,
+                                              node.clone(),
+                                              |_n| &source_code_bytes[_n.byte_range()]) {
+                let captures: &[QueryCapture] = &query_match.captures;
+                if let Ok(replace_node) = get_node_captured_by_query(captures) {
+                    if are_s_exp_same(node, &replace_node) {
+                        return Some(get_replacement(
+                            captures,
+                            &rule,
+                            &rule.query,
+                            source_code_bytes,
+                        ));
                     }
                 }
             }
@@ -237,6 +208,8 @@ pub mod piranha {
     }
 
     fn are_s_exp_same(node: &Node, replace_node: &Node) -> bool {
+        println!("Replace node exp {}", replace_node.to_sexp());
+        println!("Query node exp {}", node.to_sexp());
         let replace_sexp = replace_node.to_sexp();
         let query_node_sexp = node.to_sexp();
         let s1 = parenthesize(&replace_sexp);
@@ -245,35 +218,22 @@ pub mod piranha {
         replace_sexp.eq(&query_node_sexp) || s1.eq(&query_node_sexp) || replace_sexp.eq(s2)
     }
 
-    fn get_replacements_for_tree<'a>(
+    fn scan_for_xp_api_usages<'a>(
         rules: &Vec<Rule>,
-        tree: &'a Tree,
+        node: &'a Node,
         source_code: &String,
-        language: Language,
-    ) -> Vec<(Range, String)> {
-        let mut perfect_match_captures: Vec<(Range, String)> = vec![];
-        let source_code_bytes = source_code.as_bytes();
-        for rule in rules {
-            let mut cursor = QueryCursor::new();
-            let query = Query::new(language, rule.query.as_str()).unwrap();
-            let matches = cursor.matches(&query, tree.root_node(), |_n| {
-                &source_code_bytes[_n.byte_range()]
-            });
-            for query_match in matches {
-                let captures: &[QueryCapture] = &query_match.captures;
-                let replace_node =
-                    ts_utils::get_replace_node(&query, &rule, captures, source_code_bytes).expect(
-                        format!(
-                            "Please check the rules. The rule {} does not contain the variable @{}",
-                            rule.query, rule.complete_capture_var
-                        )
-                        .as_str(),
-                    );
-                let rewritten_source = get_replacement(captures, &rule, &query, source_code_bytes);
-
-                perfect_match_captures.push((replace_node.range(), rewritten_source));
+    ) -> Option<(Range, String)> {
+        let mut i = 0;
+        while i < node.child_count() {
+            let c = node.child(i).unwrap();
+            if let Some(usage_replacement) = scan_for_xp_api_usages(rules, &c, source_code) {
+                return Some(usage_replacement);
             }
+            i = i + 1;
         }
-        return perfect_match_captures;
+        if let Some(replacement) = get_replacement_for_node(rules, &node, source_code.as_bytes()) {
+            return Option::Some((node.range(), replacement));
+        }
+        return None;
     }
 }
