@@ -1,3 +1,4 @@
+
 use tree_sitter::{InputEdit, Language, Node, Parser, Point, QueryCapture, Range, Tree};
 
 pub fn get_edit(
@@ -59,44 +60,42 @@ pub fn get_language(language: &str) -> Language {
     }
 }
 
+// Returns the captured node with the largest span.
 pub fn get_node_captured_by_query<'a>(
     captures: &'a [QueryCapture],
 ) -> Result<Node<'a>, &'static str> {
-    // println!(
-    //     "Capture names = {}",
-    //     query.capture_names().to_vec().join(", ")
-    // );
-
     captures
         .iter()
         .map(|n| n.node.clone())
         .max_by(|c1, c2| c1.byte_range().len().cmp(&c2.byte_range().len()))
         .ok_or("Could not compute the captured node for this query.")
-    // .expect(
-    //     format!(
-    //         "Please check the rules. The rule {:?} does not contain the variable")
+}
 
-    // // for c in captures{
-    // //     c.node.byte_range().len()
-    // // }
-    //
-    // for c in captures {
-    //     println!(
-    //         "Captured node {:?} {:?}",
-    //         c.node.utf8_text(source_code_bytes),
-    //         c.index
-    //     );
-    // }
-    // captures
-    //     .iter()
-    //     .filter(|c| {
-    //         let capture_name = query
-    //             .capture_names()
-    //             .get(c.index as usize)
-    //             .expect("not found");
-    //         return capture_name.eq(&rule.complete_capture_var);
-    //     })
-    //     .next()
-    //     .map(|_n| _n.node)
-    //     .clone()
+
+fn contains(n: &Node, e1:usize, e2:usize) -> bool{
+    return n.start_byte() <= e1 && e2 <= n.end_byte() + 1
+
+}
+
+pub fn search_node<'a, 'b>(start_byte: usize, end_byte: usize, node:&'b Node<'a>) -> Node<'a> {
+    let mut curr: Node = node.clone();
+    let mut q = vec![curr];
+    loop  {
+        let head = q.pop();
+        if head.is_none(){
+            return curr;
+        }else {
+            curr = head.unwrap();
+        }
+        let mut i = 0;
+        while i < curr.child_count() {
+            let child = &curr.child(i).unwrap();
+            if contains(&child, start_byte, end_byte){
+                q.push(child.clone());
+                break;
+            }
+            println!("child range {:?} {:?}", child.start_byte(), child.end_byte() );
+            i = i + 1;
+        }
+    }
 }

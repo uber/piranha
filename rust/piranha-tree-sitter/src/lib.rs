@@ -1,43 +1,55 @@
-mod configs;
+mod config;
 mod test;
 mod tree_sitter;
 
 pub mod piranha {
-    use super::configs::Rule;
+    use super::config::ResolvedRule;
     use super::tree_sitter as ts_utils;
-    use crate::configs::{java_rules::cleanup_rules, java_rules::get_xp_api_rules};
+    use crate::config::{read_config};
+    use crate::tree_sitter::{get_node_captured_by_query, search_node};
     use std::collections::HashMap;
     use std::str;
-    use tree_sitter::{
-        Node, Parser, Query, QueryCapture, QueryCursor, Range, Tree     ,
-    };
-    use crate::tree_sitter::get_node_captured_by_query;
+    use tree_sitter::{Node, Parser, Query, QueryCapture, QueryCursor, Range, Tree};
 
     pub fn transform(input: &String, input_language: &str) -> (Tree, String) {
         let language = ts_utils::get_language(input_language);
-        let xp_api_rules = get_xp_api_rules();
+        let (mut xp_api_rules, cleanups) = read_config();
+        // let cleanups = get_cleanup_rules(input_language);
+
         let mut source_code = input.clone();
         let (mut parser, mut tree) = ts_utils::parse_code(language, &source_code);
-        let cleanups = cleanup_rules();
         loop {
-            if let Some(piranha_capture_site) =
+            if let Some((range, replacement, _rule)) =
                 scan_for_xp_api_usages(&xp_api_rules, &tree.root_node(), &source_code)
             {
-                let (new_tree, new_source_code) =
-                    update_capture_sites(&mut parser, &source_code, &tree, piranha_capture_site, &cleanups);
+                let (new_tree, new_source_code) = update_capture_sites(
+                    &mut parser,
+                    &source_code,
+                    &tree,
+                    (range, replacement),
+                    &cleanups,
+                );
                 tree = new_tree;
                 source_code = new_source_code;
+
+                // if rule.chained_rule.is_some() {
+                //     let rule1 = rule.chained_rule.as_mut().unwrap();
+                //     xp_api_rules.push(rule1);
+                // }
             } else {
                 return (tree, source_code);
             }
         }
     }
 
+
+
     fn update_capture_sites(
         parser: &mut Parser,
         source_code: &String,
         tree: &Tree,
-        piranha_replacement: (Range, String), cleanup_rules: &Vec<Rule>,
+        piranha_replacement: (Range, String),
+        cleanup_rules: &Vec<ResolvedRule>,
     ) -> (Tree, String) {
         let mut capture = Option::Some(piranha_replacement.clone());
         let mut curr_source_code = source_code.clone();
@@ -66,36 +78,53 @@ pub mod piranha {
                         .parse(&new_source_code, Some(&curr_tree))
                         .expect("Could not generate new tree!");
 
-                    let change_range = &curr_tree
-                        .changed_ranges(&new_tree)
-                        .next()
-                        .expect("Could not get change range!");
+                    let change_range = (&edit.start_byte, &edit.new_end_byte);
+                        // &curr_tree .changed_ranges(&new_tree) .next() .expect("Could not get change range!");
 
                     curr_tree = new_tree;
                     curr_source_code = new_source_code;
 
-                    let changed_node = &curr_tree
-                        .root_node()
-                        .descendant_for_byte_range(change_range.start_byte, change_range.end_byte)
-                        .expect("No descendant found for range");
+                    let node = &curr_tree.root_node();
+                    let changed_node = search_node(change_range.0.clone(), change_range.1.clone(), node);
+                        // .expect("Node not found!");
+                        // .root_node()
+                        // .descendant_for_byte_range(change_range.0.clone(), change_range.1.clone())
+                        // .expect("No descendant found for range");
 
-                    capture = match get_relevant_parent(changed_node, &curr_source_code, cleanup_rules) {
-                        Some(relevant_parent) => {
-                            println!("Found a parent to be cleaned up!");
-                            Some((relevant_parent.0.range(), relevant_parent.1))
-                        }
-                        None => {
-                            println!("No parent found to be cleaned up!");
-                            None
-                        }
+                    if changed_node.start_byte() != change_range.0.clone() && changed_node.end_byte() != change_range.1.clone(){
+                        println!("NODE IS NOT EXACT!!!")
                     }
+
+                    println!("Cleaning up {:?}, {:?}, {:?}, {:?} {}",
+                             change_range.0.clone(), change_range.1.clone(),
+                             changed_node.start_byte(), changed_node.end_byte(),
+                             str::from_utf8(
+                                 &curr_source_code.as_bytes()
+                                     [change_range.0.clone()..change_range.1.clone()]
+                             ).unwrap());
+                    println!("Cleaning up {:?}", changed_node.utf8_text(&curr_source_code.as_bytes()));
+
+                    capture =
+                        match get_relevant_parent(&changed_node, &curr_source_code, cleanup_rules) {
+                            Some(relevant_parent) => {
+                                println!("Found a parent to be cleaned up!");
+                                Some((relevant_parent.0.range(), relevant_parent.1))
+                            }
+                            None => {
+                                println!("No parent found to be cleaned up!");
+                                None
+                            }
+                        }
                 }
             }
         }
     }
 
+
+
+
     fn get_relevant_parent_helper<'a, 'b>(
-        cleanup_rules: &Vec<Rule>,
+        cleanup_rules: &Vec<ResolvedRule>,
         changed_node: &Node<'a>,
         new_source_code: &String,
         count: i8,
@@ -103,7 +132,7 @@ pub mod piranha {
         match count {
             0 => None,
             _ => {
-                if let Some(replacement) = get_replacement_for_node(
+                if let Some((replacement, _r)) = get_replacement_for_node(
                     cleanup_rules,
                     changed_node,
                     &new_source_code.as_bytes(),
@@ -127,7 +156,7 @@ pub mod piranha {
     fn get_relevant_parent<'a>(
         changed_node: &Node<'a>,
         new_source_code: &String,
-        rules: &Vec<Rule>,
+        rules: &Vec<ResolvedRule>,
     ) -> Option<(Node<'a>, String)> {
         // let cleanup_rules = rules;
         get_relevant_parent_helper(rules, changed_node, new_source_code, 3)
@@ -136,10 +165,10 @@ pub mod piranha {
     // This is like comby rewrite.
     fn get_replacement(
         captures: &[QueryCapture],
-        rule: &Rule,
-        query: &Query,
+        rule: &ResolvedRule,
         source_code_bytes: &[u8],
     ) -> String {
+        let query: &Query = &rule.query;
         let mut output = String::from(&rule.rewrite_template);
 
         let mut var_capture = HashMap::new();
@@ -175,26 +204,22 @@ pub mod piranha {
     }
 
     // Returns the replacement for the first rule that matches node.
-    fn get_replacement_for_node<'a>(
-        rules: &Vec<Rule>,
+    fn get_replacement_for_node<'a, 'b>(
+        rules: &'b Vec<ResolvedRule>,
         node: &'a Node,
         source_code_bytes: &[u8],
-    ) -> Option<String> {
+    ) -> Option<(String, &'b ResolvedRule)> {
         let source_code_bytes = source_code_bytes;
         let mut cursor = QueryCursor::new();
         for rule in rules {
-            for query_match in cursor.matches(&rule.query,
-                                              node.clone(),
-                                              |_n| &source_code_bytes[_n.byte_range()]) {
+            for query_match in cursor.matches(&rule.query, node.clone(), |_n| {
+                &source_code_bytes[_n.byte_range()]
+            }) {
                 let captures: &[QueryCapture] = &query_match.captures;
                 if let Ok(replace_node) = get_node_captured_by_query(captures) {
                     if are_s_exp_same(node, &replace_node) {
-                        return Some(get_replacement(
-                            captures,
-                            &rule,
-                            &rule.query,
-                            source_code_bytes,
-                        ));
+                        let replacement = get_replacement(captures, rule, source_code_bytes);
+                        return Some((replacement, rule));
                     }
                 }
             }
@@ -214,15 +239,15 @@ pub mod piranha {
         let query_node_sexp = node.to_sexp();
         let s1 = parenthesize(&replace_sexp);
         let s2 = &parenthesize(&query_node_sexp);
-        println!("s1 and s2 {} {}", s1, s2);
+        // println!("s1 and s2 {} {}", s1, s2);
         replace_sexp.eq(&query_node_sexp) || s1.eq(&query_node_sexp) || replace_sexp.eq(s2)
     }
 
-    fn scan_for_xp_api_usages<'a>(
-        rules: &Vec<Rule>,
+    fn scan_for_xp_api_usages<'a, 'b>(
+        rules: &'b Vec<ResolvedRule>,
         node: &'a Node,
         source_code: &String,
-    ) -> Option<(Range, String)> {
+    ) -> Option<(Range, String, &'b ResolvedRule)> {
         let mut i = 0;
         while i < node.child_count() {
             let c = node.child(i).unwrap();
@@ -231,8 +256,10 @@ pub mod piranha {
             }
             i = i + 1;
         }
-        if let Some(replacement) = get_replacement_for_node(rules, &node, source_code.as_bytes()) {
-            return Option::Some((node.range(), replacement));
+        if let Some((replacement, r)) =
+            get_replacement_for_node(rules, &node, source_code.as_bytes())
+        {
+            return Option::Some((node.range(), replacement, r));
         }
         return None;
     }
