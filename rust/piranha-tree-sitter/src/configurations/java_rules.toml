@@ -1,98 +1,298 @@
-[[rule]]
-name = "r1"
-kind = "xp"
-query = """
+# Enum based API rules 
+flag_name = "[stale_flag_name]"
+flag_namespace = "[namespace]"
+flag_value = "[treated]"
+[[rules]]
+name = "Enum Based, toggle enabled"
+queries = [
+    """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isToggleEnabled")
+(#eq? @f "[stale_flag_name]")
+)"""
+]
+replace = "[treated]"
+scope = "PROJECT"
+
+[[rules]]
+name = "Enum Based, flag enabled"
+queries = [
+    """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isFlagTreated")
+(#eq? @f "[stale_flag_name]")
+)"""
+]
+replace = "[treated]"
+scope = "PROJECT"
+
+[[rules]]
+name = "Enum Based, toggle disabled"
+queries = [
+    """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isToggleDisabled")
+(#eq? @f "[stale_flag_name]")
+)"""
+]
+replace = "[treated_complement]"
+scope = "PROJECT"
+
+[[rules]]
+name = "Enum based, Delete enum constant (just the constant)"
+queries = [
+    """
+    (
+    ((enum_constant name : (_)) @ec)       
+    (#eq? @ec "STALE_FLAG")
+    )
+    """
+]
+replace = ""
+scope = "PROJECT"
+
+[[rules]]
+name = "Enum based, Delete enum constant"
+queries = [
+    """
+    (
+    ((enum_constant name : (_) @n) @ec)       
+    (#eq? @n  "STALE_FLAG")
+    )
+    """
+]
+replace = ""
+scope = "PROJECT"
+
+[[rules]]
+name = "Interface based, method invocation chain"
+queries = ["""
 (
     ((method_invocation
             object: (method_invocation name: (identifier) @i2)
             name : (identifier) @i)
     @m)
     (#eq? @i getVal)
-    (#eq? @i2 staleFlag)
-)"""
-replace = "true"
+    (#eq? @i2 [stale_flag_name])
+)"""]
+replace = "[treated]"
+scope = "PROJECT"
 
-[[rule]]
-name = "r2"
-kind = "xp"
-query = """
+
+[[rules]]
+name = "Interface based, method invocation, put"
+queries = ["""
 (
-    ((method_invocation
-        object: (method_invocation name: (identifier) @i2)
-        name : (identifier) @i) @m)
-    (#eq? @i getValN)
-    (#eq? @i2 staleFlag)
-)"""
-replace = "false"
+(expression_statement ((method_invocation name: (_) @n
+			arguments : (
+            (argument_list 
+            	(method_invocation 
+                		name: (_) @an)
+                ([(true) (false)])
+             ))
+            
+            ) @m) @e)
+ (#eq? @n "put")
+ (#eq? @an "[stale_flag_name]")
+)
+"""]
+replace = ""
+scope = "PROJECT"
 
-[[rule]]
+[[rules]]
+name = "Enum based, method invocation, put enabled"
+queries = ["""
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "putToggleEnabled")
+ (#eq? @f "[stale_flag_name]")
+)
+"""]
+replace = ""
+scope = "PROJECT"
+
+[[rules]]
+name = "Enum based, method invocation, put disabled"
+queries = ["""
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "putToggleDisabled")
+ (#eq? @f "[stale_flag_name]")
+)
+"""]
+replace = ""
+scope = "PROJECT"
+
+[[rules]]
+name = "Enum based, method invocation, includeEvent"
+queries = ["""
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "includeEvent")
+ (#eq? @f "[stale_flag_name]")
+)
+"""]
+replace = ""
+scope = "PROJECT"
+
+
+[[rules]]
+name = "Interface based, annotated method declaration"
+queries = ["""
+(
+(method_declaration
+	 (modifiers (annotation
+     				name: (_) @a_name
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k1
+							 value: (_) @v1))))
+      name: (_) @m_name
+ )@m1
+ (#eq? @a_name "BoolParam")
+ (#eq? @k1 "key")
+ (#eq? @v1 "\\\"[stale_flag_name]\\\"")
+ )
+""","""
+(
+(method_declaration
+	 (modifiers (annotation
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k2
+							 value: (_) @v2))))
+ )@m2
+ (#eq? @k2 "namespace")
+ (#eq? @v2 "\\\"[namespace]\\\"")
+ )
+""" 
+]
+replace=""
+scope = "PROJECT"
+
+# [[rules.and_then]]
+# name = "Interface based, delete method invocation"
+# queries = ["""
+# (
+#    ((method_invocation
+#        object: (method_invocation name: (identifier) @i2)
+#        name : (identifier) @i) @m)
+#    (#eq? @i getVal)
+#    (#eq? @i2 [@m_name])
+# )"""]
+# replace = "[treated]"
+
+
+[[rules]]
 name = "Simple If-(optional)else True"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (if_statement
         condition : ((parenthesized_expression ((true) @i)))
         consequence : ((statement) @s))
 @ifstmt)
-"""
-replace="@s"
+"""]
+replace = "@s"
+scope = "PARENT" 
 
 
-[[rule]]
+[[rules]]
 name = "Simple If-else False"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (if_statement
         condition : ((parenthesized_expression ((false) @i)))
         consequence : ((statement) @s)
         alternative : ((_) @el))
-@ifstmt)"""
+@ifstmt)"""]
 replace = "@el"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Simple if False"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (if_statement
         condition : ((parenthesized_expression ((false) @i)))
         consequence : ((statement) @s)
         !alternative)
 @ifstmt)
-"""
+"""]
 replace = ""
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "not False"
-kind = "cleanup"
-query = """
+
+queries = ["""
 (
     (unary_expression
         operator: "!"
         operand: (false))
 @u)
-"""
+"""]
 replace = "true"
+scope = "PARENT"
 
 
-[[rule]]
+[[rules]]
 name = "not True"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (unary_expression
         operator: \"!\"
         operand: (true))
 @u)
-"""
+"""]
 replace = "false"
+scope = "PARENT"
 
 
-[[rule]]
+[[rules]]
 name = "Remove unnecesary nested block"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (block
         (
@@ -102,59 +302,59 @@ query = """
             (_)*@post
         )
     )@b1
-)"""
+)"""]
 replace = """
 {
     @pre
     @b
     @post
-}
-"""
+}"""
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "And - left operand is True"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (binary_expression
         left: (true)
         operator:"&&"
          right : (_)* @other )
-) @b"""
+) @b"""]
 replace = "@other"
+scope = "PARENT"
 
 
-[[rule]]
+[[rules]]
 name = "And - right operand is True"
-kind = "cleanup"
-query = """
+
+queries = ["""
 (
     (binary_expression
         left : (_)* @other
         operator:"&&"
         right: (true)
     )
-@b)"""
+@b)"""]
 replace = "@other"
+scope = "PARENT"
 
 
-[[rule]]
+[[rules]]
 name = "Or - right operand is True"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (binary_expression
         left : (_)* @other
         operator:"||"
         right: (true)
     )
-@b)"""
+@b)"""]
 replace = "true"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Or - left operand is True"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (binary_expression
         left : (true)
@@ -162,26 +362,27 @@ query = """
         right: (_)* @other
     )
 @b)
-"""
+"""]
 replace = "true"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "And - left operand is False"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (binary_expression
         left: (false)
         operator:"&&"
         right : (_)* @other
     )
-@b)"""
+@b)"""]
 replace = "false"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "And - right operand is False"
-kind = "cleanup"
-query = """
+
+queries = ["""
 (
     (binary_expression
         left : (_)* @other
@@ -189,111 +390,127 @@ query = """
         right: (false)
     )
 @b)
-"""
+"""]
 replace = "false"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Or - left operand is False"
-kind = "cleanup"
-query = """(
+queries =[ """(
 (
     binary_expression
         left : (_)* @other
         operator:"||"
         right: (false)
     )
-@b)"""
+@b)"""]
 replace = "@other"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "And - right operand is False"
-kind = "cleanup"
-query = """
+
+queries = ["""
 (
     (binary_expression
         left : (false)
         operator:"||"
         right: (_)* @other
     )
-@b)"""
+@b)"""]
 replace = "@other"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Or - Remove unnecessary brackets from left operand"
-kind = "cleanup"
-query = """(
+queries =[ """(
 (
     binary_expression
         left: ((parenthesized_expression
                     (expression !left) @e))
         operator: "||"
         right: (_)* @r)
-@bo)"""
+@bo)"""]
 replace = "@e || @r"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Or - Remove unnecessary brackets from right operand"
-kind = "cleanup"
-query = """
+queries = ["""
 (binary_expression
         left: (_)* @l
         operator: "||"
         right: ((parenthesized_expression
                     (expression !left) @e))
-@bo)"""
+@bo)"""]
 replace = "@l || @e"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "And - Remove unnecessary brackets from left operand "
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (binary_expression
         left: ((parenthesized_expression (expression !left) @e))
         operator: "&&"
         right: (_)* @r)
-@bo)"""
+@bo)"""]
 replace = "@e && @r"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "And - Remove unnecessary brackets from right operand "
-kind = "cleanup"
-query = """(
+queries = ["""(
     (binary_expression
         left: (_)* @l
         operator: "&&"
         right: ((parenthesized_expression
                          (expression !left) @e)))
-@bo)"""
+@bo)"""]
 replace = "@l && @e"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Elide all statements after return"
-kind = "cleanup"
-query = """(
+queries = ["""(
         (block  ((statement)* @pre)
          ((return_statement) @r)
-         ((statement)+ @post)) @b)"""
+         ((statement)+ @post)) @b)"""]
 replace = "{\n@pre\n@r\n}"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Ternay operator True"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (ternary_expression condition: (true)
         consequence: (_)* @then
         alternative: (_)* @else)
-@t)"""
+@t)"""]
 replace = "@then"
+scope = "PARENT"
 
-[[rule]]
+[[rules]]
 name = "Ternay operator False"
-kind = "cleanup"
-query = """
+queries = ["""
 (
     (ternary_expression condition: (false)
         consequence: (_)* @then
         alternative: (_)* @else)
-@t)"""
+@t)"""]
 replace = "@else"
+scope = "PARENT"
+
+[[rules]]
+name = "Parenthesized boolean literal"
+queries = ["""
+(
+(parenthesized_expression 
+	[(true)
+     (false)
+    ] @l
+    ) @p
+)
+"""]
+replace = "@l"
+scope = "PARENT"

@@ -2,6 +2,7 @@ java/.gradle
 java/build/
 java/*/build/
 .idea
+.DS_STORE
 piranha.iml
 objc/process
 objc/piranha-objc
@@ -12,3 +13,6 @@ swift/Package.resolved
 rust/piranha-tree-sitter/target
 rust/piranha-tree-sitter/Cargo.lock
 rust/piranha-tree-sitter/.idea
+rust/tree-sitter-query/
+rust/tree-sitter-src/
+rust/piranha-tree-sitter/src/test-resources/
