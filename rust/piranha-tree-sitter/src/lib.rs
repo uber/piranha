@@ -15,7 +15,11 @@ pub mod piranha {
     use tree_sitter::{Language, Node, Parser, Query, QueryCapture, QueryCursor, Range, Tree};
     use tree_sitter_traversal::{traverse, Order};
 
-    // TODO: Add a string level ennry point
+    // TODO: Add a string level entry point
+    // TODO: Verify configs (Make sure no same named tags in "and queries")
+    // FIXME: Change s-expression based equality to tree based
+    // TODO: Add Inline variable cleanup (Basically add Method and File based and then rules)
+    // TODO: Move things like generating `Query`, and other stuff to associated method
 
     pub fn get_cleanups_for_code_base(
         path_to_code_base: &str,
@@ -28,7 +32,7 @@ pub mod piranha {
         let extension = get_extension(input_language);
         let config = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
         let mut rule_query_cache = HashMap::new();
-        //TODO: Move to associated method
+        
         for r in &config.rules {
             r.queries
                 .iter()
@@ -36,7 +40,6 @@ pub mod piranha {
                     Query::new(language, query_str).ok().map(|x| (query_str, x))
                 })
                 .for_each(|(query_str, query)| {
-                    // println!("{}", format!("{}", query_str).bright_red());
                     rule_query_cache.insert(String::from(query_str), query);
                 });
         }
@@ -395,7 +398,6 @@ pub mod piranha {
                             }
                         }
                     }
-                    // break;
                 }
             }
         }
