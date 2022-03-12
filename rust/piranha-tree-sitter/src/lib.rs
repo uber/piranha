@@ -6,17 +6,15 @@ mod utilities;
 pub mod piranha {
     use super::tree_sitter as ts_utils;
     use crate::config::{Config, Rule};
-    use crate::tree_sitter::{get_node_captured_by_query};
-    use crate::utilities::{has_extension, read_file, get_extension, get_files_with_extension};
+    use crate::tree_sitter::get_node_captured_by_query;
+    use crate::utilities::{get_extension, get_files_with_extension, read_file};
 
-    use std::collections::HashMap;
-    use std::fs;
     use colored::Colorize;
+    use std::collections::HashMap;
     use std::path::PathBuf;
     use tree_sitter::{Language, Node, Parser, Query, QueryCapture, QueryCursor, Range, Tree};
     use tree_sitter_traversal::{traverse, Order};
-    
-    
+
     // TODO: Add a string level ennry point
 
     pub fn get_cleanups_for_code_base(
@@ -30,21 +28,25 @@ pub mod piranha {
         let extension = get_extension(input_language);
         let config = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
         let mut rule_query_cache = HashMap::new();
+        //TODO: Move to associated method
         for r in &config.rules {
-            rule_query_cache.insert(
-                String::from(r.name.clone()),
-                r.queries
-                    .iter()
-                    .filter_map(|q| Query::new(language, q).ok())
-                    .collect::<Vec<Query>>(),
-            );
+            r.queries
+                .iter()
+                .filter_map(|query_str| {
+                    Query::new(language, query_str).ok().map(|x| (query_str, x))
+                })
+                .for_each(|(query_str, query)| {
+                    // println!("{}", format!("{}", query_str).bright_red());
+                    rule_query_cache.insert(String::from(query_str), query);
+                });
         }
+        println!("Rule query cache size {}", rule_query_cache.len());
         cleanup_code_base(
             path_to_code_base,
             extension,
             &config.rules,
             language,
-            &rule_query_cache,
+            &mut rule_query_cache,
         )
     }
 
@@ -53,7 +55,7 @@ pub mod piranha {
         extension: &str,
         all_rules: &Vec<Rule>,
         language: Language,
-        rule_query_cache: &HashMap<String, Vec<Query>>,
+        rule_query_cache: &mut HashMap<String, Query>,
     ) -> HashMap<PathBuf, String> {
         let mut parser = Parser::new();
         parser
@@ -61,16 +63,18 @@ pub mod piranha {
             .expect("Could not set language");
 
         let mut cache: HashMap<PathBuf, String> = HashMap::new();
-
-        let project_level_rules: &Vec<Rule> = &all_rules
-            .into_iter()
-            .filter(|r| r.scope.eq("PROJECT"))
-            .map(|c| c.clone())
-            .collect();
+        
+        let mut project_level_rules = vec![];
+        for r in all_rules {
+            if r.scope.eq("PROJECT"){
+                project_level_rules.push(r.clone());
+            }
+        }
 
         loop {
-            let all_code_replacements_in_codebase = scan_code_base_to_match_rules(
-                project_level_rules,
+            println!("Project level rules {}", project_level_rules.len());
+            let (all_code_replacements_in_codebase, new_and_then_rules) = get_rewrites_for_directory(
+                &project_level_rules,
                 path_to_code_base,
                 extension,
                 &cache,
@@ -78,17 +82,31 @@ pub mod piranha {
                 rule_query_cache,
             );
 
-            println!("{}",format!("Number of files that matched rules {}",all_code_replacements_in_codebase.len()).purple());
-            
+            #[rustfmt::skip]
+            println!("{}",format!("Number of files that matched rules {}", all_code_replacements_in_codebase.len()).purple());
+
             if all_code_replacements_in_codebase.is_empty() {
                 break;
             }
 
-            for (path, (code, ast, replacements_by_file_by_rule)) in all_code_replacements_in_codebase
-            {
-                println!("{}",
-                     format!("{} rules matched in {:?} .\n{} replacements to be performed. ", replacements_by_file_by_rule.len(), path, replacements_by_file_by_rule.values().flatten().count()).purple().bold());
-                
+            println!("Rule Query Cache len {}", &rule_query_cache.len());
+            if !new_and_then_rules.is_empty(){
+                println!("{}", format!("Adding new and then rules - ").yellow());
+                for n in new_and_then_rules{
+                     println!("{}", format!("{}",&n.name).yellow());
+                     println!("Query {}", format!("{}",&n.queries.join("\n")).yellow());
+                     println!("Replace {}", format!("{}",&n.replace).yellow());
+                     project_level_rules.push(n);
+                }
+            }
+
+            for (path, (code, ast, replacements_by_file_by_rule)) in
+                all_code_replacements_in_codebase
+            {   
+
+                #[rustfmt::skip]
+                println!("{}",format!("{} rules matched in {:?} .\n{} replacements to be performed. ",replacements_by_file_by_rule.len(),path,replacements_by_file_by_rule.values().flatten().count()).purple().bold());
+
                 let new_source_code = apply_rules_to_file(
                     &replacements_by_file_by_rule,
                     &mut parser,
@@ -109,7 +127,7 @@ pub mod piranha {
         code: String,
         ast: Tree,
         all_rules: &Vec<Rule>,
-        rule_query_cache: &HashMap<String, Vec<Query>>,
+        rule_query_cache: &mut HashMap<String, Query>,
     ) -> String {
         let mut tree = ast.clone();
         let mut source_code = code.clone();
@@ -123,7 +141,7 @@ pub mod piranha {
 
         loop {
             if code_replacements_for_file.is_empty() {
-                println!("{}", format!("Finished updating file!").yellow());
+                println!("{}", format!("Finished updating the file!").yellow());
                 return source_code;
             }
 
@@ -150,7 +168,7 @@ pub mod piranha {
                 code_replacements_for_file = synced_nodes;
             }
 
-            let replacements_by_rule = scan_node_to_match_rules(
+            let (replacements_by_rule, new_and_then_rules) = get_rewrites_for_node(
                 &rules_for_file,
                 &tree.root_node(),
                 &source_code,
@@ -170,7 +188,7 @@ pub mod piranha {
         code_replacement: (Range, String),
         all_rules: &Vec<Rule>,
         sync_replacements: &Vec<(Range, String)>,
-        rule_query_cache: &HashMap<String, Vec<Query>>,
+        rule_query_cache: &mut HashMap<String, Query>,
     ) -> (Tree, String, Vec<(Range, String)>) {
         let mut sync_nodes = search_nodes(tree, sync_replacements);
         let mut capture = Option::Some(code_replacement.clone());
@@ -193,8 +211,6 @@ pub mod piranha {
                 }
 
                 Some((replace_range, replacement)) => {
-                    // println!("{:?}", replacement, replace_range);
-
                     let (new_source_code, edit) =
                         ts_utils::get_edit(&curr_source_code, replace_range, &replacement);
 
@@ -221,15 +237,16 @@ pub mod piranha {
                         cleanup_rules,
                         rule_query_cache,
                     );
-                    println!("{}",
-                            (if capture.is_some() { "Cleaning up parent." } else { "No parent for deeper clean up. Finished updating and cleaning up the site!" }).bold().yellow()
+
+                    #[rustfmt::skip]
+                    println!("{}",(if capture.is_some() { "Cleaning up parent." } else { "No parent for deeper clean up. Finished updating and cleaning up the site!" }).bold().yellow()
                     );
                 }
             }
         }
     }
 
-    // TODO: Find a one traverse solution
+    // TODO: Implement one traversal solution
     fn search_nodes<'a, 'b>(
         tree: &'a Tree,
         sync_replacements: &Vec<(Range, String)>,
@@ -265,21 +282,23 @@ pub mod piranha {
     }
 
     fn match_parent_rules<'a>(
-        changed_node: &Node<'a>,
-        new_source_code: &String,
+        updated_node: &Node<'a>,
+        source_code: &String,
         rules: &Vec<Rule>,
-        rule_query_cache: &HashMap<String, Vec<Query>>,
+        rule_query_cache: &mut HashMap<String, Query>,
     ) -> Option<(Range, String)> {
-        let cc = changed_node.clone();
+        let cc = updated_node.clone();
         let parent: Node = cc.parent().clone().unwrap();
         let grand_parent = parent.parent().clone().unwrap();
         let context = vec![cc, parent, grand_parent];
+
+        // Apply each rule to the three ancestors. Short-circuit on finding the replacement.
         for rule in rules {
-            for c in &context {
-                if let Some(replacement) =
-                    apply_rule(&rule, c, new_source_code.as_bytes(), rule_query_cache)
-                {
-                    return Some((c.range(), replacement));
+            for ancestor in &context {
+                if let Some((replacement, and_then_rules)) =
+                    apply_rule(&rule, ancestor, source_code.as_bytes(), rule_query_cache)
+                {   
+                    return Some((ancestor.range(), replacement));
                 }
             }
         }
@@ -325,13 +344,21 @@ pub mod piranha {
         rule: &Rule,
         node: &'a Node,
         source_code_bytes: &[u8],
-        rule_query_cache: &HashMap<String, Vec<Query>>,
-    ) -> Option<String> {
-        let captures_by_tag = get_tag_matches_for_rule(rule, node, source_code_bytes, rule_query_cache);
-        if captures_by_tag.is_empty() {
+        rule_query_cache: &mut HashMap<String, Query>,
+    ) -> Option<(String, Vec<Rule>)> {
+        let tag_matches =
+            get_tag_matches_for_rule(rule, node, source_code_bytes, rule_query_cache);
+        if tag_matches.is_empty() {
             return None;
         }
-        return Some(substitute_tag_with_code(&captures_by_tag, &rule.replace));
+        let replacement = substitute_tag_with_code(&tag_matches, &rule.replace);
+        let cr = rule.clone();
+        let (and_then_rules, new_rule_queries) = cr.and_then(tag_matches);
+        if !new_rule_queries.is_empty(){
+            rule_query_cache.extend(new_rule_queries);
+            println!("Added to Rule Query cache");
+        }
+        return Some((replacement,and_then_rules));
     }
 
     // If result is empty it implies that the rule did not match the node.
@@ -339,13 +366,15 @@ pub mod piranha {
         rule: &'a Rule,
         node: &'a Node,
         source_code_bytes: &'a [u8],
-        rule_query_cache: &HashMap<String, Vec<Query>>,
+        rule_query_cache: &mut HashMap<String, Query>,
     ) -> HashMap<String, String> {
         let mut cursor = QueryCursor::new();
         let mut captures_by_tag = HashMap::new();
         let mut r_node = 0;
-        let queries = rule_query_cache.get(&rule.name).unwrap();
-        for query in queries {
+        for query_str in &rule.queries {
+
+            let query = rule_query_cache.get(query_str).unwrap();
+
             let query_matches = cursor.matches(&query, node.clone(), source_code_bytes);
             if let Some(qm) = query_matches.into_iter().next() {
                 let captures: &[QueryCapture] = qm.captures;
@@ -366,7 +395,7 @@ pub mod piranha {
                             }
                         }
                     }
-                    break;
+                    // break;
                 }
             }
         }
@@ -381,62 +410,64 @@ pub mod piranha {
         rules: &Vec<Rule>,
         node: &'a Node,
         source_code_bytes: &[u8],
-        rule_query_cache: &HashMap<String, Vec<Query>>,
-    ) -> Option<(String, Rule)> {
+        rule_query_cache: &mut HashMap<String, Query>,
+    ) -> Option<(String, Rule, Vec<Rule>)> {
         for rule in rules {
-            if let Some(replacement) = apply_rule(rule, &node, &source_code_bytes, rule_query_cache)
+            if let Some((replacement, and_then_rules)) =
+                apply_rule(rule, &node, &source_code_bytes, rule_query_cache)
             {
-                return Some((replacement, rule.clone()));
+                return Some((replacement, rule.clone(), and_then_rules));
             }
         }
         return None;
     }
 
-    fn scan_node_to_match_rules<'b>(
+    fn get_rewrites_for_node<'b>(
         rules: &Vec<Rule>,
         node: &Node,
         source_code: &String,
-        rule_query_cache: &HashMap<String, Vec<Query>>,
-    ) -> HashMap<Rule, Vec<(Range, String)>> {
+        rule_query_cache: &mut HashMap<String, Query>,
+    ) -> (HashMap<Rule, Vec<(Range, String)>>, Vec<Rule>) {
         let preorder: Vec<Node<'_>> = traverse(node.walk(), Order::Pre).collect::<Vec<_>>();
         let mut code_replacements_in_node = HashMap::new();
+        let mut new_and_then_rules = vec![];
 
         for node in preorder {
             let replacement_info =
                 get_replacement_for_node(rules, &node, source_code.as_bytes(), rule_query_cache)
-                    .map(|replacement| (node.range(), replacement.0, replacement.1));
+                    .map(|replacement| (node.range(), replacement));
 
             if replacement_info.is_none() {
                 continue;
             }
 
-            let (range, replacement, rule) = replacement_info.unwrap();
+            let (range, (replacement, rule, and_then_rules)) = replacement_info.unwrap();
+            
+            new_and_then_rules.extend(and_then_rules);
+            
+
+            // let cr = &rule.clone();
 
             code_replacements_in_node
-                .entry(rule)
+                .entry(rule.clone())
                 .or_insert_with(Vec::new)
                 .push((range, replacement));
         }
 
-        code_replacements_in_node
+        (code_replacements_in_node, new_and_then_rules)
     }
 
-    fn scan_code_base_to_match_rules<'b>(
+    fn get_rewrites_for_directory<'b>(
         rules: &Vec<Rule>,
         path_to_code_base: &str,
         extension: &str,
         cache: &HashMap<PathBuf, String>,
         parser: &mut Parser,
-        rule_query_cache: &HashMap<String, Vec<Query>>,
-    ) -> HashMap<PathBuf, (String, Tree, HashMap<Rule, Vec<(Range, String)>>)> {
-        
+        rule_query_cache: &mut HashMap<String, Query>,
+    ) -> (HashMap<PathBuf, (String, Tree, HashMap<Rule, Vec<(Range, String)>>)>, Vec<Rule>) {
         let mut matches_by_file_by_rule = HashMap::new();
-
         let files = get_files_with_extension(path_to_code_base, extension);
-        // fs::read_dir(path_to_code_base)
-            // .unwrap()
-            // .filter_map(|d| d.ok());
-
+        let mut new_and_then_rules = vec![];
         for dir_entry in files {
             let file_path = dir_entry.path();
             // Get content for file from cache or read from file system
@@ -449,18 +480,16 @@ pub mod piranha {
                 .parse(&source_code, None)
                 .expect("Could not parse code");
 
-            let code_replacements_in_file =
-                scan_node_to_match_rules(rules, &tree.root_node(), &source_code, rule_query_cache);
+            let (code_replacements_in_file, and_then_rules) =
+                get_rewrites_for_node(rules, &tree.root_node(), &source_code, rule_query_cache);
 
             if !code_replacements_in_file.is_empty() {
-                println!(
-                    "{}",
-                    format!("Rule matched in file {:?}", file_path).purple()
-                );
+                println!("{}",format!("Rule matched in file {:?}", file_path).purple());
                 matches_by_file_by_rule
                     .insert(file_path, (source_code, tree, code_replacements_in_file));
             }
+            new_and_then_rules.extend(and_then_rules);
         }
-        matches_by_file_by_rule
+        (matches_by_file_by_rule, new_and_then_rules)
     }
 }

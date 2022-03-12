@@ -1,5 +1,5 @@
 use colored::Colorize;
-use tree_sitter::{InputEdit, Language, Node, Point, QueryCapture, Range};
+use tree_sitter::{InputEdit, Language, Node, Point, QueryCapture, Range, Parser, Tree};
 
 extern "C" {
     fn tree_sitter_java() -> Language;
@@ -11,7 +11,6 @@ pub fn get_edit(
     replace_range: Range,
     rewritten_snippet: &str,
 ) -> (String, InputEdit) {
-
     let new_source_code = [
         &source_code[..replace_range.start_byte],
         rewritten_snippet,
@@ -19,29 +18,15 @@ pub fn get_edit(
     ]
     .concat();
 
-    let replace_code =
-        &source_code[replace_range.start_byte..replace_range.end_byte];
+    let replace_code = &source_code[replace_range.start_byte..replace_range.end_byte];
 
-    println!(
-        "{} at ({:?}) -\n {}",
-        if rewritten_snippet.is_empty() {
-            "Delete code"
-        } else {
-            "Update code"
-        }
-        .green(),
-        replace_range,
-        if !rewritten_snippet.is_empty() {
-            format!(
-                "{}\n to \n{}",
-                replace_code.italic(),
-                rewritten_snippet.italic()
-            )
-        } else {
-            format!("{} ", replace_code.italic())
-        }
+    
+    println!("{} at ({:?}) -\n {}", if rewritten_snippet.is_empty() { "Delete code" } else {"Update code" }.green(),
+        ((&replace_range.start_point.row, &replace_range.start_point.column),
+            (&replace_range.end_point.row, &replace_range.end_point.column)),
+        if !rewritten_snippet.is_empty() {format!("{}\n to \n{}",replace_code.italic(),rewritten_snippet.italic())
+        } else {format!("{} ", replace_code.italic())}
     );
-
 
     let len_new_source_code_bytes = rewritten_snippet.as_bytes().len();
     let byte_vec = &source_code.as_bytes().to_vec();
@@ -73,16 +58,16 @@ fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
     result
 }
 
-// pub fn parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
-//     let mut parser = Parser::new();
-//     parser
-//         .set_language(language)
-//         .expect("Could not set language");
-//     let tree = parser
-//         .parse(&source_code, None)
-//         .expect("Could not parse code");
-//     (parser, tree)
-// }
+pub fn parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
+    let mut parser = Parser::new();
+    parser
+        .set_language(language)
+        .expect("Could not set language");
+    let tree = parser
+        .parse(&source_code, None)
+        .expect("Could not parse code");
+    (parser, tree)
+}
 
 pub fn get_language(language: &str) -> Language {
     unsafe {

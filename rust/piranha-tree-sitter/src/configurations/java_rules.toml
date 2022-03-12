@@ -22,6 +22,7 @@ queries = [
 ]
 replace = "[treated]"
 scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum Based, flag enabled"
@@ -43,6 +44,7 @@ queries = [
 ]
 replace = "[treated]"
 scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum Based, toggle disabled"
@@ -64,6 +66,7 @@ queries = [
 ]
 replace = "[treated_complement]"
 scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum based, Delete enum constant (just the constant)"
@@ -77,6 +80,7 @@ queries = [
 ]
 replace = ""
 scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum based, Delete enum constant"
@@ -90,41 +94,7 @@ queries = [
 ]
 replace = ""
 scope = "PROJECT"
-
-[[rules]]
-name = "Interface based, method invocation chain"
-queries = ["""
-(
-    ((method_invocation
-            object: (method_invocation name: (identifier) @i2)
-            name : (identifier) @i)
-    @m)
-    (#eq? @i getVal)
-    (#eq? @i2 [stale_flag_name])
-)"""]
-replace = "[treated]"
-scope = "PROJECT"
-
-
-[[rules]]
-name = "Interface based, method invocation, put"
-queries = ["""
-(
-(expression_statement ((method_invocation name: (_) @n
-			arguments : (
-            (argument_list 
-            	(method_invocation 
-                		name: (_) @an)
-                ([(true) (false)])
-             ))
-            
-            ) @m) @e)
- (#eq? @n "put")
- (#eq? @an "[stale_flag_name]")
-)
-"""]
-replace = ""
-scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum based, method invocation, put enabled"
@@ -142,6 +112,7 @@ queries = ["""
 """]
 replace = ""
 scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum based, method invocation, put disabled"
@@ -159,6 +130,7 @@ queries = ["""
 """]
 replace = ""
 scope = "PROJECT"
+language = "Java"
 
 [[rules]]
 name = "Enum based, method invocation, includeEvent"
@@ -176,6 +148,7 @@ queries = ["""
 """]
 replace = ""
 scope = "PROJECT"
+language = "Java"
 
 
 [[rules]]
@@ -194,9 +167,8 @@ queries = ["""
  (#eq? @a_name "BoolParam")
  (#eq? @k1 "key")
  (#eq? @v1 "\\\"[stale_flag_name]\\\"")
- )
-""","""
-(
+ )""","""
+ (
 (method_declaration
 	 (modifiers (annotation
 					arguments: (annotation_argument_list
@@ -207,23 +179,46 @@ queries = ["""
  (#eq? @k2 "namespace")
  (#eq? @v2 "\\\"[namespace]\\\"")
  )
-""" 
-]
+"""]
+
 replace=""
 scope = "PROJECT"
+language = "Java"
+
+[[rules.and_then]]
+name = "Interface based, replace method invocation chain with true/false"
+queries = ["""
+(
+   ((method_invocation
+       object: (method_invocation name: (identifier) @i2)
+       name : (identifier) @i) @m)
+   (#eq? @i "getVal")
+   (#eq? @i2 "[@m_name]")
+)"""]
+replace = "[treated]"
+scope = "PROJECT"
+language = "Java"
 
 # [[rules.and_then]]
-# name = "Interface based, delete method invocation"
+# name = "Interface based, method invocation, put"
 # queries = ["""
 # (
-#    ((method_invocation
-#        object: (method_invocation name: (identifier) @i2)
-#        name : (identifier) @i) @m)
-#    (#eq? @i getVal)
-#    (#eq? @i2 [@m_name])
-# )"""]
-# replace = "[treated]"
-
+# (expression_statement ((method_invocation name: (_) @n
+# 			arguments : (
+#             (argument_list 
+#             	(method_invocation 
+#                 		name: (_) @an)
+#                 ([(true) (false)])
+#              ))
+            
+#             ) @m) @e)
+#  (#eq? @n "put")
+#  (#eq? @an "[stale_flag_name]")
+# )
+# """]
+# replace = ""
+# scope = "PROJECT"
+# language = "Java"
 
 [[rules]]
 name = "Simple If-(optional)else True"
@@ -235,8 +230,8 @@ queries = ["""
 @ifstmt)
 """]
 replace = "@s"
-scope = "PARENT" 
-
+scope = "PARENT"
+language = "Java" 
 
 [[rules]]
 name = "Simple If-else False"
@@ -249,6 +244,7 @@ queries = ["""
 @ifstmt)"""]
 replace = "@el"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Simple if False"
@@ -262,6 +258,7 @@ queries = ["""
 """]
 replace = ""
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "not False"
@@ -275,6 +272,7 @@ queries = ["""
 """]
 replace = "true"
 scope = "PARENT"
+language = "Java"
 
 
 [[rules]]
@@ -288,6 +286,7 @@ queries = ["""
 """]
 replace = "false"
 scope = "PARENT"
+language = "Java"
 
 
 [[rules]]
@@ -310,6 +309,7 @@ replace = """
     @post
 }"""
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "And - left operand is True"
@@ -322,6 +322,7 @@ queries = ["""
 ) @b"""]
 replace = "@other"
 scope = "PARENT"
+language = "Java"
 
 
 [[rules]]
@@ -337,6 +338,7 @@ queries = ["""
 @b)"""]
 replace = "@other"
 scope = "PARENT"
+language = "Java"
 
 
 [[rules]]
@@ -351,6 +353,7 @@ queries = ["""
 @b)"""]
 replace = "true"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Or - left operand is True"
@@ -365,6 +368,7 @@ queries = ["""
 """]
 replace = "true"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "And - left operand is False"
@@ -378,6 +382,7 @@ queries = ["""
 @b)"""]
 replace = "false"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "And - right operand is False"
@@ -393,6 +398,7 @@ queries = ["""
 """]
 replace = "false"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Or - left operand is False"
@@ -406,6 +412,7 @@ queries =[ """(
 @b)"""]
 replace = "@other"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "And - right operand is False"
@@ -420,6 +427,7 @@ queries = ["""
 @b)"""]
 replace = "@other"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from left operand"
@@ -433,6 +441,7 @@ queries =[ """(
 @bo)"""]
 replace = "@e || @r"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from right operand"
@@ -445,6 +454,7 @@ queries = ["""
 @bo)"""]
 replace = "@l || @e"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "And - Remove unnecessary brackets from left operand "
@@ -457,6 +467,7 @@ queries = ["""
 @bo)"""]
 replace = "@e && @r"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "And - Remove unnecessary brackets from right operand "
@@ -469,6 +480,7 @@ queries = ["""(
 @bo)"""]
 replace = "@l && @e"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Elide all statements after return"
@@ -478,6 +490,7 @@ queries = ["""(
          ((statement)+ @post)) @b)"""]
 replace = "{\n@pre\n@r\n}"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Ternay operator True"
@@ -489,6 +502,7 @@ queries = ["""
 @t)"""]
 replace = "@then"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Ternay operator False"
@@ -500,6 +514,7 @@ queries = ["""
 @t)"""]
 replace = "@else"
 scope = "PARENT"
+language = "Java"
 
 [[rules]]
 name = "Parenthesized boolean literal"
@@ -514,3 +529,4 @@ queries = ["""
 """]
 replace = "@l"
 scope = "PARENT"
+language = "Java"

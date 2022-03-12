@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::{DirEntry, File, self};
 use std::io::{BufReader, Read};
@@ -51,4 +52,12 @@ pub fn get_file_with_name(input_dir: &str, name: &str, ) -> Option<DirEntry>{
           .filter(|de| has_name(de, name))
           .next()
   
+}
+
+pub fn apply_substitutions_to_string(item: String, substitutions:HashMap<String,String>)-> String{
+    let mut s = item;
+    for (k, v) in substitutions{
+        s = s.replace(k.as_str(), v.as_str());
+    }
+    return s;
 }

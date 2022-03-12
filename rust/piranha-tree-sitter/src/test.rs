@@ -1,16 +1,18 @@
 use std::path::Path;
 
+use colored::Colorize;
+
 use crate::piranha::get_cleanups_for_code_base;
-use crate::tree_sitter::get_language;
+use crate::tree_sitter::{get_language, parse_code};
 use crate::utilities::{get_file_with_name, read_file};
 
 #[test]
 fn test_java_scenarios_treated() {
-    let language = "java";
+    let language = "Java";
     let path_to_test_resource = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("src")
         .join("test-resources")
-        .join(language);
+        .join("java");
 
     let c = get_cleanups_for_code_base(
         path_to_test_resource.join("input").to_str().unwrap(),
@@ -24,11 +26,20 @@ fn test_java_scenarios_treated() {
     for e in c {
         let file_name = e.0.file_name().unwrap();
         let f = get_file_with_name(path_to_expected.as_path().to_str().unwrap(), file_name.to_str().unwrap())
-                    .unwrap().path();
+        .unwrap().path();
         let expected_content = read_file(&f);
-        assert_eq!(expected_content, e.1);
+        let output = &e.1;
+        let (_, output_tree) = parse_code(get_language("Java"), output);
+        let (_, expected_tree) = parse_code(get_language("Java"), &expected_content);
+        let result = output_tree.root_node().to_sexp().eq(&expected_tree.root_node().to_sexp());
+        if !result {
+            println!("{}", output);
+        }
+        assert!(result);
+        println!("{}", format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue());
     }
 
+    // assert_eq!(expected_content, e.1);
 }
 
 // // TODO using sexp is not the most ideal way to test the expected and produced output
