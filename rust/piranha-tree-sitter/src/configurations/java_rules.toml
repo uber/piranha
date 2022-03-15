@@ -530,3 +530,30 @@ queries = ["""
 replace = "@l"
 scope = "PARENT"
 language = "Java"
+
+[[rules]]
+name="Inline Local Variable Declaration - Delete variable declaration"
+queries= ["""
+(
+((local_variable_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @n
+                					value: [(true) (false)] @v)) @l)
+)
+"""]
+replace = ""
+scope = "PARENT"
+language = "Java"
+
+[[rules.and_then]]
+name="Inline local variable declaration - Replace identifier with value"
+queries = ["""
+(
+(identifier )@i
+(#eq? @i "[@n]")
+)
+"""
+]
+replace="[@v]"
+scope="METHOD"
+language="Java"

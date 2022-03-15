@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use colored::Colorize;
-use tree_sitter::{InputEdit, Language, Node, Point, QueryCapture, Range, Parser, Tree};
+use tree_sitter::{InputEdit, Language, Node, Point, QueryCapture, Range, Parser, Tree, Query};
 
 extern "C" {
     fn tree_sitter_java() -> Language;
@@ -88,4 +90,28 @@ pub fn get_node_captured_by_query<'a>(
         .map(|n| n.node.clone())
         .max_by(|c1, c2| c1.byte_range().len().cmp(&c2.byte_range().len()))
         .ok_or("Could not compute the captured node for this query.")
+}
+
+pub fn group_by_tag<'a>(
+    captures: &[QueryCapture],
+    query: &'a Query,
+    source_code_bytes: &'a [u8],
+) -> HashMap<String, Vec<String>> {
+    let mut tag_capture = HashMap::new();
+    // let capture_names = &query.capture_names();
+    for capture in captures {
+        let name = query
+            .capture_names()
+            .get(capture.index as usize)
+            .expect("Capture name not found!");
+        let code_snippet = capture
+            .node
+            .utf8_text(source_code_bytes)
+            .expect("Could not get source code for node");
+        tag_capture
+            .entry(String::from(name))
+            .or_insert_with(Vec::new)
+            .push(String::from(code_snippet));
+    }
+    tag_capture
 }
