@@ -1,9 +1,13 @@
 use colored::Colorize;
 use serde_derive::Deserialize;
+use tree_sitter::Query;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::Path;
+
+use crate::tree_sitter::get_language;
+use crate::tree_sitter::substitute_tag_with_code;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -21,55 +25,47 @@ pub struct Rule {
 }
 
 impl Rule {
-    // pub fn and_then(
-    //     self,
-    //     tag_matches: HashMap<String, String>,
-    // ) -> (Vec<Rule>, HashMap<String, Query>) {
-    //     let mut and_then_queries = vec![];
-    //     let mut rule_query_cache = HashMap::new();
-    //     let ts_language = get_language(self.language.as_str());
-    //     if self.and_then.is_some() {
-    //         for r in self.and_then.unwrap() {
-    //             let transformed_rule = &r.fill_holes(&tag_matches);
-    //             for q in &transformed_rule.queries {
-    //                 let query = Query::new(ts_language, q.as_str())
-    //                     .expect(format!("Invalid Query generated, please check {}", q).as_str());
-    //                 rule_query_cache.insert(String::from(q), query);
-    //                 println!("Added rule to cache");
-    //             }
-    //             println!("Transformed rule {:?}", transformed_rule);
-    //             and_then_queries.push(transformed_rule.clone());
-    //         }
-    //     }
-    //     (and_then_queries, rule_query_cache)
-    // }
+    pub fn and_then(
+        self,
+        tag_matches: HashMap<String, String>,
+    ) -> HashMap<Rule, Query> {
+        // let mut and_then_queries = vec![];
+        let mut rule_query_cache = HashMap::new();
+        let ts_language = get_language(self.language.as_str());
+        if self.and_then.is_some() {
+            for r in self.and_then.unwrap() {
+                let transformed_rule = Self::fill_holes(&r, &tag_matches);
+                // for q in &transformed_rule.queries {
+                let q = &transformed_rule.query;
+                let query = Query::new(ts_language, q.as_str())
+                    .expect(format!("Invalid Query generated, please check {}", q).as_str());
+                println!("Added rule to cache");
+                rule_query_cache.insert(r, query);
+            }
+        }
+        rule_query_cache
+    }
 
-    // fn fill_holes(self, tag_substutions: &HashMap<String, String>) -> Rule {
-    //     println!("Substitutions {:?}", tag_substutions);
-    //     let mut new_queries = vec![];
-    //     for q in self.queries {
-    //         let mut new_q = String::from(q);
-    //         for (tag, substitute) in tag_substutions {
-    //             let tag_as_template_var = format!("[@{}]", &tag);
-    //             new_q = new_q.replace(tag_as_template_var.as_str(), &substitute);
-    //         }
-    //         println!("New query {}", new_q);
-    //         new_queries.push(new_q);
-    //     }
-    //     let mut new_replace = String::from(self.replace);
-    //     for (tag, substitute) in tag_substutions {
-    //         let tag_as_template_var = format!("[@{}]", &tag);
-    //         new_replace = new_replace.replace(&tag_as_template_var, &substitute);
-    //     }
-    //     return Rule {
-    //         name: self.name,
-    //         queries: new_queries,
-    //         replace: new_replace,
-    //         and_then: self.and_then,
-    //         scope: self.scope,
-    //         language: self.language,
-    //     };
-    // }
+    fn map_key(s: &String) -> String {
+        format!("[@{}]", s)
+    }
+
+    fn fill_holes(cr: &Rule, tag_substutions: &HashMap<String, String>) -> Rule {
+        println!("Substitutions {:?}", tag_substutions);
+        let rule = cr.clone();
+
+        let new_query = substitute_tag_with_code(tag_substutions,&rule.query, &Self::map_key);
+        println!("New query {}", new_query);
+        let new_replace = substitute_tag_with_code(tag_substutions,&rule.replace, &Self::map_key);
+        return Rule {
+            name: rule.name,
+            query: new_query,
+            replace: new_replace,
+            and_then: rule.and_then,
+            scope: rule.scope,
+            language: rule.language,
+        };
+    }
 }
 
 impl Config {

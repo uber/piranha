@@ -146,13 +146,16 @@ pub fn group_by_tag_str<'a>(
     tag_capture
 }
 
+//&format!("@{}", tag)
 pub fn substitute_tag_with_code(
     tag_substitutes: &HashMap<String, String>,
     rewrite_template: &String,
+    key_mapper: &dyn Fn(&String) -> String
 ) -> String {
     let mut output = String::from(rewrite_template);
     for (tag, substitute) in tag_substitutes {
-        output = output.replace(&format!("@{}", tag), substitute)
+        let key = key_mapper(tag);
+        output = output.replace(&key, substitute)
     }
     output
 }
