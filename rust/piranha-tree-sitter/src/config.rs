@@ -1,7 +1,7 @@
 use crate::tree_sitter as ts_utils;
 use crate::tree_sitter::get_language;
-use crate::tree_sitter::get_node_captured_by_query;
-use crate::tree_sitter::group_by_tag;
+use crate::tree_sitter::group_by_tag_str;
+use crate::tree_sitter::substitute_tag_with_code;
 use crate::utilities::get_extension;
 use crate::utilities::get_files_with_extension;
 use crate::utilities::read_file;
@@ -14,10 +14,11 @@ use std::path::Path;
 use std::path::PathBuf;
 use tree_sitter::InputEdit;
 use tree_sitter::Language;
+use tree_sitter::Node;
 use tree_sitter::Parser;
 use tree_sitter::Query;
-use tree_sitter::QueryCapture;
 use tree_sitter::QueryCursor;
+use tree_sitter::QueryMatch;
 use tree_sitter::Range;
 use tree_sitter::Tree;
 
@@ -49,7 +50,7 @@ impl Rule {
         let ts_language = get_language(self.language.as_str());
         if self.and_then.is_some() {
             for r in self.and_then.unwrap() {
-                let transformed_rule = &r.substitute(&tag_matches);
+                let transformed_rule = &r.fill_holes(&tag_matches);
                 for q in &transformed_rule.queries {
                     let query = Query::new(ts_language, q.as_str())
                         .expect(format!("Invalid Query generated, please check {}", q).as_str());
@@ -63,7 +64,7 @@ impl Rule {
         (and_then_queries, rule_query_cache)
     }
 
-    fn substitute(self, tag_substutions: &HashMap<String, String>) -> Rule {
+    fn fill_holes(self, tag_substutions: &HashMap<String, String>) -> Rule {
         println!("Substitutions {:?}", tag_substutions);
         let mut new_queries = vec![];
         for q in self.queries {
@@ -144,18 +145,20 @@ impl Config {
         return config;
     }
 }
+struct RulesStore {
+    pub rule_query_cache: HashMap<String, Query>,
+    pub seed_rules: Vec<Rule>,
+    pub cleanup_rules: Vec<Rule>,
+}
 
-struct FlagCleaner {
-    path_to_code_base: String,
-    rule_query_cache: HashMap<String, Query>,
-    seed_rules: Vec<Rule>,
-    cleanup_rules: Vec<Rule>,
+pub struct FlagCleaner {
+    rules_store: RulesStore,
     language: Language,
-    files: HashMap<PathBuf, SourceCodeUnit>,
+    pub files: HashMap<PathBuf, SourceCodeUnit>,
 }
 
 impl FlagCleaner {
-    fn new(
+    pub fn new(
         path_to_code_base: &str,
         input_language: &str,
         flag_name: &str,
@@ -167,16 +170,36 @@ impl FlagCleaner {
         let config = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
         let mut rule_query_cache = HashMap::new();
 
+        let mut seed_rules = vec![];
+        let mut cleanup_rules = vec![];
         for r in &config.rules {
-            r.queries
-                .iter()
-                .filter_map(|query_str| {
-                    Query::new(language, query_str).ok().map(|x| (query_str, x))
-                })
-                .for_each(|(query_str, query)| {
-                    rule_query_cache.insert(String::from(query_str), query);
-                });
+
+            let qq = r.queries.first().unwrap();
+            let query = Query::new(language, qq);
+            if query.is_ok(){
+                rule_query_cache.insert(String::from(qq), query.unwrap());
+            }else {
+                panic!("Cannot process {qq}");
+            }
+            // r.queries
+            //     .iter()
+            //     .filter_map(|query_str| {
+            //         Query::new(language, query_str).ok().map(|x| (query_str, x))
+            //     })
+            //     .for_each(|(query_str, query)| {
+            //         rule_query_cache.insert(String::from(query_str), query);
+            //     });
+            if r.scope.eq("PROJECT"){
+                println!("Seed rule");
+                seed_rules.push(r.clone());
+            }else{
+                cleanup_rules.push(r.clone());
+            }
         }
+
+        let rules_store = RulesStore {
+            rule_query_cache, seed_rules, cleanup_rules
+        };
 
         let mut project_level_rules = vec![];
         let mut cleanup_rules = vec![];
@@ -203,86 +226,205 @@ impl FlagCleaner {
         }
 
         Self {
-            path_to_code_base: String::from(path_to_code_base),
-            rule_query_cache,
-            seed_rules: project_level_rules,
-            cleanup_rules,
+            rules_store,
             language,
-            files
+            files,
         }
+    }
+
+    pub fn cleanup(&mut self){
+        let mut parser = Parser::new();
+        parser
+            .set_language(self.language)
+            .expect("Could not set language");
+        for (_, scu) in self.files.iter_mut() {
+            scu.apply_seed_rules(&mut self.rules_store, &mut parser);
+        }   
     }
 }
 
-struct SourceCodeUnit {
-    ast: Tree,
-    code: String,
+pub struct SourceCodeUnit {
+    pub ast: Tree,
+    pub code: String,
 }
 
 impl SourceCodeUnit {
-    fn new(ast: Tree, code: String) -> Self {
-        Self { ast, code }
-    }
-
-    fn parse(parser: &mut Parser, code: String) -> Self {
-        let ast = parser
-                .parse(&code, None)
-                .expect("Could not parse code");
-        Self{ast, code}
-    }
-
-    
-
     // This method performs the input code replacement in the source code
-    fn apply_edit(self, code_replacement: (Range, String), parser: &mut Parser) -> Self {
+    fn apply_edit(&mut self, code_replacement: (Range, String), parser: &mut Parser) -> InputEdit {
         let replace_range = code_replacement.0;
         let replacement = code_replacement.1;
         // let curr_source_code = source_code.clone();
         // let curr_tree = tree.clone();
         let (new_source_code, edit) =
             ts_utils::get_edit(self.code.as_str(), replace_range, &replacement);
+        self.ast.edit(&edit);
         let new_tree = parser
             .parse(&new_source_code, Some(&self.ast))
             .expect("Could not generate new tree!");
-        return Self::new(new_tree, new_source_code);
+        self.ast = new_tree;
+        self.code = new_source_code;
+        return edit;
     }
 
     // Will update all occurences of a rule in the code.
-    fn apply_rule() { todo!()}
-
-
-    //TODO: DO IT THE WAY IT IS ALREADY IMPLEMENTED - USING THE TRAVERSER
-    fn match_rule(
-        self,
+    // We will do this without sync for now. Keep things simple.
+    fn apply_rule(
+        &mut self,
         rule: Rule,
-        mut cursor: QueryCursor,
-        rule_query_cache: HashMap<String, Query>,
+        rules_store: &mut RulesStore,
+        parser: &mut Parser,
     ) {
-        let root = self.ast.root_node();
-        let source_code_bytes = self.code.as_bytes();
-        let mut captures_by_tag = HashMap::new();
-        let mut capture_range = vec![];
-        for query_str in rule.queries {
-            let query = rule_query_cache.get(&query_str).unwrap();
-            let query_matches = cursor.matches(&query, root, source_code_bytes);
-            if let Some(qm) = query_matches.into_iter().next() {
-                let captures: &[QueryCapture] = qm.captures;
-                if let Ok(replace_node) = get_node_captured_by_query(captures) {
-                    let code_snippets_by_tag: HashMap<String, String> =
-                        group_by_tag(captures, &query, source_code_bytes)
-                            .iter()
-                            .map(|(k, v)| (String::from(k), v.join("\n")))
-                            .collect();
-                    captures_by_tag.extend(code_snippets_by_tag);
-                    capture_range.push(replace_node.range());
-                    for tag in query.capture_names() {
-                        if !captures_by_tag.contains_key(tag) {
-                            captures_by_tag.insert(String::from(tag), String::new());
-                        }
-                    }
+        loop {
+            let cr = rule.clone();
+            //TODO: Will return andThen rules too.
+            let replacement = self.scan_and_match_rule(cr, rules_store);
+            if replacement.is_none() {
+                break;
+            } else {
+                let edit = self.apply_edit(replacement.unwrap(), parser);
+                self.cleanup_previous_edit_site(edit, rules_store, parser);
+            }
+        }
+    }
+
+    fn apply_seed_rules(
+        &mut self,
+        rules_store: &mut RulesStore,
+        parser: &mut Parser,
+    ) {
+        let rules = rules_store.seed_rules.clone();
+        for rule in rules {
+            self.apply_rule(rule.clone(), rules_store, parser);
+        }
+    }
+
+    fn cleanup_previous_edit_site(
+        &mut self,
+        edit: InputEdit,
+        rules_store: &mut RulesStore,
+        parser: &mut Parser,
+        
+    ) {
+        loop {
+            let replacement = self.match_cleanup_site(edit, rules_store);
+            if replacement.is_none() {
+                break;
+            } else {
+                self.apply_edit(replacement.unwrap(), parser);
+            }
+        }
+    }
+
+    fn match_cleanup_site(
+        &mut self,
+        previous_edit: InputEdit,
+        rules_store: &mut RulesStore,
+    ) -> Option<(Range, String)> {
+        let changed_node = self
+            .ast
+            .root_node()
+            .descendant_for_byte_range(previous_edit.start_byte, previous_edit.new_end_byte)
+            .unwrap();
+        let parent: Node = changed_node.parent().clone().unwrap();
+        let grand_parent = parent.parent().clone().unwrap();
+        let context = vec![changed_node, parent, grand_parent];
+
+        let cleanup_rules = rules_store.cleanup_rules.clone();
+
+        for rule in &cleanup_rules {
+            for ancestor in &context {
+                if let Some((range, replacement)) = match_rule(
+                    rule.clone(),
+                    rules_store,
+                    ancestor.clone(),
+                    self.code.as_bytes(),
+                    false,
+                ) {
+                    return Some((range, replacement));
                 }
             }
         }
-
-
+        return None;
     }
+
+    fn new(ast: Tree, code: String) -> Self {
+        Self { ast, code }
+    }
+
+    fn parse(parser: &mut Parser, code: String) -> Self {
+        let ast = parser.parse(&code, None).expect("Could not parse code");
+        Self { ast, code }
+    }
+
+    fn scan_and_match_rule(
+        &self,
+        rule: Rule,
+        rule_store: &mut RulesStore, // rule_query_cache: &mut HashMap<String, Query>,
+    ) -> Option<(Range, String)> {
+        let root = self.ast.root_node();
+        let source_code_bytes = self.code.as_bytes();
+        return match_rule(rule, rule_store, root, source_code_bytes, true);
+    }
+}
+
+fn match_rule(
+    rule: Rule,
+    rule_store: &mut RulesStore,
+    node: Node,
+    source_code_bytes: &[u8],
+    recurssive: bool,
+) -> Option<(Range, String)> {
+    if recurssive{
+        println!("Matching rule {:?} {:?} {:?}", rule.name, rule.replace, rule.queries);
+        println!("{:?}",node.utf8_text(source_code_bytes));
+    }
+    let query_str = rule.queries.first().unwrap();
+    if !rule_store.rule_query_cache.contains_key(query_str){
+        println!("{}",query_str);
+    }
+    let query = rule_store.rule_query_cache.get(query_str).unwrap();
+    let pattern_count = query.pattern_count();
+    println!("Pattern count {}", pattern_count);
+    // TODO: extract parameter `cursor`
+    let mut cursor = QueryCursor::new();
+    let query_matches = cursor.matches(&query, node, source_code_bytes);
+        // .into_iter()
+        // .collect::<Vec<QueryMatch>>();
+    let mut matched_node_query_match = HashMap::new();
+    // println!("Query matches {:?}", query_matches.len());
+    for qm in query_matches {
+        // The assumption is that the first capture is the node that the pattern matches to.
+        let captures = qm.captures;
+        for c in captures{
+            println!("{:?} \n {:?} \n\n", query.capture_names().get(c.index as usize), c.node.utf8_text(source_code_bytes))
+        }
+        if captures.is_empty() {
+            break;
+        }
+        let matched_node_range = captures.first().map(|z| z.node.range()).unwrap();
+        println!("First Capture {:?}", captures.first());
+        matched_node_query_match
+            .entry(matched_node_range)
+            .or_insert_with(Vec::new)
+            .push(group_by_tag_str(captures, query, source_code_bytes));
+    }
+
+    let relevant_query_matches = matched_node_query_match
+        .iter()
+        .filter(|(_, v)| v.len() == pattern_count)
+        .filter(|(k, _)| {
+            recurssive || k.start_byte == node.start_byte() && k.end_byte == node.end_byte()
+        })
+        .next();
+    let mut captures_by_tag = HashMap::new();
+    if relevant_query_matches.is_some() {
+        let relevant_match = relevant_query_matches.unwrap();
+        for i in relevant_match.1 {
+            captures_by_tag.extend(i.clone());
+        }
+        let replacement = substitute_tag_with_code(&captures_by_tag, &rule.replace);
+
+        return Some((relevant_match.0.clone(), replacement));
+    }
+    return None;
 }

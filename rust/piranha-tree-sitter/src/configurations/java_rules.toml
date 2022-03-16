@@ -64,7 +64,7 @@ queries = [
 (#eq? @f "[stale_flag_name]")
 )"""
 ]
-replace = "[treated_complement]"
+replace = "false"
 scope = "PROJECT"
 language = "Java"
 
@@ -167,7 +167,7 @@ queries = ["""
  (#eq? @a_name "BoolParam")
  (#eq? @k1 "key")
  (#eq? @v1 "\\\"[stale_flag_name]\\\"")
- )""","""
+ )
  (
 (method_declaration
 	 (modifiers (annotation

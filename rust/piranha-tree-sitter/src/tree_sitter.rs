@@ -82,9 +82,11 @@ pub fn get_language(language: &str) -> Language {
 }
 
 // Returns the captured node with the largest span.
-pub fn get_node_captured_by_query<'a>(
+pub fn get_largest_node_captured_by_query<'a>(
     captures: &'a [QueryCapture],
 ) -> Result<Node<'a>, &'static str> {
+
+
     captures
         .iter()
         .map(|n| n.node.clone())
@@ -114,4 +116,39 @@ pub fn group_by_tag<'a>(
             .push(String::from(code_snippet));
     }
     tag_capture
+}
+
+pub fn group_by_tag_str<'a>(
+    captures: &[QueryCapture],
+    query: &'a Query,
+    source_code_bytes: &'a [u8],
+) -> HashMap<String, String> {
+    let mut tag_capture = HashMap::new();
+    // let capture_names = &query.capture_names();
+    for capture in captures {
+        let name = query
+            .capture_names()
+            .get(capture.index as usize)
+            .expect("Capture name not found!");
+        let code_snippet = capture
+            .node
+            .utf8_text(source_code_bytes)
+            .expect("Could not get source code for node");
+        tag_capture
+            .entry(String::from(name))
+            .or_insert_with(String::new)
+            .push_str(["\n",code_snippet].join("").as_str()); 
+    }
+    tag_capture
+}
+
+pub fn substitute_tag_with_code(
+    tag_substitutes: &HashMap<String, String>,
+    rewrite_template: &String,
+) -> String {
+    let mut output = String::from(rewrite_template);
+    for (tag, substitute) in tag_substitutes {
+        output = output.replace(&format!("@{}", tag), substitute)
+    }
+    output
 }

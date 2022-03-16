@@ -2,7 +2,7 @@ use std::path::Path;
 
 use colored::Colorize;
 
-use crate::piranha::get_cleanups_for_code_base;
+use crate::piranha::get_cleanups_for_code_base_new;
 use crate::tree_sitter::{get_language, parse_code};
 use crate::utilities::{get_file_with_name, read_file};
 
@@ -14,7 +14,7 @@ fn test_java_scenarios_treated() {
         .join("test-resources")
         .join("java");
 
-    let c = get_cleanups_for_code_base(
+    let c = get_cleanups_for_code_base_new(
         path_to_test_resource.join("input").to_str().unwrap(),
         "Java",
         "STALE_FLAG",
