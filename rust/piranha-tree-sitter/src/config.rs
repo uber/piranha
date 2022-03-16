@@ -23,17 +23,14 @@ use tree_sitter::Range;
 use tree_sitter::Tree;
 
 #[derive(Deserialize, Debug)]
-pub struct Config {
-    pub rules: Vec<Rule>,
-    pub flag_name: String,
-    pub flag_value: String,
-    pub flag_namespace: String,
+struct Config {
+    pub rules: Vec<Rule>
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Rule {
+struct Rule {
     pub name: String,
-    pub queries: Vec<String>,
+    pub query: String,
     pub replace: String,
     and_then: Option<Vec<Rule>>,
     pub scope: String,
@@ -41,55 +38,55 @@ pub struct Rule {
 }
 
 impl Rule {
-    pub fn and_then(
-        self,
-        tag_matches: HashMap<String, String>,
-    ) -> (Vec<Rule>, HashMap<String, Query>) {
-        let mut and_then_queries = vec![];
-        let mut rule_query_cache = HashMap::new();
-        let ts_language = get_language(self.language.as_str());
-        if self.and_then.is_some() {
-            for r in self.and_then.unwrap() {
-                let transformed_rule = &r.fill_holes(&tag_matches);
-                for q in &transformed_rule.queries {
-                    let query = Query::new(ts_language, q.as_str())
-                        .expect(format!("Invalid Query generated, please check {}", q).as_str());
-                    rule_query_cache.insert(String::from(q), query);
-                    println!("Added rule to cache");
-                }
-                println!("Transformed rule {:?}", transformed_rule);
-                and_then_queries.push(transformed_rule.clone());
-            }
-        }
-        (and_then_queries, rule_query_cache)
-    }
+    // pub fn and_then(
+    //     self,
+    //     tag_matches: HashMap<String, String>,
+    // ) -> (Vec<Rule>, HashMap<String, Query>) {
+    //     let mut and_then_queries = vec![];
+    //     let mut rule_query_cache = HashMap::new();
+    //     let ts_language = get_language(self.language.as_str());
+    //     if self.and_then.is_some() {
+    //         for r in self.and_then.unwrap() {
+    //             let transformed_rule = &r.fill_holes(&tag_matches);
+    //             for q in &transformed_rule.queries {
+    //                 let query = Query::new(ts_language, q.as_str())
+    //                     .expect(format!("Invalid Query generated, please check {}", q).as_str());
+    //                 rule_query_cache.insert(String::from(q), query);
+    //                 println!("Added rule to cache");
+    //             }
+    //             println!("Transformed rule {:?}", transformed_rule);
+    //             and_then_queries.push(transformed_rule.clone());
+    //         }
+    //     }
+    //     (and_then_queries, rule_query_cache)
+    // }
 
-    fn fill_holes(self, tag_substutions: &HashMap<String, String>) -> Rule {
-        println!("Substitutions {:?}", tag_substutions);
-        let mut new_queries = vec![];
-        for q in self.queries {
-            let mut new_q = String::from(q);
-            for (tag, substitute) in tag_substutions {
-                let tag_as_template_var = format!("[@{}]", &tag);
-                new_q = new_q.replace(tag_as_template_var.as_str(), &substitute);
-            }
-            println!("New query {}", new_q);
-            new_queries.push(new_q);
-        }
-        let mut new_replace = String::from(self.replace);
-        for (tag, substitute) in tag_substutions {
-            let tag_as_template_var = format!("[@{}]", &tag);
-            new_replace = new_replace.replace(&tag_as_template_var, &substitute);
-        }
-        return Rule {
-            name: self.name,
-            queries: new_queries,
-            replace: new_replace,
-            and_then: self.and_then,
-            scope: self.scope,
-            language: self.language,
-        };
-    }
+    // fn fill_holes(self, tag_substutions: &HashMap<String, String>) -> Rule {
+    //     println!("Substitutions {:?}", tag_substutions);
+    //     let mut new_queries = vec![];
+    //     for q in self.queries {
+    //         let mut new_q = String::from(q);
+    //         for (tag, substitute) in tag_substutions {
+    //             let tag_as_template_var = format!("[@{}]", &tag);
+    //             new_q = new_q.replace(tag_as_template_var.as_str(), &substitute);
+    //         }
+    //         println!("New query {}", new_q);
+    //         new_queries.push(new_q);
+    //     }
+    //     let mut new_replace = String::from(self.replace);
+    //     for (tag, substitute) in tag_substutions {
+    //         let tag_as_template_var = format!("[@{}]", &tag);
+    //         new_replace = new_replace.replace(&tag_as_template_var, &substitute);
+    //     }
+    //     return Rule {
+    //         name: self.name,
+    //         queries: new_queries,
+    //         replace: new_replace,
+    //         and_then: self.and_then,
+    //         scope: self.scope,
+    //         language: self.language,
+    //     };
+    // }
 }
 
 impl Config {
@@ -173,24 +170,13 @@ impl FlagCleaner {
         let mut seed_rules = vec![];
         let mut cleanup_rules = vec![];
         for r in &config.rules {
-
-            let qq = r.queries.first().unwrap();
-            let query = Query::new(language, qq);
-            if query.is_ok(){
-                rule_query_cache.insert(String::from(qq), query.unwrap());
-            }else {
-                panic!("Cannot process {qq}");
+            let query_str = r.query.as_str();
+            let query = Query::new(language, query_str);
+            if query.is_err(){
+                panic!("Cannot process {query_str}");
             }
-            // r.queries
-            //     .iter()
-            //     .filter_map(|query_str| {
-            //         Query::new(language, query_str).ok().map(|x| (query_str, x))
-            //     })
-            //     .for_each(|(query_str, query)| {
-            //         rule_query_cache.insert(String::from(query_str), query);
-            //     });
+            rule_query_cache.insert(String::from(query_str), query.unwrap());
             if r.scope.eq("PROJECT"){
-                println!("Seed rule");
                 seed_rules.push(r.clone());
             }else{
                 cleanup_rules.push(r.clone());
@@ -201,15 +187,15 @@ impl FlagCleaner {
             rule_query_cache, seed_rules, cleanup_rules
         };
 
-        let mut project_level_rules = vec![];
-        let mut cleanup_rules = vec![];
-        for r in &config.rules {
-            if r.scope.eq("PROJECT") {
-                project_level_rules.push(r.clone());
-            } else {
-                cleanup_rules.push(r.clone());
-            }
-        }
+        // let mut project_level_rules = vec![];
+        // let mut cleanup_rules = vec![];
+        // for r in &config.rules {
+        //     if r.scope.eq("PROJECT") {
+        //         project_level_rules.push(r.clone());
+        //     } else {
+        //         cleanup_rules.push(r.clone());
+        //     }
+        // }
 
         let mut files = HashMap::new();
         let relevant_files = get_files_with_extension(path_to_code_base, extension);
@@ -305,12 +291,13 @@ impl SourceCodeUnit {
         parser: &mut Parser,
         
     ) {
+        let mut previous_edit = edit.clone();
         loop {
-            let replacement = self.match_cleanup_site(edit, rules_store);
+            let replacement = self.match_cleanup_site(previous_edit, rules_store);
             if replacement.is_none() {
                 break;
             } else {
-                self.apply_edit(replacement.unwrap(), parser);
+                previous_edit = self.apply_edit(replacement.unwrap(), parser);
             }
         }
     }
@@ -325,6 +312,8 @@ impl SourceCodeUnit {
             .root_node()
             .descendant_for_byte_range(previous_edit.start_byte, previous_edit.new_end_byte)
             .unwrap();
+        println!("Previously edited site {:?} {:?}", previous_edit.start_byte, previous_edit.new_end_byte);
+        println!("Cleaning up site {:?} {:?} {:?}", changed_node.utf8_text(self.code.as_bytes()), changed_node.range().start_byte, changed_node.range().end_byte);
         let parent: Node = changed_node.parent().clone().unwrap();
         let grand_parent = parent.parent().clone().unwrap();
         let context = vec![changed_node, parent, grand_parent];
@@ -374,17 +363,16 @@ fn match_rule(
     source_code_bytes: &[u8],
     recurssive: bool,
 ) -> Option<(Range, String)> {
-    if recurssive{
-        println!("Matching rule {:?} {:?} {:?}", rule.name, rule.replace, rule.queries);
-        println!("{:?}",node.utf8_text(source_code_bytes));
-    }
-    let query_str = rule.queries.first().unwrap();
+    let query_str = rule.query.as_str();
     if !rule_store.rule_query_cache.contains_key(query_str){
-        println!("{}",query_str);
+        panic!("{}",query_str);
     }
+    // if !recurssive {
+    //     print!("{:?} {:?}", node.start_position(), node.end_position());
+    // }
     let query = rule_store.rule_query_cache.get(query_str).unwrap();
     let pattern_count = query.pattern_count();
-    println!("Pattern count {}", pattern_count);
+    
     // TODO: extract parameter `cursor`
     let mut cursor = QueryCursor::new();
     let query_matches = cursor.matches(&query, node, source_code_bytes);
@@ -395,18 +383,22 @@ fn match_rule(
     for qm in query_matches {
         // The assumption is that the first capture is the node that the pattern matches to.
         let captures = qm.captures;
-        for c in captures{
-            println!("{:?} \n {:?} \n\n", query.capture_names().get(c.index as usize), c.node.utf8_text(source_code_bytes))
-        }
+        // for c in captures{
+            // println!("{:?} \n {:?} \n\n", query.capture_names().get(c.index as usize), c.node.utf8_text(source_code_bytes))
+        // }
         if captures.is_empty() {
             break;
         }
         let matched_node_range = captures.first().map(|z| z.node.range()).unwrap();
         println!("First Capture {:?}", captures.first());
+        let mut captured_tags = group_by_tag_str(captures, query, source_code_bytes);
+        for cn in query.capture_names(){
+            captured_tags.entry(String::from(cn)).or_insert_with(String::new);
+        }
         matched_node_query_match
             .entry(matched_node_range)
             .or_insert_with(Vec::new)
-            .push(group_by_tag_str(captures, query, source_code_bytes));
+            .push(captured_tags);
     }
 
     let relevant_query_matches = matched_node_query_match
@@ -416,6 +408,7 @@ fn match_rule(
             recurssive || k.start_byte == node.start_byte() && k.end_byte == node.end_byte()
         })
         .next();
+    
     let mut captures_by_tag = HashMap::new();
     if relevant_query_matches.is_some() {
         let relevant_match = relevant_query_matches.unwrap();
@@ -423,7 +416,7 @@ fn match_rule(
             captures_by_tag.extend(i.clone());
         }
         let replacement = substitute_tag_with_code(&captures_by_tag, &rule.replace);
-
+        println!("{replacement}");
         return Some((relevant_match.0.clone(), replacement));
     }
     return None;

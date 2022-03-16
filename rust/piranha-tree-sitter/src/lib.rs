@@ -5,16 +5,12 @@ mod tree_sitter;
 mod utilities;
 
 pub mod piranha {
-    use super::tree_sitter as ts_utils;
-    use crate::config::{Config, Rule, FlagCleaner};
-    use crate::tree_sitter::{get_largest_node_captured_by_query, group_by_tag, substitute_tag_with_code};
-    use crate::utilities::{get_extension, get_files_with_extension, read_file};
-
-    use colored::Colorize;
+    
+    use crate::config::{FlagCleaner};
+    
+    
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use tree_sitter::{Language, Node, Parser, Query, QueryCapture, QueryCursor, Range, Tree, InputEdit};
-    use tree_sitter_traversal::{traverse, Order};
 
     // TODO: Add a string level entry point
     // TODO: Verify configs (Make sure no same named tags in "and queries")

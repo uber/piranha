@@ -4,8 +4,7 @@ flag_namespace = "[namespace]"
 flag_value = "[treated]"
 [[rules]]
 name = "Enum Based, toggle enabled"
-queries = [
-    """((
+query = """((
 	(method_invocation 
     	name : (_) @n1
         arguments: ((argument_list 
@@ -19,15 +18,14 @@ queries = [
 (#eq? @n1 "isToggleEnabled")
 (#eq? @f "[stale_flag_name]")
 )"""
-]
+
 replace = "[treated]"
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum Based, flag enabled"
-queries = [
-    """((
+query = """((
 	(method_invocation 
     	name : (_) @n1
         arguments: ((argument_list 
@@ -41,15 +39,14 @@ queries = [
 (#eq? @n1 "isFlagTreated")
 (#eq? @f "[stale_flag_name]")
 )"""
-]
+
 replace = "[treated]"
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum Based, toggle disabled"
-queries = [
-    """((
+query = """((
 	(method_invocation 
     	name : (_) @n1
         arguments: ((argument_list 
@@ -63,42 +60,40 @@ queries = [
 (#eq? @n1 "isToggleDisabled")
 (#eq? @f "[stale_flag_name]")
 )"""
-]
+
 replace = "false"
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum based, Delete enum constant (just the constant)"
-queries = [
-    """
+query =  """
     (
     ((enum_constant name : (_)) @ec)       
     (#eq? @ec "STALE_FLAG")
     )
     """
-]
+
 replace = ""
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum based, Delete enum constant"
-queries = [
-    """
+query = """
     (
     ((enum_constant name : (_) @n) @ec)       
     (#eq? @n  "STALE_FLAG")
     )
     """
-]
+
 replace = ""
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum based, method invocation, put enabled"
-queries = ["""
+query = """
 (
 (expression_statement (method_invocation name : (_) @n
 					arguments: (argument_list
@@ -109,14 +104,14 @@ queries = ["""
  (#eq? @n "putToggleEnabled")
  (#eq? @f "[stale_flag_name]")
 )
-"""]
+"""
 replace = ""
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum based, method invocation, put disabled"
-queries = ["""
+query = """
 (
 (expression_statement (method_invocation name : (_) @n
 					arguments: (argument_list
@@ -127,14 +122,14 @@ queries = ["""
  (#eq? @n "putToggleDisabled")
  (#eq? @f "[stale_flag_name]")
 )
-"""]
+"""
 replace = ""
 scope = "PROJECT"
 language = "Java"
 
 [[rules]]
 name = "Enum based, method invocation, includeEvent"
-queries = ["""
+query = """
 (
 (expression_statement (method_invocation name : (_) @n
 					arguments: (argument_list
@@ -145,7 +140,7 @@ queries = ["""
  (#eq? @n "includeEvent")
  (#eq? @f "[stale_flag_name]")
 )
-"""]
+"""
 replace = ""
 scope = "PROJECT"
 language = "Java"
@@ -153,7 +148,7 @@ language = "Java"
 
 [[rules]]
 name = "Interface based, annotated method declaration"
-queries = ["""
+query = """
 (
 (method_declaration
 	 (modifiers (annotation
@@ -179,7 +174,7 @@ queries = ["""
  (#eq? @k2 "namespace")
  (#eq? @v2 "\\\"[namespace]\\\"")
  )
-"""]
+"""
 
 replace=""
 scope = "PROJECT"
@@ -187,21 +182,21 @@ language = "Java"
 
 [[rules.and_then]]
 name = "Interface based, replace method invocation chain with true/false"
-queries = ["""
+query = """
 (
    ((method_invocation
        object: (method_invocation name: (identifier) @i2)
        name : (identifier) @i) @m)
    (#eq? @i "getVal")
    (#eq? @i2 "[@m_name]")
-)"""]
+)"""
 replace = "[treated]"
 scope = "PROJECT"
 language = "Java"
 
 # [[rules.and_then]]
 # name = "Interface based, method invocation, put"
-# queries = ["""
+# query = ["""
 # (
 # (expression_statement ((method_invocation name: (_) @n
 # 			arguments : (
@@ -222,40 +217,40 @@ language = "Java"
 
 [[rules]]
 name = "Simple If-(optional)else True"
-queries = ["""
+query = """
 (
     (if_statement
         condition : ((parenthesized_expression ((true) @i)))
         consequence : ((statement) @s))
 @ifstmt)
-"""]
+"""
 replace = "@s"
 scope = "PARENT"
 language = "Java" 
 
 [[rules]]
 name = "Simple If-else False"
-queries = ["""
+query = """
 (
     (if_statement
         condition : ((parenthesized_expression ((false) @i)))
         consequence : ((statement) @s)
         alternative : ((_) @el))
-@ifstmt)"""]
+@ifstmt)"""
 replace = "@el"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Simple if False"
-queries = ["""
+query = """
 (
     (if_statement
         condition : ((parenthesized_expression ((false) @i)))
         consequence : ((statement) @s)
         !alternative)
 @ifstmt)
-"""]
+"""
 replace = ""
 scope = "PARENT"
 language = "Java"
@@ -263,13 +258,13 @@ language = "Java"
 [[rules]]
 name = "not False"
 
-queries = ["""
+query = """
 (
     (unary_expression
         operator: "!"
         operand: (false))
 @u)
-"""]
+"""
 replace = "true"
 scope = "PARENT"
 language = "Java"
@@ -277,13 +272,13 @@ language = "Java"
 
 [[rules]]
 name = "not True"
-queries = ["""
+query = """
 (
     (unary_expression
         operator: \"!\"
         operand: (true))
 @u)
-"""]
+"""
 replace = "false"
 scope = "PARENT"
 language = "Java"
@@ -291,7 +286,7 @@ language = "Java"
 
 [[rules]]
 name = "Remove unnecesary nested block"
-queries = ["""
+query = """
 (
     (block
         (
@@ -301,7 +296,7 @@ queries = ["""
             (_)*@post
         )
     )@b1
-)"""]
+)"""
 replace = """
 {
     @pre
@@ -313,13 +308,13 @@ language = "Java"
 
 [[rules]]
 name = "And - left operand is True"
-queries = ["""
+query = """
 (
     (binary_expression
         left: (true)
         operator:"&&"
          right : (_)* @other )
-) @b"""]
+) @b"""
 replace = "@other"
 scope = "PARENT"
 language = "Java"
@@ -328,14 +323,14 @@ language = "Java"
 [[rules]]
 name = "And - right operand is True"
 
-queries = ["""
+query = """
 (
     (binary_expression
         left : (_)* @other
         operator:"&&"
         right: (true)
     )
-@b)"""]
+@b)"""
 replace = "@other"
 scope = "PARENT"
 language = "Java"
@@ -343,21 +338,21 @@ language = "Java"
 
 [[rules]]
 name = "Or - right operand is True"
-queries = ["""
+query = """
 (
     (binary_expression
         left : (_)* @other
         operator:"||"
         right: (true)
     )
-@b)"""]
+@b)"""
 replace = "true"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Or - left operand is True"
-queries = ["""
+query = """
 (
     (binary_expression
         left : (true)
@@ -365,21 +360,21 @@ queries = ["""
         right: (_)* @other
     )
 @b)
-"""]
+"""
 replace = "true"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "And - left operand is False"
-queries = ["""
+query = """
 (
     (binary_expression
         left: (false)
         operator:"&&"
         right : (_)* @other
     )
-@b)"""]
+@b)"""
 replace = "false"
 scope = "PARENT"
 language = "Java"
@@ -387,7 +382,7 @@ language = "Java"
 [[rules]]
 name = "And - right operand is False"
 
-queries = ["""
+query = """
 (
     (binary_expression
         left : (_)* @other
@@ -395,21 +390,21 @@ queries = ["""
         right: (false)
     )
 @b)
-"""]
+"""
 replace = "false"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Or - left operand is False"
-queries =[ """(
+query = """(
 (
     binary_expression
         left : (_)* @other
         operator:"||"
         right: (false)
     )
-@b)"""]
+@b)"""
 replace = "@other"
 scope = "PARENT"
 language = "Java"
@@ -417,108 +412,108 @@ language = "Java"
 [[rules]]
 name = "And - right operand is False"
 
-queries = ["""
+query = """
 (
     (binary_expression
         left : (false)
         operator:"||"
         right: (_)* @other
     )
-@b)"""]
+@b)"""
 replace = "@other"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from left operand"
-queries =[ """(
+query ="""(
 (
     binary_expression
         left: ((parenthesized_expression
                     (expression !left) @e))
         operator: "||"
         right: (_)* @r)
-@bo)"""]
+@bo)"""
 replace = "@e || @r"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from right operand"
-queries = ["""
+query = """
 (binary_expression
         left: (_)* @l
         operator: "||"
         right: ((parenthesized_expression
                     (expression !left) @e))
-@bo)"""]
+@bo)"""
 replace = "@l || @e"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "And - Remove unnecessary brackets from left operand "
-queries = ["""
+query = """
 (
     (binary_expression
         left: ((parenthesized_expression (expression !left) @e))
         operator: "&&"
         right: (_)* @r)
-@bo)"""]
+@bo)"""
 replace = "@e && @r"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "And - Remove unnecessary brackets from right operand "
-queries = ["""(
+query = """(
     (binary_expression
         left: (_)* @l
         operator: "&&"
         right: ((parenthesized_expression
                          (expression !left) @e)))
-@bo)"""]
+@bo)"""
 replace = "@l && @e"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Elide all statements after return"
-queries = ["""(
+query = """(
         (block  ((statement)* @pre)
          ((return_statement) @r)
-         ((statement)+ @post)) @b)"""]
+         ((statement)+ @post)) @b)"""
 replace = "{\n@pre\n@r\n}"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Ternay operator True"
-queries = ["""
+query = """
 (
     (ternary_expression condition: (true)
         consequence: (_)* @then
         alternative: (_)* @else)
-@t)"""]
+@t)"""
 replace = "@then"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Ternay operator False"
-queries = ["""
+query = """
 (
     (ternary_expression condition: (false)
         consequence: (_)* @then
         alternative: (_)* @else)
-@t)"""]
+@t)"""
 replace = "@else"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name = "Parenthesized boolean literal"
-queries = ["""
+query = """
 (
 (parenthesized_expression 
 	[(true)
@@ -526,34 +521,34 @@ queries = ["""
     ] @l
     ) @p
 )
-"""]
+"""
 replace = "@l"
 scope = "PARENT"
 language = "Java"
 
 [[rules]]
 name="Inline Local Variable Declaration - Delete variable declaration"
-queries= ["""
+query= """
 (
 ((local_variable_declaration 
 				declarator: (variable_declarator 
                 					name: (_) @n
                 					value: [(true) (false)] @v)) @l)
 )
-"""]
+"""
 replace = ""
 scope = "PARENT"
 language = "Java"
 
 [[rules.and_then]]
 name="Inline local variable declaration - Replace identifier with value"
-queries = ["""
+query = """
 (
 (identifier )@i
 (#eq? @i "[@n]")
 )
 """
-]
+
 replace="[@v]"
 scope="METHOD"
 language="Java"
