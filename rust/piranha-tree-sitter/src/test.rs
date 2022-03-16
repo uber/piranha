@@ -22,6 +22,8 @@ fn test_java_scenarios_treated() {
         "true",
     );
     let path_to_expected = path_to_test_resource.join("expected_treated");
+
+    assert_eq!(c.len(), 2);
     
     for e in c {
         let file_name = e.0.file_name().unwrap();
