@@ -77,8 +77,8 @@ pub mod piranha {
             let (ff_config, cleanup_config) = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
             let mut rule_query_cache = HashMap::new();
 
-            let mut seed_rules = ff_config.rules;
-            let mut cleanup_rules = cleanup_config.rules;
+            let seed_rules = ff_config.rules;
+            let cleanup_rules = cleanup_config.rules;
 
             for r in &seed_rules {
                 rule_query_cache.insert(String::from(r.query.as_str()), r.get_query(language));
