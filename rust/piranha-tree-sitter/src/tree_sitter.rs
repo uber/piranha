@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use colored::Colorize;
-use tree_sitter::{InputEdit, Language, Node, Point, QueryCapture, Range, Parser, Tree, Query};
+use tree_sitter::{InputEdit, Language, Point, QueryCapture, Range, Parser, Tree, Query};
 
 extern "C" {
     fn tree_sitter_java() -> Language;
@@ -60,16 +60,7 @@ fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
     result
 }
 
-pub fn parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
-    let mut parser = Parser::new();
-    parser
-        .set_language(language)
-        .expect("Could not set language");
-    let tree = parser
-        .parse(&source_code, None)
-        .expect("Could not parse code");
-    (parser, tree)
-}
+
 
 pub fn get_language(language: &str) -> Language {
     unsafe {
@@ -80,43 +71,6 @@ pub fn get_language(language: &str) -> Language {
         }
     }
 }
-
-// // Returns the captured node with the largest span.
-// pub fn get_largest_node_captured_by_query<'a>(
-//     captures: &'a [QueryCapture],
-// ) -> Result<Node<'a>, &'static str> {
-
-
-//     captures
-//         .iter()
-//         .map(|n| n.node.clone())
-//         .max_by(|c1, c2| c1.byte_range().len().cmp(&c2.byte_range().len()))
-//         .ok_or("Could not compute the captured node for this query.")
-// }
-
-// pub fn group_by_tag<'a>(
-//     captures: &[QueryCapture],
-//     query: &'a Query,
-//     source_code_bytes: &'a [u8],
-// ) -> HashMap<String, Vec<String>> {
-//     let mut tag_capture = HashMap::new();
-//     // let capture_names = &query.capture_names();
-//     for capture in captures {
-//         let name = query
-//             .capture_names()
-//             .get(capture.index as usize)
-//             .expect("Capture name not found!");
-//         let code_snippet = capture
-//             .node
-//             .utf8_text(source_code_bytes)
-//             .expect("Could not get source code for node");
-//         tag_capture
-//             .entry(String::from(name))
-//             .or_insert_with(Vec::new)
-//             .push(String::from(code_snippet));
-//     }
-//     tag_capture
-// }
 
 pub fn group_by_tag_str<'a>(
     captures: &[QueryCapture],
@@ -146,43 +100,3 @@ pub fn group_by_tag_str<'a>(
     tag_capture
 }
 
-//&format!("@{}", tag)
-pub fn substitute_tag_with_code(
-    tag_substitutes: &HashMap<String, String>,
-    rewrite_template: &String,
-    key_mapper: &dyn Fn(&String) -> String
-) -> String {
-    let mut output = String::from(rewrite_template);
-    for (tag, substitute) in tag_substitutes {
-        let key = key_mapper(tag);
-        output = output.replace(&key, substitute)
-    }
-    output
-}
-
-// fn contains(n: &Node, e1:usize, e2:usize) -> bool{
-//     return n.start_byte() <= e1 + 1 && e2 <= n.end_byte() + 1;
-// }
-
-// pub fn search_node<'a, 'b>(start_byte: usize, end_byte: usize, node:&'b Node<'a>) -> Node<'a> {
-//     let mut curr: Node = node.clone();
-//     let mut q = vec![curr];
-//     loop  {
-//         let head = q.pop();
-//         if head.is_none(){
-//             return curr;
-//         }else {
-//             curr = head.unwrap();
-//         }
-//         let mut i = 0;
-//         while i < curr.child_count() {
-//             let child = &curr.child(i).unwrap();
-//             if contains(&child, start_byte, end_byte){
-//                 q.push(child.clone());
-//                 break;
-//             }
-//             println!("child range {:?} {:?}", child.start_byte(), child.end_byte() );
-//             i = i + 1;
-//         }
-//     }
-// }

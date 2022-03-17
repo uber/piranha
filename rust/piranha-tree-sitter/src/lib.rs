@@ -20,7 +20,7 @@ pub mod piranha {
 
     use crate::tree_sitter as ts_utils;
     use crate::tree_sitter::group_by_tag_str;
-    use crate::tree_sitter::substitute_tag_with_code;
+    use crate::utilities::substitute_in_str;
     use crate::utilities::get_extension;
     use crate::utilities::get_files_with_extension;
     use crate::utilities::read_file;
@@ -74,23 +74,17 @@ pub mod piranha {
         ) -> Self {
             let language = ts_utils::get_language(input_language);
             let extension = get_extension(input_language);
-            let config = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
+            let (ff_config, cleanup_config) = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
             let mut rule_query_cache = HashMap::new();
 
-            let mut seed_rules = vec![];
-            let mut cleanup_rules = vec![];
-            for r in &config.rules {
-                let query_str = r.query.as_str();
-                let query = Query::new(language, query_str);
-                if query.is_err() {
-                    panic!("Cannot process {query_str}");
-                }
-                rule_query_cache.insert(String::from(query_str), query.unwrap());
-                if r.scope.eq("PROJECT") {
-                    seed_rules.push(r.clone());
-                } else {
-                    cleanup_rules.push(r.clone());
-                }
+            let mut seed_rules = ff_config.rules;
+            let mut cleanup_rules = cleanup_config.rules;
+
+            for r in &seed_rules {
+                rule_query_cache.insert(String::from(r.query.as_str()), r.get_query(language));
+            }
+            for r in &cleanup_rules {
+                rule_query_cache.insert(String::from(r.query.as_str()), r.get_query(language));
             }
 
             let rules_store = RulesStore {
@@ -110,7 +104,7 @@ pub mod piranha {
             for dir_entry in relevant_files {
                 let file_path = dir_entry.path();
                 let code = read_file(&file_path);
-                files.insert(file_path, SourceCodeUnit::parse(&mut parser, code));
+                files.insert(file_path, SourceCodeUnit::parse(&mut parser, code, language));
             }
 
             Self {
@@ -125,8 +119,16 @@ pub mod piranha {
             parser
                 .set_language(self.language)
                 .expect("Could not set language");
-            for (_, scu) in self.files.iter_mut() {
-                scu.apply_seed_rules(&mut self.rules_store, &mut parser);
+            loop {
+                let mut any_file_updated = false;
+                for (_, scu) in self.files.iter_mut() {
+                    if scu.apply_seed_rules(&mut self.rules_store, &mut parser){
+                        any_file_updated = true;
+                    } 
+                }
+                if !any_file_updated {
+                    break;
+                }
             }
         }
     }
@@ -134,6 +136,7 @@ pub mod piranha {
     pub struct SourceCodeUnit {
         pub ast: Tree,
         pub code: String,
+        language: Language
     }
 
     impl SourceCodeUnit {
@@ -158,14 +161,19 @@ pub mod piranha {
 
         // Will update all occurences of a rule in the code.
         // We will do this without sync for now. Keep things simple.
-        fn apply_rule(&mut self, rule: Rule, rules_store: &mut RulesStore, parser: &mut Parser) -> bool {
+        fn apply_rule(
+            &mut self,
+            rule: Rule,
+            rules_store: &mut RulesStore,
+            parser: &mut Parser,
+        ) -> bool {
             let mut any_match = false;
             loop {
                 let cr = rule.clone();
                 //TODO: Will return andThen rules too.
                 let replacement = self.scan_and_match_rule(cr, rules_store);
                 if replacement.is_none() {
-                    break;
+                    return any_match;
                 } else {
                     any_match = true;
                     let (range, rpl) = replacement.unwrap();
@@ -173,21 +181,18 @@ pub mod piranha {
                     self.cleanup_previous_edit_site(edit, rules_store, parser);
                 }
             }
-            any_match
         }
 
-        fn apply_seed_rules(&mut self, rules_store: &mut RulesStore, parser: &mut Parser) {
-            loop {
-                let rules = rules_store.seed_rules.clone();
-                let mut any_matches = vec![];
-                for rule in rules {
-                    let b = self.apply_rule(rule.clone(), rules_store, parser);
-                    any_matches.push(b);
-                }
-                if any_matches.iter().all(|x|!x){
-                    break;
+        fn apply_seed_rules(&mut self, rules_store: &mut RulesStore, parser: &mut Parser) -> bool {
+            let mut any_matches = false;
+            // loop {
+            let rules = rules_store.seed_rules.clone();
+            for rule in rules {
+                if self.apply_rule(rule.clone(), rules_store, parser){
+                    any_matches = true;
                 }
             }
+            return any_matches;
         }
 
         fn cleanup_previous_edit_site(
@@ -225,7 +230,7 @@ pub mod piranha {
 
             for rule in &cleanup_rules {
                 for ancestor in &context {
-                    if let Some((range, replacement, new_rules)) = Self::match_rule(
+                    if let Some((range, replacement, new_rules)) = self.match_rule(
                         rule.clone(),
                         rules_store,
                         ancestor.clone(),
@@ -239,9 +244,9 @@ pub mod piranha {
             return None;
         }
 
-        fn parse(parser: &mut Parser, code: String) -> Self {
+        fn parse(parser: &mut Parser, code: String, language: Language) -> Self {
             let ast = parser.parse(&code, None).expect("Could not parse code");
-            Self { ast, code }
+            Self { ast, code, language }
         }
 
         fn scan_and_match_rule(
@@ -251,21 +256,22 @@ pub mod piranha {
         ) -> Option<(Range, String)> {
             let root = self.ast.root_node();
             let source_code_bytes = self.code.as_bytes();
-            let z =  Self::match_rule(rule, rule_store, root, source_code_bytes, true);
-            if z.is_some(){
+            let z = self.match_rule(rule, rule_store, root, source_code_bytes, true);
+            if z.is_some() {
                 let (rng, rpl, new_rules) = z.unwrap();
                 for (r, q) in new_rules {
-                    rule_store.rule_query_cache.insert(String::from(&r.query), q);
+                    rule_store
+                        .rule_query_cache
+                        .insert(String::from(&r.query), q);
                     rule_store.seed_rules.push(r.clone());
                 }
                 return Some((rng, rpl));
             }
             None
-            
-
         }
-    
+
         fn match_rule(
+            &self,
             rule: Rule,
             rule_store: &mut RulesStore,
             node: Node,
@@ -276,16 +282,16 @@ pub mod piranha {
             if !rule_store.rule_query_cache.contains_key(query_str) {
                 panic!("{}", query_str);
             }
-    
+
             let query = rule_store.rule_query_cache.get(query_str).unwrap();
             let pattern_count = query.pattern_count();
-    
+
             // TODO: extract parameter `cursor`
             let mut cursor = QueryCursor::new();
             let query_matches = cursor.matches(&query, node, source_code_bytes);
-    
+
             let mut matched_node_query_match = HashMap::new();
-    
+
             for qm in query_matches {
                 let captures = qm.captures;
                 if captures.is_empty() {
@@ -304,7 +310,7 @@ pub mod piranha {
                     .or_insert_with(Vec::new)
                     .push(captured_tags);
             }
-    
+
             let relevant_query_matches = matched_node_query_match
                 .iter()
                 .filter(|(_, v)| v.len() == pattern_count)
@@ -323,16 +329,14 @@ pub mod piranha {
                 for i in relevant_match.1 {
                     captures_by_tag.extend(i.clone());
                 }
-                let replacement = substitute_tag_with_code(&captures_by_tag, &rule.replace, &map_key);
+                let replacement =
+                    substitute_in_str(&captures_by_tag, &rule.replace, &map_key);
 
-                let new_rules = rule.and_then(captures_by_tag);
+                let new_rules = rule.and_then(captures_by_tag, self.language);
 
                 return Some((relevant_match.0.clone(), replacement, new_rules));
             }
             return None;
         }
-    
     }
-
-    
 }

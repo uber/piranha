@@ -1,0 +1,212 @@
+[[rules]]
+name = "Enum Based, toggle enabled"
+query = """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isToggleEnabled")
+(#eq? @f "[stale_flag_name]")
+)"""
+
+replace = "[treated]"
+
+
+
+[[rules]]
+name = "Enum Based, flag enabled"
+query = """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isFlagTreated")
+(#eq? @f "[stale_flag_name]")
+)"""
+
+replace = "[treated]"
+
+
+
+[[rules]]
+name = "Enum Based, toggle disabled"
+query = """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isToggleDisabled")
+(#eq? @f "[stale_flag_name]")
+)"""
+
+replace = "false"
+
+
+
+[[rules]]
+name = "Enum based, Delete enum constant (just the constant)"
+query =  """
+    (
+    ((enum_constant name : (_)) @ec)       
+    (#eq? @ec "STALE_FLAG")
+    )
+    """
+
+replace = ""
+
+
+
+[[rules]]
+name = "Enum based, Delete enum constant"
+query = """
+    (
+    ((enum_constant name : (_) @n) @ec)       
+    (#eq? @n  "STALE_FLAG")
+    )
+    """
+
+replace = ""
+
+
+
+[[rules]]
+name = "Enum based, method invocation, put enabled"
+query = """
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "putToggleEnabled")
+ (#eq? @f "[stale_flag_name]")
+)
+"""
+replace = ""
+
+
+
+[[rules]]
+name = "Enum based, method invocation, put disabled"
+query = """
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "putToggleDisabled")
+ (#eq? @f "[stale_flag_name]")
+)
+"""
+replace = ""
+
+
+
+[[rules]]
+name = "Enum based, method invocation, includeEvent"
+query = """
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "includeEvent")
+ (#eq? @f "[stale_flag_name]")
+)
+"""
+replace = ""
+
+
+
+
+[[rules]]
+name = "Interface based, annotated method declaration"
+query = """
+(
+(method_declaration
+	 (modifiers (annotation
+     				name: (_) @a_name
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k1
+							 value: (_) @v1))))
+      name: (_) @m_name
+ )@m1
+ (#eq? @a_name "BoolParam")
+ (#eq? @k1 "key")
+ (#eq? @v1 "\\\"[stale_flag_name]\\\"")
+ )
+ (
+(method_declaration
+	 (modifiers (annotation
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k2
+							 value: (_) @v2))))
+ )@m2
+ (#eq? @k2 "namespace")
+ (#eq? @v2 "\\\"[namespace]\\\"")
+ )
+"""
+
+replace=""
+
+
+
+[[rules.and_then]]
+name = "Interface based, replace method invocation chain with true/false"
+query = """
+(
+   ((method_invocation
+       object: (method_invocation name: (identifier) @i2)
+       name : (identifier) @i) @m)
+   (#eq? @i "getVal")
+   (#eq? @i2 "[@m_name]")
+)"""
+replace = "[treated]"
+
+
+
+# [[rules.and_then]]
+# name = "Interface based, method invocation, put"
+# query = ["""
+# (
+# (expression_statement ((method_invocation name: (_) @n
+# 			arguments : (
+#             (argument_list 
+#             	(method_invocation 
+#                 		name: (_) @an)
+#                 ([(true) (false)])
+#              ))
+            
+#             ) @m) @e)
+#  (#eq? @n "put")
+#  (#eq? @an "[stale_flag_name]")
+# )
+# """]
+# replace = ""
+# 
+# 

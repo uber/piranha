@@ -1,10 +1,12 @@
+use std::fs::{self, DirEntry};
 use std::path::Path;
 
 use colored::Colorize;
+use tree_sitter::{Language, Parser, Tree};
 
 use crate::piranha::get_cleanups_for_code_base_new;
-use crate::tree_sitter::{get_language, parse_code};
-use crate::utilities::{get_file_with_name, read_file};
+use crate::tree_sitter::{get_language};
+use crate::utilities::{read_file};
 
 #[test]
 fn test_java_scenarios_treated() {
@@ -39,6 +41,35 @@ fn test_java_scenarios_treated() {
         }
         assert!(result);
         println!("{}", format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue());
+    }
+
+    pub fn parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
+        let mut parser = Parser::new();
+        parser
+            .set_language(language)
+            .expect("Could not set language");
+        let tree = parser
+            .parse(&source_code, None)
+            .expect("Could not parse code");
+        (parser, tree)
+    }
+
+
+    pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
+        dir_entry
+            .path()
+            .file_name()
+            .map(|e| e.eq(extension))
+            .unwrap_or(false)
+    }
+
+    pub fn get_file_with_name(input_dir: &str, name: &str, ) -> Option<DirEntry>{
+        fs::read_dir(input_dir)
+            .unwrap()
+            .filter_map(|d| d.ok())
+            .filter(|de| has_name(de, name))
+            .next()
+    
     }
 
     // assert_eq!(expected_content, e.1);
