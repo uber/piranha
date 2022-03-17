@@ -4,11 +4,9 @@ use tree_sitter::Language;
 use tree_sitter::Query;
 use std::collections::HashMap;
 use std::env;
-use std::fs;
 use std::panic;
 use std::path::Path;
 
-use crate::tree_sitter::get_language;
 use crate::utilities::substitute_in_str;
 use crate::utilities::read_file;
 
@@ -20,13 +18,20 @@ pub struct Config {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
     pub name: String,
-    pub query: String,
+    pub query: String, // ts-query
     pub replace: String,
     and_then: Option<Vec<Rule>>,
-    ancestor_contains_none: Option<Vec<String>>,
-    ancestor_contains_some: Option<Vec<String>>,
-    ancestor_contains_one: Option<Vec<String>>,
+    pub scope : Option<String>, // ts-query
+    pub ancestor_predicate: Option<AncestorPredicate>
 }
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct AncestorPredicate {
+    pub predicate_kind : String,
+    pub matcher: String,
+    pub frequency : String,
+    pub query: String
+}
+
 
 impl Rule {
     pub fn and_then(
@@ -71,9 +76,8 @@ impl Rule {
             query: new_query,
             replace: new_replace,
             and_then: rule.and_then,
-            ancestor_contains_some: rule.ancestor_contains_some,
-            ancestor_contains_none: rule.ancestor_contains_none,
-            ancestor_contains_one: rule.ancestor_contains_one,
+            scope: rule.scope,
+            ancestor_predicate : rule.ancestor_predicate
         };
     }
 }

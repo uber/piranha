@@ -281,7 +281,6 @@ query = """
 replace = "@then"
 
 
-
 [[rules]]
 name = "Ternay operator False"
 query = """
@@ -291,7 +290,6 @@ query = """
         alternative: (_)* @else)
 @t)"""
 replace = "@else"
-
 
 
 [[rules]]
@@ -307,8 +305,6 @@ query = """
 """
 replace = "@l"
 
-
-
 [[rules]]
 name="Inline Local Variable Declaration - Delete variable declaration"
 query= """
@@ -321,8 +317,11 @@ query= """
 """
 replace = ""
 
-
-ancestor_contains_one = ["((method_declaration) @md1)", """
+[[rules.ancestor_predicates]]
+predicate_kind = "Contains"
+matcher = "((method_declaration) @md1)"
+frequency = "One"
+query = """
 (
 ((local_variable_declaration 
 				declarator: (variable_declarator 
@@ -330,7 +329,7 @@ ancestor_contains_one = ["((method_declaration) @md1)", """
                 					value: [(true) (false)] @v1)) @l1)
 (#eq? @n1 [@n])
 )
-"""]
+"""
 
 [[rules.and_then]]
 name="Inline local variable declaration - Replace identifier with value"
@@ -341,9 +340,12 @@ query = """
 )
 """
 replace="[@v]"
-scope="((method_declaration) @md2)"
-language="Java"
-ancestor_contains_none = ["((method_declaration) @md)", """
+scope = "((method_declaration) @md)"
+[[rules.ancestor_predicates]]
+predicate_kind = "Contains"
+matcher = "((method_declaration) @md)"
+frequency = "None"
+query = """
 (
 ((local_variable_declaration 
 				declarator: (variable_declarator 
@@ -351,4 +353,4 @@ ancestor_contains_none = ["((method_declaration) @md)", """
                 					value: [(true) (false)] @v2)) @l2)
 (#eq? @n2 [@n1])
 )
-"""]
+"""
