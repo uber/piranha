@@ -306,7 +306,7 @@ pub mod piranha {
             root: Node,
             source_code_bytes: &[u8],
             rule: Rule,
-            rule_store: &mut RulesStore, // rule_query_cache: &mut HashMap<String, Query>,
+            rule_store: &RulesStore
         ) -> Option<(Range, String, HashMap<String, String>)> {
             if let Some((rng, rpl, captures_by_tag)) =
                 Self::get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true)
@@ -318,7 +318,7 @@ pub mod piranha {
 
         fn get_any_match_for_rule(
             rule: Rule,
-            rule_store: &mut RulesStore,
+            rule_store: &RulesStore,
             node: Node,
             source_code_bytes: &[u8],
             recurssive: bool,
