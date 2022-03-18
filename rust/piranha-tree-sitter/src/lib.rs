@@ -20,10 +20,10 @@ pub mod piranha {
 
     use crate::tree_sitter as ts_utils;
     use crate::tree_sitter::group_by_tag_str;
-    use crate::utilities::substitute_in_str;
     use crate::utilities::get_extension;
     use crate::utilities::get_files_with_extension;
     use crate::utilities::read_file;
+    use crate::utilities::substitute_in_str;
 
     // TODO: Add a string level entry point
     // TODO: Verify configs (Make sure no same named tags in "and queries")
@@ -74,7 +74,8 @@ pub mod piranha {
         ) -> Self {
             let language = ts_utils::get_language(input_language);
             let extension = get_extension(input_language);
-            let (ff_config, cleanup_config) = Config::read_config(input_language, flag_name, flag_namespace, flag_value);
+            let (ff_config, cleanup_config) =
+                Config::read_config(input_language, flag_name, flag_namespace, flag_value);
             let mut rule_query_cache = HashMap::new();
 
             let seed_rules = ff_config.rules;
@@ -104,7 +105,10 @@ pub mod piranha {
             for dir_entry in relevant_files {
                 let file_path = dir_entry.path();
                 let code = read_file(&file_path);
-                files.insert(file_path, SourceCodeUnit::parse(&mut parser, code, language));
+                files.insert(
+                    file_path,
+                    SourceCodeUnit::parse(&mut parser, code, language),
+                );
             }
 
             Self {
@@ -122,9 +126,9 @@ pub mod piranha {
             loop {
                 let mut any_file_updated = false;
                 for (_, scu) in self.files.iter_mut() {
-                    if scu.apply_seed_rules(&mut self.rules_store, &mut parser){
+                    if scu.apply_seed_rules(&mut self.rules_store, &mut parser) {
                         any_file_updated = true;
-                    } 
+                    }
                 }
                 if !any_file_updated {
                     break;
@@ -136,7 +140,7 @@ pub mod piranha {
     pub struct SourceCodeUnit {
         pub ast: Tree,
         pub code: String,
-        language: Language
+        language: Language,
     }
 
     impl SourceCodeUnit {
@@ -176,7 +180,7 @@ pub mod piranha {
                     any_match = true;
                     let (range, rpl) = replacement.unwrap();
                     let edit = self.apply_edit(range, rpl, parser);
-                    self.cleanup_previous_edit_site(edit, rules_store, parser);
+                    self.apply_cleanup_rules(edit, rules_store, parser);
                 }
             }
         }
@@ -186,17 +190,22 @@ pub mod piranha {
             self.apply_rules(rules_store, rules, parser)
         }
 
-        fn apply_rules(&mut self, rules_store: &mut RulesStore, rules: Vec<Rule>, parser: &mut Parser) -> bool {
+        fn apply_rules(
+            &mut self,
+            rules_store: &mut RulesStore,
+            rules: Vec<Rule>,
+            parser: &mut Parser,
+        ) -> bool {
             let mut any_matches = false;
             for rule in rules {
-                if self.apply_rule(rule.clone(), rules_store, parser){
+                if self.apply_rule(rule.clone(), rules_store, parser) {
                     any_matches = true;
                 }
             }
             return any_matches;
         }
 
-        fn cleanup_previous_edit_site(
+        fn apply_cleanup_rules(
             &mut self,
             edit: InputEdit,
             rules_store: &mut RulesStore,
@@ -204,18 +213,30 @@ pub mod piranha {
         ) {
             let mut previous_edit = edit.clone();
             loop {
-                if let Some((range, replacement_str, new_rules)) = self.match_cleanup_site(previous_edit, rules_store){
+                if let Some((range, replacement_str, new_rules)) =
+                    self.match_cleanup_site(previous_edit, rules_store)
+                {
                     previous_edit = self.apply_edit(range, replacement_str, parser);
-                    if !new_rules.is_empty(){
+                    if !new_rules.is_empty() {
                         self.apply_rules(rules_store, new_rules, parser);
                         break;
                     }
-                }
-                else {
+                } else {
                     break;
-                    // return HashMap::new();
-                } 
+                }
             }
+        }
+
+        fn apply_and_then_rules(&mut self,
+            edit: InputEdit,
+            rules_store: &mut RulesStore,
+            parser: &mut Parser,
+            and_then_rules: Vec<Rule>,
+            and_then_scope: String){
+
+                
+
+
         }
 
         fn match_cleanup_site(
@@ -227,18 +248,17 @@ pub mod piranha {
                 .ast
                 .root_node()
                 .descendant_for_byte_range(previous_edit.start_byte, previous_edit.new_end_byte)
-                .unwrap();            
+                .unwrap();
             let mut context = vec![changed_node];
             let parent = changed_node.parent().clone();
-            if parent.is_some(){
+            if parent.is_some() {
                 let pu = parent.unwrap();
                 context.push(pu);
                 let grand_parent = pu.parent().clone();
-                if grand_parent.is_some(){
+                if grand_parent.is_some() {
                     context.push(grand_parent.unwrap());
                 }
             }
-            
 
             let cleanup_rules = rules_store.cleanup_rules.clone();
 
@@ -260,7 +280,11 @@ pub mod piranha {
 
         fn parse(parser: &mut Parser, code: String, language: Language) -> Self {
             let ast = parser.parse(&code, None).expect("Could not parse code");
-            Self { ast, code, language }
+            Self {
+                ast,
+                code,
+                language,
+            }
         }
 
         fn scan_and_match_rule(
@@ -291,8 +315,14 @@ pub mod piranha {
                 panic!("{}", query_str);
             }
 
-            let all_relevant_query_matches = get_all_relevant_matches(node, query_str, source_code_bytes, &rule_store, recurssive);
-            
+            let all_relevant_query_matches = get_all_relevant_matches(
+                node,
+                query_str,
+                source_code_bytes,
+                &rule_store,
+                recurssive,
+            );
+
             if all_relevant_query_matches.is_empty() {
                 return None;
             }
@@ -300,28 +330,26 @@ pub mod piranha {
             //TODO: Add logic for ancestor predicate
 
             let relevant_match = all_relevant_query_matches.first().unwrap().clone();
-            
+
             let mut captures_by_tag = HashMap::new();
             for i in relevant_match.1 {
                 captures_by_tag.extend(i.clone());
             }
 
-            let replacement =
-                substitute_in_str(&captures_by_tag, &rule.replace, &map_key_as_tag);
+            let replacement = substitute_in_str(&captures_by_tag, &rule.replace, &map_key_as_tag);
 
             let and_then_rules = rule.and_then(captures_by_tag, self.language);
             let mut new_rules = vec![];
 
             for (r, q) in and_then_rules {
                 rule_store
-                    .rule_query_cache.insert(String::from(&r.query), q);
+                    .rule_query_cache
+                    .insert(String::from(&r.query), q);
                 rule_store.seed_rules.push(r.clone());
                 new_rules.push(r);
             }
 
             return Some((relevant_match.0.clone(), replacement, new_rules));
-            
-            
         }
     }
 
@@ -329,7 +357,13 @@ pub mod piranha {
         format!("@{}", s)
     }
 
-    fn get_all_relevant_matches(node:Node, query_str: &str, source_code_bytes: &[u8], rule_store: &RulesStore, recurssive: bool) -> Vec<(Range, Vec<HashMap<String, String>>)> {
+    fn get_all_relevant_matches(
+        node: Node,
+        query_str: &str,
+        source_code_bytes: &[u8],
+        rule_store: &RulesStore,
+        recurssive: bool,
+    ) -> Vec<(Range, Vec<HashMap<String, String>>)> {
         // TODO: extract parameter `cursor`
         let query = rule_store.rule_query_cache.get(query_str).unwrap();
         let mut cursor = QueryCursor::new();
@@ -339,19 +373,18 @@ pub mod piranha {
         let mut matched_node_query_match = HashMap::new();
 
         for qm in query_matches {
-
             let captures = qm.captures;
             if captures.is_empty() {
                 break;
             }
-            
+
             let mut captured_tags = group_by_tag_str(captures, query, source_code_bytes);
             for cn in query.capture_names() {
                 captured_tags
-                .entry(String::from(cn))
-                .or_insert_with(String::new);
+                    .entry(String::from(cn))
+                    .or_insert_with(String::new);
             }
-            
+
             // The first capture is the outermost tag
             let matched_node_range = captures.first().map(|z| z.node.range()).unwrap();
             matched_node_query_match
@@ -361,9 +394,12 @@ pub mod piranha {
         }
 
         let mut output = vec![];
-        for (k, v ) in matched_node_query_match {
-            if  v.len() == pattern_count && (recurssive || k.start_byte == node.start_byte() && k.end_byte == node.end_byte()){
-                 output.push((k, v));
+        for (k, v) in matched_node_query_match {
+            if v.len() == pattern_count
+                && (recurssive
+                    || k.start_byte == node.start_byte() && k.end_byte == node.end_byte())
+            {
+                output.push((k, v));
             }
         }
         return output;
