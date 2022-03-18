@@ -166,6 +166,7 @@ pub mod piranha {
         // We will do this without sync for now. Keep things simple.
         fn apply_rule(
             &mut self,
+
             rule: Rule,
             rules_store: &mut RulesStore,
             parser: &mut Parser,
@@ -173,14 +174,23 @@ pub mod piranha {
             let mut any_match = false;
             loop {
                 //TODO: Will return andThen rules too.
-                let replacement = self.scan_and_match_rule(rule.clone(), rules_store);
-                if replacement.is_none() {
-                    return any_match;
-                } else {
+                let cr = rule.clone();
+                if let Some((range, rpl, captures_by_tag)) =
+                    Self::scan_and_match_rule(self.ast.root_node(), self.code.as_bytes(), cr.clone(), rules_store)
+                {
                     any_match = true;
-                    let (range, rpl) = replacement.unwrap();
                     let edit = self.apply_edit(range, rpl, parser);
                     self.apply_cleanup_rules(edit, rules_store, parser);
+
+                    let and_then_rules = cr.and_then(captures_by_tag, self.language);
+                    for (r, q) in and_then_rules {
+                        rules_store
+                            .rule_query_cache
+                            .insert(String::from(&r.query), q);
+                        rules_store.seed_rules.push(r.clone());
+                    }
+                } else {
+                    return any_match;
                 }
             }
         }
@@ -238,13 +248,25 @@ pub mod piranha {
 
             for rule in &cleanup_rules {
                 for ancestor in &context {
-                    if let Some((range, replacement, new_rules)) = self.get_any_match_for_rule(
-                        rule.clone(),
-                        rules_store,
-                        ancestor.clone(),
-                        self.code.as_bytes(),
-                        false,
-                    ) {
+                    let cr = rule.clone();
+                    if let Some((range, replacement, captures_by_tag)) = Self::get_any_match_for_rule(
+                            cr.clone(),
+                            rules_store,
+                            ancestor.clone(),
+                            self.code.as_bytes(),
+                            false,
+                        )
+                    {
+                        let and_then_rules = cr.and_then(captures_by_tag, self.language);
+                        let mut new_rules = vec![];
+
+                        for (r, q) in and_then_rules {
+                            rules_store
+                                .rule_query_cache
+                                .insert(String::from(&r.query), q);
+                            // rules_store.seed_rules.push(r.clone());
+                            new_rules.push(r);
+                        }
                         return Some((range, replacement, new_rules));
                     }
                 }
@@ -281,26 +303,26 @@ pub mod piranha {
         }
 
         fn scan_and_match_rule(
-            &self,
+            root: Node,
+            source_code_bytes: &[u8],
             rule: Rule,
             rule_store: &mut RulesStore, // rule_query_cache: &mut HashMap<String, Query>,
-        ) -> Option<(Range, String)> {
-            let root = self.ast.root_node();
-            let source_code_bytes = self.code.as_bytes();
-            if let Some((rng, rpl, _new_rules)) = self.get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true){
-                return Some((rng, rpl));
+        ) -> Option<(Range, String, HashMap<String, String>)> {
+            if let Some((rng, rpl, captures_by_tag)) =
+                Self::get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true)
+            {
+                return Some((rng, rpl, captures_by_tag));
             }
             None
         }
 
         fn get_any_match_for_rule(
-            &self,
             rule: Rule,
             rule_store: &mut RulesStore,
             node: Node,
             source_code_bytes: &[u8],
             recurssive: bool,
-        ) -> Option<(Range, String, Vec<Rule>)> {
+        ) -> Option<(Range, String, HashMap<String, String>)> {
             let query_str = rule.query.as_str();
             if !rule_store.rule_query_cache.contains_key(query_str) {
                 panic!("{}", query_str);
@@ -329,18 +351,7 @@ pub mod piranha {
 
             let replacement = substitute_in_str(&captures_by_tag, &rule.replace, &map_key_as_tag);
 
-            let and_then_rules = rule.and_then(captures_by_tag, self.language);
-            let mut new_rules = vec![];
-
-            for (r, q) in and_then_rules {
-                rule_store
-                    .rule_query_cache
-                    .insert(String::from(&r.query), q);
-                rule_store.seed_rules.push(r.clone());
-                new_rules.push(r);
-            }
-
-            return Some((relevant_match.0.clone(), replacement, new_rules));
+            return Some((relevant_match.0.clone(), replacement, captures_by_tag));
         }
     }
 
