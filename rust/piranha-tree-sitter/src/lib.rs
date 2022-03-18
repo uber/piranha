@@ -227,38 +227,12 @@ pub mod piranha {
             }
         }
 
-        fn apply_and_then_rules(&mut self,
-            edit: InputEdit,
-            rules_store: &mut RulesStore,
-            parser: &mut Parser,
-            and_then_rules: Vec<Rule>,
-            and_then_scope: String){
-
-                
-
-
-        }
-
         fn match_cleanup_site(
             &mut self,
             previous_edit: InputEdit,
             rules_store: &mut RulesStore,
         ) -> Option<(Range, String, Vec<Rule>)> {
-            let changed_node = self
-                .ast
-                .root_node()
-                .descendant_for_byte_range(previous_edit.start_byte, previous_edit.new_end_byte)
-                .unwrap();
-            let mut context = vec![changed_node];
-            let parent = changed_node.parent().clone();
-            if parent.is_some() {
-                let pu = parent.unwrap();
-                context.push(pu);
-                let grand_parent = pu.parent().clone();
-                if grand_parent.is_some() {
-                    context.push(grand_parent.unwrap());
-                }
-            }
+            let context = self.get_context(previous_edit);
 
             let cleanup_rules = rules_store.cleanup_rules.clone();
 
@@ -278,6 +252,25 @@ pub mod piranha {
             return None;
         }
 
+        fn get_context(&self, previous_edit: InputEdit) -> Vec<Node> {
+            let changed_node = self
+                .ast
+                .root_node()
+                .descendant_for_byte_range(previous_edit.start_byte, previous_edit.new_end_byte)
+                .unwrap();
+            let mut context = vec![changed_node];
+            let parent = changed_node.parent().clone();
+            if parent.is_some() {
+                let pu = parent.unwrap();
+                context.push(pu);
+                let grand_parent = pu.parent().clone();
+                if grand_parent.is_some() {
+                    context.push(grand_parent.unwrap());
+                }
+            }
+            context
+        }
+
         fn parse(parser: &mut Parser, code: String, language: Language) -> Self {
             let ast = parser.parse(&code, None).expect("Could not parse code");
             Self {
@@ -294,9 +287,7 @@ pub mod piranha {
         ) -> Option<(Range, String)> {
             let root = self.ast.root_node();
             let source_code_bytes = self.code.as_bytes();
-            let z = self.get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true);
-            if z.is_some() {
-                let (rng, rpl, _new_rules) = z.unwrap();
+            if let Some((rng, rpl, _new_rules)) = self.get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true){
                 return Some((rng, rpl));
             }
             None
