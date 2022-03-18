@@ -21,7 +21,7 @@ pub struct Rule {
     pub query: String, // ts-query
     pub replace: String,
     and_then: Option<Vec<Rule>>,
-    pub scope : Option<String>, // ts-query
+    pub and_then_scope : Option<String>, // ts-query
     pub ancestor_predicate: Option<AncestorPredicate>
 }
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
@@ -77,7 +77,7 @@ impl Rule {
             query: new_query,
             replace: new_replace,
             and_then: rule.and_then,
-            scope: rule.scope,
+            and_then_scope: rule.and_then_scope,
             ancestor_predicate : rule.ancestor_predicate
         };
     }

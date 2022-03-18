@@ -339,7 +339,7 @@ query = """
 )
 """
 replace="[@v]"
-scope = "((method_declaration) @md)"
+and_then_scope = "((method_declaration) @md)"
 [[rules.ancestor_predicates]]
 predicate_kind = "Contains"
 matcher = "((method_declaration) @md)"
