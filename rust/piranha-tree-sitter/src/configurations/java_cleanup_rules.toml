@@ -330,7 +330,6 @@ query = """
 (#eq? @n1 [@n])
 )
 """
-
 [[rules.and_then]]
 name="Inline local variable declaration - Replace identifier with value"
 query = """

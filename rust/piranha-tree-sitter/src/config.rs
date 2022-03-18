@@ -43,10 +43,10 @@ impl Rule {
         if self.and_then.is_some() {
             for r in self.and_then.unwrap() {
                 let transformed_rule = Self::fill_holes(&r, &tag_matches);
-                let q = &transformed_rule.query;
+                // let q = &transformed_rule.query;
                 let query = transformed_rule.get_query(language);
                 println!("Added rule to cache");
-                rule_query_cache.insert(r, query);
+                rule_query_cache.insert(transformed_rule, query);
             }
         }
         rule_query_cache
@@ -71,6 +71,7 @@ impl Rule {
         let new_query = substitute_in_str(tag_substutions,&rule.query, &Self::map_key);
         println!("New query {}", new_query);
         let new_replace = substitute_in_str(tag_substutions,&rule.replace, &Self::map_key);
+        println!("{}", format!("Filled hole {new_replace}").bright_blue());
         return Rule {
             name: rule.name,
             query: new_query,

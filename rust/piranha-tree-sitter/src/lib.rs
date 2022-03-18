@@ -147,8 +147,6 @@ pub mod piranha {
             replacement_str: String,
             parser: &mut Parser,
         ) -> InputEdit {
-            // let replace_range = code_replacement.0;
-            // let replacement = code_replacement.1;
             let (new_source_code, edit) =
                 ts_utils::get_edit(self.code.as_str(), replace_range, &replacement_str);
             self.ast.edit(&edit);
@@ -170,9 +168,8 @@ pub mod piranha {
         ) -> bool {
             let mut any_match = false;
             loop {
-                let cr = rule.clone();
                 //TODO: Will return andThen rules too.
-                let replacement = self.scan_and_match_rule(cr, rules_store);
+                let replacement = self.scan_and_match_rule(rule.clone(), rules_store);
                 if replacement.is_none() {
                     return any_match;
                 } else {
@@ -185,9 +182,12 @@ pub mod piranha {
         }
 
         fn apply_seed_rules(&mut self, rules_store: &mut RulesStore, parser: &mut Parser) -> bool {
-            let mut any_matches = false;
-            // loop {
             let rules = rules_store.seed_rules.clone();
+            self.apply_rules(rules_store, rules, parser)
+        }
+
+        fn apply_rules(&mut self, rules_store: &mut RulesStore, rules: Vec<Rule>, parser: &mut Parser) -> bool {
+            let mut any_matches = false;
             for rule in rules {
                 if self.apply_rule(rule.clone(), rules_store, parser){
                     any_matches = true;
@@ -206,9 +206,14 @@ pub mod piranha {
             loop {
                 if let Some((range, replacement_str, new_rules)) = self.match_cleanup_site(previous_edit, rules_store){
                     previous_edit = self.apply_edit(range, replacement_str, parser);
+                    if !new_rules.is_empty(){
+                        self.apply_rules(rules_store, new_rules, parser);
+                        break;
+                    }
                 }
                 else {
                     break;
+                    // return HashMap::new();
                 } 
             }
         }
@@ -217,15 +222,23 @@ pub mod piranha {
             &mut self,
             previous_edit: InputEdit,
             rules_store: &mut RulesStore,
-        ) -> Option<(Range, String, HashMap<Rule, Query>)> {
+        ) -> Option<(Range, String, Vec<Rule>)> {
             let changed_node = self
                 .ast
                 .root_node()
                 .descendant_for_byte_range(previous_edit.start_byte, previous_edit.new_end_byte)
-                .unwrap();
-            let parent: Node = changed_node.parent().clone().unwrap();
-            let grand_parent = parent.parent().clone().unwrap();
-            let context = vec![changed_node, parent, grand_parent];
+                .unwrap();            
+            let mut context = vec![changed_node];
+            let parent = changed_node.parent().clone();
+            if parent.is_some(){
+                let pu = parent.unwrap();
+                context.push(pu);
+                let grand_parent = pu.parent().clone();
+                if grand_parent.is_some(){
+                    context.push(grand_parent.unwrap());
+                }
+            }
+            
 
             let cleanup_rules = rules_store.cleanup_rules.clone();
 
@@ -259,13 +272,7 @@ pub mod piranha {
             let source_code_bytes = self.code.as_bytes();
             let z = self.get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true);
             if z.is_some() {
-                let (rng, rpl, new_rules) = z.unwrap();
-                for (r, q) in new_rules {
-                    rule_store
-                        .rule_query_cache
-                        .insert(String::from(&r.query), q);
-                    rule_store.seed_rules.push(r.clone());
-                }
+                let (rng, rpl, _new_rules) = z.unwrap();
                 return Some((rng, rpl));
             }
             None
@@ -278,7 +285,7 @@ pub mod piranha {
             node: Node,
             source_code_bytes: &[u8],
             recurssive: bool,
-        ) -> Option<(Range, String, HashMap<Rule, Query>)> {
+        ) -> Option<(Range, String, Vec<Rule>)> {
             let query_str = rule.query.as_str();
             if !rule_store.rule_query_cache.contains_key(query_str) {
                 panic!("{}", query_str);
@@ -302,7 +309,15 @@ pub mod piranha {
             let replacement =
                 substitute_in_str(&captures_by_tag, &rule.replace, &map_key_as_tag);
 
-            let new_rules = rule.and_then(captures_by_tag, self.language);
+            let and_then_rules = rule.and_then(captures_by_tag, self.language);
+            let mut new_rules = vec![];
+
+            for (r, q) in and_then_rules {
+                rule_store
+                    .rule_query_cache.insert(String::from(&r.query), q);
+                rule_store.seed_rules.push(r.clone());
+                new_rules.push(r);
+            }
 
             return Some((relevant_match.0.clone(), replacement, new_rules));
             
