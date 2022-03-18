@@ -143,13 +143,14 @@ pub mod piranha {
         // This method performs the input code replacement in the source code
         fn apply_edit(
             &mut self,
-            code_replacement: (Range, String),
+            replace_range: Range,
+            replacement_str: String,
             parser: &mut Parser,
         ) -> InputEdit {
-            let replace_range = code_replacement.0;
-            let replacement = code_replacement.1;
+            // let replace_range = code_replacement.0;
+            // let replacement = code_replacement.1;
             let (new_source_code, edit) =
-                ts_utils::get_edit(self.code.as_str(), replace_range, &replacement);
+                ts_utils::get_edit(self.code.as_str(), replace_range, &replacement_str);
             self.ast.edit(&edit);
             let new_tree = parser
                 .parse(&new_source_code, Some(&self.ast))
@@ -177,7 +178,7 @@ pub mod piranha {
                 } else {
                     any_match = true;
                     let (range, rpl) = replacement.unwrap();
-                    let edit = self.apply_edit((range, rpl), parser);
+                    let edit = self.apply_edit(range, rpl, parser);
                     self.cleanup_previous_edit_site(edit, rules_store, parser);
                 }
             }
@@ -203,12 +204,12 @@ pub mod piranha {
         ) {
             let mut previous_edit = edit.clone();
             loop {
-                let replacement = self.match_cleanup_site(previous_edit, rules_store);
-                if replacement.is_none() {
-                    break;
-                } else {
-                    previous_edit = self.apply_edit(replacement.unwrap(), parser);
+                if let Some((range, replacement_str, new_rules)) = self.match_cleanup_site(previous_edit, rules_store){
+                    previous_edit = self.apply_edit(range, replacement_str, parser);
                 }
+                else {
+                    break;
+                } 
             }
         }
 
@@ -216,7 +217,7 @@ pub mod piranha {
             &mut self,
             previous_edit: InputEdit,
             rules_store: &mut RulesStore,
-        ) -> Option<(Range, String)> {
+        ) -> Option<(Range, String, HashMap<Rule, Query>)> {
             let changed_node = self
                 .ast
                 .root_node()
@@ -230,14 +231,14 @@ pub mod piranha {
 
             for rule in &cleanup_rules {
                 for ancestor in &context {
-                    if let Some((range, replacement, new_rules)) = self.match_rule(
+                    if let Some((range, replacement, new_rules)) = self.get_any_match_for_rule(
                         rule.clone(),
                         rules_store,
                         ancestor.clone(),
                         self.code.as_bytes(),
                         false,
                     ) {
-                        return Some((range, replacement));
+                        return Some((range, replacement, new_rules));
                     }
                 }
             }
@@ -256,7 +257,7 @@ pub mod piranha {
         ) -> Option<(Range, String)> {
             let root = self.ast.root_node();
             let source_code_bytes = self.code.as_bytes();
-            let z = self.match_rule(rule, rule_store, root, source_code_bytes, true);
+            let z = self.get_any_match_for_rule(rule, rule_store, root, source_code_bytes, true);
             if z.is_some() {
                 let (rng, rpl, new_rules) = z.unwrap();
                 for (r, q) in new_rules {
@@ -270,7 +271,7 @@ pub mod piranha {
             None
         }
 
-        fn match_rule(
+        fn get_any_match_for_rule(
             &self,
             rule: Rule,
             rule_store: &mut RulesStore,
@@ -283,60 +284,73 @@ pub mod piranha {
                 panic!("{}", query_str);
             }
 
-            let query = rule_store.rule_query_cache.get(query_str).unwrap();
-            let pattern_count = query.pattern_count();
-
-            // TODO: extract parameter `cursor`
-            let mut cursor = QueryCursor::new();
-            let query_matches = cursor.matches(&query, node, source_code_bytes);
-
-            let mut matched_node_query_match = HashMap::new();
-
-            for qm in query_matches {
-                let captures = qm.captures;
-                if captures.is_empty() {
-                    break;
-                }
-                let matched_node_range = captures.first().map(|z| z.node.range()).unwrap();
-                println!("First Capture {:?}", captures.first());
-                let mut captured_tags = group_by_tag_str(captures, query, source_code_bytes);
-                for cn in query.capture_names() {
-                    captured_tags
-                        .entry(String::from(cn))
-                        .or_insert_with(String::new);
-                }
-                matched_node_query_match
-                    .entry(matched_node_range)
-                    .or_insert_with(Vec::new)
-                    .push(captured_tags);
+            let all_relevant_query_matches = get_all_relevant_matches(node, query_str, source_code_bytes, &rule_store, recurssive);
+            
+            if all_relevant_query_matches.is_empty() {
+                return None;
             }
 
-            let relevant_query_matches = matched_node_query_match
-                .iter()
-                .filter(|(_, v)| v.len() == pattern_count)
-                .filter(|(k, _)| {
-                    recurssive || k.start_byte == node.start_byte() && k.end_byte == node.end_byte()
-                })
-                .next();
+            //TODO: Add logic for ancestor predicate
 
-            fn map_key(s: &String) -> String {
-                format!("@{}", s)
-            }
-
+            let relevant_match = all_relevant_query_matches.first().unwrap().clone();
+            
             let mut captures_by_tag = HashMap::new();
-            if relevant_query_matches.is_some() {
-                let relevant_match = relevant_query_matches.unwrap();
-                for i in relevant_match.1 {
-                    captures_by_tag.extend(i.clone());
-                }
-                let replacement =
-                    substitute_in_str(&captures_by_tag, &rule.replace, &map_key);
-
-                let new_rules = rule.and_then(captures_by_tag, self.language);
-
-                return Some((relevant_match.0.clone(), replacement, new_rules));
+            for i in relevant_match.1 {
+                captures_by_tag.extend(i.clone());
             }
-            return None;
+
+            let replacement =
+                substitute_in_str(&captures_by_tag, &rule.replace, &map_key_as_tag);
+
+            let new_rules = rule.and_then(captures_by_tag, self.language);
+
+            return Some((relevant_match.0.clone(), replacement, new_rules));
+            
+            
         }
+    }
+
+    fn map_key_as_tag(s: &String) -> String {
+        format!("@{}", s)
+    }
+
+    fn get_all_relevant_matches(node:Node, query_str: &str, source_code_bytes: &[u8], rule_store: &RulesStore, recurssive: bool) -> Vec<(Range, Vec<HashMap<String, String>>)> {
+        // TODO: extract parameter `cursor`
+        let query = rule_store.rule_query_cache.get(query_str).unwrap();
+        let mut cursor = QueryCursor::new();
+        let query_matches = cursor.matches(&query, node, source_code_bytes);
+        let pattern_count = query.pattern_count();
+
+        let mut matched_node_query_match = HashMap::new();
+
+        for qm in query_matches {
+
+            let captures = qm.captures;
+            if captures.is_empty() {
+                break;
+            }
+            
+            let mut captured_tags = group_by_tag_str(captures, query, source_code_bytes);
+            for cn in query.capture_names() {
+                captured_tags
+                .entry(String::from(cn))
+                .or_insert_with(String::new);
+            }
+            
+            // The first capture is the outermost tag
+            let matched_node_range = captures.first().map(|z| z.node.range()).unwrap();
+            matched_node_query_match
+                .entry(matched_node_range)
+                .or_insert_with(Vec::new)
+                .push(captured_tags);
+        }
+
+        let mut output = vec![];
+        for (k, v ) in matched_node_query_match {
+            if  v.len() == pattern_count && (recurssive || k.start_byte == node.start_byte() && k.end_byte == node.end_byte()){
+                 output.push((k, v));
+            }
+        }
+        return output;
     }
 }
