@@ -5,7 +5,6 @@ use colored::Colorize;
 use tree_sitter::{Language, Parser, Tree};
 
 use crate::piranha::get_cleanups_for_code_base_new;
-use crate::tree_sitter::{get_language};
 use crate::utilities::{read_file};
 
 #[test]
@@ -33,9 +32,9 @@ fn test_java_scenarios_treated() {
         .unwrap().path();
         let expected_content = read_file(&f);
         let output = &e.1;
-        let (_, output_tree) = parse_code(get_language(language), output);
-        let (_, expected_tree) = parse_code(get_language(language), &expected_content);
-        let result = output_tree.root_node().to_sexp().eq(&expected_tree.root_node().to_sexp());
+        // let (_, output_tree) = parse_code(get_language(language), output);
+        // let (_, expected_tree) = parse_code(get_language(language), &expected_content);
+        let result = output.eq(&expected_content);
         if !result {
             println!("{}", output);
         }
@@ -43,7 +42,7 @@ fn test_java_scenarios_treated() {
         println!("{}", format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue());
     }
 
-    pub fn parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
+    pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
         let mut parser = Parser::new();
         parser
             .set_language(language)

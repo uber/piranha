@@ -172,7 +172,6 @@ pub mod piranha {
         ) -> bool {
             let mut any_match = false;
             loop {
-                //TODO: Will return andThen rules too.
                 let cr = rule.clone();
                 if let Some((range, rpl, captures_by_tag)) =
                     Self::scan_and_match_rule(self.ast.root_node(), self.code.as_bytes(), cr.clone(), rules_store)
