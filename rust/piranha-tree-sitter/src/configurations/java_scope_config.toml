@@ -1,0 +1,114 @@
+[[scopes]]
+name = "METHOD"
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1)
+                    (formal_parameter type:(_) @t2)
+                    (formal_parameter type:(_) @t3)
+                    (formal_parameter type:(_) @t4))) @md)"""
+matcher_gen = """
+(((method_declaration 
+			name : (_) @n1
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2)
+                    (formal_parameter type:(_) @r3)
+                    (formal_parameter type:(_) @r4))) @md)
+(#eq? @n1 "[@n]")
+(#eq? @r0 "[@t0]")
+(#eq? @r1 "[@t1]")
+(#eq? @r2 "[@t2]")
+(#eq? @r3 "[@t3]")
+(#eq? @r4 "[@t4]")                    
+)"""
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1)
+                    (formal_parameter type:(_) @t2)
+                    (formal_parameter type:(_) @t3))) @md)"""
+matcher_gen = """
+(((method_declaration 
+			name : (_) @n1
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2)
+                    (formal_parameter type:(_) @r3))) @md)
+(#eq? @n1 "[@n]")
+(#eq? @r0 "[@t0]")
+(#eq? @r1 "[@t1]")
+(#eq? @r2 "[@t2]")
+(#eq? @r3 "[@t3]")
+)"""
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1)
+                    (formal_parameter type:(_) @t2))) @md)"""
+matcher_gen = """
+(((method_declaration 
+			name : (_) @n1
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2))) @md)
+(#eq? @n1 "[@n]")
+(#eq? @r0 "[@t0]")
+(#eq? @r1 "[@t1]")
+(#eq? @r2 "[@t2]")
+)"""
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1))) @md)"""
+matcher_gen = """
+(((method_declaration 
+			name : (_) @n1
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1))) @md)
+(#eq? @n1 "[@n]")
+(#eq? @r0 "[@t0]")
+(#eq? @r1 "[@t1]")
+)"""
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0))) @md)"""
+matcher_gen = """
+(((method_declaration 
+			name : (_) @n1
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0))) @md)
+(#eq? @n1 "[@n]")
+(#eq? @r0 "[@t0]")
+)"""
+
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters)) @md)"""
+matcher_gen = """
+(((method_declaration 
+			name : (_) @n1
+            parameters : (formal_parameters)) @md)
+(#eq? @n1 "[@n]")
+)"""

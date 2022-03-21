@@ -316,7 +316,7 @@ query= """
 )
 """
 replace = ""
-
+and_then_scope = "METHOD"
 [[rules.constraint]]
 predicate_kind = "Contains"
 matcher = "((method_declaration) @md1)"
@@ -339,7 +339,6 @@ query = """
 )
 """
 replace="[@v]"
-and_then_scope = "((method_declaration) @md)"
 
 [[rules.constraint]]
 predicate_kind = "Contains"

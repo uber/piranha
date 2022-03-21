@@ -14,6 +14,36 @@ use crate::utilities::substitute_in_str;
 pub struct Config {
     pub rules: Vec<Rule>,
 }
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct ScopeConfig {
+    pub scopes: Vec<Scope>,
+}
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Scope {
+    pub name: String,
+    pub rules: Vec<ScopeMatcher>
+}
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct ScopeMatcher {
+    pub matcher: String,
+    pub matcher_gen: String
+}
+
+impl ScopeMatcher {
+    pub fn get_query(&self, language: Language) -> Query {
+        let q = Query::new(language, self.matcher.as_str());
+        if q.is_err() {
+            panic!("Could not create query for {:?}", self.matcher);
+        }
+        q.unwrap()
+    }
+
+    // pub fn generate_matcher(&self,  tag_matches: HashMap<String, String>) -> String {
+    //     substitute_in_str(&tag_matches, &self.matcher, &map_key)
+    // }
+}
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
@@ -27,28 +57,30 @@ pub struct Rule {
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
-    pub predicate_kind: String, 
-    pub matcher: String,        // ts-query
-    pub frequency: String,      // none, one, any
+    pub predicate_kind: String,
+    pub matcher: String,   // ts-query
+    pub frequency: String, // none, one, any
     pub query: String,
 }
 
-// pub struct AndThen {
-//     pub scope: String, 
-
-// }
-
 impl Rule {
     pub fn and_then(
-        self,
+        &self,
         tag_matches: HashMap<String, String>,
         language: Language,
     ) -> HashMap<Rule, Query> {
         let mut rule_query_cache = HashMap::new();
         if self.and_then.is_some() {
-            for r in self.and_then.unwrap() {
-                let transformed_rule = Self::fill_holes(&r, &tag_matches);
-                // let q = &transformed_rule.query;
+            for cr in self.and_then.as_ref().unwrap() {
+                let r = cr.clone();
+                let transformed_rule = Rule {
+                    name: r.name,
+                    query: substitute_in_str(&tag_matches, &r.query, &map_key),
+                    replace: substitute_in_str(&tag_matches, &r.replace, &map_key),
+                    and_then: r.and_then,
+                    and_then_scope: r.and_then_scope,
+                    constraint: r.constraint,
+                };
                 let query = transformed_rule.get_query(language);
                 println!("Added rule to cache");
                 rule_query_cache.insert(transformed_rule, query);
@@ -63,28 +95,11 @@ impl Rule {
             panic!("Could not create query for {:?}", self.query);
         }
         q.unwrap()
-    }
+    }    
+}
 
-    fn map_key(s: &String) -> String {
-        format!("[@{}]", s)
-    }
-
-    fn fill_holes(cr: &Rule, tag_substutions: &HashMap<String, String>) -> Rule {
-        println!("Substitutions {:?}", tag_substutions);
-        let rule = cr.clone();
-        let new_query = substitute_in_str(tag_substutions, &rule.query, &Self::map_key);
-        println!("New query {}", new_query);
-        let new_replace = substitute_in_str(tag_substutions, &rule.replace, &Self::map_key);
-        println!("{}", format!("Filled hole {new_replace}").bright_blue());
-        return Rule {
-            name: rule.name,
-            query: new_query,
-            replace: new_replace,
-            and_then: rule.and_then,
-            and_then_scope: rule.and_then_scope,
-            constraint: rule.constraint,
-        };
-    }
+pub fn map_key(s: &String) -> String {
+    format!("[@{}]", s)
 }
 
 impl Config {
@@ -93,7 +108,7 @@ impl Config {
         flag_name: &str,
         flag_namespace: &str,
         flag_value: &str,
-    ) -> (Config, Config) {
+    ) -> (Config, Config, ScopeConfig) {
         println!("{}", format!("Loading Configs").purple());
         let path_to_feature_flags_toml = match language {
             "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -107,6 +122,14 @@ impl Config {
                 .join("src")
                 .join("configurations")
                 .join("java_cleanup_rules.toml"),
+            _ => panic!(),
+        };
+
+        let path_to_scope_config = match language {
+            "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("src")
+                .join("configurations")
+                .join("java_scope_config.toml"),
             _ => panic!(),
         };
 
@@ -146,6 +169,10 @@ impl Config {
         );
         let cleanup_config: Config = toml::from_str(cleanup_rules_content.as_str()).unwrap();
 
-        return (feature_flag_config, cleanup_config);
+        let scope_config_content = read_file(&path_to_scope_config);
+        let scope_config: ScopeConfig = toml::from_str(&scope_config_content).unwrap();
+        
+
+        return (feature_flag_config, cleanup_config, scope_config);
     }
 }
