@@ -18,18 +18,18 @@ pub struct Config {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
     pub name: String,
-    pub query: String, // ts-query
-    pub replace: String,
-    and_then: Option<Vec<Rule>>,
-    pub and_then_scope : Option<String>, // ts-query
-    pub ancestor_predicate: Option<AncestorPredicate>
+    pub query: String, 
+    pub replace: String, 
+    and_then: Option<Vec<Rule>>, 
+    pub and_then_scope : Option<String>, 
+    pub constraint: Option<Vec<Constraints>>
 }
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct AncestorPredicate {
-    pub predicate_kind : String,
-    pub matcher: String,
-    pub frequency : String,
-    pub query: String
+pub struct Constraints {
+    pub predicate_kind : String, // contains, matches/ does not contain
+    pub matcher: String, // ts-query 
+    pub frequency : String, // none, one, any
+    pub query: String 
 }
 
 
@@ -78,7 +78,7 @@ impl Rule {
             replace: new_replace,
             and_then: rule.and_then,
             and_then_scope: rule.and_then_scope,
-            ancestor_predicate : rule.ancestor_predicate
+            constraint : rule.constraint
         };
     }
 }

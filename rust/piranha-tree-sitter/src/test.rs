@@ -18,7 +18,7 @@ fn test_java_scenarios_treated() {
 
     let c = get_cleanups_for_code_base_new(
         path_to_test_resource.join("input").to_str().unwrap(),
-        "Java",
+        language,
         "STALE_FLAG",
         "ns",   
         "true",
@@ -33,8 +33,8 @@ fn test_java_scenarios_treated() {
         .unwrap().path();
         let expected_content = read_file(&f);
         let output = &e.1;
-        let (_, output_tree) = parse_code(get_language("Java"), output);
-        let (_, expected_tree) = parse_code(get_language("Java"), &expected_content);
+        let (_, output_tree) = parse_code(get_language(language), output);
+        let (_, expected_tree) = parse_code(get_language(language), &expected_content);
         let result = output_tree.root_node().to_sexp().eq(&expected_tree.root_node().to_sexp());
         if !result {
             println!("{}", output);

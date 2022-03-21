@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use colored::Colorize;
-use tree_sitter::{InputEdit, Language, Point, QueryCapture, Range, Parser, Tree, Query};
+use tree_sitter::{InputEdit, Language, Point, QueryCapture, Range, Query};
 
 extern "C" {
     fn tree_sitter_java() -> Language;

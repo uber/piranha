@@ -166,7 +166,6 @@ pub mod piranha {
         // We will do this without sync for now. Keep things simple.
         fn apply_rule(
             &mut self,
-
             rule: Rule,
             rules_store: &mut RulesStore,
             parser: &mut Parser,

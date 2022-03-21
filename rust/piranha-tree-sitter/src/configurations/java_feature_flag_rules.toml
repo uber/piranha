@@ -171,7 +171,6 @@ query = """
  (#eq? @v2 "\\\"[namespace]\\\"")
  )
 """
-
 replace=""
 
 

@@ -317,7 +317,7 @@ query= """
 """
 replace = ""
 
-[[rules.ancestor_predicates]]
+[[rules.constraint]]
 predicate_kind = "Contains"
 matcher = "((method_declaration) @md1)"
 frequency = "One"
@@ -340,7 +340,8 @@ query = """
 """
 replace="[@v]"
 and_then_scope = "((method_declaration) @md)"
-[[rules.ancestor_predicates]]
+
+[[rules.constraint]]
 predicate_kind = "Contains"
 matcher = "((method_declaration) @md)"
 frequency = "None"
