@@ -29,6 +29,7 @@ pub mod piranha {
     // TODO: Verify configs (Make sure no same named tags in "and queries")
     // FIXME: Change s-expression based equality to tree based
     // TODO: Add Inline variable cleanup (Basically add Method and File based and then rules)
+    // TODO: Improve toml design 
 
     pub fn get_cleanups_for_code_base_new(
         path_to_code_base: &str,

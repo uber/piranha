@@ -1,14 +1,14 @@
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::Language;
-use tree_sitter::Query;
 use std::collections::HashMap;
 use std::env;
 use std::panic;
 use std::path::Path;
+use tree_sitter::Language;
+use tree_sitter::Query;
 
-use crate::utilities::substitute_in_str;
 use crate::utilities::read_file;
+use crate::utilities::substitute_in_str;
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -18,26 +18,31 @@ pub struct Config {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
     pub name: String,
-    pub query: String, 
-    pub replace: String, 
-    and_then: Option<Vec<Rule>>, 
-    pub and_then_scope : Option<String>, 
-    pub constraint: Option<Vec<Constraint>>
-}
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Constraint {
-    pub predicate_kind : String, // contains, matches/ does not contain
-    pub matcher: String, // ts-query 
-    pub frequency : String, // none, one, any
-    pub query: String 
+    pub query: String,
+    pub replace: String,
+    and_then: Option<Vec<Rule>>,
+    pub and_then_scope: Option<String>,
+    pub constraint: Option<Vec<Constraint>>,
 }
 
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Constraint {
+    pub predicate_kind: String, 
+    pub matcher: String,        // ts-query
+    pub frequency: String,      // none, one, any
+    pub query: String,
+}
+
+// pub struct AndThen {
+//     pub scope: String, 
+
+// }
 
 impl Rule {
     pub fn and_then(
         self,
         tag_matches: HashMap<String, String>,
-        language: Language
+        language: Language,
     ) -> HashMap<Rule, Query> {
         let mut rule_query_cache = HashMap::new();
         if self.and_then.is_some() {
@@ -67,10 +72,9 @@ impl Rule {
     fn fill_holes(cr: &Rule, tag_substutions: &HashMap<String, String>) -> Rule {
         println!("Substitutions {:?}", tag_substutions);
         let rule = cr.clone();
-
-        let new_query = substitute_in_str(tag_substutions,&rule.query, &Self::map_key);
+        let new_query = substitute_in_str(tag_substutions, &rule.query, &Self::map_key);
         println!("New query {}", new_query);
-        let new_replace = substitute_in_str(tag_substutions,&rule.replace, &Self::map_key);
+        let new_replace = substitute_in_str(tag_substutions, &rule.replace, &Self::map_key);
         println!("{}", format!("Filled hole {new_replace}").bright_blue());
         return Rule {
             name: rule.name,
@@ -78,7 +82,7 @@ impl Rule {
             replace: new_replace,
             and_then: rule.and_then,
             and_then_scope: rule.and_then_scope,
-            constraint : rule.constraint
+            constraint: rule.constraint,
         };
     }
 }
@@ -117,20 +121,31 @@ impl Config {
             (String::from("[stale_flag_name]"), String::from(flag_name)),
             (String::from("[treated]"), String::from(&treated)),
             (String::from("[namespace]"), String::from(flag_namespace)),
-            (String::from("[treated_complement]"), String::from(&treated_c)),
+            (
+                String::from("[treated_complement]"),
+                String::from(&treated_c),
+            ),
         ]);
 
-        fn identity(s:&String) -> String {
+        fn identity(s: &String) -> String {
             String::from(s)
         }
 
-        let feature_flag_rules_content = substitute_in_str(&substitutions, &read_file(&path_to_feature_flags_toml),&identity );
-        let feature_flag_config: Config = toml::from_str(feature_flag_rules_content.as_str()).unwrap();
+        let feature_flag_rules_content = substitute_in_str(
+            &substitutions,
+            &read_file(&path_to_feature_flags_toml),
+            &identity,
+        );
+        let feature_flag_config: Config =
+            toml::from_str(feature_flag_rules_content.as_str()).unwrap();
 
-        let cleanup_rules_content = substitute_in_str(&substitutions, &read_file(&path_to_cleanups_toml),&identity );
+        let cleanup_rules_content = substitute_in_str(
+            &substitutions,
+            &read_file(&path_to_cleanups_toml),
+            &identity,
+        );
         let cleanup_config: Config = toml::from_str(cleanup_rules_content.as_str()).unwrap();
 
         return (feature_flag_config, cleanup_config);
     }
 }
-
