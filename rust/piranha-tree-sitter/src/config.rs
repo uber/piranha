@@ -22,10 +22,10 @@ pub struct Rule {
     pub replace: String, 
     and_then: Option<Vec<Rule>>, 
     pub and_then_scope : Option<String>, 
-    pub constraint: Option<Vec<Constraints>>
+    pub constraint: Option<Vec<Constraint>>
 }
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Constraints {
+pub struct Constraint {
     pub predicate_kind : String, // contains, matches/ does not contain
     pub matcher: String, // ts-query 
     pub frequency : String, // none, one, any
