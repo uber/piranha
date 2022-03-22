@@ -31,32 +31,20 @@ pub struct ScopeMatcher {
     pub matcher_gen: String,
 }
 
-// impl ScopeMatcher {
-//     pub fn get_query(&self, language: Language) -> Query {
-//         let q = Query::new(language, self.matcher.as_str());
-//         if q.is_err() {
-//             panic!("Could not create query for {:?}", self.matcher);
-//         }
-//         q.unwrap()
-//     }
-// }
-
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
     pub name: String,
     pub query: String,
     pub replace: String,
+    pub constraint: Option<Constraint>,
     and_then: Option<Vec<Rule>>,
     pub and_then_scope: Option<String>,
-    pub constraint: Option<Vec<Constraint>>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
-    pub predicate_kind: String,
-    pub matcher: String,   // ts-query
-    pub frequency: String, // none, one, any
-    pub query: String,
+    pub predicate_kind: String, // All, any , none
+    pub queries: Vec<String>,
 }
 
 impl Rule {
@@ -169,7 +157,7 @@ pub struct RulesStore {
     pub seed_rules: Vec<Rule>,
     pub cleanup_rules: Vec<Rule>,
     pub scopes: Vec<Scope>,
-    language: Language,
+    pub language: Language,
 }
 
 impl RulesStore {
@@ -216,4 +204,12 @@ impl RulesStore {
         let query = q.unwrap();
         let _ = self.rule_query_cache.insert(query_str, query);
     }
+
+    // pub fn get_query(&self, query_str: String) -> &Query {
+    //     if !self.rule_query_cache.contains_key(&query_str){
+    //         self.cache_query(query_str.clone());   
+    //     }
+    //     let r =  self.rule_query_cache.get(&query_str);
+    //     return r.unwrap();
+    // }
 }
