@@ -2,7 +2,6 @@ use std::fs::{self, DirEntry};
 use std::path::Path;
 
 use colored::Colorize;
-use tree_sitter::{Language, Parser, Tree};
 
 use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::{read_file};
@@ -26,14 +25,13 @@ fn test_java_scenarios_treated() {
 
     assert_eq!(c.len(), 3);
     
+    
     for e in c {
         let file_name = e.0.file_name().unwrap();
         let f = get_file_with_name(path_to_expected.as_path().to_str().unwrap(), file_name.to_str().unwrap())
         .unwrap().path();
         let expected_content = read_file(&f);
         let output = &e.1;
-        // let (_, output_tree) = parse_code(get_language(language), output);
-        // let (_, expected_tree) = parse_code(get_language(language), &expected_content);
         let result = output.eq(&expected_content);
         if !result {
             println!("{}", output);
@@ -42,16 +40,16 @@ fn test_java_scenarios_treated() {
         println!("{}", format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue());
     }
 
-    pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
-        let mut parser = Parser::new();
-        parser
-            .set_language(language)
-            .expect("Could not set language");
-        let tree = parser
-            .parse(&source_code, None)
-            .expect("Could not parse code");
-        (parser, tree)
-    }
+    // pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
+    //     let mut parser = Parser::new();
+    //     parser
+    //         .set_language(language)
+    //         .expect("Could not set language");
+    //     let tree = parser
+    //         .parse(&source_code, None)
+    //         .expect("Could not parse code");
+    //     (parser, tree)
+    // }
 
 
     pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
