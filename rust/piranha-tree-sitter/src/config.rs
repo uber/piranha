@@ -31,19 +31,15 @@ pub struct ScopeMatcher {
     pub matcher_gen: String
 }
 
-impl ScopeMatcher {
-    pub fn get_query(&self, language: Language) -> Query {
-        let q = Query::new(language, self.matcher.as_str());
-        if q.is_err() {
-            panic!("Could not create query for {:?}", self.matcher);
-        }
-        q.unwrap()
-    }
-
-    // pub fn generate_matcher(&self,  tag_matches: HashMap<String, String>) -> String {
-    //     substitute_in_str(&tag_matches, &self.matcher, &map_key)
-    // }
-}
+// impl ScopeMatcher {
+//     pub fn get_query(&self, language: Language) -> Query {
+//         let q = Query::new(language, self.matcher.as_str());
+//         if q.is_err() {
+//             panic!("Could not create query for {:?}", self.matcher);
+//         }
+//         q.unwrap()
+//     }
+// }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
@@ -67,9 +63,8 @@ impl Rule {
     pub fn and_then(
         &self,
         tag_matches: HashMap<String, String>,
-        language: Language,
-    ) -> HashMap<Rule, Query> {
-        let mut rule_query_cache = HashMap::new();
+    ) -> Vec<Rule> {
+        let mut and_then_rules = vec![];
         if self.and_then.is_some() {
             for cr in self.and_then.as_ref().unwrap() {
                 let r = cr.clone();
@@ -81,21 +76,21 @@ impl Rule {
                     and_then_scope: r.and_then_scope,
                     constraint: r.constraint,
                 };
-                let query = transformed_rule.get_query(language);
+                // let query = transformed_rule.get_query(language);
                 println!("Added rule to cache");
-                rule_query_cache.insert(transformed_rule, query);
+                and_then_rules.push(transformed_rule);
             }
         }
-        rule_query_cache
+        and_then_rules
     }
 
-    pub fn get_query(&self, language: Language) -> Query {
-        let q = Query::new(language, self.query.as_str());
-        if q.is_err() {
-            panic!("Could not create query for {:?}", self.query);
-        }
-        q.unwrap()
-    }    
+    // pub fn get_query(&self, language: Language) -> Query {
+    //     let q = Query::new(language, self.query.as_str());
+    //     if q.is_err() {
+    //         panic!("Could not create query for {:?}", self.query);
+    //     }
+    //     q.unwrap()
+    // }    
 }
 
 pub fn map_key(s: &String) -> String {
@@ -175,4 +170,59 @@ impl Config {
 
         return (feature_flag_config, cleanup_config, scope_config);
     }
+}
+
+pub struct RulesStore {
+    pub rule_query_cache: HashMap<String, Query>,
+    pub seed_rules: Vec<Rule>,
+    pub cleanup_rules: Vec<Rule>,
+    pub scopes: Vec<Scope>,
+    language: Language
+}
+
+impl RulesStore {
+    pub fn new(
+        input_language: &str,
+        language: Language,
+        flag_name: &str,
+        flag_namespace: &str,
+        flag_value: &str,
+    ) -> RulesStore {
+        let (ff_config, cleanup_config, scope_config) =
+            Config::read_config(input_language, flag_name, flag_namespace, flag_value);
+        
+        let mut rule_store = Self {
+            rule_query_cache: HashMap::new(),
+            seed_rules: ff_config.rules.clone(),
+            cleanup_rules: cleanup_config.rules.clone(),
+            scopes: scope_config.scopes.clone(),
+            language
+        };
+
+        for r in &ff_config.rules {
+            rule_store.cache_query(String::from(r.query.as_str()));
+        }
+
+        for r in &cleanup_config.rules {
+            rule_store.cache_query(String::from(r.query.as_str()));
+        }
+
+        for s in &scope_config.scopes {
+            for r in s.rules.iter() {
+                rule_store.cache_query(String::from(r.matcher.as_str()));
+            }
+        }
+
+        return rule_store;
+    }
+
+    pub fn cache_query(&mut self, query_str: String){
+        let q = Query::new(self.language, &query_str);
+        if q.is_err() {
+            panic!("Could not parse the query : {}", query_str);
+        }
+        let query = q.unwrap();
+        let _ = self.rule_query_cache.insert(query_str, query);
+    }
+
 }
