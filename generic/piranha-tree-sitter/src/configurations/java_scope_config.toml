@@ -88,27 +88,60 @@ matcher_gen = """
 )"""
 [[scopes.rules]]
 matcher =  """
-((method_declaration 
+(
+(((method_declaration 
 			name : (_) @n
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @t0))) @md)"""
+            parameters : 
+            	((formal_parameters
+            		(((formal_parameter type: (_) @t0) )? @f )) @ff)
+                )
+    @md)
+)
+(#not-match? @ff ",")
+(#not-eq? @ff "()")
+)"""
 matcher_gen = """
+(
 (((method_declaration 
 			name : (_) @n1
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @r0))) @md)
+            parameters : 
+            	((formal_parameters
+            		(((formal_parameter type: (_) @r1) ) @f1 )) @ff1)
+                )
+    @md)
+)
+(#not-match? @ff1 ",")
+(#not-eq? @ff1 "()")
 (#eq? @n1 "[@n]")
-(#eq? @r0 "[@t0]")
+(#eq? @r1 "[@t0]")
 )"""
 
+# This is a bit flaky, since it will not support matching ( ) i.e. bracket with space 
 [[scopes.rules]]
 matcher =  """
-((method_declaration 
+(
+(((method_declaration 
 			name : (_) @n
-            parameters : (formal_parameters)) @md)"""
+            parameters : 
+            	((formal_parameters) @ff)
+                )
+    @md)
+)
+
+(#not-match? @ff ",")
+(#eq? @ff "()")
+)"""
 matcher_gen = """
+(
 (((method_declaration 
 			name : (_) @n1
-            parameters : (formal_parameters)) @md)
+            parameters : 
+            	((formal_parameters) @ff1)
+                )
+    @md1)
+)
+
+(#not-match? @ff1 ",")
+(#eq? @ff1 "()")
 (#eq? @n1 "[@n]")
 )"""

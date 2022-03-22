@@ -22,13 +22,13 @@ pub struct ScopeConfig {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Scope {
     pub name: String,
-    pub rules: Vec<ScopeMatcher>
+    pub rules: Vec<ScopeMatcher>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScopeMatcher {
     pub matcher: String,
-    pub matcher_gen: String
+    pub matcher_gen: String,
 }
 
 // impl ScopeMatcher {
@@ -60,10 +60,7 @@ pub struct Constraint {
 }
 
 impl Rule {
-    pub fn and_then(
-        &self,
-        tag_matches: HashMap<String, String>,
-    ) -> Vec<Rule> {
+    pub fn and_then(&self, tag_matches: HashMap<String, String>) -> Vec<Rule> {
         let mut and_then_rules = vec![];
         if self.and_then.is_some() {
             for cr in self.and_then.as_ref().unwrap() {
@@ -90,7 +87,7 @@ impl Rule {
     //         panic!("Could not create query for {:?}", self.query);
     //     }
     //     q.unwrap()
-    // }    
+    // }
 }
 
 pub fn map_key(s: &String) -> String {
@@ -104,27 +101,23 @@ impl Config {
         flag_namespace: &str,
         flag_value: &str,
     ) -> (Config, Config, ScopeConfig) {
+        
         println!("{}", format!("Loading Configs").purple());
+        let path_to_config = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("configurations");
+
         let path_to_feature_flags_toml = match language {
-            "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("src")
-                .join("configurations")
-                .join("java_feature_flag_rules.toml"),
+            "Java" => path_to_config.join("java_feature_flag_rules.toml"),
             _ => panic!(),
         };
         let path_to_cleanups_toml = match language {
-            "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("src")
-                .join("configurations")
-                .join("java_cleanup_rules.toml"),
+            "Java" => path_to_config.join("java_cleanup_rules.toml"),
             _ => panic!(),
         };
 
         let path_to_scope_config = match language {
-            "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
-                .join("src")
-                .join("configurations")
-                .join("java_scope_config.toml"),
+            "Java" => path_to_config.join("java_scope_config.toml"),
             _ => panic!(),
         };
 
@@ -166,7 +159,6 @@ impl Config {
 
         let scope_config_content = read_file(&path_to_scope_config);
         let scope_config: ScopeConfig = toml::from_str(&scope_config_content).unwrap();
-        
 
         return (feature_flag_config, cleanup_config, scope_config);
     }
@@ -177,7 +169,7 @@ pub struct RulesStore {
     pub seed_rules: Vec<Rule>,
     pub cleanup_rules: Vec<Rule>,
     pub scopes: Vec<Scope>,
-    language: Language
+    language: Language,
 }
 
 impl RulesStore {
@@ -190,13 +182,13 @@ impl RulesStore {
     ) -> RulesStore {
         let (ff_config, cleanup_config, scope_config) =
             Config::read_config(input_language, flag_name, flag_namespace, flag_value);
-        
+
         let mut rule_store = Self {
             rule_query_cache: HashMap::new(),
             seed_rules: ff_config.rules.clone(),
             cleanup_rules: cleanup_config.rules.clone(),
             scopes: scope_config.scopes.clone(),
-            language
+            language,
         };
 
         for r in &ff_config.rules {
@@ -216,7 +208,7 @@ impl RulesStore {
         return rule_store;
     }
 
-    pub fn cache_query(&mut self, query_str: String){
+    pub fn cache_query(&mut self, query_str: String) {
         let q = Query::new(self.language, &query_str);
         if q.is_err() {
             panic!("Could not parse the query : {}", query_str);
@@ -224,5 +216,4 @@ impl RulesStore {
         let query = q.unwrap();
         let _ = self.rule_query_cache.insert(query_str, query);
     }
-
 }
