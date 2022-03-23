@@ -102,10 +102,12 @@ pub mod piranha {
             parser
                 .set_language(self.language)
                 .expect("Could not set language");
+                
             loop {
+                let mut rules = self.rules_store.seed_rules.clone();
                 let mut any_file_updated = false;
                 for (_, scu) in self.files.iter_mut() {
-                    if scu.apply_seed_rules(&mut self.rules_store, &mut parser) {
+                    if scu.apply_rules(&mut self.rules_store, rules.clone(), &mut parser, None) {
                         any_file_updated = true;
                     }
                 }
@@ -115,11 +117,16 @@ pub mod piranha {
             }
         }
     }
-
+    // (s1, F) (s2, F) (s3, F) 
+    // (s2, F) (s3, F) 
+    // (C1, P) (s2, F) (s3, F) 
+    // (C2, P) (s2, F) (s3, F)
+    // (C3, M) (C4, M) (s2, F), (s3, F)
     pub struct SourceCodeUnit {
         pub ast: Tree,
         pub code: String,
     }
+
 
     impl SourceCodeUnit {
         // This method performs the input code replacement in the source code
@@ -182,12 +189,6 @@ pub mod piranha {
                     return any_match;
                 }
             }
-        }
-
-        fn apply_seed_rules(&mut self, rules_store: &mut RulesStore, parser: &mut Parser) -> bool {
-            let rules = rules_store.seed_rules.clone();
-            println!("SEED RULES : {}", rules.len());
-            self.apply_rules(rules_store, rules, parser, None)
         }
 
         fn apply_rules(
@@ -299,8 +300,8 @@ pub mod piranha {
             for rule in &cleanup_rules {
                 for ancestor in &context {
                     let cr = rule.clone();
-                    if let Some((range, replacement, captures_by_tag)) =
-                        self.get_any_match_for_rule(
+                    if let Some((range, replacement, captures_by_tag)) = self
+                        .get_any_match_for_rule(
                             cr.clone(),
                             rules_store,
                             ancestor.clone(),
@@ -415,33 +416,39 @@ pub mod piranha {
                     query_cache.insert(z, query.unwrap());
                 }
                 let matcher_query = Query::new(language, &c.matcher).unwrap();
-                
+
                 // Apply matcher
-                
+
                 let mut curr_node = node;
                 while let Some(parent) = curr_node.parent() {
-                    if let Some((range, _)) = get_all_relevant_matches(parent, &matcher_query, source_code_bytes, false).first() {
+                    if let Some((range, _)) =
+                        get_all_relevant_matches(parent, &matcher_query, source_code_bytes, false)
+                            .first()
+                    {
                         let matcher = self.get_descendant(range.start_byte, range.end_byte);
                         let mut c_node = node;
                         while let Some(c_p) = c_node.parent() {
                             let mut all_queries_match = true;
                             for (_, query) in &query_cache {
                                 all_queries_match = all_queries_match
-                                    && !get_all_relevant_matches(matcher, query, source_code_bytes, true)
-                                        .is_empty();
+                                    && !get_all_relevant_matches(
+                                        matcher,
+                                        query,
+                                        source_code_bytes,
+                                        true,
+                                    )
+                                    .is_empty();
                             }
                             if all_queries_match {
                                 return c.predicate.eq("All");
                             }
                             c_node = c_p;
                         }
-                        return !c.predicate.eq("All") ;
+                        return !c.predicate.eq("All");
                         // break;
                     }
                     curr_node = parent;
                 }
-                
-                
             }
             true
         }
@@ -450,8 +457,6 @@ pub mod piranha {
     fn map_key_as_tag(s: &String) -> String {
         format!("@{}", s)
     }
-
-    
 
     fn get_all_relevant_matches(
         node: Node,
@@ -503,7 +508,7 @@ pub mod piranha {
                 }
             }
         }
-        output.sort_by(|a,b| a.0.start_byte.cmp(&b.0.start_byte));
+        output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
         output.reverse();
         return output;
     }
