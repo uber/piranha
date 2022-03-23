@@ -318,17 +318,13 @@ query= """
 replace = ""
 and_then_scope = "METHOD"
 [rules.constraint]
-predicate_kind = "None"
+predicate = "None"
+matcher = "((method_declaration) @md1)"
 queries = ["""
 (
-((method_declaration 
-	body : ((block 
-    	((expression_statement 
-    	(assignment_expression
+((assignment_expression
     				left: (_) @l
-                    right: (_) @r)))
-                    ))
-)@md)
+                    right: (_) @r) @a)
 (#eq? @l "[@n]")
 (#not-eq? @r "[@v]")
 )"""]
@@ -354,17 +350,19 @@ query = """
 """
 replace="[@v]"
 [rules.and_then.constraint]
-predicate_kind = "None"
+predicate = "None"
+matcher = "((method_declaration) @md1)"
 queries = ["""
 (
-(expression_statement (assignment_expression
-                                left: (_) @l
-                    right: (_) @r)) @e
+((assignment_expression
+    				left: (_) @l
+                    right: (_) @r) @a)
 (#eq? @l "[@i]")
 ) 
 """]
 
 #########
+
 
 # [[rules]]
 # name="Inline Field Declaration - Delete variable declaration"
@@ -379,7 +377,7 @@ queries = ["""
 # replace = ""
 # and_then_scope = "CLASS"
 # [[rules.constraint]]
-# predicate_kind = "Contains"
+# predicate = "Contains"
 # matcher = "((method_declaration) @md1)"
 # frequency = "One"
 # query = """
@@ -402,7 +400,7 @@ queries = ["""
 # replace="[@v]"
 
 # [[rules.constraint]]
-# predicate_kind = "Contains"
+# predicate = "Contains"
 # matcher = "((method_declaration) @md)"
 # frequency = "None"
 # query = """

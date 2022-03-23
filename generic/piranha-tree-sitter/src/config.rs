@@ -43,7 +43,8 @@ pub struct Rule {
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
-    pub predicate_kind: String, // All, any , none
+    pub matcher: String,
+    pub predicate: String, // All, any , none
     pub queries: Vec<String>,
 }
 
@@ -68,14 +69,6 @@ impl Rule {
         }
         and_then_rules
     }
-
-    // pub fn get_query(&self, language: Language) -> Query {
-    //     let q = Query::new(language, self.query.as_str());
-    //     if q.is_err() {
-    //         panic!("Could not create query for {:?}", self.query);
-    //     }
-    //     q.unwrap()
-    // }
 }
 
 pub fn map_key(s: &String) -> String {
