@@ -364,66 +364,61 @@ queries = ["""
 #########
 
 
-# [[rules]]
-# name="Inline Field Declaration - Delete variable declaration"
-# query= """
-# (
-# ((field_declaration 
-# 				declarator: (variable_declarator 
-#                 					name: (_) @n
-#                 					value: [(true) (false)] @v)) @l)
-# )
-# """
-# replace = ""
-# and_then_scope = "CLASS"
-# [[rules.constraint]]
-# predicate = "Contains"
-# matcher = "((method_declaration) @md1)"
-# frequency = "One"
-# query = """
-# (
-# ((local_variable_declaration 
-# 				declarator: (variable_declarator 
-#                 					name: (_) @n1
-#                 					value: [(true) (false)] @v1)) @l1)
-# (#eq? @n1 [@n])
-# )
-# """
-# [[rules.and_then]]
-# name="Inline local variable declaration - Replace identifier with value"
-# query = """
-# (
-# (identifier )@i
-# (#eq? @i "[@n]")
-# )
-# """
-# replace="[@v]"
-
-# [[rules.constraint]]
-# predicate = "Contains"
-# matcher = "((method_declaration) @md)"
-# frequency = "None"
-# query = """
-# (
-# ((local_variable_declaration 
-# 				declarator: (variable_declarator 
-#                 					name: (_) @n2
-#                 					value: [(true) (false)] @v2)) @l2)
-# (#eq? @n2 [@n1])
-# )
-#"""
-
-
-# (
-# ((method_declaration 
-# 	body : ((block ((expression_statement (assignment_expression
-#     				left: (_) @l
-#                     right: (_) @r)))))
-# )@md)
-# (#eq? @l "tBool")
-# (#not-eq? @r "true")
-# )
-                                    
+            [[rules]]
+name="Inline Field Declaration - Delete field declaration"
+query= """
+(
+((field_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @n
+                					value: [(true) (false)] @v)) @l)
+)
+"""
+replace = ""
+and_then_scope = "CLASS"
+[rules.constraint]
+predicate = "None"
+matcher = "((class_declaration) @cd)"
+queries = ["""
+(
+((assignment_expression
+    				left: (_) @l
+                    right: (_) @r) @a)
+(#eq? @l "[@n]")
+(#not-eq? @r "[@v]")
+)"""]
+[[rules.and_then]]
+name="Inline local variable declaration - Remove redundant assignments"
+query = """
+(
+(expression_statement (assignment_expression
+                                left: (_) @l
+                    right: (_) @r)) @e
+(#eq? @l "[@n]")
+(#eq? @r "[@v]")
+) 
+"""
+replace = ""
+[[rules.and_then]]
+name="Inline local variable declaration - Replace identifier with value"
+query = """
+(
+(identifier )@i
+(#eq? @i "[@n]")
+)
+"""
+replace="[@v]"
+[rules.and_then.constraint]
+predicate = "None"
+matcher = "((method_declaration) @md1)"
+queries = ["""
+(
+((assignment_expression
+    				left: (_) @l
+                    right: (_) @r) @a)
+(#eq? @l "[@i]")
+) 
+"""]             
                                     
                                     
                                     

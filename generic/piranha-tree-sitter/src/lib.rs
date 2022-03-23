@@ -503,6 +503,8 @@ pub mod piranha {
                 }
             }
         }
+        output.sort_by(|a,b| a.0.start_byte.cmp(&b.0.start_byte));
+        output.reverse();
         return output;
     }
 }

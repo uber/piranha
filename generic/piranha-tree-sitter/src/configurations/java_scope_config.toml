@@ -145,3 +145,12 @@ matcher_gen = """
 (#eq? @ff1 "()")
 (#eq? @n1 "[@n]")
 )"""
+
+[[scope.rules]]
+matcher = "(class_declaration name:(_) @n) @c"
+matcher_gen = """
+(
+((class_declaration name:(_) @n1) @c1)
+(#eq? @n1 "[@n]")
+)
+"""
