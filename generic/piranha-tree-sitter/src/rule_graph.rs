@@ -20,12 +20,12 @@ struct Edge {
 struct Edges {
     edges: Vec<Edge>,
 }
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct EdgeWeight {
-    pub scope: String,
-    // pub populate_holes: Option<Vec<String>>,
-    // pub constraint: Option<Constraint>,
-}
+// #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+// pub struct EdgeWeight {
+//     pub scope: String,
+//     // pub populate_holes: Option<Vec<String>>,
+//     // pub constraint: Option<Constraint>,
+// }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 struct Rules {
@@ -33,7 +33,7 @@ struct Rules {
 }
 
 pub struct GraphRuleStore {
-    pub p_rule_graph: HashMap<String, Vec<(EdgeWeight, String)>>,
+    pub p_rule_graph: HashMap<String, Vec<(String, String)>>,
     rule_query_cache: HashMap<String, Query>,
     pub language: Language,
     pub p_rules_by_name: HashMap<String, Rule>,
@@ -105,21 +105,16 @@ impl GraphRuleStore {
 
     pub fn add_seed_rule(
         &mut self,
-        (ew, r): (EdgeWeight, Rule),
+        r: Rule,
         tag_captures_previous_edit: &HashMap<String, String>,
     ) {
-        // let mut ss = HashMap::new();
-        // // ss.extend(self.seed_substitutions);
-        // for (k, v) in tag_captures_previous_edit {
-        //     ss.insert(map_key(&k), String::from(v));
-        // }
-        if ew.scope.eq("Global") {
-            // let new_seed_rule = r.instantiate(&tag_captures_previous_edit, &map_identity);
-            if let Some(new_seed_rule) =  r.instantiate(&tag_captures_previous_edit, &map_identity){
-                println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
-                self.seed_rules.push(new_seed_rule);
-            }
+        
+        // let new_seed_rule = r.instantiate(&tag_captures_previous_edit, &map_identity);
+        if let Some(new_seed_rule) =  r.instantiate(&tag_captures_previous_edit, &map_identity){
+            println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
+            self.seed_rules.push(new_seed_rule);
         }
+        
     }
 
     pub fn get_query(&mut self, query_str: &String) -> &Query {
@@ -139,15 +134,15 @@ impl GraphRuleStore {
         &self,
         rule: Rule,
         tag_matches: &HashMap<String, String>,
-    ) -> HashMap<String, Vec<(EdgeWeight, Rule)>> {
+    ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
-        let mut next_rules: HashMap<String, Vec<(EdgeWeight, Rule)>> = HashMap::new();
+        let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
         if self.p_rule_graph.contains_key(rule_name) {
             for to in self.p_rule_graph[rule_name].iter() {
                 if let Some(transformed_rule) =
                     self.p_rules_by_name[&to.1].instantiate(&tag_matches, &map_key)
                 {
-                    next_rules.collect(String::from(&to.0.scope), (to.0.clone(), transformed_rule));
+                    next_rules.collect(String::from(&to.0), transformed_rule);
                 }else {
                     panic!("Could not transform {:?} \n \n {:?}", self.p_rules_by_name[&to.1], tag_matches);
                 }
@@ -161,19 +156,21 @@ impl GraphRuleStore {
         rule: Rule,
         tag_matches: &HashMap<String, String>,
     ) -> (
-        Vec<(EdgeWeight, Rule)>,
-        Vec<(EdgeWeight, Rule)>,
-        Vec<(EdgeWeight, Rule)>,
+        Vec<Rule>,
+        Vec<Rule>,
+        Vec<Rule>,
+        Vec<Rule>,
     ) {
         let next_rules = self.get_next_rules(rule, tag_matches);
-        let mut file_level_rules = vec![];
+        let mut class_level_rules = vec![];
+        let mut method_level_rules = vec![];
         let mut global_rules = vec![];
         let mut parent_rules = vec![];
         if next_rules.contains_key("Method") {
-            file_level_rules.extend(next_rules["Method"].clone());
+            method_level_rules.extend(next_rules["Method"].clone());
         }
         if next_rules.contains_key("Class") {
-            file_level_rules.extend(next_rules["Class"].clone());
+            class_level_rules.extend(next_rules["Class"].clone());
         }
         if next_rules.contains_key("Global") {
             global_rules.extend(next_rules["Global"].clone());
@@ -181,11 +178,11 @@ impl GraphRuleStore {
         if next_rules.contains_key("Parent") {
             parent_rules.extend(next_rules["Parent"].clone());
         }
-        (parent_rules, file_level_rules, global_rules)
+        (parent_rules, method_level_rules, class_level_rules, global_rules)
     }
 }
 
-type ParameterizedRuleGraph = HashMap<String, Vec<(EdgeWeight, String)>>;
+type ParameterizedRuleGraph = HashMap<String, Vec<(String, String)>>;
 
 pub fn create_rule_graph(
     language: &str,
@@ -242,7 +239,7 @@ pub fn create_rule_graph(
                 graph.entry(f.clone())
                 .or_insert_with(Vec::new)
                 .push((
-                    EdgeWeight {scope: edge.scope.clone()},
+                    String::from(&edge.scope),
                     t.clone(),
                 ));
             }

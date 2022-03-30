@@ -27,7 +27,7 @@ pub mod piranha {
     use crate::utilities::read_file;
     use crate::utilities::substitute_in_str;
 
-    use crate::rule_graph::{EdgeWeight, GraphRuleStore, map_identity};
+    use crate::rule_graph::{GraphRuleStore, map_identity};
 
     pub fn get_cleanups_for_code_base_new(
         path_to_code_base: &str,
@@ -218,13 +218,21 @@ pub mod piranha {
 
                 loop {
 
-                    let (parent_rules, file_level_rules, _global_rules) = rules_store
+                    let (parent_rules, method_level_rules, class_level_rules, _global_rules) = rules_store
                         .get_next(curr_rule.clone(), &self.substitutions);
 
-                        println!("Parent : {}, File : {}, Global: {}", parent_rules.len(), file_level_rules.len(), _global_rules.len());
+                        println!("Parent : {}, Method : {}, Class: {}, Global: {}", parent_rules.len(), method_level_rules.len(), class_level_rules.len(), _global_rules.len());
 
-                    for (ew, r) in file_level_rules {
-                        if let Some(scope_query) = self.get_scope_query(ew.scope, previous_edit, rules_store) {
+                    for  r in method_level_rules {
+                        if let Some(scope_query) = self.get_scope_query(String::from("Method"), previous_edit, rules_store) {
+                            scope_rule_queue.push((scope_query, r.instantiate(&self.substitutions, &map_identity).unwrap()));
+                        }else {
+                            panic!("Could not create scope query");
+                        }
+                    }
+
+                    for  r in class_level_rules {
+                        if let Some(scope_query) = self.get_scope_query(String::from("Class"), previous_edit, rules_store) {
                             scope_rule_queue.push((scope_query, r.instantiate(&self.substitutions, &map_identity).unwrap()));
                         }else {
                             panic!("Could not create scope query");
@@ -338,13 +346,13 @@ pub mod piranha {
             &mut self,
             previous_edit: InputEdit,
             rules_store: &mut GraphRuleStore,
-            rules: &Vec<(EdgeWeight, Rule)>,
+            rules: &Vec<Rule>,
         ) -> Option<(Range, String, Rule, HashMap<String, String>)> {
             let context = self.get_context(previous_edit);
 
             for rule in rules {
                 for ancestor in &context {
-                    let cr = rule.1.clone();
+                    let cr = rule.clone();
                     if let Some((range, replacement, captures_by_tag)) = self
                         .get_any_match_for_rule(
                             cr.clone(),
