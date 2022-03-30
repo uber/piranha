@@ -6,6 +6,7 @@ use colored::Colorize;
 use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::{read_file};
 
+
 #[test]
 fn test_java_scenarios_treated() {
     let language = "Java";
@@ -23,8 +24,8 @@ fn test_java_scenarios_treated() {
     );
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
-    assert_eq!(c.len(), 3);
     
+    assert_eq!(c.len(), 1);
     
     for e in c {
         let file_name = e.0.file_name().unwrap();
@@ -32,24 +33,13 @@ fn test_java_scenarios_treated() {
         .unwrap().path();
         let expected_content = read_file(&f);
         let output = &e.1;
-        let result = output.eq(&expected_content);
+        let result = output.replace("\n", "").eq(&expected_content.replace("\n", ""));
         if !result {
             println!("{}", output);
         }
         assert!(result);
         println!("{}", format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue());
     }
-
-    // pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
-    //     let mut parser = Parser::new();
-    //     parser
-    //         .set_language(language)
-    //         .expect("Could not set language");
-    //     let tree = parser
-    //         .parse(&source_code, None)
-    //         .expect("Could not parse code");
-    //     (parser, tree)
-    // }
 
 
     pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
@@ -71,6 +61,17 @@ fn test_java_scenarios_treated() {
 
     // assert_eq!(expected_content, e.1);
 }
+
+    // pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
+    //     let mut parser = Parser::new();
+    //     parser
+    //         .set_language(language)
+    //         .expect("Could not set language");
+    //     let tree = parser
+    //         .parse(&source_code, None)
+    //         .expect("Could not parse code");
+    //     (parser, tree)
+    // }
 
 // // TODO using sexp is not the most ideal way to test the expected and produced output
 // #[test]

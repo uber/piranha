@@ -1,0 +1,576 @@
+[[rules]]
+name = "Enum Based, toggle enabled"
+query = """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isToggleEnabled")
+(#eq? @f "[stale_flag_name]")
+)"""
+replace = "[treated]"
+tag = ["Feature-flag API cleanup", "Returns boolean"]
+holes = ["[treated]", "[stale_flag_name]"]
+
+
+[[rules]]
+name = "Enum Based, flag enabled"
+query = """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isFlagTreated")
+(#eq? @f "[stale_flag_name]")
+)"""
+replace = "[treated]"
+tag = ["Feature-flag API cleanup", "Returns boolean"]
+holes = ["[treated]", "[stale_flag_name]"]
+
+[[rules]]
+name = "Enum Based, toggle disabled"
+query = """((
+	(method_invocation 
+    	name : (_) @n1
+        arguments: ((argument_list 
+        				([
+                          (field_access field: (_)@f)
+                          (_) @f
+                         ])) )
+        	
+    ) @mi
+)
+(#eq? @n1 "isToggleDisabled")
+(#eq? @f "[stale_flag_name]")
+)"""
+replace = "false"
+tag = ["Feature-flag API cleanup", "Returns boolean"]
+holes = ["[treated]", "[stale_flag_name]"]
+
+[[rules]]
+name = "Enum based, Delete enum constant (just the constant)"
+query =  """
+    (
+    ((enum_constant name : (_)) @ec)       
+    (#eq? @ec "[stale_flag_name]")
+    )
+    """
+replace = ""
+tag = ["Feature-flag API cleanup"]
+holes = ["[stale_flag_name]"]
+
+[[rules]]
+name = "Enum based, Delete enum constant"
+query = """
+    (
+    ((enum_constant name : (_) @n) @ec)       
+    (#eq? @n  "[stale_flag_name]")
+    )
+    """
+replace = ""
+tag = ["Feature-flag API cleanup"]
+holes = ["[stale_flag_name]"]
+#scope = "GLOBAL"
+
+[[rules]]
+name = "Enum based, method invocation, put enabled"
+query = """
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "putToggleEnabled")
+ (#eq? @f "[stale_flag_name]")
+)
+"""
+replace = ""
+tag = ["Feature-flag API cleanup"]
+holes = ["[stale_flag_name]"]
+
+[[rules]]
+name = "Enum based, method invocation, put disabled"
+query = """
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "putToggleDisabled")
+ (#eq? @f "[stale_flag_name]")
+)
+"""
+replace = ""
+tag = ["Feature-flag API cleanup"]
+holes = ["[stale_flag_name]"]
+
+[[rules]]
+name = "Enum based, method invocation, includeEvent"
+query = """
+(
+(expression_statement (method_invocation name : (_) @n
+					arguments: (argument_list
+                    			([
+		                          (field_access field: (_)@f)
+        		                  (_) @f
+                		         ])))@m) @e
+ (#eq? @n "includeEvent")
+ (#eq? @f "[stale_flag_name]")
+)
+"""
+replace = ""
+tag = ["Feature-flag API cleanup"]
+holes = ["[stale_flag_name]"]
+
+[[rules]]
+name = "Interface based, annotated method declaration"
+query = """
+(
+(method_declaration
+	 (modifiers (annotation
+     				name: (_) @a_name
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k1
+							 value: (_) @v1))))
+      name: (_) @m_name
+ )@m1
+ (#eq? @a_name "BoolParam")
+ (#eq? @k1 "key")
+ (#eq? @v1 "\\\"[stale_flag_name]\\\"")
+ )
+ (
+(method_declaration
+	 (modifiers (annotation
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k2
+							 value: (_) @v2))))
+ )@m2
+ (#eq? @k2 "namespace")
+ (#eq? @v2 "\\\"[namespace]\\\"")
+ )
+"""
+replace=""
+tag = ["Feature-flag API cleanup"]
+holes = ["[stale_flag_name]","[namespace]"]
+
+[[rules]]
+name = "Interface based, replace method invocation chain with true/false"
+query = """
+(
+   ((method_invocation
+       object: (method_invocation name: (identifier) @i2)
+       name : (identifier) @i) @m)
+   (#eq? @i "getVal")
+   (#eq? @i2 "[@m_name]")
+)"""
+replace = "[treated]"
+tag = ["Returns boolean"]
+holes = ["[@m_name]", "[treated]"]
+#scope = "GLOBAL"
+
+# [[rules.and_then]]
+# name = "Interface based, method invocation, put"
+# query = ["""
+# (
+# (expression_statement ((method_invocation name: (_) @n
+# 			arguments : (
+#             (argument_list 
+#             	(method_invocation 
+#                 		name: (_) @an)
+#                 ([(true) (false)])
+#              ))
+            
+#             ) @m) @e)
+#  (#eq? @n "put")
+#  (#eq? @an "[stale_flag_name]")
+# )
+# """]
+# replace = ""
+#  
+# 
+
+[[rules]]
+name = "Simple If-(optional)else True"
+query = """
+(
+    (if_statement
+        condition : ((parenthesized_expression ((true) @i)))
+        consequence : ((statement) @s))
+@ifstmt)
+"""
+replace = "@s"
+tag = ["If cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+
+[[rules]]
+name = "Simple If-else False"
+query = """
+(
+    (if_statement
+        condition : ((parenthesized_expression ((false) @i)))
+        consequence : ((statement) @s)
+        alternative : ((_) @el))
+@ifstmt)"""
+replace = "@el"
+tag = ["If cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Simple if False"
+query = """
+(
+    (if_statement
+        condition : ((parenthesized_expression ((false) @i)))
+        consequence : ((statement) @s)
+        !alternative)
+@ifstmt)
+"""
+replace = ""
+tag = ["If cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+[[rules]]
+name = "not False"
+
+query = """
+(
+    (unary_expression
+        operator: "!"
+        operand: (false))
+@u)
+"""
+replace = "true"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+
+[[rules]]
+name = "not True"
+query = """
+(
+    (unary_expression
+        operator: \"!\"
+        operand: (true))
+@u)
+"""
+replace = "false"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+
+[[rules]]
+name = "Remove unnecesary nested block"
+query = """
+(
+    (block
+        (
+
+            (_)*@pre
+            (block (_)* @b)@n
+            (_)*@post
+        )
+    )@b1
+)"""
+replace = """
+{
+    @pre
+    @b
+    @post
+}"""
+tag = ["Block cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+[[rules]]
+name = "And - left operand is True"
+query = """
+(
+    (binary_expression
+        left: (true)
+        operator:"&&"
+         right : (_)* @other )
+) @b"""
+replace = "@other"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+
+[[rules]]
+name = "And - right operand is True"
+query = """
+(
+    (binary_expression
+        left : (_)* @other
+        operator:"&&"
+        right: (true)
+    )
+@b)"""
+replace = "@other"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+
+[[rules]]
+name = "Or - right operand is True"
+query = """
+(
+    (binary_expression
+        left : (_)* @other
+        operator:"||"
+        right: (true)
+    )
+@b)"""
+replace = "true"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Or - left operand is True"
+query = """
+(
+    (binary_expression
+        left : (true)
+        operator:"||"
+        right: (_)* @other
+    )
+@b)
+"""
+replace = "true"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "And - left operand is False"
+query = """
+(
+    (binary_expression
+        left: (false)
+        operator:"&&"
+        right : (_)* @other
+    )
+@b)"""
+replace = "false"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "And - right operand is False"
+
+query = """
+(
+    (binary_expression
+        left : (_)* @other
+        operator:"&&"
+        right: (false)
+    )
+@b)
+"""
+replace = "false"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Or - left operand is False"
+query = """(
+(
+    binary_expression
+        left : (_)* @other
+        operator:"||"
+        right: (false)
+    )
+@b)"""
+replace = "@other"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "And - right operand is False"
+
+query = """
+(
+    (binary_expression
+        left : (false)
+        operator:"||"
+        right: (_)* @other
+    )
+@b)"""
+replace = "@other"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Or - Remove unnecessary brackets from left operand"
+query ="""(
+(
+    binary_expression
+        left: ((parenthesized_expression
+                    (expression !left) @e))
+        operator: "||"
+        right: (_)* @r)
+@bo)"""
+replace = "@e || @r"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Or - Remove unnecessary brackets from right operand"
+query = """
+(binary_expression
+        left: (_)* @l
+        operator: "||"
+        right: ((parenthesized_expression
+                    (expression !left) @e))
+@bo)"""
+replace = "@l || @e"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "And - Remove unnecessary brackets from left operand "
+query = """
+(
+    (binary_expression
+        left: ((parenthesized_expression (expression !left) @e))
+        operator: "&&"
+        right: (_)* @r)
+@bo)"""
+replace = "@e && @r"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "And - Remove unnecessary brackets from right operand "
+query = """(
+    (binary_expression
+        left: (_)* @l
+        operator: "&&"
+        right: ((parenthesized_expression
+                         (expression !left) @e)))
+@bo)"""
+replace = "@l && @e"
+tag = ["Boolean expression cleanup", "Returns boolean"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Elide all statements after return"
+query = """(
+        (block  ((statement)* @pre)
+         ((return_statement) @r)
+         ((statement)+ @post)) @b)"""
+replace = "{\n@pre\n@r\n}"
+tag = ["Block cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Ternay operator True"
+query = """
+(
+    (ternary_expression condition: (true)
+        consequence: (_)* @then
+        alternative: (_)* @else)
+@tt)"""
+replace = "@then"
+tag = ["If cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+[[rules]]
+name = "Ternay operator False"
+query = """
+(
+    (ternary_expression condition: (false)
+        consequence: (_)* @then
+        alternative: (_)* @else)
+@tt)"""
+replace = "@else"
+tag = ["If cleanup", "Statement cleanup"]
+#scope = "PARENT"
+
+# [[rules]]
+# name = "Parenthesized boolean literal"
+# query = """
+# (
+# (parenthesized_expression 
+# 	[(true)
+#      (false)
+#     ] @l
+#     ) @p
+# )
+# """
+# replace = "@l"
+# tag = ["Boolean expression cleanup", "Returns boolean"]
+# #scope = "PARENT"
+
+
+
+[[rules]]
+name="Inline Local Variable Declaration - Delete variable declaration"
+query= """
+(
+((local_variable_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @n
+                					value: [(true) (false)] @v)) @l)
+)
+"""
+replace = ""
+tag = []
+
+
+[[rules]]
+name="Inline Field Declaration - Delete field declaration"
+query= """
+(
+((field_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @n
+                					value: [(true) (false)] @v)) @l)
+)
+"""
+replace = ""
+tag = []
+
+[[rules]]
+name="Remove assignment"
+query = """
+(
+(expression_statement (assignment_expression
+                                left: (_) @l
+                    right: (_) @r)) @e
+(#eq? @l "[@n]")
+(#eq? @r "[@v]")
+) 
+"""
+replace = ""
+tag = []
+holes = ["[@n]", "[@v]"]
+
+
+[[rules]]
+name="Replace identifier with value"
+query = """
+(
+(identifier )@i
+(#eq? @i "[@n]")
+)
+"""
+replace="[@v]"
+tag = []
+holes = ["[@n]", "[@v]"]

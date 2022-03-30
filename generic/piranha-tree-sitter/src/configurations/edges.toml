@@ -1,0 +1,97 @@
+[[edges]]
+from = "Feature-flag API cleanup"
+scope = "Parent"
+to = "Boolean expression cleanup"
+
+[[edges]]
+from = "Interface based, annotated method declaration"
+scope = "Global"
+populate_holes = ["[@m_name]", "@m_name"]
+to = "Interface based, replace method invocation chain with true/false"
+
+[[edges]]
+from = "Interface based, replace method invocation chain with true/false"
+scope = "Parent"
+to = "Boolean expression cleanup"
+
+[[edges]]
+from = "Returns boolean"
+scope = "Parent"
+to = "Statement cleanup"
+
+[[edges]]
+from = "Boolean expression cleanup"
+scope = "Parent"
+to = "Boolean expression cleanup"
+
+[[edges]]
+from = "If cleanup"
+scope = "Parent"
+to = "Block cleanup"
+
+[[edges]]
+from = "Returns boolean"
+scope = "Parent"
+to = "Inline Local Variable Declaration - Delete variable declaration"
+# [[edges.constraint]]
+# scope = "(method_declaration) @md"
+# predicate = "!"
+# queries = ["""
+# (
+# ((assignment_expression
+#     				left: (_) @l
+#                     right: (_) @r) @a)
+# (#eq? @l "[@n]")
+# (#not-eq? @r "[@v]")
+# )"""]
+
+[[edges]]
+from = "Returns boolean"
+scope = "Parent"
+to = "Inline Field Declaration - Delete field declaration"
+# [[edges.constraint]]
+# scope = "(class_declaration) @cd"
+# predicate = "!"
+# queries = ["""(
+# ((assignment_expression
+#     				left: (_) @l
+#                     right: (_) @r) @a)
+# (#eq? @l "[@n]")
+# (#not-eq? @r "[@v]")
+# )"""]
+
+[[edges]]
+from = "Inline Local Variable Declaration - Delete variable declaration"
+to = "Replace identifier with value"
+scope = "Method"
+populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+
+[[edges]]
+from = "Inline Local Variable Declaration - Delete variable declaration"
+scope = "Method"
+populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+to = "Remove assignment"
+
+
+[[edges]]
+from = "Inline Field Declaration - Delete field declaration"
+scope = "Class"
+populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+to = "Remove assignment"
+
+
+[[edges]]
+from = "Inline Field Declaration - Delete field declaration"
+scope = "Class"
+populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+to = "Replace identifier with value"
+
+[[edges]]
+from = "Replace identifier with value"
+scope = "Parent"
+to = "Boolean expression cleanup"
+
+[[edges]]
+from = "Remove unnecesary nested block"
+scope = "Parent"
+to = "Elide all statements after return"
