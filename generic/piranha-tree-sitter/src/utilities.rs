@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::{DirEntry, File, self};
 use std::io::{BufReader, Read};
+use std::hash::Hash;
+// use extend::ext;
 
 pub fn read_file(file_path: &PathBuf) -> String {
     let mut content = String::new();
@@ -48,6 +50,18 @@ pub fn substitute_in_str(
         output = output.replace(&key, substitute)
     }
     output
+}
+
+pub trait MapOfVec<T, V> {
+    fn collect(&mut self,key: T, value: V) ;
+}
+
+impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>>  {
+    fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value : U) {
+        self.entry(key)
+                .or_insert_with(Vec::new)
+                .push(value);
+    }
 }
 
 // pub fn apply_substitutions_to_string(item: String, substitutions:HashMap<String,String>)-> String{

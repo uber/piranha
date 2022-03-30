@@ -1,5 +1,5 @@
 [[scopes]]
-name = "METHOD"
+name = "Method"
 [[scopes.rules]]
 matcher =  """
 ((method_declaration 
@@ -146,7 +146,9 @@ matcher_gen = """
 (#eq? @n1 "[@n]")
 )"""
 
-[[scope.rules]]
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
 matcher = "(class_declaration name:(_) @n) @c"
 matcher_gen = """
 (

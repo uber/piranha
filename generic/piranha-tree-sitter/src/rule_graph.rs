@@ -1,6 +1,6 @@
 use crate::{
     config::{Rule, Scope, ScopeConfig},
-    utilities::{read_file, substitute_in_str},
+    utilities::{read_file, substitute_in_str, MapOfVec},
 };
 use colored::Colorize;
 use serde_derive::Deserialize;
@@ -12,7 +12,7 @@ struct Edge {
     pub from: String,
     pub to: String,
     pub scope: String,
-    pub populate_holes: Option<Vec<String>>,
+    // pub populate_holes: Option<Vec<String>>,
     // pub constraint: Option<Constraint>,
 }
 
@@ -23,7 +23,7 @@ struct Edges {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct EdgeWeight {
     pub scope: String,
-    pub populate_holes: Option<Vec<String>>,
+    // pub populate_holes: Option<Vec<String>>,
     // pub constraint: Option<Constraint>,
 }
 
@@ -46,8 +46,7 @@ pub fn map_key(s: &String) -> String {
     format!("[@{}]", s)
 }
 
-
-fn map_identity(x: &String) -> String {
+pub fn map_identity(x: &String) -> String {
     String::from(x)
 }
 
@@ -75,18 +74,17 @@ impl GraphRuleStore {
                 String::from(&treated_c),
             ),
         ]);
-        
-        // Seed rules = All parameterized rules with `> 0` holes and can be instantiated with above 
+
+        // Seed rules = All parameterized rules with `> 0` holes and can be instantiated with above
         // substitutions
         let mut seed_rules = vec![];
         for (_, rule) in &p_rules_by_name {
-            if let Some(_) = &rule.holes{
-                if let Some(r) = rule.instantiate(&seed_substitutions, &map_identity){
+            if let Some(_) = &rule.holes {
+                if let Some(r) = rule.instantiate(&seed_substitutions, &map_identity) {
                     print!("{:?}", r);
                     seed_rules.push(r);
                 }
             }
-            
         }
         println!("{}", format!("{}", seed_rules.len()).red());
 
@@ -105,18 +103,22 @@ impl GraphRuleStore {
         self.seed_rules.clone()
     }
 
-    pub fn add_seed_rule(&mut self, (ew, r): (EdgeWeight, Rule), tag_captures_previous_edit: HashMap<String, String>){
-        let mut ss = HashMap::new();
-        // ss.extend(self.seed_substitutions);
-        for (k,v) in tag_captures_previous_edit {
-            ss.insert(map_key(&k), v);
-        }
-        if ew.scope.eq("Global"){
-            let new_seed_rule = r.instantiate(&&ss, &map_identity);
-            if new_seed_rule.is_some(){
-                self.seed_rules.push(new_seed_rule.unwrap());
+    pub fn add_seed_rule(
+        &mut self,
+        (ew, r): (EdgeWeight, Rule),
+        tag_captures_previous_edit: &HashMap<String, String>,
+    ) {
+        // let mut ss = HashMap::new();
+        // // ss.extend(self.seed_substitutions);
+        // for (k, v) in tag_captures_previous_edit {
+        //     ss.insert(map_key(&k), String::from(v));
+        // }
+        if ew.scope.eq("Global") {
+            // let new_seed_rule = r.instantiate(&tag_captures_previous_edit, &map_identity);
+            if let Some(new_seed_rule) =  r.instantiate(&tag_captures_previous_edit, &map_identity){
+                println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
+                self.seed_rules.push(new_seed_rule);
             }
-
         }
     }
 
@@ -129,7 +131,6 @@ impl GraphRuleStore {
             let _ = self
                 .rule_query_cache
                 .insert(String::from(query_str), q.unwrap());
-                // .unwrap();
         }
         return self.rule_query_cache.get(query_str).unwrap();
     }
@@ -140,32 +141,30 @@ impl GraphRuleStore {
         tag_matches: &HashMap<String, String>,
     ) -> HashMap<String, Vec<(EdgeWeight, Rule)>> {
         let rule_name = &rule.name;
-        let mut next_rules = HashMap::new();
+        let mut next_rules: HashMap<String, Vec<(EdgeWeight, Rule)>> = HashMap::new();
         if self.p_rule_graph.contains_key(rule_name) {
             for to in self.p_rule_graph[rule_name].iter() {
-                let r = self.p_rules_by_name[&to.1].clone();
-                let transformed_rule = Rule {
-                    name: r.name,
-                    query: substitute_in_str(&tag_matches, &r.query, &map_key),
-                    replace: substitute_in_str(&tag_matches, &r.replace, &map_key),
-                    holes: r.holes,
-                    tag: r.tag,
-                };
-                next_rules
-                    .entry(String::from(&to.0.scope))
-                    .or_insert_with(Vec::new)
-                    .push((to.0.clone(), transformed_rule));
+                if let Some(transformed_rule) =
+                    self.p_rules_by_name[&to.1].instantiate(&tag_matches, &map_key)
+                {
+                    next_rules.collect(String::from(&to.0.scope), (to.0.clone(), transformed_rule));
+                }else {
+                    panic!("Could not transform {:?} \n \n {:?}", self.p_rules_by_name[&to.1], tag_matches);
+                }
             }
         }
         next_rules
     }
 
-
     pub fn get_next(
         &self,
         rule: Rule,
         tag_matches: &HashMap<String, String>,
-    ) -> (Vec<(EdgeWeight, Rule)>,Vec<(EdgeWeight, Rule)>, Vec<(EdgeWeight, Rule)>) {
+    ) -> (
+        Vec<(EdgeWeight, Rule)>,
+        Vec<(EdgeWeight, Rule)>,
+        Vec<(EdgeWeight, Rule)>,
+    ) {
         let next_rules = self.get_next_rules(rule, tag_matches);
         let mut file_level_rules = vec![];
         let mut global_rules = vec![];
@@ -198,70 +197,59 @@ pub fn create_rule_graph(
         .join("src")
         .join("configurations");
 
-    let path_to_all_rules_toml = match language {
-        "Java" => path_to_config.join("all_rules.toml"),
+    // Read the configuration files.
+    let (path_to_all_rules_toml, path_to_edges, path_to_scope_config) = match language {
+        "Java" => (
+            path_to_config.join("all_rules.toml"),
+            path_to_config.join("edges.toml"),
+            path_to_config.join("java_scope_config.toml"),
+        ),
         _ => panic!(),
     };
 
-    let path_to_edges = match language {
-        "Java" => path_to_config.join("edges.toml"),
-        _ => panic!(),
-    };
-    
+    let all_rules_content = read_file(&path_to_all_rules_toml);
+    let edges_content = read_file(&path_to_edges);
+    let scope_config_content = read_file(&path_to_scope_config);
+
     #[rustfmt::skip]
     let treated = format!("{}", flag_value.eq("true"));
     println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {flag_name}\n (ii) Value: {treated} \n (iii) flag_namespace : {flag_namespace}").purple());
 
-    let all_rules_content = read_file(&path_to_all_rules_toml);
-    // substitute_in_str( &substitutions, &read_file(&path_to_all_rules_toml), &identity,);
-
-    let edges_content = read_file(&path_to_edges);
-
-    let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
-    let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
-
+    // Group rules by tag
+    // Collect groups by name
     let mut rules_by_name = HashMap::new();
     let mut rules_by_tag = HashMap::new();
+    let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
 
     for rule in all_rules.rules {
         rules_by_name.insert(String::from(&rule.name), rule.clone());
 
         if let Some(tags) = &rule.tag {
             for tag in tags {
-                rules_by_tag
-                    .entry(String::from(tag))
-                    .or_insert_with(Vec::new)
-                    .push(String::from(&rule.name));
+                rules_by_tag.collect(String::from(tag), String::from(&rule.name));
             }
         }
     }
 
+    // Construct Graph
     let mut graph: ParameterizedRuleGraph = HashMap::new();
-
+    let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
     for edge in edges.edges {
         let froms = get_rules_for_tag_or_name(&edge.from, &rules_by_name, &rules_by_tag);
         let tos = get_rules_for_tag_or_name(&edge.to, &rules_by_name, &rules_by_tag);
         for f in &froms {
-            // let fi = node_idx_map[f];
             for t in &tos {
-                graph.entry(f.clone()).or_insert_with(Vec::new).push((
-                    EdgeWeight {
-                        scope: edge.scope.clone(),
-                        // constraint: edge.constraint.clone(),
-                        populate_holes: edge.populate_holes.clone(),
-                    },
+                graph.entry(f.clone())
+                .or_insert_with(Vec::new)
+                .push((
+                    EdgeWeight {scope: edge.scope.clone()},
                     t.clone(),
                 ));
             }
         }
     }
-    
 
-    let path_to_scope_config = match language {
-        "Java" => path_to_config.join("java_scope_config.toml"),
-        _ => panic!(),
-    };
-    let scope_config_content = read_file(&path_to_scope_config);
+    println!("Neighbors for citrus method decl {:?}", graph["Interface based, annotated method declaration"]);
 
     let scope_config: ScopeConfig = toml::from_str(&scope_config_content).unwrap();
 

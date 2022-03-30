@@ -6,7 +6,7 @@ to = "Boolean expression cleanup"
 [[edges]]
 from = "Interface based, annotated method declaration"
 scope = "Global"
-populate_holes = ["[@m_name]", "@m_name"]
+# populate_holes = ["[@m_name]", "@m_name"]
 to = "Interface based, replace method invocation chain with true/false"
 
 [[edges]]
@@ -64,19 +64,19 @@ to = "Inline Field Declaration - Delete field declaration"
 from = "Inline Local Variable Declaration - Delete variable declaration"
 to = "Replace identifier with value"
 scope = "Method"
-populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+# populate_holes = ["[@n]", "@n", "[@v]", "@v"]
 
 [[edges]]
 from = "Inline Local Variable Declaration - Delete variable declaration"
 scope = "Method"
-populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+# populate_holes = ["[@n]", "@n", "[@v]", "@v"]
 to = "Remove assignment"
 
 
 [[edges]]
 from = "Inline Field Declaration - Delete field declaration"
 scope = "Class"
-populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+# populate_holes = ["[@n]", "@n", "[@v]", "@v"]
 to = "Remove assignment"
 
 
@@ -90,6 +90,11 @@ to = "Replace identifier with value"
 from = "Replace identifier with value"
 scope = "Parent"
 to = "Boolean expression cleanup"
+
+[[edges]]
+from = "Replace identifier with value"
+scope = "Parent"
+to = "If cleanup"
 
 [[edges]]
 from = "Remove unnecesary nested block"
