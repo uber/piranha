@@ -12,20 +12,12 @@ struct Edge {
     pub from: String,
     pub to: String,
     pub scope: String,
-    // pub populate_holes: Option<Vec<String>>,
-    // pub constraint: Option<Constraint>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 struct Edges {
     edges: Vec<Edge>,
 }
-// #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-// pub struct EdgeWeight {
-//     pub scope: String,
-//     // pub populate_holes: Option<Vec<String>>,
-//     // pub constraint: Option<Constraint>,
-// }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 struct Rules {
@@ -60,8 +52,8 @@ impl GraphRuleStore {
     ) -> GraphRuleStore {
         let (p_rule_graph, p_rules_by_name, scopes) =
             create_rule_graph(input_language, flag_name, flag_namespace, flag_value);
-        let rule_query_cache = HashMap::new();
 
+        let rule_query_cache = HashMap::new();
         let flag_val = flag_value.eq("true");
         let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
 
@@ -103,18 +95,12 @@ impl GraphRuleStore {
         self.seed_rules.clone()
     }
 
-    pub fn add_seed_rule(
-        &mut self,
-        r: Rule,
-        tag_captures_previous_edit: &HashMap<String, String>,
-    ) {
-        
+    pub fn add_seed_rule(&mut self, r: Rule, tag_captures_previous_edit: &HashMap<String, String>) {
         // let new_seed_rule = r.instantiate(&tag_captures_previous_edit, &map_identity);
-        if let Some(new_seed_rule) =  r.instantiate(&tag_captures_previous_edit, &map_identity){
+        if let Some(new_seed_rule) = r.instantiate(&tag_captures_previous_edit, &map_identity) {
             println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
             self.seed_rules.push(new_seed_rule);
         }
-        
     }
 
     pub fn get_query(&mut self, query_str: &String) -> &Query {
@@ -137,14 +123,16 @@ impl GraphRuleStore {
     ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
-        if self.p_rule_graph.contains_key(rule_name) {
-            for to in self.p_rule_graph[rule_name].iter() {
+        
+        
+        if let Some(from_rule) = self.p_rule_graph.get(rule_name){
+            for (scope, to_rule) in from_rule {
                 if let Some(transformed_rule) =
-                    self.p_rules_by_name[&to.1].instantiate(&tag_matches, &map_key)
+                    self.p_rules_by_name[to_rule].instantiate(&tag_matches, &map_key)
                 {
-                    next_rules.collect(String::from(&to.0), transformed_rule);
-                }else {
-                    panic!("Could not transform {:?} \n \n {:?}", self.p_rules_by_name[&to.1], tag_matches);
+                    next_rules.collect(String::from(scope), transformed_rule);
+                } else {
+                    panic!("Could not transform {:?} \n \n {:?}", from_rule, tag_matches);
                 }
             }
         }
@@ -155,30 +143,14 @@ impl GraphRuleStore {
         &self,
         rule: Rule,
         tag_matches: &HashMap<String, String>,
-    ) -> (
-        Vec<Rule>,
-        Vec<Rule>,
-        Vec<Rule>,
-        Vec<Rule>,
-    ) {
+    ) -> (Vec<Rule>, Vec<Rule>, Vec<Rule>, Vec<Rule>) {
         let next_rules = self.get_next_rules(rule, tag_matches);
-        let mut class_level_rules = vec![];
-        let mut method_level_rules = vec![];
-        let mut global_rules = vec![];
-        let mut parent_rules = vec![];
-        if next_rules.contains_key("Method") {
-            method_level_rules.extend(next_rules["Method"].clone());
-        }
-        if next_rules.contains_key("Class") {
-            class_level_rules.extend(next_rules["Class"].clone());
-        }
-        if next_rules.contains_key("Global") {
-            global_rules.extend(next_rules["Global"].clone());
-        }
-        if next_rules.contains_key("Parent") {
-            parent_rules.extend(next_rules["Parent"].clone());
-        }
-        (parent_rules, method_level_rules, class_level_rules, global_rules)
+        
+        let get = |s: &str|{
+            if next_rules.contains_key(s) {next_rules[s].clone()} else {vec![]}
+        };
+
+        (get("Parent"), get("Method"), get("Class"), get("Global"))
     }
 }
 
@@ -214,16 +186,15 @@ pub fn create_rule_graph(
 
     // Group rules by tag
     // Collect groups by name
+    let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
+    
     let mut rules_by_name = HashMap::new();
     let mut rules_by_tag = HashMap::new();
-    let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
-
     for rule in all_rules.rules {
-        rules_by_name.insert(String::from(&rule.name), rule.clone());
-
+        rules_by_name.insert(rule.name.clone(), rule.clone());
         if let Some(tags) = &rule.tag {
             for tag in tags {
-                rules_by_tag.collect(String::from(tag), String::from(&rule.name));
+                rules_by_tag.collect(tag.clone(), rule.name.clone());
             }
         }
     }
@@ -232,25 +203,15 @@ pub fn create_rule_graph(
     let mut graph: ParameterizedRuleGraph = HashMap::new();
     let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
     for edge in edges.edges {
-        let froms = get_rules_for_tag_or_name(&edge.from, &rules_by_name, &rules_by_tag);
-        let tos = get_rules_for_tag_or_name(&edge.to, &rules_by_name, &rules_by_tag);
-        for f in &froms {
-            for t in &tos {
-                graph.entry(f.clone())
-                .or_insert_with(Vec::new)
-                .push((
-                    String::from(&edge.scope),
-                    t.clone(),
-                ));
+        for f in get_rules_for_tag_or_name(&edge.from, &rules_by_name, &rules_by_tag) {
+            for t in get_rules_for_tag_or_name(&edge.to, &rules_by_name, &rules_by_tag) {
+                graph.collect(f.clone(), (String::from(&edge.scope), t.clone()));
             }
         }
     }
 
-    println!("Neighbors for citrus method decl {:?}", graph["Interface based, annotated method declaration"]);
-
-    let scope_config: ScopeConfig = toml::from_str(&scope_config_content).unwrap();
-
-    (graph, rules_by_name, scope_config.scopes.clone())
+    let scopes = toml::from_str(&scope_config_content).map(|x:ScopeConfig|x.scopes).unwrap();
+    (graph, rules_by_name, scopes)
 }
 
 fn get_rules_for_tag_or_name(
@@ -258,14 +219,9 @@ fn get_rules_for_tag_or_name(
     rules_by_name: &HashMap<String, Rule>,
     rules_by_tag: &HashMap<String, Vec<String>>,
 ) -> Vec<String> {
-    let mut output = vec![];
     if rules_by_name.contains_key(val) {
-        output.push(String::from(&rules_by_name.get(val).unwrap().name));
+        vec![String::from(&rules_by_name[val].name)]
     } else {
-        println!("{}", val);
-        for r in rules_by_tag.get(val).unwrap() {
-            output.push(String::from(r));
-        }
+        rules_by_tag[val].clone()
     }
-    output
 }
