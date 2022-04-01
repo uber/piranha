@@ -172,13 +172,7 @@ pub mod piranha {
             {
                 any_match = true;
                 let edit = self.apply_edit(range, rpl, parser);
-
-                // TODO: Cleanup
-                let mut cc = HashMap::new();
-                for (k, v) in captures_by_tag {
-                    cc.insert(k.to_parameterized_rule_hole(), v);
-                }
-                self.substitutions.extend(cc);
+                self.substitutions.extend(captures_by_tag);
 
                 let mut previous_edit = edit.clone();
                 let mut curr_rule = rule.clone();
@@ -187,6 +181,7 @@ pub mod piranha {
                 loop {
                     let (parent_rules, method_level_rules, class_level_rules, _global_rules) =
                         rules_store.get_next(curr_rule.clone(), &self.substitutions);
+                    println!("Method {} Class {}", method_level_rules.len(), class_level_rules.len());
 
                     let mut add_to_queue = |s: &str, rules: Vec<Rule>| {
                         for r in rules {
@@ -194,7 +189,7 @@ pub mod piranha {
                                 self.get_scope_query(String::from(s), previous_edit, rules_store)
                             {
                                 if let Some(transformed_rule) =
-                                    r.instantiate(&self.substitutions, &map_identity)
+                                    r.instantiate(&self.substitutions)
                                 {
                                     scope_rule_queue.push((scope_query, transformed_rule));
                                 } else {
@@ -225,13 +220,7 @@ pub mod piranha {
                         println!("{}", format!("Matched parent for cleanup").red());
                         previous_edit = self.apply_edit(c_range, replacement_str, parser);
                         curr_rule = matched_rule;
-
-                        //TODO: Remove this pattern with trait
-                        let mut cc = HashMap::new();
-                        for (k, v) in new_capture_by_tag {
-                            cc.insert(k.to_parameterized_rule_hole(), v);
-                        }
-                        self.substitutions.extend(cc);
+                        self.substitutions.extend(new_capture_by_tag);
                     } else {
                         break;
                     }
@@ -299,7 +288,7 @@ pub mod piranha {
                     ) {
                         let transformed_query = m
                             .matcher_gen
-                            .substitute_parameterized_rule_holes(&captures_by_tag);
+                            .substitute_rule_holes(&captures_by_tag);
                         let _ = rules_store.get_query(&transformed_query);
                         return Some(transformed_query);
                     } else {
@@ -400,6 +389,7 @@ pub mod piranha {
                 let n = node
                     .descendant_for_byte_range(range.start_byte, range.end_byte)
                     .unwrap();
+                
                 if self.satisfies_constraint(
                     n,
                     rule_store.language,
@@ -407,6 +397,7 @@ pub mod piranha {
                     source_code_bytes,
                     &captures_by_tag,
                 ) {
+
                     let replacement = rule.replace.substitute_rule_holes(&captures_by_tag);
                     return Some((range.clone(), replacement, captures_by_tag));
                 }
@@ -425,7 +416,8 @@ pub mod piranha {
             if let Some(c) = constraint {
                 let mut query_cache = HashMap::new();
                 for q in &c.queries {
-                    let query_str = q.substitute_parameterized_rule_holes(&capture_by_tags);
+                    let query_str = q.substitute_rule_holes(&capture_by_tags);
+                    println!("Inside satifies constraint {:?} {:?}", capture_by_tags, query_str);
                     if let Ok(query) = Query::new(language, &query_str) {
                         query_cache.insert(query_str, query);
                     }

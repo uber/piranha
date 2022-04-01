@@ -12,11 +12,11 @@ query = """((
     ) @mi
 )
 (#eq? @n1 "isToggleEnabled")
-(#eq? @f "[stale_flag_name]")
+(#eq? @f "@stale_flag_name")
 )"""
-replace = "[treated]"
+replace = "@treated"
 tag = ["Feature-flag API cleanup", "Returns boolean"]
-holes = ["[treated]", "[stale_flag_name]"]
+holes = ["@treated", "@stale_flag_name"]
 
 
 [[rules]]
@@ -33,11 +33,11 @@ query = """((
     ) @mi
 )
 (#eq? @n1 "isFlagTreated")
-(#eq? @f "[stale_flag_name]")
+(#eq? @f "@stale_flag_name")
 )"""
-replace = "[treated]"
+replace = "@treated"
 tag = ["Feature-flag API cleanup", "Returns boolean"]
-holes = ["[treated]", "[stale_flag_name]"]
+holes = ["@treated", "@stale_flag_name"]
 
 [[rules]]
 name = "Enum Based, toggle disabled"
@@ -53,35 +53,35 @@ query = """((
     ) @mi
 )
 (#eq? @n1 "isToggleDisabled")
-(#eq? @f "[stale_flag_name]")
+(#eq? @f "@stale_flag_name")
 )"""
 replace = "false"
 tag = ["Feature-flag API cleanup", "Returns boolean"]
-holes = ["[treated]", "[stale_flag_name]"]
+holes = ["@treated", "@stale_flag_name"]
 
 [[rules]]
 name = "Enum based, Delete enum constant (just the constant)"
 query = """
     (
     ((enum_constant name : (_)) @ec)       
-    (#eq? @ec "[stale_flag_name]")
+    (#eq? @ec "@stale_flag_name")
     )
     """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]"]
+holes = ["@stale_flag_name"]
 
 [[rules]]
 name = "Enum based, Delete enum constant"
 query = """
     (
     ((enum_constant name : (_) @n) @ec)       
-    (#eq? @n  "[stale_flag_name]")
+    (#eq? @n  "@stale_flag_name")
     )
     """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]"]
+holes = ["@stale_flag_name"]
 
 
 [[rules]]
@@ -95,12 +95,12 @@ query = """
         		                  (_) @f
                 		         ])))@m) @e
  (#eq? @n "putToggleEnabled")
- (#eq? @f "[stale_flag_name]")
+ (#eq? @f "@stale_flag_name")
 )
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]"]
+holes = ["@stale_flag_name"]
 
 [[rules]]
 name = "Enum based, method invocation, put disabled"
@@ -113,12 +113,12 @@ query = """
         		                  (_) @f
                 		         ])))@m) @e
  (#eq? @n "putToggleDisabled")
- (#eq? @f "[stale_flag_name]")
+ (#eq? @f "@stale_flag_name")
 )
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]"]
+holes = ["@stale_flag_name"]
 
 [[rules]]
 name = "Enum based, method invocation, includeEvent"
@@ -131,12 +131,12 @@ query = """
         		                  (_) @f
                 		         ])))@m) @e
  (#eq? @n "includeEvent")
- (#eq? @f "[stale_flag_name]")
+ (#eq? @f "@stale_flag_name")
 )
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]"]
+holes = ["@stale_flag_name"]
 
 [[rules]]
 name = "Interface based, annotated method declaration"
@@ -153,7 +153,7 @@ query = """
  )@m1
  (#eq? @a_name "BoolParam")
  (#eq? @k1 "key")
- (#eq? @v1 "\\\"[stale_flag_name]\\\"")
+ (#eq? @v1 "\\\"@stale_flag_name\\\"")
  )
  (
 (method_declaration
@@ -164,12 +164,12 @@ query = """
 							 value: (_) @v2))))
  )@m2
  (#eq? @k2 "namespace")
- (#eq? @v2 "\\\"[namespace]\\\"")
+ (#eq? @v2 "\\\"@namespace\\\"")
  )
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]", "[namespace]"]
+holes = ["@stale_flag_name", "@namespace"]
 
 [[rules]]
 name = "Interface based, replace method invocation chain with true/false"
@@ -179,11 +179,11 @@ query = """
        object: (method_invocation name: (identifier) @i2)
        name : (identifier) @i) @m)
    (#eq? @i "getVal")
-   (#eq? @i2 "[@m_name]")
+   (#eq? @i2 "@m_name")
 )"""
-replace = "[treated]"
+replace = "@treated"
 tag = ["Returns boolean"]
-holes = ["[@m_name]", "[treated]"]
+holes = ["@m_name", "@treated"]
 
 
 # [[rules.and_then]]
@@ -200,7 +200,7 @@ holes = ["[@m_name]", "[treated]"]
 
 #             ) @m) @e)
 #  (#eq? @n "put")
-#  (#eq? @an "[stale_flag_name]")
+#  (#eq? @an "@stale_flag_name")
 # )
 # """]
 # replace = ""
@@ -518,10 +518,10 @@ predicate = "None"
 queries = ["""
 (
 ((assignment_expression
-    				left: (_) @l
+    				left: (_) @o1
                     right: (_) @r) @a)
-(#eq? @l "[@n]")
-(#not-eq? @r "[@v]")
+(#eq? @o1 "@n")
+(#not-eq? @r "@v")
 )"""]
 
 # TODO: Add a inline field declaration without RHS.
@@ -542,10 +542,10 @@ matcher = "(class_declaration) @cd"
 predicate = "None"
 queries = ["""(
 ((assignment_expression
-    				left: (_) @l
+    				left: (_) @o
                     right: (_) @r) @a)
-(#eq? @l "[@n]")
-(#not-eq? @r "[@v]")
+(#eq? @o "@n")
+(#not-eq? @r "@v")
 )"""]
 
 [[rules]]
@@ -555,13 +555,13 @@ query = """
 (expression_statement (assignment_expression
                                 left: (_) @l
                     right: (_) @r)) @e
-(#eq? @l "[@n]")
-(#eq? @r "[@v]")
+(#eq? @l "@n")
+(#eq? @r "@v")
 ) 
 """
 replace = ""
 tag = []
-holes = ["[@n]", "[@v]"]
+holes = ["@n", "@v"]
 
 # Remove assignment if it is the only assignment in the entire class. 
 # This should be done in class and method scope. But while deleting the assignment, 
@@ -583,10 +583,10 @@ matcher = "(class_declaration) @cd"
 predicate = "None"
 queries = ["""(
 ((assignment_expression
-    				left: (_) @l1
-                    right: (_) @r1) @a)
-(#eq? @l1 "[@l]")
-(#not-eq? @r1 "[@v]")
+    				left: (_) @u1
+                    right: (_) @k) @a)
+(#eq? @u1 "@l")
+(#not-eq? @k "@v")
 )"""]
 
 
@@ -595,9 +595,9 @@ name = "Replace identifier with value"
 query = """
 (
 (identifier )@i
-(#eq? @i "[@n]")
+(#eq? @i "@n")
 )
 """
-replace = "[@v]"
+replace = "@v"
 tag = []
-holes = ["[@n]", "[@v]"]
+holes = ["@n", "@v"]

@@ -47,7 +47,7 @@ impl GraphRuleStore {
         let mut seed_rules = vec![];
         for (_, rule) in &p_rules_by_name {
             if let Some(_) = &rule.holes {
-                if let Some(r) = rule.instantiate(&args.input_substiution, &map_identity) {
+                if let Some(r) = rule.instantiate(&args.input_substiution) {
                     seed_rules.push(r);
                 }
             }
@@ -70,7 +70,7 @@ impl GraphRuleStore {
     }
 
     pub fn add_seed_rule(&mut self, r: Rule, tag_captures_previous_edit: &HashMap<String, String>) {
-        if let Some(new_seed_rule) = r.instantiate(&tag_captures_previous_edit, &map_identity) {
+        if let Some(new_seed_rule) = r.instantiate(&tag_captures_previous_edit) {
             println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
             self.seed_rules.push(new_seed_rule);
         }
@@ -92,7 +92,7 @@ impl GraphRuleStore {
         if let Some(from_rule) = self.p_rule_graph.get(rule_name) {
             for (scope, to_rule) in from_rule {
                 if let Some(transformed_rule) =
-                    self.p_rules_by_name[to_rule].instantiate(&tag_matches, &map_identity)
+                    self.p_rules_by_name[to_rule].instantiate(&tag_matches)
                 {
                     next_rules.collect_as_counter(String::from(scope), transformed_rule);
                 } else {

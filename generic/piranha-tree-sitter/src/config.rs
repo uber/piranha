@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use colored::Colorize;
 use serde_derive::Deserialize;
+use std::{collections::HashMap, hash::Hash};
 
-use crate::utilities::substitute_in_str;
+use crate::{tree_sitter::TreeSitterQuery, utilities::substitute_in_str};
 
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
@@ -18,28 +18,23 @@ impl PiranhaArguments {
         flag_namespace: &str,
         flag_value: &str,
     ) -> Self {
-
         let flag_val = flag_value.eq("true");
         let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
 
         let input_substiution = HashMap::from([
-            (String::from("[stale_flag_name]"), String::from(flag_name)),
-            (String::from("[treated]"), String::from(&treated)),
-            (String::from("[namespace]"), String::from(flag_namespace)),
-            (
-                String::from("[treated_complement]"),
-                String::from(&treated_c),
-            ),
+            (String::from("stale_flag_name"), String::from(flag_name)),
+            (String::from("treated"), String::from(&treated)),
+            (String::from("namespace"), String::from(flag_namespace)),
+            (String::from("treated_complement"), String::from(&treated_c)),
         ]);
-        
-        
+
         let treated = format!("{}", flag_value.eq("true"));
         #[rustfmt::skip]
         println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {flag_name}\n (ii) Value: {treated} \n (iii) flag_namespace : {flag_namespace}").purple());
         Self {
             path_to_code_base: path_to_code_base.to_string(),
             language: input_language.to_string(),
-            input_substiution
+            input_substiution,
         }
     }
 }
@@ -79,24 +74,29 @@ pub struct Constraint {
 }
 
 impl Rule {
-    pub fn instantiate(
-        &self,
-        substitutions: &HashMap<String, String>,
-        key_mapper: &dyn Fn(&String) -> String,
-    ) -> Option<Rule> {
+    pub fn instantiate(&self, substitutions: &HashMap<String, String>) -> Option<Rule> {
         if self.holes.is_none() {
             Some(self.clone())
-        } else if self
+        } 
+        //TODO: Cleanup
+        else if self
             .holes
             .clone()
             .unwrap()
             .iter()
-            .all(|x| substitutions.contains_key(x))
+            .map(|x| x.replace("@", ""))
+            .all(|x| substitutions.contains_key(&x))
         {
+            let mut cc = HashMap::new();
+            for (k, v) in substitutions {
+                if self.holes.clone().unwrap().contains(&["@", k].join("")){
+                    cc.insert(k.clone(), v.clone());
+                }
+            }
             Some(Rule {
                 name: String::from(&self.name),
-                query: substitute_in_str(&substitutions, &self.query, &key_mapper),
-                replace: substitute_in_str(&substitutions, &self.replace, &key_mapper),
+                query: self.query.substitute_rule_holes(&cc), //substitute_in_str(&substitutions, &self.query, &key_mapper),
+                replace: self.replace.substitute_rule_holes(&cc),
                 holes: self.holes.clone(),
                 tag: self.tag.clone(),
                 constraint: self.constraint.clone(),

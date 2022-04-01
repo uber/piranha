@@ -98,14 +98,9 @@ pub fn node_matches_range(n: Node, range: Range) -> bool {
 pub trait TreeSitterQuery {
     fn get_language(&self) -> Language;
     fn get_extension(&self) -> &'static str;
-    fn substitute_parameterized_rule_holes(
-        &self,
-        substitutions: &HashMap<String, String>,
-    ) -> String;
     fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String;
     fn create_query(&self, language: Language) -> Query;
     fn to_rule_hole(&self) -> String;
-    fn to_parameterized_rule_hole(&self) -> String;
 }
 
 impl TreeSitterQuery for String {
@@ -126,19 +121,7 @@ impl TreeSitterQuery for String {
             _ => panic!("Language not supported"),
         }
     }
-    fn substitute_parameterized_rule_holes(
-        &self,
-        substitutions: &HashMap<String, String>,
-    ) -> String {
-        let mut output = String::from(self);
-        for (tag, substitute) in substitutions {
-            let key = tag.to_parameterized_rule_hole();
-            output = output.replace(&key, substitute)
-        }
-        output
-        // substitute_in_str(substitutions, self, &toParameterizedRuleHole)
-    }
-
+    
     fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in substitutions {
@@ -157,9 +140,5 @@ impl TreeSitterQuery for String {
 
     fn to_rule_hole(&self) -> String {
         format!("@{}", self)
-    }
-
-    fn to_parameterized_rule_hole(&self) -> String {
-        format!("[@{}]", self)
     }
 }
