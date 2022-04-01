@@ -1,5 +1,5 @@
 use crate::{
-    config::{Rule, Scope, ScopeConfig},
+    config::{Rule, Scope, ScopeConfig, PiranhaArguments},
     tree_sitter::TreeSitterQuery,
     utilities::{read_file, MapOfVec},
 };
@@ -35,6 +35,8 @@ pub struct GraphRuleStore {
     pub scopes: Vec<Scope>,
 }
 
+
+// TODO: Remove these functions
 pub fn map_key(s: &String) -> String {
     format!("[@{}]", s)
 }
@@ -44,37 +46,14 @@ pub fn map_identity(x: &String) -> String {
 }
 
 impl GraphRuleStore {
-    pub fn new(
-        input_language: &str,
-        language: Language,
-        flag_name: &str,
-        flag_namespace: &str,
-        flag_value: &str,
-    ) -> GraphRuleStore {
+    pub fn new(args: &PiranhaArguments) -> GraphRuleStore {
         let (p_rule_graph, p_rules_by_name, scopes) =
-            create_rule_graph(input_language, flag_name, flag_namespace, flag_value);
+            create_rule_graph(&args);
 
-        let rule_query_cache = HashMap::new();
-        let flag_val = flag_value.eq("true");
-        let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
-
-        let seed_substitutions = HashMap::from([
-            (String::from("[stale_flag_name]"), String::from(flag_name)),
-            (String::from("[treated]"), String::from(&treated)),
-            (String::from("[namespace]"), String::from(flag_namespace)),
-            (
-                String::from("[treated_complement]"),
-                String::from(&treated_c),
-            ),
-        ]);
-
-        // Seed rules = All parameterized rules with `> 0` holes and can be instantiated with above
-        // substitutions
         let mut seed_rules = vec![];
         for (_, rule) in &p_rules_by_name {
             if let Some(_) = &rule.holes {
-                if let Some(r) = rule.instantiate(&seed_substitutions, &map_identity) {
-                    print!("{:?}", r);
+                if let Some(r) = rule.instantiate(&args.input_substiution, &map_identity) {
                     seed_rules.push(r);
                 }
             }
@@ -83,11 +62,11 @@ impl GraphRuleStore {
 
         GraphRuleStore {
             p_rule_graph,
-            rule_query_cache,
-            language,
+            rule_query_cache: HashMap::new(),
+            language: args.language.get_language(),
             p_rules_by_name,
             seed_rules,
-            seed_substitutions,
+            seed_substitutions: args.input_substiution.clone(),
             scopes,
         }
     }
@@ -106,7 +85,7 @@ impl GraphRuleStore {
     pub fn get_query(&mut self, query_str: &String) -> &Query {
         self.rule_query_cache
             .entry(query_str.clone())
-            .or_insert_with(|| query_str.createQuery(self.language))
+            .or_insert_with(|| query_str.create_query(self.language))
     }
 
     fn get_next_rules(
@@ -152,18 +131,14 @@ impl GraphRuleStore {
 
 type ParameterizedRuleGraph = HashMap<String, Vec<(String, String)>>;
 
-pub fn create_rule_graph(
-    language: &str,
-    flag_name: &str,
-    flag_namespace: &str,
-    flag_value: &str,
-) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
+pub fn create_rule_graph(args: &PiranhaArguments) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
+
     let path_to_config = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("src")
         .join("configurations");
 
     // Read the configuration files.
-    let (path_to_all_rules_toml, path_to_edges, path_to_scope_config) = match language {
+    let (path_to_all_rules_toml, path_to_edges, path_to_scope_config) = match args.language.as_str() {
         "Java" => (
             path_to_config.join("all_rules.toml"),
             path_to_config.join("edges.toml"),
@@ -175,10 +150,6 @@ pub fn create_rule_graph(
     let all_rules_content = read_file(&path_to_all_rules_toml);
     let edges_content = read_file(&path_to_edges);
     let scope_config_content = read_file(&path_to_scope_config);
-
-    #[rustfmt::skip]
-    let treated = format!("{}", flag_value.eq("true"));
-    println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {flag_name}\n (ii) Value: {treated} \n (iii) flag_namespace : {flag_namespace}").purple());
 
     // Group rules by tag
     // Collect groups by name

@@ -8,41 +8,26 @@ mod utilities;
 pub mod piranha {
 
     use crate::config::Constraint;
+    use crate::config::PiranhaArguments;
     use crate::config::Rule;
+    use crate::tree_sitter::node_matches_range;
     use colored::Colorize;
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use tree_sitter::Language;
-    use tree_sitter::Node;
-    use tree_sitter::Parser;
-    use tree_sitter::QueryCursor;
-    use tree_sitter::Range;
-    use tree_sitter::Tree;
-    use tree_sitter::{InputEdit, Query};
-
-    use crate::tree_sitter::group_by_tag_str;
+    use tree_sitter::{Tree, Language, Node, Parser, QueryCursor, Range, InputEdit, Query};
+    use crate::tree_sitter::group_captures_by_tag;
     use crate::tree_sitter::{self as ts_utils, TreeSitterQuery};
     use crate::utilities::get_files_with_extension;
     use crate::utilities::read_file;
-    use crate::utilities::substitute_in_str;
-    use crate::utilities::{get_extension, MapOfVec};
+    use crate::utilities::{MapOfVec};
 
     use crate::rule_graph::{map_identity, GraphRuleStore};
 
-    pub fn get_cleanups_for_code_base_new(
-        path_to_code_base: &str,
-        input_language: &str,
-        flag_name: &str,
-        flag_namespace: &str,
-        flag_value: &str,
-    ) -> HashMap<PathBuf, String> {
-        let mut flag_cleaner = FlagCleaner::new(
-            path_to_code_base,
-            input_language,
-            flag_name,
-            flag_namespace,
-            flag_value,
-        );
+    
+
+    pub fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
+
+        let mut flag_cleaner = FlagCleaner::new(args);
 
         flag_cleaner.cleanup();
 
@@ -54,7 +39,6 @@ pub mod piranha {
     }
 
     pub struct FlagCleaner {
-        // rules_store: RulesStore,
         graph_rule_store: GraphRuleStore,
         language: Language,
         pub files: HashMap<PathBuf, SourceCodeUnit>,
@@ -83,26 +67,14 @@ pub mod piranha {
             }
         }
 
-        pub fn new(
-            path_to_code_base: &str,
-            input_language: &str,
-            flag_name: &str,
-            flag_namespace: &str,
-            flag_value: &str,
-        ) -> Self {
-            let language = ts_utils::get_language(input_language);
-            let extension = get_extension(input_language);
+        pub fn new(args: PiranhaArguments) -> Self {
+            let language = args.language.get_language();
+            let extension = args.language.get_extension();
 
-            let graph_rule_store = GraphRuleStore::new(
-                input_language,
-                language,
-                flag_name,
-                flag_namespace,
-                flag_value,
-            );
+            let graph_rule_store = GraphRuleStore::new(&args);
 
             let mut files = HashMap::new();
-            let relevant_files = get_files_with_extension(path_to_code_base, extension);
+            let relevant_files = get_files_with_extension(&args.path_to_code_base, extension);
 
             let mut parser = Parser::new();
             parser
@@ -184,7 +156,7 @@ pub mod piranha {
             // Get scope node
             let mut root = self.ast.root_node();
             if let Some(scope_q) = scope_query {
-                if let Some((range, _)) = get_any_match_for_rule_no_constraint(
+                if let Some((range, _)) = get_any_match_for_query_str(
                     self.ast.root_node(),
                     rules_store.get_query(scope_q),
                     self.code.as_bytes(),
@@ -204,7 +176,7 @@ pub mod piranha {
                 // TODO: Cleanup
                 let mut cc = HashMap::new();
                 for (k, v) in captures_by_tag {
-                    cc.insert(k.toParameterizedRuleHole(), v);
+                    cc.insert(k.to_parameterized_rule_hole(), v);
                 }
                 self.substitutions.extend(cc);
 
@@ -257,7 +229,7 @@ pub mod piranha {
                         //TODO: Remove this pattern with trait
                         let mut cc = HashMap::new();
                         for (k, v) in new_capture_by_tag {
-                            cc.insert(k.toParameterizedRuleHole(), v);
+                            cc.insert(k.to_parameterized_rule_hole(), v);
                         }
                         self.substitutions.extend(cc);
                     } else {
@@ -305,7 +277,6 @@ pub mod piranha {
             previous_edit: InputEdit,
             rules_store: &mut GraphRuleStore,
         ) -> Option<String> {
-            // if let Some(s_scope) = o_scope {
             let mut changed_node =
                 self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
             let mut scope_matchers = vec![];
@@ -320,7 +291,7 @@ pub mod piranha {
             }
             while let Some(parent) = changed_node.parent() {
                 for m in &scope_matchers {
-                    if let Some((_, captures_by_tag)) = get_any_match_for_rule_no_constraint(
+                    if let Some((_, captures_by_tag)) = get_any_match_for_query_str(
                         parent,
                         rules_store.get_query(&m.matcher),
                         self.code.as_bytes(),
@@ -328,8 +299,7 @@ pub mod piranha {
                     ) {
                         let transformed_query = m
                             .matcher_gen
-                            .substituteParameterizedRuleHoles(&captures_by_tag);
-                        // substitute_in_str(&captures_by_tag, &m.matcher_gen, &create_p_rule_hole);
+                            .substitute_parameterized_rule_holes(&captures_by_tag);
                         let _ = rules_store.get_query(&transformed_query);
                         return Some(transformed_query);
                     } else {
@@ -437,7 +407,7 @@ pub mod piranha {
                     source_code_bytes,
                     &captures_by_tag,
                 ) {
-                    let replacement = rule.replace.substituteRuleHoles(&captures_by_tag);
+                    let replacement = rule.replace.substitute_rule_holes(&captures_by_tag);
                     return Some((range.clone(), replacement, captures_by_tag));
                 }
             }
@@ -455,7 +425,7 @@ pub mod piranha {
             if let Some(c) = constraint {
                 let mut query_cache = HashMap::new();
                 for q in &c.queries {
-                    let query_str = q.substituteParameterizedRuleHoles(&capture_by_tags);
+                    let query_str = q.substitute_parameterized_rule_holes(&capture_by_tags);
                     if let Ok(query) = Query::new(language, &query_str) {
                         query_cache.insert(query_str, query);
                     }
@@ -466,7 +436,7 @@ pub mod piranha {
 
                 let mut curr_node = node;
                 while let Some(parent) = curr_node.parent() {
-                    if let Some((range, _)) = get_any_match_for_rule_no_constraint(
+                    if let Some((range, _)) = get_any_match_for_query_str(
                         parent,
                         &matcher_query,
                         source_code_bytes,
@@ -478,7 +448,7 @@ pub mod piranha {
                             let mut all_queries_match = true;
                             for (_, query) in &query_cache {
                                 all_queries_match = all_queries_match
-                                    && get_any_match_for_rule_no_constraint(
+                                    && get_any_match_for_query_str(
                                         matcher,
                                         query,
                                         source_code_bytes,
@@ -500,11 +470,7 @@ pub mod piranha {
         }
     }
 
-    // fn append_at_symb(s: &String) -> String {
-    //     format!("@{}", s)
-    // }
-
-    fn get_any_match_for_rule_no_constraint(
+    fn get_any_match_for_query_str(
         node: Node,
         query: &Query,
         source_code_bytes: &[u8],
@@ -529,41 +495,27 @@ pub mod piranha {
         let mut matched_node_query_match = HashMap::new();
 
         for qm in query_matches {
-            let captures = qm.captures;
-
-            if captures.is_empty() {
+            if let Some(matched_node) = qm.captures.first() {
+                let captured_tags = group_captures_by_tag(qm.captures, query, source_code_bytes);
+                matched_node_query_match.collect_as_counter(matched_node.node.range(), captured_tags);
+            }else{
                 break;
             }
-
-            let mut captured_tags = group_by_tag_str(captures, query, source_code_bytes);
-            for cn in query.capture_names() {
-                captured_tags
-                    .entry(String::from(cn))
-                    .or_insert_with(String::new);
-            }
-
-            // The first capture is the outermost tag
-            let matched_node = captures.first().map(|x| x.node).unwrap();
-            // let matched_node_range = matched_node.range();
-            matched_node_query_match.collect_as_counter(matched_node.range(), captured_tags);
         }
 
         let mut output = vec![];
-        for (k, v) in matched_node_query_match {
+        for (range, v) in matched_node_query_match {
             if v.len() == pattern_count {
-                if recurssive
-                    || (node.start_byte() == k.start_byte && node.end_byte() == k.end_byte)
-                {
+                if recurssive || node_matches_range(node, range){
                     let mut captures_by_tag = HashMap::new();
                     for i in v {
                         captures_by_tag.extend(i.clone());
                     }
-                    output.push((k, captures_by_tag));
+                    output.push((range, captures_by_tag));
                 }
             }
         }
         output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
-        // output.reverse();
         return output;
     }
 }

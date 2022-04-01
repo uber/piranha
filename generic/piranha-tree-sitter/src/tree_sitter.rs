@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
 use colored::Colorize;
-use tree_sitter::{InputEdit, Language, Point, QueryCapture, Range, Query};
-
-use crate::{utilities::substitute_in_str};
+use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, Range};
 
 extern "C" {
     fn tree_sitter_java() -> Language;
@@ -23,8 +21,7 @@ pub fn get_edit(
     .concat();
 
     let replace_code = &source_code[replace_range.start_byte..replace_range.end_byte];
-
-    
+    #[rustfmt::skip]
     println!("{} at ({:?}) -\n {}", if rewritten_snippet.is_empty() { "Delete code" } else {"Update code" }.green(),
         ((&replace_range.start_point.row, &replace_range.start_point.column),
             (&replace_range.end_point.row, &replace_range.end_point.column)),
@@ -62,19 +59,7 @@ fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
     result
 }
 
-
-
-pub fn get_language(language: &str) -> Language {
-    unsafe {
-        match language {
-            "Java" => tree_sitter_java(),
-            "Swift" => tree_sitter_swift(),
-            _ => panic!("Language not supported"),
-        }
-    }
-}
-
-pub fn group_by_tag_str<'a>(
+pub fn group_captures_by_tag<'a>(
     captures: &[QueryCapture],
     query: &'a Query,
     source_code_bytes: &'a [u8],
@@ -90,66 +75,91 @@ pub fn group_by_tag_str<'a>(
             .node
             .utf8_text(source_code_bytes)
             .expect("Could not get source code for node");
-        if !tag_capture.contains_key(name){
-           tag_capture.insert(String::from(name), String::from(code_snippet));
-        }else {
-            tag_capture.entry(String::from(name))
-            .and_modify(|s| s.push_str(["\n", code_snippet].join("").as_str()));    
+        if !tag_capture.contains_key(name) {
+            tag_capture.insert(String::from(name), String::from(code_snippet));
+        } else {
+            tag_capture
+                .entry(String::from(name))
+                .and_modify(|s| s.push_str(["\n", code_snippet].join("").as_str()));
         }
-        
-        
     }
+
+    for cn in query.capture_names() {
+        tag_capture.entry(String::from(cn)).or_default();
+    }
+
     tag_capture
 }
 
-// fn append_at_symb(s: &String) -> String {
-//     format!("@{}", s)
-// }
-
-// fn create_p_rule_hole(s: &String) -> String {
-//     format!("[@{}]", s)
-// }
+pub fn node_matches_range(n: Node, range: Range) -> bool {
+    n.start_byte() == range.start_byte && n.end_byte() == range.end_byte
+}
 
 pub trait TreeSitterQuery {
-    fn substituteParameterizedRuleHoles(&self, substitutions: &HashMap<String, String>) -> String;
-    fn substituteRuleHoles(&self,  substitutions: &HashMap<String, String>) -> String;
-    fn createQuery(&self, language: Language) -> Query;
-    fn toRuleHole(&self) -> String;
-    fn toParameterizedRuleHole(&self) -> String;
+    fn get_language(&self) -> Language;
+    fn get_extension(&self) -> &'static str;
+    fn substitute_parameterized_rule_holes(
+        &self,
+        substitutions: &HashMap<String, String>,
+    ) -> String;
+    fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String;
+    fn create_query(&self, language: Language) -> Query;
+    fn to_rule_hole(&self) -> String;
+    fn to_parameterized_rule_hole(&self) -> String;
 }
 
 impl TreeSitterQuery for String {
-    fn substituteParameterizedRuleHoles(&self, substitutions: &HashMap<String, String>) -> String {
+    fn get_language(&self) -> Language {
+        unsafe {
+            match self.as_str() {
+                "Java" => tree_sitter_java(),
+                "Swift" => tree_sitter_swift(),
+                _ => panic!("Language not supported"),
+            }
+        }
+    }
+
+    fn get_extension(&self) -> &'static str {
+        match self.as_str() {
+            "Java" => "java",
+            "Swift" => "swift",
+            _ => panic!("Language not supported"),
+        }
+    }
+    fn substitute_parameterized_rule_holes(
+        &self,
+        substitutions: &HashMap<String, String>,
+    ) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in substitutions {
-            let key = tag.toParameterizedRuleHole();
+            let key = tag.to_parameterized_rule_hole();
             output = output.replace(&key, substitute)
         }
         output
         // substitute_in_str(substitutions, self, &toParameterizedRuleHole)
     }
 
-    fn substituteRuleHoles(&self,  substitutions: &HashMap<String, String>) -> String {
+    fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in substitutions {
-            let key = tag.toRuleHole();
+            let key = tag.to_rule_hole();
             output = output.replace(&key, substitute)
         }
         output
     }
 
-    fn createQuery(&self, language: Language) -> Query {
-        if let Ok(q)  = Query::new(language, self){
+    fn create_query(&self, language: Language) -> Query {
+        if let Ok(q) = Query::new(language, self) {
             return q;
         }
         panic!("Could not parse the query : {}", self);
     }
 
-    fn toRuleHole(&self) -> String {
+    fn to_rule_hole(&self) -> String {
         format!("@{}", self)
     }
 
-    fn toParameterizedRuleHole(&self) -> String {
+    fn to_parameterized_rule_hole(&self) -> String {
         format!("[@{}]", self)
     }
 
@@ -166,4 +176,3 @@ impl TreeSitterQuery for String {
     //     output
     // }
 }
-

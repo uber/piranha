@@ -22,16 +22,8 @@ pub fn has_extension(dir_entry: &DirEntry, extension: &str) -> bool {
         .unwrap_or(false)
 }
 
-pub fn get_extension(language: &str) -> &str {
-    match language {
-        "Java" => "java",
-        "Swift" => "swift",
-        _ => panic!("Language not supported"),
-    }
-}
-
-pub fn get_files_with_extension(input_dir: &str, extension: &str) -> Vec<DirEntry>{
-      fs::read_dir(input_dir)
+pub fn get_files_with_extension(input_dir: &String, extension: &str) -> Vec<DirEntry>{
+      fs::read_dir(&input_dir)
             .unwrap()
             .filter_map(|d| d.ok())
             .filter(|de| has_extension(de, extension))
@@ -39,6 +31,7 @@ pub fn get_files_with_extension(input_dir: &str, extension: &str) -> Vec<DirEntr
     
 }
 
+// TODO: Remove
 pub fn substitute_in_str(
     substitutes: &HashMap<String, String>,
     value: &String,
@@ -63,13 +56,3 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>>  {
                 .push(value);
     }
 }
-
-
-
-// pub fn apply_substitutions_to_string(item: String, substitutions:HashMap<String,String>)-> String{
-//     let mut s = item;
-//     for (k, v) in substitutions{
-//         s = s.replace(k.as_str(), v.as_str());
-//     }
-//     return s;
-// }

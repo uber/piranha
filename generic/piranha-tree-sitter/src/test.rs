@@ -3,6 +3,7 @@ use std::path::Path;
 
 use colored::Colorize;
 
+use crate::config::PiranhaArguments;
 use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::{read_file};
 
@@ -16,11 +17,12 @@ fn test_java_scenarios_treated() {
         .join("java");
 
     let c = get_cleanups_for_code_base_new(
+        PiranhaArguments::new(
         path_to_test_resource.join("input").to_str().unwrap(),
         language,
         "STALE_FLAG",
         "ns",   
-        "true",
+        "true")
     );
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
