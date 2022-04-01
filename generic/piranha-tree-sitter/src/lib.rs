@@ -8,7 +8,7 @@ mod utilities;
 pub mod piranha {
 
     use crate::config::Constraint;
-    use crate::config::{map_key, Rule};
+    use crate::config::Rule;
     use colored::Colorize;
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -20,14 +20,14 @@ pub mod piranha {
     use tree_sitter::Tree;
     use tree_sitter::{InputEdit, Query};
 
-    use crate::tree_sitter as ts_utils;
     use crate::tree_sitter::group_by_tag_str;
-    use crate::utilities::{get_extension, MapOfVec};
+    use crate::tree_sitter::{self as ts_utils, TreeSitterQuery};
     use crate::utilities::get_files_with_extension;
     use crate::utilities::read_file;
     use crate::utilities::substitute_in_str;
+    use crate::utilities::{get_extension, MapOfVec};
 
-    use crate::rule_graph::{GraphRuleStore, map_identity};
+    use crate::rule_graph::{map_identity, GraphRuleStore};
 
     pub fn get_cleanups_for_code_base_new(
         path_to_code_base: &str,
@@ -36,7 +36,6 @@ pub mod piranha {
         flag_namespace: &str,
         flag_value: &str,
     ) -> HashMap<PathBuf, String> {
-        
         let mut flag_cleaner = FlagCleaner::new(
             path_to_code_base,
             input_language,
@@ -44,7 +43,7 @@ pub mod piranha {
             flag_namespace,
             flag_value,
         );
-        
+
         flag_cleaner.cleanup();
 
         flag_cleaner
@@ -62,7 +61,6 @@ pub mod piranha {
     }
 
     impl FlagCleaner {
-        
         pub fn cleanup(&mut self) {
             let mut parser = Parser::new();
             parser
@@ -169,7 +167,7 @@ pub mod piranha {
             loop {
                 if self.apply_rule_to_any_match(rule.clone(), rules_store, parser, scope_query) {
                     any_match = true;
-                }else {
+                } else {
                     break;
                 }
             }
@@ -183,7 +181,6 @@ pub mod piranha {
             parser: &mut Parser,
             scope_query: &Option<String>,
         ) -> bool {
-
             // Get scope node
             let mut root = self.ast.root_node();
             if let Some(scope_q) = scope_query {
@@ -192,11 +189,10 @@ pub mod piranha {
                     rules_store.get_query(scope_q),
                     self.code.as_bytes(),
                     true,
-                ){
-                root = self.get_descendant(range.start_byte, range.end_byte);
+                ) {
+                    root = self.get_descendant(range.start_byte, range.end_byte);
                 }
             }
-
 
             let mut any_match = false;
             if let Some((range, rpl, captures_by_tag)) =
@@ -208,43 +204,45 @@ pub mod piranha {
                 // TODO: Cleanup
                 let mut cc = HashMap::new();
                 for (k, v) in captures_by_tag {
-                    cc.insert(map_key(&k), v);
+                    cc.insert(k.toParameterizedRuleHole(), v);
                 }
                 self.substitutions.extend(cc);
-                
+
                 let mut previous_edit = edit.clone();
                 let mut curr_rule = rule.clone();
                 let mut scope_rule_queue = vec![];
 
                 loop {
+                    let (parent_rules, method_level_rules, class_level_rules, _global_rules) =
+                        rules_store.get_next(curr_rule.clone(), &self.substitutions);
 
-                    let (parent_rules, method_level_rules, class_level_rules, _global_rules) = rules_store
-                        .get_next(curr_rule.clone(), &self.substitutions);
-
-                        println!("Parent : {}, Method : {}, Class: {}, Global: {}", parent_rules.len(), method_level_rules.len(), class_level_rules.len(), _global_rules.len());
-
-                    for  r in method_level_rules {
-                        if let Some(scope_query) = self.get_scope_query(String::from("Method"), previous_edit, rules_store) {
-                            scope_rule_queue.push((scope_query, r.instantiate(&self.substitutions, &map_identity).unwrap()));
-                        }else {
-                            panic!("Could not create scope query");
+                    let mut add_to_queue = |s: &str, rules: Vec<Rule>| {
+                        for r in rules {
+                            if let Some(scope_query) =
+                                self.get_scope_query(String::from(s), previous_edit, rules_store)
+                            {
+                                if let Some(transformed_rule) =
+                                    r.instantiate(&self.substitutions, &map_identity)
+                                {
+                                    scope_rule_queue.push((scope_query, transformed_rule));
+                                } else {
+                                    panic!(
+                                        "Could not transform rule {:?} {:?}",
+                                        r, &self.substitutions
+                                    );
+                                }
+                            } else {
+                                panic!("Could not create scope query {:?}", s);
+                            }
                         }
-                    }
+                    };
 
-                    for  r in class_level_rules {
-                        if let Some(scope_query) = self.get_scope_query(String::from("Class"), previous_edit, rules_store) {
-                            scope_rule_queue.push((scope_query, r.instantiate(&self.substitutions, &map_identity).unwrap()));
-                        }else {
-                            panic!("Could not create scope query");
-                        }
-                    }
-
+                    let _ = &add_to_queue("Method", method_level_rules);
+                    let _ = &add_to_queue("Class", class_level_rules);
                     for r in _global_rules {
-                        println!("{}", format!("Trying to add {:?}", r).red());
                         rules_store.add_seed_rule(r, &self.substitutions);
                     }
-                    
-                    
+
                     if parent_rules.is_empty() {
                         break;
                     }
@@ -255,14 +253,12 @@ pub mod piranha {
                         println!("{}", format!("Matched parent for cleanup").red());
                         previous_edit = self.apply_edit(c_range, replacement_str, parser);
                         curr_rule = matched_rule;
-                        
+
                         //TODO: Remove this pattern with trait
                         let mut cc = HashMap::new();
                         for (k, v) in new_capture_by_tag {
-                            cc.insert(map_key(&k), v);
+                            cc.insert(k.toParameterizedRuleHole(), v);
                         }
-                        // let cc: HashMap<String, String> = new_capture_by_tag.iter().map(|(k, v)| (map_key_as_tag(k), v))
-                                // .collect();
                         self.substitutions.extend(cc);
                     } else {
                         break;
@@ -330,8 +326,10 @@ pub mod piranha {
                         self.code.as_bytes(),
                         false,
                     ) {
-                        let transformed_query =
-                            substitute_in_str(&captures_by_tag, &m.matcher_gen, &map_key);
+                        let transformed_query = m
+                            .matcher_gen
+                            .substituteParameterizedRuleHoles(&captures_by_tag);
+                        // substitute_in_str(&captures_by_tag, &m.matcher_gen, &create_p_rule_hole);
                         let _ = rules_store.get_query(&transformed_query);
                         return Some(transformed_query);
                     } else {
@@ -417,7 +415,6 @@ pub mod piranha {
             source_code_bytes: &[u8],
             recurssive: bool,
         ) -> Option<(Range, String, HashMap<String, String>)> {
-            // let query_str = rule.query.as_str();
             let all_relevant_query_matches = _get_all_relevant_matches_no_constraint(
                 node,
                 rule_store.get_query(&rule.query),
@@ -426,27 +423,23 @@ pub mod piranha {
             );
 
             if all_relevant_query_matches.is_empty() {
-                // println!("Found no match");
                 return None;
             }
 
-            //TODO: Add logic for ancestor predicate
             for (range, captures_by_tag) in all_relevant_query_matches {
-                // let n = node
-                //     .descendant_for_byte_range(range.start_byte, range.end_byte)
-                //     .unwrap();
-                // if self.satisfies_constraint(
-                //     n,
-                //     rule_store.language,
-                //     rule.constraint.clone(),
-                //     source_code_bytes,
-                //     &captures_by_tag,
-                // ) {
-                // println!("Satisfied constraint!");
-                let replacement =
-                    substitute_in_str(&captures_by_tag, &rule.replace, &map_key_as_tag);
-                return Some((range.clone(), replacement, captures_by_tag));
-                // }
+                let n = node
+                    .descendant_for_byte_range(range.start_byte, range.end_byte)
+                    .unwrap();
+                if self.satisfies_constraint(
+                    n,
+                    rule_store.language,
+                    rule.constraint.clone(),
+                    source_code_bytes,
+                    &captures_by_tag,
+                ) {
+                    let replacement = rule.replace.substituteRuleHoles(&captures_by_tag);
+                    return Some((range.clone(), replacement, captures_by_tag));
+                }
             }
             None
         }
@@ -462,9 +455,10 @@ pub mod piranha {
             if let Some(c) = constraint {
                 let mut query_cache = HashMap::new();
                 for q in &c.queries {
-                    let z = substitute_in_str(capture_by_tags, q, &map_key);
-                    let query = Query::new(language, &z);
-                    query_cache.insert(z, query.unwrap());
+                    let query_str = q.substituteParameterizedRuleHoles(&capture_by_tags);
+                    if let Ok(query) = Query::new(language, &query_str) {
+                        query_cache.insert(query_str, query);
+                    }
                 }
                 let matcher_query = Query::new(language, &c.matcher).unwrap();
 
@@ -477,8 +471,7 @@ pub mod piranha {
                         &matcher_query,
                         source_code_bytes,
                         false,
-                    )
-                    {
+                    ) {
                         let matcher = self.get_descendant(range.start_byte, range.end_byte);
                         let mut c_node = node;
                         while let Some(c_p) = c_node.parent() {
@@ -490,7 +483,8 @@ pub mod piranha {
                                         query,
                                         source_code_bytes,
                                         true,
-                                    ).is_some();
+                                    )
+                                    .is_some();
                             }
                             if all_queries_match {
                                 return c.predicate.eq("All");
@@ -506,9 +500,9 @@ pub mod piranha {
         }
     }
 
-    fn map_key_as_tag(s: &String) -> String {
-        format!("@{}", s)
-    }
+    // fn append_at_symb(s: &String) -> String {
+    //     format!("@{}", s)
+    // }
 
     fn get_any_match_for_rule_no_constraint(
         node: Node,
@@ -551,8 +545,7 @@ pub mod piranha {
             // The first capture is the outermost tag
             let matched_node = captures.first().map(|x| x.node).unwrap();
             // let matched_node_range = matched_node.range();
-            matched_node_query_match.collect(matched_node.range(), captured_tags);
-            
+            matched_node_query_match.collect_as_counter(matched_node.range(), captured_tags);
         }
 
         let mut output = vec![];
@@ -570,7 +563,7 @@ pub mod piranha {
             }
         }
         output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
-        output.reverse();
+        // output.reverse();
         return output;
     }
 }

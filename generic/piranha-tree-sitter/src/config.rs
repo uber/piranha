@@ -1,8 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
 use serde_derive::Deserialize;
 
 use crate::utilities::substitute_in_str;
+
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScopeConfig {
@@ -28,6 +29,7 @@ pub struct Rule {
     pub replace: String,
     pub tag: Option<Vec<String>>,
     pub holes: Option<Vec<String>>,
+    pub constraint: Option<Constraint>
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
@@ -37,9 +39,7 @@ pub struct Constraint {
     pub queries: Vec<String>,
 }
 
-pub fn map_key(s: &String) -> String {
-    format!("[@{}]", s)
-}
+
 
 impl Rule {
     pub fn instantiate(&self, substitutions: &HashMap<String, String>, key_mapper: &dyn Fn(&String) -> String) -> Option<Rule> {
@@ -52,8 +52,10 @@ impl Rule {
                 replace: substitute_in_str(&substitutions, &self.replace, &key_mapper),
                 holes: self.holes.clone(),
                 tag: self.tag.clone(),
+                constraint: self.constraint.clone()
             })
         }else {
+            println!("Holes {:?} not found in table", self.holes);
             None
         }  
     }

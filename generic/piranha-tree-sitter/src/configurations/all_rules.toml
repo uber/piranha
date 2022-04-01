@@ -61,7 +61,7 @@ holes = ["[treated]", "[stale_flag_name]"]
 
 [[rules]]
 name = "Enum based, Delete enum constant (just the constant)"
-query =  """
+query = """
     (
     ((enum_constant name : (_)) @ec)       
     (#eq? @ec "[stale_flag_name]")
@@ -82,7 +82,7 @@ query = """
 replace = ""
 tag = ["Feature-flag API cleanup"]
 holes = ["[stale_flag_name]"]
-#scope = "GLOBAL"
+
 
 [[rules]]
 name = "Enum based, method invocation, put enabled"
@@ -167,9 +167,9 @@ query = """
  (#eq? @v2 "\\\"[namespace]\\\"")
  )
 """
-replace=""
+replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["[stale_flag_name]","[namespace]"]
+holes = ["[stale_flag_name]", "[namespace]"]
 
 [[rules]]
 name = "Interface based, replace method invocation chain with true/false"
@@ -184,7 +184,7 @@ query = """
 replace = "[treated]"
 tag = ["Returns boolean"]
 holes = ["[@m_name]", "[treated]"]
-#scope = "GLOBAL"
+
 
 # [[rules.and_then]]
 # name = "Interface based, method invocation, put"
@@ -197,7 +197,7 @@ holes = ["[@m_name]", "[treated]"]
 #                 		name: (_) @an)
 #                 ([(true) (false)])
 #              ))
-            
+
 #             ) @m) @e)
 #  (#eq? @n "put")
 #  (#eq? @an "[stale_flag_name]")
@@ -218,7 +218,7 @@ query = """
 """
 replace = "@s"
 tag = ["If cleanup", "Statement cleanup"]
-#scope = "PARENT"
+
 
 
 [[rules]]
@@ -232,7 +232,7 @@ query = """
 @ifstmt)"""
 replace = "@el"
 tag = ["If cleanup", "Statement cleanup"]
-#scope = "PARENT"
+
 
 [[rules]]
 name = "Simple if False"
@@ -246,7 +246,7 @@ query = """
 """
 replace = ""
 tag = ["If cleanup", "Statement cleanup"]
-#scope = "PARENT"
+
 
 [[rules]]
 name = "not False"
@@ -260,7 +260,7 @@ query = """
 """
 replace = "true"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
+
 
 
 [[rules]]
@@ -274,22 +274,19 @@ query = """
 """
 replace = "false"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
+
 
 
 [[rules]]
 name = "Remove unnecesary nested block"
 query = """
-(
-    (block
+((block
         (
-
             (_)*@pre
             (block (_)* @b)@n
             (_)*@post
         )
-    )@b1
-)"""
+    )@b1)"""
 replace = """
 {
     @pre
@@ -297,7 +294,6 @@ replace = """
     @post
 }"""
 tag = ["Block cleanup", "Statement cleanup"]
-#scope = "PARENT"
 
 [[rules]]
 name = "And - left operand is True"
@@ -310,7 +306,6 @@ query = """
 ) @b"""
 replace = "@other"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 
 [[rules]]
@@ -325,7 +320,7 @@ query = """
 @b)"""
 replace = "@other"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
+
 
 
 [[rules]]
@@ -340,7 +335,6 @@ query = """
 @b)"""
 replace = "true"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "Or - left operand is True"
@@ -355,7 +349,6 @@ query = """
 """
 replace = "true"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "And - left operand is False"
@@ -369,7 +362,6 @@ query = """
 @b)"""
 replace = "false"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "And - right operand is False"
@@ -385,7 +377,7 @@ query = """
 """
 replace = "false"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
+
 
 [[rules]]
 name = "Or - left operand is False"
@@ -399,11 +391,9 @@ query = """(
 @b)"""
 replace = "@other"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "And - right operand is False"
-
 query = """
 (
     (binary_expression
@@ -414,11 +404,10 @@ query = """
 @b)"""
 replace = "@other"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from left operand"
-query ="""(
+query = """(
 (
     binary_expression
         left: ((parenthesized_expression
@@ -428,7 +417,6 @@ query ="""(
 @bo)"""
 replace = "@e || @r"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from right operand"
@@ -441,7 +429,6 @@ query = """
 @bo)"""
 replace = "@l || @e"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "And - Remove unnecessary brackets from left operand "
@@ -454,7 +441,6 @@ query = """
 @bo)"""
 replace = "@e && @r"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
 
 [[rules]]
 name = "And - Remove unnecessary brackets from right operand "
@@ -467,7 +453,7 @@ query = """(
 @bo)"""
 replace = "@l && @e"
 tag = ["Boolean expression cleanup", "Returns boolean"]
-#scope = "PARENT"
+
 
 [[rules]]
 name = "Elide all statements after return"
@@ -477,7 +463,6 @@ query = """(
          ((statement)+ @post)) @b)"""
 replace = "{\n@pre\n@r\n}"
 tag = ["Block cleanup", "Statement cleanup"]
-#scope = "PARENT"
 
 [[rules]]
 name = "Ternay operator True"
@@ -489,7 +474,6 @@ query = """
 @tt)"""
 replace = "@then"
 tag = ["If cleanup", "Statement cleanup"]
-#scope = "PARENT"
 
 [[rules]]
 name = "Ternay operator False"
@@ -501,7 +485,6 @@ query = """
 @tt)"""
 replace = "@else"
 tag = ["If cleanup", "Statement cleanup"]
-#scope = "PARENT"
 
 # [[rules]]
 # name = "Parenthesized boolean literal"
@@ -516,13 +499,10 @@ tag = ["If cleanup", "Statement cleanup"]
 # """
 # replace = "@l"
 # tag = ["Boolean expression cleanup", "Returns boolean"]
-# #scope = "PARENT"
-
-
 
 [[rules]]
-name="Inline Local Variable Declaration - Delete variable declaration"
-query= """
+name = "Inline Local Variable Declaration - Delete variable declaration"
+query = """
 (
 ((local_variable_declaration 
 				declarator: (variable_declarator 
@@ -532,11 +512,22 @@ query= """
 """
 replace = ""
 tag = []
+[rules.constraint]
+matcher = "(method_declaration) @md"
+predicate = "None"
+queries = ["""
+(
+((assignment_expression
+    				left: (_) @l
+                    right: (_) @r) @a)
+(#eq? @l "[@n]")
+(#not-eq? @r "[@v]")
+)"""]
 
-
+# TODO: Add a inline field declaration without RHS.
 [[rules]]
-name="Inline Field Declaration - Delete field declaration"
-query= """
+name = "Inline Field Declaration - Delete field declaration"
+query = """
 (
 ((field_declaration 
 				declarator: (variable_declarator 
@@ -546,9 +537,19 @@ query= """
 """
 replace = ""
 tag = []
+[rules.constraint]
+matcher = "(class_declaration) @cd"
+predicate = "None"
+queries = ["""(
+((assignment_expression
+    				left: (_) @l
+                    right: (_) @r) @a)
+(#eq? @l "[@n]")
+(#not-eq? @r "[@v]")
+)"""]
 
 [[rules]]
-name="Remove assignment"
+name = "Remove assignment"
 query = """
 (
 (expression_statement (assignment_expression
@@ -562,15 +563,41 @@ replace = ""
 tag = []
 holes = ["[@n]", "[@v]"]
 
+# Remove assignment if it is the only assignment in the entire class. 
+# This should be done in class and method scope. But while deleting the assignment, 
+# we cannot guess if the lhs is a field or a local variable.
+[[rules]]
+name = "Remove assignment-1"
+query = """
+(
+(expression_statement (assignment_expression
+                                left: (_) @l
+                    right: [(true) (false)] @v)) @e
+) 
+"""
+replace = ""
+tag = []
+holes = []
+[rules.constraint]
+matcher = "(class_declaration) @cd"
+predicate = "None"
+queries = ["""(
+((assignment_expression
+    				left: (_) @l1
+                    right: (_) @r1) @a)
+(#eq? @l1 "[@l]")
+(#not-eq? @r1 "[@v]")
+)"""]
+
 
 [[rules]]
-name="Replace identifier with value"
+name = "Replace identifier with value"
 query = """
 (
 (identifier )@i
 (#eq? @i "[@n]")
 )
 """
-replace="[@v]"
+replace = "[@v]"
 tag = []
 holes = ["[@n]", "[@v]"]

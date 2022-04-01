@@ -33,57 +33,50 @@ to = "Block cleanup"
 from = "Returns boolean"
 scope = "Parent"
 to = "Inline Local Variable Declaration - Delete variable declaration"
-# [[edges.constraint]]
-# scope = "(method_declaration) @md"
-# predicate = "!"
-# queries = ["""
-# (
-# ((assignment_expression
-#     				left: (_) @l
-#                     right: (_) @r) @a)
-# (#eq? @l "[@n]")
-# (#not-eq? @r "[@v]")
-# )"""]
 
 [[edges]]
 from = "Returns boolean"
 scope = "Parent"
 to = "Inline Field Declaration - Delete field declaration"
-# [[edges.constraint]]
-# scope = "(class_declaration) @cd"
-# predicate = "!"
-# queries = ["""(
-# ((assignment_expression
-#     				left: (_) @l
-#                     right: (_) @r) @a)
-# (#eq? @l "[@n]")
-# (#not-eq? @r "[@v]")
-# )"""]
+
+[[edges]]
+from = "Returns boolean"
+scope = "Parent"
+to = "Remove assignment-1"
+
 
 [[edges]]
 from = "Inline Local Variable Declaration - Delete variable declaration"
+scope = "Method"
 to = "Replace identifier with value"
-scope = "Method"
-# populate_holes = ["[@n]", "@n", "[@v]", "@v"]
+
 
 [[edges]]
 from = "Inline Local Variable Declaration - Delete variable declaration"
 scope = "Method"
-# populate_holes = ["[@n]", "@n", "[@v]", "@v"]
 to = "Remove assignment"
 
 
 [[edges]]
 from = "Inline Field Declaration - Delete field declaration"
 scope = "Class"
-# populate_holes = ["[@n]", "@n", "[@v]", "@v"]
 to = "Remove assignment"
+
+[[edges]]
+from = "Remove assignment-1"
+scope = "Method"
+to = "Inline Local Variable Declaration - Delete variable declaration"
+
+
+[[edges]]
+from = "Remove assignment-1"
+scope = "Class"
+to = "Inline Field Declaration - Delete field declaration"
 
 
 [[edges]]
 from = "Inline Field Declaration - Delete field declaration"
 scope = "Class"
-populate_holes = ["[@n]", "@n", "[@v]", "@v"]
 to = "Replace identifier with value"
 
 [[edges]]

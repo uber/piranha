@@ -1,6 +1,7 @@
 use crate::{
     config::{Rule, Scope, ScopeConfig},
-    utilities::{read_file, substitute_in_str, MapOfVec},
+    tree_sitter::TreeSitterQuery,
+    utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
 use serde_derive::Deserialize;
@@ -96,7 +97,6 @@ impl GraphRuleStore {
     }
 
     pub fn add_seed_rule(&mut self, r: Rule, tag_captures_previous_edit: &HashMap<String, String>) {
-        // let new_seed_rule = r.instantiate(&tag_captures_previous_edit, &map_identity);
         if let Some(new_seed_rule) = r.instantiate(&tag_captures_previous_edit, &map_identity) {
             println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
             self.seed_rules.push(new_seed_rule);
@@ -104,16 +104,9 @@ impl GraphRuleStore {
     }
 
     pub fn get_query(&mut self, query_str: &String) -> &Query {
-        if !self.rule_query_cache.contains_key(query_str) {
-            let q = Query::new(self.language, query_str);
-            if q.is_err() {
-                panic!("Could not parse the query : {}", query_str);
-            }
-            let _ = self
-                .rule_query_cache
-                .insert(String::from(query_str), q.unwrap());
-        }
-        return self.rule_query_cache.get(query_str).unwrap();
+        self.rule_query_cache
+            .entry(query_str.clone())
+            .or_insert_with(|| query_str.createQuery(self.language))
     }
 
     fn get_next_rules(
@@ -123,16 +116,15 @@ impl GraphRuleStore {
     ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
-        
-        
-        if let Some(from_rule) = self.p_rule_graph.get(rule_name){
+        if let Some(from_rule) = self.p_rule_graph.get(rule_name) {
             for (scope, to_rule) in from_rule {
                 if let Some(transformed_rule) =
                     self.p_rules_by_name[to_rule].instantiate(&tag_matches, &map_key)
                 {
-                    next_rules.collect(String::from(scope), transformed_rule);
+                    next_rules.collect_as_counter(String::from(scope), transformed_rule);
                 } else {
-                    panic!("Could not transform {:?} \n \n {:?}", from_rule, tag_matches);
+                    #[rustfmt::skip]
+                    panic!("Could not transform {:?} \n \n {:?}", self.p_rules_by_name[to_rule], tag_matches);
                 }
             }
         }
@@ -145,9 +137,13 @@ impl GraphRuleStore {
         tag_matches: &HashMap<String, String>,
     ) -> (Vec<Rule>, Vec<Rule>, Vec<Rule>, Vec<Rule>) {
         let next_rules = self.get_next_rules(rule, tag_matches);
-        
-        let get = |s: &str|{
-            if next_rules.contains_key(s) {next_rules[s].clone()} else {vec![]}
+
+        let get = |s: &str| {
+            if next_rules.contains_key(s) {
+                next_rules[s].clone()
+            } else {
+                vec![]
+            }
         };
 
         (get("Parent"), get("Method"), get("Class"), get("Global"))
@@ -187,14 +183,14 @@ pub fn create_rule_graph(
     // Group rules by tag
     // Collect groups by name
     let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
-    
+
     let mut rules_by_name = HashMap::new();
     let mut rules_by_tag = HashMap::new();
     for rule in all_rules.rules {
         rules_by_name.insert(rule.name.clone(), rule.clone());
         if let Some(tags) = &rule.tag {
             for tag in tags {
-                rules_by_tag.collect(tag.clone(), rule.name.clone());
+                rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
             }
         }
     }
@@ -205,12 +201,14 @@ pub fn create_rule_graph(
     for edge in edges.edges {
         for f in get_rules_for_tag_or_name(&edge.from, &rules_by_name, &rules_by_tag) {
             for t in get_rules_for_tag_or_name(&edge.to, &rules_by_name, &rules_by_tag) {
-                graph.collect(f.clone(), (String::from(&edge.scope), t.clone()));
+                graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
             }
         }
     }
 
-    let scopes = toml::from_str(&scope_config_content).map(|x:ScopeConfig|x.scopes).unwrap();
+    let scopes = toml::from_str(&scope_config_content)
+        .map(|x: ScopeConfig| x.scopes)
+        .unwrap();
     (graph, rules_by_name, scopes)
 }
 

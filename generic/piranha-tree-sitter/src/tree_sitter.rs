@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use colored::Colorize;
 use tree_sitter::{InputEdit, Language, Point, QueryCapture, Range, Query};
 
+use crate::{utilities::substitute_in_str};
+
 extern "C" {
     fn tree_sitter_java() -> Language;
     fn tree_sitter_swift() -> Language;
@@ -98,5 +100,70 @@ pub fn group_by_tag_str<'a>(
         
     }
     tag_capture
+}
+
+// fn append_at_symb(s: &String) -> String {
+//     format!("@{}", s)
+// }
+
+// fn create_p_rule_hole(s: &String) -> String {
+//     format!("[@{}]", s)
+// }
+
+pub trait TreeSitterQuery {
+    fn substituteParameterizedRuleHoles(&self, substitutions: &HashMap<String, String>) -> String;
+    fn substituteRuleHoles(&self,  substitutions: &HashMap<String, String>) -> String;
+    fn createQuery(&self, language: Language) -> Query;
+    fn toRuleHole(&self) -> String;
+    fn toParameterizedRuleHole(&self) -> String;
+}
+
+impl TreeSitterQuery for String {
+    fn substituteParameterizedRuleHoles(&self, substitutions: &HashMap<String, String>) -> String {
+        let mut output = String::from(self);
+        for (tag, substitute) in substitutions {
+            let key = tag.toParameterizedRuleHole();
+            output = output.replace(&key, substitute)
+        }
+        output
+        // substitute_in_str(substitutions, self, &toParameterizedRuleHole)
+    }
+
+    fn substituteRuleHoles(&self,  substitutions: &HashMap<String, String>) -> String {
+        let mut output = String::from(self);
+        for (tag, substitute) in substitutions {
+            let key = tag.toRuleHole();
+            output = output.replace(&key, substitute)
+        }
+        output
+    }
+
+    fn createQuery(&self, language: Language) -> Query {
+        if let Ok(q)  = Query::new(language, self){
+            return q;
+        }
+        panic!("Could not parse the query : {}", self);
+    }
+
+    fn toRuleHole(&self) -> String {
+        format!("@{}", self)
+    }
+
+    fn toParameterizedRuleHole(&self) -> String {
+        format!("[@{}]", self)
+    }
+
+    // fn substitute_in_str(
+    //     substitutes: &HashMap<String, String>,
+    //     value: &String,
+    //     key_mapper: &dyn Fn(&String) -> String
+    // ) -> String {
+    //     let mut output = String::from(value);
+    //     for (tag, substitute) in substitutes {
+    //         let key = key_mapper(tag);
+    //         output = output.replace(&key, substitute)
+    //     }
+    //     output
+    // }
 }
 

@@ -53,16 +53,18 @@ pub fn substitute_in_str(
 }
 
 pub trait MapOfVec<T, V> {
-    fn collect(&mut self,key: T, value: V) ;
+    fn collect_as_counter(&mut self,key: T, value: V) ;
 }
 
 impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>>  {
-    fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value : U) {
+    fn collect_as_counter(self: &mut HashMap<T, Vec<U>>, key: T, value : U) {
         self.entry(key)
                 .or_insert_with(Vec::new)
                 .push(value);
     }
 }
+
+
 
 // pub fn apply_substitutions_to_string(item: String, substitutions:HashMap<String,String>)-> String{
 //     let mut s = item;
