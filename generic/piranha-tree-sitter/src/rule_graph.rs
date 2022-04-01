@@ -35,12 +35,6 @@ pub struct GraphRuleStore {
     pub scopes: Vec<Scope>,
 }
 
-
-// TODO: Remove these functions
-pub fn map_key(s: &String) -> String {
-    format!("[@{}]", s)
-}
-
 pub fn map_identity(x: &String) -> String {
     String::from(x)
 }
@@ -98,7 +92,7 @@ impl GraphRuleStore {
         if let Some(from_rule) = self.p_rule_graph.get(rule_name) {
             for (scope, to_rule) in from_rule {
                 if let Some(transformed_rule) =
-                    self.p_rules_by_name[to_rule].instantiate(&tag_matches, &map_key)
+                    self.p_rules_by_name[to_rule].instantiate(&tag_matches, &map_identity)
                 {
                     next_rules.collect_as_counter(String::from(scope), transformed_rule);
                 } else {

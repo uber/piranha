@@ -162,17 +162,4 @@ impl TreeSitterQuery for String {
     fn to_parameterized_rule_hole(&self) -> String {
         format!("[@{}]", self)
     }
-
-    // fn substitute_in_str(
-    //     substitutes: &HashMap<String, String>,
-    //     value: &String,
-    //     key_mapper: &dyn Fn(&String) -> String
-    // ) -> String {
-    //     let mut output = String::from(value);
-    //     for (tag, substitute) in substitutes {
-    //         let key = key_mapper(tag);
-    //         output = output.replace(&key, substitute)
-    //     }
-    //     output
-    // }
 }
