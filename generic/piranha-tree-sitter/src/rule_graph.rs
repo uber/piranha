@@ -1,6 +1,6 @@
 use crate::{
     config::{Rule, Scope, ScopeConfig, PiranhaArguments},
-    tree_sitter::TreeSitterQuery,
+    tree_sitter::TreeSitterHelpers,
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
@@ -25,22 +25,18 @@ struct Rules {
     pub rules: Vec<Rule>,
 }
 
-pub struct GraphRuleStore {
-    pub p_rule_graph: HashMap<String, Vec<(String, String)>>,
+pub struct RuleStore {
+    pub rule_graph: HashMap<String, Vec<(String, String)>>,
     rule_query_cache: HashMap<String, Query>,
     pub language: Language,
-    pub p_rules_by_name: HashMap<String, Rule>,
+    pub rules_by_name: HashMap<String, Rule>,
     pub seed_rules: Vec<Rule>,
     pub seed_substitutions: HashMap<String, String>,
     pub scopes: Vec<Scope>,
 }
 
-pub fn map_identity(x: &String) -> String {
-    String::from(x)
-}
-
-impl GraphRuleStore {
-    pub fn new(args: &PiranhaArguments) -> GraphRuleStore {
+impl RuleStore {
+    pub fn new(args: &PiranhaArguments) -> RuleStore {
         let (p_rule_graph, p_rules_by_name, scopes) =
             create_rule_graph(&args);
 
@@ -54,11 +50,11 @@ impl GraphRuleStore {
         }
         println!("{}", format!("{}", seed_rules.len()).red());
 
-        GraphRuleStore {
-            p_rule_graph,
+        RuleStore {
+            rule_graph: p_rule_graph,
             rule_query_cache: HashMap::new(),
             language: args.language.get_language(),
-            p_rules_by_name,
+            rules_by_name: p_rules_by_name,
             seed_rules,
             seed_substitutions: args.input_substiution.clone(),
             scopes,
@@ -89,15 +85,15 @@ impl GraphRuleStore {
     ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
-        if let Some(from_rule) = self.p_rule_graph.get(rule_name) {
+        if let Some(from_rule) = self.rule_graph.get(rule_name) {
             for (scope, to_rule) in from_rule {
                 if let Some(transformed_rule) =
-                    self.p_rules_by_name[to_rule].instantiate(&tag_matches)
+                    self.rules_by_name[to_rule].instantiate(&tag_matches)
                 {
                     next_rules.collect_as_counter(String::from(scope), transformed_rule);
                 } else {
                     #[rustfmt::skip]
-                    panic!("Could not transform {:?} \n \n {:?}", self.p_rules_by_name[to_rule], tag_matches);
+                    panic!("Could not transform {:?} \n \n {:?}", self.rules_by_name[to_rule], tag_matches);
                 }
             }
         }

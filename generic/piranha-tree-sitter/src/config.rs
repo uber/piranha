@@ -2,7 +2,7 @@ use colored::Colorize;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash};
 
-use crate::{tree_sitter::TreeSitterQuery, utilities::substitute_in_str};
+use crate::{tree_sitter::TreeSitterHelpers};
 
 pub struct PiranhaArguments {
     pub path_to_code_base: String,

@@ -31,20 +31,6 @@ pub fn get_files_with_extension(input_dir: &String, extension: &str) -> Vec<DirE
     
 }
 
-// TODO: Remove
-pub fn substitute_in_str(
-    substitutes: &HashMap<String, String>,
-    value: &String,
-    key_mapper: &dyn Fn(&String) -> String
-) -> String {
-    let mut output = String::from(value);
-    for (tag, substitute) in substitutes {
-        let key = key_mapper(tag);
-        output = output.replace(&key, substitute)
-    }
-    output
-}
-
 pub trait MapOfVec<T, V> {
     fn collect_as_counter(&mut self,key: T, value: V) ;
 }

@@ -95,7 +95,7 @@ pub fn node_matches_range(n: Node, range: Range) -> bool {
     n.start_byte() == range.start_byte && n.end_byte() == range.end_byte
 }
 
-pub trait TreeSitterQuery {
+pub trait TreeSitterHelpers {
     fn get_language(&self) -> Language;
     fn get_extension(&self) -> &'static str;
     fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String;
@@ -103,7 +103,7 @@ pub trait TreeSitterQuery {
     fn to_rule_hole(&self) -> String;
 }
 
-impl TreeSitterQuery for String {
+impl TreeSitterHelpers for String {
     fn get_language(&self) -> Language {
         unsafe {
             match self.as_str() {
