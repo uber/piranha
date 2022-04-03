@@ -40,28 +40,10 @@
   ],
   "unnecessaryTestMethodProperties" : [
     {
-      "methodName": "when",
+      "methodName": "isTrue",
       "argumentIndex": 0,
-      "receiverType":"org.mockito.Mockito",
-      "isStatic": "true"
-    },
-    {
-      "methodName": "expect",
-      "argumentIndex": 0,
-      "receiverType":"org.easymock.EasyMock",
-      "isStatic": "true"
-    },
-    {
-      "methodName": "assertTrue",
-      "argumentIndex": 0,
-      "receiverType":"org.junit.Assert",
-      "isStatic": "true"
-    },
-    {
-      "methodName": "assertFalse",
-      "argumentIndex": 0,
-      "receiverType":"org.junit.Assert",
-      "isStatic": "true"
+      "receiverType":"com.uber.piranha.TestObj",
+      "isStatic": "false"
     }
   ],
   "linkURL": "<provide_your_url>",

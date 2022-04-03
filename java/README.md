@@ -25,7 +25,7 @@ sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 dependencies {
-  annotationProcessor "com.uber.piranha:piranha:0.1.4"
+  annotationProcessor "com.uber.piranha:piranha:0.1.8"
   errorprone "com.google.errorprone:error_prone_core:2.4.0"
   errorproneJavac "com.google.errorprone:javac:9+181-r4173-1"
 }
@@ -65,6 +65,14 @@ The properties file has the following template:
       },
       ...
     ],
+  "enumProperties":
+    [
+      {
+        "enumName": "TestExperimentName",
+        "argumentIndex": 0
+      },
+      ...
+    ],
   "linkURL": "<provide_your_url>",
   "annotations": ["ToggleTesting"]
 }
@@ -98,8 +106,43 @@ public void some_unit_test() { ... }
 
 when `IsTreated` is `true`, and will be deleted completely when `IsTreated` is `false`.
 
+An optional top-level field is `enumProperties`.
+Within that, there is an array of JSON objects, having the required fields `enumName` and `argumentIndex`.
+
+What this field does, is if you specify an enum class name, Piranha will remove enum constants that have a constructor with a string argument that matches your `FlagName` value, along with their usages.
+
+For example, if your `FlagName` is set to `stale.flag`, and `TestExperimentName` is configured in `enumProperties` with an `argumentIndex` of `0`:
+
+```java
+public enum TestExperimentName {
+  STALE_FLAG("stale.flag"),
+  OTHER_FLAG("other");
+  ...
+}
+```
+
+will be refactored to
+
+
+```java
+public enum TestExperimentName {
+  OTHER_FLAG("other");
+  ...
+}
+```
+
+Additionally, usages of `STALE_FLAG` will be removed as if the enum itself had been passed as the flag to be cleaned by Piranha, rather than the string `"stale.flag"`
+
 Finally, the setting `linkURL` in the properties file is to provide a URL describing the Piranha tooling and any custom configurations associated with the codebase. 
 
+Another top-level optional field is `unnecessaryTestMethodProperties`. Within that, there is an array of JSON objects, 
+having the fields `methodName`, `argumentIndex`, `receiverType`, `returnType` and `isStatic`.
+
+The refactored code may contain unnecessary method invocations. For instance, 
+Piranha changes the statement `when(experimentation.isToggleDisabled("STALE_FLAG")).thenReturn(false);` to `when(true).thenReturn(false);`, 
+where the invocation `when(true)` is unnecessary, and could be deleted.
+This field (`unnecessaryTestMethodProperties`) is used to define such potentially unnecessary method invocations.
+Piranha will delete a statement if it invokes one of these pre-defined methods with a stale flag as an argument.  
 
 ## Example refactoring
 
@@ -225,7 +268,7 @@ IMPORTANT: Please note that the gradle build script included in that directory a
             <path>
               <groupId>com.uber.piranha</groupId>
               <artifactId>piranha</artifactId>
-              <version>0.1.4</version>
+              <version>0.1.8</version>
             </path>
             <path>
               <groupId>com.google.errorprone</groupId>

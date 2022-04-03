@@ -1,3 +1,25 @@
+Version 0.1.8
+-------------
+* Added support for matching flag method invocations when passed as argument [#165]
+* Improve code coverage [#169]
+
+Version 0.1.7
+-------------
+* Added support for matching chain of method invocations for XP APIs [#163]
+* Refactoring to use the Error-prone's matcher API [#162]
+* Fixed the bug relating to commas in the annotation argument list [#159]
+
+Version 0.1.6
+-------------
+* Delete statements using EasyMock and JUnit API [#156]
+* Handling the unnecessary parentheses [#158]
+
+Version 0.1.5
+-------------
+* Remove enum constants with field matching flag value. [#142]
+* Properly clean up enum constants ending with semicolon. [#147]
+* Deleting statements using specific Mockito API patterns. [#155]
+
 Version 0.1.4
 -------------
 * Fix XP flag symbol matching on imports. [#102]

@@ -1,0 +1,9 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "putToggleEnabled",
+      "flagType": "set_treated",
+      "argumentIndex": 0
+    }
+  ]
+}
