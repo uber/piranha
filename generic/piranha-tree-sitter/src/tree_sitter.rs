@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
 use colored::Colorize;
-use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, Range};
+use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
+
+use crate::utilities::MapOfVec;
 
 extern "C" {
     fn tree_sitter_java() -> Language;
@@ -91,10 +93,6 @@ pub fn group_captures_by_tag<'a>(
     tag_capture
 }
 
-pub fn node_matches_range(n: Node, range: Range) -> bool {
-    n.start_byte() == range.start_byte && n.end_byte() == range.end_byte
-}
-
 pub trait TreeSitterHelpers {
     fn get_language(&self) -> Language;
     fn get_extension(&self) -> &'static str;
@@ -121,7 +119,7 @@ impl TreeSitterHelpers for String {
             _ => panic!("Language not supported"),
         }
     }
-    
+
     fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in substitutions {
@@ -140,5 +138,76 @@ impl TreeSitterHelpers for String {
 
     fn to_rule_hole(&self) -> String {
         format!("@{}", self)
+    }
+}
+
+pub trait PiranhaRuleMatcher {
+    fn match_query_str(
+        &self,
+        source_code: String,
+        query: &Query,
+        recurssive: bool,
+    ) -> Vec<(Range, HashMap<String, String>)>;
+    fn get_any_match_query_str(
+        &self,
+        source_code: &String,
+        query: &Query,
+        recurssive: bool,
+    ) -> Option<(Range, HashMap<String, String>)>;
+    fn node_matches_range(&self, range: Range) -> bool;
+}
+
+impl PiranhaRuleMatcher for Node<'_> {
+    fn get_any_match_query_str(
+        &self,
+        source_code: &String,
+        query: &Query,
+        recurssive: bool,
+    ) -> Option<(Range, HashMap<String, String>)> {
+        return self
+            .match_query_str(source_code.to_string(), query, recurssive)
+            .first()
+            .map(|x| x.clone());
+    }
+
+    fn match_query_str(
+        &self,
+        source_code: String,
+        query: &Query,
+        recurssive: bool,
+    ) -> Vec<(Range, HashMap<String, String>)> {
+        let mut cursor = QueryCursor::new();
+        let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
+        let pattern_count = query.pattern_count();
+
+        let mut matched_node_tag_match = HashMap::new();
+
+        for qm in query_matches {
+            if let Some(matched_node) = qm.captures.first() {
+                let captured_tags =
+                    group_captures_by_tag(qm.captures, query, source_code.as_bytes());
+                matched_node_tag_match
+                    .collect_as_counter(matched_node.node.range(), captured_tags);
+            }
+        }
+
+        let mut output = vec![];
+        for (range, v) in matched_node_tag_match {
+            if v.len() == pattern_count {
+                if recurssive || self.node_matches_range(range) {
+                    let mut captures_by_tag = HashMap::new();
+                    for i in v {
+                        captures_by_tag.extend(i.clone());
+                    }
+                    output.push((range, captures_by_tag));
+                }
+            }
+        }
+        output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
+        return output;
+    }
+
+    fn node_matches_range(&self, range: Range) -> bool {
+        self.start_byte() == range.start_byte && self.end_byte() == range.end_byte
     }
 }
