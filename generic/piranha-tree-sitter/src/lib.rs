@@ -48,12 +48,8 @@ pub mod piranha {
                 println!("Number of seed rules {}", rules.len());
                 let mut any_file_updated = false;
                 for (_, scu) in self.files.iter_mut() {
-                    any_file_updated |= scu.apply_rules(
-                            &mut self.rule_store,
-                            rules.clone(),
-                            &mut parser,
-                            None,
-                        );
+                    any_file_updated |=
+                        scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
                 }
 
                 if !any_file_updated {
@@ -65,29 +61,27 @@ pub mod piranha {
         pub fn new(args: PiranhaArguments) -> Self {
             let language = args.language.get_language();
             let extension = args.language.get_extension();
-
             let graph_rule_store = RuleStore::new(&args);
-
-            let mut files = HashMap::new();
-            let relevant_files = get_files_with_extension(&args.path_to_code_base, extension);
 
             let mut parser = Parser::new();
             parser
                 .set_language(language)
                 .expect("Could not set language");
 
-            for dir_entry in relevant_files {
-                let file_path = dir_entry.path();
-                let code = read_file(&file_path);
-                files.insert(
-                    file_path,
-                    SourceCodeUnit::new(
-                        &mut parser,
-                        code,
-                        graph_rule_store.seed_substitutions.clone(),
-                    ),
-                );
-            }
+            // let mut files = HashMap::new();
+            let relevant_files = get_files_with_extension(&args.path_to_code_base, extension);
+
+            let files = relevant_files
+                .iter()
+                .map(|dir_entry| (dir_entry.path(), read_file(&dir_entry.path())))
+                .map(|(file_path, code)| {
+                    (
+                        file_path,
+                        SourceCodeUnit::new(&mut parser, code, args.input_substiution.clone()),
+                    )
+                })
+                .collect();
+
             Self {
                 rule_store: graph_rule_store,
                 language,
@@ -239,7 +233,8 @@ pub mod piranha {
         ) -> bool {
             let mut is_any_rule_applied = false;
             for rule in rules {
-                is_any_rule_applied |= self.apply_rule(rule.clone(), rules_store, parser, &scope_query)
+                is_any_rule_applied |=
+                    self.apply_rule(rule.clone(), rules_store, parser, &scope_query)
             }
             return is_any_rule_applied;
         }

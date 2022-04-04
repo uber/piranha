@@ -1,5 +1,5 @@
 use crate::{
-    config::{Rule, Scope, ScopeConfig, PiranhaArguments},
+    config::{PiranhaArguments, Rule, Scope, ScopeConfig},
     tree_sitter::TreeSitterHelpers,
     utilities::{read_file, MapOfVec},
 };
@@ -31,14 +31,13 @@ pub struct RuleStore {
     pub language: Language,
     pub rules_by_name: HashMap<String, Rule>,
     pub seed_rules: Vec<Rule>,
-    pub seed_substitutions: HashMap<String, String>,
+    // pub seed_substitutions: HashMap<String, String>,
     pub scopes: Vec<Scope>,
 }
 
 impl RuleStore {
     pub fn new(args: &PiranhaArguments) -> RuleStore {
-        let (p_rule_graph, p_rules_by_name, scopes) =
-            create_rule_graph(&args);
+        let (p_rule_graph, p_rules_by_name, scopes) = create_rule_graph(&args);
 
         let mut seed_rules = vec![];
         for (_, rule) in &p_rules_by_name {
@@ -56,7 +55,7 @@ impl RuleStore {
             language: args.language.get_language(),
             rules_by_name: p_rules_by_name,
             seed_rules,
-            seed_substitutions: args.input_substiution.clone(),
+            // seed_substitutions: args.input_substiution.clone(),
             scopes,
         }
     }
@@ -121,14 +120,16 @@ impl RuleStore {
 
 type ParameterizedRuleGraph = HashMap<String, Vec<(String, String)>>;
 
-pub fn create_rule_graph(args: &PiranhaArguments) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
-
+pub fn create_rule_graph(
+    args: &PiranhaArguments,
+) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
     let path_to_config = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("src")
         .join("configurations");
 
     // Read the configuration files.
-    let (path_to_all_rules_toml, path_to_edges, path_to_scope_config) = match args.language.as_str() {
+    let (path_to_all_rules_toml, path_to_edges, path_to_scope_config) = match args.language.as_str()
+    {
         "Java" => (
             path_to_config.join("all_rules.toml"),
             path_to_config.join("edges.toml"),
@@ -157,11 +158,19 @@ pub fn create_rule_graph(args: &PiranhaArguments) -> (ParameterizedRuleGraph, Ha
     }
 
     // Construct Graph
+
+    let get_rules_for_tag_or_name = |val: &String| {
+        rules_by_name
+            .get(val)
+            .map(|v| vec![v.name.clone()])
+            .unwrap_or_else(|| rules_by_tag[val].clone())
+    };
+
     let mut graph: ParameterizedRuleGraph = HashMap::new();
     let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
     for edge in edges.edges {
-        for f in get_rules_for_tag_or_name(&edge.from, &rules_by_name, &rules_by_tag) {
-            for t in get_rules_for_tag_or_name(&edge.to, &rules_by_name, &rules_by_tag) {
+        for f in get_rules_for_tag_or_name(&edge.from) {
+            for t in get_rules_for_tag_or_name(&edge.to) {
                 graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
             }
         }
@@ -171,16 +180,4 @@ pub fn create_rule_graph(args: &PiranhaArguments) -> (ParameterizedRuleGraph, Ha
         .map(|x: ScopeConfig| x.scopes)
         .unwrap();
     (graph, rules_by_name, scopes)
-}
-
-fn get_rules_for_tag_or_name(
-    val: &String,
-    rules_by_name: &HashMap<String, Rule>,
-    rules_by_tag: &HashMap<String, Vec<String>>,
-) -> Vec<String> {
-    if rules_by_name.contains_key(val) {
-        vec![String::from(&rules_by_name[val].name)]
-    } else {
-        rules_by_tag[val].clone()
-    }
 }
