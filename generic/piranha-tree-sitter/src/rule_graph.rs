@@ -31,31 +31,24 @@ pub struct RuleStore {
     pub language: Language,
     pub rules_by_name: HashMap<String, Rule>,
     pub seed_rules: Vec<Rule>,
-    // pub seed_substitutions: HashMap<String, String>,
     pub scopes: Vec<Scope>,
 }
 
 impl RuleStore {
     pub fn new(args: &PiranhaArguments) -> RuleStore {
-        let (p_rule_graph, p_rules_by_name, scopes) = create_rule_graph(&args);
+        let (rule_graph, rules_by_name, scopes) = create_rule_graph(&args);
 
-        let mut seed_rules = vec![];
-        for (_, rule) in &p_rules_by_name {
-            if let Some(_) = &rule.holes {
-                if let Some(r) = rule.instantiate(&args.input_substiution) {
-                    seed_rules.push(r);
-                }
-            }
-        }
-        println!("{}", format!("{}", seed_rules.len()).red());
+        let seed_rules:Vec<Rule> = rules_by_name.iter()
+            .filter(|(_,rule)| rule.is_feature_flag_cleanup())
+            .map(|(_, r)| r.instantiate(&args.input_substiution))
+            .collect();
 
         RuleStore {
-            rule_graph: p_rule_graph,
+            rule_graph,
             rule_query_cache: HashMap::new(),
             language: args.language.get_language(),
-            rules_by_name: p_rules_by_name,
+            rules_by_name,
             seed_rules,
-            // seed_substitutions: args.input_substiution.clone(),
             scopes,
         }
     }
@@ -65,10 +58,9 @@ impl RuleStore {
     }
 
     pub fn add_seed_rule(&mut self, r: Rule, tag_captures_previous_edit: &HashMap<String, String>) {
-        if let Some(new_seed_rule) = r.instantiate(&tag_captures_previous_edit) {
-            println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
-            self.seed_rules.push(new_seed_rule);
-        }
+        let new_seed_rule = r.instantiate(&tag_captures_previous_edit);
+        println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
+        self.seed_rules.push(new_seed_rule);
     }
 
     pub fn get_query(&mut self, query_str: &String) -> &Query {
@@ -86,14 +78,10 @@ impl RuleStore {
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
         if let Some(from_rule) = self.rule_graph.get(rule_name) {
             for (scope, to_rule) in from_rule {
-                if let Some(transformed_rule) =
-                    self.rules_by_name[to_rule].instantiate(&tag_matches)
-                {
-                    next_rules.collect_as_counter(String::from(scope), transformed_rule);
-                } else {
-                    #[rustfmt::skip]
-                    panic!("Could not transform {:?} \n \n {:?}", self.rules_by_name[to_rule], tag_matches);
-                }
+                next_rules.collect_as_counter(
+                    String::from(scope),
+                    self.rules_by_name[to_rule].instantiate(&tag_matches),
+                );
             }
         }
         next_rules
@@ -107,11 +95,10 @@ impl RuleStore {
         let next_rules = self.get_next_rules(rule, tag_matches);
 
         let get = |s: &str| {
-            if next_rules.contains_key(s) {
-                next_rules[s].clone()
-            } else {
-                vec![]
-            }
+            next_rules
+                .get(s)
+                .map(|x| x.clone())
+                .unwrap_or_else(|| vec![])
         };
 
         (get("Parent"), get("Method"), get("Class"), get("Global"))

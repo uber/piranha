@@ -164,33 +164,19 @@ pub mod piranha {
 
                 let mut previous_edit = edit.clone();
                 let mut curr_rule = rule.clone();
-                let mut scope_rule_queue = vec![];
+                let mut new_rules_q = vec![];
 
                 loop {
                     let (parent_rules, method_level_rules, class_level_rules, _global_rules) =
                         rules_store.get_next(curr_rule.clone(), &self.substitutions);
-                    println!(
-                        "Method {} Class {}",
-                        method_level_rules.len(),
-                        class_level_rules.len()
-                    );
+                    
+                    #[rustfmt::skip]
+                    println!("Method {} Class {}",method_level_rules.len(),class_level_rules.len());
 
                     let mut add_to_queue = |s: &str, rules: Vec<Rule>| {
-                        for r in rules {
-                            if let Some(scope_query) =
-                                self.get_scope_query(String::from(s), previous_edit, rules_store)
-                            {
-                                if let Some(transformed_rule) = r.instantiate(&self.substitutions) {
-                                    scope_rule_queue.push((scope_query, transformed_rule));
-                                } else {
-                                    panic!(
-                                        "Could not transform rule {:?} {:?}",
-                                        r, &self.substitutions
-                                    );
-                                }
-                            } else {
-                                panic!("Could not create scope query {:?}", s);
-                            }
+                        for rule in rules {
+                            let scope_query =self.get_scope_query(s, previous_edit, rules_store);
+                            new_rules_q.push((scope_query, rule.instantiate(&self.substitutions)));
                         }
                     };
 
@@ -215,9 +201,8 @@ pub mod piranha {
                         break;
                     }
                 }
-
-                scope_rule_queue.reverse();
-                for (sq, rle) in scope_rule_queue {
+                new_rules_q.reverse();
+                for (sq, rle) in new_rules_q {
                     self.apply_rule(rle, rules_store, parser, &Some(sq));
                 }
             }
@@ -248,21 +233,21 @@ pub mod piranha {
 
         fn get_scope_query(
             &self,
-            s_scope: String,
+            s_scope: &str,
             previous_edit: InputEdit,
             rules_store: &mut RuleStore,
-        ) -> Option<String> {
+        ) -> String {
             let mut changed_node =
                 self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
             let mut scope_matchers = vec![];
             for s in rules_store.scopes.iter() {
-                if s.name.eq(s_scope.as_str()) {
+                if s.name.eq(s_scope) {
                     scope_matchers = s.rules.clone();
                     break;
                 }
             }
             if scope_matchers.is_empty() {
-                return None;
+                panic!("Could not find scope matcher for {:?}", s_scope);
             }
             while let Some(parent) = changed_node.parent() {
                 for m in &scope_matchers {
@@ -274,13 +259,13 @@ pub mod piranha {
                         let transformed_query =
                             m.matcher_gen.substitute_rule_holes(&captures_by_tag);
                         let _ = rules_store.get_query(&transformed_query);
-                        return Some(transformed_query);
+                        return transformed_query;
                     } else {
                         changed_node = parent;
                     }
                 }
             }
-            None
+            panic!("Could not create scope query for {:?}", s_scope);
         }
 
         fn match_rules_to_context(
