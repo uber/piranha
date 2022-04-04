@@ -2,7 +2,7 @@ use colored::Colorize;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash};
 
-use crate::{tree_sitter::TreeSitterHelpers};
+use crate::tree_sitter::TreeSitterHelpers;
 
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
@@ -74,36 +74,37 @@ pub struct Constraint {
 }
 
 impl Rule {
-    pub fn instantiate(&self, substitutions: &HashMap<String, String>) -> Option<Rule> {
-        if self.holes.is_none() {
-            Some(self.clone())
-        } 
-        //TODO: Cleanup
-        else if self
-            .holes
-            .clone()
-            .unwrap()
-            .iter()
-            .map(|x| x.replace("@", ""))
-            .all(|x| substitutions.contains_key(&x))
-        {
-            let mut cc = HashMap::new();
-            for (k, v) in substitutions {
-                if self.holes.clone().unwrap().contains(&["@", k].join("")){
-                    cc.insert(k.clone(), v.clone());
-                }
-            }
-            Some(Rule {
-                name: String::from(&self.name),
-                query: self.query.substitute_rule_holes(&cc), //substitute_in_str(&substitutions, &self.query, &key_mapper),
-                replace: self.replace.substitute_rule_holes(&cc),
-                holes: self.holes.clone(),
-                tag: self.tag.clone(),
-                constraint: self.constraint.clone(),
-            })
-        } else {
-            println!("Holes {:?} not found in table", self.holes);
-            None
+
+    pub fn update(&self, query: String, replace: String) -> Self{
+        Rule {
+            name: String::from(&self.name),
+            query,
+            replace,
+            holes: self.holes.clone(),
+            tag: self.tag.clone(),
+            constraint: self.constraint.clone(),
         }
+    }
+
+    pub fn instantiate(&self, substitutions: &HashMap<String, String>) -> Option<Rule> {
+        if let Some(holes) = &self.holes {
+
+            let relevant_substitutions: HashMap<String, String> = holes
+                .iter()
+                .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
+                .map(|(a, b)| (a.clone(), b.clone()))
+                .collect();
+
+            if relevant_substitutions.len() == holes.len() {
+                return Some(self.update(
+                    self.query.substitute_rule_holes(&relevant_substitutions), 
+                    self.replace.substitute_rule_holes(&relevant_substitutions)));
+            } else {
+                #[rustfmt::skip]
+                println!("Some Holes {:?} not found in table {:?}",  self.holes, substitutions);
+                return None;
+            }
+        }
+        return Some(self.clone());
     }
 }

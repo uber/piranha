@@ -16,7 +16,7 @@ query = """((
 )"""
 replace = "@treated"
 tag = ["Feature-flag API cleanup", "Returns boolean"]
-holes = ["@treated", "@stale_flag_name"]
+holes = ["treated", "stale_flag_name"]
 
 
 [[rules]]
@@ -37,7 +37,7 @@ query = """((
 )"""
 replace = "@treated"
 tag = ["Feature-flag API cleanup", "Returns boolean"]
-holes = ["@treated", "@stale_flag_name"]
+holes = ["treated", "stale_flag_name"]
 
 [[rules]]
 name = "Enum Based, toggle disabled"
@@ -57,7 +57,7 @@ query = """((
 )"""
 replace = "false"
 tag = ["Feature-flag API cleanup", "Returns boolean"]
-holes = ["@treated", "@stale_flag_name"]
+holes = ["treated", "stale_flag_name"]
 
 [[rules]]
 name = "Enum based, Delete enum constant (just the constant)"
@@ -69,7 +69,7 @@ query = """
     """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["@stale_flag_name"]
+holes = ["stale_flag_name"]
 
 [[rules]]
 name = "Enum based, Delete enum constant"
@@ -81,7 +81,7 @@ query = """
     """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["@stale_flag_name"]
+holes = ["stale_flag_name"]
 
 
 [[rules]]
@@ -100,7 +100,7 @@ query = """
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["@stale_flag_name"]
+holes = ["stale_flag_name"]
 
 [[rules]]
 name = "Enum based, method invocation, put disabled"
@@ -118,7 +118,7 @@ query = """
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["@stale_flag_name"]
+holes = ["stale_flag_name"]
 
 [[rules]]
 name = "Enum based, method invocation, includeEvent"
@@ -136,7 +136,7 @@ query = """
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["@stale_flag_name"]
+holes = ["stale_flag_name"]
 
 [[rules]]
 name = "Interface based, annotated method declaration"
@@ -169,7 +169,7 @@ query = """
 """
 replace = ""
 tag = ["Feature-flag API cleanup"]
-holes = ["@stale_flag_name", "@namespace"]
+holes = ["stale_flag_name", "namespace"]
 
 [[rules]]
 name = "Interface based, replace method invocation chain with true/false"
@@ -183,7 +183,7 @@ query = """
 )"""
 replace = "@treated"
 tag = ["Returns boolean"]
-holes = ["@m_name", "@treated"]
+holes = ["m_name", "treated"]
 
 
 # [[rules.and_then]]
@@ -561,7 +561,7 @@ query = """
 """
 replace = ""
 tag = []
-holes = ["@n", "@v"]
+holes = ["n", "v"]
 
 # Remove assignment if it is the only assignment in the entire class. 
 # This should be done in class and method scope. But while deleting the assignment, 
@@ -600,4 +600,4 @@ query = """
 """
 replace = "@v"
 tag = []
-holes = ["@n", "@v"]
+holes = ["n", "v"]
