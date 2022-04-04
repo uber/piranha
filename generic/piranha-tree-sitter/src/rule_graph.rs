@@ -1,6 +1,6 @@
 use crate::{
     config::{PiranhaArguments, Rule, Scope, ScopeConfig},
-    tree_sitter::TreeSitterHelpers,
+    tree_sitter::{TreeSitterHelpers, TagMatches},
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
@@ -40,7 +40,7 @@ impl RuleStore {
 
         let seed_rules:Vec<Rule> = rules_by_name.iter()
             .filter(|(_,rule)| rule.is_feature_flag_cleanup())
-            .map(|(_, r)| r.instantiate(&args.input_substiution))
+            .map(|(_, r)| r.instantiate(&args.input_substitutions))
             .collect();
 
         RuleStore {
@@ -57,7 +57,7 @@ impl RuleStore {
         self.seed_rules.clone()
     }
 
-    pub fn add_seed_rule(&mut self, r: Rule, tag_captures_previous_edit: &HashMap<String, String>) {
+    pub fn add_seed_rule(&mut self, r: &Rule, tag_captures_previous_edit: &TagMatches) {
         let new_seed_rule = r.instantiate(&tag_captures_previous_edit);
         println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
         self.seed_rules.push(new_seed_rule);
@@ -72,7 +72,7 @@ impl RuleStore {
     fn get_next_rules(
         &self,
         rule: Rule,
-        tag_matches: &HashMap<String, String>,
+        tag_matches: &TagMatches,
     ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
@@ -90,18 +90,18 @@ impl RuleStore {
     pub fn get_next(
         &self,
         rule: Rule,
-        tag_matches: &HashMap<String, String>,
-    ) -> (Vec<Rule>, Vec<Rule>, Vec<Rule>, Vec<Rule>) {
+        tag_matches: &TagMatches,
+    ) -> HashMap<String, Vec<Rule>> {
         let next_rules = self.get_next_rules(rule, tag_matches);
 
         let get = |s: &str| {
-            next_rules
+            (String::from(s), next_rules
                 .get(s)
                 .map(|x| x.clone())
-                .unwrap_or_else(|| vec![])
+                .unwrap_or_else(|| vec![]))
         };
 
-        (get("Parent"), get("Method"), get("Class"), get("Global"))
+        HashMap::from([get("Parent"), get("Method"), get("Class"), get("Global")])
     }
 }
 

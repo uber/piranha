@@ -3,12 +3,13 @@ use serde_derive::Deserialize;
 use core::panic;
 use std::{collections::HashMap, hash::Hash};
 
-use crate::tree_sitter::TreeSitterHelpers;
+use crate::tree_sitter::{TreeSitterHelpers, TagMatches};
+
 
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
-    pub input_substiution: HashMap<String, String>,
+    pub input_substitutions: TagMatches,
 }
 
 impl PiranhaArguments {
@@ -22,7 +23,7 @@ impl PiranhaArguments {
         let flag_val = flag_value.eq("true");
         let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
 
-        let input_substiution = HashMap::from([
+        let input_substitutions = HashMap::from([
             (String::from("stale_flag_name"), String::from(flag_name)),
             (String::from("treated"), String::from(&treated)),
             (String::from("namespace"), String::from(flag_namespace)),
@@ -35,7 +36,7 @@ impl PiranhaArguments {
         Self {
             path_to_code_base: path_to_code_base.to_string(),
             language: input_language.to_string(),
-            input_substiution,
+            input_substitutions: TagMatches::new(input_substitutions),
         }
     }
 }
@@ -93,14 +94,14 @@ impl Rule {
                         .unwrap_or(false)
     }
 
-    pub fn instantiate(&self, substitutions: &HashMap<String, String>) -> Rule {
+    pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {
         if let Some(holes) = &self.holes {
 
-            let relevant_substitutions: HashMap<String, String> = holes
+            let relevant_substitutions = TagMatches::new(holes
                 .iter()
                 .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
                 .map(|(a, b)| (a.clone(), b.clone()))
-                .collect();
+                .collect());
 
             if relevant_substitutions.len() == holes.len() {
                 return self.update(

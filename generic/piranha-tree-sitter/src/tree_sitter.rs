@@ -1,14 +1,46 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use colored::Colorize;
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
-use crate::utilities::MapOfVec;
+use itertools::Itertools;
 
 extern "C" {
     fn tree_sitter_java() -> Language;
     fn tree_sitter_swift() -> Language;
 }
+
+
+
+#[derive(Clone, Debug)]
+pub struct TagMatches(HashMap<String, String>);
+
+impl TagMatches {
+    pub fn new(matches: HashMap<String, String>) -> Self {
+        TagMatches(matches)
+    }
+
+    fn merge(tag_matches_list: Vec<TagMatches>) -> Self{
+        let mut new_map = HashMap::new();
+        for tag_matches in tag_matches_list{
+            new_map.extend(tag_matches.0);
+        }
+        Self::new(new_map)
+    }
+
+    pub fn get(&self, s: &String) -> Option<&String>{
+        self.0.get(s)
+    }
+
+    pub fn len(&self) -> usize{
+        self.0.len()
+    }
+
+    pub fn extend(&mut self, other_tag_matches: TagMatches){
+        self.0.extend(other_tag_matches.0)
+    }
+}
+
 
 pub fn get_edit(
     source_code: &str,
@@ -65,38 +97,28 @@ pub fn group_captures_by_tag<'a>(
     captures: &[QueryCapture],
     query: &'a Query,
     source_code_bytes: &'a [u8],
-) -> HashMap<String, String> {
-    let mut tag_capture = HashMap::new();
-    // let capture_names = &query.capture_names();
-    for capture in captures {
-        let name = query
-            .capture_names()
-            .get(capture.index as usize)
-            .expect("Capture name not found!");
-        let code_snippet = capture
-            .node
-            .utf8_text(source_code_bytes)
-            .expect("Could not get source code for node");
-        if !tag_capture.contains_key(name) {
-            tag_capture.insert(String::from(name), String::from(code_snippet));
-        } else {
-            tag_capture
-                .entry(String::from(name))
-                .and_modify(|s| s.push_str(["\n", code_snippet].join("").as_str()));
-        }
-    }
-
-    for cn in query.capture_names() {
-        tag_capture.entry(String::from(cn)).or_default();
-    }
-
-    tag_capture
+) -> TagMatches {
+    let code_snippets = |idx: &u32| {
+        String::from(
+            &captures
+                .iter()
+                .filter(|x| x.index.eq(idx))
+                .map(|cs| cs.node.utf8_text(source_code_bytes).unwrap())
+                .join("\n"),
+        )
+    };
+    TagMatches::new(query
+        .capture_names()
+        .iter()
+        .enumerate()
+        .map(|(idx, name)| (name.clone(), code_snippets(&(idx as u32))))
+        .collect())
 }
 
 pub trait TreeSitterHelpers {
     fn get_language(&self) -> Language;
     fn get_extension(&self) -> &'static str;
-    fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String;
+    fn substitute_rule_holes(&self, substitutions: &TagMatches) -> String;
     fn create_query(&self, language: Language) -> Query;
     fn to_rule_hole(&self) -> String;
 }
@@ -120,11 +142,11 @@ impl TreeSitterHelpers for String {
         }
     }
 
-    fn substitute_rule_holes(&self, substitutions: &HashMap<String, String>) -> String {
+    fn substitute_rule_holes(&self, substitutions: &TagMatches) -> String {
         let mut output = String::from(self);
-        for (tag, substitute) in substitutions {
+        for (tag, substitute) in &substitutions.0 {
             let key = tag.to_rule_hole();
-            output = output.replace(&key, substitute)
+            output = output.replace(&key, &substitute)
         }
         output
     }
@@ -141,69 +163,66 @@ impl TreeSitterHelpers for String {
     }
 }
 
+#[rustfmt::skip]
 pub trait PiranhaRuleMatcher {
-    fn match_query_str(
-        &self,
-        source_code: String,
-        query: &Query,
-        recurssive: bool,
-    ) -> Vec<(Range, HashMap<String, String>)>;
-    fn get_any_match_query_str(
-        &self,
-        source_code: &String,
-        query: &Query,
-        recurssive: bool,
-    ) -> Option<(Range, HashMap<String, String>)>;
+    fn match_query(&self, source_code: String, query: &Query, recurssive: bool) -> Vec<(Range, TagMatches)>;
+    fn get_any_match_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
     fn node_matches_range(&self, range: Range) -> bool;
 }
 
 impl PiranhaRuleMatcher for Node<'_> {
-    fn get_any_match_query_str(
+    fn get_any_match_query(
         &self,
         source_code: &String,
         query: &Query,
         recurssive: bool,
-    ) -> Option<(Range, HashMap<String, String>)> {
-        return self
-            .match_query_str(source_code.to_string(), query, recurssive)
-            .first()
-            .map(|x| x.clone());
+    ) -> Option<(Range,TagMatches)> {
+        if let Some((range, tagMatches)) =  self
+            .match_query(source_code.to_string(), query, recurssive)
+            .first(){
+                return Some((range.clone(), tagMatches.clone()));
+            }
+            None
+            // .map(|x| x.clone());
     }
 
-    fn match_query_str(
+    fn match_query(
         &self,
         source_code: String,
         query: &Query,
         recurssive: bool,
-    ) -> Vec<(Range, HashMap<String, String>)> {
+    ) -> Vec<(Range,TagMatches)> {
         let mut cursor = QueryCursor::new();
         let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
         let pattern_count = query.pattern_count();
 
-        let mut matched_node_tag_match = HashMap::new();
 
-        for qm in query_matches {
-            if let Some(matched_node) = qm.captures.first() {
-                let captured_tags =
-                    group_captures_by_tag(qm.captures, query, source_code.as_bytes());
-                matched_node_tag_match
-                    .collect_as_counter(matched_node.node.range(), captured_tags);
-            }
-        }
+        let matched_node_tag_match : HashMap<Range, Vec<TagMatches>> = query_matches
+            .into_iter()
+            .filter(|qm| qm.captures.first().is_some())
+            .group_by(|qm| qm.captures.first().unwrap().node.range())
+            .into_iter()
+            .map(|(range, grp)| {
+                (
+                    range,
+                    grp.into_iter().map(|qm|group_captures_by_tag(qm.captures, query, source_code.as_bytes())).collect(),
+                )
+            })
+            .collect();
 
+       
         let mut output = vec![];
-        for (range, v) in matched_node_tag_match {
-            if v.len() == pattern_count {
+        for (range, tag_matches_list) in matched_node_tag_match {
+            if tag_matches_list.len() == pattern_count {
                 if recurssive || self.node_matches_range(range) {
-                    let mut captures_by_tag = HashMap::new();
-                    for i in v {
-                        captures_by_tag.extend(i.clone());
-                    }
-                    output.push((range, captures_by_tag));
+                    // let mut captures_by_tag = HashMap::new();
+                    // for i in tag_matches_list {
+                    //     captures_by_tag.extend(i.clone());
+                    // }
+                    output.push((range, TagMatches::merge(tag_matches_list)));
                 }
             }
         }
-        output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
         return output;
     }
 
