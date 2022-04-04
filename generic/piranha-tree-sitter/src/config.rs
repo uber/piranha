@@ -87,22 +87,13 @@ impl Rule {
         }
     }
 
-    pub fn instantiate(&self, substitutions: &HashMap<String, String>) -> Rule {
-        if let Some(rule) = self.try_instantiate(substitutions){
-            return rule;
-        }else{
-            panic!("Could not instantiate {:?} with substitutions {:?}", &self, substitutions);
-        }
-
-    }
-
     pub fn is_feature_flag_cleanup(&self) -> bool {
         self.tag.as_ref()
                         .map(|tags| tags.iter().any(|t| t.eq( "Feature-flag API cleanup" )))
                         .unwrap_or(false)
     }
 
-    pub fn try_instantiate(&self, substitutions: &HashMap<String, String>) -> Option<Rule> {
+    pub fn instantiate(&self, substitutions: &HashMap<String, String>) -> Rule {
         if let Some(holes) = &self.holes {
 
             let relevant_substitutions: HashMap<String, String> = holes
@@ -112,15 +103,15 @@ impl Rule {
                 .collect();
 
             if relevant_substitutions.len() == holes.len() {
-                return Some(self.update(
+                return self.update(
                     self.query.substitute_rule_holes(&relevant_substitutions), 
-                    self.replace.substitute_rule_holes(&relevant_substitutions)));
+                    self.replace.substitute_rule_holes(&relevant_substitutions));
             } else {
                 #[rustfmt::skip]
                 println!("Some Holes {:?} not found in table {:?}",  self.holes, substitutions);
-                return None;
+                panic!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes, substitutions);
             }
         }
-        return Some(self.clone());
+        return self.clone();
     }
 }
