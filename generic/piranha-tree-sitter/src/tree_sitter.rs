@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{collections::HashMap};
 
 use colored::Colorize;
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
@@ -11,6 +11,26 @@ extern "C" {
 }
 
 
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct TSQuery(String);
+
+impl TSQuery {
+    pub fn from(s: String) -> Self {
+        TSQuery(s)
+    }
+
+    pub fn create_query(&self, language: Language) -> Query {
+        if let Ok(q) = Query::new(language, self.0.as_str()) {
+            return q;
+        }
+        panic!("Could not parse the query : {:?}", self);
+    }
+
+    pub fn substitute_tags(&self, substitutions: &TagMatches) -> String{
+        self.0.substitute_tags(substitutions)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct TagMatches(HashMap<String, String>);
@@ -118,8 +138,8 @@ pub fn group_captures_by_tag<'a>(
 pub trait TreeSitterHelpers {
     fn get_language(&self) -> Language;
     fn get_extension(&self) -> &'static str;
-    fn substitute_rule_holes(&self, substitutions: &TagMatches) -> String;
-    fn create_query(&self, language: Language) -> Query;
+    fn substitute_tags(&self, substitutions: &TagMatches) -> String;
+    // fn create_query(&self, language: Language) -> Query;
     fn to_rule_hole(&self) -> String;
 }
 
@@ -142,20 +162,13 @@ impl TreeSitterHelpers for String {
         }
     }
 
-    fn substitute_rule_holes(&self, substitutions: &TagMatches) -> String {
+    fn substitute_tags(&self, substitutions: &TagMatches) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in &substitutions.0 {
             let key = tag.to_rule_hole();
             output = output.replace(&key, &substitute)
         }
         output
-    }
-
-    fn create_query(&self, language: Language) -> Query {
-        if let Ok(q) = Query::new(language, self) {
-            return q;
-        }
-        panic!("Could not parse the query : {}", self);
     }
 
     fn to_rule_hole(&self) -> String {
@@ -166,21 +179,21 @@ impl TreeSitterHelpers for String {
 #[rustfmt::skip]
 pub trait PiranhaRuleMatcher {
     fn match_query(&self, source_code: String, query: &Query, recurssive: bool) -> Vec<(Range, TagMatches)>;
-    fn get_any_match_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
+    fn get_first_match__for_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
     fn node_matches_range(&self, range: Range) -> bool;
 }
 
 impl PiranhaRuleMatcher for Node<'_> {
-    fn get_any_match_query(
+    fn get_first_match__for_query(
         &self,
         source_code: &String,
         query: &Query,
         recurssive: bool,
     ) -> Option<(Range,TagMatches)> {
-        if let Some((range, tagMatches)) =  self
+        if let Some((range, tag_matches)) =  self
             .match_query(source_code.to_string(), query, recurssive)
             .first(){
-                return Some((range.clone(), tagMatches.clone()));
+                return Some((range.clone(), tag_matches.clone()));
             }
             None
             // .map(|x| x.clone());

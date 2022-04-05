@@ -1,6 +1,6 @@
 use crate::{
     config::{PiranhaArguments, Rule, Scope, ScopeConfig},
-    tree_sitter::{TreeSitterHelpers, TagMatches},
+    tree_sitter::{TreeSitterHelpers, TagMatches, TSQuery},
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
@@ -27,7 +27,7 @@ struct Rules {
 
 pub struct RuleStore {
     pub rule_graph: HashMap<String, Vec<(String, String)>>,
-    rule_query_cache: HashMap<String, Query>,
+    rule_query_cache: HashMap<TSQuery, Query>,
     pub language: Language,
     pub rules_by_name: HashMap<String, Rule>,
     pub seed_rules: Vec<Rule>,
@@ -63,7 +63,7 @@ impl RuleStore {
         self.seed_rules.push(new_seed_rule);
     }
 
-    pub fn get_query(&mut self, query_str: &String) -> &Query {
+    pub fn get_query(&mut self, query_str: &TSQuery) -> &Query {
         self.rule_query_cache
             .entry(query_str.clone())
             .or_insert_with(|| query_str.create_query(self.language))
@@ -76,11 +76,11 @@ impl RuleStore {
     ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
-        if let Some(from_rule) = self.rule_graph.get(rule_name) {
-            for (scope, to_rule) in from_rule {
+        if let Some(nbrs) = self.rule_graph.get(rule_name) {
+            for (scope, to_rule) in nbrs {
                 next_rules.collect_as_counter(
                     String::from(scope),
-                    self.rules_by_name[to_rule].instantiate(&tag_matches),
+                    self.rules_by_name[to_rule].instantiate(&tag_matches)
                 );
             }
         }
@@ -137,7 +137,7 @@ pub fn create_rule_graph(
     let mut rules_by_tag = HashMap::new();
     for rule in all_rules.rules {
         rules_by_name.insert(rule.name.clone(), rule.clone());
-        if let Some(tags) = &rule.tag {
+        if let Some(tags) = &rule.groups {
             for tag in tags {
                 rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
             }

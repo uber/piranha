@@ -10,7 +10,7 @@ pub mod piranha {
     use crate::config::{PiranhaArguments, Rule};
     use crate::rule_graph::RuleStore;
     use crate::tree_sitter::{
-        self as ts_utils, TreeSitterHelpers,PiranhaRuleMatcher, TagMatches
+        self as ts_utils, PiranhaRuleMatcher, TSQuery, TagMatches, TreeSitterHelpers,
     };
     use crate::utilities::{get_files_with_extension, read_file};
     use colored::Colorize;
@@ -122,11 +122,11 @@ pub mod piranha {
             rule: Rule,
             rules_store: &mut RuleStore,
             parser: &mut Parser,
-            scope_query: &Option<String>,
+            scope_query: &Option<TSQuery>,
         ) -> bool {
             let mut is_rule_applied = false;
             loop {
-                if self.apply_rule_to_any_match(rule.clone(), rules_store, parser, scope_query) {
+                if self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query) {
                     is_rule_applied = true;
                 } else {
                     break;
@@ -135,17 +135,17 @@ pub mod piranha {
             is_rule_applied
         }
 
-        fn apply_rule_to_any_match(
+        fn apply_rule_to_first_match(
             &mut self,
             rule: Rule,
             rules_store: &mut RuleStore,
             parser: &mut Parser,
-            scope_query: &Option<String>,
+            scope_query: &Option<TSQuery>,
         ) -> bool {
             // Get scope node
             let mut root = self.ast.root_node();
             if let Some(scope_q) = scope_query {
-                if let Some((range, _)) = &self.ast.root_node().get_any_match_query(
+                if let Some((range, _)) = &self.ast.root_node().get_first_match__for_query(
                     &self.code,
                     rules_store.get_query(scope_q),
                     true,
@@ -156,7 +156,7 @@ pub mod piranha {
 
             let mut any_match = false;
             if let Some((range, rpl, captures_by_tag)) =
-                self.scan_and_match_rule(root, rule.clone(), rules_store)
+                self.get_any_match_for_rule(&rule, rules_store, root, true)
             {
                 any_match = true;
                 let edit = self.apply_edit(range, rpl, parser);
@@ -166,14 +166,18 @@ pub mod piranha {
                 let mut curr_rule = rule.clone();
                 let mut new_rules_q = vec![];
 
+                // recurssively perform the parent edits
                 loop {
                     let next_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
-
-                    // Add the rules to the queue - `scope_query`
+                    
+                    // Add the method and class level rules to the queue
                     let mut add_to_queue = |s: &str, rules: &Vec<Rule>| {
                         for rule in rules {
                             let scope_query_q = self.get_scope_query(s, previous_edit, rules_store);
-                            new_rules_q.push((scope_query_q, rule.instantiate(&self.substitutions)));
+                            new_rules_q.push((
+                                TSQuery::from(scope_query_q),
+                                rule.instantiate(&self.substitutions),
+                            ));
                         }
                     };
 
@@ -183,6 +187,7 @@ pub mod piranha {
                     for r in &next_rules["Global"] {
                         rules_store.add_seed_rule(r, &self.substitutions);
                     }
+
                     let parent_rules = &next_rules["Parent"];
 
                     if parent_rules.is_empty() {
@@ -190,7 +195,7 @@ pub mod piranha {
                         break;
                     }
 
-                    // Process the parent and DFS on parent 
+                    // Process the parent
                     if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
                         self.match_rules_to_context(previous_edit, rules_store, &parent_rules)
                     {
@@ -204,6 +209,7 @@ pub mod piranha {
                     }
                 }
                 // Process the method and class level rules. 
+                // Apply recurssively 
                 new_rules_q.reverse();
                 for (sq, rle) in new_rules_q {
                     self.apply_rule(rle, rules_store, parser, &Some(sq));
@@ -217,7 +223,7 @@ pub mod piranha {
             rules_store: &mut RuleStore,
             rules: Vec<Rule>,
             parser: &mut Parser,
-            scope_query: Option<String>,
+            scope_query: Option<TSQuery>,
         ) -> bool {
             let mut is_any_rule_applied = false;
             for rule in rules {
@@ -254,14 +260,14 @@ pub mod piranha {
             }
             while let Some(parent) = changed_node.parent() {
                 for m in &scope_matchers {
-                    if let Some((_, captures_by_tag)) = parent.get_any_match_query(
+                    if let Some((_, captures_by_tag)) = parent.get_first_match__for_query(
                         &self.code,
-                        rules_store.get_query(&m.matcher),
+                        rules_store.get_query(&m.get_matcher()),
                         false,
                     ) {
                         let transformed_query =
-                            m.matcher_gen.substitute_rule_holes(&captures_by_tag);
-                        let _ = rules_store.get_query(&transformed_query);
+                            m.get_matcher_gen().substitute_tags(&captures_by_tag);
+                        let _ = rules_store.get_query(&TSQuery::from(transformed_query.clone()));
                         return transformed_query;
                     } else {
                         changed_node = parent;
@@ -281,8 +287,8 @@ pub mod piranha {
             for rule in rules {
                 for ancestor in &context {
                     let cr = rule.clone();
-                    if let Some((range, replacement, captures_by_tag)) = self
-                        .get_any_match_for_rule(cr.clone(), rules_store, ancestor.clone(), false)
+                    if let Some((range, replacement, captures_by_tag)) =
+                        self.get_any_match_for_rule(&cr, rules_store, ancestor.clone(), false)
                     {
                         return Some((range, replacement, cr, captures_by_tag));
                     }
@@ -305,7 +311,7 @@ pub mod piranha {
             context
         }
 
-        fn new(parser: &mut Parser, code: String, substitutions:TagMatches) -> Self {
+        fn new(parser: &mut Parser, code: String, substitutions: TagMatches) -> Self {
             let ast = parser.parse(&code, None).expect("Could not parse code");
             Self {
                 ast,
@@ -314,40 +320,28 @@ pub mod piranha {
             }
         }
 
-        fn scan_and_match_rule(
-            &self,
-            root: Node,
-            rule: Rule,
-            rule_store: &mut RuleStore,
-        ) -> Option<(Range, String, TagMatches)> {
-            if let Some((rng, rpl, captures_by_tag)) =
-                self.get_any_match_for_rule(rule, rule_store, root, true)
-            {
-                return Some((rng, rpl, captures_by_tag));
-            }
-            None
-        }
-
         fn get_any_match_for_rule(
             &self,
-            rule: Rule,
+            rule: &Rule,
             rule_store: &mut RuleStore,
             node: Node,
             recurssive: bool,
         ) -> Option<(Range, String, TagMatches)> {
-            let all_relevant_query_matches =
-            node.match_query(String::from(&self.code), rule_store.get_query(&rule.query), recurssive);
+            let all_relevant_query_matches = node.match_query(
+                String::from(&self.code),
+                rule_store.get_query(&rule.get_query()),
+                recurssive,
+            );
 
             if all_relevant_query_matches.is_empty() {
                 return None;
             }
 
-            for (range, captures_by_tag) in all_relevant_query_matches {
+            for (range, tag_substitutions) in all_relevant_query_matches {
                 let n = self.get_descendant(range.start_byte, range.end_byte);
-
-                if self.satisfies_constraint(n, &rule, &captures_by_tag, rule_store) {
-                    let replacement = rule.replace.substitute_rule_holes(&captures_by_tag);
-                    return Some((range.clone(), replacement, captures_by_tag));
+                if self.satisfies_constraint(n, &rule, &tag_substitutions, rule_store) {
+                    let replacement = rule.replace.substitute_tags(&tag_substitutions);
+                    return Some((range.clone(), replacement, tag_substitutions));
                 }
             }
             None
@@ -363,28 +357,23 @@ pub mod piranha {
             if let Some(constraint) = &rule.constraint {
                 let mut curr_node = node;
                 while let Some(parent) = curr_node.parent() {
-                    if let Some((range, _)) = parent.get_any_match_query(
+                    if let Some((range, _)) = parent.get_first_match__for_query(
                         &self.code,
-                        &constraint.matcher.create_query(rule_store.language),
+                        &constraint.get_matcher().create_query(rule_store.language),
                         false,
                     ) {
                         let matcher = self.get_descendant(range.start_byte, range.end_byte);
-                        let mut c_node = node;
-                        while let Some(c_p) = c_node.parent() {
-                            let mut all_queries_match = true;
-                            for q in &constraint.queries {
-                                let query_str = q.substitute_rule_holes(&capture_by_tags);
-                                let query = &rule_store.get_query(&query_str);
-                                all_queries_match = all_queries_match
-                                    && matcher.get_any_match_query(&self.code, query, true)
-                                        .is_some();
-                            }
-                            if all_queries_match {
-                                return constraint.predicate.eq("All");
-                            }
-                            c_node = c_p;
+                        let mut all_queries_match = true;
+                        for q in &constraint.get_queries() {
+                            let query_str = q.substitute_tags(&capture_by_tags);
+                            let query = &rule_store.get_query(&TSQuery::from(query_str));
+                            all_queries_match = all_queries_match
+                                && matcher
+                                    .get_first_match__for_query(&self.code, query, true)
+                                    .is_some();
                         }
-                        return !constraint.predicate.eq("All");
+                        return (all_queries_match && constraint.get_predicate().is_all())
+                            || (!all_queries_match && constraint.get_predicate().is_none());
                     }
                     curr_node = parent;
                 }

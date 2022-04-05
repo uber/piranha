@@ -15,7 +15,7 @@ query = """((
 (#eq? @f "@stale_flag_name")
 )"""
 replace = "@treated"
-tag = ["Feature-flag API cleanup", "Returns boolean"]
+groups = ["Feature-flag API cleanup", "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
 
 
@@ -36,7 +36,7 @@ query = """((
 (#eq? @f "@stale_flag_name")
 )"""
 replace = "@treated"
-tag = ["Feature-flag API cleanup", "Returns boolean"]
+groups = ["Feature-flag API cleanup", "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
 
 [[rules]]
@@ -56,7 +56,7 @@ query = """((
 (#eq? @f "@stale_flag_name")
 )"""
 replace = "false"
-tag = ["Feature-flag API cleanup", "Returns boolean"]
+groups = ["Feature-flag API cleanup", "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
 
 [[rules]]
@@ -68,7 +68,7 @@ query = """
     )
     """
 replace = ""
-tag = ["Feature-flag API cleanup"]
+groups = ["Feature-flag API cleanup"]
 holes = ["stale_flag_name"]
 
 [[rules]]
@@ -80,7 +80,7 @@ query = """
     )
     """
 replace = ""
-tag = ["Feature-flag API cleanup"]
+groups = ["Feature-flag API cleanup"]
 holes = ["stale_flag_name"]
 
 
@@ -99,7 +99,7 @@ query = """
 )
 """
 replace = ""
-tag = ["Feature-flag API cleanup"]
+groups = ["Feature-flag API cleanup"]
 holes = ["stale_flag_name"]
 
 [[rules]]
@@ -117,7 +117,7 @@ query = """
 )
 """
 replace = ""
-tag = ["Feature-flag API cleanup"]
+groups = ["Feature-flag API cleanup"]
 holes = ["stale_flag_name"]
 
 [[rules]]
@@ -135,7 +135,7 @@ query = """
 )
 """
 replace = ""
-tag = ["Feature-flag API cleanup"]
+groups = ["Feature-flag API cleanup"]
 holes = ["stale_flag_name"]
 
 [[rules]]
@@ -168,7 +168,7 @@ query = """
  )
 """
 replace = ""
-tag = ["Feature-flag API cleanup"]
+groups = ["Feature-flag API cleanup"]
 holes = ["stale_flag_name", "namespace"]
 
 [[rules]]
@@ -182,7 +182,7 @@ query = """
    (#eq? @i2 "@m_name")
 )"""
 replace = "@treated"
-tag = ["Returns boolean"]
+groups = ["Returns boolean"]
 holes = ["m_name", "treated"]
 
 
@@ -217,7 +217,7 @@ query = """
 @ifstmt)
 """
 replace = "@s"
-tag = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup", "Statement cleanup"]
 
 
 
@@ -231,7 +231,7 @@ query = """
         alternative : ((_) @el))
 @ifstmt)"""
 replace = "@el"
-tag = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup", "Statement cleanup"]
 
 
 [[rules]]
@@ -245,7 +245,7 @@ query = """
 @ifstmt)
 """
 replace = ""
-tag = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup", "Statement cleanup"]
 
 
 [[rules]]
@@ -259,7 +259,7 @@ query = """
 @u)
 """
 replace = "true"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 
 
@@ -273,7 +273,7 @@ query = """
 @u)
 """
 replace = "false"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 
 
@@ -293,7 +293,7 @@ replace = """
     @b
     @post
 }"""
-tag = ["Block cleanup", "Statement cleanup"]
+groups = ["Block cleanup", "Statement cleanup"]
 
 [[rules]]
 name = "And - left operand is True"
@@ -305,7 +305,7 @@ query = """
          right : (_)* @other )
 ) @b"""
 replace = "@other"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 
 [[rules]]
@@ -319,7 +319,7 @@ query = """
     )
 @b)"""
 replace = "@other"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 
 
@@ -334,7 +334,7 @@ query = """
     )
 @b)"""
 replace = "true"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "Or - left operand is True"
@@ -348,7 +348,7 @@ query = """
 @b)
 """
 replace = "true"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "And - left operand is False"
@@ -361,7 +361,7 @@ query = """
     )
 @b)"""
 replace = "false"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "And - right operand is False"
@@ -376,7 +376,7 @@ query = """
 @b)
 """
 replace = "false"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 
 [[rules]]
@@ -390,7 +390,7 @@ query = """(
     )
 @b)"""
 replace = "@other"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "And - right operand is False"
@@ -403,7 +403,7 @@ query = """
     )
 @b)"""
 replace = "@other"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from left operand"
@@ -416,7 +416,7 @@ query = """(
         right: (_)* @r)
 @bo)"""
 replace = "@e || @r"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from right operand"
@@ -428,7 +428,7 @@ query = """
                     (expression !left) @e))
 @bo)"""
 replace = "@l || @e"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "And - Remove unnecessary brackets from left operand "
@@ -440,7 +440,7 @@ query = """
         right: (_)* @r)
 @bo)"""
 replace = "@e && @r"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "And - Remove unnecessary brackets from right operand "
@@ -452,7 +452,7 @@ query = """(
                          (expression !left) @e)))
 @bo)"""
 replace = "@l && @e"
-tag = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "Returns boolean"]
 
 
 [[rules]]
@@ -462,7 +462,7 @@ query = """(
          ((return_statement) @r)
          ((statement)+ @post)) @b)"""
 replace = "{\n@pre\n@r\n}"
-tag = ["Block cleanup", "Statement cleanup"]
+groups = ["Block cleanup", "Statement cleanup"]
 
 [[rules]]
 name = "Ternay operator True"
@@ -473,7 +473,7 @@ query = """
         alternative: (_)* @else)
 @tt)"""
 replace = "@then"
-tag = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup", "Statement cleanup"]
 
 [[rules]]
 name = "Ternay operator False"
@@ -484,7 +484,7 @@ query = """
         alternative: (_)* @else)
 @tt)"""
 replace = "@else"
-tag = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup", "Statement cleanup"]
 
 # [[rules]]
 # name = "Parenthesized boolean literal"
@@ -498,7 +498,7 @@ tag = ["If cleanup", "Statement cleanup"]
 # )
 # """
 # replace = "@l"
-# tag = ["Boolean expression cleanup", "Returns boolean"]
+# groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
 name = "Inline Local Variable Declaration - Delete variable declaration"
@@ -511,7 +511,7 @@ query = """
 )
 """
 replace = ""
-tag = []
+groups = []
 [rules.constraint]
 matcher = "(method_declaration) @md"
 predicate = "None"
@@ -536,7 +536,7 @@ query = """
 )
 """
 replace = ""
-tag = []
+groups = []
 [rules.constraint]
 matcher = "(class_declaration) @cd"
 predicate = "None"
@@ -560,7 +560,7 @@ query = """
 ) 
 """
 replace = ""
-tag = []
+groups = []
 holes = ["n", "v"]
 
 # Remove assignment if it is the only assignment in the entire class. 
@@ -576,7 +576,7 @@ query = """
 ) 
 """
 replace = ""
-tag = []
+groups = []
 holes = []
 [rules.constraint]
 matcher = "(class_declaration) @cd"
@@ -599,5 +599,5 @@ query = """
 )
 """
 replace = "@v"
-tag = []
+groups = []
 holes = ["n", "v"]

@@ -1,10 +1,9 @@
 use colored::Colorize;
-use serde_derive::Deserialize;
 use core::panic;
+use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash};
 
-use crate::tree_sitter::{TreeSitterHelpers, TagMatches};
-
+use crate::tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers};
 
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
@@ -54,65 +53,119 @@ pub struct Scope {
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScopeMatcher {
-    pub matcher: String,
-    pub matcher_gen: String,
+    matcher: String,
+    matcher_gen: String,
+}
+
+impl ScopeMatcher {
+    pub fn get_matcher(&self) -> TSQuery {
+        TSQuery::from(self.matcher.clone())
+    }
+
+    pub fn get_matcher_gen(&self) -> TSQuery {
+        TSQuery::from(self.matcher_gen.clone())
+    }
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
     pub name: String,
-    pub query: String,
+    query: String,
     pub replace: String,
-    pub tag: Option<Vec<String>>,
+    pub groups: Option<Vec<String>>,
     pub holes: Option<Vec<String>>,
     pub constraint: Option<Constraint>,
 }
 
+pub struct Pred(String);
+
+impl Pred {
+    pub fn new(s: String) -> Self {
+        if ["All", "None", "Any"].contains(&s.as_str()) {
+            return Pred(s);
+        }
+        panic!("Predicate value should be `All`, `None` or `Any`");
+    }
+
+    pub fn is_all(&self) -> bool {
+        "All".eq(self.0.as_str())
+    }
+
+    pub fn is_none(&self) -> bool {
+        "None".eq(self.0.as_str())
+    }
+
+    pub fn _is_any(&self) -> bool {
+        "Any".eq(self.0.as_str())
+    }
+}
+
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
-    pub matcher: String,
-    pub predicate: String, // All, any , none
-    pub queries: Vec<String>,
+    matcher: String,
+    predicate: String, // All, any , none
+    queries: Vec<String>,
+}
+
+impl Constraint {
+    pub fn get_matcher(&self) -> TSQuery {
+        TSQuery::from(self.matcher.clone())
+    }
+    pub fn get_queries(&self) -> Vec<TSQuery> {
+        self.queries
+            .iter()
+            .map(|x| TSQuery::from(x.clone()))
+            .collect()
+    }
+
+    pub fn get_predicate(&self) -> Pred {
+        Pred::new(self.predicate.clone())
+    }
 }
 
 impl Rule {
-
-    pub fn update(&self, query: String, replace: String) -> Self{
+    pub fn update(&self, query: String, replace: String) -> Self {
         Rule {
             name: String::from(&self.name),
             query,
             replace,
             holes: self.holes.clone(),
-            tag: self.tag.clone(),
+            groups: self.groups.clone(),
             constraint: self.constraint.clone(),
         }
     }
 
     pub fn is_feature_flag_cleanup(&self) -> bool {
-        self.tag.as_ref()
-                        .map(|tags| tags.iter().any(|t| t.eq( "Feature-flag API cleanup" )))
-                        .unwrap_or(false)
+        self.groups
+            .as_ref()
+            .map(|tags| tags.iter().any(|t| t.eq("Feature-flag API cleanup")))
+            .unwrap_or(false)
     }
 
     pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {
         if let Some(holes) = &self.holes {
-
-            let relevant_substitutions = TagMatches::new(holes
-                .iter()
-                .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
-                .map(|(a, b)| (a.clone(), b.clone()))
-                .collect());
+            let relevant_substitutions = TagMatches::new(
+                holes
+                    .iter()
+                    .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
+                    .map(|(a, b)| (a.clone(), b.clone()))
+                    .collect(),
+            );
 
             if relevant_substitutions.len() == holes.len() {
                 return self.update(
-                    self.query.substitute_rule_holes(&relevant_substitutions), 
-                    self.replace.substitute_rule_holes(&relevant_substitutions));
+                    self.query.substitute_tags(&relevant_substitutions),
+                    self.replace.substitute_tags(&relevant_substitutions),
+                );
             } else {
                 #[rustfmt::skip]
-                println!("Some Holes {:?} not found in table {:?}",  self.holes, substitutions);
                 panic!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes, substitutions);
             }
         }
         return self.clone();
+    }
+
+    pub fn get_query(&self) -> TSQuery {
+        TSQuery::from(self.query.clone())
     }
 }
