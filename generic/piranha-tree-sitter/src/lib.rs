@@ -13,9 +13,8 @@ pub mod piranha {
     };
     use crate::utilities::{get_files_with_extension, read_file};
     use colored::Colorize;
-    // use regex::Regex;
     use std::collections::HashMap;
-    // use std::hash::Hash;
+    
     use std::path::PathBuf;
     use tree_sitter::{InputEdit, Language, Node, Parser, Range, Tree};
 
@@ -25,8 +24,9 @@ pub mod piranha {
         flag_cleaner.cleanup();
 
         flag_cleaner
-            .files
+            .relevant_files
             .iter()
+            // .filter_map(|(k, v)| v.as_ref().map(|x| (k.clone(), x.code.clone())))
             .map(|(k, x)| (k.clone(), x.code.clone()))
             .collect()
     }
@@ -34,7 +34,9 @@ pub mod piranha {
     pub struct FlagCleaner {
         rule_store: RuleStore,
         language: Language,
-        files: HashMap<PathBuf, SourceCodeUnit>,
+        files: Vec<PathBuf>,
+        relevant_files: HashMap<PathBuf, SourceCodeUnit>,
+        input_substitutions: TagMatches,
     }
 
     impl FlagCleaner {
@@ -48,9 +50,38 @@ pub mod piranha {
                 let rules = self.rule_store.get_seed_rules();
                 println!("Number of seed rules {}", rules.len());
                 let mut any_file_updated = false;
-                for (_, scu) in self.files.iter_mut() {
-                    any_file_updated |=
-                        scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
+                for path in self.files.iter_mut() {
+                    let content = read_file(&path);
+                    let pattern = self.rule_store.get_grep_heuristics();
+                    println!("Searching {:?} in {:?}", pattern, path);
+                    if pattern.is_match(&content) {
+                        println!("Found!");
+                        let scu = self
+                            .relevant_files
+                            .entry(path.to_path_buf())
+                            .or_insert_with(|| {
+                                return SourceCodeUnit::new(
+                                    &mut parser,
+                                    content,
+                                    &self.input_substitutions,
+                                );
+                            });
+                        any_file_updated |=
+                            scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
+                    }
+                    // if !self.relevant_files.contains_key(path) {
+                    //     let content = read_file(&path);
+                    //     // if content.contains(pat)
+                    //     let scu =
+                    //         SourceCodeUnit::new(&mut parser, content, &self.input_substitutions);
+                    //     self.relevant_files.insert(path.to_path_buf(), Some(scu));
+                    // }
+                    // if self.relevant_files[path].is_some() {
+                    //     let mut scu = self.relevant_files[path].as_ref().unwrap();
+                    //     any_file_updated |=
+                    //         scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
+
+                    // }
                 }
 
                 if !any_file_updated {
@@ -74,13 +105,14 @@ pub mod piranha {
 
             let files = relevant_files
                 .iter()
-                .map(|dir_entry| (dir_entry.path(), read_file(&dir_entry.path())))
-                .map(|(file_path, code)| {
-                    (
-                        file_path,
-                        SourceCodeUnit::new(&mut parser, code, args.input_substitutions.clone()),
-                    )
-                })
+                .map(|dir_entry| dir_entry.path())
+                // .map(|dir_entry| (dir_entry.path(), read_file(&dir_entry.path())))
+                // .map(|(file_path, code)| {
+                // (
+                // file_path,
+                // SourceCodeUnit::new(&mut parser, code, args.input_substitutions.clone()),
+                // )
+                // })
                 .collect();
 
             // let get_source_code_unit = |(path, grep_heuristics): (PathBuf, Vec<String>)|
@@ -101,7 +133,8 @@ pub mod piranha {
                 rule_store: graph_rule_store,
                 language,
                 files,
-                // files_cache: Cacher::new(get_source_code_unit),
+                relevant_files: HashMap::new(),
+                input_substitutions: args.input_substitutions, // files_cache: Cacher::new(get_source_code_unit),
             }
         }
     }
@@ -110,7 +143,7 @@ pub mod piranha {
     //     calculation: Fn((PathBuf, Vec<String>)) -> Option<SourceCodeUnit>,
     //     values: HashMap<(PathBuf, Vec<String>), Option<SourceCodeUnit>>
     // }
-    
+
     // impl<U, V> Cacher<U, V>
     // {
     //     pub fn new(calculation: fn(U) -> V) -> Cacher<U, V> {
@@ -119,7 +152,7 @@ pub mod piranha {
     //             values: HashMap::new(),
     //         }
     //     }
-    
+
     //     pub fn value(&mut self, arg: U) -> V {
     //         if self.values.contains_key(&arg) {
     //             return self.values[&arg];
@@ -130,8 +163,6 @@ pub mod piranha {
     //         }
     //     }
     // }
-
-    
 
     #[derive(Clone)]
     pub struct SourceCodeUnit {
@@ -355,12 +386,12 @@ pub mod piranha {
             context
         }
 
-        fn new(parser: &mut Parser, code: String, substitutions: TagMatches) -> Self {
+        fn new(parser: &mut Parser, code: String, substitutions: &TagMatches) -> Self {
             let ast = parser.parse(&code, None).expect("Could not parse code");
             Self {
                 ast,
                 code,
-                substitutions,
+                substitutions: substitutions.clone(),
             }
         }
 

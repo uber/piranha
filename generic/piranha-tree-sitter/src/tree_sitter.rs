@@ -60,8 +60,8 @@ impl TagMatches {
         self.0.extend(other_tag_matches.0)
     }
 
-    pub fn keys(&self) -> Vec<String> {
-        self.0.keys().map(|x|x.to_string()).collect_vec()
+    pub fn values(&self) -> Vec<String> {
+        self.0.values().map(|x|x.to_string()).collect_vec()
     }
 }
 

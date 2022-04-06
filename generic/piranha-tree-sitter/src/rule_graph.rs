@@ -4,6 +4,8 @@ use crate::{
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
+use itertools::Itertools;
+use regex::Regex;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, path::Path};
 use tree_sitter::{Language, Query};
@@ -39,8 +41,8 @@ impl RuleStore {
         let (rule_graph, rules_by_name, scopes) = create_rule_graph(&args);
 
         let mut seed_rules: Vec<Rule> = vec![];
-        for (_, rule) in &rules_by_name{
-            if rule.is_feature_flag_cleanup(){
+        for (_, rule) in &rules_by_name {
+            if rule.is_feature_flag_cleanup() {
                 let mut r = rule.instantiate(&args.input_substitutions);
                 r.add_grep_heuristics_for_seed_rules(&args.input_substitutions);
                 seed_rules.push(r.clone());
@@ -55,6 +57,18 @@ impl RuleStore {
             seed_rules,
             scopes,
         }
+    }
+
+    pub fn get_grep_heuristics(&self) -> Regex {
+        let reg_x = self
+            .get_seed_rules()
+            .iter()
+            .flat_map(|r| r.grep_heuristics.as_ref().unwrap().iter())
+            //Remove duplicates
+            .sorted()
+            .dedup()
+            .join("|");
+        Regex::new(reg_x.as_str()).unwrap()
     }
 
     pub fn get_seed_rules(&self) -> Vec<Rule> {
@@ -109,7 +123,6 @@ pub struct ParameterizedRuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl ParameterizedRuleGraph {
     fn new(edges: Edges, all_rules: Rules) -> Self {
-
         let mut rules_by_name = HashMap::new();
         let mut rules_by_tag = HashMap::new();
 
@@ -140,8 +153,11 @@ impl ParameterizedRuleGraph {
         ParameterizedRuleGraph(graph)
     }
 
-    pub fn get_nbrs(&self, rule_name: &String) -> Vec<(String, String)>{
-        self.0.get(rule_name).map(|x|x.clone()).unwrap_or_else(||vec![])
+    pub fn get_nbrs(&self, rule_name: &String) -> Vec<(String, String)> {
+        self.0
+            .get(rule_name)
+            .map(|x| x.clone())
+            .unwrap_or_else(|| vec![])
     }
 }
 
@@ -200,7 +216,11 @@ pub fn create_rule_graph(
     //         }
     //     }
     // }
-    let rules_by_name = all_rules.rules.iter().map(|r|(r.name.clone(), r.clone())).collect();
+    let rules_by_name = all_rules
+        .rules
+        .iter()
+        .map(|r| (r.name.clone(), r.clone()))
+        .collect();
     let graph = ParameterizedRuleGraph::new(edges, all_rules);
     let scopes = toml::from_str(&scope_config_content)
         .map(|x: ScopeConfig| x.scopes)

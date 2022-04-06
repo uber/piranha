@@ -21,7 +21,7 @@ fn test_java_scenarios_treated() {
         path_to_test_resource.join("input").to_str().unwrap(),
         language,
         "STALE_FLAG",
-        "ns",   
+        "some_long_name",   
         "true")
     );
     let path_to_expected = path_to_test_resource.join("expected_treated");
