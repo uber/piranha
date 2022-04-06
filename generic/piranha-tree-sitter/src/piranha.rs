@@ -95,7 +95,7 @@ impl FlagCleaner {
 
         let files = relevant_files
             .iter()
-            .map(|dir_entry| dir_entry.path())
+            .map(|dir_entry| dir_entry.path().to_path_buf())
             .collect();
 
         Self {

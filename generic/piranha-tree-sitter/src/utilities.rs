@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::fs::{DirEntry, File, self};
+use std::fs::{File, self};
 use std::io::{BufReader, Read};
 use std::hash::Hash;
+
+use walkdir::{WalkDir, DirEntry};
 // use extend::ext;
 
 pub fn read_file(file_path: &PathBuf) -> String {
@@ -23,9 +25,12 @@ pub fn has_extension(dir_entry: &DirEntry, extension: &str) -> bool {
 }
 
 pub fn get_files_with_extension(input_dir: &String, extension: &str) -> Vec<DirEntry>{
-      fs::read_dir(&input_dir)
-            .unwrap()
-            .filter_map(|d| d.ok())
+    WalkDir::new(input_dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    //   fs::read_dir(&input_dir)
+            // .unwrap()
+            // .filter_map(|d| d.ok())
             .filter(|de| has_extension(de, extension))
             .collect()
     
