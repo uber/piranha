@@ -68,9 +68,8 @@ pub mod piranha {
                 for path in self.files.iter_mut() {
                     let content = read_file(&path);
                     let pattern = self.rule_store.get_grep_heuristics();
-                    println!("Searching {:?} in {:?}", pattern, path);
                     if pattern.is_match(&content) {
-                        println!("Found!");
+                        println!("Found! {:?} in {:?}", pattern, path);
                         let scu = self
                             .relevant_files
                             .entry(path.to_path_buf())

@@ -23,7 +23,7 @@ fn test_java_scenarios_treated() {
         "STALE_FLAG",
         "some_long_name",   
         "true",
-        "./../../configurations/",));
+        "/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/",));
         
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
