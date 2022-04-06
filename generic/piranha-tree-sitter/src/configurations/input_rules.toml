@@ -172,6 +172,42 @@ groups = ["Delete Method"]
 holes = ["stale_flag_name", "namespace"]
 
 [[rules]]
+name = "Interface based, annotated method declaration and interface"
+query= """
+
+
+(
+(interface_declaration 
+	(modifiers (annotation
+     				name: (_) @a_name
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k1
+							 value: (_) @v1)))) @mod
+    name: (_) @i_name
+	body: (interface_body 
+    	(_)* @pre
+    	(method_declaration
+			 (modifiers (annotation
+					arguments: (annotation_argument_list
+                    	(element_value_pair
+							 key: (_) @k2
+							 value: (_) @v2))))) @md
+	    (_)* @post
+    )
+) @id
+ (#eq? @k1 "namespace")
+ (#eq? @v1 "\\\"@namespace\\\"")
+ (#eq? @k2 "key")
+ (#eq? @v2 "\\\"@stale_flag_name\\\"")
+)
+"""
+replace = "@mod interface @i_name { \n @pre \n @post \n}"
+groups = ["Delete Method"]
+holes = ["stale_flag_name", "namespace"]
+
+
+[[rules]]
 name = "Interface based, replace method invocation chain with true/false"
 query = """
 (

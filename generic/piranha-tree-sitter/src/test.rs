@@ -1,3 +1,4 @@
+#[cfg(test)]
 use std::fs::{self, DirEntry};
 use std::path::Path;
 
@@ -26,7 +27,7 @@ fn test_java_scenarios_treated() {
         
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
-    assert_eq!(c.len(), 3);
+    assert_eq!(c.len(), 4);
 
     for e in c {
         let file_name = e.0.file_name().unwrap();
@@ -42,7 +43,7 @@ fn test_java_scenarios_treated() {
             .replace("\n", "")
             .eq(&expected_content.replace("\n", ""));
         if !result {
-            println!("{}", output);
+            println!("{:?}\n{}",file_name, output);
         }
         assert!(result);
         println!(
