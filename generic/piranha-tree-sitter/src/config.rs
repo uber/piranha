@@ -1,5 +1,4 @@
 use colored::Colorize;
-use core::panic;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash};
 
@@ -9,6 +8,8 @@ pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
     pub input_substitutions: TagMatches,
+    pub path_to_input_rules: String,
+    pub path_to_input_edges: String,
 }
 
 impl PiranhaArguments {
@@ -18,6 +19,8 @@ impl PiranhaArguments {
         flag_name: &str,
         flag_namespace: &str,
         flag_value: &str,
+        path_to_input_rules: &str,
+        path_to_input_edges: &str,
     ) -> Self {
         let flag_val = flag_value.eq("true");
         let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
@@ -36,6 +39,8 @@ impl PiranhaArguments {
             path_to_code_base: path_to_code_base.to_string(),
             language: input_language.to_string(),
             input_substitutions: TagMatches::new(input_substitutions),
+            path_to_input_rules: path_to_input_rules.to_string(),
+            path_to_input_edges: path_to_input_edges.to_string(),
         }
     }
 }
@@ -75,13 +80,12 @@ pub struct Rule {
     pub groups: Option<Vec<String>>,
     pub holes: Option<Vec<String>>,
     pub constraint: Option<Constraint>,
-    pub grep_heuristics: Option<Vec<String>>
+    pub grep_heuristics: Option<Vec<String>>,
 }
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Pred(String);
 
 impl Pred {
-
     pub fn is_all(&self) -> bool {
         "All".eq(self.0.as_str())
     }
@@ -111,7 +115,7 @@ impl Rule {
             holes: self.holes.clone(),
             groups: self.groups.clone(),
             constraint: self.constraint.clone(),
-            grep_heuristics : self.grep_heuristics.clone()
+            grep_heuristics: self.grep_heuristics.clone(),
         }
     }
 
@@ -123,6 +127,10 @@ impl Rule {
     }
 
     pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {
+        self.try_instantiate(substitutions).unwrap()
+    }
+
+    pub fn try_instantiate(&self, substitutions: &TagMatches) -> Result<Rule, String> {
         if let Some(holes) = &self.holes {
             let relevant_substitutions = TagMatches::new(
                 holes
@@ -133,24 +141,24 @@ impl Rule {
             );
 
             if relevant_substitutions.len() == holes.len() {
-                return self.update(
+                return Ok(self.update(
                     self.query.substitute_tags(&relevant_substitutions),
                     self.replace.substitute_tags(&relevant_substitutions),
-                );
+                ));
             } else {
                 #[rustfmt::skip]
-                panic!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes, substitutions);
+                return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes, substitutions));
             }
         }
-        return self.clone();
+        return Ok(self.clone());
     }
 
-    pub fn add_grep_heuristics_for_seed_rules(&mut self, substitutions: &TagMatches){   
+    pub fn add_grep_heuristics_for_seed_rules(&mut self, substitutions: &TagMatches) {
         let mut gh = vec![];
         for h in self.holes.as_ref().unwrap() {
-            if let Some(x) = substitutions.get(h){
+            if let Some(x) = substitutions.get(h) {
                 // We do not want to search for strings that occur only in replace.
-                if self.query.contains(x)  {
+                if self.query.contains(x) {
                     gh.push(x.clone());
                 }
             }
@@ -159,6 +167,14 @@ impl Rule {
     }
 
     pub fn get_query(&self) -> TSQuery {
-       self.query.clone()
+        self.query.clone()
+    }
+
+    pub fn add_group(&mut self, group_name: String) {
+        if self.groups.is_none() {
+            self.groups = Some(vec![group_name]);
+        } else {
+            self.groups.as_mut().unwrap().push(group_name);
+        }
     }
 }

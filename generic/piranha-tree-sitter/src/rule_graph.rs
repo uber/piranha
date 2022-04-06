@@ -43,9 +43,10 @@ impl RuleStore {
         let mut seed_rules: Vec<Rule> = vec![];
         for (_, rule) in &rules_by_name {
             if rule.is_feature_flag_cleanup() {
-                let mut r = rule.instantiate(&args.input_substitutions);
-                r.add_grep_heuristics_for_seed_rules(&args.input_substitutions);
-                seed_rules.push(r.clone());
+                if let Ok(mut r) = rule.try_instantiate(&args.input_substitutions){
+                    r.add_grep_heuristics_for_seed_rules(&args.input_substitutions);
+                    seed_rules.push(r.clone());
+                }
             }
         }
 
@@ -58,6 +59,8 @@ impl RuleStore {
             scopes,
         }
     }
+
+    
 
     pub fn get_grep_heuristics(&self) -> Regex {
         let reg_x = self
@@ -169,32 +172,36 @@ pub fn create_rule_graph(
         .join("configurations");
 
     // Read the configuration files.
-    let (path_to_all_rules_toml, path_to_edges, path_to_scope_config) = match args.language.as_str()
-    {
+    let (language_rules, language_edges, scopes) = match args.language.as_str() {
         "Java" => (
-            path_to_config.join("all_rules.toml"),
-            path_to_config.join("edges.toml"),
-            path_to_config.join("java_scope_config.toml"),
+            toml::from_str::<Rules>(read_file(&path_to_config.join("java_rules.toml")).as_str()).unwrap(),
+            toml::from_str::<Edges>(read_file(&path_to_config.join("java_edges.toml")).as_str()).unwrap(),
+            toml::from_str::<ScopeConfig>(read_file(&path_to_config.join("java_scope_config.toml")).as_str()).map(|x| x.scopes).unwrap(),
         ),
         _ => panic!(),
     };
 
-    let all_rules_content = read_file(&path_to_all_rules_toml);
-    let edges_content = read_file(&path_to_edges);
-    let scope_config_content = read_file(&path_to_scope_config);
+    let(mut input_rules, input_edges) = (
+        toml::from_str::<Rules>(read_file(&path_to_config.join(&args.path_to_input_rules)).as_str()).unwrap(),
+        toml::from_str::<Edges>(read_file(&path_to_config.join(&args.path_to_input_edges)).as_str()).unwrap(),
+    );
 
-    let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
+    for r in input_rules.rules.iter_mut(){
+        r.add_group(String::from("Feature-flag API cleanup"));
+    }
 
-    let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
-
+    let all_rules = Rules {rules: [language_rules.clone().rules, input_rules.clone().rules].concat()};
+    let edges = Edges { edges: [language_edges.edges.clone(), input_edges.edges.clone()].concat() };
+    // all_rules.extend(in)
+    
     let rules_by_name = all_rules
         .rules
         .iter()
         .map(|r| (r.name.clone(), r.clone()))
         .collect();
     let graph = ParameterizedRuleGraph::new(edges, all_rules);
-    let scopes = toml::from_str(&scope_config_content)
-        .map(|x: ScopeConfig| x.scopes)
-        .unwrap();
+    // let scopes = toml::from_str(&scope_config_content)
+    //     .map(|x: ScopeConfig| x.scopes)
+    //     .unwrap();
     (graph, rules_by_name, scopes)
 }

@@ -4,12 +4,6 @@ scope = "Parent"
 to = "Boolean expression cleanup"
 
 [[edges]]
-from = "Interface based, annotated method declaration"
-scope = "Global"
-# populate_holes = ["[@m_name]", "@m_name"]
-to = "Interface based, replace method invocation chain with true/false"
-
-[[edges]]
 from = "Interface based, replace method invocation chain with true/false"
 scope = "Parent"
 to = "Boolean expression cleanup"

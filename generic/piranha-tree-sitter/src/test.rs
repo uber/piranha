@@ -5,8 +5,7 @@ use colored::Colorize;
 
 use crate::config::PiranhaArguments;
 use crate::piranha::get_cleanups_for_code_base_new;
-use crate::utilities::{read_file};
-
+use crate::utilities::read_file;
 
 #[test]
 fn test_java_scenarios_treated() {
@@ -22,27 +21,36 @@ fn test_java_scenarios_treated() {
         language,
         "STALE_FLAG",
         "some_long_name",   
-        "true")
+        "true",
+        "/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/input_rules.toml",
+    "/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/input_edges.toml")
     );
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
-    
     assert_eq!(c.len(), 3);
-    
+
     for e in c {
         let file_name = e.0.file_name().unwrap();
-        let f = get_file_with_name(path_to_expected.as_path().to_str().unwrap(), file_name.to_str().unwrap())
-        .unwrap().path();
+        let f = get_file_with_name(
+            path_to_expected.as_path().to_str().unwrap(),
+            file_name.to_str().unwrap(),
+        )
+        .unwrap()
+        .path();
         let expected_content = read_file(&f);
         let output = &e.1;
-        let result = output.replace("\n", "").eq(&expected_content.replace("\n", ""));
+        let result = output
+            .replace("\n", "")
+            .eq(&expected_content.replace("\n", ""));
         if !result {
             println!("{}", output);
         }
         assert!(result);
-        println!("{}", format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue());
+        println!(
+            "{}",
+            format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue()
+        );
     }
-
 
     pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
         dir_entry
@@ -52,28 +60,27 @@ fn test_java_scenarios_treated() {
             .unwrap_or(false)
     }
 
-    pub fn get_file_with_name(input_dir: &str, name: &str, ) -> Option<DirEntry>{
+    pub fn get_file_with_name(input_dir: &str, name: &str) -> Option<DirEntry> {
         fs::read_dir(input_dir)
             .unwrap()
             .filter_map(|d| d.ok())
             .filter(|de| has_name(de, name))
             .next()
-    
     }
 
     // assert_eq!(expected_content, e.1);
 }
 
-    // pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
-    //     let mut parser = Parser::new();
-    //     parser
-    //         .set_language(language)
-    //         .expect("Could not set language");
-    //     let tree = parser
-    //         .parse(&source_code, None)
-    //         .expect("Could not parse code");
-    //     (parser, tree)
-    // }
+// pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
+//     let mut parser = Parser::new();
+//     parser
+//         .set_language(language)
+//         .expect("Could not set language");
+//     let tree = parser
+//         .parse(&source_code, None)
+//         .expect("Could not parse code");
+//     (parser, tree)
+// }
 
 // // TODO using sexp is not the most ideal way to test the expected and produced output
 // #[test]
