@@ -179,23 +179,21 @@ pub mod piranha {
                 let mut curr_rule = rule.clone();
                 let mut new_rules_q = vec![];
 
-                // recurssively perform the parent edits
+                // recurssively perform the parent edits, while queueing the Method and Class level edits.
                 loop {
                     let next_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
 
-                    // Add the method and class level rules to the queue
-                    let mut add_to_queue = |s: &str, rules: &Vec<Rule>| {
-                        for rule in rules {
-                            let scope_query_q = self.get_scope_query(s, previous_edit, rules_store);
-                            new_rules_q.push((
-                                TSQuery::from(scope_query_q),
-                                rule.instantiate(&self.substitutions),
-                            ));
+                    // Add Method and Class scoped rules to the
+                    for (scope_s, rules) in &next_rules {
+                        if ["Method", "Class"].contains(&scope_s.as_str()) && !rules.is_empty() {
+                            let scope_query_q =
+                                self.get_scope_query(scope_s, previous_edit, rules_store);
+                            for rule in rules {
+                                new_rules_q
+                                    .push((scope_query_q.clone(), rule.instantiate(&self.substitutions)));
+                            }
                         }
-                    };
-
-                    let _ = &add_to_queue("Method", &next_rules["Method"]);
-                    let _ = &add_to_queue("Class", &next_rules["Class"]);
+                    }
 
                     for r in &next_rules["Global"] {
                         rules_store.add_seed_rule(r, &self.substitutions);
@@ -258,7 +256,7 @@ pub mod piranha {
             s_scope: &str,
             previous_edit: InputEdit,
             rules_store: &mut RuleStore,
-        ) -> String {
+        ) -> TSQuery {
             let mut changed_node =
                 self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
             let mut scope_matchers = vec![];
@@ -281,7 +279,7 @@ pub mod piranha {
                         let transformed_query =
                             m.get_matcher_gen().substitute_tags(&captures_by_tag);
                         let _ = rules_store.get_query(&TSQuery::from(transformed_query.clone()));
-                        return transformed_query;
+                        return TSQuery::from(transformed_query);
                     } else {
                         changed_node = parent;
                     }
