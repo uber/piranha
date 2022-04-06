@@ -183,39 +183,10 @@ pub fn create_rule_graph(
     let edges_content = read_file(&path_to_edges);
     let scope_config_content = read_file(&path_to_scope_config);
 
-    // Group rules by tag
-    // Collect groups by name
     let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
 
-    // let mut rules_by_name = HashMap::new();
-    // let mut rules_by_tag = HashMap::new();
-    // for rule in all_rules.rules {
-    //     rules_by_name.insert(rule.name.clone(), rule.clone());
-    //     if let Some(tags) = &rule.groups {
-    //         for tag in tags {
-    //             rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
-    //         }
-    //     }
-    // }
-
-    // Construct Graph
-
-    // let get_rules_for_tag_or_name = |val: &String| {
-    //     rules_by_name
-    //         .get(val)
-    //         .map(|v| vec![v.name.clone()])
-    //         .unwrap_or_else(|| rules_by_tag[val].clone())
-    // };
-
     let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
-    // let mut graph: ParameterizedRuleGraph = HashMap::new();
-    // for edge in edges.edges {
-    //     for f in get_rules_for_tag_or_name(&edge.from) {
-    //         for t in get_rules_for_tag_or_name(&edge.to) {
-    //             graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
-    //         }
-    //     }
-    // }
+
     let rules_by_name = all_rules
         .rules
         .iter()
