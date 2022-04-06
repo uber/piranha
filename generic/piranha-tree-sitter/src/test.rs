@@ -22,9 +22,8 @@ fn test_java_scenarios_treated() {
         "STALE_FLAG",
         "some_long_name",   
         "true",
-        "/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/input_rules.toml",
-    "/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/input_edges.toml")
-    );
+        "/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/",));
+        
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
     assert_eq!(c.len(), 3);

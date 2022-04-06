@@ -167,10 +167,8 @@ impl ParameterizedRuleGraph {
 pub fn create_rule_graph(
     args: &PiranhaArguments,
 ) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
-    let path_to_config = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("configurations");
-
+    let path_to_config = Path::new(args.path_to_configurations.as_str());
+        
     // Read the configuration files.
     let (language_rules, language_edges, scopes) = match args.language.as_str() {
         "Java" => (
@@ -182,8 +180,8 @@ pub fn create_rule_graph(
     };
 
     let(mut input_rules, input_edges) = (
-        toml::from_str::<Rules>(read_file(&path_to_config.join(&args.path_to_input_rules)).as_str()).unwrap(),
-        toml::from_str::<Edges>(read_file(&path_to_config.join(&args.path_to_input_edges)).as_str()).unwrap(),
+        toml::from_str::<Rules>(read_file(&path_to_config.join("input_rules.toml")).as_str()).unwrap(),
+        toml::from_str::<Edges>(read_file(&path_to_config.join("input_edges.toml")).as_str()).unwrap(),
     );
 
     for r in input_rules.rules.iter_mut(){

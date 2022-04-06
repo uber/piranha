@@ -8,8 +8,7 @@ pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
     pub input_substitutions: TagMatches,
-    pub path_to_input_rules: String,
-    pub path_to_input_edges: String,
+    pub path_to_configurations: String,
 }
 
 impl PiranhaArguments {
@@ -19,8 +18,10 @@ impl PiranhaArguments {
         flag_name: &str,
         flag_namespace: &str,
         flag_value: &str,
-        path_to_input_rules: &str,
-        path_to_input_edges: &str,
+        path_to_configurations: &str
+        // path_to_input_rules: &str,
+        // path_to_input_edges: &str,
+        // path_to_language_config: &str,
     ) -> Self {
         let flag_val = flag_value.eq("true");
         let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
@@ -39,8 +40,7 @@ impl PiranhaArguments {
             path_to_code_base: path_to_code_base.to_string(),
             language: input_language.to_string(),
             input_substitutions: TagMatches::new(input_substitutions),
-            path_to_input_rules: path_to_input_rules.to_string(),
-            path_to_input_edges: path_to_input_edges.to_string(),
+            path_to_configurations: path_to_configurations.to_string(),
         }
     }
 }

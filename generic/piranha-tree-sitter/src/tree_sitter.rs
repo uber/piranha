@@ -1,7 +1,9 @@
 use std::{collections::HashMap};
 
 use colored::Colorize;
-use serde::{Serialize, Deserialize};
+// use serde::{Serialize};
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 use itertools::Itertools;

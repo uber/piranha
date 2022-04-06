@@ -18,8 +18,21 @@ pub mod piranha {
     use colored::Colorize;
     use std::collections::HashMap;
 
+    use std::fs;
     use std::path::PathBuf;
     use tree_sitter::{InputEdit, Language, Node, Parser, Range, Tree};
+
+
+    pub fn perform_cleanups_for_code_base_new(args: PiranhaArguments) {
+        let mut flag_cleaner = FlagCleaner::new(args);
+
+        flag_cleaner.cleanup();
+
+        for (k,v) in flag_cleaner.relevant_files {
+            println!("Rewriting file {:?}", k);
+            v.persist(&k);
+        }
+    }
 
     pub fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
         let mut flag_cleaner = FlagCleaner::new(args);
@@ -113,7 +126,13 @@ pub mod piranha {
         pub substitutions: TagMatches,
     }
 
+    
+
     impl SourceCodeUnit {
+
+        fn persist(&self, path: &PathBuf) {
+            fs::write(path, self.code.as_str()).expect("Unable to Write file");
+        }
         // This method performs the input code replacement in the source code
         fn apply_edit(
             &mut self,
