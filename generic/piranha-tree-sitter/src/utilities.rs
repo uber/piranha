@@ -42,3 +42,4 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>>  {
                 .push(value);
     }
 }
+

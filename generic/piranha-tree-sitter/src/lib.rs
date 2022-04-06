@@ -6,7 +6,6 @@ mod tree_sitter;
 mod utilities;
 
 pub mod piranha {
-
     use crate::config::{PiranhaArguments, Rule};
     use crate::rule_graph::RuleStore;
     use crate::tree_sitter::{
@@ -14,7 +13,9 @@ pub mod piranha {
     };
     use crate::utilities::{get_files_with_extension, read_file};
     use colored::Colorize;
+    // use regex::Regex;
     use std::collections::HashMap;
+    // use std::hash::Hash;
     use std::path::PathBuf;
     use tree_sitter::{InputEdit, Language, Node, Parser, Range, Tree};
 
@@ -33,7 +34,7 @@ pub mod piranha {
     pub struct FlagCleaner {
         rule_store: RuleStore,
         language: Language,
-        pub files: HashMap<PathBuf, SourceCodeUnit>,
+        files: HashMap<PathBuf, SourceCodeUnit>,
     }
 
     impl FlagCleaner {
@@ -82,14 +83,57 @@ pub mod piranha {
                 })
                 .collect();
 
+            // let get_source_code_unit = |(path, grep_heuristics): (PathBuf, Vec<String>)|
+            // {
+            //     let content = read_file(&path);
+            //     let pattern = Regex::new(&grep_heuristics.join("|")).unwrap();
+            //     if pattern.is_match(&content) {
+            //         return Some(SourceCodeUnit::new(
+            //             &mut parser,
+            //             content,
+            //             args.input_substitutions.clone(),
+            //         ));
+            //     }
+            //     return None;
+            // };
+
             Self {
                 rule_store: graph_rule_store,
                 language,
                 files,
+                // files_cache: Cacher::new(get_source_code_unit),
             }
         }
     }
 
+    // pub struct SourceCodeUnitCacher {
+    //     calculation: Fn((PathBuf, Vec<String>)) -> Option<SourceCodeUnit>,
+    //     values: HashMap<(PathBuf, Vec<String>), Option<SourceCodeUnit>>
+    // }
+    
+    // impl<U, V> Cacher<U, V>
+    // {
+    //     pub fn new(calculation: fn(U) -> V) -> Cacher<U, V> {
+    //         Cacher {
+    //             calculation,
+    //             values: HashMap::new(),
+    //         }
+    //     }
+    
+    //     pub fn value(&mut self, arg: U) -> V {
+    //         if self.values.contains_key(&arg) {
+    //             return self.values[&arg];
+    //         } else {
+    //             let v = (self.calculation)(arg.clone());
+    //             self.values.insert(arg, v);
+    //             return v;
+    //         }
+    //     }
+    // }
+
+    
+
+    #[derive(Clone)]
     pub struct SourceCodeUnit {
         pub ast: Tree,
         pub code: String,
@@ -145,7 +189,7 @@ pub mod piranha {
             // Get scope node
             let mut root = self.ast.root_node();
             if let Some(scope_q) = scope_query {
-                if let Some((range, _)) = &self.ast.root_node().get_first_match__for_query(
+                if let Some((range, _)) = &self.ast.root_node().get_first_match_for_query(
                     &self.code,
                     rules_store.get_query(scope_q),
                     true,
@@ -169,7 +213,7 @@ pub mod piranha {
                 // recurssively perform the parent edits
                 loop {
                     let next_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
-                    
+
                     // Add the method and class level rules to the queue
                     let mut add_to_queue = |s: &str, rules: &Vec<Rule>| {
                         for rule in rules {
@@ -208,8 +252,8 @@ pub mod piranha {
                         break;
                     }
                 }
-                // Process the method and class level rules. 
-                // Apply recurssively 
+                // Process the method and class level rules.
+                // Apply recurssively
                 new_rules_q.reverse();
                 for (sq, rle) in new_rules_q {
                     self.apply_rule(rle, rules_store, parser, &Some(sq));
@@ -260,7 +304,7 @@ pub mod piranha {
             }
             while let Some(parent) = changed_node.parent() {
                 for m in &scope_matchers {
-                    if let Some((_, captures_by_tag)) = parent.get_first_match__for_query(
+                    if let Some((_, captures_by_tag)) = parent.get_first_match_for_query(
                         &self.code,
                         rules_store.get_query(&m.get_matcher()),
                         false,
@@ -357,7 +401,7 @@ pub mod piranha {
             if let Some(constraint) = &rule.constraint {
                 let mut curr_node = node;
                 while let Some(parent) = curr_node.parent() {
-                    if let Some((range, _)) = parent.get_first_match__for_query(
+                    if let Some((range, _)) = parent.get_first_match_for_query(
                         &self.code,
                         &constraint.get_matcher().create_query(rule_store.language),
                         false,
@@ -369,7 +413,7 @@ pub mod piranha {
                             let query = &rule_store.get_query(&TSQuery::from(query_str));
                             all_queries_match = all_queries_match
                                 && matcher
-                                    .get_first_match__for_query(&self.code, query, true)
+                                    .get_first_match_for_query(&self.code, query, true)
                                     .is_some();
                         }
                         return (all_queries_match && constraint.get_predicate().is_all())

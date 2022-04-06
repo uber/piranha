@@ -1,6 +1,6 @@
 use crate::{
     config::{PiranhaArguments, Rule, Scope, ScopeConfig},
-    tree_sitter::{TreeSitterHelpers, TagMatches, TSQuery},
+    tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers},
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
@@ -26,7 +26,7 @@ struct Rules {
 }
 
 pub struct RuleStore {
-    pub rule_graph: HashMap<String, Vec<(String, String)>>,
+    pub rule_graph: ParameterizedRuleGraph,
     rule_query_cache: HashMap<TSQuery, Query>,
     pub language: Language,
     pub rules_by_name: HashMap<String, Rule>,
@@ -38,10 +38,14 @@ impl RuleStore {
     pub fn new(args: &PiranhaArguments) -> RuleStore {
         let (rule_graph, rules_by_name, scopes) = create_rule_graph(&args);
 
-        let seed_rules:Vec<Rule> = rules_by_name.iter()
-            .filter(|(_,rule)| rule.is_feature_flag_cleanup())
-            .map(|(_, r)| r.instantiate(&args.input_substitutions))
-            .collect();
+        let mut seed_rules: Vec<Rule> = vec![];
+        for (_, rule) in &rules_by_name{
+            if rule.is_feature_flag_cleanup(){
+                let mut r = rule.instantiate(&args.input_substitutions);
+                r.add_grep_heuristics_for_seed_rules(&args.input_substitutions);
+                seed_rules.push(r.clone());
+            }
+        }
 
         RuleStore {
             rule_graph,
@@ -57,8 +61,9 @@ impl RuleStore {
         self.seed_rules.clone()
     }
 
-    pub fn add_seed_rule(&mut self, r: &Rule, tag_captures_previous_edit: &TagMatches) {
-        let new_seed_rule = r.instantiate(&tag_captures_previous_edit);
+    pub fn add_seed_rule(&mut self, r: &Rule, tag_captures: &TagMatches) {
+        let mut new_seed_rule = r.instantiate(&tag_captures);
+        new_seed_rule.add_grep_heuristics_for_seed_rules(tag_captures);
         println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
         self.seed_rules.push(new_seed_rule);
     }
@@ -69,43 +74,76 @@ impl RuleStore {
             .or_insert_with(|| query_str.create_query(self.language))
     }
 
-    fn get_next_rules(
-        &self,
-        rule: Rule,
-        tag_matches: &TagMatches,
-    ) -> HashMap<String, Vec<Rule>> {
+    fn get_next_rules(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
-        if let Some(nbrs) = self.rule_graph.get(rule_name) {
-            for (scope, to_rule) in nbrs {
-                next_rules.collect_as_counter(
-                    String::from(scope),
-                    self.rules_by_name[to_rule].instantiate(&tag_matches)
-                );
-            }
+        // if let Some(nbrs) = self.rule_graph.get_nbrs(rule_name) {
+        for (scope, to_rule) in self.rule_graph.get_nbrs(rule_name) {
+            next_rules.collect_as_counter(
+                String::from(scope),
+                self.rules_by_name[&to_rule].instantiate(&tag_matches),
+            );
         }
+        // }
         next_rules
     }
 
-    pub fn get_next(
-        &self,
-        rule: Rule,
-        tag_matches: &TagMatches,
-    ) -> HashMap<String, Vec<Rule>> {
+    pub fn get_next(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
         let next_rules = self.get_next_rules(rule, tag_matches);
 
         let get = |s: &str| {
-            (String::from(s), next_rules
-                .get(s)
-                .map(|x| x.clone())
-                .unwrap_or_else(|| vec![]))
+            (
+                String::from(s),
+                next_rules
+                    .get(s)
+                    .map(|x| x.clone())
+                    .unwrap_or_else(|| vec![]),
+            )
         };
 
         HashMap::from([get("Parent"), get("Method"), get("Class"), get("Global")])
     }
 }
 
-type ParameterizedRuleGraph = HashMap<String, Vec<(String, String)>>;
+pub struct ParameterizedRuleGraph(HashMap<String, Vec<(String, String)>>);
+
+impl ParameterizedRuleGraph {
+    fn new(edges: Edges, all_rules: Rules) -> Self {
+
+        let mut rules_by_name = HashMap::new();
+        let mut rules_by_tag = HashMap::new();
+
+        for rule in all_rules.rules {
+            rules_by_name.insert(rule.name.clone(), rule.clone());
+            if let Some(tags) = &rule.groups {
+                for tag in tags {
+                    rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
+                }
+            }
+        }
+
+        let get_rules_for_tag_or_name = |val: &String| {
+            rules_by_name
+                .get(val)
+                .map(|v| vec![v.name.clone()])
+                .unwrap_or_else(|| rules_by_tag[val].clone())
+        };
+
+        let mut graph = HashMap::new();
+        for edge in edges.edges {
+            for f in get_rules_for_tag_or_name(&edge.from) {
+                for t in get_rules_for_tag_or_name(&edge.to) {
+                    graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
+                }
+            }
+        }
+        ParameterizedRuleGraph(graph)
+    }
+
+    pub fn get_nbrs(&self, rule_name: &String) -> Vec<(String, String)>{
+        self.0.get(rule_name).map(|x|x.clone()).unwrap_or_else(||vec![])
+    }
+}
 
 pub fn create_rule_graph(
     args: &PiranhaArguments,
@@ -133,36 +171,37 @@ pub fn create_rule_graph(
     // Collect groups by name
     let all_rules: Rules = toml::from_str(all_rules_content.as_str()).unwrap();
 
-    let mut rules_by_name = HashMap::new();
-    let mut rules_by_tag = HashMap::new();
-    for rule in all_rules.rules {
-        rules_by_name.insert(rule.name.clone(), rule.clone());
-        if let Some(tags) = &rule.groups {
-            for tag in tags {
-                rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
-            }
-        }
-    }
+    // let mut rules_by_name = HashMap::new();
+    // let mut rules_by_tag = HashMap::new();
+    // for rule in all_rules.rules {
+    //     rules_by_name.insert(rule.name.clone(), rule.clone());
+    //     if let Some(tags) = &rule.groups {
+    //         for tag in tags {
+    //             rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
+    //         }
+    //     }
+    // }
 
     // Construct Graph
 
-    let get_rules_for_tag_or_name = |val: &String| {
-        rules_by_name
-            .get(val)
-            .map(|v| vec![v.name.clone()])
-            .unwrap_or_else(|| rules_by_tag[val].clone())
-    };
+    // let get_rules_for_tag_or_name = |val: &String| {
+    //     rules_by_name
+    //         .get(val)
+    //         .map(|v| vec![v.name.clone()])
+    //         .unwrap_or_else(|| rules_by_tag[val].clone())
+    // };
 
-    let mut graph: ParameterizedRuleGraph = HashMap::new();
     let edges: Edges = toml::from_str(edges_content.as_str()).unwrap();
-    for edge in edges.edges {
-        for f in get_rules_for_tag_or_name(&edge.from) {
-            for t in get_rules_for_tag_or_name(&edge.to) {
-                graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
-            }
-        }
-    }
-
+    // let mut graph: ParameterizedRuleGraph = HashMap::new();
+    // for edge in edges.edges {
+    //     for f in get_rules_for_tag_or_name(&edge.from) {
+    //         for t in get_rules_for_tag_or_name(&edge.to) {
+    //             graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
+    //         }
+    //     }
+    // }
+    let rules_by_name = all_rules.rules.iter().map(|r|(r.name.clone(), r.clone())).collect();
+    let graph = ParameterizedRuleGraph::new(edges, all_rules);
     let scopes = toml::from_str(&scope_config_content)
         .map(|x: ScopeConfig| x.scopes)
         .unwrap();

@@ -75,6 +75,7 @@ pub struct Rule {
     pub groups: Option<Vec<String>>,
     pub holes: Option<Vec<String>>,
     pub constraint: Option<Constraint>,
+    pub grep_heuristics: Option<Vec<String>>
 }
 
 pub struct Pred(String);
@@ -132,6 +133,7 @@ impl Rule {
             holes: self.holes.clone(),
             groups: self.groups.clone(),
             constraint: self.constraint.clone(),
+            grep_heuristics : self.grep_heuristics.clone()
         }
     }
 
@@ -163,6 +165,10 @@ impl Rule {
             }
         }
         return self.clone();
+    }
+
+    pub fn add_grep_heuristics_for_seed_rules(&mut self, substitutions: &TagMatches){   
+        self.grep_heuristics = Some(substitutions.keys());
     }
 
     pub fn get_query(&self) -> TSQuery {

@@ -59,6 +59,10 @@ impl TagMatches {
     pub fn extend(&mut self, other_tag_matches: TagMatches){
         self.0.extend(other_tag_matches.0)
     }
+
+    pub fn keys(&self) -> Vec<String> {
+        self.0.keys().map(|x|x.to_string()).collect_vec()
+    }
 }
 
 
@@ -179,12 +183,12 @@ impl TreeSitterHelpers for String {
 #[rustfmt::skip]
 pub trait PiranhaRuleMatcher {
     fn match_query(&self, source_code: String, query: &Query, recurssive: bool) -> Vec<(Range, TagMatches)>;
-    fn get_first_match__for_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
+    fn get_first_match_for_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
     fn node_matches_range(&self, range: Range) -> bool;
 }
 
 impl PiranhaRuleMatcher for Node<'_> {
-    fn get_first_match__for_query(
+    fn get_first_match_for_query(
         &self,
         source_code: &String,
         query: &Query,
@@ -228,10 +232,6 @@ impl PiranhaRuleMatcher for Node<'_> {
         for (range, tag_matches_list) in matched_node_tag_match {
             if tag_matches_list.len() == pattern_count {
                 if recurssive || self.node_matches_range(range) {
-                    // let mut captures_by_tag = HashMap::new();
-                    // for i in tag_matches_list {
-                    //     captures_by_tag.extend(i.clone());
-                    // }
                     output.push((range, TagMatches::merge(tag_matches_list)));
                 }
             }
