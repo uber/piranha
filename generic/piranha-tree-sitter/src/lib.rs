@@ -5,8 +5,8 @@ mod test;
 mod tree_sitter;
 mod utilities;
 
-// TODO: Add logic to main 
-// TODO: 
+// TODO: Add logic to main
+// TODO:
 
 pub mod piranha {
     use crate::config::{PiranhaArguments, Rule};
@@ -95,6 +95,7 @@ pub mod piranha {
                 .iter()
                 .map(|dir_entry| dir_entry.path())
                 .collect();
+                
             Self {
                 rule_store: graph_rule_store,
                 language,
@@ -192,8 +193,10 @@ pub mod piranha {
                             let scope_query_q =
                                 self.get_scope_query(scope_s, previous_edit, rules_store);
                             for rule in rules {
-                                new_rules_q
-                                    .push((scope_query_q.clone(), rule.instantiate(&self.substitutions)));
+                                new_rules_q.push((
+                                    scope_query_q.clone(),
+                                    rule.instantiate(&self.substitutions),
+                                ));
                             }
                         }
                     }
@@ -203,8 +206,8 @@ pub mod piranha {
                     }
 
                     // Process the parent
-                    if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
-                        self.match_rules_to_context(previous_edit, rules_store, &next_rules["Parent"])
+                    if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) = self
+                        .match_rules_to_context(previous_edit, rules_store, &next_rules["Parent"])
                     {
                         println!("{}", format!("Matched parent for cleanup").green());
                         previous_edit = self.apply_edit(c_range, replacement_str, parser);
@@ -290,7 +293,7 @@ pub mod piranha {
             rules_store: &mut RuleStore,
             rules: &Vec<Rule>,
         ) -> Option<(Range, String, Rule, TagMatches)> {
-            if rules.is_empty(){
+            if rules.is_empty() {
                 return None;
             }
             let context = self.get_context(previous_edit);
