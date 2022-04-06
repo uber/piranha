@@ -70,23 +70,17 @@ impl ScopeMatcher {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Rule {
     pub name: String,
-    query: String,
+    query: TSQuery,
     pub replace: String,
     pub groups: Option<Vec<String>>,
     pub holes: Option<Vec<String>>,
     pub constraint: Option<Constraint>,
     pub grep_heuristics: Option<Vec<String>>
 }
-
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Pred(String);
 
 impl Pred {
-    pub fn new(s: String) -> Self {
-        if ["All", "None", "Any"].contains(&s.as_str()) {
-            return Pred(s);
-        }
-        panic!("Predicate value should be `All`, `None` or `Any`");
-    }
 
     pub fn is_all(&self) -> bool {
         "All".eq(self.0.as_str())
@@ -103,29 +97,13 @@ impl Pred {
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
-    matcher: String,
-    predicate: String, // All, any , none
-    queries: Vec<String>,
-}
-
-impl Constraint {
-    pub fn get_matcher(&self) -> TSQuery {
-        TSQuery::from(self.matcher.clone())
-    }
-    pub fn get_queries(&self) -> Vec<TSQuery> {
-        self.queries
-            .iter()
-            .map(|x| TSQuery::from(x.clone()))
-            .collect()
-    }
-
-    pub fn get_predicate(&self) -> Pred {
-        Pred::new(self.predicate.clone())
-    }
+    pub matcher: TSQuery,
+    pub predicate: Pred, // All, any , none
+    pub queries: Vec<TSQuery>,
 }
 
 impl Rule {
-    pub fn update(&self, query: String, replace: String) -> Self {
+    pub fn update(&self, query: TSQuery, replace: String) -> Self {
         Rule {
             name: String::from(&self.name),
             query,
@@ -181,6 +159,6 @@ impl Rule {
     }
 
     pub fn get_query(&self) -> TSQuery {
-        TSQuery::from(self.query.clone())
+       self.query.clone()
     }
 }

@@ -5,6 +5,9 @@ mod test;
 mod tree_sitter;
 mod utilities;
 
+// TODO: Add logic to main 
+// TODO: 
+
 pub mod piranha {
     use crate::config::{PiranhaArguments, Rule};
     use crate::rule_graph::RuleStore;
@@ -271,8 +274,8 @@ pub mod piranha {
                     ) {
                         let transformed_query =
                             m.get_matcher_gen().substitute_tags(&captures_by_tag);
-                        let _ = rules_store.get_query(&TSQuery::from(transformed_query.clone()));
-                        return TSQuery::from(transformed_query);
+                        let _ = rules_store.get_query(&transformed_query);
+                        return transformed_query;
                     } else {
                         changed_node = parent;
                     }
@@ -362,21 +365,21 @@ pub mod piranha {
                 while let Some(parent) = curr_node.parent() {
                     if let Some((range, _)) = parent.get_first_match_for_query(
                         &self.code,
-                        &constraint.get_matcher().create_query(rule_store.language),
+                        &constraint.matcher.create_query(rule_store.language),
                         false,
                     ) {
                         let matcher = self.get_descendant(range.start_byte, range.end_byte);
                         let mut all_queries_match = true;
-                        for q in &constraint.get_queries() {
+                        for q in &constraint.queries {
                             let query_str = q.substitute_tags(&capture_by_tags);
-                            let query = &rule_store.get_query(&TSQuery::from(query_str));
+                            let query = &rule_store.get_query(&query_str);
                             all_queries_match = all_queries_match
                                 && matcher
                                     .get_first_match_for_query(&self.code, query, true)
                                     .is_some();
                         }
-                        return (all_queries_match && constraint.get_predicate().is_all())
-                            || (!all_queries_match && constraint.get_predicate().is_none());
+                        return (all_queries_match && constraint.predicate.is_all())
+                            || (!all_queries_match && constraint.predicate.is_none());
                     }
                     curr_node = parent;
                 }

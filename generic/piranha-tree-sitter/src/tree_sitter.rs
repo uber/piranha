@@ -1,6 +1,7 @@
 use std::{collections::HashMap};
 
 use colored::Colorize;
+use serde::{Serialize, Deserialize};
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 use itertools::Itertools;
@@ -12,7 +13,7 @@ extern "C" {
 
 
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TSQuery(String);
 
 impl TSQuery {
@@ -27,8 +28,12 @@ impl TSQuery {
         panic!("Could not parse the query : {:?}", self);
     }
 
-    pub fn substitute_tags(&self, substitutions: &TagMatches) -> String{
-        self.0.substitute_tags(substitutions)
+    pub fn substitute_tags(&self, substitutions: &TagMatches) -> TSQuery{
+        Self::from(self.0.substitute_tags(substitutions))
+    }
+
+    pub fn contains(&self, s: &String) -> bool{
+        self.0.contains(s)
     }
 }
 
