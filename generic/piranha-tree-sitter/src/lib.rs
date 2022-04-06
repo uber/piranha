@@ -199,18 +199,11 @@ pub mod piranha {
                         rules_store.add_seed_rule(r, &self.substitutions);
                     }
 
-                    let parent_rules = &next_rules["Parent"];
-
-                    if parent_rules.is_empty() {
-                        // No parents found for cleanup
-                        break;
-                    }
-
                     // Process the parent
                     if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
-                        self.match_rules_to_context(previous_edit, rules_store, &parent_rules)
+                        self.match_rules_to_context(previous_edit, rules_store, &next_rules["Parent"])
                     {
-                        println!("{}", format!("Matched parent for cleanup").red());
+                        println!("{}", format!("Matched parent for cleanup").green());
                         previous_edit = self.apply_edit(c_range, replacement_str, parser);
                         curr_rule = matched_rule;
                         self.substitutions.extend(new_capture_by_tag);
@@ -294,6 +287,9 @@ pub mod piranha {
             rules_store: &mut RuleStore,
             rules: &Vec<Rule>,
         ) -> Option<(Range, String, Rule, TagMatches)> {
+            if rules.is_empty(){
+                return None;
+            }
             let context = self.get_context(previous_edit);
             for rule in rules {
                 for ancestor in &context {
@@ -343,10 +339,6 @@ pub mod piranha {
                 rule_store.get_query(&rule.get_query()),
                 recurssive,
             );
-
-            if all_relevant_query_matches.is_empty() {
-                return None;
-            }
 
             for (range, tag_substitutions) in all_relevant_query_matches {
                 let n = self.get_descendant(range.start_byte, range.end_byte);
