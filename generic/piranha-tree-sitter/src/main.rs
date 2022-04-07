@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, time::Instant};
 
 use config::PiranhaArguments;
 use piranha::{perform_cleanups_for_code_base_new};
@@ -13,6 +13,7 @@ mod piranha;
 #[cfg(test)]
 mod test;
 fn main() {
+    let now = Instant::now();
     let args: Vec<String> = env::args().collect();
      perform_cleanups_for_code_base_new(
         PiranhaArguments::new(
@@ -23,7 +24,7 @@ fn main() {
         &args[5],//"true",
         &args[6] 
     ));
-
+    println!("Time elapsed - {:?}", now.elapsed().as_secs());
 // ///"/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/",) 
 }
 
