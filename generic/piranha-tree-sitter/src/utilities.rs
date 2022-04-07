@@ -17,13 +17,6 @@ pub fn read_file(file_path: &PathBuf) -> String {
     content
 }
 
-// pub fn has_extension(dir_entry: &DirEntry, extension: &str) -> bool {
-//     dir_entry
-//         .path()
-//         .extension()
-//         .map(|e| e.eq(extension))
-//         .unwrap_or(false)
-// }
 
 pub fn get_files_with_extension(input_dir: &String, extension: &str, pattern: Regex) -> HashMap<PathBuf, String> {
     WalkDir::new(input_dir)

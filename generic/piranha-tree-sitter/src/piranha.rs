@@ -51,13 +51,15 @@ impl FlagCleaner {
             .set_language(self.language)
             .expect("Could not set language");
 
+        let mut new_rules = true;
+        let mut curr_rules = 0;
         loop {
             let rules = self.rule_store.get_seed_rules();
+            curr_rules = rules.len();
             println!("Number of seed rules {}", rules.len());
             let mut any_file_updated = false;
             let pattern = self.rule_store.get_grep_heuristics();
             let relevant_files = get_files_with_extension(&self.path_to_codebase, &self.extension, pattern);
-
             for (path, content) in relevant_files {
                 let scu = self
                         .relevant_files
@@ -69,30 +71,12 @@ impl FlagCleaner {
                                 &self.input_substitutions,
                             );
                         });
-                    any_file_updated |=
-                        scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
+                    let _ = scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
+                    if self.rule_store.seed_rules.len() > curr_rules {
+                        break;
+                    }
             }
-
-            // for path in self.files.iter_mut() {
-            //     let content = read_file(&path);
-            //     if pattern.is_match(&content) {
-            //         println!("Found! {:?} in {:?}", pattern, path);
-            //         let scu = self
-            //             .relevant_files
-            //             .entry(path.to_path_buf())
-            //             .or_insert_with(|| {
-            //                 return SourceCodeUnit::new(
-            //                     &mut parser,
-            //                     content,
-            //                     &self.input_substitutions,
-            //                 );
-            //             });
-            //         any_file_updated |=
-            //             scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
-            //     }
-            // }
-
-            if !any_file_updated {
+            if  self.rule_store.seed_rules.len() == curr_rules {
                 break;
             }
         }
