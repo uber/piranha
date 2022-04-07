@@ -174,10 +174,8 @@ holes = ["stale_flag_name", "namespace"]
 [[rules]]
 name = "Interface based, annotated method declaration and interface"
 query= """
-
-
 (
-(interface_declaration 
+(interface_declaration
 	(modifiers (annotation
      				name: (_) @a_name
 					arguments: (annotation_argument_list
@@ -185,14 +183,16 @@ query= """
 							 key: (_) @k1
 							 value: (_) @v1)))) @mod
     name: (_) @i_name
-	body: (interface_body 
+	body: (interface_body
     	(_)* @pre
     	(method_declaration
 			 (modifiers (annotation
 					arguments: (annotation_argument_list
                     	(element_value_pair
 							 key: (_) @k2
-							 value: (_) @v2))))) @md
+							 value: (_) @v2))))
+                             
+        name: (_) @m_name) @md
 	    (_)* @post
     )
 ) @id
@@ -214,7 +214,7 @@ query = """
    ((method_invocation
        object: (method_invocation name: (identifier) @i2)
        name : (identifier) @i) @m)
-   (#eq? @i "getVal")
+   (#eq? @i "getCachedValue")
    (#eq? @i2 "@m_name")
 )"""
 replace = "@treated"

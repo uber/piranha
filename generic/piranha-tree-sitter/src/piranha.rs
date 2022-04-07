@@ -38,7 +38,8 @@ pub fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf
 pub struct FlagCleaner {
     rule_store: RuleStore,
     language: Language,
-    files: Vec<PathBuf>,
+    path_to_codebase: String,
+    extension: String,
     relevant_files: HashMap<PathBuf, SourceCodeUnit>,
     input_substitutions: TagMatches,
 }
@@ -54,13 +55,11 @@ impl FlagCleaner {
             let rules = self.rule_store.get_seed_rules();
             println!("Number of seed rules {}", rules.len());
             let mut any_file_updated = false;
-            for path in self.files.iter_mut() {
-                let content = read_file(&path);
-                let pattern = self.rule_store.get_grep_heuristics();
-                println!("Searching {:?} in {:?}", pattern, path);
-                if pattern.is_match(&content) {
-                    println!("Found!");
-                    let scu = self
+            let pattern = self.rule_store.get_grep_heuristics();
+            let relevant_files = get_files_with_extension(&self.path_to_codebase, &self.extension, pattern);
+
+            for (path, content) in relevant_files {
+                let scu = self
                         .relevant_files
                         .entry(path.to_path_buf())
                         .or_insert_with(|| {
@@ -72,8 +71,26 @@ impl FlagCleaner {
                         });
                     any_file_updated |=
                         scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
-                }
             }
+
+            // for path in self.files.iter_mut() {
+            //     let content = read_file(&path);
+            //     if pattern.is_match(&content) {
+            //         println!("Found! {:?} in {:?}", pattern, path);
+            //         let scu = self
+            //             .relevant_files
+            //             .entry(path.to_path_buf())
+            //             .or_insert_with(|| {
+            //                 return SourceCodeUnit::new(
+            //                     &mut parser,
+            //                     content,
+            //                     &self.input_substitutions,
+            //                 );
+            //             });
+            //         any_file_updated |=
+            //             scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
+            //     }
+            // }
 
             if !any_file_updated {
                 break;
@@ -91,17 +108,19 @@ impl FlagCleaner {
             .set_language(language)
             .expect("Could not set language");
 
-        let relevant_files = get_files_with_extension(&args.path_to_code_base, extension);
+        // let files_in_input_language = get_files_with_extension(&args.path_to_code_base, extension);
 
-        let files = relevant_files
-            .iter()
-            .map(|dir_entry| dir_entry.path().to_path_buf())
-            .collect();
+        // let files = files_in_input_language
+        //     .iter()
+        //     .map(|dir_entry| dir_entry.path().to_path_buf())
+        //     .collect();
 
         Self {
             rule_store: graph_rule_store,
             language,
-            files,
+            path_to_codebase: args.path_to_code_base,
+            extension: extension.to_string(),
+            // files,
             relevant_files: HashMap::new(),
             input_substitutions: args.input_substitutions,
         }

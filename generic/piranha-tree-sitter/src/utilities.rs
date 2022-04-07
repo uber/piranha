@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
-use std::fs::{File, self};
-use std::io::{BufReader, Read};
+use std::fs::{self, File};
 use std::hash::Hash;
+use std::io::{BufReader, Read};
+use std::path::PathBuf;
 
-use walkdir::{WalkDir, DirEntry};
+use regex::Regex;
+use jwalk::{DirEntry, WalkDir};
 // use extend::ext;
 
 pub fn read_file(file_path: &PathBuf) -> String {
@@ -16,35 +17,30 @@ pub fn read_file(file_path: &PathBuf) -> String {
     content
 }
 
-pub fn has_extension(dir_entry: &DirEntry, extension: &str) -> bool {
-    dir_entry
-        .path()
-        .extension()
-        .map(|e| e.eq(extension))
-        .unwrap_or(false)
-}
+// pub fn has_extension(dir_entry: &DirEntry, extension: &str) -> bool {
+//     dir_entry
+//         .path()
+//         .extension()
+//         .map(|e| e.eq(extension))
+//         .unwrap_or(false)
+// }
 
-pub fn get_files_with_extension(input_dir: &String, extension: &str) -> Vec<DirEntry>{
+pub fn get_files_with_extension(input_dir: &String, extension: &str, pattern: Regex) -> HashMap<PathBuf, String> {
     WalkDir::new(input_dir)
         .into_iter()
         .filter_map(|e| e.ok())
-    //   fs::read_dir(&input_dir)
-            // .unwrap()
-            // .filter_map(|d| d.ok())
-            .filter(|de| has_extension(de, extension))
-            .collect()
-    
+        .filter(|de| de.path().extension().map(|e|e.eq(extension)).unwrap_or(false))
+        .map(|f|(f.path().to_path_buf(),read_file(&f.path().to_path_buf())))
+        .filter(|x|pattern.is_match(x.1.as_str()))
+        .collect()
 }
 
 pub trait MapOfVec<T, V> {
-    fn collect_as_counter(&mut self,key: T, value: V) ;
+    fn collect_as_counter(&mut self, key: T, value: V);
 }
 
-impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>>  {
-    fn collect_as_counter(self: &mut HashMap<T, Vec<U>>, key: T, value : U) {
-        self.entry(key)
-                .or_insert_with(Vec::new)
-                .push(value);
+impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
+    fn collect_as_counter(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
+        self.entry(key).or_insert_with(Vec::new).push(value);
     }
 }
-
