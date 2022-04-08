@@ -14,6 +14,7 @@ query = """((
 (#eq? @n1 "isToggleEnabled")
 (#eq? @f "@stale_flag_name")
 )"""
+replace_node = "mi"
 replace = "@treated"
 groups = [ "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
@@ -35,6 +36,7 @@ query = """((
 (#eq? @n1 "isFlagTreated")
 (#eq? @f "@stale_flag_name")
 )"""
+replace_node = "mi"
 replace = "@treated"
 groups = [ "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
@@ -55,6 +57,7 @@ query = """((
 (#eq? @n1 "isToggleDisabled")
 (#eq? @f "@stale_flag_name")
 )"""
+replace_node = "mi"
 replace = "false"
 groups = [ "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
@@ -67,6 +70,7 @@ query = """
     (#eq? @ec "@stale_flag_name")
     )
     """
+replace_node = "ec"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
@@ -79,6 +83,7 @@ query = """
     (#eq? @n  "@stale_flag_name")
     )
     """
+replace_node = "ec"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
@@ -93,11 +98,12 @@ query = """
                     			([
 		                          (field_access field: (_)@f)
         		                  (_) @f
-                		         ])))@m) @e
+                		         ])))@m) @expr
  (#eq? @n "putToggleEnabled")
  (#eq? @f "@stale_flag_name")
 )
 """
+replace_node = "expr"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
@@ -111,11 +117,12 @@ query = """
                     			([
 		                          (field_access field: (_)@f)
         		                  (_) @f
-                		         ])))@m) @e
+                		         ])))@m) @expr
  (#eq? @n "putToggleDisabled")
  (#eq? @f "@stale_flag_name")
 )
 """
+replace_node = "expr"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
@@ -129,11 +136,12 @@ query = """
                     			([
 		                          (field_access field: (_)@f)
         		                  (_) @f
-                		         ])))@m) @e
+                		         ])))@m) @expr
  (#eq? @n "includeEvent")
  (#eq? @f "@stale_flag_name")
 )
 """
+replace_node = "expr"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
@@ -167,6 +175,7 @@ query = """
  (#eq? @v2 "\\\"@namespace\\\"")
  )
 """
+replace_node = "m1"
 replace = ""
 groups = ["Delete Method"]
 holes = ["stale_flag_name", "namespace"]
@@ -202,6 +211,8 @@ query= """
  (#eq? @v2 "\\\"@stale_flag_name\\\"")
 )
 """
+# FIXME:
+replace_node = "id"
 replace = "@mod interface @i_name { \n @pre \n @post \n}"
 groups = ["Delete Method"]
 holes = ["stale_flag_name", "namespace"]
@@ -213,10 +224,11 @@ query = """
 (
    ((method_invocation
        object: (method_invocation name: (identifier) @i2)
-       name : (identifier) @i) @m)
+       name : (identifier) @i) @mi)
    (#eq? @i "getCachedValue")
    (#eq? @i2 "@m_name")
 )"""
+replace_node = "mi"
 replace = "@treated"
 groups = ["Returns boolean"]
 holes = ["m_name", "treated"]

@@ -21,6 +21,7 @@ pub struct Args {
     #[clap(short, long)]
     pub path_to_configuration: String
 }
+
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
@@ -83,6 +84,7 @@ impl ScopeMatcher {
 pub struct Rule {
     pub name: String,
     query: TSQuery,
+    pub replace_node: String,
     pub replace: String,
     pub groups: Option<Vec<String>>,
     pub holes: Option<Vec<String>>,
@@ -118,6 +120,7 @@ impl Rule {
         Rule {
             name: String::from(&self.name),
             query,
+            replace_node: self.replace_node.clone(),
             replace,
             holes: self.holes.clone(),
             groups: self.groups.clone(),
