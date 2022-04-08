@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
-use crate::config::PiranhaArguments;
+use crate::config::{PiranhaArguments, Args};
 use crate::piranha::FlagCleaner;
 // use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::read_file;
@@ -30,14 +30,14 @@ fn test_java_scenarios_treated() {
         .join("java");
 
     let c = get_cleanups_for_code_base_new(
-        PiranhaArguments::new(
-        path_to_test_resource.join("input").to_str().unwrap(),
-        language,
-        "STALE_FLAG",
-        "some_long_name",   
-        "true",
-        "src/test-resources/java/configurations/",));
-        
+        PiranhaArguments::new(Args{
+            path_to_codebase: path_to_test_resource.join("input").to_str().unwrap().to_string(),
+            language: language.to_string(),
+            flag_name: "STALE_FLAG".to_string(),
+            flag_namespace: "some_long_name".to_string(),
+            flag_value: "true".to_string(),
+            path_to_configuration: "src/test-resources/java/configurations/".to_string(),
+        }));
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
     assert_eq!(c.len(), 4);

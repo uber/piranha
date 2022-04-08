@@ -1,9 +1,26 @@
 use colored::Colorize;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash};
-
+use clap::Parser;
 use crate::tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers};
 
+
+#[derive(Clone,Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+pub struct Args {
+    #[clap(short, long)]
+    pub path_to_codebase: String,
+    #[clap(short, long)]
+    pub language: String,
+    #[clap(short, long)]
+    pub flag_name: String,
+    #[clap(short, long)]
+    pub flag_namespace: String,
+    #[clap(short, long)]
+    pub flag_value: String,
+    #[clap(short, long)]
+    pub path_to_configuration: String
+}
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
@@ -12,35 +29,25 @@ pub struct PiranhaArguments {
 }
 
 impl PiranhaArguments {
-    pub fn new(
-        path_to_code_base: &str,
-        input_language: &str,
-        flag_name: &str,
-        flag_namespace: &str,
-        flag_value: &str,
-        path_to_configurations: &str
-        // path_to_input_rules: &str,
-        // path_to_input_edges: &str,
-        // path_to_language_config: &str,
-    ) -> Self {
-        let flag_val = flag_value.eq("true");
+    pub fn new(args: Args) -> Self {
+        let flag_val = args.flag_value.eq("true");
         let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
 
         let input_substitutions = HashMap::from([
-            (String::from("stale_flag_name"), String::from(flag_name)),
+            (String::from("stale_flag_name"), String::from(&args.flag_name)),
             (String::from("treated"), String::from(&treated)),
-            (String::from("namespace"), String::from(flag_namespace)),
+            (String::from("namespace"), String::from(&args.flag_namespace)),
             (String::from("treated_complement"), String::from(&treated_c)),
         ]);
 
-        let treated = format!("{}", flag_value.eq("true"));
+        let treated = format!("{}", args.flag_value.eq("true"));
         #[rustfmt::skip]
-        println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {flag_name}\n (ii) Value: {treated} \n (iii) flag_namespace : {flag_namespace}").purple());
+        println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), treated, &args.flag_namespace.clone()).purple());
         Self {
-            path_to_code_base: path_to_code_base.to_string(),
-            language: input_language.to_string(),
+            path_to_code_base: args.path_to_codebase.to_string(),
+            language: args.language.to_string(),
             input_substitutions: TagMatches::new(input_substitutions),
-            path_to_configurations: path_to_configurations.to_string(),
+            path_to_configurations: args.path_to_configuration.to_string(),
         }
     }
 }

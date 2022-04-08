@@ -1,6 +1,7 @@
-use std::{env, time::Instant};
+use std::{time::Instant};
 
-use crate::piranha::FlagCleaner;
+use crate::{piranha::FlagCleaner, config::Args};
+use clap::StructOpt;
 use config::PiranhaArguments;
 
 mod config;
@@ -10,17 +11,20 @@ mod tree_sitter;
 mod utilities;
 #[cfg(test)]
 mod test;
+
+// TODO: Add an argument parser 
+//      1. Add parser 
+//      2. Adapt other code    
+// TODO: Add mappings for test method annotations 
+//      
+
+
+
+
 fn main() {
     let now = Instant::now();
-    let args: Vec<String> = env::args().collect();
-    let pa = PiranhaArguments::new(
-        &args[1], // path_to_test_resource.join("input").to_str().unwrap(),
-        &args[2], //language,
-        &args[3], //"STALE_FLAG",
-        &args[4], //"some_long_name",
-        &args[5], //"true",
-        &args[6],
-    );
+    let args = Args::parse();
+    let pa = PiranhaArguments::new(args);
 
     let mut flag_cleaner = FlagCleaner::new(pa);
 
@@ -32,5 +36,4 @@ fn main() {
     }
 
     println!("Time elapsed - {:?}", now.elapsed().as_secs());
-    // ///"/Users/ketkara/repositories/open-source/piranha/generic/piranha-tree-sitter/src/configurations/",)
 }

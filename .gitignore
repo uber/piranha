@@ -15,4 +15,3 @@ generic/piranha-tree-sitter/Cargo.lock
 generic/piranha-tree-sitter/.idea
 generic/tree-sitter-query/
 generic/tree-sitter-src/
-generic/piranha-tree-sitter/src/test-resources/
