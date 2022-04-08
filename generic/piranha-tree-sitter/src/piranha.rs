@@ -114,20 +114,13 @@ impl SourceCodeUnit {
         parser: &mut Parser,
         scope_query: &Option<TSQuery>,
     ) {
-        // let mut is_rule_applied = false;
         loop {
             let is_rule_applied =
                 self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query);
             if !is_rule_applied {
                 break;
             }
-            // if self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query) {
-            //     is_rule_applied = true;
-            // } else {
-            //     break;
-            // }
         }
-        // is_rule_applied
     }
 
     fn apply_rule_to_first_match(
@@ -140,7 +133,7 @@ impl SourceCodeUnit {
         // Get scope node
         let mut root = self.ast.root_node();
         if let Some(scope_q) = scope_query {
-            if let Some((range, _)) = &self.ast.root_node().get_first_match_for_query(
+            if let Some((range, _)) = &self.ast.root_node().get_match_for_query(
                 &self.code,
                 rules_store.get_query(scope_q),
                 true,
@@ -245,7 +238,7 @@ impl SourceCodeUnit {
         }
         while let Some(parent) = changed_node.parent() {
             for m in &scope_matchers {
-                if let Some((_, captures_by_tag)) = parent.get_first_match_for_query(
+                if let Some((_, captures_by_tag)) = parent.get_match_for_query(
                     &self.code,
                     rules_store.get_query(&m.get_matcher()),
                     false,
@@ -314,7 +307,7 @@ impl SourceCodeUnit {
         node: Node,
         recurssive: bool,
     ) -> Option<(Range, String, TagMatches)> {
-        let all_relevant_query_matches = node.match_query(
+        let all_relevant_query_matches = node.get_matches_for_query(
             String::from(&self.code),
             rule_store.get_query(&rule.get_query()),
             recurssive,
@@ -340,7 +333,7 @@ impl SourceCodeUnit {
         if let Some(constraint) = &rule.constraint {
             let mut curr_node = node;
             while let Some(parent) = curr_node.parent() {
-                if let Some((range, _)) = parent.get_first_match_for_query(
+                if let Some((range, _)) = parent.get_match_for_query(
                     &self.code,
                     &constraint.matcher.create_query(rule_store.language),
                     false,
@@ -352,7 +345,7 @@ impl SourceCodeUnit {
                         let query = &rule_store.get_query(&query_str);
                         all_queries_match = all_queries_match
                             && matcher
-                                .get_first_match_for_query(&self.code, query, true)
+                                .get_match_for_query(&self.code, query, true)
                                 .is_some();
                     }
                     return (all_queries_match && constraint.predicate.is_all())
@@ -364,4 +357,3 @@ impl SourceCodeUnit {
         true
     }
 }
-// }
