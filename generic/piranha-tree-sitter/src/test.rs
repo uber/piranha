@@ -1,12 +1,25 @@
-#[cfg(test)]
+use std::collections::HashMap;
 use std::fs::{self, DirEntry};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
 use crate::config::PiranhaArguments;
-use crate::piranha::get_cleanups_for_code_base_new;
+use crate::piranha::FlagCleaner;
+// use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::read_file;
+
+fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
+    let mut flag_cleaner = FlagCleaner::new(args);
+
+    flag_cleaner.cleanup();
+
+    flag_cleaner
+        .relevant_files
+        .iter()
+        .map(|(k, x)| (k.clone(), x.code.clone()))
+        .collect()
+}
 
 #[test]
 fn test_java_scenarios_treated() {

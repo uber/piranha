@@ -1,46 +1,18 @@
 // pub mod piranha {
 use crate::config::{PiranhaArguments, Rule};
 use crate::rule_graph::RuleStore;
-use crate::tree_sitter::{
-    self as ts_utils, PiranhaRuleMatcher, TSQuery, TagMatches, TreeSitterHelpers,
-};
-use crate::utilities::{get_files_with_extension, read_file};
+use crate::tree_sitter::{get_edit, PiranhaRuleMatcher, TSQuery, TagMatches, TreeSitterHelpers};
+use crate::utilities::get_files_with_extension;
 use colored::Colorize;
-use std::collections::HashMap;
-
-use std::fs;
-use std::path::PathBuf;
+use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Language, Node, Parser, Range, Tree};
-
-pub fn perform_cleanups_for_code_base_new(args: PiranhaArguments) {
-    let mut flag_cleaner = FlagCleaner::new(args);
-
-    flag_cleaner.cleanup();
-
-    for (k, v) in flag_cleaner.relevant_files {
-        println!("Rewriting file {:?}", k);
-        v.persist(&k);
-    }
-}
-
-pub fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
-    let mut flag_cleaner = FlagCleaner::new(args);
-
-    flag_cleaner.cleanup();
-
-    flag_cleaner
-        .relevant_files
-        .iter()
-        .map(|(k, x)| (k.clone(), x.code.clone()))
-        .collect()
-}
 
 pub struct FlagCleaner {
     rule_store: RuleStore,
     language: Language,
     path_to_codebase: String,
     extension: String,
-    relevant_files: HashMap<PathBuf, SourceCodeUnit>,
+    pub relevant_files: HashMap<PathBuf, SourceCodeUnit>,
     input_substitutions: TagMatches,
 }
 
@@ -51,32 +23,34 @@ impl FlagCleaner {
             .set_language(self.language)
             .expect("Could not set language");
 
-        let mut new_rules = true;
-        let mut curr_rules = 0;
         loop {
-            let rules = self.rule_store.get_seed_rules();
-            curr_rules = rules.len();
-            println!("Number of seed rules {}", rules.len());
-            let mut any_file_updated = false;
+            let curr_rules = self.rule_store.get_seed_rules();
+
+            println!("Number of seed rules {}", curr_rules.len());
+
             let pattern = self.rule_store.get_grep_heuristics();
-            let relevant_files = get_files_with_extension(&self.path_to_codebase, &self.extension, pattern);
-            for (path, content) in relevant_files {
-                let scu = self
-                        .relevant_files
-                        .entry(path.to_path_buf())
-                        .or_insert_with(|| {
-                            return SourceCodeUnit::new(
-                                &mut parser,
-                                content,
-                                &self.input_substitutions,
-                            );
-                        });
-                    let _ = scu.apply_rules(&mut self.rule_store, rules.clone(), &mut parser, None);
-                    if self.rule_store.seed_rules.len() > curr_rules {
-                        break;
-                    }
+
+            let files_containing_pattern =
+                get_files_with_extension(&self.path_to_codebase, &self.extension, pattern);
+                
+            for (path, content) in files_containing_pattern {
+
+                self.relevant_files
+                    .entry(path.to_path_buf())
+                    .or_insert_with(|| 
+                        SourceCodeUnit::new(
+                            &mut parser,
+                            content,
+                            &self.input_substitutions)
+                    )
+                    .apply_rules(&mut self.rule_store, curr_rules.clone(), &mut parser, None);
+
+                if self.rule_store.seed_rules.len() > curr_rules.len() {
+                    println!("Found a new seed rule. Will start scanning all the files again.");
+                    break;
+                }
             }
-            if  self.rule_store.seed_rules.len() == curr_rules {
+            if self.rule_store.seed_rules.len() == curr_rules.len() {
                 break;
             }
         }
@@ -92,19 +66,11 @@ impl FlagCleaner {
             .set_language(language)
             .expect("Could not set language");
 
-        // let files_in_input_language = get_files_with_extension(&args.path_to_code_base, extension);
-
-        // let files = files_in_input_language
-        //     .iter()
-        //     .map(|dir_entry| dir_entry.path().to_path_buf())
-        //     .collect();
-
         Self {
             rule_store: graph_rule_store,
             language,
             path_to_codebase: args.path_to_code_base,
             extension: extension.to_string(),
-            // files,
             relevant_files: HashMap::new(),
             input_substitutions: args.input_substitutions,
         }
@@ -119,7 +85,7 @@ pub struct SourceCodeUnit {
 }
 
 impl SourceCodeUnit {
-    fn persist(&self, path: &PathBuf) {
+    pub fn persist(&self, path: &PathBuf) {
         fs::write(path, self.code.as_str()).expect("Unable to Write file");
     }
     // This method performs the input code replacement in the source code
@@ -129,8 +95,7 @@ impl SourceCodeUnit {
         replacement_str: String,
         parser: &mut Parser,
     ) -> InputEdit {
-        let (new_source_code, edit) =
-            ts_utils::get_edit(self.code.as_str(), replace_range, &replacement_str);
+        let (new_source_code, edit) = get_edit(self.code.as_str(), replace_range, &replacement_str);
         self.ast.edit(&edit);
         let new_tree = parser
             .parse(&new_source_code, Some(&self.ast))
@@ -148,16 +113,21 @@ impl SourceCodeUnit {
         rules_store: &mut RuleStore,
         parser: &mut Parser,
         scope_query: &Option<TSQuery>,
-    ) -> bool {
-        let mut is_rule_applied = false;
+    ) {
+        // let mut is_rule_applied = false;
         loop {
-            if self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query) {
-                is_rule_applied = true;
-            } else {
+            let is_rule_applied =
+                self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query);
+            if !is_rule_applied {
                 break;
             }
+            // if self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query) {
+            //     is_rule_applied = true;
+            // } else {
+            //     break;
+            // }
         }
-        is_rule_applied
+        // is_rule_applied
     }
 
     fn apply_rule_to_first_match(
@@ -242,12 +212,10 @@ impl SourceCodeUnit {
         rules: Vec<Rule>,
         parser: &mut Parser,
         scope_query: Option<TSQuery>,
-    ) -> bool {
-        let mut is_any_rule_applied = false;
+    ) {
         for rule in rules {
-            is_any_rule_applied |= self.apply_rule(rule.clone(), rules_store, parser, &scope_query)
+            self.apply_rule(rule.clone(), rules_store, parser, &scope_query)
         }
-        return is_any_rule_applied;
     }
 
     fn get_descendant(&self, start_byte: usize, end_byte: usize) -> Node {

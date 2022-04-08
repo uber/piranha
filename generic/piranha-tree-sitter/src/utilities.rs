@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use std::fs::{self, File};
+use std::fs::{File};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
 use regex::Regex;
-use jwalk::{DirEntry, WalkDir};
+use jwalk::{WalkDir};
 // use extend::ext;
 
 pub fn read_file(file_path: &PathBuf) -> String {
