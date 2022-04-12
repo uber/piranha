@@ -49,38 +49,44 @@ impl RuleStore {
     pub fn new(args: &PiranhaArguments) -> RuleStore {
         let (rule_graph, rules_by_name, scopes) = read_rule_graph_from_config(&args);
 
-        let mut seed_rules: Vec<Rule> = vec![];
-        for (_, rule) in &rules_by_name {
-            if rule.is_feature_flag_cleanup() {
-                if let Ok(mut r) = rule.try_instantiate(&args.input_substitutions) {
-                    r.add_grep_heuristics_for_global_rules(&args.input_substitutions);
-                    seed_rules.push(r.clone());
-                }
-            }
-        }
-
-        RuleStore {
+        let mut rule_store = RuleStore {
             rule_graph,
             rule_query_cache: HashMap::new(),
             language: args.language.get_language(),
             rules_by_name,
-            global_rules: seed_rules,
+            global_rules: vec![],
             scopes,
-        }
-    }
+        };
 
+        for (_, rule) in rule_store.rules_by_name.clone() {
+            rule_store.add_global_rule(&rule, &args.input_substitutions);
+            
+        }
+        return rule_store;
+
+    }
 
     pub fn get_global_rules(&self) -> Vec<Rule> {
         self.global_rules.clone()
     }
 
-    pub fn add_global_rule(&mut self, r: &Rule, tag_captures: &TagMatches) {
-        let mut new_seed_rule = r.instantiate(&tag_captures);
-        new_seed_rule.add_grep_heuristics_for_global_rules(tag_captures);
-        println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
-        self.global_rules.push(new_seed_rule);
+    /// Add a new global rule, along with grep heuristics.
+    pub fn add_global_rule(&mut self, rule: &Rule, tag_captures: &TagMatches) {
+        if !rule.is_feature_flag_cleanup(){
+            return;
+        }
+        if let Ok(mut r) = rule.try_instantiate(&tag_captures) {
+            r.add_grep_heuristics_for_global_rules(&tag_captures);
+            // seed_rules.push(r.clone());
+            println!("{}", format!("Added Seed Rule : {:?}", r).red());
+            self.global_rules.push(r);
+        }
+        // let mut new_seed_rule = r.instantiate(&tag_captures);
+        // new_seed_rule.add_grep_heuristics_for_global_rules(tag_captures);
     }
 
+    /// Get the compiled query for the `query_str` from the cache 
+    /// else compile it, add it to the cache and return it.
     pub fn get_query(&mut self, query_str: &TSQuery) -> &Query {
         self.rule_query_cache
             .entry(query_str.clone())
