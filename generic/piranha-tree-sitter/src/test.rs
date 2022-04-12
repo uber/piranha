@@ -6,29 +6,24 @@ use colored::Colorize;
 
 use crate::config::{Args, PiranhaArguments};
 use crate::piranha::FlagCleaner;
-// use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::read_file;
+
+
 
 #[test]
 fn test_java_scenarios_treated() {
     let language = "Java";
-    let path_to_test_resource = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("test-resources")
-        .join("java");
-
-    let updated_files = get_cleanups_for_code_base_new(PiranhaArguments::new(Args {
-        path_to_codebase: path_to_test_resource
-            .join("input")
-            .to_str()
-            .unwrap()
-            .to_string(),
+    let path_to_test_resource =  get_path_to_test_resource();
+    let args = PiranhaArguments::new(Args {
+        path_to_codebase: get_path_to_test_code_base(),
         language: language.to_string(),
         flag_name: "STALE_FLAG".to_string(),
         flag_namespace: "some_long_name".to_string(),
         flag_value: true,
-        path_to_configuration: "src/test-resources/java/configurations/".to_string(),
-    }));
+        path_to_configuration: get_path_test_configurations(),
+    });
+
+    let updated_files = get_cleanups_for_code_base_new(args);
 
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
@@ -40,29 +35,42 @@ fn test_java_scenarios_treated() {
 #[test]
 fn test_java_scenarios_control() {
     let language = "Java";
-    let path_to_test_resource = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("test-resources")
-        .join("java");
-
-    let updated_files = get_cleanups_for_code_base_new(PiranhaArguments::new(Args {
-        path_to_codebase: path_to_test_resource
-            .join("input")
-            .to_str()
-            .unwrap()
-            .to_string(),
+    let path_to_test_resource =  get_path_to_test_resource();
+    let args = PiranhaArguments::new(Args {
+        path_to_codebase: get_path_to_test_code_base(),
         language: language.to_string(),
         flag_name: "STALE_FLAG".to_string(),
         flag_namespace: "some_long_name".to_string(),
         flag_value: false,
-        path_to_configuration: "src/test-resources/java/configurations/".to_string(),
-    }));
+        path_to_configuration: get_path_test_configurations(),
+    });
+
+    let updated_files = get_cleanups_for_code_base_new(args);
 
     let path_to_expected = path_to_test_resource.join("expected_control");
 
     assert_eq!(updated_files.len(), 4);
 
     check_result(updated_files, path_to_expected);
+}
+
+fn get_path_to_test_resource() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("src")
+        .join("test-resources")
+        .join("java")
+}
+
+fn get_path_test_configurations() -> String {
+    "src/test-resources/java/configurations/".to_string()
+}
+
+fn get_path_to_test_code_base() -> String {
+    get_path_to_test_resource()
+        .join("input")
+        .to_str()
+        .unwrap()
+        .to_string()
 }
 
 fn eq_without_whitspace(s1: &String, s2: &String) -> bool {
