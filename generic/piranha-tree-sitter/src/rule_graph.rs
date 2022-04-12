@@ -162,13 +162,9 @@ pub fn read_rule_graph_from_config(
     // Read the rules 
     let (language_rules, language_edges, scopes) = match args.language.as_str() {
         "Java" => (
-            toml::from_str::<Rules>(read_file(&path_to_config.join("java_rules.toml")).as_str())
-                .unwrap(),
-            toml::from_str::<Edges>(read_file(&path_to_config.join("java_edges.toml")).as_str())
-                .unwrap(),
-            toml::from_str::<ScopeConfig>(
-                read_file(&path_to_config.join("java_scope_config.toml")).as_str(),
-            )
+            toml::from_str::<Rules>(include_str!("config/java/java_rules.toml")).unwrap(),
+            toml::from_str::<Edges>(include_str!("config/java/java_edges.toml")).unwrap(),
+            toml::from_str::<ScopeConfig>(include_str!("config/java/java_scope_config.toml"),)
             .map(|x| x.scopes)
             .unwrap(),
         ),
