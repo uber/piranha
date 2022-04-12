@@ -9,18 +9,17 @@ use crate::piranha::FlagCleaner;
 use crate::utilities::read_file;
 
 
-
 #[test]
 fn test_java_scenarios_treated() {
     let language = "Java";
-    let path_to_test_resource =  get_path_to_test_resource();
+    let path_to_test_resource =  get_path_to_test_resource(language);
     let args = PiranhaArguments::new(Args {
-        path_to_codebase: get_path_to_test_code_base(),
+        path_to_codebase: get_path_to_test_code_base(language),
         language: language.to_string(),
         flag_name: "STALE_FLAG".to_string(),
         flag_namespace: "some_long_name".to_string(),
         flag_value: true,
-        path_to_configuration: get_path_test_configurations(),
+        path_to_configuration: get_path_test_configurations(language),
     });
 
     let updated_files = get_cleanups_for_code_base_new(args);
@@ -35,14 +34,14 @@ fn test_java_scenarios_treated() {
 #[test]
 fn test_java_scenarios_control() {
     let language = "Java";
-    let path_to_test_resource =  get_path_to_test_resource();
+    let path_to_test_resource =  get_path_to_test_resource(language);
     let args = PiranhaArguments::new(Args {
-        path_to_codebase: get_path_to_test_code_base(),
+        path_to_codebase: get_path_to_test_code_base(language),
         language: language.to_string(),
         flag_name: "STALE_FLAG".to_string(),
         flag_namespace: "some_long_name".to_string(),
         flag_value: false,
-        path_to_configuration: get_path_test_configurations(),
+        path_to_configuration: get_path_test_configurations(language),
     });
 
     let updated_files = get_cleanups_for_code_base_new(args);
@@ -54,19 +53,25 @@ fn test_java_scenarios_control() {
     check_result(updated_files, path_to_expected);
 }
 
-fn get_path_to_test_resource() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
+fn get_path_to_test_resource(language: &str) -> PathBuf {
+    match language {
+        "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("src")
         .join("test-resources")
-        .join("java")
+        .join("java"),
+        _ => panic!("{} not supported!", language)
+    }
 }
 
-fn get_path_test_configurations() -> String {
-    "src/test-resources/java/configurations/".to_string()
+fn get_path_test_configurations(language: &str) -> String {
+    match language {
+        "Java" => "src/test-resources/java/configurations/".to_string(),
+        _ => panic!("{} not supported!", language)
+    }
 }
 
-fn get_path_to_test_code_base() -> String {
-    get_path_to_test_resource()
+fn get_path_to_test_code_base(language: &str) -> String {
+    get_path_to_test_resource(language)
         .join("input")
         .to_str()
         .unwrap()
