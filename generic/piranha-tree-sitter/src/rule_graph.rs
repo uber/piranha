@@ -1,10 +1,9 @@
 use crate::{
-    config::{PiranhaArguments, Rule, ScopeGenerator, ScopeConfig},
+    config::{PiranhaArguments, Rule, ScopeGenerator, ScopeConfig, Rules, Edges},
     tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers},
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
-use serde_derive::Deserialize;
 use std::{collections::HashMap, path::Path};
 use tree_sitter::{Language, Query};
 
@@ -12,24 +11,6 @@ pub static GLOBAL: &str = "Global";
 pub static METHOD: &str = "Method";
 pub static CLASS: &str = "Class";
 pub static PARENT: &str = "Parent";
-
-
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-struct Edge {
-    pub from: String,
-    pub to: String,
-    pub scope: String,
-}
-
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-struct Edges {
-    edges: Vec<Edge>,
-}
-
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-struct Rules {
-    pub rules: Vec<Rule>,
-}
 
 /// This maintains the state for Piranha. 
 pub struct RuleStore {
@@ -46,6 +27,7 @@ pub struct RuleStore {
 }
 
 impl RuleStore {
+
     pub fn new(args: &PiranhaArguments) -> RuleStore {
         let (rule_graph, rules_by_name, scopes) = read_rule_graph_from_config(&args);
 
@@ -78,7 +60,7 @@ impl RuleStore {
         if let Ok(mut r) = rule.try_instantiate(&tag_captures) {
             r.add_grep_heuristics_for_global_rules(&tag_captures);
             // seed_rules.push(r.clone());
-            println!("{}", format!("Added Seed Rule : {:?}", r).red());
+            println!("{}", format!("Added Global Rule : {:?} - {:?}", r.name, r.get_query()).blue());
             self.global_rules.push(r);
         }
         // let mut new_seed_rule = r.instantiate(&tag_captures);
@@ -115,6 +97,7 @@ pub struct ParameterizedRuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl ParameterizedRuleGraph {
 
+    // Constructs a graph of rules based on the input `edges`
     fn new(edges: Edges, all_rules: Rules) -> Self {
         let mut rules_by_name = HashMap::new();
         let mut rules_by_group = HashMap::new();

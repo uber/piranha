@@ -109,6 +109,7 @@ pub struct Constraint {
 }
 
 impl Rule {
+    /// Create a new query from `self` with the input `query` and `replace`
     pub fn update(&self, query: TSQuery, replace: String) -> Self {
         Rule {
             name: self.name.to_string(),
@@ -121,7 +122,6 @@ impl Rule {
             grep_heuristics: self.grep_heuristics.clone(),
         }
     }
-
 
     pub fn is_feature_flag_cleanup(&self) -> bool {
         self.groups.as_ref().map_or(false, |tags| {
@@ -190,4 +190,21 @@ impl Rule {
             self.groups.as_mut().unwrap().push(group_name);
         }
     }
+}
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Edge {
+    pub from: String,
+    pub to: String,
+    pub scope: String,
+}
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Edges {
+    pub edges: Vec<Edge>,
+}
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub struct Rules {
+    pub rules: Vec<Rule>,
 }

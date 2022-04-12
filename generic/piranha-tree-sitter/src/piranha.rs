@@ -1,6 +1,5 @@
-// pub mod piranha {
 use crate::config::{PiranhaArguments, Rule};
-use crate::rule_graph::{RuleStore, GLOBAL, METHOD, CLASS, PARENT};
+use crate::rule_graph::{RuleStore, CLASS, GLOBAL, METHOD, PARENT};
 use crate::tree_sitter::{PiranhaRuleMatcher, TSQuery, TagMatches, TreeSitterHelpers};
 use crate::utilities::read_file;
 use colored::Colorize;
@@ -8,7 +7,7 @@ use itertools::Itertools;
 use jwalk::WalkDir;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
-use tree_sitter::{InputEdit, Language, Node, Parser, Range, Tree, Point};
+use tree_sitter::{InputEdit, Language, Node, Parser, Point, Range, Tree};
 
 pub struct FlagCleaner {
     rule_store: RuleStore,
@@ -20,6 +19,7 @@ pub struct FlagCleaner {
 }
 
 impl FlagCleaner {
+    // Performs cleanup related to stale flags
     pub fn cleanup(&mut self) {
         let mut parser = Parser::new();
         parser
@@ -32,9 +32,11 @@ impl FlagCleaner {
             println!("Number of global rules {}", curr_rules.len());
 
             let files_containing_pattern = self.get_relevant_files();
+            
+            #[rustfmt::skip]
+            println!("{}", format!("Will parse and analyze {} files.", files_containing_pattern.len()).green());
 
             for (path, content) in files_containing_pattern {
-
                 self.relevant_files
                     .entry(path.to_path_buf())
                     .or_insert_with(|| {
@@ -52,10 +54,14 @@ impl FlagCleaner {
             }
         }
     }
-    /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern. 
+    /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
     /// Note that `WalkDir` traverses the directory with parallelism.
     pub fn get_relevant_files(&self) -> HashMap<PathBuf, String> {
         let pattern = self.get_grep_heuristics();
+        println!(
+            "{}",
+            format!("Searching for pattern {}", pattern.as_str()).green()
+        );
         WalkDir::new(&self.path_to_codebase)
             .into_iter()
             .filter_map(|e| e.ok())
@@ -84,14 +90,14 @@ impl FlagCleaner {
         }
     }
 
-    /// To create the current set of global rules, certain substitutions were applied. 
-    /// This method creates a regex pattern matching these substituted values. 
-    /// 
-    /// At the directory level, we would always look to perform global rules. However this is expensive because 
-    /// it requires parsing each file. To overcome this, we apply this simple 
+    /// To create the current set of global rules, certain substitutions were applied.
+    /// This method creates a regex pattern matching these substituted values.
+    ///
+    /// At the directory level, we would always look to perform global rules. However this is expensive because
+    /// it requires parsing each file. To overcome this, we apply this simple
     /// heuristic to find the (upper bound) files that would match one of our current global rules.
     /// This heurisitic reduces the number of files to parse.
-    /// 
+    ///
     pub fn get_grep_heuristics(&self) -> Regex {
         let reg_x = self
             .rule_store
@@ -283,11 +289,9 @@ impl SourceCodeUnit {
         // Match the `scope_matcher.matcher` to the parent
         while let Some(parent) = changed_node.parent() {
             for m in &scope_matchers {
-                if let Some((_, captures_by_tag)) = parent.get_match_for_query(
-                    &self.code,
-                    rules_store.get_query(&m.matcher),
-                    false,
-                ) {
+                if let Some((_, captures_by_tag)) =
+                    parent.get_match_for_query(&self.code, rules_store.get_query(&m.matcher), false)
+                {
                     // Generate the scope query for the specific context
                     return m.generator.substitute_tags(&captures_by_tag);
                 } else {
@@ -409,13 +413,9 @@ impl SourceCodeUnit {
     }
 
     /// Replaces the given byte range (`replace_range`) with the `replacement`.
-    /// Returns tree-sitter's edit representation along with updated source code. 
+    /// Returns tree-sitter's edit representation along with updated source code.
     /// Note: This method does not update `self`.
-    pub fn get_edit(
-        &self,
-        replace_range: Range,
-        replacement: &str,
-    ) -> (String, InputEdit) {
+    pub fn get_edit(&self, replace_range: Range, replacement: &str) -> (String, InputEdit) {
         let source_code = self.code.clone();
         let new_source_code = [
             &source_code[..replace_range.start_byte],
@@ -423,9 +423,9 @@ impl SourceCodeUnit {
             &source_code[replace_range.end_byte..],
         ]
         .concat();
-    
+
         let replace_code = &source_code[replace_range.start_byte..replace_range.end_byte];
-    
+
         #[rustfmt::skip]
         println!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(),
             ((&replace_range.start_point.row, &replace_range.start_point.column),
@@ -433,7 +433,7 @@ impl SourceCodeUnit {
             if !replacement.is_empty() {format!("{}\n to \n{}",replace_code.italic(),replacement.italic())
             } else {format!("{} ", replace_code.italic())}
         );
-    
+
         fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
             let mut result = Point { row: 0, column: 0 };
             for c in &input[0..offset] {
@@ -446,7 +446,7 @@ impl SourceCodeUnit {
             }
             result
         }
-    
+
         let len_new_source_code_bytes = replacement.as_bytes().len();
         let byte_vec = &source_code.as_bytes().to_vec();
         let edit = InputEdit {
@@ -460,9 +460,7 @@ impl SourceCodeUnit {
                 replace_range.start_byte + len_new_source_code_bytes,
             ),
         };
-    
+
         (new_source_code, edit)
     }
-
-    
 }
