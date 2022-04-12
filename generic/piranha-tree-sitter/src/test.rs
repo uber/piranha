@@ -4,10 +4,68 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
-use crate::config::{PiranhaArguments, Args};
+use crate::config::{Args, PiranhaArguments};
 use crate::piranha::FlagCleaner;
 // use crate::piranha::get_cleanups_for_code_base_new;
 use crate::utilities::read_file;
+
+#[test]
+fn test_java_scenarios_treated() {
+    let language = "Java";
+    let path_to_test_resource = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("src")
+        .join("test-resources")
+        .join("java");
+
+    let updated_files = get_cleanups_for_code_base_new(PiranhaArguments::new(Args {
+        path_to_codebase: path_to_test_resource
+            .join("input")
+            .to_str()
+            .unwrap()
+            .to_string(),
+        language: language.to_string(),
+        flag_name: "STALE_FLAG".to_string(),
+        flag_namespace: "some_long_name".to_string(),
+        flag_value: true,
+        path_to_configuration: "src/test-resources/java/configurations/".to_string(),
+    }));
+
+    let path_to_expected = path_to_test_resource.join("expected_treated");
+
+    assert_eq!(updated_files.len(), 4);
+
+    check_result(updated_files, path_to_expected);
+}
+
+fn eq_without_whitspace(s1: &String, s2: &String) -> bool {
+    s1.replace("\n", "")
+            .replace(" ", "")
+            .eq(&s2.replace("\n", "").replace(" ", ""))
+}
+
+fn check_result(updated_files: HashMap<PathBuf, String>, path_to_expected: PathBuf) {
+    let mut results = HashMap::new();
+    for (path_buf, new_content) in updated_files {
+        let ufn = &path_buf.file_name().clone();
+        let updated_file_name =  ufn.unwrap().to_str().unwrap().to_string();
+        let expected_file_path = get_file_with_name(path_to_expected.to_path_buf(), &updated_file_name);
+        let expected_content = read_file(&expected_file_path);
+        let result =  eq_without_whitspace(&new_content, &expected_content);
+        results.insert(updated_file_name, result);
+    }
+
+    let mut failed_scenarios = true;
+    for (file_name, result) in results {
+        if result {
+            println!("{}", format!("Match successful for {:?}", file_name).green());
+        }else{
+            println!("{}", format!("Match failed for {:?}", file_name).red());
+            failed_scenarios = true;
+        }
+    }
+    assert!(failed_scenarios);
+    
+}
 
 fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
     let mut flag_cleaner = FlagCleaner::new(args);
@@ -21,67 +79,22 @@ fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, St
         .collect()
 }
 
-#[test]
-fn test_java_scenarios_treated() {
-    let language = "Java";
-    let path_to_test_resource = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("test-resources")
-        .join("java");
+pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
+    dir_entry
+        .path()
+        .file_name()
+        .map(|e| e.eq(extension))
+        .unwrap_or(false)
+}
 
-    let c = get_cleanups_for_code_base_new(
-        PiranhaArguments::new(Args{
-            path_to_codebase: path_to_test_resource.join("input").to_str().unwrap().to_string(),
-            language: language.to_string(),
-            flag_name: "STALE_FLAG".to_string(),
-            flag_namespace: "some_long_name".to_string(),
-            flag_value: true,
-            path_to_configuration: "src/test-resources/java/configurations/".to_string(),
-        }));
-    let path_to_expected = path_to_test_resource.join("expected_treated");
-
-    assert_eq!(c.len(), 4);
-
-    for e in c {
-        let file_name = e.0.file_name().unwrap();
-        let f = get_file_with_name(
-            path_to_expected.as_path().to_str().unwrap(),
-            file_name.to_str().unwrap(),
-        )
+pub fn get_file_with_name(input_dir: PathBuf, name: &String) -> PathBuf {
+    fs::read_dir(input_dir)
         .unwrap()
-        .path();
-        let expected_content = read_file(&f);
-        let output = &e.1;
-        let result = output
-            .replace("\n", "").replace(" ", "")
-            .eq(&expected_content.replace("\n", "").replace(" ", ""));
-        if !result {
-            println!("{:?}\n{}",file_name, output);
-        }
-        assert!(result);
-        println!(
-            "{}",
-            format!("Test Result for {:?} is successful!!!", f.file_name()).bright_blue()
-        );
-    }
-
-    pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
-        dir_entry
-            .path()
-            .file_name()
-            .map(|e| e.eq(extension))
-            .unwrap_or(false)
-    }
-
-    pub fn get_file_with_name(input_dir: &str, name: &str) -> Option<DirEntry> {
-        fs::read_dir(input_dir)
-            .unwrap()
-            .filter_map(|d| d.ok())
-            .filter(|de| has_name(de, name))
-            .next()
-    }
-
-    // assert_eq!(expected_content, e.1);
+        .filter_map(|d| d.ok())
+        .filter(|de| has_name(de, name))
+        .next()
+        .unwrap()
+        .path()
 }
 
 // pub fn _parse_code(language: Language, source_code: &String) -> (Parser, Tree) {
