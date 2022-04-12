@@ -26,7 +26,7 @@ fn test_java_scenarios_treated() {
 
     let path_to_expected = path_to_test_resource.join("expected_treated");
 
-    assert_eq!(updated_files.len(), 4);
+    assert_eq!(updated_files.len(), 5);
 
     check_result(updated_files, path_to_expected);
 }
@@ -48,7 +48,7 @@ fn test_java_scenarios_control() {
 
     let path_to_expected = path_to_test_resource.join("expected_control");
 
-    assert_eq!(updated_files.len(), 4);
+    assert_eq!(updated_files.len(), 5);
 
     check_result(updated_files, path_to_expected);
 }

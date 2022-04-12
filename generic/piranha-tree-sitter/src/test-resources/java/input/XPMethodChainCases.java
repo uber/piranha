@@ -13,15 +13,21 @@ class XPMethodChainCases {
   public static void foobar(Parameter cp) {
     SomeParam sp = SomeParam.create(cp);
     // Matches API
-    
+    if (sp.isStaleFeature().getCachedValue()) {
+      System.out.println("!");
+    }
     // Matches API
-    System.out.println("!!!");
+    if (!sp.isStaleFeature().getCachedValue()) {
+      System.out.println("!!!");
+    }
     // Does not match API
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    
-    if (sp.otherFlag().getCachedValue()) {
+    if (sp.otherFlag().getCachedValue() && sp.isStaleFeature().getCachedValue()) {
+      System.out.println("!!!");
+    }
+    if (sp.otherFlag().getCachedValue() || sp.isStaleFeature().getCachedValue()) {
       System.out.println("!!!");
     }
     SomeParamRev spr = SomeParamRev.create(cp);
@@ -45,8 +51,8 @@ class XPMethodChainCases {
 
     System.out.println("done!");
     // Matches API
-    
-    
+    cp.put(sp.isStaleFeature(), true);
+    cp.put(sp.isStaleFeature(), false);
 
     // Do not match API
     cp.put(sp.otherFlag(), true);

@@ -222,34 +222,40 @@ name = "Interface based, replace method invocation chain with true/false"
 query = """
 (
    ((method_invocation
-       object: (method_invocation name: (identifier) @i2)
-       name : (identifier) @i) @mi)
+       object: (method_invocation 
+       			object: (_) @o
+       			name: (identifier) @i2)
+       name : (identifier) @i) 
+       @mi)
    (#eq? @i "getCachedValue")
    (#eq? @i2 "@m_name")
+   (#not-match? @o "^[A-Z]+.*")
 )"""
 replace_node = "mi"
 replace = "@treated"
 groups = ["Returns boolean"]
 holes = ["m_name", "treated"]
 
+[[rules]]
+name = "Interface based, method invocation, put"
+query = """
+(
+(expression_statement ((method_invocation name: (_) @n
+			arguments : (
+            (argument_list 
+            	(method_invocation 
+                		name: (_) @an)
+                ([(true) (false)])
+             ))
 
-# [[rules.and_then]]
-# name = "Interface based, method invocation, put"
-# query = ["""
-# (
-# (expression_statement ((method_invocation name: (_) @n
-# 			arguments : (
-#             (argument_list 
-#             	(method_invocation 
-#                 		name: (_) @an)
-#                 ([(true) (false)])
-#              ))
-
-#             ) @m) @e)
-#  (#eq? @n "put")
-#  (#eq? @an "@stale_flag_name")
-# )
-# """]
-# replace = ""
-#  
+            ) @m) ) @expr
+ (#eq? @n "put")
+ (#eq? @an "@m_name")
+)
+"""
+replace_node = "expr"
+replace = ""
+groups = []
+holes = ["m_name"]
+ 
 # 
