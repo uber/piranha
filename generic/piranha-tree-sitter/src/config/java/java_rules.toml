@@ -152,11 +152,11 @@ query = """
 (
     (binary_expression
         left: (false)
-        operator:"&&"
+        operator : "&&"
         right : (_)* @other
     )
-@b)"""
-replace_node = "b"
+@bool_expr)"""
+replace_node = "bool_expr"
 replace = "false"
 groups = ["Boolean expression cleanup", "Returns boolean"]
 
@@ -167,12 +167,12 @@ query = """
 (
     (binary_expression
         left : (_)* @other
-        operator:"&&"
+        operator : "&&"
         right: (false)
     )
-@b)
+@bool_expr)
 """
-replace_node = "b"
+replace_node = "bool_expr"
 replace = "false"
 groups = ["Boolean expression cleanup", "Returns boolean"]
 

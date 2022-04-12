@@ -1,10 +1,5 @@
 [[edges]]
-from = "Feature-flag API cleanup"
-scope = "Parent"
-to = "Boolean expression cleanup"
-
-[[edges]]
-from = "Interface based, replace method invocation chain with true/false"
+from = "Returns boolean"
 scope = "Parent"
 to = "Boolean expression cleanup"
 
@@ -12,16 +7,6 @@ to = "Boolean expression cleanup"
 from = "Returns boolean"
 scope = "Parent"
 to = "Statement cleanup"
-
-[[edges]]
-from = "Boolean expression cleanup"
-scope = "Parent"
-to = "Boolean expression cleanup"
-
-[[edges]]
-from = "If cleanup"
-scope = "Parent"
-to = "Block cleanup"
 
 [[edges]]
 from = "Returns boolean"
@@ -33,10 +18,24 @@ from = "Returns boolean"
 scope = "Parent"
 to = "Inline Field Declaration - Delete field declaration"
 
+
 [[edges]]
 from = "Returns boolean"
 scope = "Parent"
 to = "Remove assignment-1"
+
+
+#####################################################################
+
+[[edges]]
+from = "Boolean expression cleanup"
+scope = "Parent"
+to = "Boolean expression cleanup"
+
+[[edges]]
+from = "If cleanup"
+scope = "Parent"
+to = "Block cleanup"
 
 
 [[edges]]
