@@ -6,7 +6,6 @@ use crate::utilities::MapOfVec;
 use itertools::Itertools;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
-use tree_sitter::QueryMatch;
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 extern "C" {
@@ -46,22 +45,6 @@ impl TagMatches {
         TagMatches(matches)
     }
 
-    // pub fn new_vec(matches: Vec<HashMap<String, String>>) -> Self {
-    //     let mut new_map = HashMap::new();
-    //     for tag_matches in tag_matches_list {
-    //         new_map.extend(tag_matches.0);
-    //     }
-    //     Self::new(new_map)
-    // }
-
-    pub fn new_list(tag_matches_list: Vec<TagMatches>) -> Self {
-        let mut new_map = HashMap::new();
-        for tag_matches in tag_matches_list {
-            new_map.extend(tag_matches.0);
-        }
-        Self::new(new_map)
-    }
-
     pub fn get(&self, s: &String) -> Option<&String> {
         self.0.get(s)
     }
@@ -73,10 +56,6 @@ impl TagMatches {
     pub fn extend(&mut self, other_tag_matches: TagMatches) {
         self.0.extend(other_tag_matches.0)
     }
-
-    // pub fn values(&self) -> Vec<String> {
-    //     self.0.values().map(|x|x.to_string()).collect_vec()
-    // }
 }
 
 pub fn get_edit(
@@ -134,29 +113,6 @@ fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
     result
 }
 
-pub fn group_captures_by_tag<'a>(
-    captures: &[QueryCapture],
-    query: &'a Query,
-    source_code_bytes: &'a [u8],
-) -> TagMatches {
-    let code_snippets = |idx: &u32| {
-        String::from(
-            &captures
-                .iter()
-                .filter(|x| x.index.eq(idx))
-                .map(|cs| cs.node.utf8_text(source_code_bytes).unwrap())
-                .join("\n"),
-        )
-    };
-    TagMatches::new(
-        query
-            .capture_names()
-            .iter()
-            .enumerate()
-            .map(|(idx, name)| (name.clone(), code_snippets(&(idx as u32))))
-            .collect(),
-    )
-}
 
 pub trait TreeSitterHelpers {
     fn get_language(&self) -> Language;
@@ -200,7 +156,7 @@ impl TreeSitterHelpers for String {
 
 #[rustfmt::skip]
 pub trait PiranhaRuleMatcher {
-    fn get_matches_for_query(&self, source_code: String, query: &Query, recurssive: bool, specific_tag: Option<String>) -> Vec<(Range, TagMatches)>;
+    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recurssive: bool, specific_tag: Option<String>) -> Vec<(Range, TagMatches)>;
     fn get_match_for_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
     fn node_matches_range(&self, range: Range) -> bool;
 }
@@ -212,12 +168,12 @@ impl PiranhaRuleMatcher for Node<'_> {
         query: &Query,
         recurssive: bool,
     ) -> Option<(Range, TagMatches)> {
-        self.get_matches_for_query(source_code.to_string(), query, recurssive, None)
+        self.get_all_matches_for_query(source_code.to_string(), query, recurssive, None)
             .first()
             .map(|x| x.clone())
     }
 
-    fn get_matches_for_query(
+    fn get_all_matches_for_query(
         &self,
         source_code: String,
         query: &Query,

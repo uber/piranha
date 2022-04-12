@@ -32,17 +32,13 @@ impl FlagCleaner {
 
             let files_containing_pattern =
                 get_files_with_extension(&self.path_to_codebase, &self.extension, pattern);
-                
-            for (path, content) in files_containing_pattern {
 
+            for (path, content) in files_containing_pattern {
                 self.relevant_files
                     .entry(path.to_path_buf())
-                    .or_insert_with(|| 
-                        SourceCodeUnit::new(
-                            &mut parser,
-                            content,
-                            &self.input_substitutions)
-                    )
+                    .or_insert_with(|| {
+                        SourceCodeUnit::new(&mut parser, content, &self.input_substitutions)
+                    })
                     .apply_rules(&mut self.rule_store, curr_rules.clone(), &mut parser, None);
 
                 if self.rule_store.seed_rules.len() > curr_rules.len() {
@@ -115,9 +111,7 @@ impl SourceCodeUnit {
         scope_query: &Option<TSQuery>,
     ) {
         loop {
-            let is_rule_applied =
-                self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query);
-            if !is_rule_applied {
+            if !self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query) {
                 break;
             }
         }
@@ -150,38 +144,36 @@ impl SourceCodeUnit {
             let edit = self.apply_edit(range, rpl, parser);
             self.substitutions.extend(captures_by_tag);
 
-            let mut previous_edit = edit.clone();
+            let mut curr_edit = edit.clone();
             let mut curr_rule = rule.clone();
-            let mut new_rules_q = vec![];
+            let mut file_level_and_then_rules = vec![];
 
             // recurssively perform the parent edits, while queueing the Method and Class level edits.
             loop {
-                let next_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
+                let and_then_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
 
                 // Add Method and Class scoped rules to the
-                for (scope_s, rules) in &next_rules {
+                for (scope_s, rules) in &and_then_rules {
                     if ["Method", "Class"].contains(&scope_s.as_str()) && !rules.is_empty() {
-                        let scope_query_q =
-                            self.get_scope_query(scope_s, previous_edit, rules_store);
                         for rule in rules {
-                            new_rules_q.push((
-                                scope_query_q.clone(),
+                            file_level_and_then_rules.push((
+                                self.get_scope_query(scope_s, curr_edit, rules_store),
                                 rule.instantiate(&self.substitutions),
                             ));
                         }
                     }
                 }
-
-                for r in &next_rules["Global"] {
+                // Add Global rules as seed rules
+                for r in &and_then_rules["Global"] {
                     rules_store.add_seed_rule(r, &self.substitutions);
                 }
 
                 // Process the parent
                 if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
-                    self.match_rules_to_context(previous_edit, rules_store, &next_rules["Parent"])
+                    self.match_rules_to_context(curr_edit, rules_store, &and_then_rules["Parent"])
                 {
                     println!("{}", format!("Matched parent for cleanup").green());
-                    previous_edit = self.apply_edit(c_range, replacement_str, parser);
+                    curr_edit = self.apply_edit(c_range, replacement_str, parser);
                     curr_rule = matched_rule;
                     self.substitutions.extend(new_capture_by_tag);
                 } else {
@@ -189,10 +181,10 @@ impl SourceCodeUnit {
                     break;
                 }
             }
-            // Process the method and class level rules.
+            // Process the method and class level rules
             // Apply recurssively
-            new_rules_q.reverse();
-            for (sq, rle) in new_rules_q {
+            file_level_and_then_rules.reverse();
+            for (sq, rle) in file_level_and_then_rules {
                 self.apply_rule(rle, rules_store, parser, &Some(sq));
             }
         }
@@ -226,16 +218,14 @@ impl SourceCodeUnit {
     ) -> TSQuery {
         let mut changed_node =
             self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
-        let mut scope_matchers = vec![];
-        for s in rules_store.scopes.iter() {
-            if s.name.eq(s_scope) {
-                scope_matchers = s.rules.clone();
-                break;
-            }
-        }
-        if scope_matchers.is_empty() {
-            panic!("Could not find scope matcher for {:?}", s_scope);
-        }
+
+        let scope_matchers = rules_store
+            .scopes
+            .iter()
+            .find(|scope| scope.name.eq(s_scope))
+            .map(|scope| scope.rules.clone())
+            .unwrap_or_else(Vec::new);
+
         while let Some(parent) = changed_node.parent() {
             for m in &scope_matchers {
                 if let Some((_, captures_by_tag)) = parent.get_match_for_query(
@@ -243,9 +233,7 @@ impl SourceCodeUnit {
                     rules_store.get_query(&m.get_matcher()),
                     false,
                 ) {
-                    let transformed_query = m.get_matcher_gen().substitute_tags(&captures_by_tag);
-                    let _ = rules_store.get_query(&transformed_query);
-                    return transformed_query;
+                    return m.get_matcher_gen().substitute_tags(&captures_by_tag);
                 } else {
                     changed_node = parent;
                 }
@@ -306,11 +294,11 @@ impl SourceCodeUnit {
         node: Node,
         recurssive: bool,
     ) -> Option<(Range, String, TagMatches)> {
-        let all_relevant_query_matches = node.get_matches_for_query(
+        let all_relevant_query_matches = node.get_all_matches_for_query(
             String::from(&self.code),
             rule_store.get_query(&rule.get_query()),
             recurssive,
-            Some(rule.replace_node.clone())
+            Some(rule.replace_node.clone()),
         );
 
         for (range, tag_substitutions) in all_relevant_query_matches {
