@@ -4,11 +4,15 @@ use crate::{
     utilities::{read_file, MapOfVec},
 };
 use colored::Colorize;
-use itertools::Itertools;
-use regex::Regex;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, path::Path};
 use tree_sitter::{Language, Query};
+
+pub static GLOBAL: &str = "Global";
+pub static METHOD: &str = "Method";
+pub static CLASS: &str = "Class";
+pub static PARENT: &str = "Parent";
+
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 struct Edge {
@@ -27,12 +31,17 @@ struct Rules {
     pub rules: Vec<Rule>,
 }
 
+/// This maintains the state for Piranha. 
 pub struct RuleStore {
     pub rule_graph: ParameterizedRuleGraph,
+    // Caches the compiled tree-sitter queries.
     rule_query_cache: HashMap<TSQuery, Query>,
     pub language: Language,
+    // All the input rules stored by name
     pub rules_by_name: HashMap<String, Rule>,
-    pub seed_rules: Vec<Rule>,
+    // Current global rules to be applied.
+    pub global_rules: Vec<Rule>,
+    // Scope generators.
     pub scopes: Vec<Scope>,
 }
 
@@ -44,7 +53,7 @@ impl RuleStore {
         for (_, rule) in &rules_by_name {
             if rule.is_feature_flag_cleanup() {
                 if let Ok(mut r) = rule.try_instantiate(&args.input_substitutions) {
-                    r.add_grep_heuristics_for_seed_rules(&args.input_substitutions);
+                    r.add_grep_heuristics_for_global_rules(&args.input_substitutions);
                     seed_rules.push(r.clone());
                 }
             }
@@ -55,32 +64,21 @@ impl RuleStore {
             rule_query_cache: HashMap::new(),
             language: args.language.get_language(),
             rules_by_name,
-            seed_rules,
+            global_rules: seed_rules,
             scopes,
         }
     }
 
-    pub fn get_grep_heuristics(&self) -> Regex {
-        let reg_x = self
-            .get_seed_rules()
-            .iter()
-            .flat_map(|r| r.grep_heuristics.as_ref().unwrap().iter())
-            //Remove duplicates
-            .sorted()
-            .dedup()
-            .join("|");
-        Regex::new(reg_x.as_str()).unwrap()
+
+    pub fn get_global_rules(&self) -> Vec<Rule> {
+        self.global_rules.clone()
     }
 
-    pub fn get_seed_rules(&self) -> Vec<Rule> {
-        self.seed_rules.clone()
-    }
-
-    pub fn add_seed_rule(&mut self, r: &Rule, tag_captures: &TagMatches) {
+    pub fn add_global_rule(&mut self, r: &Rule, tag_captures: &TagMatches) {
         let mut new_seed_rule = r.instantiate(&tag_captures);
-        new_seed_rule.add_grep_heuristics_for_seed_rules(tag_captures);
+        new_seed_rule.add_grep_heuristics_for_global_rules(tag_captures);
         println!("{}", format!("Added Seed Rule : {:?}", new_seed_rule).red());
-        self.seed_rules.push(new_seed_rule);
+        self.global_rules.push(new_seed_rule);
     }
 
     pub fn get_query(&mut self, query_str: &TSQuery) -> &Query {
@@ -93,7 +91,7 @@ impl RuleStore {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
         for (scope, to_rule) in self.rule_graph.get_nbrs(rule_name) {
-            next_rules.collect_map_of_vec(
+            next_rules.collect(
                 String::from(scope),
                 self.rules_by_name[&to_rule].instantiate(&tag_matches),
             );
@@ -101,10 +99,11 @@ impl RuleStore {
         next_rules
     }
 
+    /// Get the next rules to be applied grouped by the scope in which they should be performed. 
     pub fn get_next(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
         let next_rules = self.get_next_rules(rule, tag_matches);
 
-        ["Parent", "Method", "Class", "Global"]
+        [PARENT, METHOD, CLASS, GLOBAL]
             .into_iter()
             .map(|s| {
                 (
@@ -119,40 +118,47 @@ impl RuleStore {
     }
 }
 
+/// a new_type for the rule graph.
 pub struct ParameterizedRuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl ParameterizedRuleGraph {
+
     fn new(edges: Edges, all_rules: Rules) -> Self {
         let mut rules_by_name = HashMap::new();
-        let mut rules_by_tag = HashMap::new();
+        let mut rules_by_group = HashMap::new();
 
+        // Collect all the rules based on the group.
         for rule in all_rules.rules {
             rules_by_name.insert(rule.name.clone(), rule.clone());
-            if let Some(tags) = &rule.groups {
-                for tag in tags {
-                    rules_by_tag.collect_map_of_vec(tag.clone(), rule.name.clone());
+            if let Some(groups) = &rule.groups {
+                for tag in groups {
+                    rules_by_group.collect(tag.clone(), rule.name.clone());
                 }
             }
         }
 
+        // Get the rules corresponding to the given rule name or group name.
         let get_rules_for_tag_or_name = |val: &String| {
             rules_by_name
                 .get(val)
                 .map(|v| vec![v.name.clone()])
-                .unwrap_or_else(|| rules_by_tag[val].clone())
+                .unwrap_or_else(|| rules_by_group[val].clone())
         };
 
         let mut graph = HashMap::new();
+        // Add the edge(s) to the graph. Multiple edges will be added 
+        // when the either edge endpoint is a group name.
         for edge in edges.edges {
             for f in get_rules_for_tag_or_name(&edge.from) {
                 for t in get_rules_for_tag_or_name(&edge.to) {
-                    graph.collect_map_of_vec(f.clone(), (String::from(&edge.scope), t.clone()));
+                    graph.collect(f.clone(), (String::from(&edge.scope), t.clone()));
                 }
             }
         }
         ParameterizedRuleGraph(graph)
     }
 
+    /// Get all the outgoing edges from `rule_name`
     pub fn get_nbrs(&self, rule_name: &String) -> Vec<(String, String)> {
         self.0
             .get(rule_name)
@@ -161,6 +167,7 @@ impl ParameterizedRuleGraph {
     }
 }
 
+/// Reads the input configurations and creates a rule graph.
 pub fn read_rule_graph_from_config(
     args: &PiranhaArguments,
 ) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
@@ -192,7 +199,7 @@ pub fn read_rule_graph_from_config(
 
     // Label the input-rules as `Feature-flag API cleanup`
     for r in input_rules.rules.iter_mut() {
-        r.add_group(String::from("Feature-flag API cleanup"));
+        r.add_to_feature_flag_api_group();
     }
 
     let all_rules = Rules {

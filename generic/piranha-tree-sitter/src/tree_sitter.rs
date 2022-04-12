@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
-use colored::Colorize;
 // use serde::{Serialize};
 use crate::utilities::MapOfVec;
 use itertools::Itertools;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
-use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
+use tree_sitter::{Language, Node, Query, QueryCapture, QueryCursor, Range};
 
 extern "C" {
     fn tree_sitter_java() -> Language;
     fn tree_sitter_swift() -> Language;
 }
 
+/// A new_type for for tree-sitter queries
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TSQuery(String);
 
@@ -37,6 +37,7 @@ impl TSQuery {
     }
 }
 
+/// A new_type for matches between tags and code snippets.
 #[derive(Clone, Debug)]
 pub struct TagMatches(HashMap<String, String>);
 
@@ -58,62 +59,6 @@ impl TagMatches {
     }
 }
 
-pub fn get_edit(
-    source_code: &str,
-    replace_range: Range,
-    rewritten_snippet: &str,
-) -> (String, InputEdit) {
-    let new_source_code = [
-        &source_code[..replace_range.start_byte],
-        rewritten_snippet,
-        &source_code[replace_range.end_byte..],
-    ]
-    .concat();
-
-    let replace_code = &source_code[replace_range.start_byte..replace_range.end_byte];
-    #[rustfmt::skip]
-    println!("{} at ({:?}) -\n {}", if rewritten_snippet.is_empty() { "Delete code" } else {"Update code" }.green(),
-        ((&replace_range.start_point.row, &replace_range.start_point.column),
-            (&replace_range.end_point.row, &replace_range.end_point.column)),
-        if !rewritten_snippet.is_empty() {format!("{}\n to \n{}",replace_code.italic(),rewritten_snippet.italic())
-        } else {format!("{} ", replace_code.italic())}
-    );
-
-    if replace_code.eq("true") && rewritten_snippet.eq("true"){
-        panic!("Replace true with true?");
-    }
-
-    let len_new_source_code_bytes = rewritten_snippet.as_bytes().len();
-    let byte_vec = &source_code.as_bytes().to_vec();
-    let edit = InputEdit {
-        start_byte: replace_range.start_byte,
-        old_end_byte: replace_range.end_byte,
-        new_end_byte: replace_range.start_byte + len_new_source_code_bytes,
-        start_position: position_for_offset(byte_vec, replace_range.start_byte),
-        old_end_position: position_for_offset(byte_vec, replace_range.end_byte),
-        new_end_position: position_for_offset(
-            byte_vec,
-            replace_range.start_byte + len_new_source_code_bytes,
-        ),
-    };
-
-    (new_source_code, edit)
-}
-
-fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
-    let mut result = Point { row: 0, column: 0 };
-    for c in &input[0..offset] {
-        if *c as char == '\n' {
-            result.row += 1;
-            result.column = 0;
-        } else {
-            result.column += 1;
-        }
-    }
-    result
-}
-
-
 pub trait TreeSitterHelpers {
     fn get_language(&self) -> Language;
     fn get_extension(&self) -> &'static str;
@@ -122,6 +67,7 @@ pub trait TreeSitterHelpers {
 }
 
 impl TreeSitterHelpers for String {
+    /// Gets the tree-sitter language model.
     fn get_language(&self) -> Language {
         unsafe {
             match self.as_str() {
@@ -131,7 +77,7 @@ impl TreeSitterHelpers for String {
             }
         }
     }
-
+    /// Gets the file extension.
     fn get_extension(&self) -> &'static str {
         match self.as_str() {
             "Java" => "java",
@@ -140,6 +86,8 @@ impl TreeSitterHelpers for String {
         }
     }
 
+    /// replaces the keys in `substitutions` with value.
+    /// Before replacing the key, it is transformed to a tree-sitter tag by appending `@`
     fn substitute_tags(&self, substitutions: &TagMatches) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in &substitutions.0 {
@@ -149,6 +97,7 @@ impl TreeSitterHelpers for String {
         output
     }
 
+    /// appends `@`
     fn to_rule_hole(&self) -> String {
         format!("@{}", self)
     }
@@ -161,6 +110,14 @@ pub trait PiranhaRuleMatcher {
     fn node_matches_range(&self, range: Range) -> bool;
 }
 
+/// Applies the query upon `self`, and gets the first match
+/// # Arguments
+/// * `source_code` - the corresponding source code string for the node.
+/// * `query` - the query to be applied
+/// * `recurssive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+///
+/// # Returns
+/// The range of the match in the source code and the corresponding mapping from tags to code snippets.
 impl PiranhaRuleMatcher for Node<'_> {
     fn get_match_for_query(
         &self,
@@ -173,6 +130,16 @@ impl PiranhaRuleMatcher for Node<'_> {
             .map(|x| x.clone())
     }
 
+    /// Applies the query upon `self`, and gets all the matches
+    /// # Arguments
+    /// * `source_code` - the corresponding source code string for the node.
+    /// * `query` - the query to be applied
+    /// * `recurssive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+    ///
+    /// # Returns
+    /// A vector of tuples containing the range of the matches in the source code and the corresponding mapping from tags to code snippets.
+    /// By default it returns the range of the outermost node for each query match. 
+    /// If `specific_tag` is provided, it returns the range of the node corresponding to it.
     fn get_all_matches_for_query(
         &self,
         source_code: String,
@@ -180,38 +147,50 @@ impl PiranhaRuleMatcher for Node<'_> {
         recurssive: bool,
         specific_tag: Option<String>,
     ) -> Vec<(Range, TagMatches)> {
+
         let mut cursor = QueryCursor::new();
+        let node_as_str = |n:&Node| n.utf8_text(source_code.as_bytes()).unwrap();
+
         let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
-
-        let tag_name_index: HashMap<usize, &String> =
-            query.capture_names().iter().enumerate().collect();
-
-        let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> = HashMap::new();
+        
+        let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> =
+            HashMap::new();
         for query_match in query_matches {
+            // The first capture in any query match is it's outermost tag.
             if let Some(captured_node) = query_match.captures.first() {
-                query_matches_by_node_range
-                    .collect_map_of_vec(captured_node.node.range(), query_match.captures.iter().cloned().collect_vec());
+                query_matches_by_node_range.collect(
+                    captured_node.node.range(),
+                    query_match.captures.iter().cloned().collect_vec(),
+                );
             }
         }
+
+        let tag_names_by_index: HashMap<usize, &String> =
+            query.capture_names().iter().enumerate().collect();
         let mut output = vec![];
         for (captured_node_range, qms) in query_matches_by_node_range {
+            // Ensures that all patterns in the query match the same outermost node.
             if qms.len() != query.pattern_count() {
                 continue;
             }
+
             if recurssive || self.node_matches_range(captured_node_range) {
                 let mut capture_str_by_tag: HashMap<String, String> = HashMap::new();
                 let mut replace_node_range = captured_node_range;
-                
+
                 for tag_name in query.capture_names().iter() {
                     for captures in &qms {
                         for capture in captures {
-                            if tag_name_index[&(capture.index as usize)].eq(tag_name) {
-                                let node_str = capture.node.utf8_text(source_code.as_bytes()).unwrap();
-                                if let Some(sp) =  specific_tag.as_ref(){
-                                    if tag_name.eq(sp){
+                            if tag_names_by_index[&(capture.index as usize)].eq(tag_name) {
+
+                                let node_str = node_as_str(&capture.node);
+
+                                if let Some(sp) = specific_tag.as_ref() {
+                                    if tag_name.eq(sp) {
                                         replace_node_range = capture.node.range();
                                     }
                                 }
+                                // Concats code snippets with `\n` corresponding to tags with One or more quantifier (i.e. `*` por `+`)
                                 capture_str_by_tag
                                     .entry(tag_name.clone())
                                     .and_modify(|x| x.push_str(format!("\n{}", node_str).as_str()))
@@ -219,18 +198,18 @@ impl PiranhaRuleMatcher for Node<'_> {
                             }
                         }
                     }
-                    capture_str_by_tag.entry(tag_name.clone()).or_insert(String::new());
+                    // If tag name did not match a code snippet, add an empty string.
+                    capture_str_by_tag
+                        .entry(tag_name.clone())
+                        .or_insert(String::new());
                 }
-    
-                let tm = TagMatches::new(capture_str_by_tag);
-                println!("{:?}", tm);
-                output.push((replace_node_range, tm));     
+                output.push((replace_node_range, TagMatches::new(capture_str_by_tag)));
             }
-
         }
         output
     }
 
+    /// Checks if `self` lies in the exact `range`.
     fn node_matches_range(&self, range: Range) -> bool {
         self.start_byte() == range.start_byte && self.end_byte() == range.end_byte
     }

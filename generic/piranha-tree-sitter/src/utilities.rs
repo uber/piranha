@@ -3,37 +3,28 @@ use std::fs::{File};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
+use colored::Colorize;
 
-use regex::Regex;
-use jwalk::{WalkDir};
-// use extend::ext;
-
+// Reads a file at `flie_path`
 pub fn read_file(file_path: &PathBuf) -> String {
-    let mut content = String::new();
-    let file =
-        File::open(&file_path).expect(format!("Could not read file {:?}", &file_path).as_str());
-    let mut buf_reader = BufReader::new(file);
-    let _ = buf_reader.read_to_string(&mut content);
-    content
+    if let Ok(file) =  File::open(&file_path) {
+        let mut content = String::new();
+        let _ = BufReader::new(file).read_to_string(&mut content);
+        return content;
+    }
+    panic!("{}",format!("Could not read file {:?}", &file_path).red())
 }
 
-
-pub fn get_files_with_extension(input_dir: &String, extension: &str, pattern: Regex) -> HashMap<PathBuf, String> {
-    WalkDir::new(input_dir)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|de| de.path().extension().map(|e|e.eq(extension)).unwrap_or(false))
-        .map(|f|(f.path().to_path_buf(),read_file(&f.path().to_path_buf())))
-        .filter(|x|pattern.is_match(x.1.as_str()))
-        .collect()
-}
 
 pub trait MapOfVec<T, V> {
-    fn collect_map_of_vec(&mut self, key: T, value: V);
+    fn collect(&mut self, key: T, value: V);
 }
 
+// Implements trait `MapOfVec` for `HashMap<T, Vec<U>>`.
 impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
-    fn collect_map_of_vec(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
+    
+    // Adds the given `value` to the vector corresponding to the `key`. 
+    fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
         self.entry(key).or_insert_with(Vec::new).push(value);
     }
 }

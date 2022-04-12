@@ -23,7 +23,7 @@ fn main() {
 
     for (k, v) in flag_cleaner.relevant_files {
         println!("Rewriting file {:?}", k);
-        v.persist(&k);
+        v.persist();
     }
 
     println!("Time elapsed - {:?}", now.elapsed().as_secs());

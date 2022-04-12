@@ -21,6 +21,7 @@ pub struct Args {
     pub path_to_configuration: String,
 }
 
+static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
@@ -131,16 +132,23 @@ impl Rule {
         }
     }
 
+
     pub fn is_feature_flag_cleanup(&self) -> bool {
         self.groups.as_ref().map_or(false, |tags| {
-            tags.iter().any(|t| t.eq("Feature-flag API cleanup"))
+            tags.iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
         })
     }
 
+    /// Instantiate `self` with substitutions or panic.
     pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {
-        self.try_instantiate(substitutions).unwrap()
+        if let Ok(r) = self.try_instantiate(substitutions){
+            return r;
+        }
+        panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
     }
 
+    /// Tries to instantiate the `self` with the tag matches. 
+    /// Note this could fail in case when tag matches dont contain mappings for all the holes.
     pub fn try_instantiate(&self, substitutions: &TagMatches) -> Result<Rule, String> {
         if let Some(holes) = &self.holes {
             let relevant_substitutions = TagMatches::new(
@@ -164,7 +172,9 @@ impl Rule {
         return Ok(self.clone());
     }
 
-    pub fn add_grep_heuristics_for_seed_rules(&mut self, substitutions: &TagMatches) {
+    /// Records the string that should be grepped in order to find files that 
+    /// potentially could match this global rule.
+    pub fn add_grep_heuristics_for_global_rules(&mut self, substitutions: &TagMatches) {
         let mut gh = vec![];
         for h in self.holes.as_ref().unwrap() {
             if let Some(x) = substitutions.get(h) {
@@ -181,7 +191,9 @@ impl Rule {
         self.query.clone()
     }
 
-    pub fn add_group(&mut self, group_name: String) {
+    /// Adds a new group label to the rule. 
+    pub fn add_to_feature_flag_api_group(&mut self) {
+        let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
         if self.groups.is_none() {
             self.groups = Some(vec![group_name]);
         } else {
