@@ -22,34 +22,13 @@ import javax.inject.Inject;
 
 class XPFlagCleanerPositiveCases {
 
-  enum TestExperimentName {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+  private ExperimentInterface experimentation;
 
-  }
-
-  enum AnotherTestExperimentName {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-
-  }
-
-  @Retention(RetentionPolicy.RUNTIME)
-  public @interface Autorollout {
-    boolean staged() default false;
-  }
-
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target({ElementType.METHOD})
-  @interface ToggleTesting {
-    TestExperimentName[] treated();
-  }
-
-  private XPTest experimentation;
-
-  private boolean tBool = false;
+  
 
   public void conditional_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
-
+    
   }
 
   public void conditional_with_else_contains_stale_flag() {
@@ -57,202 +36,54 @@ class XPFlagCleanerPositiveCases {
     System.out.println("Hi world");
   }
 
-  public void complex_conditional_contains_stale_flag() {
+  public void conditional_with_else_contains_stale_flag_tbool() {
     // BUG: Diagnostic contains: Cleans stale XP flags
-    if (true || (tBool && false)) {
+    
+    System.out.println("Hi world");
+  }
+
+  public void conditional_with_else_contains_stale_flag_tbool(int a) {
+    // BUG: Diagnostic contains: Cleans stale XP flags
+    
+    System.out.println("Hi world");
+  }
+
+  public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
+    // BUG: Diagnostic contains: Cleans stale XP flags
+    
+    System.out.println("Hello World");
+  }
+
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned(int a, bool abc, int z) {
+    // Currently if there is another assignment, variable will not be inlined.
+    bool tBool = false;
+    tBool = abc() && tBool;
+    if (!tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
     }
   }
 
-  public void other_api_stale_flag() {
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(int a, bool abc, int z) {
     // BUG: Diagnostic contains: Cleans stale XP flags
-    System.out.println("Hi world");
-  }
-
-  public void assignments_containing_stale_flag() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    tBool = false;
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    tBool = false;
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    bool tBool = false;
     tBool = true;
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    tBool = tBool;
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    tBool = false;
-  }
-
-  public boolean return_contains_stale_flag() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    return false;
-  }
-
-  public void condexp_contains_stale_flag() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    tBool = false;
-  }
-
-  public void misc_xp_apis_containing_stale_flag() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    if ((tBool || true)) {}
-  }
-
-  public int return_within_if_basic() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-
-    return 30;
-  }
-
-  public int return_within_if_additional(int x) {
-    if (x == 0) {
-      // BUG: Diagnostic contains: Cleans stale XP flags
-
-      return 75;
-    }
-
-    if (x == 1)
-      // BUG: Diagnostic contains: Cleans stale XP flags
-      {
-        return 76;
-      }
-
-    if (x == 2) {
-      int y = 3;
-
-      return y + 10;
-    }
-
-    if (x == 3) {
-      int z = 4;
-      // BUG: Diagnostic contains: Cleans stale XP flags
-      z = z * 5;
-return z + 10;
-
-    }
-
-    return 100;
-  }
-
-  @ToggleTesting(treated = TestExperimentName.STALE_FLAG)
-  // BUG: Diagnostic contains: Cleans stale XP flags
-  public void annotation_test() {}
-
-  @Inject XPTest injectedExperimentsShouldBeDeleted;
-
-  private int testRemovingInjectField() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    return 2;
-  }
-
-  @Inject XPTest injectedExperimentsMultipleUses;
-
-  private void randomSet(XPTest x) {
-    injectedExperimentsMultipleUses = x;
-  }
-
-  private int testNotRemovingInjectField() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    return 2;
-  }
-
-  @Provides
-  public int unusedParamTestWithDeletion(XPTest x) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    return 2;
-  }
-
-  @Provides
-  public int unusedParamTestWithoutDeletion(XPTest x) {
-
-    if (x != null) {
-      // just another use to prevent deletion of this parameter.
-    }
-
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    return 2;
-  }
-
-  private void testMultipleCalls(int x) {
-    if (x > 0) {
-      // BUG: Diagnostic contains: Cleans stale XP flags
-
-      // BUG: Diagnostic contains: Cleans stale XP flags
-      // comment1
-return;
-    }
-
-    // do something here
-    return;
-  }
-
-  public int or_compounded_with_not(int x, boolean extra_toggle) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    if (extra_toggle) {
-      return 0;
+    if (!tBool && true) {
+      System.out.println("Hello World");
     } else {
-      return 1;
+      System.out.println("Hi world");
     }
   }
 
-  public int remove_else_if(boolean extra_toggle) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
-    if (extra_toggle) {
-      return 0;
-    } else {
-      return 1;
-    }
-  }
-
-  public void conditional_with_else_contains_stale_flag() {
+  public void conditional_with_else_contains_stale_flag_ftbool(int a) {
     // BUG: Diagnostic contains: Cleans stale XP flags
     System.out.println("Hi world");
   }
 
-  class XPTest {
-    public boolean isToggleEnabled(TestExperimentName x) {
-      return true;
-    }
-
-    public boolean putToggleEnabled(TestExperimentName x) {
-      return true;
-    }
-
-    public boolean includeEvent(TestExperimentName x) {
-      return true;
-    }
-
-    public boolean isToggleDisabled(TestExperimentName x) {
-      return true;
-    }
-
-    public boolean putToggleDisabled(TestExperimentName x) {
-      return true;
-    }
-
-    public boolean isFlagTreated(TestExperimentName x) {
-      return true;
-    }
-
-    public boolean isToggleInGroup(TestExperimentName x) {
-      return true;
-    }
-  }
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(int a, bool abc, int z) {
+    // Currently if there is another assignment, variable will not be inlined.
+    
+    System.out.println("Hello World");
+  }  
 }

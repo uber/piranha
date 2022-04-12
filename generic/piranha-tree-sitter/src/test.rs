@@ -37,7 +37,7 @@ fn test_java_scenarios_treated() {
     check_result(updated_files, path_to_expected);
 }
 
-// #[test]
+#[test]
 fn test_java_scenarios_control() {
     let language = "Java";
     let path_to_test_resource = Path::new(env!("CARGO_MANIFEST_DIR"))

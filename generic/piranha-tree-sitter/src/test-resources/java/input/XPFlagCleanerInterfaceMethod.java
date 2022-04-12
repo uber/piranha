@@ -45,7 +45,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_with_else_contains_stale_flag_tbool() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     bool tBool = exp.isStaleFeature().getCachedValue();
-    if (tBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -55,7 +55,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
     // BUG: Diagnostic contains: Cleans stale XP flags
     bool tBool = exp.isStaleFeature().getCachedValue();
-    if (tBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -65,7 +65,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
     // BUG: Diagnostic contains: Cleans stale XP flags
     bool tBool = exp.isStaleFeature().getCachedValue();
-    if (!tBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (!tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -76,7 +76,7 @@ class XPFlagCleanerPositiveCases {
     // Currently if there is another assignment, variable will not be inlined.
     bool tBool = exp.isStaleFeature().getCachedValue();
     tBool = abc() && tBool;
-    if (!tBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (!tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -87,7 +87,7 @@ class XPFlagCleanerPositiveCases {
     // BUG: Diagnostic contains: Cleans stale XP flags
     bool tBool = exp.isStaleFeature().getCachedValue();
     tBool = true;
-    if (!tBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (!tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -96,7 +96,7 @@ class XPFlagCleanerPositiveCases {
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
     // BUG: Diagnostic contains: Cleans stale XP flags
-    if (ftBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (ftBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
@@ -106,7 +106,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
     ftBool = exp.isStaleFeature().getCachedValue();
-    if (!ftBool && experimentation.isStaleFeature().getCachedValue()) {
+    if (!ftBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");

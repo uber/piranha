@@ -192,7 +192,7 @@ replace = "@other"
 groups = ["Boolean expression cleanup", "Returns boolean"]
 
 [[rules]]
-name = "And - right operand is False"
+name = "Or - right operand is False"
 query = """
 (
     (binary_expression

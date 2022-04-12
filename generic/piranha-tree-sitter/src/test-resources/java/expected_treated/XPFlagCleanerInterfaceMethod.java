@@ -60,7 +60,7 @@ class XPFlagCleanerPositiveCases {
     // Currently if there is another assignment, variable will not be inlined.
     bool tBool = true;
     tBool = abc() && tBool;
-    if (!tBool) {
+    if (!tBool && true) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
