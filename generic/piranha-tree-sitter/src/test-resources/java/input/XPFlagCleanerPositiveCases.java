@@ -138,6 +138,7 @@ class XPFlagCleanerPositiveCases {
     if (x == 0) {
       // BUG: Diagnostic contains: Cleans stale XP flags
       if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+        System.out.println();
         return 0;
       }
       return 75;

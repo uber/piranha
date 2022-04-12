@@ -211,9 +211,8 @@ query= """
  (#eq? @v2 "\\\"@stale_flag_name\\\"")
 )
 """
-# FIXME:
-replace_node = "id"
-replace = "@mod interface @i_name { \n @pre \n @post \n}"
+replace_node = "md"
+replace = ""
 groups = ["Delete Method"]
 holes = ["stale_flag_name", "namespace"]
 

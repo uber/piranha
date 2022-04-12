@@ -53,8 +53,8 @@ fn test_java_scenarios_treated() {
         let expected_content = read_file(&f);
         let output = &e.1;
         let result = output
-            .replace("\n", "")
-            .eq(&expected_content.replace("\n", ""));
+            .replace("\n", "").replace(" ", "")
+            .eq(&expected_content.replace("\n", "").replace(" ", ""));
         if !result {
             println!("{:?}\n{}",file_name, output);
         }

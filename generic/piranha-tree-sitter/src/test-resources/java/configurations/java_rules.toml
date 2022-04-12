@@ -119,19 +119,13 @@ name = "Remove unnecesary nested block"
 query = """
 ((block
         (
-            (_)*@pre
-            (block (_)* @b)@n
-            (_)*@post
+            (_)* @pre
+            (block (_)* @nested.statements) @nested.block
+            (_)* @post
         )
-    )@b1)"""
-# FIXME:
-replace_node = "b1"
-replace = """
-{
-    @pre
-    @b
-    @post
-}"""
+    )@sb)"""
+replace_node = "nested.block"
+replace = "@nested.statements"
 groups = ["Block cleanup", "Statement cleanup"]
 
 [[rules]]
@@ -312,9 +306,8 @@ query = """(
         (block  ((statement)* @pre)
          ((return_statement) @r)
          ((statement)+ @post)) @b)"""
-# FIXME:
-replace_node = "b"
-replace = "{\n@pre\n@r\n}"
+replace_node = "post"
+replace = ""
 groups = ["Block cleanup", "Statement cleanup"]
 
 [[rules]]

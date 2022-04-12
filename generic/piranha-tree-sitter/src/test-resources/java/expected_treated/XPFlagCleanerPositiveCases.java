@@ -24,12 +24,12 @@ class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
     // BUG: Diagnostic contains: Cleans stale XP flags
-    
+
   }
 
   enum AnotherTestExperimentName {
     // BUG: Diagnostic contains: Cleans stale XP flags
-    
+
   }
 
   @Retention(RetentionPolicy.RUNTIME)
@@ -50,26 +50,22 @@ class XPFlagCleanerPositiveCases {
   public void conditional_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     System.out.println("Hello World");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     System.out.println("Hello World");
-    
-}
+  }
 
   public void complex_conditional_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     System.out.println("Hello World");
-    
-}
+  }
 
   public void other_api_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     System.out.println("Hello World");
-    
-}
+  }
 
   public void assignments_containing_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
@@ -103,26 +99,27 @@ class XPFlagCleanerPositiveCases {
     if ((tBool || true)) {}
 
     // BUG: Diagnostic contains: Cleans stale XP flags
-    
+
 
     // BUG: Diagnostic contains: Cleans stale XP flags
-    
+
 
     // BUG: Diagnostic contains: Cleans stale XP flags
-    
+
 
     // BUG: Diagnostic contains: Cleans stale XP flags
-    
+
   }
 
   public int return_within_if_basic() {
-
+// BUG: Diagnostic contains: Cleans stale XP flags
 return 20;
 }
 
   public int return_within_if_additional(int x) {
     if (x == 0) {
-
+// BUG: Diagnostic contains: Cleans stale XP flags
+System.out.println();
 return 0;
 }
 
@@ -139,11 +136,11 @@ return y;
 }
 
     if (x == 3) {
-    int z = 4;
-// BUG: Diagnostic contains: Cleans stale XP flags
-    z++;
-    return z;
-}
+      int z = 4;
+      // BUG: Diagnostic contains: Cleans stale XP flags
+      z++;
+      return z;
+    }
 
     return 100;
   }
@@ -189,13 +186,12 @@ return y;
 
   private void testMultipleCalls(int x) {
     if (x > 0) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+      // BUG: Diagnostic contains: Cleans stale XP flags
 
-// BUG: Diagnostic contains: Cleans stale XP flags
-    // comment0
+      // BUG: Diagnostic contains: Cleans stale XP flags
+      // comment0
 return;
-    
-}
+    }
 
     // do something here
     return;
@@ -204,8 +200,7 @@ return;
   public int or_compounded_with_not(int x, boolean extra_toggle) {
     // BUG: Diagnostic contains: Cleans stale XP flags
     return 0;
-    
-}
+  }
 
   public int remove_else_if(boolean extra_toggle) {
     // BUG: Diagnostic contains: Cleans stale XP flags
@@ -219,8 +214,7 @@ return;
   public void conditional_with_else_contains_stale_flag() {
     // BUG: Diagnostic contains: Cleans stale XP flags
     System.out.println("Hello World");
-    
-}
+  }
 
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) {

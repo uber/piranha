@@ -200,10 +200,9 @@ impl TreeSitterHelpers for String {
 
 #[rustfmt::skip]
 pub trait PiranhaRuleMatcher {
-    fn get_matches_for_query(&self, source_code: String, query: &Query, recurssive: bool) -> Vec<(Range, TagMatches)>;
+    fn get_matches_for_query(&self, source_code: String, query: &Query, recurssive: bool, specific_tag: Option<String>) -> Vec<(Range, TagMatches)>;
     fn get_match_for_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
     fn node_matches_range(&self, range: Range) -> bool;
-    fn get_matches_for_query_specific_tag(&self, source_code: String, query: &Query, recurssive: bool, specific_tag: String) -> Vec<(Range, TagMatches)>;
 }
 
 impl PiranhaRuleMatcher for Node<'_> {
@@ -213,7 +212,7 @@ impl PiranhaRuleMatcher for Node<'_> {
         query: &Query,
         recurssive: bool,
     ) -> Option<(Range, TagMatches)> {
-        self.get_matches_for_query(source_code.to_string(), query, recurssive)
+        self.get_matches_for_query(source_code.to_string(), query, recurssive, None)
             .first()
             .map(|x| x.clone())
     }
@@ -223,6 +222,7 @@ impl PiranhaRuleMatcher for Node<'_> {
         source_code: String,
         query: &Query,
         recurssive: bool,
+        specific_tag: Option<String>,
     ) -> Vec<(Range, TagMatches)> {
         let mut cursor = QueryCursor::new();
         let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
@@ -230,96 +230,36 @@ impl PiranhaRuleMatcher for Node<'_> {
         let tag_name_index: HashMap<usize, &String> =
             query.capture_names().iter().enumerate().collect();
 
-        let mut query_matches_by_node_range: HashMap<Range, Vec<QueryMatch>> = HashMap::new();
+        let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> = HashMap::new();
         for query_match in query_matches {
             if let Some(captured_node) = query_match.captures.first() {
                 query_matches_by_node_range
-                    .collect_as_counter(captured_node.node.range(), query_match);
-            }
-        }
-        let mut output = vec![];
-        for (captured_node_range, query_matches) in query_matches_by_node_range {
-            if query_matches.len() != query.pattern_count() {
-                continue;
-            }
-
-            if !recurssive && !self.node_matches_range(captured_node_range) {
-                continue;
-            }
-
-            let mut capture_str_by_tag: HashMap<String, String> = HashMap::new();
-
-            for tag_name in query.capture_names().iter() {
-                for qm in &query_matches {
-                    for capture in qm.captures {
-                        if tag_name_index[&(capture.index as usize)].eq(tag_name) {
-                            let node_str = capture.node.utf8_text(source_code.as_bytes()).unwrap();
-                            capture_str_by_tag
-                                .entry(tag_name.clone())
-                                .and_modify(|x| x.push_str(format!("\n{}", node_str).as_str()))
-                                .or_insert_with(|| String::from(node_str));
-                        }
-                    }
-                }
-                capture_str_by_tag.entry(tag_name.clone()).or_insert(String::new());
-            }
-
-            let tm = TagMatches::new(capture_str_by_tag);
-            println!("{:?}", tm);
-            output.push((captured_node_range, tm));
-        }
-        output
-    }
-
-    fn get_matches_for_query_specific_tag(
-        &self,
-        source_code: String,
-        query: &Query,
-        recurssive: bool,
-        specific_tag: String,
-    ) -> Vec<(Range, TagMatches)> {
-        let mut cursor = QueryCursor::new();
-        let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
-
-        let tag_name_index: HashMap<usize, &String> =
-            query.capture_names().iter().enumerate().collect();
-
-        println!("Number of patterns : {} ", query.pattern_count());
-
-        let mut query_matches_by_node_range: HashMap<Range, Vec<QueryMatch>> = HashMap::new();
-        for query_match in query_matches {
-            if let Some(captured_node) = query_match.captures.first() {
-                query_matches_by_node_range
-                    .collect_as_counter(captured_node.node.range(), query_match);
+                    .collect_as_counter(captured_node.node.range(), query_match.captures.iter().cloned().collect_vec());
             }
         }
         let mut output = vec![];
         for (captured_node_range, qms) in query_matches_by_node_range {
-            println!("QMS {:?}", qms);
             if qms.len() != query.pattern_count() {
                 continue;
             }
             if recurssive || self.node_matches_range(captured_node_range) {
                 let mut capture_str_by_tag: HashMap<String, String> = HashMap::new();
                 let mut replace_node_range = captured_node_range;
-                println!("{:?}", query.capture_names());
+                
                 for tag_name in query.capture_names().iter() {
-                    for qm in &qms {
-                        println!("QM:");
-                        for capture in qm.captures {
-                            println!("{:?}", capture );
+                    for captures in &qms {
+                        for capture in captures {
                             if tag_name_index[&(capture.index as usize)].eq(tag_name) {
                                 let node_str = capture.node.utf8_text(source_code.as_bytes()).unwrap();
-                                println!("{:?}", node_str);
-                                if tag_name.eq(&specific_tag){
-                                    replace_node_range = capture.node.range();
+                                if let Some(sp) =  specific_tag.as_ref(){
+                                    if tag_name.eq(sp){
+                                        replace_node_range = capture.node.range();
+                                    }
                                 }
-    
                                 capture_str_by_tag
                                     .entry(tag_name.clone())
                                     .and_modify(|x| x.push_str(format!("\n{}", node_str).as_str()))
                                     .or_insert_with(|| String::from(node_str));
-                                break;
                             }
                         }
                     }

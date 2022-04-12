@@ -266,11 +266,10 @@ impl SourceCodeUnit {
         let context = self.get_context(previous_edit);
         for rule in rules {
             for ancestor in &context {
-                let cr = rule.clone();
                 if let Some((range, replacement, captures_by_tag)) =
-                    self.get_any_match_for_rule(&cr, rules_store, ancestor.clone(), false)
+                    self.get_any_match_for_rule(&rule, rules_store, ancestor.clone(), false)
                 {
-                    return Some((range, replacement, cr, captures_by_tag));
+                    return Some((range, replacement, rule.clone(), captures_by_tag));
                 }
             }
         }
@@ -311,7 +310,7 @@ impl SourceCodeUnit {
             String::from(&self.code),
             rule_store.get_query(&rule.get_query()),
             recurssive,
-            // rule.replace_node.clone()
+            Some(rule.replace_node.clone())
         );
 
         for (range, tag_substitutions) in all_relevant_query_matches {
