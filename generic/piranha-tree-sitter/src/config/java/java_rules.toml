@@ -1,44 +1,3 @@
-# [[rules]]
-# name = "Enum Based, toggle enabled"
-# query = """((
-# 	(method_invocation 
-#     	name : (_) @n1
-#         arguments: ((argument_list 
-#         				([
-#                           (field_access field: (_)@f)
-#                           (_) @f
-#                          ])) )
-        	
-#     ) @mi
-# )
-# (#eq? @n1 "isToggleEnabled")
-# (#eq? @f "@stale_flag_name")
-# )"""
-# replace = "@treated"
-# groups = ["Feature-flag API cleanup", "Returns boolean"]
-# holes = ["treated", "stale_flag_name"]
-
-
-# [[rules]]
-# name = "Enum Based, flag enabled"
-# query = """((
-# 	(method_invocation 
-#     	name : (_) @n1
-#         arguments: ((argument_list 
-#         				([
-#                           (field_access field: (_)@f)
-#                           (_) @f
-#                          ])) )
-        	
-#     ) @mi
-# )
-# (#eq? @n1 "isFlagTreated")
-# (#eq? @f "@stale_flag_name")
-# )"""
-# replace = "@treated"
-# groups = ["Feature-flag API cleanup", "Returns boolean"]
-# holes = ["treated", "stale_flag_name"]
-
 [[rules]]
 name = "Simple If-(optional)else True"
 query = """
@@ -440,7 +399,6 @@ queries = ["""(
 (#eq? @u1 "@l")
 (#not-eq? @k "@v")
 )"""]
-
 
 [[rules]]
 name = "Replace identifier with value"

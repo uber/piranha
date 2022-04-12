@@ -58,9 +58,9 @@ query = """((
 (#eq? @f "@stale_flag_name")
 )"""
 replace_node = "mi"
-replace = "false"
+replace = "@treated_complement"
 groups = [ "Returns boolean"]
-holes = ["treated", "stale_flag_name"]
+holes = ["treated_complement", "stale_flag_name"]
 
 [[rules]]
 name = "Enum based, Delete enum constant (just the constant)"
