@@ -1,11 +1,10 @@
+use crate::tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers};
+use clap::Parser;
 use colored::Colorize;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash};
-use clap::Parser;
-use crate::tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers};
 
-
-#[derive(Clone,Parser, Debug)]
+#[derive(Clone, Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
     #[clap(short, long)]
@@ -17,33 +16,36 @@ pub struct Args {
     #[clap(short, long)]
     pub flag_namespace: String,
     #[clap(short, long)]
-    pub flag_value: String,
+    pub flag_value: bool,
     #[clap(short, long)]
-    pub path_to_configuration: String
+    pub path_to_configuration: String,
 }
 
 pub struct PiranhaArguments {
     pub path_to_code_base: String,
     pub language: String,
+    // These are the input arguments provided to Piranha, mapped to the appropriate tag names.
+    // These are used as the seed substitutions to instantiate the feature flag mappings.
     pub input_substitutions: TagMatches,
     pub path_to_configurations: String,
 }
 
 impl PiranhaArguments {
     pub fn new(args: Args) -> Self {
-        let flag_val = args.flag_value.eq("true");
-        let (treated, treated_c) = (format!("{}", flag_val), format!("{}", !flag_val));
-
+        
         let input_substitutions = HashMap::from([
-            (String::from("stale_flag_name"), String::from(&args.flag_name)),
-            (String::from("treated"), String::from(&treated)),
-            (String::from("namespace"), String::from(&args.flag_namespace)),
-            (String::from("treated_complement"), String::from(&treated_c)),
-        ]);
+            ("stale_flag_name", &args.flag_name),
+            ("treated", &format!("{}", args.flag_value)),
+            ("namespace", &args.flag_namespace),
+            ("treated_complement", &format!("{}", !args.flag_value)),
+        ])
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect();
 
-        let treated = format!("{}", args.flag_value.eq("true"));
         #[rustfmt::skip]
-        println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), treated, &args.flag_namespace.clone()).purple());
+        println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), &format!("{}", args.flag_value), &args.flag_namespace.clone()).purple());
+        
         Self {
             path_to_code_base: args.path_to_codebase.to_string(),
             language: args.language.to_string(),
@@ -118,9 +120,9 @@ pub struct Constraint {
 impl Rule {
     pub fn update(&self, query: TSQuery, replace: String) -> Self {
         Rule {
-            name: String::from(&self.name),
+            name: self.name.to_string(),
             query,
-            replace_node: self.replace_node.clone(),
+            replace_node: self.replace_node.to_string(),
             replace,
             holes: self.holes.clone(),
             groups: self.groups.clone(),
@@ -130,10 +132,9 @@ impl Rule {
     }
 
     pub fn is_feature_flag_cleanup(&self) -> bool {
-        self.groups
-            .as_ref()
-            .map(|tags| tags.iter().any(|t| t.eq("Feature-flag API cleanup")))
-            .unwrap_or(false)
+        self.groups.as_ref().map_or(false, |tags| {
+            tags.iter().any(|t| t.eq("Feature-flag API cleanup"))
+        })
     }
 
     pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {

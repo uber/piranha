@@ -35,7 +35,7 @@ fn test_java_scenarios_treated() {
             language: language.to_string(),
             flag_name: "STALE_FLAG".to_string(),
             flag_namespace: "some_long_name".to_string(),
-            flag_value: "true".to_string(),
+            flag_value: true,
             path_to_configuration: "src/test-resources/java/configurations/".to_string(),
         }));
     let path_to_expected = path_to_test_resource.join("expected_treated");

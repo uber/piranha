@@ -12,11 +12,6 @@ mod utilities;
 #[cfg(test)]
 mod test;
 
-// TODO: Add an argument parser 
-//      1. Add parser 
-//      2. Adapt other code   (all the scipts) 
-// TODO: Add mappings for test method annotations 
-// TODO: Should the rules be changed to matcher, replace node, rewrite template
 fn main() {
     let now = Instant::now();
     let args = Args::parse();

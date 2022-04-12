@@ -75,16 +75,31 @@ impl FlagCleaner {
 
 #[derive(Clone)]
 pub struct SourceCodeUnit {
+    // The tree representing the file 
     pub ast: Tree,
+    // The content of a file 
     pub code: String,
+    // The substiution cache
     pub substitutions: TagMatches,
 }
 
 impl SourceCodeUnit {
+    
+    /// Writes the current contents of `code` to the file system.
     pub fn persist(&self, path: &PathBuf) {
         fs::write(path, self.code.as_str()).expect("Unable to Write file");
     }
-    // This method performs the input code replacement in the source code
+    
+    /// Applies an edit to the source code unit 
+    /// # Arguments 
+    /// * `replace_range` - the range of code to be replaced 
+    /// * `replacement_str` - the replacement string 
+    /// * `parser` 
+    /// 
+    /// # Returns 
+    /// The `edit:InputEdit` performed.
+    /// 
+    /// Note - Causes side effect. - Updates `self.ast` and `self.code`
     fn apply_edit(
         &mut self,
         replace_range: Range,
@@ -101,8 +116,7 @@ impl SourceCodeUnit {
         return edit;
     }
 
-    // Will update all occurences of a rule in the code.
-    // We will do this without sync for now. Keep things simple.
+    /// Will apply the input rule to all of its occurences in the source code unit.
     fn apply_rule(
         &mut self,
         rule: Rule,
@@ -126,10 +140,10 @@ impl SourceCodeUnit {
     ) -> bool {
         // Get scope node
         let mut root = self.ast.root_node();
-        if let Some(scope_q) = scope_query {
+        if let Some(ts_scope_query) = scope_query {
             if let Some((range, _)) = &self.ast.root_node().get_match_for_query(
                 &self.code,
-                rules_store.get_query(scope_q),
+                rules_store.get_query(ts_scope_query),
                 true,
             ) {
                 root = self.get_descendant(range.start_byte, range.end_byte);
@@ -137,6 +151,8 @@ impl SourceCodeUnit {
         }
 
         let mut any_match = false;
+        
+        // Recurssively scan the node, and match the rule. 
         if let Some((range, rpl, captures_by_tag)) =
             self.get_any_match_for_rule(&rule, rules_store, root, true)
         {
@@ -148,7 +164,7 @@ impl SourceCodeUnit {
             let mut curr_rule = rule.clone();
             let mut file_level_and_then_rules = vec![];
 
-            // recurssively perform the parent edits, while queueing the Method and Class level edits.
+            // perform the parent edits, while queueing the Method and Class level edits.
             loop {
                 let and_then_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
 
@@ -181,8 +197,7 @@ impl SourceCodeUnit {
                     break;
                 }
             }
-            // Process the method and class level rules
-            // Apply recurssively
+            // Apply the method and class level rules
             file_level_and_then_rules.reverse();
             for (sq, rle) in file_level_and_then_rules {
                 self.apply_rule(rle, rules_store, parser, &Some(sq));
@@ -210,22 +225,26 @@ impl SourceCodeUnit {
             .unwrap()
     }
 
+    /// Generate a tree-sitter based query representing the scope of the previous edit. 
+    /// Currently we generate scopes based on the configs provided in `<lang>_scopes.toml`.
     fn get_scope_query(
         &self,
-        s_scope: &str,
+        scope_level: &str,
         previous_edit: InputEdit,
         rules_store: &mut RuleStore,
     ) -> TSQuery {
         let mut changed_node =
             self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
 
+        // Get the scope matchers for `s_scope`
         let scope_matchers = rules_store
             .scopes
             .iter()
-            .find(|scope| scope.name.eq(s_scope))
+            .find(|level| level.name.eq(scope_level))
             .map(|scope| scope.rules.clone())
             .unwrap_or_else(Vec::new);
 
+        // Match the `scope_matcher.matcher` to the parent 
         while let Some(parent) = changed_node.parent() {
             for m in &scope_matchers {
                 if let Some((_, captures_by_tag)) = parent.get_match_for_query(
@@ -233,15 +252,18 @@ impl SourceCodeUnit {
                     rules_store.get_query(&m.get_matcher()),
                     false,
                 ) {
+                    // Generate the scope query for the specific context
                     return m.get_matcher_gen().substitute_tags(&captures_by_tag);
                 } else {
                     changed_node = parent;
                 }
             }
         }
-        panic!("Could not create scope query for {:?}", s_scope);
+        panic!("Could not create scope query for {:?}", scope_level);
     }
 
+    // Apply all the `rules` to the node, it's parent and its grand parent. 
+    // Short-circuit on the first match.
     fn match_rules_to_context(
         &mut self,
         previous_edit: InputEdit,
@@ -264,14 +286,14 @@ impl SourceCodeUnit {
         return None;
     }
 
+    /// Returns the node, its parent and its grand parent.
     fn get_context(&self, previous_edit: InputEdit) -> Vec<Node> {
         let changed_node =
             self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
         let mut context = vec![changed_node];
-        let parent = changed_node.parent().clone();
-        if let Some(pu) = parent {
-            context.push(pu);
-            if let Some(grand_parent) = pu.parent() {
+        if let Some(parent) = changed_node.parent() {
+            context.push(parent);
+            if let Some(grand_parent) = parent.parent() {
                 context.push(grand_parent);
             }
         }
@@ -295,7 +317,7 @@ impl SourceCodeUnit {
         recurssive: bool,
     ) -> Option<(Range, String, TagMatches)> {
         let all_relevant_query_matches = node.get_all_matches_for_query(
-            String::from(&self.code),
+            self.code.clone(),
             rule_store.get_query(&rule.get_query()),
             recurssive,
             Some(rule.replace_node.clone()),
@@ -311,6 +333,7 @@ impl SourceCodeUnit {
         None
     }
 
+    /// Checks if the node satisfies the constraints
     fn satisfies_constraint(
         &self,
         node: Node,
@@ -320,19 +343,21 @@ impl SourceCodeUnit {
     ) -> bool {
         if let Some(constraint) = &rule.constraint {
             let mut curr_node = node;
+            // Get the scope of the predicate 
             while let Some(parent) = curr_node.parent() {
                 if let Some((range, _)) = parent.get_match_for_query(
                     &self.code,
                     &constraint.matcher.create_query(rule_store.language),
                     false,
                 ) {
-                    let matcher = self.get_descendant(range.start_byte, range.end_byte);
+                    let scope = self.get_descendant(range.start_byte, range.end_byte);
+                    // Apply the predicate in the scope 
                     let mut all_queries_match = true;
                     for q in &constraint.queries {
                         let query_str = q.substitute_tags(&capture_by_tags);
                         let query = &rule_store.get_query(&query_str);
                         all_queries_match = all_queries_match
-                            && matcher
+                            && scope
                                 .get_match_for_query(&self.code, query, true)
                                 .is_some();
                     }

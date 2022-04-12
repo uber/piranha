@@ -190,7 +190,7 @@ impl PiranhaRuleMatcher for Node<'_> {
         for query_match in query_matches {
             if let Some(captured_node) = query_match.captures.first() {
                 query_matches_by_node_range
-                    .collect_as_counter(captured_node.node.range(), query_match.captures.iter().cloned().collect_vec());
+                    .collect_map_of_vec(captured_node.node.range(), query_match.captures.iter().cloned().collect_vec());
             }
         }
         let mut output = vec![];

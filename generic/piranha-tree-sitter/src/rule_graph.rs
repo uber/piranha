@@ -93,7 +93,7 @@ impl RuleStore {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
         for (scope, to_rule) in self.rule_graph.get_nbrs(rule_name) {
-            next_rules.collect_as_counter(
+            next_rules.collect_map_of_vec(
                 String::from(scope),
                 self.rules_by_name[&to_rule].instantiate(&tag_matches),
             );
@@ -130,7 +130,7 @@ impl ParameterizedRuleGraph {
             rules_by_name.insert(rule.name.clone(), rule.clone());
             if let Some(tags) = &rule.groups {
                 for tag in tags {
-                    rules_by_tag.collect_as_counter(tag.clone(), rule.name.clone());
+                    rules_by_tag.collect_map_of_vec(tag.clone(), rule.name.clone());
                 }
             }
         }
@@ -146,7 +146,7 @@ impl ParameterizedRuleGraph {
         for edge in edges.edges {
             for f in get_rules_for_tag_or_name(&edge.from) {
                 for t in get_rules_for_tag_or_name(&edge.to) {
-                    graph.collect_as_counter(f.clone(), (String::from(&edge.scope), t.clone()));
+                    graph.collect_map_of_vec(f.clone(), (String::from(&edge.scope), t.clone()));
                 }
             }
         }
@@ -166,7 +166,7 @@ pub fn read_rule_graph_from_config(
 ) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
     let path_to_config = Path::new(args.path_to_configurations.as_str());
 
-    // Read the configuration files.
+    // Read the rules 
     let (language_rules, language_edges, scopes) = match args.language.as_str() {
         "Java" => (
             toml::from_str::<Rules>(read_file(&path_to_config.join("java_rules.toml")).as_str())
@@ -182,6 +182,7 @@ pub fn read_rule_graph_from_config(
         _ => panic!(),
     };
 
+    // Read the edges 
     let (mut input_rules, input_edges) = (
         toml::from_str::<Rules>(read_file(&path_to_config.join("input_rules.toml")).as_str())
             .unwrap(),
@@ -189,6 +190,7 @@ pub fn read_rule_graph_from_config(
             .unwrap(),
     );
 
+    // Label the input-rules as `Feature-flag API cleanup`
     for r in input_rules.rules.iter_mut() {
         r.add_group(String::from("Feature-flag API cleanup"));
     }

@@ -29,11 +29,11 @@ pub fn get_files_with_extension(input_dir: &String, extension: &str, pattern: Re
 }
 
 pub trait MapOfVec<T, V> {
-    fn collect_as_counter(&mut self, key: T, value: V);
+    fn collect_map_of_vec(&mut self, key: T, value: V);
 }
 
 impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
-    fn collect_as_counter(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
+    fn collect_map_of_vec(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
         self.entry(key).or_insert_with(Vec::new).push(value);
     }
 }
