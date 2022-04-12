@@ -1,5 +1,5 @@
 use crate::{
-    config::{PiranhaArguments, Rule, Scope, ScopeConfig},
+    config::{PiranhaArguments, Rule, ScopeGenerator, ScopeConfig},
     tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers},
     utilities::{read_file, MapOfVec},
 };
@@ -42,7 +42,7 @@ pub struct RuleStore {
     // Current global rules to be applied.
     pub global_rules: Vec<Rule>,
     // Scope generators.
-    pub scopes: Vec<Scope>,
+    pub scopes: Vec<ScopeGenerator>,
 }
 
 impl RuleStore {
@@ -87,7 +87,8 @@ impl RuleStore {
             .or_insert_with(|| query_str.create_query(self.language))
     }
 
-    fn get_next_rules(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
+    /// Get the next rules to be applied grouped by the scope in which they should be performed. 
+    pub fn get_next(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
         for (scope, to_rule) in self.rule_graph.get_nbrs(rule_name) {
@@ -96,25 +97,10 @@ impl RuleStore {
                 self.rules_by_name[&to_rule].instantiate(&tag_matches),
             );
         }
+        for scope in [PARENT, METHOD, CLASS, GLOBAL] {
+            next_rules.entry(scope.to_string()).or_default();
+        }
         next_rules
-    }
-
-    /// Get the next rules to be applied grouped by the scope in which they should be performed. 
-    pub fn get_next(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
-        let next_rules = self.get_next_rules(rule, tag_matches);
-
-        [PARENT, METHOD, CLASS, GLOBAL]
-            .into_iter()
-            .map(|s| {
-                (
-                    String::from(s),
-                    next_rules
-                        .get(s)
-                        .map(|x| x.clone())
-                        .unwrap_or_else(Vec::new),
-                )
-            })
-            .collect()
     }
 }
 
@@ -170,7 +156,7 @@ impl ParameterizedRuleGraph {
 /// Reads the input configurations and creates a rule graph.
 pub fn read_rule_graph_from_config(
     args: &PiranhaArguments,
-) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<Scope>) {
+) -> (ParameterizedRuleGraph, HashMap<String, Rule>, Vec<ScopeGenerator>) {
     let path_to_config = Path::new(args.path_to_configurations.as_str());
 
     // Read the rules 

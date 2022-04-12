@@ -285,11 +285,11 @@ impl SourceCodeUnit {
             for m in &scope_matchers {
                 if let Some((_, captures_by_tag)) = parent.get_match_for_query(
                     &self.code,
-                    rules_store.get_query(&m.get_matcher()),
+                    rules_store.get_query(&m.matcher),
                     false,
                 ) {
                     // Generate the scope query for the specific context
-                    return m.get_matcher_gen().substitute_tags(&captures_by_tag);
+                    return m.generator.substitute_tags(&captures_by_tag);
                 } else {
                     changed_node = parent;
                 }

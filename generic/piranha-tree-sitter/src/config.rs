@@ -58,29 +58,19 @@ impl PiranhaArguments {
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScopeConfig {
-    pub scopes: Vec<Scope>,
+    pub scopes: Vec<ScopeGenerator>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Scope {
+pub struct ScopeGenerator {
     pub name: String,
-    pub rules: Vec<ScopeMatcher>,
+    pub rules: Vec<ScopeQueryGenerator>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct ScopeMatcher {
-    matcher: String,
-    matcher_gen: String,
-}
-
-impl ScopeMatcher {
-    pub fn get_matcher(&self) -> TSQuery {
-        TSQuery::from(self.matcher.clone())
-    }
-
-    pub fn get_matcher_gen(&self) -> TSQuery {
-        TSQuery::from(self.matcher_gen.clone())
-    }
+pub struct ScopeQueryGenerator {
+    pub matcher: TSQuery,
+    pub generator: TSQuery,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]

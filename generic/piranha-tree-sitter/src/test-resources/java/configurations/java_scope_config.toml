@@ -10,7 +10,7 @@ matcher =  """
                     (formal_parameter type:(_) @t2)
                     (formal_parameter type:(_) @t3)
                     (formal_parameter type:(_) @t4))) @xd0)"""
-matcher_gen = """
+generator = """
 (((method_declaration 
 			name : (_) @z
             parameters : (formal_parameters
@@ -35,7 +35,7 @@ matcher =  """
                     (formal_parameter type:(_) @t1)
                     (formal_parameter type:(_) @t2)
                     (formal_parameter type:(_) @t3))) @xd5)"""
-matcher_gen = """
+generator = """
 (((method_declaration 
 			name : (_) @z
             parameters : (formal_parameters
@@ -57,7 +57,7 @@ matcher =  """
             		(formal_parameter type:(_) @t0)
                     (formal_parameter type:(_) @t1)
                     (formal_parameter type:(_) @t2))) @xd2)"""
-matcher_gen = """
+generator = """
 (((method_declaration 
 			name : (_) @z
             parameters : (formal_parameters
@@ -76,7 +76,7 @@ matcher =  """
             parameters : (formal_parameters
             		(formal_parameter type:(_) @t0)
                     (formal_parameter type:(_) @t1))) @xd3)"""
-matcher_gen = """
+generator = """
 (((method_declaration 
 			name : (_) @z
             parameters : (formal_parameters
@@ -100,7 +100,7 @@ matcher =  """
 (#not-match? @zz ",")
 (#not-eq? @zz "()")
 )"""
-matcher_gen = """
+generator = """
 (
 (((method_declaration 
 			name : (_) @z
@@ -131,7 +131,7 @@ matcher =  """
 (#not-match? @gg ",")
 (#eq? @gg "()")
 )"""
-matcher_gen = """
+generator = """
 (
 (((method_declaration 
 			name : (_) @z
@@ -150,7 +150,7 @@ matcher_gen = """
 name = "Class"
 [[scopes.rules]]
 matcher = "(class_declaration name:(_) @n) @c"
-matcher_gen = """
+generator = """
 (
 ((class_declaration name:(_) @z) @qc)
 (#eq? @z "@n")
