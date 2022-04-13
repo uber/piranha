@@ -60,7 +60,7 @@ impl RuleStore {
         if let Ok(mut r) = rule.try_instantiate(&tag_captures) {
             r.add_grep_heuristics_for_global_rules(&tag_captures);
             // seed_rules.push(r.clone());
-            println!("{}", format!("Added Global Rule : {:?} - {:?}", r.name, r.get_query()).blue());
+            println!("{}", format!("Added Global Rule : {:?} - {}", r.name, r.get_query().pretty()).bright_blue());
             self.global_rules.push(r);
         }
         // let mut new_seed_rule = r.instantiate(&tag_captures);

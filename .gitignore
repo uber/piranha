@@ -16,3 +16,4 @@ generic/piranha-tree-sitter/.idea
 generic/tree-sitter-query/
 generic/tree-sitter-src/
 .history
+.vscode

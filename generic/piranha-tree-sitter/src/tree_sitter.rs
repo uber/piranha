@@ -25,7 +25,7 @@ impl TSQuery {
         if let Ok(q) = Query::new(language, self.0.as_str()) {
             return q;
         }
-        panic!("Could not parse the query : {:?}", self);
+        panic!("Could not parse the query : {}", self.0);
     }
 
     pub fn substitute_tags(&self, substitutions: &TagMatches) -> TSQuery {
@@ -34,6 +34,10 @@ impl TSQuery {
 
     pub fn contains(&self, s: &String) -> bool {
         self.0.contains(s)
+    }
+
+    pub fn pretty(&self) -> String {
+        return self.0.to_string();
     }
 }
 

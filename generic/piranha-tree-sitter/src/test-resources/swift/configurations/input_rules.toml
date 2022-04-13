@@ -1,0 +1,16 @@
+[[rules]]
+name = "isTreated method invocations"
+query = """
+(
+((navigation_expression suffix: (_) @s ) @n)
+((call_suffix (value_arguments (value_argument 
+									name: (_) @e
+                                    value: (navigation_expression suffix: (_) @s1)))) @expr)
+(#eq? @s ".isTreated")
+(#eq? @s1 ".@stale_flag_name")
+)
+
+"""
+replace_node = "expr"
+replace = "@treated"
+groups = ["Returns boolean"]

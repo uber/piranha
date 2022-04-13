@@ -258,4 +258,85 @@ replace = ""
 groups = []
 holes = ["m_name"]
  
+[[rules]]
+name = "Delete annotated method, treated"
+query = """(
+(method_declaration
+	(modifiers (annotation name: (_) @n
+    					  arguments : 
+                          	(annotation_argument_list
+                            	(element_value_pair 
+                                	key : (_) @k1
+                                    value : (_) @v1))) )) @md1
+(#eq? @k1 "ns")
+(#eq? @v1 "\\\"@namespace\\\"")
+(#eq? @n "ParameterValue")
+)
+(
+(method_declaration
+	(modifiers (annotation name: (_) 
+    					  arguments : 
+                          	(annotation_argument_list
+                            	(element_value_pair 
+                                	key : (_) @k2
+                                    value : (_) @v2))))) @md2
+(#eq? @k2 "key")
+(#eq? @v2 "\\\"@stale_flag_name\\\"")
+)
+(
+(method_declaration
+	(modifiers (annotation name: (_) 
+    					  arguments : 
+                          	(annotation_argument_list
+                            	(element_value_pair 
+                                	key : (_) @k3
+                                    value : (_) @v3))) @an) ) @md3
+(#eq? @k3 "val")
+(#eq? @v3 "\\\"@treated\\\"")
+)"""
+replace_node = "an"
+replace = ""
+groups = []
+holes = ["stale_flag_name", "treated", "namespace"]
+
+[[rules]]
+name = "Delete annotated method, not treated"
+query = """(
+(method_declaration
+	(modifiers (annotation name: (_) @n
+    					  arguments : 
+                          	(annotation_argument_list
+                            	(element_value_pair 
+                                	key : (_) @k1
+                                    value : (_) @v1))) )) @md1
+(#eq? @k1 "ns")
+(#eq? @v1 "\\\"@namespace\\\"")
+(#eq? @n "ParameterValue")
+)
+(
+(method_declaration
+	(modifiers (annotation name: (_) 
+    					  arguments : 
+                          	(annotation_argument_list
+                            	(element_value_pair 
+                                	key : (_) @k2
+                                    value : (_) @v2))))) @md2
+(#eq? @k2 "key")
+(#eq? @v2 "\\\"@stale_flag_name\\\"")
+)
+(
+(method_declaration
+	(modifiers (annotation name: (_) 
+    					  arguments : 
+                          	(annotation_argument_list
+                            	(element_value_pair 
+                                	key : (_) @k3
+                                    value : (_) @v3))) @an) ) @md3
+(#eq? @k3 "val")
+(#eq? @v3 "\\\"@treated_complement\\\"")
+)"""
+replace_node = "md3"
+replace = ""
+groups = []
+holes = ["stale_flag_name", "treated_complement", "namespace"]
 # 

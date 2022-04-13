@@ -181,6 +181,8 @@ impl Rule {
         self.query.clone()
     }
 
+   
+
     /// Adds a new group label to the rule. 
     pub fn add_to_feature_flag_api_group(&mut self) {
         let group_name: String = FEATURE_FLAG_API_GROUP.to_string();

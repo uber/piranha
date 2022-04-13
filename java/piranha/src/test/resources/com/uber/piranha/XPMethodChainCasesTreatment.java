@@ -65,7 +65,7 @@ class XPMethodChainCases {
     }
 
     // Does not match annotation
-    @PVal(ns = "", key = "other_flag", val = "false")
+    @ParameterValue(ns = "", key = "other_flag", val = "false")
     public void testSomethingOther() {
       System.out.println();
     }

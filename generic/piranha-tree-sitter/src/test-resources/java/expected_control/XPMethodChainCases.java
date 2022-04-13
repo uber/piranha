@@ -52,4 +52,20 @@ class XPMethodChainCases {
     cp.put(sp.otherFlag(), true);
     cp.put(sp.otherFlag(), false);
   }
+
+  class TestMethodChainTest {
+    // Matches annotation
+    
+
+    // Matches annotation
+
+    public void testSomethingControl() {
+      System.out.println();
+    }
+    // Does not match annotation
+    @ParameterValue(ns = "some_long_name", key = "other_flag", val = "false")
+    public void testSomethingOther() {
+      System.out.println();
+    }
+  }
 }
