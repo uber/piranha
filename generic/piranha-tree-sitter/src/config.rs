@@ -168,10 +168,7 @@ impl Rule {
         let mut gh = vec![];
         for h in self.holes.as_ref().unwrap() {
             if let Some(x) = substitutions.get(h) {
-                // We do not want to search for strings that occur only in replace.
-                if self.query.contains(x) {
-                    gh.push(x.clone());
-                }
+                gh.push(x.clone());
             }
         }
         self.grep_heuristics = Some(gh.clone());

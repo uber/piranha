@@ -108,6 +108,7 @@ impl FlagCleaner {
             .sorted()
             .dedup()
             //FIXME: Dirty trick to remove tru and false. Ideally, grep heuristic could be a field in itself for a rule.
+            // Since not all "holes" could be used as grep heuristic. 
             .filter(|x|!x.as_str().eq("true") && !x.as_str().eq("false"))
             .join("|");
         Regex::new(reg_x.as_str()).unwrap()

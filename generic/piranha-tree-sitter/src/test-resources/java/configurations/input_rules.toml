@@ -337,6 +337,6 @@ query = """(
 )"""
 replace_node = "md3"
 replace = ""
-groups = []
+groups = ["Delete Method"]
 holes = ["stale_flag_name", "treated_complement", "namespace"]
 # 
