@@ -66,8 +66,9 @@ replace = "@treated"
 groups = [ "Replace with boolean"]
 holes = ["treated", "stale_flag_name"]
 ```
-This specifies a rule that matches against expressions like `exp.isToggleEnabled(SOME_FLAG_NAME)` and replaces it with `true` or `false`. The `rule` contains `holes` or template variables that need to be instantiated. For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some 
-concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`. 
+This specifies a rule that matches against expressions like `exp.isToggleEnabled(SOME_FLAG_NAME)` and replaces it with `true` or `false`. 
+The `rule` contains `holes` or template variables that need to be instantiated.
+For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`. 
 The `query` property of the rule contains a tree-sitter query that is matched against the source code. 
 The node captured by the tag-name specifed in the `replace_node` property is replaced with the pattern specified in the `replace` property.
 The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like regex-replace).
@@ -130,7 +131,7 @@ int foobar(){
 
 </table>
 
-We would first define flag API rules as discussed in the section *Configuring Piranha*. Let's say this rule (**F**) would replaces the occurence of the flag API corresponding to `SOME_STALE_FLAG` with `true`. To perform the desired refactoring we would have to define cleanup rules (i)**R0:** Deletes the enclosing variable declaration (i.e. ) (ii) **R1:** replace the identifier with the RHS of the deleted variable (`x` with `true` within the method body of `foobar` (iii) **R2:** simplify the boolean expressions e.g. `true || someCond()` to `true`, that encloses the node where **R1** was applied (iv) **R3:** eliminate the enclosing if statement with a constant condition (`if (true) { return 100;}` -> `return 100;`), and (v) **R4:** eliminate unreachable code (`return 0;` in `return 100; return 0;`).
+We would first define flag API rules as discussed in the section *Configuring Piranha*. Let's say this rule (`F`) would replaces the occurence of the flag API corresponding to `SOME_STALE_FLAG` with `true`. To perform the desired refactoring we would have to define cleanup rules (i)`R0`: Deletes the enclosing variable declaration (i.e. ) (ii) **R1:** replace the identifier with the RHS of the deleted variable (`x` with `true` within the method body of `foobar` (iii) **R2:** simplify the boolean expressions e.g. `true || someCond()` to `true`, that encloses the node where **R1** was applied (iv) **R3:** eliminate the enclosing if statement with a constant condition (`if (true) { return 100;}` -> `return 100;`), and (v) **R4:** eliminate unreachable code (`return 0;` in `return 100; return 0;`).
 The fact that **R2** has to be applied to the enclosing node where **R1** was performed, is expressed by specifying the `edges.toml` file. 
 
 To define how these cleanup rules should be chained, one needs to specify edges (in `edges.toml` file) between the groups and (or) individual rules.
