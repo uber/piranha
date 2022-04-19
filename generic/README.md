@@ -131,13 +131,20 @@ int foobar(){
 
 </table>
 
-We would first define flag API rules as discussed in the section *Configuring Piranha*. Let's say this rule (`F`) would replaces the occurence of the flag API corresponding to `SOME_STALE_FLAG` with `true`. To perform the desired refactoring we would have to define cleanup rules (i)`R0`: Deletes the enclosing variable declaration (i.e. ) (ii) **R1:** replace the identifier with the RHS of the deleted variable (`x` with `true` within the method body of `foobar` (iii) **R2:** simplify the boolean expressions e.g. `true || someCond()` to `true`, that encloses the node where **R1** was applied (iv) **R3:** eliminate the enclosing if statement with a constant condition (`if (true) { return 100;}` -> `return 100;`), and (v) **R4:** eliminate unreachable code (`return 0;` in `return 100; return 0;`).
-The fact that **R2** has to be applied to the enclosing node where **R1** was performed, is expressed by specifying the `edges.toml` file. 
+We would first define flag API rules as discussed in the section *Configuring Piranha*. Let's say this rule (`F`) would replaces the occurence of the flag API corresponding to `SOME_STALE_FLAG` with `true`. To perform the desired refactoring we would have to define cleanup rules as follows :
+
+* `R0`: Deletes the enclosing variable declaration (i.e. `x`) 
+* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied (i.e. replace `x` with `true` within the method body of `foobar`)
+* `R2`: simplify the boolean expressions (`true || someCond()` to `true`, that encloses the node where `R1` was applied )
+* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied(`if (true) { return 100;}` -> `return 100;`),
+* `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied.
+
+The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file. 
 
 To define how these cleanup rules should be chained, one needs to specify edges (in `edges.toml` file) between the groups and (or) individual rules.
 The edges can be labelled as `ANCESTOR`, `METHOD`, `CLASS` or `GLOBAL`. 
-An `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. **R1** -> **R2**, **R2** -> **R3**, **R3** -> **R4**)
-A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. **R0** -> **R1**)
+An `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` -> `R2`, `R2` -> `R3`, `R3` -> `R4`)
+A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` -> `R1`)
 A `CLASS` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. inlining a private field)
 A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. inlining a public field)
 
