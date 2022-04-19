@@ -5,7 +5,7 @@ This generic tree-sitter based implementation for Piranha makes it easy to exten
 
 ## Motivation 
 
-Currently, to add a Piranha support for a new language, requires re-implementing the entire refactoring logic for that particular language. This is time consuming and expensive to develop and maintain such nearly similar implementations.
+Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. This is time consuming and expensive to develop and maintain such nearly similar implementations.
 This implementation overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query API based rewrite rules, and applying them to the input program as chains of rules.
 
 <!-- ## Overview 
