@@ -7,17 +7,21 @@ use std::{collections::HashMap, hash::Hash};
 #[derive(Clone, Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    #[clap(short, long)]
+    /// Input source code folder.
+    #[clap(short = 'p', long)]
     pub path_to_codebase: String,
-    #[clap(short, long)]
+    #[clap(short = 'l', long)]
     pub language: String,
-    #[clap(short, long)]
+    /// Name of the stale flag
+    #[clap(short = 'f', long)]
     pub flag_name: String,
-    #[clap(short, long)]
+    #[clap(short = 'n', long)]
     pub flag_namespace: String,
-    #[clap(short, long)]
+    /// is treated?
+    #[clap(short = 't', long)]
     pub flag_value: bool,
-    #[clap(short, long)]
+    /// Folder containing the required configuration files
+    #[clap(short = 'c', long)]
     pub path_to_configuration: String,
 }
 
@@ -33,7 +37,6 @@ pub struct PiranhaArguments {
 
 impl PiranhaArguments {
     pub fn new(args: Args) -> Self {
-        
         let input_substitutions = HashMap::from([
             ("stale_flag_name", &args.flag_name),
             ("treated", &format!("{}", args.flag_value)),
@@ -46,7 +49,7 @@ impl PiranhaArguments {
 
         #[rustfmt::skip]
         println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), &format!("{}", args.flag_value), &args.flag_namespace.clone()).purple());
-        
+
         Self {
             path_to_code_base: args.path_to_codebase.to_string(),
             language: args.language.to_string(),
@@ -131,13 +134,20 @@ impl Rule {
 
     /// Instantiate `self` with substitutions or panic.
     pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {
-        if let Ok(r) = self.try_instantiate(substitutions){
+        if let Ok(r) = self.try_instantiate(substitutions) {
             return r;
         }
-        panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
+        panic!(
+            "{}",
+            format!(
+                "Could not instantiate the rule {:?} with substitutions {:?}",
+                self, substitutions
+            )
+            .red()
+        );
     }
 
-    /// Tries to instantiate the `self` with the tag matches. 
+    /// Tries to instantiate the `self` with the tag matches.
     /// Note this could fail in case when tag matches dont contain mappings for all the holes.
     pub fn try_instantiate(&self, substitutions: &TagMatches) -> Result<Rule, String> {
         if let Some(holes) = &self.holes {
@@ -162,7 +172,7 @@ impl Rule {
         return Ok(self.clone());
     }
 
-    /// Records the string that should be grepped in order to find files that 
+    /// Records the string that should be grepped in order to find files that
     /// potentially could match this global rule.
     pub fn add_grep_heuristics_for_global_rules(&mut self, substitutions: &TagMatches) {
         let mut gh = vec![];
@@ -178,9 +188,7 @@ impl Rule {
         self.query.clone()
     }
 
-   
-
-    /// Adds a new group label to the rule. 
+    /// Adds a new group label to the rule.
     pub fn add_to_feature_flag_api_group(&mut self) {
         let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
         if self.groups.is_none() {

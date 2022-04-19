@@ -22,7 +22,7 @@ fn main() {
     flag_cleaner.cleanup();
 
     for (k, v) in flag_cleaner.relevant_files {
-        println!("Rewriting file {:?}", k);
+        println!("Updating file {:?}", k);
         v.persist();
     }
 
