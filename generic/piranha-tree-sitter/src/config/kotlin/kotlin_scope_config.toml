@@ -1,0 +1,162 @@
+[[scopes]]
+name = "Method"
+
+[[scopes.rules]]
+matcher =  """
+(
+(function_declaration 
+            (_) @name0  
+			(parameter) @t0
+            (parameter) @t1
+            (parameter) @t2
+            (parameter) @t3
+            (parameter) @t4)
+            @function_declaration5_m
+)"""
+generator = """
+(
+(
+(function_declaration 
+            (_) @name1  
+			(parameter) @r0
+            (parameter) @r1
+            (parameter) @r2
+            (parameter) @r3
+            (parameter) @r4)
+            @function_declaration5_g
+)
+(#eq? @name1 "@name0")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")
+(#eq? @r3 "@t3")
+(#eq? @r4 "@t4")                    
+)"""
+
+[[scopes.rules]]
+matcher =  """
+(
+(function_declaration 
+            (_) @name0  
+			(parameter) @t0
+            (parameter) @t1
+            (parameter) @t2
+            (parameter) @t3)
+            @function_declaration4_m
+)"""
+generator = """
+(
+(
+(function_declaration 
+            (_) @name1  
+			(parameter) @r0
+            (parameter) @r1
+            (parameter) @r2
+            (parameter) @r3)
+            @function_declaration4_g
+)
+(#eq? @name1 "@name0")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")
+(#eq? @r3 "@t3")         
+)"""
+
+[[scopes.rules]]
+matcher =  """
+(
+(function_declaration 
+            (_) @name0  
+			(parameter) @t0
+            (parameter) @t1
+            (parameter) @t2)
+            @function_declaration3_m
+)"""
+generator = """
+(
+(
+(function_declaration 
+            (_) @name1  
+			(parameter) @r0
+            (parameter) @r1
+            (parameter) @r2)
+            @function_declaration3_g
+)
+(#eq? @name1 "@name0")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")       
+)"""
+
+[[scopes.rules]]
+matcher =  """
+(
+(function_declaration 
+            (_) @name0  
+			(parameter) @t0
+            (parameter) @t1)
+            @function_declaration2_m
+)"""
+generator = """
+(
+(
+(function_declaration 
+            (_) @name1  
+			(parameter) @r0
+            (parameter) @r1)
+            @function_declaration2_g
+)
+(#eq? @name1 "@name0")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")     
+)"""
+
+[[scopes.rules]]
+matcher =  """
+(
+(function_declaration 
+            (_) @name0  
+			(parameter) @t0)
+            @function_declaration1_m
+)"""
+generator = """
+(
+(
+(function_declaration 
+            (_) @name1  
+			(parameter) @r0)
+            @function_declaration1_g
+)
+(#eq? @name1 "@name0")
+(#eq? @r0 "@t0")
+)"""
+
+
+[[scopes.rules]]
+matcher =  """
+(
+(function_declaration 
+            (_) @name0)
+            @function_declaration1_m
+)"""
+generator = """
+(
+(
+(function_declaration 
+            (_) @name1)
+            @function_declaration1_g
+)
+(#eq? @name1 "@name0")
+(#eq? @r0 "@t0")
+)"""
+
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
+matcher = "(class_declaration name:(_) @n) @c"
+generator = """
+(
+((class_declaration name:(_) @z) @qc)
+(#eq? @z "@n")
+)
+"""

@@ -1,0 +1,399 @@
+[[rules]]
+name = "Simple If-(optional)else True"
+query = """
+(
+(if_expression condition: (boolean_literal) @b
+				consequence: (control_structure_body (_) @if_branch)) @if_expr
+                
+(#eq? @b "true")
+)
+"""
+replace_node = "if_expr"
+replace = "@if_branch"
+groups = ["If cleanup", "Statement cleanup"]
+
+
+
+[[rules]]
+name = "Simple If-else False"
+query = """
+(
+(if_expression condition: (boolean_literal) @b
+				consequence: (control_structure_body (_) @if_branch)
+                alternative: (control_structure_body (_) @else_branch)) @if_expr
+                
+(#eq? @b "false")
+)"""
+replace_node = "if_expr"
+replace = "@else_branch"
+groups = ["If cleanup", "Statement cleanup"]
+
+
+[[rules]]
+name = "Simple if False"
+query = """
+(
+(if_expression condition: (boolean_literal) @b
+				consequence: (control_structure_body (_) @if_branch)
+                !alternative) @if_expr
+                
+(#eq? @b "false")
+)
+"""
+replace_node = "if_expr"
+replace = ""
+groups = ["If cleanup", "Statement cleanup"]
+
+
+[[rules]]
+name = "not False"
+
+query = """
+(
+(prefix_expression (boolean_literal) @b ) @prefix_expr
+(#match? @prefix_expr "!")
+(#eq? @b "false")
+)
+"""
+replace_node = "prefix_expr"
+replace = "true"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+
+[[rules]]
+name = "not True"
+query = """
+(
+(prefix_expression (boolean_literal) @b ) @prefix_expr
+(#match? @prefix_expr "!")
+(#eq? @b "true")
+)
+"""
+replace_node = "prefix_expr"
+replace = "false"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+# Not needed for Kotlin ? 
+# [[rules]]
+# name = "Remove unnecesary nested block"
+# query = """
+# ((block
+#         (
+#             (_)* @pre
+#             (block (_)* @nested.statements) @nested.block
+#             (_)* @post
+#         )
+#     )@sb)"""
+# replace_node = "nested.block"
+# replace = "@nested.statements"
+# groups = ["Block cleanup", "Statement cleanup"]
+
+
+[[rules]]
+name = "And - left operand is True"
+query = """
+(conjunction_expression 
+			(boolean_literal)@lhs
+            (_) @rhs) @conjunction
+(#eq? @lhs "true")"""
+replace_node = "conjunction"
+replace = "@rhs"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+[[rules]]
+name = "And - right operand is True"
+query = """
+(conjunction_expression 
+            (_) @lhs
+			(boolean_literal)@rhs ) @conjunction
+(#eq? @rhs "true")"""
+replace_node = "conjunction"
+replace = "@lhs"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+
+[[rules]]
+name = "Or - right operand is True"
+query = """
+(disjunction_expression 
+            (_) @lhs
+			(boolean_literal) @rhs ) @disjunction
+(#eq? @rhs "true")"""
+replace_node = "disjunction"
+replace = "true"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+[[rules]]
+name = "Or - left operand is True"
+query = """
+(disjunction_expression 
+			(boolean_literal)@lhs
+            (_) @rhs) @disjunction
+(#eq? @lhs "true")
+"""
+replace_node = "disjunction"
+replace = "true"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+[[rules]]
+name = "And - left operand is False"
+query = """
+(conjunction_expression 
+			(boolean_literal)@lhs
+            (_) @rhs) @conjunction
+(#eq? @lhs "false")"""
+replace_node = "conjunction"
+replace = "false"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+[[rules]]
+name = "And - right operand is False"
+
+query = """
+(conjunction_expression 
+            (_) @lhs
+			(boolean_literal)@rhs ) @conjunction
+(#eq? @rhs "false")
+"""
+replace_node = "conjunction"
+replace = "false"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+[[rules]]
+name = "Or - left operand is False"
+query = """(
+(disjunction_expression 
+			(boolean_literal)@lhs
+            (_) @rhs) @disjunction
+(#eq? @lhs "true")"""
+replace_node = "disjunction"
+replace = "@rhs"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+[[rules]]
+name = "Or - right operand is False"
+query = """
+(disjunction_expression 
+            (_) @lhs
+			(boolean_literal) @rhs ) @disjunction
+(#eq? @rhs "true")"""
+replace_node = "disjunction"
+replace = "@lhs"
+groups = ["Boolean expression cleanup", "Returns boolean"]
+
+# [[rules]]
+# name = "Or - Remove unnecessary brackets from left operand"
+# query = """(
+# (
+#     binary_expression
+#         left: ((parenthesized_expression
+#                     (expression !left) @e))
+#         operator: "||"
+#         right: (_)* @r)
+# @bo)"""
+# replace_node = "bo"
+# replace = "@e || @r"
+# groups = ["Boolean expression cleanup", "Returns boolean"]
+
+# [[rules]]
+# name = "Or - Remove unnecessary brackets from right operand"
+# query = """
+# (binary_expression
+#         left: (_)* @l
+#         operator: "||"
+#         right: ((parenthesized_expression
+#                     (expression !left) @e))
+# @bo)"""
+# replace = "@l || @e"
+# replace_node = "bo"
+# groups = ["Boolean expression cleanup", "Returns boolean"]
+
+# [[rules]]
+# name = "And - Remove unnecessary brackets from left operand "
+# query = """
+# (
+#     (binary_expression
+#         left: ((parenthesized_expression (expression !left) @e))
+#         operator: "&&"
+#         right: (_)* @r)
+# @bo)"""
+# replace_node = "bo"
+# replace = "@e && @r"
+# groups = ["Boolean expression cleanup", "Returns boolean"]
+
+# [[rules]]
+# name = "And - Remove unnecessary brackets from right operand "
+# query = """(
+#     (binary_expression
+#         left: (_)* @l
+#         operator: "&&"
+#         right: ((parenthesized_expression
+#                          (expression !left) @e)))
+# @bo)"""
+# replace_node = "bo"
+# replace = "@l && @e"
+# groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+[[rules]]
+name = "Elide all statements after return"
+query = """(
+    ((jump_expression) @return_stmt)
+    (_)* @post_stmt
+    (#match? @return_stmt "^return")
+)"""
+replace_node = "post_stmt"
+replace = ""
+groups = ["Block cleanup", "Statement cleanup"]
+
+# [[rules]]
+# name = "Ternay operator True"
+# query = """
+# (
+#     (ternary_expression condition: (true)
+#         consequence: (_)* @then
+#         alternative: (_)* @else)
+# @tt)"""
+# replace_node = "tt"
+# replace = "@then"
+# groups = ["If cleanup", "Statement cleanup"]
+
+# [[rules]]
+# name = "Ternay operator False"
+# query = """
+# (
+#     (ternary_expression condition: (false)
+#         consequence: (_)* @then
+#         alternative: (_)* @else)
+# @tt)"""
+# replace_node = "tt"
+# replace = "@else"
+# groups = ["If cleanup", "Statement cleanup"]
+
+# [[rules]]
+# name = "Parenthesized boolean literal"
+# query = """
+# (
+# (parenthesized_expression 
+# 	[(true)
+#      (false)
+#     ] @l
+#     ) @p
+# )
+# """
+# replace = "@l"
+# groups = ["Boolean expression cleanup", "Returns boolean"]
+
+
+# Add constrain to ensure its var or prop. Change satisfies logic to return false when constraint.matcher has no match.
+[[rules]]
+name = "Inline Local Variable Declaration - Delete variable declaration"
+query = """
+(
+(property_declaration 
+				(variable_declaration (_) @name 
+                					  (":"?	(_))? @type)
+                (_) @initializer ) @declaration
+(#match? @initializer "true|false")
+)
+"""
+replace_node = "declaration"
+replace = ""
+groups = []
+[rules.constraint]
+matcher = "(function_declaration) @md"
+predicate = "None"
+queries = ["""
+(
+(assignment (_)@lhs (_)@rhs) @assignment
+(#eq? @lhs "@name")
+(#not-eq? @rhs "@initializer")
+)
+"""]
+
+# TODO: Add a inline field declaration without RHS.
+[[rules]]
+name = "Inline Field Declaration - Delete field declaration"
+query = """
+(
+(property_declaration 
+				(variable_declaration (_) @name 
+                					  (":"?	(_))? @type)
+                (_) @initializer ) @declaration
+(#match? @initializer "true|false")
+)
+"""
+replace_node = "declaration"
+replace = ""
+groups = []
+[rules.constraint]
+matcher = "(class_declaration) @cd"
+predicate = "None"
+queries = ["""
+(
+(assignment (_)@lhs (_)@rhs) @assignment
+(#eq? @lhs "@name")
+(#not-eq? @rhs "@initializer")
+)
+"""]
+
+[[rules]]
+name = "Remove assignment"
+query = """
+(
+(assignment (_)@lhs (_)@rhs) @assignment
+(#eq? @l "@name")
+(#eq? @r "@initializer")
+) 
+"""
+replace_node = "assignment"
+replace = ""
+groups = []
+holes = ["name", "initializer"]
+
+# Remove assignment if it is the only assignment in the entire class. 
+# This should be done in class and method scope. But while deleting the assignment, 
+# we cannot guess if the lhs is a field or a local variable.
+[[rules]]
+name = "Remove assignment-1"
+query = """
+(
+(
+(assignment (_)@lhs1 (_)@rhs1) @assignment1
+(#match? @rhs1 "true|false")
+)
+) 
+"""
+replace_node = "assignment1"
+replace = ""
+groups = []
+holes = []
+[rules.constraint]
+matcher = "(class_declaration) @cd"
+predicate = "None"
+queries = ["""
+(
+(assignment (_)@lhs2 (_)@rhs2) @assignment2
+(#eq? @lhs1 "@lhs2")
+(#not-eq? @rhs1 "@rhs2")
+)
+"""]
+
+[[rules]]
+name = "Replace identifier with value"
+query = """
+(
+(simple_identifier ) @identifier
+(#eq? @identifier "@name")
+)
+"""
+replace_node = "i"
+replace = "@v"
+groups = []
+holes = ["@name", "@initializer"]
+
