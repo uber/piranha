@@ -1,3 +1,16 @@
+/* 
+Copyright (c) 2019 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 use crate::config::{PiranhaArguments, Rule};
 use crate::rule_graph::{RuleStore, CLASS, GLOBAL, METHOD, PARENT};
 use crate::tree_sitter::{PiranhaRuleMatcher, TSQuery, TagMatches, TreeSitterHelpers};
@@ -8,9 +21,12 @@ use jwalk::WalkDir;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Language, Node, Parser, Point, Range, Tree};
+//TODO: File leven comments .. what it does ... what it handles so on 
 
+//TODO: Comments for cstruct and its fields. 
 pub struct FlagCleaner {
     rule_store: RuleStore,
+    // FIXME: Remove
     language: Language,
     path_to_codebase: String,
     extension: String,
@@ -49,6 +65,7 @@ impl FlagCleaner {
                     break;
                 }
             }
+
             if self.rule_store.global_rules.len() == curr_rules.len() {
                 break;
             }
@@ -205,7 +222,7 @@ impl SourceCodeUnit {
 
             let mut curr_edit = edit.clone();
             let mut curr_rule = rule.clone();
-            let mut file_level_and_then_rules = vec![];
+            let mut file_level_next_rules = vec![];
 
             // perform the parent edits, while queueing the Method and Class level edits.
             loop {
@@ -215,7 +232,7 @@ impl SourceCodeUnit {
                 for (scope_s, rules) in &and_then_rules {
                     if [METHOD, CLASS].contains(&scope_s.as_str()) && !rules.is_empty() {
                         for rule in rules {
-                            file_level_and_then_rules.push((
+                            file_level_next_rules.push((
                                 self.get_scope_query(scope_s, curr_edit, rules_store),
                                 rule.instantiate(&self.substitutions),
                             ));
@@ -241,8 +258,8 @@ impl SourceCodeUnit {
                 }
             }
             // Apply the method and class level rules
-            file_level_and_then_rules.reverse();
-            for (sq, rle) in file_level_and_then_rules {
+            file_level_next_rules.reverse();
+            for (sq, rle) in file_level_next_rules {
                 self.apply_rule(rle, rules_store, parser, &Some(sq));
             }
         }
