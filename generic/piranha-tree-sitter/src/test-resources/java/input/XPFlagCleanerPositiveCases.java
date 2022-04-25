@@ -53,6 +53,9 @@ class XPFlagCleanerPositiveCases {
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
       System.out.println("Hello World");
     }
+    if (!experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+      System.out.println("Hi World");
+    }
   }
 
   public void conditional_with_else_contains_stale_flag() {
