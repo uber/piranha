@@ -419,9 +419,7 @@ replace = ""
 groups = []
 holes = ["variable_name", "init"]
 
-# Remove assignment if it is the only assignment in the entire class. 
-# This should be done in class and method scope. But while deleting the assignment, 
-# we cannot guess if the lhs is a field or a local variable.
+# Remove assignment if it is the only assignment in the entire class.
 [[rules]]
 name = "Remove assignment-1"
 query = """
