@@ -1,3 +1,4 @@
+# The edges in this file specify the the flow between the rules
 [[edges]]
 from = "Interface based, annotated method declaration"
 scope = "Global"

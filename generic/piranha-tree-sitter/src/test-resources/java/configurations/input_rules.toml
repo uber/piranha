@@ -1,82 +1,100 @@
- 
+# This file contains rules to the specifc feature flag API.
 
+#
+# For @stale_flag_name = STALE_FLAG and @treated = true
+# Before 
+#  exp.isToggleEnabled(Expriement.STALE_FLAG)
+# After 
+#  true
+#
 [[rules]]
 name = "Enum Based, toggle enabled"
 query = """((
 	(method_invocation 
-    	name : (_) @n1
+    	name : (_) @name
         arguments: ((argument_list 
         				([
-                          (field_access field: (_)@f)
-                          (_) @f
+                          (field_access field: (_)@argument)
+                          (_) @argument
                          ])) )
         	
-    ) @mi
+    ) @method_invocation
 )
-(#eq? @n1 "isToggleEnabled")
-(#eq? @f "@stale_flag_name")
+(#eq? @name "isToggleEnabled")
+(#eq? @argument "@stale_flag_name")
 )"""
-replace_node = "mi"
+replace_node = "method_invocation"
 replace = "@treated"
 groups = [ "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
 
-
+#
+# For @stale_flag_name = STALE_FLAG and @treated = true
+# Before :
+#  exp.isFlagTreated(STALE_FLAG)
+# After :
+#  true
+#
 [[rules]]
 name = "Enum Based, flag enabled"
 query = """((
 	(method_invocation 
-    	name : (_) @n1
+    	name : (_) @name
         arguments: ((argument_list 
         				([
-                          (field_access field: (_)@f)
-                          (_) @f
+                          (field_access field: (_)@argument)
+                          (_) @argument
                          ])) )
         	
-    ) @mi
+    ) @method_invocation
 )
-(#eq? @n1 "isFlagTreated")
-(#eq? @f "@stale_flag_name")
+(#eq? @name "isFlagTreated")
+(#eq? @argument "@stale_flag_name")
 )"""
-replace_node = "mi"
+replace_node = "method_invocation"
 replace = "@treated"
 groups = [ "Returns boolean"]
 holes = ["treated", "stale_flag_name"]
 
+#
+# For @stale_flag_name = STALE_FLAG and @treated = true
+# Before :
+#  exp.isToggleDisabled(STALE_FLAG)
+# After :
+#  false
+#
 [[rules]]
 name = "Enum Based, toggle disabled"
 query = """((
 	(method_invocation 
-    	name : (_) @n1
+    	name : (_) @name
         arguments: ((argument_list 
         				([
-                          (field_access field: (_)@f)
-                          (_) @f
+                          (field_access field: (_)@argument)
+                          (_) @argument
                          ])) )
         	
-    ) @mi
+    ) @method_invocation
 )
-(#eq? @n1 "isToggleDisabled")
-(#eq? @f "@stale_flag_name")
+(#eq? @name "isToggleDisabled")
+(#eq? @argument "@stale_flag_name")
 )"""
-replace_node = "mi"
+replace_node = "method_invocation"
 replace = "@treated_complement"
 groups = [ "Returns boolean"]
 holes = ["treated_complement", "stale_flag_name"]
 
-[[rules]]
-name = "Enum based, Delete enum constant (just the constant)"
-query = """
-    (
-    ((enum_constant name : (_)) @ec)       
-    (#eq? @ec "@stale_flag_name")
-    )
-    """
-replace_node = "ec"
-replace = ""
-groups = []
-holes = ["stale_flag_name"]
-
+#
+# For @stale_flag_name = STALE_FLAG 
+# Before :
+#  enum Flags {
+#   ABC, STALE_FLAG, OTHER_FLAG	
+#  }
+# After :
+#  enum Flags {
+#   ABC, OTHER_FLAG	
+#  }
+#
 [[rules]]
 name = "Enum based, Delete enum constant"
 query = """
@@ -90,78 +108,111 @@ replace = ""
 groups = []
 holes = ["stale_flag_name"]
 
-
+#
+# For @stale_flag_name = STALE_FLAG and @treated = true
+# Before :
+#   exp.putToggleEnabled(STALE_FLAG);
+# After :
+#   
+#
 [[rules]]
 name = "Enum based, method invocation, put enabled"
 query = """
 (
-(expression_statement (method_invocation name : (_) @n
+(expression_statement (method_invocation name : (_) @name
 					arguments: (argument_list
                     			([
-		                          (field_access field: (_)@f)
-        		                  (_) @f
-                		         ])))@m) @expr
- (#eq? @n "putToggleEnabled")
- (#eq? @f "@stale_flag_name")
+		                          (field_access field: (_)@argument)
+        		                  (_) @argument
+                		         ])))) @expression_statement
+ (#eq? @name "putToggleEnabled")
+ (#eq? @argument "@stale_flag_name")
 )
 """
-replace_node = "expr"
+replace_node = "expression_statement"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
 
+#
+# For @stale_flag_name = STALE_FLAG and @treated = true
+# Before :
+#   exp.putToggleDisabled(STALE_FLAG);
+# After :
+#   
+#
 [[rules]]
 name = "Enum based, method invocation, put disabled"
 query = """
 (
-(expression_statement (method_invocation name : (_) @n
+(expression_statement (method_invocation name : (_) @name
 					arguments: (argument_list
                     			([
-		                          (field_access field: (_)@f)
-        		                  (_) @f
-                		         ])))@m) @expr
- (#eq? @n "putToggleDisabled")
- (#eq? @f "@stale_flag_name")
+		                          (field_access field: (_)@argument)
+        		                  (_) @argument
+                		         ])))) @expression_statement
+ (#eq? @name "putToggleDisabled")
+ (#eq? @argument "@stale_flag_name")
 )
 """
-replace_node = "expr"
+replace_node = "expression_statement"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
 
+#
+# For @stale_flag_name = STALE_FLAG and @treated = true
+# Before :
+#   exp.includeEvent(STALE_FLAG);
+# After :
+#   
+#
 [[rules]]
 name = "Enum based, method invocation, includeEvent"
 query = """
 (
-(expression_statement (method_invocation name : (_) @n
+(expression_statement (method_invocation name : (_) @name
 					arguments: (argument_list
                     			([
-		                          (field_access field: (_)@f)
-        		                  (_) @f
-                		         ])))@m) @expr
- (#eq? @n "includeEvent")
- (#eq? @f "@stale_flag_name")
+		                          (field_access field: (_)@argument)
+        		                  (_) @argument
+                		         ])))) @expression_statement
+ (#eq? @name "includeEvent")
+ (#eq? @argument "@stale_flag_name")
 )
 """
-replace_node = "expr"
+replace_node = "expression_statement"
 replace = ""
 groups = []
 holes = ["stale_flag_name"]
 
+# 
+# interface IExp {
+#  @BoolParam(key = "STALE_FLAG", namespace="NS")	
+#  public void isStaleFeature();
+#  @BoolParam(key = "OTHER_FLAG", namespace="NS")
+#  public void isOtherFeature();
+# }
+#
+# interface IExp {
+#  @BoolParam(key = "OTHER_FLAG", namespace="NS")
+#  public void isOtherFeature();
+# }
+#
 [[rules]]
 name = "Interface based, annotated method declaration"
 query = """
 (
 (method_declaration
 	 (modifiers (annotation
-     				name: (_) @a_name
+     				name: (_) @annotation_name
 					arguments: (annotation_argument_list
                     	(element_value_pair
 							 key: (_) @k1
 							 value: (_) @v1))))
       name: (_) @m_name
- )@m1
- (#eq? @a_name "BoolParam")
+ )@method_declaration
+ (#eq? @annotation_name "BoolParam")
  (#eq? @k1 "key")
  (#eq? @v1 "\\\"@stale_flag_name\\\"")
  )
@@ -177,11 +228,25 @@ query = """
  (#eq? @v2 "\\\"@namespace\\\"")
  )
 """
-replace_node = "m1"
+replace_node = "method_declaration"
 replace = ""
 groups = ["Delete Method"]
 holes = ["stale_flag_name", "namespace"]
 
+# Before :
+#  @ParamDefinition(namespace="NS")
+#  interface IExp {
+#   @BoolParam(key = "STALE_FLAG")	
+#   public void isStaleFeature();
+#   @BoolParam(key = "OTHER_FLAG", namespace="Some_NS")
+#   public void isOtherFeature();
+#  }
+# After :
+#  interface IExp {
+#   @BoolParam(key = "OTHER_FLAG", namespace="Some_NS")
+#   public void isOtherFeature();
+#  }
+#
 [[rules]]
 name = "Interface based, annotated method declaration and interface"
 query= """
@@ -207,6 +272,7 @@ query= """
 	    (_)* @post
     )
 ) @id
+ (#eq? @a_name "ParameterDefinition")
  (#eq? @k1 "namespace")
  (#eq? @v1 "\\\"@namespace\\\"")
  (#eq? @k2 "key")
@@ -218,26 +284,37 @@ replace = ""
 groups = ["Delete Method"]
 holes = ["stale_flag_name", "namespace"]
 
-
+# For @m_name = `isStaleFeature`, @treated = `true`
+# Before :
+#  exp.isStaleFeature().getCachedValue()
+# After: 
+#  true
+#
 [[rules]]
 name = "Interface based, replace method invocation chain with true/false"
 query = """
 (
    ((method_invocation
        object: (method_invocation 
-       			object: (_) @o
-       			name: (identifier) @i2)
-       name : (identifier) @i) 
-       @mi)
-   (#eq? @i "getCachedValue")
-   (#eq? @i2 "@m_name")
-   (#not-match? @o "^[A-Z]+.*")
+       			object: (_) @receiver
+       			name: (identifier) @nested_name)
+       name : (identifier) @name) 
+       @method_invocation)
+   (#eq? @name "getCachedValue")
+   (#eq? @nested_name "@m_name")
+   (#not-match? @receiver "^[A-Z]+.*")
 )"""
-replace_node = "mi"
+replace_node = "method_invocation"
 replace = "@treated"
 groups = ["Returns boolean"]
 holes = ["m_name", "treated"]
 
+# For @m_name = `isStaleFeature`, @treated = `true`
+# Before : 
+# cp.put(e.isStaleFeature(), true);
+# After : 
+# 
+#
 [[rules]]
 name = "Interface based, method invocation, put"
 query = """
@@ -250,16 +327,28 @@ query = """
                 ([(true) (false)])
              ))
 
-            ) @m) ) @expr
+            ) @m) ) @expression_statement
  (#eq? @n "put")
  (#eq? @an "@m_name")
 )
 """
-replace_node = "expr"
+replace_node = "expression_statement"
 replace = ""
 groups = []
 holes = ["m_name"]
- 
+
+#
+# For @stale_flag_name = `STALE_FLAG`, @treated = `true`
+# Before : 
+#  @Pval(name = "STALE_FLAG", namespace= "ns", val = true)
+#  void someTestMethod() {
+#   // Test code 
+#  }
+# After :
+#  void someTestMethod() {
+#   // Test code 
+#  }
+#
 [[rules]]
 name = "Delete annotated method, treated"
 query = """(
@@ -301,6 +390,16 @@ replace = ""
 groups = []
 holes = ["stale_flag_name", "treated", "namespace"]
 
+#
+# For @stale_flag_name = `STALE_FLAG`, @treated = `true`
+# Before : 
+#  @Pval(name = "STALE_FLAG", namespace= "ns", val = false)
+#  void someTestMethod() {
+#   // Test code 
+#  }
+# After :
+# 
+#
 [[rules]]
 name = "Delete annotated method, not treated"
 query = """(
@@ -341,4 +440,3 @@ replace_node = "md3"
 replace = ""
 groups = ["Delete Method"]
 holes = ["stale_flag_name", "treated_complement", "namespace"]
-# 

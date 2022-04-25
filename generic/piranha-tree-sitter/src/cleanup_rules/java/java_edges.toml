@@ -1,3 +1,5 @@
+# The edges in this file specify the the flow between the rules
+
 [[edges]]
 from = "Returns boolean"
 scope = "Parent"
@@ -54,7 +56,7 @@ from = "Replace identifier with value"
 scope = "Parent"
 to = ["Boolean literal cleanup"]
 
-
+# Another workflow for inline variable
 [[edges]]
 from = "Remove assignment-1"
 scope = "Method"
@@ -62,6 +64,7 @@ to = [
   "Inline Local Variable Declaration - Delete variable declaration",
 ]
 
+# Another workflow for inline field
 [[edges]]
 from = "Remove assignment-1"
 scope = "Class"

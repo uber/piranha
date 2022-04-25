@@ -49,6 +49,7 @@ groups = ["If cleanup"]
 #  !false
 # After :
 #  true 
+#
 [[rules]]
 name = "not false"
 query = """
@@ -67,6 +68,7 @@ groups = ["Boolean expression simplify"]
 #  !true
 # After :
 #  false
+#
 [[rules]]
 name = "not True"
 query = """

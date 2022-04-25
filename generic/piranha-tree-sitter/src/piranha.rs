@@ -23,7 +23,7 @@ use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Language, Node, Parser, Point, Range, Tree};
 //TODO: File level comments .. what it does ... what it handles so on 
 
-//TODO: Comments for cstruct and its fields. 
+//TODO: Comments for constructor and its fields. 
 pub struct FlagCleaner {
     rule_store: RuleStore,
     // FIXME: Remove
@@ -43,9 +43,9 @@ impl FlagCleaner {
             .expect("Could not set the language for the parser.");
 
         loop {
-            let curr_rules = self.rule_store.get_global_rules();
+            let current_rules = self.rule_store.get_global_rules();
 
-            println!("Number of global rules {}", curr_rules.len());
+            println!("Number of global rules {}", current_rules.len());
 
             let files_containing_pattern = self.get_relevant_files();
             
@@ -58,15 +58,15 @@ impl FlagCleaner {
                     .or_insert_with(|| {
                         SourceCodeUnit::new(&mut parser, content, &self.input_substitutions, &path)
                     })
-                    .apply_rules(&mut self.rule_store, &curr_rules, &mut parser, None);
+                    .apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
 
-                if self.rule_store.global_rules.len() > curr_rules.len() {
+                if self.rule_store.global_rules.len() > current_rules.len() {
                     println!("Found a new global rule. Will start scanning all the files again.");
                     break;
                 }
             }
 
-            if self.rule_store.global_rules.len() == curr_rules.len() {
+            if self.rule_store.global_rules.len() == current_rules.len() {
                 break;
             }
         }
@@ -113,7 +113,7 @@ impl FlagCleaner {
     /// At the directory level, we would always look to perform global rules. However this is expensive because
     /// it requires parsing each file. To overcome this, we apply this simple
     /// heuristic to find the (upper bound) files that would match one of our current global rules.
-    /// This heurisitic reduces the number of files to parse.
+    /// This heuristic reduces the number of files to parse.
     ///
     pub fn get_grep_heuristics(&self) -> Regex {
         let reg_x = self
@@ -176,7 +176,7 @@ impl SourceCodeUnit {
         return edit;
     }
 
-    /// Will apply the `rule` to all of its occurences in the source code unit.
+    /// Will apply the `rule` to all of its occurrences in the source code unit.
     fn apply_rule(
         &mut self,
         rule: Rule,
@@ -212,7 +212,7 @@ impl SourceCodeUnit {
 
         let mut any_match = false;
 
-        // Recurssively scan the node, and match the rule.
+        // Recursively scan the node, and match the rule.
         if let Some((range, rpl, captures_by_tag)) =
             self.get_any_match_for_rule(&rule, rules_store, root, true)
         {
@@ -220,13 +220,13 @@ impl SourceCodeUnit {
             let edit = self.apply_edit(range, rpl, parser);
             self.substitutions.extend(captures_by_tag);
 
-            let mut curr_edit = edit.clone();
-            let mut curr_rule = rule.clone();
+            let mut current_edit = edit.clone();
+            let mut current_rule = rule.clone();
             let mut file_level_next_rules = vec![];
 
             // perform the parent edits, while queueing the Method and Class level edits.
             loop {
-                let next_rules = rules_store.get_next(&curr_rule, &self.substitutions);
+                let next_rules = rules_store.get_next(&current_rule, &self.substitutions);
                 println!("Next rules {}", format!("{:?}", next_rules.values().flatten().map(|x|x.name.to_string()).collect_vec()).bright_purple());
 
                 // Add Method and Class scoped rules to the
@@ -234,7 +234,7 @@ impl SourceCodeUnit {
                     if [METHOD, CLASS].contains(&scope_s.as_str()) && !rules.is_empty() {
                         for rule in rules {
                             file_level_next_rules.push((
-                                self.get_scope_query(scope_s, curr_edit, rules_store),
+                                self.get_scope_query(scope_s, current_edit, rules_store),
                                 rule.instantiate(&self.substitutions),
                             ));
                         }
@@ -247,11 +247,11 @@ impl SourceCodeUnit {
 
                 // Process the parent
                 if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
-                    self.match_rules_to_context(curr_edit, rules_store, &next_rules[PARENT])
+                    self.match_rules_to_context(current_edit, rules_store, &next_rules[PARENT])
                 {
                     println!("{}", format!("Matched parent for cleanup").green());
-                    curr_edit = self.apply_edit(c_range, replacement_str, parser);
-                    curr_rule = matched_rule;
+                    current_edit = self.apply_edit(c_range, replacement_str, parser);
+                    current_rule = matched_rule;
                     self.substitutions.extend(new_capture_by_tag);
                 } else {
                     // No more parents found for cleanup
@@ -377,13 +377,13 @@ impl SourceCodeUnit {
         rule: &Rule,
         rule_store: &mut RuleStore,
         node: Node,
-        recurssive: bool,
+        recursive: bool,
     ) -> Option<(Range, String, TagMatches)> {
         // Get all matches for the query
         let all_query_matches = node.get_all_matches_for_query(
             self.code.clone(),
             rule_store.get_query(&rule.get_query()),
-            recurssive,
+            recursive,
             Some(rule.replace_node.clone()),
         );
 
@@ -407,9 +407,9 @@ impl SourceCodeUnit {
         rule_store: &mut RuleStore,
     ) -> bool {
         if let Some(constraint) = &rule.constraint {
-            let mut curr_node = node;
+            let mut current_node = node;
             // Get the scope of the predicate
-            while let Some(parent) = curr_node.parent() {
+            while let Some(parent) = current_node.parent() {
                 if let Some((range, _)) = parent.get_match_for_query(
                     &self.code,
                     &constraint.matcher.create_query(rule_store.language),
@@ -427,7 +427,7 @@ impl SourceCodeUnit {
                     return (all_queries_match && constraint.predicate.is_all())
                         || (!all_queries_match && constraint.predicate.is_none());
                 }
-                curr_node = parent;
+                current_node = parent;
             }
         }
         true

@@ -116,8 +116,8 @@ impl TreeSitterHelpers for String {
 
 #[rustfmt::skip]
 pub trait PiranhaRuleMatcher {
-    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recurssive: bool, specific_tag: Option<String>) -> Vec<(Range, TagMatches)>;
-    fn get_match_for_query(&self, source_code: &String, query: &Query, recurssive: bool) -> Option<(Range, TagMatches)>;
+    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recursive: bool, specific_tag: Option<String>) -> Vec<(Range, TagMatches)>;
+    fn get_match_for_query(&self, source_code: &String, query: &Query, recursive: bool) -> Option<(Range, TagMatches)>;
     fn node_matches_range(&self, range: Range) -> bool;
 }
 
@@ -125,7 +125,7 @@ pub trait PiranhaRuleMatcher {
 /// # Arguments
 /// * `source_code` - the corresponding source code string for the node.
 /// * `query` - the query to be applied
-/// * `recurssive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+/// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
 ///
 /// # Returns
 /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
@@ -134,9 +134,9 @@ impl PiranhaRuleMatcher for Node<'_> {
         &self,
         source_code: &String,
         query: &Query,
-        recurssive: bool,
+        recursive: bool,
     ) -> Option<(Range, TagMatches)> {
-        self.get_all_matches_for_query(source_code.to_string(), query, recurssive, None)
+        self.get_all_matches_for_query(source_code.to_string(), query, recursive, None)
             .first()
             .map(|x| x.clone())
     }
@@ -145,7 +145,7 @@ impl PiranhaRuleMatcher for Node<'_> {
     /// # Arguments
     /// * `source_code` - the corresponding source code string for the node.
     /// * `query` - the query to be applied
-    /// * `recurssive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+    /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
     ///
     /// # Returns
     /// A vector of tuples containing the range of the matches in the source code and the corresponding mapping from tags to code snippets.
@@ -155,7 +155,7 @@ impl PiranhaRuleMatcher for Node<'_> {
         &self,
         source_code: String,
         query: &Query,
-        recurssive: bool,
+        recursive: bool,
         specific_tag: Option<String>,
     ) -> Vec<(Range, TagMatches)> {
 
@@ -185,7 +185,7 @@ impl PiranhaRuleMatcher for Node<'_> {
                 continue;
             }
 
-            if recurssive || self.node_matches_range(captured_node_range) {
+            if recursive || self.node_matches_range(captured_node_range) {
                 let mut capture_str_by_tag: HashMap<String, String> = HashMap::new();
                 let mut replace_node_range = captured_node_range;
 
@@ -201,7 +201,7 @@ impl PiranhaRuleMatcher for Node<'_> {
                                         replace_node_range = capture.node.range();
                                     }
                                 }
-                                // Concats code snippets with `\n` corresponding to tags with One or more quantifier (i.e. `*` por `+`)
+                                // Join code snippets corresponding to the same tag, with `\n`.
                                 capture_str_by_tag
                                     .entry(tag_name.clone())
                                     .and_modify(|x| x.push_str(format!("\n{}", node_str).as_str()))
