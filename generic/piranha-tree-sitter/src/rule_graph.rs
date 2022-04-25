@@ -89,14 +89,27 @@ impl RuleStore {
     }
 
     /// Get the next rules to be applied grouped by the scope in which they should be performed. 
-    pub fn get_next(&self, rule: Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
+    pub fn get_next(&self, rule: &Rule, tag_matches: &TagMatches) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
+        
         for (scope, to_rule) in self.rule_graph.get_nbrs(rule_name) {
-            next_rules.collect(
-                String::from(scope),
-                self.rules_by_name[&to_rule].instantiate(&tag_matches),
-            );
+            let next_rule = &self.rules_by_name[&to_rule];
+            if next_rule.is_dummy_rule() {
+                for (next_to_next_rules_scope,next_to_next_rules) in self.get_next(next_rule, tag_matches) {
+                    for nnr in next_to_next_rules {
+                        next_rules.collect(
+                            String::from(&next_to_next_rules_scope),
+                            nnr.instantiate(&tag_matches),
+                        )    
+                    }
+                }
+            } else {
+                next_rules.collect(
+                    String::from(&scope),
+                    next_rule.instantiate(&tag_matches),
+                );
+            }
         }
         for scope in [PARENT, METHOD, CLASS, GLOBAL] {
             next_rules.entry(scope.to_string()).or_default();
@@ -127,8 +140,10 @@ impl ParameterizedRuleGraph {
         // when the either edge endpoint is a group name.
         for edge in edges.edges {
             for f in get_rules_for_tag_or_name(&edge.from) {
-                for t in get_rules_for_tag_or_name(&edge.to) {
-                    graph.collect(f.clone(), (String::from(&edge.scope), t.clone()));
+                for to_edge in &edge.to{
+                    for t in get_rules_for_tag_or_name(&to_edge) {
+                        graph.collect(f.clone(), (String::from(&edge.scope), t.clone()));
+                    }
                 }
             }
         }

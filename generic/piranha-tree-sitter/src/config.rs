@@ -146,6 +146,10 @@ impl Rule {
         })
     }
 
+    pub fn is_dummy_rule(&self) -> bool {
+        return self.name.eq("Statement cleanup") || self.name.eq("Boolean literal cleanup");
+    }
+
     /// Instantiate `self` with substitutions or panic.
     pub fn instantiate(&self, substitutions: &TagMatches) -> Rule {
         if let Ok(r) = self.try_instantiate(substitutions) {
@@ -230,7 +234,7 @@ impl Rule {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Edge {
     pub from: String,
-    pub to: String,
+    pub to: Vec<String>,
     pub scope: String,
 }
 

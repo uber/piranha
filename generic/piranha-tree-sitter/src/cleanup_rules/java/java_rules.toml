@@ -10,6 +10,22 @@
 # limitations under the License.
 
 #TODO: Add an example for each rule 
+
+[[rules]]
+name = "Boolean literal cleanup"
+query = """
+"""
+replace_node = ""
+replace = ""
+
+[[rules]]
+name = "Statement cleanup"
+query = """
+"""
+replace_node = ""
+replace = ""
+
+
 [[rules]]
 name = "Simple If-(optional)else True"
 query = """
@@ -21,7 +37,7 @@ query = """
 """
 replace_node = "ifstmt"
 replace = "@s"
-groups = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup"]
 
 [[rules]]
 name = "Simple If-else False"
@@ -34,7 +50,7 @@ query = """
 @ifstmt)"""
 replace_node = "ifstmt"
 replace = "@el"
-groups = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup"]
 
 
 [[rules]]
@@ -49,7 +65,7 @@ query = """
 """
 replace_node = "ifstmt"
 replace = ""
-groups = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup"]
 
 
 [[rules]]
@@ -64,7 +80,7 @@ query = """
 """
 replace_node = "u"
 replace = "true"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 
 
@@ -79,7 +95,7 @@ query = """
 """
 replace_node = "u"
 replace = "false"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 
 
@@ -95,7 +111,7 @@ query = """
     )@sb)"""
 replace_node = "nested.block"
 replace = "@nested.statements"
-groups = ["Block cleanup", "Statement cleanup"]
+
 
 [[rules]]
 name = "And - left operand is True"
@@ -108,7 +124,7 @@ query = """
 ) @b"""
 replace_node = "b"
 replace = "@other"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 
 [[rules]]
@@ -123,7 +139,7 @@ query = """
 @b)"""
 replace_node = "b"
 replace = "@other"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 
 
@@ -139,7 +155,7 @@ query = """
 @b)"""
 replace_node = "b"
 replace = "true"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "Or - left operand is True"
@@ -154,7 +170,7 @@ query = """
 """
 replace_node = "b"
 replace = "true"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "And - left operand is False"
@@ -168,7 +184,7 @@ query = """
 @bool_expr)"""
 replace_node = "bool_expr"
 replace = "false"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "And - right operand is False"
@@ -184,7 +200,7 @@ query = """
 """
 replace_node = "bool_expr"
 replace = "false"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 
 [[rules]]
@@ -199,7 +215,7 @@ query = """(
 @b)"""
 replace_node = "b"
 replace = "@other"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "Or - right operand is False"
@@ -213,7 +229,7 @@ query = """
 @b)"""
 replace_node = "b"
 replace = "@other"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from left operand"
@@ -227,7 +243,7 @@ query = """(
 @bo)"""
 replace_node = "bo"
 replace = "@e || @r"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "Or - Remove unnecessary brackets from right operand"
@@ -240,7 +256,7 @@ query = """
 @bo)"""
 replace = "@l || @e"
 replace_node = "bo"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "And - Remove unnecessary brackets from left operand "
@@ -253,7 +269,7 @@ query = """
 @bo)"""
 replace_node = "bo"
 replace = "@e && @r"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "And - Remove unnecessary brackets from right operand "
@@ -266,7 +282,7 @@ query = """(
 @bo)"""
 replace_node = "bo"
 replace = "@l && @e"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression simplify"]
 
 
 [[rules]]
@@ -277,7 +293,6 @@ query = """(
          ((statement)+ @post)) @b)"""
 replace_node = "post"
 replace = ""
-groups = ["Block cleanup", "Statement cleanup"]
 
 [[rules]]
 name = "Ternay operator True"
@@ -289,7 +304,7 @@ query = """
 @tt)"""
 replace_node = "tt"
 replace = "@then"
-groups = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup"]
 
 [[rules]]
 name = "Ternay operator False"
@@ -301,7 +316,7 @@ query = """
 @tt)"""
 replace_node = "tt"
 replace = "@else"
-groups = ["If cleanup", "Statement cleanup"]
+groups = ["If cleanup"]
 
 # [[rules]]
 # name = "Parenthesized boolean literal"
@@ -315,7 +330,7 @@ groups = ["If cleanup", "Statement cleanup"]
 # )
 # """
 # replace = "@l"
-# groups = ["Boolean expression cleanup", "Returns boolean"]
+# groups = ["Boolean expression simplify"]
 
 [[rules]]
 name = "Inline Local Variable Declaration - Delete variable declaration"

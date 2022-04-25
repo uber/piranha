@@ -226,10 +226,11 @@ impl SourceCodeUnit {
 
             // perform the parent edits, while queueing the Method and Class level edits.
             loop {
-                let and_then_rules = rules_store.get_next(curr_rule.clone(), &self.substitutions);
+                let next_rules = rules_store.get_next(&curr_rule, &self.substitutions);
+                println!("Next rules {}", format!("{:?}", next_rules.values().flatten().map(|x|x.name.to_string()).collect_vec()).bright_purple());
 
                 // Add Method and Class scoped rules to the
-                for (scope_s, rules) in &and_then_rules {
+                for (scope_s, rules) in &next_rules {
                     if [METHOD, CLASS].contains(&scope_s.as_str()) && !rules.is_empty() {
                         for rule in rules {
                             file_level_next_rules.push((
@@ -240,13 +241,13 @@ impl SourceCodeUnit {
                     }
                 }
                 // Add Global rules as seed rules
-                for r in &and_then_rules[GLOBAL] {
+                for r in &next_rules[GLOBAL] {
                     rules_store.add_global_rule(r, &self.substitutions);
                 }
 
                 // Process the parent
                 if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
-                    self.match_rules_to_context(curr_edit, rules_store, &and_then_rules[PARENT])
+                    self.match_rules_to_context(curr_edit, rules_store, &next_rules[PARENT])
                 {
                     println!("{}", format!("Matched parent for cleanup").green());
                     curr_edit = self.apply_edit(c_range, replacement_str, parser);

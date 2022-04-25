@@ -9,92 +9,75 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# FIXME: Make adjecency list instead of edge list
 [[edges]]
 from = "Returns boolean"
 scope = "Parent"
-to = "Boolean expression cleanup"
+to = ["Boolean literal cleanup"]
 
 [[edges]]
-from = "Returns boolean"
+from = "Boolean literal cleanup"
 scope = "Parent"
-to = "Statement cleanup"
+to = ["Boolean expression simplify", "Statement cleanup"]
 
 [[edges]]
-from = "Returns boolean"
+from = "Statement cleanup"
 scope = "Parent"
-to = "Inline Local Variable Declaration - Delete variable declaration"
+to = [
+  "If cleanup",
+  "Inline Local Variable Declaration - Delete variable declaration",
+  "Inline Field Declaration - Delete field declaration",
+  "Remove assignment-1",
+]
 
 [[edges]]
-from = "Returns boolean"
+from = "Boolean expression simplify"
 scope = "Parent"
-to = "Inline Field Declaration - Delete field declaration"
-
-
-[[edges]]
-from = "Returns boolean"
-scope = "Parent"
-to = "Remove assignment-1"
-
-
-#####################################################################
-
-[[edges]]
-from = "Boolean expression cleanup"
-scope = "Parent"
-to = "Boolean expression cleanup"
+to = ["Boolean literal cleanup"]
 
 [[edges]]
 from = "If cleanup"
 scope = "Parent"
-to = "Block cleanup"
-
-
-[[edges]]
-from = "Inline Local Variable Declaration - Delete variable declaration"
-scope = "Method"
-to = "Replace identifier with value"
-
-
-[[edges]]
-from = "Inline Local Variable Declaration - Delete variable declaration"
-scope = "Method"
-to = "Remove assignment"
-
-
-[[edges]]
-from = "Inline Field Declaration - Delete field declaration"
-scope = "Class"
-to = "Remove assignment"
-
-[[edges]]
-from = "Remove assignment-1"
-scope = "Method"
-to = "Inline Local Variable Declaration - Delete variable declaration"
-
-
-[[edges]]
-from = "Remove assignment-1"
-scope = "Class"
-to = "Inline Field Declaration - Delete field declaration"
-
-
-[[edges]]
-from = "Inline Field Declaration - Delete field declaration"
-scope = "Class"
-to = "Replace identifier with value"
-
-[[edges]]
-from = "Replace identifier with value"
-scope = "Parent"
-to = "Boolean expression cleanup"
-
-[[edges]]
-from = "Replace identifier with value"
-scope = "Parent"
-to = "If cleanup"
+to = ["Remove unnecesary nested block"]
 
 [[edges]]
 from = "Remove unnecesary nested block"
 scope = "Parent"
-to = "Elide all statements after return"
+to = ["Elide all statements after return"]
+
+[[edges]]
+from = "Inline Local Variable Declaration - Delete variable declaration"
+scope = "Method"
+to = [
+  "Replace identifier with value",
+  "Remove assignment",
+]
+
+[[edges]]
+from = "Inline Field Declaration - Delete field declaration"
+scope = "Class"
+to = [
+  "Remove assignment",
+  "Replace identifier with value",
+]
+
+[[edges]]
+from = "Replace identifier with value"
+scope = "Parent"
+to = ["Boolean literal cleanup"]
+
+
+[[edges]]
+from = "Remove assignment-1"
+scope = "Method"
+to = [
+  "Inline Local Variable Declaration - Delete variable declaration",
+]
+
+[[edges]]
+from = "Remove assignment-1"
+scope = "Class"
+to = [
+  "Inline Field Declaration - Delete field declaration"
+]
+
+

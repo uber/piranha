@@ -12,22 +12,26 @@
 [[edges]]
 from = "Interface based, annotated method declaration"
 scope = "Global"
-# populate_holes = ["[@m_name]", "@m_name"]
-to = "Interface based, replace method invocation chain with true/false"
+to = [
+  "Interface based, replace method invocation chain with true/false",
+  "Interface based, method invocation, put",
+]
 
 [[edges]]
 from = "Interface based, annotated method declaration and interface"
 scope = "Global"
-# populate_holes = ["[@m_name]", "@m_name"]
-to = "Interface based, replace method invocation chain with true/false"
+to = [
+  "Interface based, replace method invocation chain with true/false",
+  "Interface based, method invocation, put",
+]
 
-[[edges]]
-from = "Interface based, annotated method declaration and interface"
-scope = "Global"
-to = "Interface based, method invocation, put"
+# [[edges]]
+# from = "Interface based, annotated method declaration and interface"
+# scope = "Global"
+# to = "Interface based, method invocation, put"
 
-[[edges]]
-from = "Interface based, annotated method declaration"
-scope = "Global"
-# populate_holes = ["[@m_name]", "@m_name"]
-to = "Interface based, method invocation, put"
+# [[edges]]
+# from = "Interface based, annotated method declaration"
+# scope = "Global"
+# # populate_holes = ["[@m_name]", "@m_name"]
+# to = "Interface based, method invocation, put"
