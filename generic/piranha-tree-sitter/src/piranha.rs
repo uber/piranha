@@ -21,7 +21,7 @@ use jwalk::WalkDir;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Language, Node, Parser, Point, Range, Tree};
-//TODO: File leven comments .. what it does ... what it handles so on 
+//TODO: File level comments .. what it does ... what it handles so on 
 
 //TODO: Comments for cstruct and its fields. 
 pub struct FlagCleaner {

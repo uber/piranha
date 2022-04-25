@@ -105,27 +105,16 @@ impl RuleStore {
     }
 }
 
-/// a new_type for the rule graph.
+/// Captures the relationship between the rules as a graph (adjecency list)
 pub struct ParameterizedRuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl ParameterizedRuleGraph {
 
-    // Constructs a graph of rules based on the input `edges`
+    // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
     fn new(edges: Edges, all_rules: Rules) -> Self {
-        let mut rules_by_name = HashMap::new();
-        let mut rules_by_group = HashMap::new();
+        let (rules_by_name, rules_by_group) = Rule::get_grouped_rules(all_rules.rules);
 
-        // Collect all the rules based on the group.
-        for rule in all_rules.rules {
-            rules_by_name.insert(rule.name.clone(), rule.clone());
-            if let Some(groups) = &rule.groups {
-                for tag in groups {
-                    rules_by_group.collect(tag.clone(), rule.name.clone());
-                }
-            }
-        }
-
-        // Get the rules corresponding to the given rule name or group name.
+        // A closure that gets the rules corresponding to the given rule name or group name.
         let get_rules_for_tag_or_name = |val: &String| {
             rules_by_name
                 .get(val)
@@ -155,6 +144,21 @@ impl ParameterizedRuleGraph {
     }
 }
 
+
+pub fn get_cleanup_rules (language: &String) -> (Rules, Edges, Vec<ScopeGenerator>) {
+    match language.as_str() {
+        "Java" => (
+            toml::from_str::<Rules>(include_str!("cleanup_rules/java/java_rules.toml")).unwrap(),
+            toml::from_str::<Edges>(include_str!("cleanup_rules/java/java_edges.toml")).unwrap(),
+            toml::from_str::<ScopeConfig>(include_str!("cleanup_rules/java/java_scope_config.toml"),)
+            .map(|x| x.scopes)
+            .unwrap(),
+        ),
+        _ => panic!(),
+    }
+
+}
+
 /// Reads the input configurations and creates a rule graph.
 pub fn read_rule_graph_from_config(
     args: &PiranhaArguments,
@@ -162,16 +166,7 @@ pub fn read_rule_graph_from_config(
     let path_to_config = Path::new(args.path_to_configurations.as_str());
 
     // Read the rules 
-    let (language_rules, language_edges, scopes) = match args.language.as_str() {
-        "Java" => (
-            toml::from_str::<Rules>(include_str!("config/java/java_rules.toml")).unwrap(),
-            toml::from_str::<Edges>(include_str!("config/java/java_edges.toml")).unwrap(),
-            toml::from_str::<ScopeConfig>(include_str!("config/java/java_scope_config.toml"),)
-            .map(|x| x.scopes)
-            .unwrap(),
-        ),
-        _ => panic!(),
-    };
+    let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.language);
 
     // Read the edges 
     let (mut input_rules, input_edges) = (
@@ -193,11 +188,7 @@ pub fn read_rule_graph_from_config(
         edges: [language_edges.edges.clone(), input_edges.edges.clone()].concat(),
     };
 
-    let rules_by_name = all_rules
-        .rules
-        .iter()
-        .map(|r| (r.name.clone(), r.clone()))
-        .collect();
+    let (rules_by_name, _) = Rule::get_grouped_rules(all_rules.rules.clone());
 
     let graph = ParameterizedRuleGraph::new(edges, all_rules);
 

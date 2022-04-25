@@ -12,7 +12,7 @@ Copyright (c) 2019 Uber Technologies, Inc.
 */
 
 
-use crate::tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers};
+use crate::{tree_sitter::{TSQuery, TagMatches, TreeSitterHelpers}, utilities::MapOfVec};
 use clap::Parser;
 use colored::Colorize;
 use serde_derive::Deserialize;
@@ -31,7 +31,7 @@ pub struct Args {
     pub flag_name: String,
     #[clap(short = 'n', long)]
     pub flag_namespace: String,
-    /// is treated?
+    /// is the flag treated?
     #[clap(short = 't', long)]
     pub flag_value: bool,
     /// Folder containing the required configuration files
@@ -159,6 +159,20 @@ impl Rule {
             )
             .red()
         );
+    }
+
+    pub fn get_grouped_rules(rules: Vec<Rule>) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
+        let mut rules_by_name = HashMap::new();
+        let mut rules_by_group = HashMap::new();
+        for rule in rules {
+            rules_by_name.insert(rule.name.clone(), rule.clone());
+            if let Some(groups) = &rule.groups {
+                for tag in groups {
+                    rules_by_group.collect(tag.clone(), rule.name.clone());
+                }
+            }
+        }
+        (rules_by_name, rules_by_group)
     }
 
     /// Tries to instantiate the `self` with the tag matches.

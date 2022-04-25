@@ -43,10 +43,6 @@ impl TSQuery {
         Self::from(self.0.substitute_tags(substitutions))
     }
 
-    pub fn contains(&self, s: &String) -> bool {
-        self.0.contains(s)
-    }
-
     pub fn pretty(&self) -> String {
         return self.0.to_string();
     }
