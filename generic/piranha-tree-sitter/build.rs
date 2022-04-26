@@ -11,7 +11,7 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{path::PathBuf, process::{Command, Stdio}, fs};
+use std::{path::PathBuf, process::{Command, Stdio}};
 
 // TODO: Add a way to checkout github repository, generate
 
@@ -62,6 +62,6 @@ fn build(language: &str)  -> std::io::Result<()>  {
 }
 
 fn main() {
-    build("Java");
-    build("Swift");
+    let _ = build("Java");
+    let _ = build("Swift");
 }

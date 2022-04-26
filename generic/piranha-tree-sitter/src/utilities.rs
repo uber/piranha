@@ -11,6 +11,7 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
+//! Defines general utility functions. 
 use std::collections::HashMap;
 use std::fs::{File};
 use std::hash::Hash;
@@ -18,7 +19,7 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use colored::Colorize;
 
-// Reads a file at `file_path`
+// Reads a file.
 pub fn read_file(file_path: &PathBuf) -> String {
     if let Ok(file) =  File::open(&file_path) {
         let mut content = String::new();
@@ -37,6 +38,7 @@ pub trait MapOfVec<T, V> {
 impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
     
     // Adds the given `value` to the vector corresponding to the `key`. 
+    // Like an adjacency list. 
     fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
         self.entry(key).or_insert_with(Vec::new).push(value);
     }

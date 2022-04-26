@@ -11,6 +11,7 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
+//! Defines the traits containing with utility functions that interface with tree-sitter. 
 use std::collections::HashMap;
 
 use crate::utilities::MapOfVec;

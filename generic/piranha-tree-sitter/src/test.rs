@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
-use crate::config::{Args, PiranhaArguments};
+use crate::config::command_line_arguments::{Args, PiranhaArguments};
 use crate::piranha::FlagCleaner;
 use crate::utilities::read_file;
 

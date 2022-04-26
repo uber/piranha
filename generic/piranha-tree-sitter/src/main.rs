@@ -11,11 +11,12 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
+//! Defines the entrypoint for Piranha. 
 use std::time::Instant;
 
-use crate::{piranha::FlagCleaner, config::Args};
+use crate::{piranha::FlagCleaner};
 use clap::StructOpt;
-use config::PiranhaArguments;
+use config::command_line_arguments:: {PiranhaArguments, Args};
 
 mod config;
 mod piranha;

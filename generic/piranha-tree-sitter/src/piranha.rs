@@ -11,7 +11,8 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::config::{PiranhaArguments, Rule, RuleStore, CLASS, GLOBAL, METHOD, PARENT};
+//! This module contains the core logic for Piranha. 
+use crate::config::{command_line_arguments::PiranhaArguments, Rule, RuleStore, CLASS, GLOBAL, METHOD, PARENT};
 use crate::tree_sitter::{PiranhaRuleMatcher, TreeSitterHelpers};
 use crate::utilities::read_file;
 use colored::Colorize;
@@ -20,15 +21,15 @@ use jwalk::WalkDir;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Node, Parser, Point, Range, Tree};
-//TODO: File level comments .. what it does ... what it handles so on
 
-//TODO: Comments for structs and its fields.
+// Maintains the state of Piranha and the updated content of files in the source code.
 pub struct FlagCleaner {
+    // Maintains Piranha's state
     rule_store: RuleStore,
+    // Path to source code folder
     path_to_codebase: String,
-    extension: String,
-    pub relevant_files: HashMap<PathBuf, SourceCodeUnit>,
-    input_substitutions: HashMap<String, String>,
+    // Files updated by Piranha.
+    pub relevant_files: HashMap<PathBuf, SourceCodeUnit>
 }
 
 impl FlagCleaner {
@@ -36,7 +37,7 @@ impl FlagCleaner {
     pub fn cleanup(&mut self) {
         let mut parser = Parser::new();
         parser
-            .set_language(self.rule_store.language)
+            .set_language(self.rule_store.piranha_args.language)
             .expect("Could not set the language for the parser.");
 
         loop {
@@ -53,7 +54,7 @@ impl FlagCleaner {
                 self.relevant_files
                     .entry(path.to_path_buf())
                     .or_insert_with(|| {
-                        SourceCodeUnit::new(&mut parser, content, &self.input_substitutions, &path)
+                        SourceCodeUnit::new(&mut parser, content, &self.rule_store.piranha_args.input_substitutions, &path)
                     })
                     .apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
 
@@ -82,7 +83,7 @@ impl FlagCleaner {
             .filter(|de| {
                 de.path()
                     .extension()
-                    .map(|e| e.to_str().unwrap().eq(self.extension.as_str()))
+                    .map(|e| e.to_str().unwrap().eq(self.rule_store.piranha_args.extension.as_str()))
                     .unwrap_or(false)
             })
             .map(|f| (f.path().to_path_buf(), read_file(&f.path().to_path_buf())))
@@ -91,14 +92,11 @@ impl FlagCleaner {
     }
 
     pub fn new(args: PiranhaArguments) -> Self {
-        let extension = args.language.get_extension();
         let graph_rule_store = RuleStore::new(&args);
         Self {
             rule_store: graph_rule_store,
             path_to_codebase: args.path_to_code_base,
-            extension: extension.to_string(),
-            relevant_files: HashMap::new(),
-            input_substitutions: args.input_substitutions,
+            relevant_files: HashMap::new()
         }
     }
 
@@ -119,7 +117,7 @@ impl FlagCleaner {
             //Remove duplicates
             .sorted()
             .dedup()
-            //FIXME: Dirty trick to remove tru and false. Ideally, grep heuristic could be a field in itself for a rule.
+            //FIXME: Dirty trick to remove true and false. Ideally, grep heuristic could be a field in itself for a rule.
             // Since not all "holes" could be used as grep heuristic.
             .filter(|x| !x.as_str().eq("true") && !x.as_str().eq("false"))
             .join("|");
@@ -127,6 +125,7 @@ impl FlagCleaner {
     }
 }
 
+// Maintains the updated source code content and AST of the file
 #[derive(Clone)]
 pub struct SourceCodeUnit {
     // The tree representing the file
@@ -134,6 +133,7 @@ pub struct SourceCodeUnit {
     // The content of a file
     pub code: String,
     // The tag substitution cache.
+    // This map is looked up to instantiate new rules.
     pub substitutions: HashMap<String, String>,
     // The path to the source code.
     pub path: PathBuf,
@@ -186,6 +186,7 @@ impl SourceCodeUnit {
         }
     }
 
+    // Applies the rule to the first match in the source code
     fn apply_rule_to_first_match(
         &mut self,
         rule: Rule,
@@ -408,7 +409,7 @@ impl SourceCodeUnit {
             while let Some(parent) = current_node.parent() {
                 if let Some((range, _)) = parent.get_match_for_query(
                     &self.code,
-                    &constraint.matcher.create_query(rule_store.language),
+                    &constraint.matcher.create_query(rule_store.piranha_args.language),
                     false,
                 ) {
                     let scope = self.get_descendant(range.start_byte, range.end_byte);
