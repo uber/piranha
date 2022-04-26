@@ -11,10 +11,14 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
+//! Build script. 
 use std::{path::PathBuf, process::{Command, Stdio}};
 
-// TODO: Add a way to checkout github repository, generate
-
+// Compiles the tree-sitter parser/scanner. 
+// If the tree-sitter source code is not found, it clones the repositories from GitHub 
+// into the folder `piranha/generic/tree-sitter-src` and then generates (and compiles) the parser.c and/or scanner.c
+// Prerequisite: (i) Tree-sitter CLI and (ii) git.
+// Installing tree-sitter's CLI: https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md
 fn build(language: &str)  -> std::io::Result<()>  {
     let (ts_src, git_url) = match language {
         "Java" => ("tree-sitter-java", "https://github.com/tree-sitter/tree-sitter-java.git"),
@@ -24,29 +28,30 @@ fn build(language: &str)  -> std::io::Result<()>  {
     let path_to_all_tree_sitter_src = PathBuf::from(format!("../tree-sitter-src"));
     let path_tree_sitter_src = path_to_all_tree_sitter_src.join(ts_src);
     if !path_tree_sitter_src.exists() {
-        let clone_repo = Command::new("git")
+        let mut clone_repo_cmd = Command::new("git")
             .stdout(Stdio::piped())
             .current_dir(path_to_all_tree_sitter_src)
             .arg("clone")
             .arg(git_url)
-            .output()
-            .unwrap();
-        if clone_repo.status.success() {
+            .spawn().unwrap();
+
+        let clone_repo = clone_repo_cmd.wait().unwrap();
+        if clone_repo.success() {
             println!("Successfully cloned {ts_src}");
         }else{
             panic!("Could not clone repo!");
         }
 
-        let build_repo = Command::new("tree-sitter")
+        let mut build_repo_cmd = Command::new("tree-sitter")
             .stdout(Stdio::piped())
             .current_dir(&path_tree_sitter_src)
             .arg("generate")
-            .output().unwrap();
-
-        if build_repo.status.success() {
+            .spawn().unwrap();
+        let build_repo = build_repo_cmd.wait().unwrap();
+        if build_repo.success() {
             println!("Successfully generated {ts_src}");
         }else{
-            panic!("Could not generate tree-sitter parser/scanner, {:?}", build_repo.stderr);
+            panic!("Could not generate tree-sitter parser/scanner");
         }   
     }
     let dir = path_tree_sitter_src.join("src");
