@@ -11,22 +11,57 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::path::PathBuf;
+use std::{path::PathBuf, process::{Command, Stdio}, fs};
 
 // TODO: Add a way to checkout github repository, generate
 
-fn build(tree_sitter_src: &str) {
-    let dir = PathBuf::from(format!("../tree-sitter-src/{tree_sitter_src}/src"));
+fn build(language: &str)  -> std::io::Result<()>  {
+    let (ts_src, git_url) = match language {
+        "Java" => ("tree-sitter-java", "https://github.com/tree-sitter/tree-sitter-java.git"),
+        "Swift" => ("tree-sitter-swift","https://github.com/alex-pinkus/tree-sitter-swift.git"),
+        _ => panic!("Language not supported!")
+    };
+    let path_to_all_tree_sitter_src = PathBuf::from(format!("../tree-sitter-src"));
+    let path_tree_sitter_src = path_to_all_tree_sitter_src.join(ts_src);
+    if !path_tree_sitter_src.exists() {
+        let clone_repo = Command::new("git")
+            .stdout(Stdio::piped())
+            .current_dir(path_to_all_tree_sitter_src)
+            .arg("clone")
+            .arg(git_url)
+            .output()
+            .unwrap();
+        if clone_repo.status.success() {
+            println!("Successfully cloned {ts_src}");
+        }else{
+            panic!("Could not clone repo!");
+        }
+
+        let build_repo = Command::new("tree-sitter")
+            .stdout(Stdio::piped())
+            .current_dir(&path_tree_sitter_src)
+            .arg("generate")
+            .output().unwrap();
+
+        if build_repo.status.success() {
+            println!("Successfully generated {ts_src}");
+        }else{
+            panic!("Could not generate tree-sitter parser/scanner, {:?}", build_repo.stderr);
+        }   
+    }
+    let dir = path_tree_sitter_src.join("src");
     let mut build = cc::Build::new();
     build.include(&dir).warnings(false);
     build.file(dir.join("parser.c"));
     if dir.join("scanner.c").exists() {
         build.file(dir.join("scanner.c"));
     }
-    build.compile(tree_sitter_src);
+    build.compile(ts_src);
+
+    Ok(())
 }
 
 fn main() {
-    build("tree-sitter-java");
-    build("tree-sitter-swift");
+    build("Java");
+    build("Swift");
 }

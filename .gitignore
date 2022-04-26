@@ -13,7 +13,7 @@ swift/Package.resolved
 generic/piranha-tree-sitter/target
 generic/piranha-tree-sitter/Cargo.lock
 generic/piranha-tree-sitter/.idea
-generic/tree-sitter-query/
-generic/tree-sitter-src/
+generic/tree-sitter-src/tree-sitter-java
+generic/tree-sitter-src/tree-sitter-swift
 .history
 .vscode

@@ -23,10 +23,13 @@ extern "C" {
 }
 
 pub trait TreeSitterHelpers {
+    /// Gets the tree-sitter language model.
     fn get_language(&self) -> Language;
+    /// Gets the file extension.
     fn get_extension(&self) -> &'static str;
+    /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
     fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
-    fn to_rule_hole(&self) -> String;
+    /// Compiles query string to tree_sitter::Query
     fn create_query(&self, language: Language) -> Query;
 }
 
@@ -39,7 +42,6 @@ impl TreeSitterHelpers for String {
         panic!("Could not parse the query : {}", self);
     }
 
-    /// Gets the tree-sitter language model.
     fn get_language(&self) -> Language {
         unsafe {
             match self.as_str() {
@@ -49,7 +51,6 @@ impl TreeSitterHelpers for String {
             }
         }
     }
-    /// Gets the file extension.
     fn get_extension(&self) -> &'static str {
         match self.as_str() {
             "Java" => "java",
@@ -58,20 +59,14 @@ impl TreeSitterHelpers for String {
         }
     }
 
-    /// replaces the keys in `substitutions` with value.
-    /// Before replacing the key, it is transformed to a tree-sitter tag by appending `@`
     fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String {
         let mut output = String::from(self);
         for (tag, substitute) in substitutions {
-            let key = tag.to_rule_hole();
+            // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
+            let key = format!("@{}", tag);
             output = output.replace(&key, &substitute)
         }
         output
-    }
-
-    /// appends `@`
-    fn to_rule_hole(&self) -> String {
-        format!("@{}", self)
     }
 }
 
