@@ -155,6 +155,57 @@ public class EnumConstantTest {
   }
 
   /**
+   * Test for cleaning up an enum in the middle of the list of enum constants, matching on the
+   * constructor argument value, however the argumentIndex is not provided
+   *
+   * <p>See <a href="https://github.com/uber/piranha/issues/143">Issue #143</a>
+   */
+  @Test
+  public void testRemoveMiddleEnumConstantWithNonConstantMembersNoArgIndex() {
+    ErrorProneFlags.Builder b = ErrorProneFlags.builder();
+    b.putFlag("Piranha:FlagName", "stale.flag");
+    b.putFlag("Piranha:IsTreated", "false");
+    b.putFlag("Piranha:ArgumentIndexOptional", "true");
+    b.putFlag("Piranha:Config", "src/test/resources/config/properties_enum_no_arg.json");
+
+    BugCheckerRefactoringTestHelper bcr =
+        BugCheckerRefactoringTestHelper.newInstance(new XPFlagCleaner(b.build()), getClass());
+
+    bcr = bcr.setArgs("-d", temporaryFolder.getRoot().getAbsolutePath());
+
+    bcr.addInputLines(
+            "TestExperimentNameNoArg.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentNameNoArg {",
+            " OTHER_FLAG_1(1,\"other.1\"),",
+            " STALE_FLAG(1,\"stale.flag\"),",
+            " OTHER_FLAG_2(1,\"other.2\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentNameNoArg(int x, final String key) {",
+            "  this.key = x > 1 ? key : key+\"1\";",
+            " }",
+            "}")
+        .addOutputLines(
+            "TestExperimentNameNoArg.java",
+            "package com.uber.piranha;",
+            "public enum TestExperimentNameNoArg {",
+            " OTHER_FLAG_1(1,\"other.1\"),",
+            " OTHER_FLAG_2(1,\"other.2\");",
+            " private final String key;",
+            " public String getKey() {",
+            "   return key;",
+            " }",
+            " TestExperimentNameNoArg(int x, final String key) {",
+            "  this.key = x > 1 ? key : key+\"1\";",
+            " }",
+            "}")
+        .doTest();
+  }
+
+  /**
    * Test for when the last enum constant is removed on an enum with a custom constructor, matching
    * on the enum constant.
    *
