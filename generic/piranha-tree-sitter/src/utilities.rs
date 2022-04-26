@@ -18,7 +18,7 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use colored::Colorize;
 
-// Reads a file at `flie_path`
+// Reads a file at `file_path`
 pub fn read_file(file_path: &PathBuf) -> String {
     if let Ok(file) =  File::open(&file_path) {
         let mut content = String::new();

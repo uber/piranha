@@ -11,14 +11,13 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{time::Instant};
+use std::time::Instant;
 
 use crate::{piranha::FlagCleaner, config::Args};
 use clap::StructOpt;
 use config::PiranhaArguments;
 
 mod config;
-mod rule_graph;
 mod piranha;
 mod tree_sitter;
 mod utilities;

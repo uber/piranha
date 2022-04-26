@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2019 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -11,9 +11,8 @@ Copyright (c) 2019 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::config::{PiranhaArguments, Rule};
-use crate::rule_graph::{RuleStore, CLASS, GLOBAL, METHOD, PARENT};
-use crate::tree_sitter::{PiranhaRuleMatcher, TSQuery, TagMatches, TreeSitterHelpers};
+use crate::config::{PiranhaArguments, Rule, RuleStore, CLASS, GLOBAL, METHOD, PARENT};
+use crate::tree_sitter::{PiranhaRuleMatcher, TreeSitterHelpers};
 use crate::utilities::read_file;
 use colored::Colorize;
 use itertools::Itertools;
@@ -21,9 +20,9 @@ use jwalk::WalkDir;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Language, Node, Parser, Point, Range, Tree};
-//TODO: File level comments .. what it does ... what it handles so on 
+//TODO: File level comments .. what it does ... what it handles so on
 
-//TODO: Comments for constructor and its fields. 
+//TODO: Comments for structs and its fields.
 pub struct FlagCleaner {
     rule_store: RuleStore,
     // FIXME: Remove
@@ -31,7 +30,7 @@ pub struct FlagCleaner {
     path_to_codebase: String,
     extension: String,
     pub relevant_files: HashMap<PathBuf, SourceCodeUnit>,
-    input_substitutions: TagMatches,
+    input_substitutions: HashMap<String, String>,
 }
 
 impl FlagCleaner {
@@ -48,7 +47,7 @@ impl FlagCleaner {
             println!("Number of global rules {}", current_rules.len());
 
             let files_containing_pattern = self.get_relevant_files();
-            
+
             #[rustfmt::skip]
             println!("{}", format!("Will parse and analyze {} files.", files_containing_pattern.len()).green());
 
@@ -125,8 +124,8 @@ impl FlagCleaner {
             .sorted()
             .dedup()
             //FIXME: Dirty trick to remove tru and false. Ideally, grep heuristic could be a field in itself for a rule.
-            // Since not all "holes" could be used as grep heuristic. 
-            .filter(|x|!x.as_str().eq("true") && !x.as_str().eq("false"))
+            // Since not all "holes" could be used as grep heuristic.
+            .filter(|x| !x.as_str().eq("true") && !x.as_str().eq("false"))
             .join("|");
         Regex::new(reg_x.as_str()).unwrap()
     }
@@ -139,7 +138,7 @@ pub struct SourceCodeUnit {
     // The content of a file
     pub code: String,
     // The tag substitution cache.
-    pub substitutions: TagMatches,
+    pub substitutions: HashMap<String, String>,
     // The path to the source code.
     pub path: PathBuf,
 }
@@ -182,7 +181,7 @@ impl SourceCodeUnit {
         rule: Rule,
         rules_store: &mut RuleStore,
         parser: &mut Parser,
-        scope_query: &Option<TSQuery>,
+        scope_query: &Option<String>,
     ) {
         loop {
             if !self.apply_rule_to_first_match(rule.clone(), rules_store, parser, scope_query) {
@@ -196,7 +195,7 @@ impl SourceCodeUnit {
         rule: Rule,
         rules_store: &mut RuleStore,
         parser: &mut Parser,
-        scope_query: &Option<TSQuery>,
+        scope_query: &Option<String>,
     ) -> bool {
         // Get scope node
         let mut root = self.ast.root_node();
@@ -225,29 +224,28 @@ impl SourceCodeUnit {
             let mut file_level_next_rules = vec![];
 
             // perform the parent edits, while queueing the Method and Class level edits.
+            let file_level_scope_names = [METHOD, CLASS];
             loop {
-                let next_rules = rules_store.get_next(&current_rule, &self.substitutions);
-                println!("Next rules {}", format!("{:?}", next_rules.values().flatten().map(|x|x.name.to_string()).collect_vec()).bright_purple());
-
+                let next_rules_by_scope = rules_store.get_next(&current_rule, &self.substitutions);
                 // Add Method and Class scoped rules to the
-                for (scope_s, rules) in &next_rules {
-                    if [METHOD, CLASS].contains(&scope_s.as_str()) && !rules.is_empty() {
+                for (scope_s, rules) in &next_rules_by_scope {
+                    if file_level_scope_names.contains(&scope_s.as_str()) {
                         for rule in rules {
-                            file_level_next_rules.push((
-                                self.get_scope_query(scope_s, current_edit, rules_store),
-                                rule.instantiate(&self.substitutions),
-                            ));
+                            let scope_query =
+                                self.get_scope_query(scope_s, current_edit, rules_store);
+                            file_level_next_rules
+                                .push((scope_query.to_string(), rule.instantiate(&self.substitutions)));
                         }
                     }
                 }
                 // Add Global rules as seed rules
-                for r in &next_rules[GLOBAL] {
+                for r in &next_rules_by_scope[GLOBAL] {
                     rules_store.add_global_rule(r, &self.substitutions);
                 }
 
                 // Process the parent
-                if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) =
-                    self.match_rules_to_context(current_edit, rules_store, &next_rules[PARENT])
+                if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) = self
+                    .match_rules_to_context(current_edit, rules_store, &next_rules_by_scope[PARENT])
                 {
                     println!("{}", format!("Matched parent for cleanup").green());
                     current_edit = self.apply_edit(c_range, replacement_str, parser);
@@ -261,7 +259,7 @@ impl SourceCodeUnit {
             // Apply the method and class level rules
             file_level_next_rules.reverse();
             for (sq, rle) in file_level_next_rules {
-                self.apply_rule(rle, rules_store, parser, &Some(sq));
+                self.apply_rule(rle, rules_store, parser, &Some(sq.to_string()));
             }
         }
         return any_match;
@@ -273,7 +271,7 @@ impl SourceCodeUnit {
         rules_store: &mut RuleStore,
         rules: &Vec<Rule>,
         parser: &mut Parser,
-        scope_query: Option<TSQuery>,
+        scope_query: Option<String>,
     ) {
         for rule in rules.clone() {
             self.apply_rule(rule.clone(), rules_store, parser, &scope_query)
@@ -295,7 +293,7 @@ impl SourceCodeUnit {
         scope_level: &str,
         previous_edit: InputEdit,
         rules_store: &mut RuleStore,
-    ) -> TSQuery {
+    ) -> String {
         let mut changed_node =
             self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
 
@@ -330,13 +328,10 @@ impl SourceCodeUnit {
         previous_edit: InputEdit,
         rules_store: &mut RuleStore,
         rules: &Vec<Rule>,
-    ) -> Option<(Range, String, Rule, TagMatches)> {
-        if rules.is_empty() {
-            return None;
-        }
-        let context = self.get_context(previous_edit);
+    ) -> Option<(Range, String, Rule, HashMap<String, String>)> {
+        let context = || self.get_context(previous_edit);
         for rule in rules {
-            for ancestor in &context {
+            for ancestor in &context() {
                 if let Some((range, replacement, captures_by_tag)) =
                     self.get_any_match_for_rule(&rule, rules_store, ancestor.clone(), false)
                 {
@@ -361,7 +356,12 @@ impl SourceCodeUnit {
         context
     }
 
-    fn new(parser: &mut Parser, code: String, substitutions: &TagMatches, path: &PathBuf) -> Self {
+    fn new(
+        parser: &mut Parser,
+        code: String,
+        substitutions: &HashMap<String, String>,
+        path: &PathBuf,
+    ) -> Self {
         let ast = parser.parse(&code, None).expect("Could not parse code");
         Self {
             ast,
@@ -378,7 +378,7 @@ impl SourceCodeUnit {
         rule_store: &mut RuleStore,
         node: Node,
         recursive: bool,
-    ) -> Option<(Range, String, TagMatches)> {
+    ) -> Option<(Range, String, HashMap<String, String>)> {
         // Get all matches for the query
         let all_query_matches = node.get_all_matches_for_query(
             self.code.clone(),
@@ -403,7 +403,7 @@ impl SourceCodeUnit {
         &self,
         node: Node,
         rule: &Rule,
-        capture_by_tags: &TagMatches,
+        capture_by_tags: &HashMap<String, String>,
         rule_store: &mut RuleStore,
     ) -> bool {
         if let Some(constraint) = &rule.constraint {

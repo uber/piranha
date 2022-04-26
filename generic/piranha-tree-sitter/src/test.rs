@@ -91,7 +91,7 @@ fn get_path_to_test_code_base(language: &str) -> String {
         .to_string()
 }
 
-fn eq_without_whitspace(s1: &String, s2: &String) -> bool {
+fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
     s1.replace("\n", "")
             .replace(" ", "")
             .eq(&s2.replace("\n", "").replace(" ", ""))
@@ -104,7 +104,7 @@ fn check_result(updated_files: HashMap<PathBuf, String>, path_to_expected: PathB
         let updated_file_name =  ufn.unwrap().to_str().unwrap().to_string();
         let expected_file_path = get_file_with_name(path_to_expected.to_path_buf(), &updated_file_name);
         let expected_content = read_file(&expected_file_path);
-        let result =  eq_without_whitspace(&new_content, &expected_content);
+        let result =  eq_without_whitespace(&new_content, &expected_content);
         results.insert(path_buf, result);
     }
 
