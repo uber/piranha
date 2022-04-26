@@ -60,16 +60,12 @@ to = ["Boolean literal cleanup"]
 [[edges]]
 from = "Remove assignment-1"
 scope = "Method"
-to = [
-  "Inline Local Variable Declaration - Delete variable declaration",
-]
+to = ["Inline Local Variable Declaration - Delete variable declaration"]
 
 # Another workflow for inline field
 [[edges]]
 from = "Remove assignment-1"
 scope = "Class"
-to = [
-  "Inline Field Declaration - Delete field declaration"
-]
+to = ["Inline Field Declaration - Delete field declaration"]
 
 

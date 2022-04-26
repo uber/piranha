@@ -19,14 +19,12 @@ use itertools::Itertools;
 use jwalk::WalkDir;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
-use tree_sitter::{InputEdit, Language, Node, Parser, Point, Range, Tree};
+use tree_sitter::{InputEdit, Node, Parser, Point, Range, Tree};
 //TODO: File level comments .. what it does ... what it handles so on
 
 //TODO: Comments for structs and its fields.
 pub struct FlagCleaner {
     rule_store: RuleStore,
-    // FIXME: Remove
-    language: Language,
     path_to_codebase: String,
     extension: String,
     pub relevant_files: HashMap<PathBuf, SourceCodeUnit>,
@@ -38,7 +36,7 @@ impl FlagCleaner {
     pub fn cleanup(&mut self) {
         let mut parser = Parser::new();
         parser
-            .set_language(self.language)
+            .set_language(self.rule_store.language)
             .expect("Could not set the language for the parser.");
 
         loop {
@@ -93,12 +91,10 @@ impl FlagCleaner {
     }
 
     pub fn new(args: PiranhaArguments) -> Self {
-        let language = args.language.get_language();
         let extension = args.language.get_extension();
         let graph_rule_store = RuleStore::new(&args);
         Self {
             rule_store: graph_rule_store,
-            language,
             path_to_codebase: args.path_to_code_base,
             extension: extension.to_string(),
             relevant_files: HashMap::new(),
