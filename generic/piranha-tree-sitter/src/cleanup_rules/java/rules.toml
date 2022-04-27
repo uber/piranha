@@ -76,9 +76,9 @@ query = """
     (unary_expression
         operator: \"!\"
         operand: (true))
-@u)
+@unary_expression)
 """
-replace_node = "u"
+replace_node = "unary_expression"
 replace = "false"
 groups = ["boolean_expression_simplify"]
 
