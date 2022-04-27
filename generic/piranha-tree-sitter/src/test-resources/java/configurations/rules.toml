@@ -1,14 +1,14 @@
-# This file contains rules to the specifc feature flag API.
+# This file contains rules to the specific feature flag API.
 
 #
 # For @stale_flag_name = STALE_FLAG and @treated = true
 # Before 
-#  exp.isToggleEnabled(Expriement.STALE_FLAG)
+#  exp.isToggleEnabled(Experiment.STALE_FLAG)
 # After 
 #  true
 #
 [[rules]]
-name = "Enum Based, toggle enabled"
+name = "replace_isToggleEnabled_with_boolean_literal"
 query = """((
 	(method_invocation 
     	name : (_) @name
@@ -36,7 +36,7 @@ holes = ["treated", "stale_flag_name"]
 #  true
 #
 [[rules]]
-name = "Enum Based, flag enabled"
+name = "replace_isFlagEnabled_with_boolean_literal"
 query = """((
 	(method_invocation 
     	name : (_) @name
@@ -64,7 +64,7 @@ holes = ["treated", "stale_flag_name"]
 #  false
 #
 [[rules]]
-name = "Enum Based, toggle disabled"
+name = "replace_isToggleDisabled_with_boolean_literal"
 query = """((
 	(method_invocation 
     	name : (_) @name
@@ -96,7 +96,7 @@ holes = ["treated_complement", "stale_flag_name"]
 #  }
 #
 [[rules]]
-name = "Enum based, Delete enum constant"
+name = "delete_enum_constant"
 query = """
     (
     ((enum_constant name : (_) @n) @ec)       
@@ -116,7 +116,7 @@ holes = ["stale_flag_name"]
 #   
 #
 [[rules]]
-name = "Enum based, method invocation, put enabled"
+name = "delete_putToggleEnabled"
 query = """
 (
 (expression_statement (method_invocation name : (_) @name
@@ -142,7 +142,7 @@ holes = ["stale_flag_name"]
 #   
 #
 [[rules]]
-name = "Enum based, method invocation, put disabled"
+name = "delete_putToggleDisabled"
 query = """
 (
 (expression_statement (method_invocation name : (_) @name
@@ -168,7 +168,7 @@ holes = ["stale_flag_name"]
 #   
 #
 [[rules]]
-name = "Enum based, method invocation, includeEvent"
+name = "delete_includeEvent"
 query = """
 (
 (expression_statement (method_invocation name : (_) @name
@@ -186,21 +186,21 @@ replace = ""
 groups = []
 holes = ["stale_flag_name"]
 
-# 
+# Before :
 # interface IExp {
 #  @BoolParam(key = "STALE_FLAG", namespace="NS")	
 #  public void isStaleFeature();
 #  @BoolParam(key = "OTHER_FLAG", namespace="NS")
 #  public void isOtherFeature();
 # }
-#
+# After :
 # interface IExp {
 #  @BoolParam(key = "OTHER_FLAG", namespace="NS")
 #  public void isOtherFeature();
 # }
 #
 [[rules]]
-name = "Interface based, annotated method declaration"
+name = "delete_flag_method_declaration_fully_annotated"
 query = """
 (
 (method_declaration
@@ -248,7 +248,7 @@ holes = ["stale_flag_name", "namespace"]
 #  }
 #
 [[rules]]
-name = "Interface based, annotated method declaration and interface"
+name = "delete_flag_method_declaration_inside_annotated_interface"
 query= """
 (
 (interface_declaration
@@ -291,7 +291,7 @@ holes = ["stale_flag_name", "namespace"]
 #  true
 #
 [[rules]]
-name = "Interface based, replace method invocation chain with true/false"
+name = "replace_flag_method_with_boolean_literal"
 query = """
 (
    ((method_invocation
@@ -316,7 +316,7 @@ holes = ["m_name", "treated"]
 # 
 #
 [[rules]]
-name = "Interface based, method invocation, put"
+name = "delete_put"
 query = """
 (
 (expression_statement ((method_invocation name: (_) @n
@@ -350,7 +350,7 @@ holes = ["m_name"]
 #  }
 #
 [[rules]]
-name = "Delete annotated method, treated"
+name = "delete_annotated_test_method_treated"
 query = """(
 (method_declaration
 	(modifiers (annotation name: (_) @n
@@ -401,7 +401,7 @@ holes = ["stale_flag_name", "treated", "namespace"]
 # 
 #
 [[rules]]
-name = "Delete annotated method, not treated"
+name = "delete_annotated_test_method_control"
 query = """(
 (method_declaration
 	(modifiers (annotation name: (_) @n
