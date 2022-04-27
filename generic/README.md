@@ -90,7 +90,7 @@ replace = "true"
 groups = ["Boolean expression cleanup", "Returns boolean"]
 ```
 
-Currently Piranha picks up the language specific configurations from [here](https://github.com/ketkarameya/piranha/tree/feature/piranha-with-tree-sitter/generic/piranha-tree-sitter/src/config)
+Currently Piranha picks up the language specific configurations from `/generic/piranha-tree-sitter/src/config`.
 
 
 # Example

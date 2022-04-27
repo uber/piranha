@@ -19,13 +19,16 @@ use std::{path::PathBuf, process::{Command, Stdio}};
 // into the folder `piranha/generic/tree-sitter-src` and then generates (and compiles) the parser.c and/or scanner.c
 // Prerequisite: (i) Tree-sitter CLI and (ii) git.
 // Installing tree-sitter's CLI: https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md
+
 fn build(language: &str)  -> std::io::Result<()>  {
     let (ts_src, git_url) = match language {
         "Java" => ("tree-sitter-java", "https://github.com/tree-sitter/tree-sitter-java.git"),
-        "Swift" => ("tree-sitter-swift","https://github.com/alex-pinkus/tree-sitter-swift.git"),
         _ => panic!("Language not supported!")
     };
-    let path_to_all_tree_sitter_src = PathBuf::from(format!("../tree-sitter-src"));
+
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    println!("{:?}",project_root.as_os_str().to_str());
+    let path_to_all_tree_sitter_src = project_root.parent().unwrap().join("tree-sitter-src");
     let path_tree_sitter_src = path_to_all_tree_sitter_src.join(ts_src);
     if !path_tree_sitter_src.exists() {
         let mut clone_repo_cmd = Command::new("git")
@@ -68,5 +71,4 @@ fn build(language: &str)  -> std::io::Result<()>  {
 
 fn main() {
     let _ = build("Java");
-    let _ = build("Swift");
 }

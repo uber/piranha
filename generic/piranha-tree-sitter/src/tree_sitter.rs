@@ -20,7 +20,6 @@ use tree_sitter::{Language, Node, Query, QueryCapture, QueryCursor, Range};
 
 extern "C" {
     fn tree_sitter_java() -> Language;
-    fn tree_sitter_swift() -> Language;
 }
 
 pub trait TreeSitterHelpers {
@@ -47,7 +46,6 @@ impl TreeSitterHelpers for String {
         unsafe {
             match self.as_str() {
                 "Java" => tree_sitter_java(),
-                "Swift" => tree_sitter_swift(),
                 _ => panic!("Language not supported"),
             }
         }
@@ -55,7 +53,6 @@ impl TreeSitterHelpers for String {
     fn get_extension(&self) -> &'static str {
         match self.as_str() {
             "Java" => "java",
-            "Swift" => "swift",
             _ => panic!("Language not supported"),
         }
     }
