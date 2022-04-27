@@ -1,4 +1,4 @@
-# The language specific rules in this file are applied after the API spcific change has been performed.
+# The language specific rules in this file are applied after the API specific change has been performed.
 
 # Before : 
 #  if (true) { doSomething(); }
@@ -11,7 +11,7 @@
 #  { doSomething(); } 
 #
 [[rules]]
-name = "If statement - true"
+name = "simplify_if_statement_true"
 query = """
 (
     (if_statement
@@ -21,7 +21,7 @@ query = """
 """
 replace_node = "if_statement"
 replace = "@consequence"
-groups = ["If cleanup"]
+groups = ["if_cleanup"]
 
 # Before : 
 #  if (true) { doSomething(); } else { doSomethingElse();}
@@ -33,7 +33,7 @@ groups = ["If cleanup"]
 # After :
 #  
 [[rules]]
-name = "If statement - false"
+name = "simplify_if_statement_false"
 query = """
 (
     (if_statement
@@ -43,7 +43,7 @@ query = """
 @if_statement)"""
 replace_node = "if_statement"
 replace = "@alternative"
-groups = ["If cleanup"]
+groups = ["if_cleanup"]
 
 # Before : 
 #  !false
@@ -51,7 +51,7 @@ groups = ["If cleanup"]
 #  true 
 #
 [[rules]]
-name = "not false"
+name = "simplify_not_false"
 query = """
 (
     (unary_expression
@@ -61,7 +61,7 @@ query = """
 """
 replace_node = "unary_expression"
 replace = "true"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 
 # Before : 
@@ -70,7 +70,7 @@ groups = ["Boolean expression simplify"]
 #  false
 #
 [[rules]]
-name = "not True"
+name = "simplify_not_true"
 query = """
 (
     (unary_expression
@@ -80,7 +80,7 @@ query = """
 """
 replace_node = "u"
 replace = "false"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 
 # Before : 
@@ -99,7 +99,7 @@ groups = ["Boolean expression simplify"]
 #  }
 #
 [[rules]]
-name = "Remove unnecesary nested block"
+name = "remove_unnecessary_nested_block"
 query = """
 ((block
         (
@@ -117,7 +117,7 @@ replace = "@nested.statements"
 #  abc()
 #
 [[rules]]
-name = "true and something"
+name = "simplify_true_and_something"
 query = """
 (
     (binary_expression
@@ -127,7 +127,7 @@ query = """
 ) @binary_expression"""
 replace_node = "binary_expression"
 replace = "@rhs"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 # Before : 
 #  abc() && true
@@ -135,7 +135,7 @@ groups = ["Boolean expression simplify"]
 #  abc()
 #
 [[rules]]
-name = "something and true"
+name = "simplify_something_and_true"
 query = """
 (
     (binary_expression
@@ -146,7 +146,7 @@ query = """
 @binary_expression)"""
 replace_node = "binary_expression"
 replace = "@lhs"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 # Before : 
 #  false && abc()
@@ -154,7 +154,7 @@ groups = ["Boolean expression simplify"]
 #  false
 #
 [[rules]]
-name = "false and something"
+name = "simplify_false_and_something"
 query = """
 (
     (binary_expression
@@ -165,7 +165,7 @@ query = """
 @binary_expression)"""
 replace_node = "binary_expression"
 replace = "false"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 # Before : 
 #  abc() && false
@@ -173,7 +173,7 @@ groups = ["Boolean expression simplify"]
 #  false
 #
 [[rules]]
-name = "And - right operand is False"
+name = "simplify_something_and_false"
 
 query = """
 (
@@ -186,7 +186,7 @@ query = """
 """
 replace_node = "binary_expression"
 replace = "false"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 
 # Before : 
@@ -195,7 +195,7 @@ groups = ["Boolean expression simplify"]
 #  true
 #
 [[rules]]
-name = "Something or true"
+name = "simplify_something_or_true"
 query = """
 (
     (binary_expression
@@ -206,7 +206,7 @@ query = """
 @binary_expression)"""
 replace_node = "binary_expression"
 replace = "true"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 # Before : 
 #  true || abc()
@@ -214,7 +214,7 @@ groups = ["Boolean expression simplify"]
 #  true
 #
 [[rules]]
-name = "true or something"
+name = "simplify_true_or_something"
 query = """
 (
     (binary_expression
@@ -226,7 +226,7 @@ query = """
 """
 replace_node = "binary_expression"
 replace = "true"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 
 # Before: 
@@ -235,7 +235,7 @@ groups = ["Boolean expression simplify"]
 #  abc()
 #
 [[rules]]
-name = "something or false"
+name = "simplify_something_or_false"
 query = """(
 (
     binary_expression
@@ -246,7 +246,7 @@ query = """(
 @binary_expression)"""
 replace_node = "binary_expression"
 replace = "@lhs"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 # Before: 
 #  false || abc()
@@ -254,7 +254,7 @@ groups = ["Boolean expression simplify"]
 #  abc()
 #
 [[rules]]
-name = "Or - right operand is False"
+name = "simplify_false_or_something"
 query = """
 (
     (binary_expression
@@ -265,7 +265,7 @@ query = """
 @binary_expression)"""
 replace_node = "binary_expression"
 replace = "@rhs"
-groups = ["Boolean expression simplify"]
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  {
@@ -282,7 +282,7 @@ groups = ["Boolean expression simplify"]
 #  } 
 #
 [[rules]]
-name = "Elide all statements after return"
+name = "delete_all_statements_after_return"
 query = """(
         (block  ((statement)* @pre)
          ((return_statement) @r)
@@ -296,7 +296,7 @@ replace = ""
 #  abc()
 #
 [[rules]]
-name = "Ternay operator True"
+name = "simplify_ternary_operator_true"
 query = """
 (
     (ternary_expression condition: (true)
@@ -305,7 +305,7 @@ query = """
 @ternary_expression)"""
 replace_node = "ternary_expression"
 replace = "@consequence"
-groups = ["If cleanup"]
+groups = ["if_cleanup"]
 
 # Before :
 #  false ? abc() : def();
@@ -313,7 +313,7 @@ groups = ["If cleanup"]
 #  def()
 #
 [[rules]]
-name = "Ternay operator False"
+name = "simplify_ternary_operator_false"
 query = """
 (
     (ternary_expression condition: (false)
@@ -322,7 +322,7 @@ query = """
 @ternary_expression)"""
 replace_node = "ternary_expression"
 replace = "@alternative"
-groups = ["If cleanup"]
+groups = ["if_cleanup"]
 
 # Before :
 # public foo someMethod() { 
@@ -351,7 +351,7 @@ groups = ["If cleanup"]
 # }
 #
 [[rules]]
-name = "Inline Local Variable Declaration - Delete variable declaration"
+name = "delete_variable_declaration"
 query = """
 (
 ((local_variable_declaration 
@@ -377,10 +377,10 @@ queries = ["""
 (#not-eq? @a.rhs "@init")
 )"""]
 
-# Same as the rule `Inline Local Variable Declaration - Delete variable declaration`, but applicable to 
+# Same as the rule `delete_variable_declaration`, but applicable to 
 # fields. 
 [[rules]]
-name = "Inline Field Declaration - Delete field declaration"
+name = "delete_field_declaration"
 query = """
 (
 ((field_declaration 
@@ -406,7 +406,7 @@ queries = ["""(
 )"""]
 
 [[rules]]
-name = "Remove assignment"
+name = "remove_boolean_assignments_for_variable"
 query = """
 (
 (expression_statement (assignment_expression
@@ -421,14 +421,14 @@ replace = ""
 groups = []
 holes = ["variable_name", "init"]
 
-# Remove assignment if it is the only assignment in the entire class.
+# remove_boolean_assignments_for_variable if it is the only assignment in the entire class.
 [[rules]]
-name = "Remove assignment-1"
+name = "remove_parent_assignment"
 query = """
 (
 (expression_statement (assignment_expression
                                 left: (_) @variable_name
-                    right: [(true) (false)] @init)) @expression_statement
+                    right: (_) @init)) @expression_statement
 ) 
 """
 replace_node = "expression_statement"
@@ -454,7 +454,7 @@ queries = ["""(
 #  if (true  && abc()) { doSomething(); } 
 #
 [[rules]]
-name = "Replace identifier with value"
+name = "replace_identifier_with_value"
 query = """
 (
 (identifier) @identifier
@@ -469,7 +469,7 @@ holes = ["variable_name", "init"]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 [[rules]]
-name = "Boolean literal cleanup"
+name = "boolean_literal_cleanup"
 query = """
 """
 replace_node = ""
@@ -477,7 +477,7 @@ replace = ""
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
-name = "Statement cleanup"
+name = "statement_cleanup"
 query = """
 """
 replace_node = ""

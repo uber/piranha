@@ -391,6 +391,7 @@ impl ParameterizedRuleGraph {
 
         // A closure that gets the rules corresponding to the given rule name or group name.
         let get_rules_for_tag_or_name = |val: &String| {
+            println!("{}", val);
             rules_by_name
                 .get(val)
                 .map(|v| vec![v.name.clone()])

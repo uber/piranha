@@ -3,69 +3,69 @@
 [[edges]]
 from = "Returns boolean"
 scope = "Parent"
-to = ["Boolean literal cleanup"]
+to = ["boolean_literal_cleanup"]
 
 [[edges]]
-from = "Boolean literal cleanup"
+from = "boolean_literal_cleanup"
 scope = "Parent"
-to = ["Boolean expression simplify", "Statement cleanup"]
+to = ["boolean_expression_simplify", "statement_cleanup"]
 
 [[edges]]
-from = "Boolean expression simplify"
+from = "boolean_expression_simplify"
 scope = "Parent"
-to = ["Boolean literal cleanup"]
+to = ["boolean_literal_cleanup"]
 
 [[edges]]
-from = "Statement cleanup"
+from = "statement_cleanup"
 scope = "Parent"
 to = [
-  "If cleanup",
-  "Inline Local Variable Declaration - Delete variable declaration",
-  "Inline Field Declaration - Delete field declaration",
-  "Remove assignment-1",
+  "if_cleanup",
+  "delete_variable_declaration",
+  "delete_field_declaration",
+  "remove_parent_assignment",
 ]
 
 [[edges]]
-from = "If cleanup"
+from = "if_cleanup"
 scope = "Parent"
-to = ["Remove unnecesary nested block"]
+to = ["remove_unnecessary_nested_block"]
 
 [[edges]]
-from = "Remove unnecesary nested block"
+from = "remove_unnecessary_nested_block"
 scope = "Parent"
-to = ["Elide all statements after return"]
+to = ["delete_all_statements_after_return"]
 
 [[edges]]
-from = "Inline Local Variable Declaration - Delete variable declaration"
+from = "delete_variable_declaration"
 scope = "Method"
 to = [
-  "Replace identifier with value",
-  "Remove assignment",
+  "replace_identifier_with_value",
+  "remove_boolean_assignments_for_variable",
 ]
 
 [[edges]]
-from = "Inline Field Declaration - Delete field declaration"
+from = "delete_field_declaration"
 scope = "Class"
 to = [
-  "Remove assignment",
-  "Replace identifier with value",
+  "remove_boolean_assignments_for_variable",
+  "replace_identifier_with_value",
 ]
 
 [[edges]]
-from = "Replace identifier with value"
+from = "replace_identifier_with_value"
 scope = "Parent"
-to = ["Boolean literal cleanup"]
+to = ["boolean_literal_cleanup"]
 
 # Another workflow for inline variable
 [[edges]]
-from = "Remove assignment-1"
+from = "remove_parent_assignment"
 scope = "Method"
-to = ["Inline Local Variable Declaration - Delete variable declaration"]
+to = ["delete_variable_declaration"]
 
 # Another workflow for inline field
 [[edges]]
-from = "Remove assignment-1"
+from = "remove_parent_assignment"
 scope = "Class"
-to = ["Inline Field Declaration - Delete field declaration"]
+to = ["delete_field_declaration"]
 
 
