@@ -1,0 +1,74 @@
+{
+  "methodProperties": [
+    {
+      "methodName": "isToggleDisabled",
+      "flagType": "control",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isFlagTreated",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleEnabled",
+      "flagType": "treated",
+      "returnType": "boolean",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "putToggleEnabled",
+      "flagType": "set_treated",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "putToggleDisabled",
+      "flagType": "set_control",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "includeEvent",
+      "flagType": "empty",
+      "argumentIndex": 0
+    },
+    {
+      "methodName": "isToggleInGroup",
+      "flagType": "treatmentGroup",
+      "argumentIndex": 0
+    }
+  ],
+  "unnecessaryTestMethodProperties" : [
+    {
+      "methodName": "isTrue",
+      "argumentIndex": 0,
+      "receiverType":"com.uber.piranha.TestObj",
+      "isStatic": "false"
+    }
+  ],
+  "linkURL": "<provide_your_url>",
+  "annotations": [
+    "ToggleTesting",
+    {
+        "name" : "NewToggleTreated",
+        "flag" : "$value",
+        "treated" : "true"
+    },
+    {
+        "name" : "NewToggleControl",
+        "flag" : "$value",
+        "treated" : "false"
+    }
+  ],
+  "enumProperties": [
+    {
+      "enumName": "TestExperimentName",
+      "argumentIndex": 0
+    }
+  ],
+  "cleanupOptions": {
+    "tests.clean_by_setters_heuristic.enabled" : true,
+    "tests.clean_by_setters_heuristic.ignore_other_flag_sets" : false,
+    "tests.clean_by_setters_heuristic.lines_limit" : 100
+  }
+}

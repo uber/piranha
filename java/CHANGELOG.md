@@ -1,3 +1,8 @@
+Version 0.1.8
+-------------
+* Added support for matching flag method invocations when passed as argument [#165]
+* Improve code coverage [#169]
+
 Version 0.1.7
 -------------
 * Added support for matching chain of method invocations for XP APIs [#163]
