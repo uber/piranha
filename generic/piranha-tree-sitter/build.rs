@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Uber Technologies, Inc.
+Copyright (c) 2022 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -20,17 +20,21 @@ use std::{path::PathBuf, process::{Command, Stdio}};
 // Prerequisite: (i) Tree-sitter CLI and (ii) git.
 // Installing tree-sitter's CLI: https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md
 
-fn build(language: &str)  -> std::io::Result<()>  {
+fn build(language: &str)  -> Result<&str, &str>  {
     let (ts_src, git_url) = match language {
         "Java" => ("tree-sitter-java", "https://github.com/tree-sitter/tree-sitter-java.git"),
         _ => panic!("Language not supported!")
     };
 
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    println!("{:?}",project_root.as_os_str().to_str());
     let path_to_all_tree_sitter_src = project_root.parent().unwrap().join("tree-sitter-src");
-    let path_tree_sitter_src = path_to_all_tree_sitter_src.join(ts_src);
-    if !path_tree_sitter_src.exists() {
+    let path_to_tree_sitter_language = path_to_all_tree_sitter_src.join(ts_src);
+    let path_to_tree_sitter_language_src = path_to_tree_sitter_language.join("src");
+    let path_to_tree_sitter_language_parser = path_to_tree_sitter_language_src.join("parser.c");
+    let path_to_tree_sitter_language_scanner = path_to_tree_sitter_language.join("scanner.c");
+    
+    println!("{:?}",project_root.as_os_str().to_str());
+    if !path_to_tree_sitter_language.exists() {
         let mut clone_repo_cmd = Command::new("git")
             .stdout(Stdio::piped())
             .current_dir(path_to_all_tree_sitter_src)
@@ -39,34 +43,31 @@ fn build(language: &str)  -> std::io::Result<()>  {
             .spawn().unwrap();
 
         let clone_repo = clone_repo_cmd.wait().unwrap();
-        if clone_repo.success() {
-            println!("Successfully cloned {ts_src}");
-        }else{
-            panic!("Could not clone repo!");
+        if !clone_repo.success() {
+            return Err("Could not clone tree-sitter language repository - {git_url}");
         }
 
         let mut build_repo_cmd = Command::new("tree-sitter")
             .stdout(Stdio::piped())
-            .current_dir(&path_tree_sitter_src)
+            .current_dir(&path_to_tree_sitter_language)
             .arg("generate")
             .spawn().unwrap();
+            
         let build_repo = build_repo_cmd.wait().unwrap();
-        if build_repo.success() {
-            println!("Successfully generated {ts_src}");
-        }else{
-            panic!("Could not generate tree-sitter parser/scanner");
+        if !build_repo.success() {
+            return Err("Could not generate tree-sitter parser/scanner");
         }   
     }
-    let dir = path_tree_sitter_src.join("src");
+    
     let mut build = cc::Build::new();
-    build.include(&dir).warnings(false);
-    build.file(dir.join("parser.c"));
-    if dir.join("scanner.c").exists() {
-        build.file(dir.join("scanner.c"));
+    build.include(&path_to_tree_sitter_language_src).warnings(false);
+    build.file(path_to_tree_sitter_language_parser);
+    if path_to_tree_sitter_language_scanner.exists() {
+        build.file(path_to_tree_sitter_language_scanner);
     }
     build.compile(ts_src);
 
-    Ok(())
+    return Ok("Successfully built {ts_src}");
 }
 
 fn main() {
