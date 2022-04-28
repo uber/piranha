@@ -26,7 +26,7 @@ name = "simplify_if_statement_true"
 query = """
 (
     (if_statement
-        condition : ((parenthesized_expression ((true) @i)))
+        condition : ((parenthesized_expression [(true) (parenthesized_expression (true))]))
         consequence : ((statement) @consequence))
 @if_statement)
 """
@@ -48,7 +48,7 @@ name = "simplify_if_statement_false"
 query = """
 (
     (if_statement
-        condition : ((parenthesized_expression ((false) @i)))
+        condition : (parenthesized_expression [(false) @i (parenthesized_expression (false))])
         consequence : ((statement) @consequence)
         alternative : ((_) @alternative) ?)
 @if_statement)"""
@@ -67,7 +67,7 @@ query = """
 (
     (unary_expression
         operator: "!"
-        operand: (false))
+        operand: [(false) (parenthesized_expression (false))])
 @unary_expression)
 """
 replace_node = "unary_expression"
@@ -86,7 +86,7 @@ query = """
 (
     (unary_expression
         operator: \"!\"
-        operand: (true))
+        operand: [(true) (parenthesized_expression (true))])
 @unary_expression)
 """
 replace_node = "unary_expression"
@@ -132,7 +132,7 @@ name = "simplify_true_and_something"
 query = """
 (
     (binary_expression
-        left: (true)
+        left: [(true) (parenthesized_expression (true))]
         operator:"&&"
          right : (_)* @rhs )
 ) @binary_expression"""
@@ -152,7 +152,7 @@ query = """
     (binary_expression
         left : (_)* @lhs
         operator:"&&"
-        right: (true)
+        right: [(true) (parenthesized_expression (true))]
     )
 @binary_expression)"""
 replace_node = "binary_expression"
@@ -169,7 +169,7 @@ name = "simplify_false_and_something"
 query = """
 (
     (binary_expression
-        left: (false)
+        left: [(false) (parenthesized_expression (false))]
         operator : "&&"
         right : (_)* @rhs
     )
@@ -191,7 +191,7 @@ query = """
     (binary_expression
         left : (_)* @lhs
         operator : "&&"
-        right: (false)
+        right: [(false) (parenthesized_expression (false))]
     )
 @binary_expression)
 """
@@ -212,7 +212,7 @@ query = """
     (binary_expression
         left : (_)* @lhs
         operator:"||"
-        right: (true)
+        right: [(true) (parenthesized_expression (true))]
     )
 @binary_expression)"""
 replace_node = "binary_expression"
@@ -229,7 +229,7 @@ name = "simplify_true_or_something"
 query = """
 (
     (binary_expression
-        left : (true)
+        left : [(true) (parenthesized_expression (true))]
         operator:"||"
         right: (_)* @rhs
     )
@@ -252,7 +252,7 @@ query = """(
     binary_expression
         left : (_)* @lhs
         operator:"||"
-        right: (false)
+        right: [(false) (parenthesized_expression (false))]
     )
 @binary_expression)"""
 replace_node = "binary_expression"
@@ -269,7 +269,7 @@ name = "simplify_false_or_something"
 query = """
 (
     (binary_expression
-        left : (false)
+        left : [(false) (parenthesized_expression (false))]
         operator:"||"
         right: (_)* @rhs
     )
@@ -310,7 +310,7 @@ replace = ""
 name = "simplify_ternary_operator_true"
 query = """
 (
-    (ternary_expression condition: (true)
+    (ternary_expression condition: [(true) (parenthesized_expression (true))]
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
@@ -327,7 +327,7 @@ groups = ["if_cleanup"]
 name = "simplify_ternary_operator_false"
 query = """
 (
-    (ternary_expression condition: (false)
+    (ternary_expression condition: [(false) (parenthesized_expression (false))]
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
@@ -396,7 +396,7 @@ query = """
 ((field_declaration 
 				declarator: (variable_declarator 
                 					name: (_) @variable_name
-                					value: [(true) (false)] @init)) @field_declaration)
+                					value: [(true) (false) (parenthesized_expression (true)) (parenthesized_expression (false))] @init)) @field_declaration)
 )
 """
 replace_node = "field_declaration"

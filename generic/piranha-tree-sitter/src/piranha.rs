@@ -361,6 +361,9 @@ impl SourceCodeUnit {
             context.push(parent);
             if let Some(grand_parent) = parent.parent() {
                 context.push(grand_parent);
+                if let Some(great_grand_parent) = grand_parent.parent() {
+                    context.push(great_grand_parent);
+                }    
             }
         }
         context

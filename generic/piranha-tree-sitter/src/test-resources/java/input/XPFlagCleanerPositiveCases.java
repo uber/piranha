@@ -67,9 +67,9 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
-  public void complex_conditional_contains_stale_flag() {
+  public void complex_conditional_contains_stale_flag(boolean tBool) {
     // BUG: Diagnostic contains: Cleans stale XP flags
-    if (true || (tBool && experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG))) {
+    if (tBool || (true || exp9.isToggleEnabled(TestExperimentName.STALE_FLAG))) {
       System.out.println("Hello World");
     } else {
       System.out.println("Hi world");
