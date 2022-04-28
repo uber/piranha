@@ -417,7 +417,7 @@ queries = ["""(
 )"""]
 
 [[rules]]
-name = "remove_boolean_assignments_for_variable"
+name = "delete_boolean_assignments_for_variable"
 query = """
 (
 (expression_statement (assignment_expression
@@ -432,9 +432,9 @@ replace = ""
 groups = []
 holes = ["variable_name", "init"]
 
-# remove_boolean_assignments_for_variable if it is the only assignment in the entire class.
+# delete_boolean_assignments_for_variable if it is the only assignment in the entire class.
 [[rules]]
-name = "remove_parent_assignment"
+name = "delete_parent_assignment"
 query = """
 (
 (expression_statement (assignment_expression

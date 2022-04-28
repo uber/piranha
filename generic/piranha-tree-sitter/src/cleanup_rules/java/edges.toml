@@ -34,7 +34,7 @@ to = [
   "if_cleanup",
   "delete_variable_declaration",
   "delete_field_declaration",
-  "remove_parent_assignment",
+  "delete_parent_assignment",
 ]
 
 [[edges]]
@@ -52,14 +52,14 @@ from = "delete_variable_declaration"
 scope = "Method"
 to = [
   "replace_identifier_with_value",
-  "remove_boolean_assignments_for_variable",
+  "delete_boolean_assignments_for_variable",
 ]
 
 [[edges]]
 from = "delete_field_declaration"
 scope = "Class"
 to = [
-  "remove_boolean_assignments_for_variable",
+  "delete_boolean_assignments_for_variable",
   "replace_identifier_with_value",
 ]
 
@@ -70,13 +70,13 @@ to = ["boolean_literal_cleanup"]
 
 # Another workflow for inline variable
 [[edges]]
-from = "remove_parent_assignment"
+from = "delete_parent_assignment"
 scope = "Method"
 to = ["delete_variable_declaration"]
 
 # Another workflow for inline field
 [[edges]]
-from = "remove_parent_assignment"
+from = "delete_parent_assignment"
 scope = "Class"
 to = ["delete_field_declaration"]
 
