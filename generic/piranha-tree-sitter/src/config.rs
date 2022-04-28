@@ -129,29 +129,11 @@ pub struct Rule {
     /// Heuristics for identifying potential files containing occurrence of the rule.
     pub grep_heuristics: Option<Vec<String>>,
 }
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Pred(String);
-
-impl Pred {
-    pub fn is_all(&self) -> bool {
-        "All".eq(self.0.as_str())
-    }
-
-    pub fn is_none(&self) -> bool {
-        "None".eq(self.0.as_str())
-    }
-
-    pub fn _is_any(&self) -> bool {
-        "Any".eq(self.0.as_str())
-    }
-}
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
     /// Scope in which the constraint query has to be applied
     pub matcher: String,
-    /// All, None or Any
-    pub predicate: Pred, // All, any , none
     /// The Tree-sitter queries that need to be applied in the matcher scope
     pub queries: Vec<String>,
 }

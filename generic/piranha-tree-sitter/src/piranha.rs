@@ -11,8 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-//! This module contains the core logic for Piranha. 
-use crate::config::{command_line_arguments::PiranhaArguments, Rule, RuleStore, CLASS, GLOBAL, METHOD, PARENT};
+//! This module contains the core logic for Piranha.
+use crate::config::{
+    command_line_arguments::PiranhaArguments, Rule, RuleStore, CLASS, GLOBAL, METHOD, PARENT,
+};
 use crate::tree_sitter::{PiranhaRuleMatcher, TreeSitterHelpers};
 use crate::utilities::read_file;
 use colored::Colorize;
@@ -29,7 +31,7 @@ pub struct FlagCleaner {
     // Path to source code folder
     path_to_codebase: String,
     // Files updated by Piranha.
-    pub relevant_files: HashMap<PathBuf, SourceCodeUnit>
+    pub relevant_files: HashMap<PathBuf, SourceCodeUnit>,
 }
 
 impl FlagCleaner {
@@ -54,7 +56,12 @@ impl FlagCleaner {
                 self.relevant_files
                     .entry(path.to_path_buf())
                     .or_insert_with(|| {
-                        SourceCodeUnit::new(&mut parser, content, &self.rule_store.piranha_args.input_substitutions, &path)
+                        SourceCodeUnit::new(
+                            &mut parser,
+                            content,
+                            &self.rule_store.piranha_args.input_substitutions,
+                            &path,
+                        )
                     })
                     .apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
 
@@ -83,7 +90,11 @@ impl FlagCleaner {
             .filter(|de| {
                 de.path()
                     .extension()
-                    .map(|e| e.to_str().unwrap().eq(self.rule_store.piranha_args.extension.as_str()))
+                    .map(|e| {
+                        e.to_str()
+                            .unwrap()
+                            .eq(self.rule_store.piranha_args.extension.as_str())
+                    })
                     .unwrap_or(false)
             })
             .map(|f| (f.path().to_path_buf(), read_file(&f.path().to_path_buf())))
@@ -96,7 +107,7 @@ impl FlagCleaner {
         Self {
             rule_store: graph_rule_store,
             path_to_codebase: args.path_to_code_base,
-            relevant_files: HashMap::new()
+            relevant_files: HashMap::new(),
         }
     }
 
@@ -230,8 +241,10 @@ impl SourceCodeUnit {
                         for rule in rules {
                             let scope_query =
                                 self.get_scope_query(scope_s, current_edit, rules_store);
-                            file_level_next_rules
-                                .push((scope_query.to_string(), rule.instantiate(&self.substitutions)));
+                            file_level_next_rules.push((
+                                scope_query.to_string(),
+                                rule.instantiate(&self.substitutions),
+                            ));
                         }
                     }
                 }
@@ -409,20 +422,21 @@ impl SourceCodeUnit {
             while let Some(parent) = current_node.parent() {
                 if let Some((range, _)) = parent.get_match_for_query(
                     &self.code,
-                    &constraint.matcher.create_query(rule_store.piranha_args.language),
+                    &constraint
+                        .matcher
+                        .create_query(rule_store.piranha_args.language),
                     false,
                 ) {
                     let scope = self.get_descendant(range.start_byte, range.end_byte);
-                    // Apply the predicate in the scope
-                    let mut all_queries_match = true;
+                    // Check if this query does not match anywhere in the scope
                     for q in &constraint.queries {
                         let query_str = q.substitute_tags(&capture_by_tags);
                         let query = &rule_store.get_query(&query_str);
-                        all_queries_match = all_queries_match
-                            && scope.get_match_for_query(&self.code, query, true).is_some();
+                        if scope.get_match_for_query(&self.code, query, true).is_some() {
+                            return false;
+                        }
                     }
-                    return (all_queries_match && constraint.predicate.is_all())
-                        || (!all_queries_match && constraint.predicate.is_none());
+                    return true;
                 }
                 current_node = parent;
             }

@@ -378,7 +378,6 @@ groups = []
 # assigned to a value other than @init, within the method body
 [rules.constraint]
 matcher = "(method_declaration) @md"
-predicate = "None"
 queries = ["""
 (
 ((assignment_expression
@@ -407,7 +406,6 @@ groups = []
 # assigned to a value other than @init, within the method body
 [rules.constraint]
 matcher = "(class_declaration) @cd"
-predicate = "None"
 queries = ["""(
 ((assignment_expression
     				left: (_) @a.lhs
@@ -448,7 +446,6 @@ groups = []
 holes = []
 [rules.constraint]
 matcher = "(class_declaration) @cd"
-predicate = "None"
 queries = ["""(
 ((assignment_expression
     				left: (_) @a.lhs
