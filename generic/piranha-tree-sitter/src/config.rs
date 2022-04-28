@@ -125,7 +125,7 @@ pub struct Rule {
     /// Holes that need to be filled, in order to instantiate a rule
     pub holes: Option<Vec<String>>,
     /// Additional constraints for matching the rule
-    pub constraint: Option<Constraint>,
+    pub constraints: Option<Vec<Constraint>>,
     /// Heuristics for identifying potential files containing occurrence of the rule.
     pub grep_heuristics: Option<Vec<String>>,
 }
@@ -148,7 +148,7 @@ impl Rule {
             replace,
             holes: self.holes.clone(),
             groups: self.groups.clone(),
-            constraint: self.constraint.clone(),
+            constraints: self.constraints.clone(),
             grep_heuristics: self.grep_heuristics.clone(),
         }
     }

@@ -416,29 +416,32 @@ impl SourceCodeUnit {
         capture_by_tags: &HashMap<String, String>,
         rule_store: &mut RuleStore,
     ) -> bool {
-        if let Some(constraint) = &rule.constraint {
+        if let Some(constraints) = &rule.constraints {
             let mut current_node = node;
             // Get the scope of the predicate
-            while let Some(parent) = current_node.parent() {
-                if let Some((range, _)) = parent.get_match_for_query(
-                    &self.code,
-                    &constraint
-                        .matcher
-                        .create_query(rule_store.piranha_args.language),
-                    false,
-                ) {
-                    let scope = self.get_descendant(range.start_byte, range.end_byte);
-                    // Check if this query does not match anywhere in the scope
-                    for q in &constraint.queries {
-                        let query_str = q.substitute_tags(&capture_by_tags);
-                        let query = &rule_store.get_query(&query_str);
-                        if scope.get_match_for_query(&self.code, query, true).is_some() {
-                            return false;
+            for constraint in constraints {
+                while let Some(parent) = current_node.parent() {
+                    if let Some((range, _)) = parent.get_match_for_query(
+                        &self.code,
+                        &constraint
+                            .matcher
+                            .create_query(rule_store.piranha_args.language),
+                        false,
+                    ) {
+                        let scope = self.get_descendant(range.start_byte, range.end_byte);
+                        // Check if this query does not match anywhere in the scope
+                        for q in &constraint.queries {
+                            let query_str = q.substitute_tags(&capture_by_tags);
+                            println!("Constraint query {:?} {:?} {:?}", query_str, constraint.matcher, rule.name);
+                            let query = &rule_store.get_query(&query_str);
+                            if scope.get_match_for_query(&self.code, query, true).is_some() {
+                                return false;
+                            }
                         }
+                        break;
                     }
-                    return true;
+                    current_node = parent;
                 }
-                current_node = parent;
             }
         }
         true

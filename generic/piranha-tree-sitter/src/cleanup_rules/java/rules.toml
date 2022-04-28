@@ -376,7 +376,7 @@ replace = ""
 groups = []
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
-[rules.constraint]
+[[rules.constraints]]
 matcher = "(method_declaration) @md"
 queries = ["""
 (
@@ -404,7 +404,7 @@ replace = ""
 groups = []
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
-[rules.constraint]
+[[rules.constraints]]
 matcher = "(class_declaration) @cd"
 queries = ["""(
 ((assignment_expression
@@ -414,6 +414,8 @@ queries = ["""(
 (#not-eq? @a.rhs "@init")
 )"""]
 
+# Delete assignment for a particular (@variable_name, @init) if: 
+# (i) If the enclosing method does not contain a variable declaration for @variable_name
 [[rules]]
 name = "delete_boolean_assignments_for_variable"
 query = """
@@ -429,8 +431,20 @@ replace_node = "expression_statement"
 replace = ""
 groups = []
 holes = ["variable_name", "init"]
+[[rules.constraints]]
+matcher = "(method_declaration) @md"
+queries = ["""(
+((local_variable_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @vdcl.lhs
+                					value: (_) @vdcl.init)) @field_declaration)
+(#eq? @vdcl.lhs "@l")
+)"""]
 
-# delete_boolean_assignments_for_variable if it is the only assignment in the entire class.
+# delete assignment if 
+# (i) if it is the only assignment in the entire class in the enclosing class
+# (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
+# (iii) There is no local variable declaration of the same name in the enclosing method
 [[rules]]
 name = "delete_parent_assignment"
 query = """
@@ -444,7 +458,16 @@ replace_node = "expression_statement"
 replace = ""
 groups = []
 holes = []
-[rules.constraint]
+[[rules.constraints]]
+matcher = "(method_declaration) @md"
+queries = ["""(
+((local_variable_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @vdcl.lhs
+                					value: (_)? @vdcl.init)) @variable_declaration)
+(#eq? @vdcl.lhs "@variable_name")
+)"""]
+[[rules.constraints]]
 matcher = "(class_declaration) @cd"
 queries = ["""(
 ((assignment_expression
@@ -452,15 +475,21 @@ queries = ["""(
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)"""]
+)"""
+, 
+"""(
+((field_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @fdcl.lhs
+                					value: (_) @fdcl.init)) @field_declaration)
+(#eq? @fdcl.lhs "@variable_name")
+(#not-eq? @fdcl.init "@init")
+)"""
+]
 
-# Replaces the identifier with the name @variable_name with value @init
-# Let's say @variable_name = `x` and @init = `true`
-# Before :
-#  if (x  && abc()) { doSomething(); }
-# After 
-#  if (true  && abc()) { doSomething(); } 
-#
+# Replace identifier with value if :
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+# TODO: Add field constraint
 [[rules]]
 name = "replace_identifier_with_value"
 query = """
@@ -473,6 +502,15 @@ replace_node = "identifier"
 replace = "@init"
 groups = []
 holes = ["variable_name", "init"]
+[[rules.constraints]]
+matcher = "(method_declaration) @md"
+queries = ["""(
+((local_variable_declaration 
+				declarator: (variable_declarator 
+                					name: (_) @vdcl.lhs
+                					value: (_) @vdcl.init)) @field_declaration)
+(#eq? @vdcl.lhs "@identifier")
+)"""]
 
 
 # Dummy rule that acts as a junction for all boolean based cleanups

@@ -117,7 +117,7 @@ impl PiranhaRuleMatcher for Node<'_> {
         let node_as_str = |n: &Node| n.utf8_text(source_code.as_bytes()).unwrap();
 
         let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
-
+        
         let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> =
             HashMap::new();
         for query_match in query_matches {
@@ -149,7 +149,7 @@ impl PiranhaRuleMatcher for Node<'_> {
                 let mut replace_node_range = captured_node_range;
 
                 for tag_name in query.capture_names().iter() {
-                    for captures in &query_matches {
+                    for captures in query_matches.clone() {
                         for capture in captures {
                             if tag_names_by_index[&(capture.index as usize)].eq(tag_name) {
                                 let code_snippet = node_as_str(&capture.node);
@@ -176,6 +176,8 @@ impl PiranhaRuleMatcher for Node<'_> {
                 output.push((replace_node_range,code_snippet_by_tag));
             }
         }
+        output.sort_by(|a, b|a.0.start_byte.cmp(&b.0.start_byte));
+        output.reverse();
         output
     }
 }

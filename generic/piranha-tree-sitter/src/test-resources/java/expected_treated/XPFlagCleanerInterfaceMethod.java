@@ -83,5 +83,16 @@ class XPFlagCleanerPositiveCases {
     // Currently if there is another assignment, variable will not be inlined.
     System.out.println("Hi world");
     
-}  
+}
+
+ public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(int a, bool abc, int z) {
+    // Currently if there is another assignment, variable will not be inlined.
+    bool ftBool = abc();
+    ftBool = true;
+    if (!ftBool && true) {
+      System.out.println("Hello World");
+    } else {
+      System.out.println("Hi world");
+    }
+  }
 }
