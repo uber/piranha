@@ -13,23 +13,23 @@
 # The edges in this file specify the the flow between the rules
 
 [[edges]]
-from = "replace_expression_with_boolean_literal"
 scope = "Parent"
+from = "replace_expression_with_boolean_literal"
 to = ["boolean_literal_cleanup"]
 
 [[edges]]
-from = "boolean_literal_cleanup"
 scope = "Parent"
+from = "boolean_literal_cleanup"
 to = ["boolean_expression_simplify", "statement_cleanup"]
 
 [[edges]]
-from = "boolean_expression_simplify"
 scope = "Parent"
+from = "boolean_expression_simplify"
 to = ["boolean_literal_cleanup"]
 
 [[edges]]
-from = "statement_cleanup"
 scope = "Parent"
+from = "statement_cleanup"
 to = [
   "if_cleanup",
   "delete_variable_declaration",
@@ -38,46 +38,44 @@ to = [
 ]
 
 [[edges]]
-from = "if_cleanup"
 scope = "Parent"
+from = "if_cleanup"
 to = ["remove_unnecessary_nested_block"]
 
 [[edges]]
-from = "remove_unnecessary_nested_block"
 scope = "Parent"
+from = "remove_unnecessary_nested_block"
 to = ["delete_all_statements_after_return"]
 
 [[edges]]
-from = "delete_variable_declaration"
 scope = "Method"
+from = "delete_variable_declaration"
 to = [
   "replace_identifier_with_value",
   "delete_boolean_assignments_for_variable",
 ]
 
 [[edges]]
-from = "delete_field_declaration"
 scope = "Class"
+from = "delete_field_declaration"
 to = [
   "replace_identifier_with_value",
   "delete_boolean_assignments_for_variable",
 ]
 
 [[edges]]
-from = "replace_identifier_with_value"
 scope = "Parent"
+from = "replace_identifier_with_value"
 to = ["boolean_literal_cleanup"]
 
 # Another workflow for inline variable
 [[edges]]
-from = "delete_parent_assignment"
 scope = "Method"
+from = "delete_parent_assignment"
 to = ["delete_variable_declaration"]
 
 # Another workflow for inline field
 [[edges]]
-from = "delete_parent_assignment"
 scope = "Class"
+from = "delete_parent_assignment"
 to = ["delete_field_declaration"]
-
-
