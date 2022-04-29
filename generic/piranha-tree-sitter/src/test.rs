@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2022 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -21,18 +21,18 @@ use crate::config::command_line_arguments::{Args, PiranhaArguments};
 use crate::piranha::FlagCleaner;
 use crate::utilities::read_file;
 
-
 #[test]
 fn test_java_scenarios_treated() {
     let language = "Java";
-    let path_to_test_resource =  get_path_to_test_resource(language);
+    let path_to_test_resource = get_path_to_test_resource(language);
     let args = PiranhaArguments::new(Args {
         path_to_codebase: get_path_to_test_code_base(language),
-        language: language.to_string(),
-        flag_name: "STALE_FLAG".to_string(),
-        flag_namespace: "some_long_name".to_string(),
-        flag_value: true,
-        path_to_configuration: get_path_test_configurations(language),
+        path_to_feature_flag_rules: get_path_test_configurations(language),
+        path_to_piranha_arguments: PathBuf::from(get_path_test_configurations(language))
+            .join("piranha_arguments_treated.toml")
+            .to_str()
+            .unwrap()
+            .to_string(),
     });
 
     let updated_files = get_cleanups_for_code_base_new(args);
@@ -47,14 +47,15 @@ fn test_java_scenarios_treated() {
 #[test]
 fn test_java_scenarios_control() {
     let language = "Java";
-    let path_to_test_resource =  get_path_to_test_resource(language);
+    let path_to_test_resource = get_path_to_test_resource(language);
     let args = PiranhaArguments::new(Args {
         path_to_codebase: get_path_to_test_code_base(language),
-        language: language.to_string(),
-        flag_name: "STALE_FLAG".to_string(),
-        flag_namespace: "some_long_name".to_string(),
-        flag_value: false,
-        path_to_configuration: get_path_test_configurations(language),
+        path_to_feature_flag_rules: get_path_test_configurations(language),
+        path_to_piranha_arguments: PathBuf::from(get_path_test_configurations(language))
+            .join("piranha_arguments_control.toml")
+            .to_str()
+            .unwrap()
+            .to_string(),
     });
 
     let updated_files = get_cleanups_for_code_base_new(args);
@@ -69,9 +70,9 @@ fn test_java_scenarios_control() {
 fn get_path_to_test_resource(language: &str) -> PathBuf {
     match language {
         "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("src")
-        .join("test-resources")
-        .join("java"),
+            .join("src")
+            .join("test-resources")
+            .join("java"),
         _ => panic!("{} not supported!", language)
     }
 }
@@ -91,35 +92,37 @@ fn get_path_to_test_code_base(language: &str) -> String {
         .to_string()
 }
 
+/// Compares two strings, ignoring new lines, and space.
 fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
     s1.replace("\n", "")
-            .replace(" ", "")
-            .eq(&s2.replace("\n", "").replace(" ", ""))
+        .replace(" ", "")
+        .eq(&s2.replace("\n", "").replace(" ", ""))
 }
 
+/// Checks if the file updates returned by piranha are as expected.
 fn check_result(updated_files: HashMap<PathBuf, String>, path_to_expected: PathBuf) {
     let mut results = HashMap::new();
     for (path_buf, new_content) in &updated_files {
-        let ufn = &path_buf.file_name().clone();
-        let updated_file_name =  ufn.unwrap().to_str().unwrap().to_string();
-        let expected_file_path = get_file_with_name(path_to_expected.to_path_buf(), &updated_file_name);
+        let updated_file_name = &path_buf
+            .file_name()
+            .and_then(|f| f.to_str().map(|x| x.to_string()))
+            .unwrap();
+        let expected_file_path = find_file(&path_to_expected, &updated_file_name);
         let expected_content = read_file(&expected_file_path);
-        let result =  eq_without_whitespace(&new_content, &expected_content);
+        let result = eq_without_whitespace(&new_content, &expected_content);
         results.insert(path_buf, result);
     }
 
-    let mut all_success_scenarios = true;
-    for (file_name, result) in results {
-        if result {
+    let mut all_files_match = true;
+    for (file_name, is_as_expected) in results {
+        if is_as_expected {
             println!("{}", format!("Match successful for {:?}", file_name).green());
-        }else{
+        } else {
             println!("{}", format!("Match failed for {:?}", file_name).red());
-            all_success_scenarios = false;
-            println!("{}", updated_files[file_name]);
+            all_files_match = false;
         }
     }
-    assert!(all_success_scenarios);
-    
+    assert!(all_files_match);
 }
 
 fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
@@ -142,7 +145,7 @@ pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
         .unwrap_or(false)
 }
 
-pub fn get_file_with_name(input_dir: PathBuf, name: &String) -> PathBuf {
+pub fn find_file(input_dir: &PathBuf, name: &String) -> PathBuf {
     fs::read_dir(input_dir)
         .unwrap()
         .filter_map(|d| d.ok())

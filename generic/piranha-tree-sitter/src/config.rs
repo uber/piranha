@@ -23,7 +23,7 @@ use crate::{
 use colored::Colorize;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash, path::Path};
-use tree_sitter::{Query};
+use tree_sitter::Query;
 
 use self::command_line_arguments::PiranhaArguments;
 
@@ -34,34 +34,33 @@ pub static CLASS: &str = "Class";
 pub static PARENT: &str = "Parent";
 
 pub mod command_line_arguments {
-    //! This module contains structs and implementations for parsing and managing command line arguments passed to Piranha. 
-    use std::collections::HashMap;
-    use colored::Colorize;
+    //! This module contains structs and implementations for parsing and managing command line arguments passed to Piranha.
     use clap::Parser;
+    use serde_derive::Deserialize;
+    use std::{collections::HashMap, path::PathBuf};
     use tree_sitter::Language;
 
-    use crate::tree_sitter::TreeSitterHelpers;    
-    
+    use crate::{tree_sitter::TreeSitterHelpers, utilities::read_file};
+
     /// Used for parsing command-line arguments passed to Piranha .
     #[derive(Clone, Parser, Debug)]
     #[clap(author, version, about, long_about = None)]
     pub struct Args {
         /// Path to source code folder.
-        #[clap(short = 'p', long)]
-        pub path_to_codebase: String,
-        #[clap(short = 'l', long)]
-        pub language: String,
-        /// Name of the stale flag
-        #[clap(short = 'f', long)]
-        pub flag_name: String,
-        #[clap(short = 'n', long)]
-        pub flag_namespace: String,
-        /// is the flag treated?
-        #[clap(short = 't', long)]
-        pub flag_value: bool,
-        /// Folder containing the required configuration files
         #[clap(short = 'c', long)]
-        pub path_to_configuration: String,
+        pub path_to_codebase: String,
+        /// Folder containing the required configuration files
+        #[clap(short = 'f', long)]
+        pub path_to_feature_flag_rules: String,
+        /// Path to the file containing arguments for Piranha 
+        #[clap(short = 'p', long)]
+        pub path_to_piranha_arguments: String,
+    }
+
+    #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+    pub struct PiranhaArgsFromConfig {
+        language: Vec<String>,
+        substitutions: Vec<Vec<String>>,
     }
 
     #[derive(Clone)]
@@ -75,36 +74,34 @@ pub mod command_line_arguments {
         pub input_substitutions: HashMap<String, String>,
         /// Folder containing the API specific rules
         pub path_to_configurations: String,
-        // Language name passed in the command line arguments
-        pub language_name: String,
         /// Tree-sitter language model
         pub language: Language,
-        // File extension for language 
+        // File extension for language
         pub extension: String,
     }
 
     impl PiranhaArguments {
         pub fn new(args: Args) -> Self {
-            let input_substitutions = HashMap::from([
-                ("stale_flag_name", &args.flag_name),
-                ("treated", &format!("{}", args.flag_value)),
-                ("namespace", &args.flag_namespace),
-                ("treated_complement", &format!("{}", !args.flag_value)),
-            ])
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect();
+            let piranha_args = toml::from_str::<PiranhaArgsFromConfig>(
+                read_file(&PathBuf::from(args.path_to_piranha_arguments.as_str())).as_str(),
+            )
+            .unwrap();
 
-            #[rustfmt::skip]
-        println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), &format!("{}", args.flag_value), &args.flag_namespace.clone()).purple());
+            let input_substitutions = piranha_args
+                .substitutions
+                .iter()
+                .map(|x| (String::from(&x[0]), String::from(&x[1])))
+                .collect();
+
+            // #[rustfmt::skip]
+            // println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), &format!("{}", args.flag_value), &args.flag_namespace.clone()).purple());
 
             Self {
                 path_to_code_base: args.path_to_codebase.to_string(),
                 input_substitutions,
-                path_to_configurations: args.path_to_configuration.to_string(),
-                language_name:  args.language.to_string(),
-                language: args.language.to_string().get_language(),
-                extension: args.language.get_extension().to_string(),
+                path_to_configurations: args.path_to_feature_flag_rules.to_string(),
+                extension: String::from(&piranha_args.language[0]),
+                language: piranha_args.language[0].get_language(),
             }
         }
     }
@@ -280,7 +277,7 @@ pub struct RuleStore {
     // Scope generators.
     pub scopes: Vec<ScopeGenerator>,
     // Command line arguments passed to piranha
-    pub piranha_args: PiranhaArguments
+    pub piranha_args: PiranhaArguments,
 }
 
 impl RuleStore {
@@ -292,7 +289,7 @@ impl RuleStore {
             rules_by_name,
             global_rules: vec![],
             scopes,
-            piranha_args: args.clone()
+            piranha_args: args.clone(),
         };
 
         for (_, rule) in rule_store.rules_by_name.clone() {
@@ -407,7 +404,7 @@ impl ParameterizedRuleGraph {
 /// Read the language specific cleanup rules.
 pub fn get_cleanup_rules(language: &String) -> (Rules, Edges, Vec<ScopeGenerator>) {
     match language.as_str() {
-        "Java" => (
+        "java" => (
             toml::from_str::<Rules>(include_str!("cleanup_rules/java/rules.toml")).unwrap(),
             toml::from_str::<Edges>(include_str!("cleanup_rules/java/edges.toml")).unwrap(),
             toml::from_str::<ScopeConfig>(include_str!("cleanup_rules/java/scope_config.toml"))
@@ -429,7 +426,7 @@ pub fn read_rule_graph_from_config(
     let path_to_config = Path::new(args.path_to_configurations.as_str());
 
     // Read the language specific cleanup rules and edges
-    let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.language_name);
+    let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.extension);
 
     // Read the API specific cleanup rules and edges
     let (mut input_rules, input_edges) = (

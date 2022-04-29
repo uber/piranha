@@ -13,7 +13,7 @@
 # The edges in this file specify the the flow between the rules
 
 [[edges]]
-from = "Returns boolean"
+from = "replace_expression_with_boolean_literal"
 scope = "Parent"
 to = ["boolean_literal_cleanup"]
 

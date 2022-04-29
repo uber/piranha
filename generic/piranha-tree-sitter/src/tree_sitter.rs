@@ -25,8 +25,6 @@ extern "C" {
 pub trait TreeSitterHelpers {
     /// Gets the tree-sitter language model.
     fn get_language(&self) -> Language;
-    /// Gets the file extension.
-    fn get_extension(&self) -> &'static str;
     /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
     fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
     /// Compiles query string to tree_sitter::Query
@@ -45,15 +43,9 @@ impl TreeSitterHelpers for String {
     fn get_language(&self) -> Language {
         unsafe {
             match self.as_str() {
-                "Java" => tree_sitter_java(),
+                "java" => tree_sitter_java(),
                 _ => panic!("Language not supported"),
             }
-        }
-    }
-    fn get_extension(&self) -> &'static str {
-        match self.as_str() {
-            "Java" => "java",
-            _ => panic!("Language not supported"),
         }
     }
 

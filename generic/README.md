@@ -9,33 +9,61 @@ Adding Piranha support for a new language requires re-implementing the entire re
 This implementation overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query API based rewrite rules, and applying them to the input program as chains of rules.
 
 ## Usage 
-Piranha can be configured to recognize different flag APIs and flag behaviors by specifying a `input_rules.toml` file (and optionally a `input_edges.toml`) and the appropriate command line options. Moreover, Piranha can be configured to operate upon a new language by specifying a `rules.toml`, `edges.toml` and `scope_generators.toml`.
+Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally an `edges.toml`). Piranha can be then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml` . Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
+
 ```
 piranha 0.1.0
 
 USAGE:
-    piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --language <LANGUAGE> --flag-name <FLAG_NAME> --flag-namespace <FLAG_NAMESPACE> --path-to-configuration <PATH_TO_CONFIGURATION>
+    piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-feature-flag-rules <PATH_TO_FEATURE_FLAG_RULES> --path-to-piranha-arguments <PATH_TO_PIRANHA_ARGUMENTS>
 
 OPTIONS:
-    -c, --path-to-configuration <PATH_TO_CONFIGURATION>
+    -c, --path-to-codebase <PATH_TO_CODEBASE>
+            Path to source code folder
+
+    -f, --path-to-feature-flag-rules <PATH_TO_FEATURE_FLAG_RULES>
             Folder containing the required configuration files
-    -f, --flag-name <FLAG_NAME>
-            Name of the stale flag
+
     -h, --help
             Print help information
-    -l, --language <LANGUAGE>
-    -n, --flag-namespace <FLAG_NAMESPACE>
-    -p, --path-to-codebase <PATH_TO_CODEBASE>
-            Input source code folder
-    -t, --flag-value
-            is treated?
+
+    -p, --path-to-piranha-arguments <PATH_TO_PIRANHA_ARGUMENTS>
+            Path to the file containing arguments for Piranha
+
     -V, --version
             Print version information
 ```
 
 ## Configuring Piranha  
 ### Adding a flag API and specifying how it will be updated
-Consider the following definition of a rule in the `input_rules.toml` file. 
+
+The example below shows a usage of an feature flag API (`experiment.isTreated(STALE_FLAG)`), in an `if_statement`. 
+```
+class PiranhaDemo {
+
+    void demoMethod(ExperimentAPI experiment){
+        // Some code 
+        if (experiment.isTreated(STALE_FLAG)) {
+            // Do something
+        } else {
+            // Do something else 
+        }
+        // Do other things
+    }
+}
+```
+In the case when STALE_FLAG is treated, we would expect Piranha to refactor the code as shown below (assuming ) : 
+```
+class PiranhaDemo {
+
+    void demoMethod(ExperimentAPI experiment){
+        // Some code 
+        // Do something
+        // Do other things
+    }
+}
+```
+This can be achieved by adding a rule in the `input_rules.toml` file (as shown below) :
 ```
 [[rules]]
 name = "Enum Based, toggle enabled"
@@ -50,23 +78,37 @@ query = """((
         	
     ) @mi
 )
-(#eq? @n1 "isToggleEnabled")
+(#eq? @n1 "isTreated")
 (#eq? @f "@stale_flag_name")
 )"""
 replace_node = "mi"
 replace = "@treated"
-groups = [ "Replace with boolean"]
+groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 ```
-This specifies a rule that matches against expressions like `exp.isToggleEnabled(SOME_FLAG_NAME)` and replaces it with `true` or `false`. 
-The `rule` contains `holes` or template variables that need to be instantiated.
-For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`. 
-The `query` property of the rule contains a tree-sitter query that is matched against the source code. 
+This specifies a rule that matches against expressions like `exp.isTreated(SOME_FLAG_NAME)` and replaces it with `true` or `false`. 
+The `query` property of the rule contains a [tree-sitter query](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) that is matched against the source code. 
 The node captured by the tag-name specified in the `replace_node` property is replaced with the pattern specified in the `replace` property.
-The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like regex-replace).
+The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like [regex-replace](https://docs.microsoft.com/en-us/visualstudio/ide/using-regular-expressions-in-visual-studio?view=vs-2022)).
+
+The `rule` contains `holes` or template variables that need to be instantiated.
+For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`.  To specify such a behavior,
+user should create a `piranha_arguments.toml` file as shown below (assuming that the behavior of STALE_FLAG is **treated**): 
+```
+language = ["java"]
+substitutions = [
+    ["stale_flag_name", "STALE_FLAG"],
+    ["treated", "true"]
+]
+```
+This file specifies that, the user wants to perform this refactoring for `java` files. 
+The `substitutions` field captures mapping between the tags and their corresponding concrete values. In this example, we specify that the tag named `stale_flag_name` should be replaced with `STALE_FLAG` and `treated` with `true`.
+
+
+
 Each rule also contains the `groups` property, that specifies the kind of change performed by this rule. Based on this group, appropriate 
-cleanup rules will be performed by Piranha. For instance, `Replace with boolean literal` will trigger deep cleanups (like eliminating `consequent` of a `if statement`) to eliminate dead code caused by replacing an expression with a boolean literal. 
-Currently, Piranha provides deeper clean up after edits that `Replace with boolean literal` , `Delete Statement`, and `Delete Method`.
+cleanup rules will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups (like eliminating `consequent` of a `if statement`) to eliminate dead code caused by replacing an expression with a boolean literal. 
+Currently, Piranha provides deep clean ups for edits that belong the groups -  `replace_expression_with_boolean_literal` , `delete_statement`, and `delete_method`. 
 
 ### Configuring a new language 
 At a higher level, Piranha updates the feature flag API usages related to the stale flag and then cleans up the resulting dead code. 
@@ -85,9 +127,9 @@ query = """
         right: (true)
     )
 @b)"""
-replace_node = "b"
+replace_node = "b"    
 replace = "true"
-groups = ["Boolean expression cleanup", "Returns boolean"]
+groups = ["Boolean expression cleanup", "replace_expression_with_boolean_literal"]
 ```
 
 Currently Piranha picks up the language specific configurations from `/generic/piranha-tree-sitter/src/config`.

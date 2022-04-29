@@ -36,7 +36,7 @@ query = """((
 )"""
 replace_node = "method_invocation"
 replace = "@treated"
-groups = [ "Returns boolean"]
+groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 
 #
@@ -64,7 +64,7 @@ query = """((
 )"""
 replace_node = "method_invocation"
 replace = "@treated"
-groups = [ "Returns boolean"]
+groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 
 #
@@ -92,7 +92,7 @@ query = """((
 )"""
 replace_node = "method_invocation"
 replace = "@treated_complement"
-groups = [ "Returns boolean"]
+groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated_complement", "stale_flag_name"]
 
 #
@@ -317,7 +317,7 @@ query = """
 )"""
 replace_node = "method_invocation"
 replace = "@treated"
-groups = ["Returns boolean"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["m_name", "treated"]
 
 # For @m_name = `isStaleFeature`, @treated = `true`
