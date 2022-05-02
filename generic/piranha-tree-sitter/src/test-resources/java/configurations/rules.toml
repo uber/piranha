@@ -116,7 +116,6 @@ query = """
     """
 replace_node = "ec"
 replace = ""
-groups = []
 holes = ["stale_flag_name"]
 
 #
@@ -142,7 +141,7 @@ query = """
 """
 replace_node = "expression_statement"
 replace = ""
-groups = []
+
 holes = ["stale_flag_name"]
 
 #
@@ -168,7 +167,7 @@ query = """
 """
 replace_node = "expression_statement"
 replace = ""
-groups = []
+
 holes = ["stale_flag_name"]
 
 #
@@ -194,7 +193,6 @@ query = """
 """
 replace_node = "expression_statement"
 replace = ""
-groups = []
 holes = ["stale_flag_name"]
 
 # Before :
@@ -345,7 +343,6 @@ query = """
 """
 replace_node = "expression_statement"
 replace = ""
-groups = []
 holes = ["m_name"]
 
 #
@@ -398,7 +395,6 @@ query = """(
 )"""
 replace_node = "an"
 replace = ""
-groups = []
 holes = ["stale_flag_name", "treated", "namespace"]
 
 #

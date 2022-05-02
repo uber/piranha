@@ -10,7 +10,7 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The edges in this file specify the the flow between the rules
+# The edges in this file specify the the flow between the rules.
 
 [[edges]]
 scope = "Parent"
@@ -48,12 +48,23 @@ from = "remove_unnecessary_nested_block"
 to = ["delete_all_statements_after_return"]
 
 [[edges]]
+scope = "Parent"
+from = "replace_identifier_with_value"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
 scope = "Method"
 from = "delete_variable_declaration"
 to = [
   "replace_identifier_with_value",
-  "delete_boolean_assignments_for_variable",
+  "delete_boolean_assignments_for_variable"
 ]
+
+# Another workflow for inline variable
+[[edges]]
+scope = "Method"
+from = "delete_parent_assignment"
+to = ["delete_variable_declaration"]
 
 [[edges]]
 scope = "Class"
@@ -63,16 +74,6 @@ to = [
   "delete_boolean_assignments_for_variable",
 ]
 
-[[edges]]
-scope = "Parent"
-from = "replace_identifier_with_value"
-to = ["boolean_literal_cleanup"]
-
-# Another workflow for inline variable
-[[edges]]
-scope = "Method"
-from = "delete_parent_assignment"
-to = ["delete_variable_declaration"]
 
 # Another workflow for inline field
 [[edges]]

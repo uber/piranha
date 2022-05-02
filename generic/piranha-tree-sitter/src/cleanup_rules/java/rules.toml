@@ -22,6 +22,7 @@
 #  { doSomething(); } 
 #
 [[rules]]
+groups = ["if_cleanup"]
 name = "simplify_if_statement_true"
 query = """
 (
@@ -30,9 +31,8 @@ query = """
         consequence : ((statement) @consequence))
 @if_statement)
 """
-replace_node = "if_statement"
 replace = "@consequence"
-groups = ["if_cleanup"]
+replace_node = "if_statement"
 
 # Before : 
 #  if (true) { doSomething(); } else { doSomethingElse();}
@@ -44,6 +44,7 @@ groups = ["if_cleanup"]
 # After :
 #  
 [[rules]]
+groups = ["if_cleanup"]
 name = "simplify_if_statement_false"
 query = """
 (
@@ -52,9 +53,8 @@ query = """
         consequence : ((statement) @consequence)
         alternative : ((_) @alternative) ?)
 @if_statement)"""
-replace_node = "if_statement"
 replace = "@alternative"
-groups = ["if_cleanup"]
+replace_node = "if_statement"
 
 # Before : 
 #  !false
@@ -62,6 +62,7 @@ groups = ["if_cleanup"]
 #  true 
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_not_false"
 query = """
 (
@@ -70,10 +71,8 @@ query = """
         operand: [(false) (parenthesized_expression (false))])
 @unary_expression)
 """
-replace_node = "unary_expression"
 replace = "true"
-groups = ["boolean_expression_simplify"]
-
+replace_node = "unary_expression"
 
 # Before : 
 #  !true
@@ -81,6 +80,7 @@ groups = ["boolean_expression_simplify"]
 #  false
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_not_true"
 query = """
 (
@@ -89,10 +89,8 @@ query = """
         operand: [(true) (parenthesized_expression (true))])
 @unary_expression)
 """
-replace_node = "unary_expression"
 replace = "false"
-groups = ["boolean_expression_simplify"]
-
+replace_node = "unary_expression"
 
 # Before : 
 #  {
@@ -119,8 +117,8 @@ query = """
             (_)* @post
         )
     )@block)"""
-replace_node = "nested.block"
 replace = "@nested.statements"
+replace_node = "nested.block"
 
 # Before : 
 #  true && abc()
@@ -129,6 +127,7 @@ replace = "@nested.statements"
 #
 
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_true_and_something"
 query = """
 (
@@ -138,9 +137,8 @@ query = """
         right : (_)* @rhs) 
 ) @binary_expression
 """
-replace_node = "binary_expression"
 replace = "@rhs"
-groups = ["boolean_expression_simplify"]
+replace_node = "binary_expression"
 
 # Before : 
 #  abc() && true
@@ -148,6 +146,7 @@ groups = ["boolean_expression_simplify"]
 #  abc()
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_something_and_true"
 query = """
 (
@@ -157,9 +156,8 @@ query = """
         right: [(true) (parenthesized_expression (true))]
     )
 @binary_expression)"""
-replace_node = "binary_expression"
 replace = "@lhs"
-groups = ["boolean_expression_simplify"]
+replace_node = "binary_expression"
 
 # Before : 
 #  false && abc()
@@ -167,6 +165,7 @@ groups = ["boolean_expression_simplify"]
 #  false
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_false_and_something"
 query = """
 (
@@ -176,9 +175,8 @@ query = """
         right : (_)* @rhs
     )
 @binary_expression)"""
-replace_node = "binary_expression"
 replace = "false"
-groups = ["boolean_expression_simplify"]
+replace_node = "binary_expression"
 
 # Before : 
 #  abc() && false
@@ -187,7 +185,7 @@ groups = ["boolean_expression_simplify"]
 #
 [[rules]]
 name = "simplify_something_and_false"
-
+groups = ["boolean_expression_simplify"]
 query = """
 (
     (binary_expression
@@ -197,10 +195,8 @@ query = """
     )
 @binary_expression)
 """
-replace_node = "binary_expression"
 replace = "false"
-groups = ["boolean_expression_simplify"]
-
+replace_node = "binary_expression"
 
 # Before : 
 #  abc() || true
@@ -208,6 +204,7 @@ groups = ["boolean_expression_simplify"]
 #  true
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_true"
 query = """
 (
@@ -217,9 +214,8 @@ query = """
         right: [(true) (parenthesized_expression (true))]
     )
 @binary_expression)"""
-replace_node = "binary_expression"
 replace = "true"
-groups = ["boolean_expression_simplify"]
+replace_node = "binary_expression"
 
 # Before : 
 #  true || abc()
@@ -227,6 +223,7 @@ groups = ["boolean_expression_simplify"]
 #  true
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_true_or_something"
 query = """
 (
@@ -237,10 +234,8 @@ query = """
     )
 @binary_expression)
 """
-replace_node = "binary_expression"
 replace = "true"
-groups = ["boolean_expression_simplify"]
-
+replace_node = "binary_expression"
 
 # Before: 
 #  abc() || false
@@ -248,6 +243,7 @@ groups = ["boolean_expression_simplify"]
 #  abc()
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_false"
 query = """(
 (
@@ -257,9 +253,8 @@ query = """(
         right: [(false) (parenthesized_expression (false))]
     )
 @binary_expression)"""
-replace_node = "binary_expression"
 replace = "@lhs"
-groups = ["boolean_expression_simplify"]
+replace_node = "binary_expression"
 
 # Before: 
 #  false || abc()
@@ -267,6 +262,7 @@ groups = ["boolean_expression_simplify"]
 #  abc()
 #
 [[rules]]
+groups = ["boolean_expression_simplify"]
 name = "simplify_false_or_something"
 query = """
 (
@@ -276,9 +272,8 @@ query = """
         right: (_)* @rhs
     )
 @binary_expression)"""
-replace_node = "binary_expression"
 replace = "@rhs"
-groups = ["boolean_expression_simplify"]
+replace_node = "binary_expression"
 
 # Before :
 #  {
@@ -300,8 +295,8 @@ query = """(
         (block  ((statement)* @pre)
          ((return_statement) @r)
          ((statement)+ @post)) @b)"""
-replace_node = "post"
 replace = ""
+replace_node = "post"
 
 # Before :
 #  true ? abc() : def();
@@ -309,6 +304,7 @@ replace = ""
 #  abc()
 #
 [[rules]]
+groups = ["if_cleanup"]
 name = "simplify_ternary_operator_true"
 query = """
 (
@@ -316,9 +312,8 @@ query = """
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
-replace_node = "ternary_expression"
 replace = "@consequence"
-groups = ["if_cleanup"]
+replace_node = "ternary_expression"
 
 # Before :
 #  false ? abc() : def();
@@ -326,6 +321,7 @@ groups = ["if_cleanup"]
 #  def()
 #
 [[rules]]
+groups = ["if_cleanup"]
 name = "simplify_ternary_operator_false"
 query = """
 (
@@ -333,9 +329,8 @@ query = """
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
-replace_node = "ternary_expression"
 replace = "@alternative"
-groups = ["if_cleanup"]
+replace_node = "ternary_expression"
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
@@ -351,9 +346,9 @@ groups = ["if_cleanup"]
 # }
 #
 # Before inlining a variable we need to ensure that the variable is not re assigned anywhere within the method body 
-# to a value which is not the same as the initlaizer of variable we are inlining..
+# to a value which is not the same as the initializer of variable we are inlining..
 # Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's 
-# initlaizer is `true`. In such a scenario the variable `isFlag` should not be inlined.
+# initializer is `true`. In such a scenario the variable `isFlag` should not be inlined.
 # public foo someMethod() { 
 #  boolean isFlag = true; 
 #  isFlag = getFlagStatus();
@@ -371,24 +366,25 @@ query = """
                 					value: [(true) (false)] @init)) @variable_declaration)
 )
 """
-replace_node = "variable_declaration"
 replace = ""
-groups = []
+replace_node = "variable_declaration"
+
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
 # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
-queries = ["""
+queries = [
+  """
 (
 ((assignment_expression
     				left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)"""]
-
+)""",
+]
 
 # This rule is part (and entry point) of the inline field declaration cleanup.
 # Same as the rule `delete_variable_declaration`, but applicable to 
@@ -403,24 +399,24 @@ query = """
                 					value: [(true) (false) (parenthesized_expression (true)) (parenthesized_expression (false))] @init)) @field_declaration)
 )
 """
-replace_node = "field_declaration"
 replace = ""
-groups = []
+replace_node = "field_declaration"
+
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
-queries = ["""(
+queries = [
+  """(
 ((assignment_expression
     				left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)"""]
-
+)""",
+]
 
 # This rule is part of inline variable declaration and field declaration cleanup. 
-# This rule is applied after the above two rule - `delete_field_declaration` and `delete_variable_declaration`.
 # Delete assignment for a particular (@variable_name, @init) if: 
 # (i) If the enclosing method does not contain a variable declaration for @variable_name
 # (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
@@ -435,22 +431,23 @@ query = """
 (#eq? @r "@init")
 ) 
 """
-replace_node = "expression_statement"
 replace = ""
-groups = []
+replace_node = "expression_statement"
+
 holes = ["variable_name", "init"]
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
-queries = ["""(
+queries = [
+  """(
 ((local_variable_declaration 
 				declarator: (variable_declarator 
                 					name: (_) @vdcl.lhs
                 					value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@l")
-)"""]
+)""",
+]
 
 # This rule is part (and entry point) of the inline variable / field declaration. 
-# After applying this rule, the two rules `delete_field_declaration` and `delete_variable_declaration` are applied. 
 # delete assignment if 
 # (i) if it is the only assignment in the entire class in the enclosing class
 # (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
@@ -464,37 +461,38 @@ query = """
                     right: (_) @init)) @expression_statement
 ) 
 """
-replace_node = "expression_statement"
 replace = ""
-groups = []
-holes = []
+replace_node = "expression_statement"
+
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
-queries = ["""(
+queries = [
+  """(
 ((local_variable_declaration
 				declarator: (variable_declarator 
                 					name: (_) @vdcl.lhs
                 					value: (_)? @vdcl.init)) @variable_declaration)
 (#eq? @vdcl.lhs "@variable_name")
-)"""]
+)""",
+]
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
-queries = ["""(
+queries = [
+  """(
 ((assignment_expression
     				left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)"""
-, 
-"""(
+)""",
+  """(
 ((field_declaration 
 				declarator: (variable_declarator 
                 					name: (_) @fdcl.lhs
                 					value: (_) @fdcl.init)) @field_declaration)
 (#eq? @fdcl.lhs "@variable_name")
 (#not-eq? @fdcl.init "@init")
-)"""
+)""",
 ]
 
 # Replace identifier with value if :
@@ -508,33 +506,34 @@ query = """
 (#eq? @identifier "@variable_name")
 )
 """
-replace_node = "identifier"
 replace = "@init"
-groups = []
+replace_node = "identifier"
+
 holes = ["variable_name", "init"]
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
-queries = ["""(
+queries = [
+  """(
 ((local_variable_declaration 
 				declarator: (variable_declarator 
                 					name: (_) @vdcl.lhs
                 					value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@identifier")
-)"""]
-
+)""",
+]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 [[rules]]
 name = "boolean_literal_cleanup"
 query = """
 """
-replace_node = ""
 replace = ""
+replace_node = ""
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
 query = """
 """
-replace_node = ""
 replace = ""
+replace_node = ""
