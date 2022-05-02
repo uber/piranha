@@ -45,7 +45,7 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
 }
 
 
-/// Initializes a the logger.
+/// Initialize logger.
 pub fn initialize_logger(is_test: bool) {
     let log_file = OpenOptions::new()
         .write(true)

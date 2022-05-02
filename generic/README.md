@@ -111,9 +111,9 @@ cleanup rules will be performed by Piranha. For instance, `replace_expression_wi
 Currently, Piranha provides deep clean ups for edits that belong the groups -  `replace_expression_with_boolean_literal` , `delete_statement`, and `delete_method`. 
 
 ### Configuring a new language 
-At a higher level, Piranha updates the feature flag API usages related to the stale flag and then cleans up the resulting dead code. 
-The configuration discussed in the previous section, describes how to specify the updates to the flag API usages. 
-This section will describe how to encode cleanup rules that would be triggered based on the update to the flag API usages.
+This section describes how to configure Piranha to support a new language. 
+Users who do not intend to onboard a new language can skip this section.
+This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
 These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or inlining variables.
 For instance, the below example shows a rule that simplifies a `or` operation where its RHS is true. 
 ```
@@ -132,7 +132,7 @@ replace = "true"
 groups = ["Boolean expression cleanup", "replace_expression_with_boolean_literal"]
 ```
 
-Currently Piranha picks up the language specific configurations from `/generic/piranha-tree-sitter/src/config`.
+Currently, Piranha picks up the language specific configurations from `src/cleanup_rule/<language>`.
 
 
 # Example
@@ -170,19 +170,21 @@ int foobar(){
 
 We would first define flag API rules as discussed in the section *Configuring Piranha*. Let's say this rule (`F`) would replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`. To perform the desired refactoring we would have to define cleanup rules as follows :
 
-* `R0`: Deletes the enclosing variable declaration (i.e. `x`) 
-* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied (i.e. replace `x` with `true` within the method body of `foobar`)
-* `R2`: simplify the boolean expressions (`true || someCondition()` to `true`, that encloses the node where `R1` was applied )
-* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied(`if (true) { return 100;}` -> `return 100;`),
+* `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. `cleanup_rules/java/rules.toml: delete_variable_declarations`)
+* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. `cleanup_rules/java/rules.toml: replace_expression_with_boolean_literal`) 
+* `R2`: simplify the boolean expressions, for example replace `true || someCondition()` with `true`, that encloses the node where `R1` was applied. (E.g. `cleanup_rules/java/rules.toml: true_or_something`)
+* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied(`if (true) { return 100;}` -> `return 100;`. (E.g. `cleanup_rules/java/rules.toml:  simplify_if_statement_true, remove_unnecessary_nested_block`)
 * `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied.
+(E.g. `cleanup_rules/java/rules.toml:  delete_all_statements_after_return`)
 
 The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file. 
 
 To define how these cleanup rules should be chained, one needs to specify edges (in `edges.toml` file) between the groups and (or) individual rules.
 The edges can be labelled as `ANCESTOR`, `METHOD`, `CLASS` or `GLOBAL`. 
-An `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` -> `R2`, `R2` -> `R3`, `R3` -> `R4`)
-A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` -> `R1`)
-A `CLASS` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. inlining a private field)
-A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. inlining a public field)
+* An `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` -> `R2`, `R2` -> `R3`, `R3` -> `R4`)
+* A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` -> `R1`)
+* A `CLASS` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. inlining a private field)
+* A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. inlining a public field).
 
-
+One would also have to define how to capture the `METHOD` and `CLASS` scopes for the new language by specifying the `scope_config.toml` file.
+Please see `/src/cleanup_rules/java`.
