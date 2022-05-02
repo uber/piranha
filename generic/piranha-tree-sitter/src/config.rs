@@ -21,6 +21,7 @@ use crate::{
 };
 
 use colored::Colorize;
+use log::info;
 use serde_derive::Deserialize;
 use std::{collections::HashMap, hash::Hash, path::Path};
 use tree_sitter::Query;
@@ -36,6 +37,7 @@ pub static PARENT: &str = "Parent";
 pub mod command_line_arguments {
     //! This module contains structs and implementations for parsing and managing command line arguments passed to Piranha.
     use clap::Parser;
+    use colored::Colorize;
     use serde_derive::Deserialize;
     use std::{collections::HashMap, path::PathBuf};
     use tree_sitter::Language;
@@ -95,8 +97,8 @@ pub mod command_line_arguments {
                 .map(|x| (String::from(&x[0]), String::from(&x[1])))
                 .collect();
 
-            // #[rustfmt::skip]
-            // println!("{}",  format!("Piranha arguments are :\n (i) flag_name : {}\n (ii) Value: {} \n (iii) flag_namespace : {}", &args.flag_name.clone(), &format!("{}", args.flag_value), &args.flag_namespace.clone()).purple());
+            #[rustfmt::skip]
+            println!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
             Self {
                 path_to_code_base: args.path_to_codebase.to_string(),
@@ -311,7 +313,7 @@ impl RuleStore {
         }
         if let Ok(mut r) = rule.try_instantiate(&tag_captures) {
             r.add_grep_heuristics_for_global_rules(&tag_captures);
-            println!(
+            info!(
                 "{}",
                 format!("Added Global Rule : {:?} - {}", r.name, r.get_query()).bright_blue()
             );
@@ -387,7 +389,6 @@ impl ParameterizedRuleGraph {
 
         // A closure that gets the rules corresponding to the given rule name or group name.
         let get_rules_for_tag_or_name = |val: &String| {
-            println!("{}", val);
             rules_by_name
                 .get(val)
                 .map(|v| vec![v.name.clone()])

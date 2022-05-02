@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines general utility functions. 
 use std::collections::HashMap;
-use std::fs::{File};
+use std::fs::{File, OpenOptions};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
@@ -42,4 +42,18 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
     fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
         self.entry(key).or_insert_with(Vec::new).push(value);
     }
+}
+
+
+/// Initializes a the logger.
+pub fn initialize_logger(is_test: bool) {
+    let log_file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .append(true)
+        .open("piranha.log")
+        .unwrap();
+    let _ = env_logger::builder().format_timestamp(None)
+        .target(env_logger::Target::Pipe(Box::new(log_file)))
+        .is_test(is_test).try_init();
 }

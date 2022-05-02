@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2022 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -11,33 +11,35 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-//! Defines the entrypoint for Piranha. 
+//! Defines the entrypoint for Piranha.
 use std::time::Instant;
 
-use crate::piranha::FlagCleaner;
+use crate::{piranha::FlagCleaner, utilities::initialize_logger};
 use clap::StructOpt;
-use config::command_line_arguments:: {PiranhaArguments, CommandLineArguments};
+use config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
+use log::{info};
 
 mod config;
 mod piranha;
-mod tree_sitter;
-mod utilities;
 #[cfg(test)]
 mod test;
+mod tree_sitter;
+mod utilities;
 
 fn main() {
+    
     let now = Instant::now();
-    let args = CommandLineArguments::parse();
-    let pa = PiranhaArguments::new(args);
+    initialize_logger(false);
+    
+    let args = PiranhaArguments::new(CommandLineArguments::parse());
 
-    let mut flag_cleaner = FlagCleaner::new(pa);
+    let mut flag_cleaner = FlagCleaner::new(args);
 
-    flag_cleaner.cleanup();
+    flag_cleaner.perform_cleanup();
 
-    for (k, v) in flag_cleaner.get_updated_files() {
-        println!("Updating file {:?}", k);
-        v.persist();
+    for source_code_unit in flag_cleaner.get_updated_files() {
+        source_code_unit.persist();
     }
 
-    println!("Time elapsed - {:?}", now.elapsed().as_secs());
+    info!("Time elapsed - {:?}", now.elapsed().as_secs());
 }

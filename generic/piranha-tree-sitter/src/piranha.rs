@@ -20,6 +20,7 @@ use crate::utilities::read_file;
 use colored::Colorize;
 use itertools::Itertools;
 use jwalk::WalkDir;
+use log::info;
 use regex::Regex;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Node, Parser, Point, Range, Tree};
@@ -37,12 +38,12 @@ pub struct FlagCleaner {
 impl FlagCleaner {
     
     /// Getter for `relevant_files`
-    pub fn get_updated_files(&self) -> HashMap<PathBuf, SourceCodeUnit> {
-        self.relevant_files.clone()
+    pub fn get_updated_files(&self) -> Vec<SourceCodeUnit>  {
+        self.relevant_files.values().cloned().collect_vec()
     }
 
     /// Performs cleanup related to stale flags
-    pub fn cleanup(&mut self) {
+    pub fn perform_cleanup(&mut self) {
         // Setup the parser for the specific language
         let mut parser = Parser::new();
         parser
@@ -53,7 +54,7 @@ impl FlagCleaner {
         loop {
             let current_rules = self.rule_store.get_global_rules();
 
-            println!("Number of global rules {}", current_rules.len());
+            info!("{}", format!("Number of global rules {}", current_rules.len()));
             // Iterate over each file containing the usage of the feature flag API
             for (path, content) in self.get_files_containing_feature_flag_api_usage() {
                 self.relevant_files
@@ -74,7 +75,7 @@ impl FlagCleaner {
 
                 // Break when a new `global` rule is added
                 if self.rule_store.global_rules.len() > current_rules.len() {
-                    println!("Found a new global rule. Will start scanning all the files again.");
+                    info!("Found a new global rule. Will start scanning all the files again.");
                     break;
                 }
             }
@@ -89,7 +90,7 @@ impl FlagCleaner {
     /// Note that `WalkDir` traverses the directory with parallelism.
     pub fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
         let pattern = self.get_grep_heuristics();
-        println!(
+        info!(
             "{}",
             format!("Searching for pattern {}", pattern.as_str()).green()
         );
@@ -114,7 +115,7 @@ impl FlagCleaner {
             .filter(|x| pattern.is_match(x.1.as_str()))
             .collect();
         #[rustfmt::skip]
-        println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+        info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
         return files;
     }
 
@@ -287,7 +288,7 @@ impl SourceCodeUnit {
                 if let Some((c_range, replacement_str, matched_rule, code_snippets_by_tag_parent_rule)) = self
                     .match_rules_to_context(current_edit, rules_store, &next_rules_by_scope[PARENT])
                 {
-                    println!("{}", format!("Matched parent for cleanup").green());
+                    info!("{}", format!("Matched parent for cleanup").green());
                     // Apply the matched rule to the parent 
                     current_edit = self.apply_edit(c_range, replacement_str, parser);
                     current_rule = matched_rule;
@@ -506,7 +507,7 @@ impl SourceCodeUnit {
         // Log the edit
         let replaced_code_snippet = &source_code[replace_range.start_byte..replace_range.end_byte];
         #[rustfmt::skip]
-        println!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(),
+        info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(),
             ((&replace_range.start_point.row, &replace_range.start_point.column),
                 (&replace_range.end_point.row, &replace_range.end_point.column)),
             if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())

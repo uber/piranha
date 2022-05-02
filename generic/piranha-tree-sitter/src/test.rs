@@ -16,13 +16,24 @@ use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
+use log::info;
 
 use crate::config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
-use crate::piranha::FlagCleaner;
-use crate::utilities::read_file;
+use crate::piranha::{FlagCleaner, SourceCodeUnit};
+use crate::utilities::{read_file, initialize_logger};
+use std::sync::Once;
 
+
+static INIT: Once = Once::new();
+
+pub fn initialize() {
+    INIT.call_once(|| {
+        initialize_logger(true);
+    });
+}
 #[test]
 fn test_java_scenarios_treated() {
+    initialize();
     let language = "Java";
     let path_to_test_resource = get_path_to_test_resource(language);
     let args = PiranhaArguments::new(CommandLineArguments {
@@ -46,6 +57,7 @@ fn test_java_scenarios_treated() {
 
 #[test]
 fn test_java_scenarios_control() {
+    initialize();();
     let language = "Java";
     let path_to_test_resource = get_path_to_test_resource(language);
     let args = PiranhaArguments::new(CommandLineArguments {
@@ -100,41 +112,37 @@ fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
 }
 
 /// Checks if the file updates returned by piranha are as expected.
-fn check_result(updated_files: HashMap<PathBuf, String>, path_to_expected: PathBuf) {
+fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let mut results = HashMap::new();
-    for (path_buf, new_content) in &updated_files {
-        let updated_file_name = &path_buf
+    for source_code_unit in &updated_files {
+        let updated_file_name = &source_code_unit.path
             .file_name()
             .and_then(|f| f.to_str().map(|x| x.to_string()))
             .unwrap();
         let expected_file_path = find_file(&path_to_expected, &updated_file_name);
         let expected_content = read_file(&expected_file_path);
-        let result = eq_without_whitespace(&new_content, &expected_content);
-        results.insert(path_buf, result);
+        let result = eq_without_whitespace(&source_code_unit.code, &expected_content);
+        results.insert(source_code_unit.path.clone(), result);
     }
 
     let mut all_files_match = true;
     for (file_name, is_as_expected) in results {
         if is_as_expected {
-            println!("{}", format!("Match successful for {:?}", file_name).green());
+            info!("{}", format!("Match successful for {:?}", file_name).green());
         } else {
-            println!("{}", format!("Match failed for {:?}", file_name).red());
+            info!("{}", format!("Match failed for {:?}", file_name).red());
             all_files_match = false;
         }
     }
     assert!(all_files_match);
 }
 
-fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, String> {
+fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
     let mut flag_cleaner = FlagCleaner::new(args);
 
-    flag_cleaner.cleanup();
+    flag_cleaner.perform_cleanup();
 
-    flag_cleaner
-        .get_updated_files()
-        .iter()
-        .map(|(k, x)| (k.clone(), x.code.clone()))
-        .collect()
+    flag_cleaner.get_updated_files()
 }
 
 pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {

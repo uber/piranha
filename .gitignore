@@ -17,3 +17,4 @@ generic/tree-sitter-src/tree-sitter-java
 generic/tree-sitter-src/tree-sitter-swift
 .history
 .vscode
+**/*.log
