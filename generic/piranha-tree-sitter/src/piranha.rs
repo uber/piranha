@@ -31,31 +31,37 @@ pub struct FlagCleaner {
     // Path to source code folder
     path_to_codebase: String,
     // Files updated by Piranha.
-    pub relevant_files: HashMap<PathBuf, SourceCodeUnit>,
+    relevant_files: HashMap<PathBuf, SourceCodeUnit>,
 }
 
 impl FlagCleaner {
-    // Performs cleanup related to stale flags
+    
+    /// Getter for `relevant_files`
+    pub fn get_updated_files(&self) -> HashMap<PathBuf, SourceCodeUnit> {
+        self.relevant_files.clone()
+    }
+
+    /// Performs cleanup related to stale flags
     pub fn cleanup(&mut self) {
+        // Setup the parser for the specific language
         let mut parser = Parser::new();
         parser
             .set_language(self.rule_store.piranha_args.language)
             .expect("Could not set the language for the parser.");
 
+        // Keep looping until new `global` rules are added.
         loop {
             let current_rules = self.rule_store.get_global_rules();
 
             println!("Number of global rules {}", current_rules.len());
-
-            let files_containing_pattern = self.get_relevant_files();
-
-            #[rustfmt::skip]
-            println!("{}", format!("Will parse and analyze {} files.", files_containing_pattern.len()).green());
-
-            for (path, content) in files_containing_pattern {
+            // Iterate over each file containing the usage of the feature flag API
+            for (path, content) in self.get_files_containing_feature_flag_api_usage() {
                 self.relevant_files
+                    // Get the content of the file for `path` from the cache `relevant_files`
                     .entry(path.to_path_buf())
+                    // Populate the cache (`relevant_files`) with the content, in case of cache miss (lazily)
                     .or_insert_with(|| {
+                        // Create new source code unit
                         SourceCodeUnit::new(
                             &mut parser,
                             content,
@@ -63,45 +69,56 @@ impl FlagCleaner {
                             &path,
                         )
                     })
+                    // Apply the rules to this file
                     .apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
 
+                // Break when a new `global` rule is added
                 if self.rule_store.global_rules.len() > current_rules.len() {
                     println!("Found a new global rule. Will start scanning all the files again.");
                     break;
                 }
             }
-
+            // If no new `global_rules` were added, break.
             if self.rule_store.global_rules.len() == current_rules.len() {
                 break;
             }
         }
     }
+
     /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
     /// Note that `WalkDir` traverses the directory with parallelism.
-    pub fn get_relevant_files(&self) -> HashMap<PathBuf, String> {
+    pub fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
         let pattern = self.get_grep_heuristics();
         println!(
             "{}",
             format!("Searching for pattern {}", pattern.as_str()).green()
         );
-        WalkDir::new(&self.path_to_codebase)
+        let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
+            // Walk over the entire code base
             .into_iter()
+            // Ignore errors
             .filter_map(|e| e.ok())
+            // Filter files with the desired extension
             .filter(|de| {
                 de.path()
                     .extension()
-                    .map(|e| {
+                    .and_then(|e| {
                         e.to_str()
-                            .unwrap()
-                            .eq(self.rule_store.piranha_args.extension.as_str())
+                            .filter(|x| x.eq(&self.rule_store.piranha_args.extension.as_str()))
                     })
-                    .unwrap_or(false)
+                    .is_some()
             })
+            // Read the file
             .map(|f| (f.path().to_path_buf(), read_file(&f.path().to_path_buf())))
+            // Filter the files containing the desired regex pattern
             .filter(|x| pattern.is_match(x.1.as_str()))
-            .collect()
+            .collect();
+        #[rustfmt::skip]
+        println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+        return files;
     }
 
+    /// Instantiate PiranhaArguments
     pub fn new(args: PiranhaArguments) -> Self {
         let graph_rule_store = RuleStore::new(&args);
         Self {
@@ -125,8 +142,8 @@ impl FlagCleaner {
             .get_global_rules()
             .iter()
             .flat_map(|r| r.grep_heuristics.as_ref().unwrap().iter())
-            //Remove duplicates
             .sorted()
+            //Remove duplicates
             .dedup()
             //FIXME: Dirty trick to remove true and false. Ideally, grep heuristic could be a field in itself for a rule.
             // Since not all "holes" could be used as grep heuristic.
@@ -172,8 +189,11 @@ impl SourceCodeUnit {
         replacement_str: String,
         parser: &mut Parser,
     ) -> InputEdit {
+        // Get the tree_sitter's input edit representation
         let (new_source_code, edit) = self.get_edit(replace_range, &replacement_str);
+        // Apply edit to the tree
         self.ast.edit(&edit);
+        // Create a new updated tree from the previous tree
         let new_tree = parser
             .parse(&new_source_code, Some(&self.ast))
             .expect("Could not generate new tree!");
@@ -206,26 +226,31 @@ impl SourceCodeUnit {
         scope_query: &Option<String>,
     ) -> bool {
         // Get scope node
-        let mut root = self.ast.root_node();
-        if let Some(ts_scope_query) = scope_query {
+        let mut scope_node = self.ast.root_node();
+        if let Some(query_str) = scope_query {
+            // Apply the scope query in the source code and get the appropriate node 
+            let tree_sitter_scope_query = rules_store.get_query(query_str);
             if let Some((range, _)) = &self.ast.root_node().get_match_for_query(
                 &self.code,
-                rules_store.get_query(ts_scope_query),
+                tree_sitter_scope_query,
                 true,
             ) {
-                root = self.get_descendant(range.start_byte, range.end_byte);
+                scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
             }
         }
 
         let mut any_match = false;
 
-        // Recursively scan the node, and match the rule.
-        if let Some((range, rpl, captures_by_tag)) =
-            self.get_any_match_for_rule(&rule, rules_store, root, true)
+        // Match the rule "anywhere" inside the scope_node
+        if let Some((range, rpl, code_snippets_by_tag)) =
+            self.get_any_match_for_rule(&rule, rules_store, scope_node, true)
         {
             any_match = true;
+            // Get the edit for applying the matched rule to the source code
             let edit = self.apply_edit(range, rpl, parser);
-            self.substitutions.extend(captures_by_tag);
+            
+            // Add all the (code_snippet, tag) mapping to the substitution table.
+            self.substitutions.extend(code_snippets_by_tag);
 
             let mut current_edit = edit.clone();
             let mut current_rule = rule.clone();
@@ -234,13 +259,17 @@ impl SourceCodeUnit {
             // perform the parent edits, while queueing the Method and Class level edits.
             let file_level_scope_names = [METHOD, CLASS];
             loop {
+                // Get all the (next) rules that could be after applying the current rule (`rule`)
                 let next_rules_by_scope = rules_store.get_next(&current_rule, &self.substitutions);
-                // Add Method and Class scoped rules to the
-                for (scope_s, rules) in &next_rules_by_scope {
-                    if file_level_scope_names.contains(&scope_s.as_str()) {
+                for (scope_level, rules) in &next_rules_by_scope {
+                    // Scope level will be "Class" or "Method"
+                    if file_level_scope_names.contains(&scope_level.as_str()) {
                         for rule in rules {
+                            // Generate the scope query for the previously applied edit 
+                            // This query will precisely capture the enclosing method / class.
                             let scope_query =
-                                self.get_scope_query(scope_s, current_edit, rules_store);
+                                self.get_scope_query(scope_level, current_edit, rules_store);
+                            // Add Method and Class scoped rules to the queue
                             file_level_next_rules.push((
                                 scope_query.to_string(),
                                 rule.instantiate(&self.substitutions),
@@ -254,13 +283,16 @@ impl SourceCodeUnit {
                 }
 
                 // Process the parent
-                if let Some((c_range, replacement_str, matched_rule, new_capture_by_tag)) = self
+                // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
+                if let Some((c_range, replacement_str, matched_rule, code_snippets_by_tag_parent_rule)) = self
                     .match_rules_to_context(current_edit, rules_store, &next_rules_by_scope[PARENT])
                 {
                     println!("{}", format!("Matched parent for cleanup").green());
+                    // Apply the matched rule to the parent 
                     current_edit = self.apply_edit(c_range, replacement_str, parser);
                     current_rule = matched_rule;
-                    self.substitutions.extend(new_capture_by_tag);
+                    // Add the (tag, code_snippet) mapping to substitution table.
+                    self.substitutions.extend(code_snippets_by_tag_parent_rule);
                 } else {
                     // No more parents found for cleanup
                     break;
@@ -289,7 +321,7 @@ impl SourceCodeUnit {
     }
 
     /// Get the smallest node within `self` that spans the given range.
-    fn get_descendant(&self, start_byte: usize, end_byte: usize) -> Node {
+    fn get_node_for_range(&self, start_byte: usize, end_byte: usize) -> Node {
         self.ast
             .root_node()
             .descendant_for_byte_range(start_byte, end_byte)
@@ -297,7 +329,7 @@ impl SourceCodeUnit {
     }
 
     /// Generate a tree-sitter based query representing the scope of the previous edit.
-    /// Currently we generate scopes based on the configs provided in `<lang>_scopes.toml`.
+    /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
     fn get_scope_query(
         &self,
         scope_level: &str,
@@ -305,15 +337,10 @@ impl SourceCodeUnit {
         rules_store: &mut RuleStore,
     ) -> String {
         let mut changed_node =
-            self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
+            self.get_node_for_range(previous_edit.start_byte, previous_edit.new_end_byte);
 
-        // Get the scope matchers for `s_scope`
-        let scope_matchers = rules_store
-            .scopes
-            .iter()
-            .find(|level| level.name.eq(scope_level))
-            .map(|scope| scope.rules.clone())
-            .unwrap_or_else(Vec::new);
+        // Get the scope matchers for `scope_level` from the `scope_config.toml`.
+        let scope_matchers = rules_store.get_scope_query_generators(scope_level);
 
         // Match the `scope_matcher.matcher` to the parent
         while let Some(parent) = changed_node.parent() {
@@ -321,7 +348,8 @@ impl SourceCodeUnit {
                 if let Some((_, captures_by_tag)) =
                     parent.get_match_for_query(&self.code, rules_store.get_query(&m.matcher), false)
                 {
-                    // Generate the scope query for the specific context
+                    // Generate the scope query for the specific context by substituting the 
+                    // the tags with code snippets appropriately in the `generator` query.
                     return m.generator.substitute_tags(&captures_by_tag);
                 } else {
                     changed_node = parent;
@@ -331,7 +359,7 @@ impl SourceCodeUnit {
         panic!("Could not create scope query for {:?}", scope_level);
     }
 
-    // Apply all the `rules` to the node, it's parent and its grand parent.
+    // Apply all the `rules` to the node, parent, grand parent and great grand parent.
     // Short-circuit on the first match.
     fn match_rules_to_context(
         &mut self,
@@ -339,6 +367,7 @@ impl SourceCodeUnit {
         rules_store: &mut RuleStore,
         rules: &Vec<Rule>,
     ) -> Option<(Range, String, Rule, HashMap<String, String>)> {
+        // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
         let context = || self.get_context(previous_edit);
         for rule in rules {
             for ancestor in &context() {
@@ -352,18 +381,21 @@ impl SourceCodeUnit {
         return None;
     }
 
-    /// Returns the node, its parent and its grand parent.
+    /// Returns the node, its parent, grand parent and great grand parent 
     fn get_context(&self, previous_edit: InputEdit) -> Vec<Node> {
         let changed_node =
-            self.get_descendant(previous_edit.start_byte, previous_edit.new_end_byte);
+            self.get_node_for_range(previous_edit.start_byte, previous_edit.new_end_byte);
+        // Add parent of the changed node to the context
         let mut context = vec![changed_node];
         if let Some(parent) = changed_node.parent() {
             context.push(parent);
+            // Add grand parent of the changed node to the context
             if let Some(grand_parent) = parent.parent() {
                 context.push(grand_parent);
+                // Add great grand parent of the changed node to the context
                 if let Some(great_grand_parent) = grand_parent.parent() {
                     context.push(great_grand_parent);
-                }    
+                }
             }
         }
         context
@@ -392,7 +424,7 @@ impl SourceCodeUnit {
         node: Node,
         recursive: bool,
     ) -> Option<(Range, String, HashMap<String, String>)> {
-        // Get all matches for the query
+        // Get all matches for the query in the given scope `node`.
         let all_query_matches = node.get_all_matches_for_query(
             self.code.clone(),
             rule_store.get_query(&rule.get_query()),
@@ -402,8 +434,8 @@ impl SourceCodeUnit {
 
         // Return the first match that satisfies constraint of the rule
         for (range, tag_substitutions) in all_query_matches {
-            let n = self.get_descendant(range.start_byte, range.end_byte);
-            if self.satisfies_constraint(n, &rule, &tag_substitutions, rule_store) {
+            let matched_node = self.get_node_for_range(range.start_byte, range.end_byte);
+            if self.satisfies_constraint(matched_node, &rule, &tag_substitutions, rule_store) {
                 let replacement = rule.replace.substitute_tags(&tag_substitutions);
                 return Some((range.clone(), replacement, tag_substitutions));
             }
@@ -411,7 +443,10 @@ impl SourceCodeUnit {
         None
     }
 
-    /// Checks if the node satisfies the constraints
+    /// Checks if the node satisfies the constraints.
+    /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
+    /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches i.e. finds scope for constraint.
+    /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any subtree.
     fn satisfies_constraint(
         &self,
         node: Node,
@@ -423,7 +458,10 @@ impl SourceCodeUnit {
             let mut current_node = node;
             // Get the scope of the predicate
             for constraint in constraints {
+                // Loop till you find a parent for the current node
                 while let Some(parent) = current_node.parent() {
+                    // Check if the parent matches the `rule.constraint.matcher`
+                    // This is the scope in which the constraint query will be applied.
                     if let Some((range, _)) = parent.get_match_for_query(
                         &self.code,
                         &constraint
@@ -431,13 +469,13 @@ impl SourceCodeUnit {
                             .create_query(rule_store.piranha_args.language),
                         false,
                     ) {
-                        let scope = self.get_descendant(range.start_byte, range.end_byte);
-                        // Check if this query does not match anywhere in the scope
+                        let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
+                        // Apply each query within the `scope_node`
                         for q in &constraint.queries {
                             let query_str = q.substitute_tags(&capture_by_tags);
-                            println!("Constraint query {:?} {:?} {:?}", query_str, constraint.matcher, rule.name);
                             let query = &rule_store.get_query(&query_str);
-                            if scope.get_match_for_query(&self.code, query, true).is_some() {
+                             // If this query matches anywhere within the scope, return false.
+                            if scope_node.get_match_for_query(&self.code, query, true).is_some() {
                                 return false;
                             }
                         }
@@ -455,6 +493,8 @@ impl SourceCodeUnit {
     /// Note: This method does not update `self`.
     pub fn get_edit(&self, replace_range: Range, replacement: &str) -> (String, InputEdit) {
         let source_code = self.code.clone();
+        // Create the new source code content by appropriately
+        // replacing the range with the replacement string.
         let new_source_code = [
             &source_code[..replace_range.start_byte],
             replacement,
@@ -462,16 +502,18 @@ impl SourceCodeUnit {
         ]
         .concat();
 
-        let replace_code = &source_code[replace_range.start_byte..replace_range.end_byte];
-
+        
+        // Log the edit
+        let replaced_code_snippet = &source_code[replace_range.start_byte..replace_range.end_byte];
         #[rustfmt::skip]
         println!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(),
             ((&replace_range.start_point.row, &replace_range.start_point.column),
                 (&replace_range.end_point.row, &replace_range.end_point.column)),
-            if !replacement.is_empty() {format!("{}\n to \n{}",replace_code.italic(),replacement.italic())
-            } else {format!("{} ", replace_code.italic())}
+            if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())
+            } else {format!("{} ", replaced_code_snippet.italic())}
         );
 
+        // Inner function to find the position (Point) for a given offset.
         fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
             let mut result = Point { row: 0, column: 0 };
             for c in &input[0..offset] {
@@ -487,6 +529,7 @@ impl SourceCodeUnit {
 
         let len_new_source_code_bytes = replacement.as_bytes().len();
         let byte_vec = &source_code.as_bytes().to_vec();
+        // Create the InputEdit as per the tree-sitter api documentation.
         let edit = InputEdit {
             start_byte: replace_range.start_byte,
             old_end_byte: replace_range.end_byte,

@@ -45,7 +45,9 @@ pub mod command_line_arguments {
     /// Used for parsing command-line arguments passed to Piranha .
     #[derive(Clone, Parser, Debug)]
     #[clap(author, version, about, long_about = None)]
-    pub struct Args {
+    
+    
+    pub struct CommandLineArguments {
         /// Path to source code folder.
         #[clap(short = 'c', long)]
         pub path_to_codebase: String,
@@ -81,7 +83,7 @@ pub mod command_line_arguments {
     }
 
     impl PiranhaArguments {
-        pub fn new(args: Args) -> Self {
+        pub fn new(args: CommandLineArguments) -> Self {
             let piranha_args = toml::from_str::<PiranhaArgsFromConfig>(
                 read_file(&PathBuf::from(args.path_to_piranha_arguments.as_str())).as_str(),
             )
@@ -335,28 +337,43 @@ impl RuleStore {
     ) -> HashMap<String, Vec<Rule>> {
         let rule_name = &rule.name;
         let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
-
+        // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
         for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
-            let next_rule = &self.rules_by_name[&to_rule];
-            if next_rule.is_dummy_rule() {
-                for (next_to_next_rules_scope, next_to_next_rules) in
-                    self.get_next(next_rule, tag_matches)
+            let to_rule_name = &self.rules_by_name[&to_rule];
+            // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
+            if to_rule_name.is_dummy_rule() {
+                // Call this method recursively on the dummy node 
+                for (next_next_rules_scope, next_next_rules) in
+                    self.get_next(to_rule_name, tag_matches)
                 {
-                    for nnr in next_to_next_rules {
+                    for next_next_rule in next_next_rules {
+                        // Group the next rules based on the scope
                         next_rules.collect(
-                            String::from(&next_to_next_rules_scope),
-                            nnr.instantiate(&tag_matches),
+                            String::from(&next_next_rules_scope),
+                            next_next_rule.instantiate(&tag_matches),
                         )
                     }
                 }
             } else {
-                next_rules.collect(String::from(&scope), next_rule.instantiate(&tag_matches));
+                // Group the next rules based on the scope
+                next_rules.collect(String::from(&scope), to_rule_name.instantiate(&tag_matches));
             }
         }
+        // Add empty entry, incase no next rule was found for a particular scope
         for scope in [PARENT, METHOD, CLASS, GLOBAL] {
             next_rules.entry(scope.to_string()).or_default();
         }
         next_rules
+    }
+
+    // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
+    pub fn get_scope_query_generators(&self, scope_level: &str) -> Vec<ScopeQueryGenerator> {
+        self
+            .scopes
+            .iter()
+            .find(|level| level.name.eq(scope_level))
+            .map(|scope| scope.rules.clone())
+            .unwrap_or_else(Vec::new)
     }
 }
 
@@ -384,6 +401,7 @@ impl ParameterizedRuleGraph {
             for from_rule in get_rules_for_tag_or_name(&edge.from) {
                 for to_edge in &edge.to {
                     for t in get_rules_for_tag_or_name(&to_edge) {
+                        // Add edge to the adjacency list
                         graph.collect(from_rule.clone(), (String::from(&edge.scope), t.clone()));
                     }
                 }

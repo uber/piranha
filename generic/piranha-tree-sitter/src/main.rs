@@ -14,9 +14,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entrypoint for Piranha. 
 use std::time::Instant;
 
-use crate::{piranha::FlagCleaner};
+use crate::piranha::FlagCleaner;
 use clap::StructOpt;
-use config::command_line_arguments:: {PiranhaArguments, Args};
+use config::command_line_arguments:: {PiranhaArguments, CommandLineArguments};
 
 mod config;
 mod piranha;
@@ -27,14 +27,14 @@ mod test;
 
 fn main() {
     let now = Instant::now();
-    let args = Args::parse();
+    let args = CommandLineArguments::parse();
     let pa = PiranhaArguments::new(args);
 
     let mut flag_cleaner = FlagCleaner::new(pa);
 
     flag_cleaner.cleanup();
 
-    for (k, v) in flag_cleaner.relevant_files {
+    for (k, v) in flag_cleaner.get_updated_files() {
         println!("Updating file {:?}", k);
         v.persist();
     }

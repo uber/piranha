@@ -5,5 +5,3 @@ substitutions = [
     ["treated_complement", "true"],
     ["namespace", "some_long_name"]
 ]
-
-

@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
-use crate::config::command_line_arguments::{Args, PiranhaArguments};
+use crate::config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
 use crate::piranha::FlagCleaner;
 use crate::utilities::read_file;
 
@@ -25,7 +25,7 @@ use crate::utilities::read_file;
 fn test_java_scenarios_treated() {
     let language = "Java";
     let path_to_test_resource = get_path_to_test_resource(language);
-    let args = PiranhaArguments::new(Args {
+    let args = PiranhaArguments::new(CommandLineArguments {
         path_to_codebase: get_path_to_test_code_base(language),
         path_to_feature_flag_rules: get_path_test_configurations(language),
         path_to_piranha_arguments: PathBuf::from(get_path_test_configurations(language))
@@ -48,7 +48,7 @@ fn test_java_scenarios_treated() {
 fn test_java_scenarios_control() {
     let language = "Java";
     let path_to_test_resource = get_path_to_test_resource(language);
-    let args = PiranhaArguments::new(Args {
+    let args = PiranhaArguments::new(CommandLineArguments {
         path_to_codebase: get_path_to_test_code_base(language),
         path_to_feature_flag_rules: get_path_test_configurations(language),
         path_to_piranha_arguments: PathBuf::from(get_path_test_configurations(language))
@@ -131,20 +131,21 @@ fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> HashMap<PathBuf, St
     flag_cleaner.cleanup();
 
     flag_cleaner
-        .relevant_files
+        .get_updated_files()
         .iter()
         .map(|(k, x)| (k.clone(), x.code.clone()))
         .collect()
 }
 
-pub fn has_name(dir_entry: &DirEntry, extension: &str) -> bool {
+pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
     dir_entry
         .path()
         .file_name()
-        .map(|e| e.eq(extension))
+        .map(|e| e.eq(file_name))
         .unwrap_or(false)
 }
 
+/// Returns the file with the given name within the given directory.
 pub fn find_file(input_dir: &PathBuf, name: &String) -> PathBuf {
     fs::read_dir(input_dir)
         .unwrap()

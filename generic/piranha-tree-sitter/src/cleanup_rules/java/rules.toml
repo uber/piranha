@@ -118,7 +118,7 @@ query = """
             (block (_)* @nested.statements) @nested.block
             (_)* @post
         )
-    )@sb)"""
+    )@block)"""
 replace_node = "nested.block"
 replace = "@nested.statements"
 
@@ -127,6 +127,7 @@ replace = "@nested.statements"
 # After :
 #  abc()
 #
+
 [[rules]]
 name = "simplify_true_and_something"
 query = """
@@ -134,8 +135,9 @@ query = """
     (binary_expression
         left: [(true) (parenthesized_expression (true))]
         operator:"&&"
-         right : (_)* @rhs )
-) @binary_expression"""
+        right : (_)* @rhs) 
+) @binary_expression
+"""
 replace_node = "binary_expression"
 replace = "@rhs"
 groups = ["boolean_expression_simplify"]
@@ -335,6 +337,8 @@ replace_node = "ternary_expression"
 replace = "@alternative"
 groups = ["if_cleanup"]
 
+# This rule is part (and entry point) for the inline local variable cleanup. Example: 
+# 
 # Before :
 # public foo someMethod() { 
 #  boolean isFlag = true; 
@@ -346,21 +350,17 @@ groups = ["if_cleanup"]
 #  somethingElse();
 # }
 #
-# Note: Due to the constraint the below example is not updated
-# Before :
-# public foo someMethod() { 
-#  boolean isFlag = true; 
-#  isFlag = getFlagStatus();
-#  somethingElse();
-# }
-#  
-# After :
+# Before inlining a variable we need to ensure that the variable is not re assigned anywhere within the method body 
+# to a value which is not the same as the initlaizer of variable we are inlining..
+# Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's 
+# initlaizer is `true`. In such a scenario the variable `isFlag` should not be inlined.
 # public foo someMethod() { 
 #  boolean isFlag = true; 
 #  isFlag = getFlagStatus();
 #  somethingElse();
 # }
 #
+
 [[rules]]
 name = "delete_variable_declaration"
 query = """
@@ -376,6 +376,8 @@ replace = ""
 groups = []
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
+# Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
+# These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
 queries = ["""
@@ -387,6 +389,8 @@ queries = ["""
 (#not-eq? @a.rhs "@init")
 )"""]
 
+
+# This rule is part (and entry point) of the inline field declaration cleanup.
 # Same as the rule `delete_variable_declaration`, but applicable to 
 # fields. 
 [[rules]]
@@ -414,8 +418,12 @@ queries = ["""(
 (#not-eq? @a.rhs "@init")
 )"""]
 
+
+# This rule is part of inline variable declaration and field declaration cleanup. 
+# This rule is applied after the above two rule - `delete_field_declaration` and `delete_variable_declaration`.
 # Delete assignment for a particular (@variable_name, @init) if: 
 # (i) If the enclosing method does not contain a variable declaration for @variable_name
+# (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
 [[rules]]
 name = "delete_boolean_assignments_for_variable"
 query = """
@@ -441,6 +449,8 @@ queries = ["""(
 (#eq? @vdcl.lhs "@l")
 )"""]
 
+# This rule is part (and entry point) of the inline variable / field declaration. 
+# After applying this rule, the two rules `delete_field_declaration` and `delete_variable_declaration` are applied. 
 # delete assignment if 
 # (i) if it is the only assignment in the entire class in the enclosing class
 # (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
@@ -461,7 +471,7 @@ holes = []
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
 queries = ["""(
-((local_variable_declaration 
+((local_variable_declaration
 				declarator: (variable_declarator 
                 					name: (_) @vdcl.lhs
                 					value: (_)? @vdcl.init)) @variable_declaration)
