@@ -27,29 +27,29 @@ class XPFlagCleanerPositiveCases {
   
 
   public void conditional_contains_stale_flag() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     
   }
 
   public void conditional_with_else_contains_stale_flag() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool() {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     
     System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     
     System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     
     System.out.println("Hello World");
   }
@@ -66,7 +66,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(int a, bool abc, int z) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     bool tBool = false;
     tBool = true;
     if (!tBool && true) {
@@ -77,7 +77,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
-    // BUG: Diagnostic contains: Cleans stale XP flags
+    // 
     System.out.println("Hi world");
   }
 
