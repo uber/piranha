@@ -1,9 +1,6 @@
 # Generic Piranha 
 Piranha scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
-This generic tree-sitter based implementation for Piranha makes it easy to extend it to new languages, new feature flag APIs (and their usage).
-
-## Languages Supported
-* Java 
+This generic tree-sitter based implementation for Piranha makes it easy to extend it to new languages and new feature flag APIs (and their usages).
 
 ## Motivation 
 
@@ -37,17 +34,23 @@ OPTIONS:
             Print version information
 ```
 
+Languages supported :
+* Java
+* Kotlin (planned)
+* Swift (planned)
+* Contributions for other languages are welcome :) 
+
 ## Getting started with Piranha
 
 Check if the current version of Piranha supports the required language.
 If so, then check if the API usage is similar to the ones provided in the test suite at `/src/test-resources/<language>/configurations/rules.toml`.
-If not, adapt these examples to your requirements. Look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries) for more information on how to construct tree-sitter queries. 
+If not, adapt these examples to your requirements. Look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) for more information on how to construct tree-sitter queries. 
 Now adapt the `/src/test-resources/<language>/configurations/piranha_arguments.toml`
 as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`.
 If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`.
- In most cases, one will not require `/src/test-resources/<language>/configurations/edges.toml`. 
+ In most cases, one will not require `/src/test-resources/<language>/configurations/edges.toml`.
 
-For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag](onboarding-a-new-feature-flag-api).
+For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api).
 For more details on how to configure Piranha to a new language see section [Onboarding a new language flag](onboarding-a-new-language).
 
 ## Onboarding a new feature flag API
@@ -127,16 +130,11 @@ Currently, Piranha provides deep clean ups for edits that belong the groups -  `
 
 ## Onboarding a new language 
 
-To configure Piranha for a new language one has to build from source using the command `cargo build` inside `generic/piranha-tree-sitter/`. 
-Please install the following, in order to build Piranha : 
-* Git 
-* [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
-
 This section describes how to configure Piranha to support a new language. 
 Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
 These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or inlining variables.
-For instance, the below example shows a rule that simplifies a `or` operation where its RHS is true. 
+For instance, the below example shows a rule that simplifies a `or` operation where its `RHS` is true. 
 ```
 [[rules]]
 name = "Or - right operand is True"
@@ -150,13 +148,12 @@ query = """
 @b)"""
 replace_node = "b"    
 replace = "true"
-groups = ["Boolean expression cleanup", "replace_expression_with_boolean_literal"]
 ```
 
 Currently, Piranha picks up the language specific configurations from `src/cleanup_rule/<language>`.
 
 
-# Example
+### Example
 Let's consider an example where we want to define a cleanup for the scenario where 
 <table>
 <tr>
@@ -189,7 +186,7 @@ int foobar(){
 
 </table>
 
-We would first define flag API rules as discussed in the section *Configuring Piranha*. Let's say this rule (`F`) would replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`. To perform the desired refactoring we would have to define cleanup rules as follows :
+We would first define flag API rules as discussed in the section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`;  we would have to define more cleanup rules as follows:
 
 * `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. `cleanup_rules/java/rules.toml: delete_variable_declarations`)
 * `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. `cleanup_rules/java/rules.toml: replace_expression_with_boolean_literal`) 
@@ -208,4 +205,27 @@ The edges can be labelled as `ANCESTOR`, `METHOD`, `CLASS` or `GLOBAL`.
 * A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. inlining a public field).
 
 One would also have to define how to capture the `METHOD` and `CLASS` scopes for the new language by specifying the `scope_config.toml` file.
-Please see `/src/cleanup_rules/java`.
+Please refer to `/src/cleanup_rules/java/scope_config.toml`.
+
+
+## Contributing
+
+### Building from the source
+To configure Piranha for a new language one has to build from source using the command `cargo build` inside `generic/piranha-tree-sitter/`. 
+Please install the following, in order to build Piranha : 
+* Git 
+* [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
+
+### Naming conventions for the rules 
+* We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`
+* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`.
+
+### Writing tests
+Currently we only maintain integration tests for the implementation and configurations. 
+These integration run Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
+
+To add new scenarios to the existing tests for a given language, you can add them to new file in the `input` directory and then create similarly named files with the expected output in `expected_treated` and `expected_control` directory.
+Note that the the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files must be also updated accordingly. 
+
+To add tests for a new language, please add a new <language> folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
+
