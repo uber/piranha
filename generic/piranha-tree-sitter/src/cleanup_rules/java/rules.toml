@@ -140,7 +140,7 @@ query = """
 replace = "@rhs"
 replace_node = "binary_expression"
 
-# Before : 
+# Before :
 #  abc() && true
 # After :
 #  abc()
@@ -159,7 +159,7 @@ query = """
 replace = "@lhs"
 replace_node = "binary_expression"
 
-# Before : 
+# Before :
 #  false && abc()
 # After :
 #  false
@@ -178,7 +178,7 @@ query = """
 replace = "false"
 replace_node = "binary_expression"
 
-# Before : 
+# Before :
 #  abc() && false
 # After :
 #  false
@@ -198,7 +198,7 @@ query = """
 replace = "false"
 replace_node = "binary_expression"
 
-# Before : 
+# Before :
 #  abc() || true
 # After :
 #  true
@@ -217,7 +217,7 @@ query = """
 replace = "true"
 replace_node = "binary_expression"
 
-# Before : 
+# Before :
 #  true || abc()
 # After :
 #  true
@@ -281,7 +281,6 @@ replace_node = "binary_expression"
 #    return 10;
 #    somethingMore();  
 #    return 100;
-#    
 #  } 
 # After :
 #  {
@@ -339,7 +338,7 @@ replace_node = "ternary_expression"
 #  boolean isFlag = true; 
 #  somethingElse();
 # }
-#  
+#
 # After :
 # public foo someMethod() { 
 #  somethingElse();
@@ -349,6 +348,7 @@ replace_node = "ternary_expression"
 # to a value which is not the same as the initializer of variable we are inlining..
 # Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's 
 # initializer is `true`. In such a scenario the variable `isFlag` should not be inlined.
+# 
 # public foo someMethod() { 
 #  boolean isFlag = true; 
 #  isFlag = getFlagStatus();
@@ -361,9 +361,9 @@ name = "delete_variable_declaration"
 query = """
 (
 ((local_variable_declaration 
-				declarator: (variable_declarator 
-                					name: (_) @variable_name
-                					value: [(true) (false)] @init)) @variable_declaration)
+                declarator: (variable_declarator 
+                                    name: (_) @variable_name
+                                    value: [(true) (false)] @init)) @variable_declaration)
 )
 """
 replace = ""
@@ -379,24 +379,23 @@ queries = [
   """
 (
 ((assignment_expression
-    				left: (_) @a.lhs
+                    left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)""",
+)"""
 ]
 
 # This rule is part (and entry point) of the inline field declaration cleanup.
-# Same as the rule `delete_variable_declaration`, but applicable to 
-# fields. 
+# Same as the rule `delete_variable_declaration`, but applicable to fields.
 [[rules]]
 name = "delete_field_declaration"
 query = """
 (
 ((field_declaration 
-				declarator: (variable_declarator 
-                					name: (_) @variable_name
-                					value: [(true) (false) (parenthesized_expression (true)) (parenthesized_expression (false))] @init)) @field_declaration)
+                declarator: (variable_declarator 
+                                    name: (_) @variable_name
+                                    value: [(true) (false) (parenthesized_expression (true)) (parenthesized_expression (false))] @init)) @field_declaration)
 )
 """
 replace = ""
@@ -409,11 +408,11 @@ matcher = "(class_declaration) @cd"
 queries = [
   """(
 ((assignment_expression
-    				left: (_) @a.lhs
+                    left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)""",
+)"""
 ]
 
 # This rule is part of inline variable declaration and field declaration cleanup. 
@@ -442,11 +441,11 @@ matcher = "(method_declaration) @md"
 queries = [
   """(
 ((local_variable_declaration 
-				declarator: (variable_declarator 
-                					name: (_) @vdcl.lhs
-                					value: (_) @vdcl.init)) @field_declaration)
+                declarator: (variable_declarator 
+                                    name: (_) @vdcl.lhs
+                                    value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@l")
-)""",
+)"""
 ]
 
 # This rule is part (and entry point) of the inline variable / field declaration. 
@@ -471,11 +470,11 @@ matcher = "(method_declaration) @md"
 queries = [
   """(
 ((local_variable_declaration
-				declarator: (variable_declarator 
-                					name: (_) @vdcl.lhs
-                					value: (_)? @vdcl.init)) @variable_declaration)
+                declarator: (variable_declarator 
+                                    name: (_) @vdcl.lhs
+                                    value: (_)? @vdcl.init)) @variable_declaration)
 (#eq? @vdcl.lhs "@variable_name")
-)""",
+)"""
 ]
 [[rules.constraints]]
 # There should exist no field declaration named `@variable_name` and
@@ -484,19 +483,19 @@ matcher = "(class_declaration) @cd"
 queries = [
   """(
 ((assignment_expression
-    				left: (_) @a.lhs
+                    left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )""",
   """(
 ((field_declaration 
-				declarator: (variable_declarator 
-                					name: (_) @fdcl.lhs
-                					value: (_) @fdcl.init)) @field_declaration)
+                declarator: (variable_declarator 
+                                    name: (_) @fdcl.lhs
+                                    value: (_) @fdcl.init)) @field_declaration)
 (#eq? @fdcl.lhs "@variable_name")
 (#not-eq? @fdcl.init "@init")
-)""",
+)"""
 ]
 
 # Replace identifier with value if :
@@ -519,11 +518,11 @@ matcher = "(method_declaration) @md"
 queries = [
   """(
 ((local_variable_declaration 
-				declarator: (variable_declarator 
-                					name: (_) @vdcl.lhs
-                					value: (_) @vdcl.init)) @field_declaration)
+                declarator: (variable_declarator 
+                                    name: (_) @vdcl.lhs
+                                    value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@identifier")
-)""",
+)"""
 ]
 
 # Dummy rule that acts as a junction for all boolean based cleanups

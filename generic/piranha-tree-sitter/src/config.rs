@@ -38,6 +38,7 @@ pub mod command_line_arguments {
     //! This module contains structs and implementations for parsing and managing command line arguments passed to Piranha.
     use clap::Parser;
     use colored::Colorize;
+    use log::info;
     use serde_derive::Deserialize;
     use std::{collections::HashMap, path::PathBuf};
     use tree_sitter::Language;
@@ -98,7 +99,7 @@ pub mod command_line_arguments {
                 .collect();
 
             #[rustfmt::skip]
-            println!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
+            info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
             Self {
                 path_to_code_base: args.path_to_codebase.to_string(),

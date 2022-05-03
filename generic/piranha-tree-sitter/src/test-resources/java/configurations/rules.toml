@@ -21,14 +21,14 @@
 [[rules]]
 name = "replace_isToggleEnabled_with_boolean_literal"
 query = """((
-	(method_invocation 
-    	name : (_) @name
+    (method_invocation 
+        name : (_) @name
         arguments: ((argument_list 
-        				([
+                        ([
                           (field_access field: (_)@argument)
                           (_) @argument
                          ])) )
-        	
+            
     ) @method_invocation
 )
 (#eq? @name "isToggleEnabled")
@@ -49,14 +49,14 @@ holes = ["treated", "stale_flag_name"]
 [[rules]]
 name = "replace_isFlagEnabled_with_boolean_literal"
 query = """((
-	(method_invocation 
-    	name : (_) @name
+    (method_invocation 
+        name : (_) @name
         arguments: ((argument_list 
-        				([
+                        ([
                           (field_access field: (_)@argument)
                           (_) @argument
                          ])) )
-        	
+            
     ) @method_invocation
 )
 (#eq? @name "isFlagTreated")
@@ -77,14 +77,14 @@ holes = ["treated", "stale_flag_name"]
 [[rules]]
 name = "replace_isToggleDisabled_with_boolean_literal"
 query = """((
-	(method_invocation 
-    	name : (_) @name
+    (method_invocation 
+        name : (_) @name
         arguments: ((argument_list 
-        				([
+                        ([
                           (field_access field: (_)@argument)
                           (_) @argument
                          ])) )
-        	
+            
     ) @method_invocation
 )
 (#eq? @name "isToggleDisabled")
@@ -99,11 +99,11 @@ holes = ["treated_complement", "stale_flag_name"]
 # For @stale_flag_name = STALE_FLAG 
 # Before :
 #  enum Flags {
-#   ABC, STALE_FLAG, OTHER_FLAG	
+#   ABC, STALE_FLAG, OTHER_FLAG    
 #  }
 # After :
 #  enum Flags {
-#   ABC, OTHER_FLAG	
+#   ABC, OTHER_FLAG    
 #  }
 #
 [[rules]]
@@ -130,11 +130,11 @@ name = "delete_putToggleEnabled"
 query = """
 (
 (expression_statement (method_invocation name : (_) @name
-					arguments: (argument_list
-                    			([
-		                          (field_access field: (_)@argument)
-        		                  (_) @argument
-                		         ])))) @expression_statement
+                    arguments: (argument_list
+                                ([
+                                  (field_access field: (_)@argument)
+                                  (_) @argument
+                                 ])))) @expression_statement
  (#eq? @name "putToggleEnabled")
  (#eq? @argument "@stale_flag_name")
 )
@@ -156,11 +156,11 @@ name = "delete_putToggleDisabled"
 query = """
 (
 (expression_statement (method_invocation name : (_) @name
-					arguments: (argument_list
-                    			([
-		                          (field_access field: (_)@argument)
-        		                  (_) @argument
-                		         ])))) @expression_statement
+                    arguments: (argument_list
+                                ([
+                                  (field_access field: (_)@argument)
+                                  (_) @argument
+                                 ])))) @expression_statement
  (#eq? @name "putToggleDisabled")
  (#eq? @argument "@stale_flag_name")
 )
@@ -182,11 +182,11 @@ name = "delete_includeEvent"
 query = """
 (
 (expression_statement (method_invocation name : (_) @name
-					arguments: (argument_list
-                    			([
-		                          (field_access field: (_)@argument)
-        		                  (_) @argument
-                		         ])))) @expression_statement
+                    arguments: (argument_list
+                                ([
+                                  (field_access field: (_)@argument)
+                                  (_) @argument
+                                 ])))) @expression_statement
  (#eq? @name "includeEvent")
  (#eq? @argument "@stale_flag_name")
 )
@@ -197,7 +197,7 @@ holes = ["stale_flag_name"]
 
 # Before :
 # interface IExp {
-#  @BoolParam(key = "STALE_FLAG", namespace="NS")	
+#  @BoolParam(key = "STALE_FLAG", namespace="NS")    
 #  public void isStaleFeature();
 #  @BoolParam(key = "OTHER_FLAG", namespace="NS")
 #  public void isOtherFeature();
@@ -213,12 +213,12 @@ name = "delete_flag_method_declaration_fully_annotated"
 query = """
 (
 (method_declaration
-	 (modifiers (annotation
-     				name: (_) @annotation_name
-					arguments: (annotation_argument_list
-                    	(element_value_pair
-							 key: (_) @k1
-							 value: (_) @v1))))
+     (modifiers (annotation
+                     name: (_) @annotation_name
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k1
+                             value: (_) @v1))))
       name: (_) @m_name
  )@method_declaration
  (#eq? @annotation_name "BoolParam")
@@ -227,11 +227,11 @@ query = """
  )
  (
 (method_declaration
-	 (modifiers (annotation
-					arguments: (annotation_argument_list
-                    	(element_value_pair
-							 key: (_) @k2
-							 value: (_) @v2))))
+     (modifiers (annotation
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k2
+                             value: (_) @v2))))
  )@m2
  (#eq? @k2 "namespace")
  (#eq? @v2 "\\\"@namespace\\\"")
@@ -239,13 +239,13 @@ query = """
 """
 replace_node = "method_declaration"
 replace = ""
-groups = ["Delete Method"]
+groups = ["delete_method_declaration"]
 holes = ["stale_flag_name", "namespace"]
 
 # Before :
 #  @ParamDefinition(namespace="NS")
 #  interface IExp {
-#   @BoolParam(key = "STALE_FLAG")	
+#   @BoolParam(key = "STALE_FLAG")    
 #   public void isStaleFeature();
 #   @BoolParam(key = "OTHER_FLAG", namespace="Some_NS")
 #   public void isOtherFeature();
@@ -261,24 +261,24 @@ name = "delete_flag_method_declaration_inside_annotated_interface"
 query= """
 (
 (interface_declaration
-	(modifiers (annotation
-     				name: (_) @a_name
-					arguments: (annotation_argument_list
-                    	(element_value_pair
-							 key: (_) @k1
-							 value: (_) @v1)))) @mod
+    (modifiers (annotation
+                     name: (_) @a_name
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k1
+                             value: (_) @v1)))) @mod
     name: (_) @i_name
-	body: (interface_body
-    	(_)* @pre
-    	(method_declaration
-			 (modifiers (annotation
-					arguments: (annotation_argument_list
-                    	(element_value_pair
-							 key: (_) @k2
-							 value: (_) @v2))))
+    body: (interface_body
+        (_)* @pre
+        (method_declaration
+             (modifiers (annotation
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k2
+                             value: (_) @v2))))
                              
         name: (_) @m_name) @md
-	    (_)* @post
+        (_)* @post
     )
 ) @id
  (#eq? @a_name "ParameterDefinition")
@@ -290,7 +290,7 @@ query= """
 """
 replace_node = "md"
 replace = ""
-groups = ["Delete Method"]
+groups = ["delete_method_declaration"]
 holes = ["stale_flag_name", "namespace"]
 
 # For @m_name = `isStaleFeature`, @treated = `true`
@@ -305,8 +305,8 @@ query = """
 (
    ((method_invocation
        object: (method_invocation 
-       			object: (_) @receiver
-       			name: (identifier) @nested_name)
+                   object: (_) @receiver
+                   name: (identifier) @nested_name)
        name : (identifier) @name) 
        @method_invocation)
    (#eq? @name "getCachedValue")
@@ -329,10 +329,10 @@ name = "delete_put"
 query = """
 (
 (expression_statement ((method_invocation name: (_) @n
-			arguments : (
+            arguments : (
             (argument_list 
-            	(method_invocation 
-                		name: (_) @an)
+                (method_invocation 
+                        name: (_) @an)
                 ([(true) (false)])
              ))
 
@@ -361,11 +361,11 @@ holes = ["m_name"]
 name = "delete_annotated_test_method_treated"
 query = """(
 (method_declaration
-	(modifiers (annotation name: (_) @n
-    					  arguments : 
-                          	(annotation_argument_list
-                            	(element_value_pair 
-                                	key : (_) @k1
+    (modifiers (annotation name: (_) @n
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k1
                                     value : (_) @v1))) )) @md1
 (#eq? @k1 "ns")
 (#eq? @v1 "\\\"@namespace\\\"")
@@ -373,22 +373,22 @@ query = """(
 )
 (
 (method_declaration
-	(modifiers (annotation name: (_) 
-    					  arguments : 
-                          	(annotation_argument_list
-                            	(element_value_pair 
-                                	key : (_) @k2
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k2
                                     value : (_) @v2))))) @md2
 (#eq? @k2 "key")
 (#eq? @v2 "\\\"@stale_flag_name\\\"")
 )
 (
 (method_declaration
-	(modifiers (annotation name: (_) 
-    					  arguments : 
-                          	(annotation_argument_list
-                            	(element_value_pair 
-                                	key : (_) @k3
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k3
                                     value : (_) @v3))) @an) ) @md3
 (#eq? @k3 "val")
 (#eq? @v3 "\\\"@treated\\\"")
@@ -411,11 +411,11 @@ holes = ["stale_flag_name", "treated", "namespace"]
 name = "delete_annotated_test_method_control"
 query = """(
 (method_declaration
-	(modifiers (annotation name: (_) @n
-    					  arguments : 
-                          	(annotation_argument_list
-                            	(element_value_pair 
-                                	key : (_) @k1
+    (modifiers (annotation name: (_) @n
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k1
                                     value : (_) @v1))) )) @md1
 (#eq? @k1 "ns")
 (#eq? @v1 "\\\"@namespace\\\"")
@@ -423,27 +423,27 @@ query = """(
 )
 (
 (method_declaration
-	(modifiers (annotation name: (_) 
-    					  arguments : 
-                          	(annotation_argument_list
-                            	(element_value_pair 
-                                	key : (_) @k2
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k2
                                     value : (_) @v2))))) @md2
 (#eq? @k2 "key")
 (#eq? @v2 "\\\"@stale_flag_name\\\"")
 )
 (
 (method_declaration
-	(modifiers (annotation name: (_) 
-    					  arguments : 
-                          	(annotation_argument_list
-                            	(element_value_pair 
-                                	key : (_) @k3
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k3
                                     value : (_) @v3))) @an) ) @md3
 (#eq? @k3 "val")
 (#eq? @v3 "\\\"@treated_complement\\\"")
 )"""
 replace_node = "md3"
 replace = ""
-groups = ["Delete Method"]
+groups = ["delete_method_declaration"]
 holes = ["stale_flag_name", "treated_complement", "namespace"]

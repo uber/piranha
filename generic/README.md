@@ -2,6 +2,8 @@
 Piranha scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 This generic tree-sitter based implementation for Piranha makes it easy to extend it to new languages, new feature flag APIs (and their usage).
 
+## Languages Supported
+* Java 
 
 ## Motivation 
 
@@ -10,6 +12,7 @@ This implementation overcomes this problem by extracting the language specific s
 
 ## Usage 
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally an `edges.toml`). Piranha can be then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml` . Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
+
 
 ```
 piranha 0.1.0
@@ -34,8 +37,20 @@ OPTIONS:
             Print version information
 ```
 
-## Configuring Piranha  
-### Adding a flag API and specifying how it will be updated
+## Getting started with Piranha
+
+Check if the current version of Piranha supports the required language.
+If so, then check if the API usage is similar to the ones provided in the test suite at `/src/test-resources/<language>/configurations/rules.toml`.
+If not, adapt these examples to your requirements. Look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries) for more information on how to construct tree-sitter queries. 
+Now adapt the `/src/test-resources/<language>/configurations/piranha_arguments.toml`
+as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`.
+If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`.
+ In most cases, one will not require `/src/test-resources/<language>/configurations/edges.toml`. 
+
+For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag](onboarding-a-new-feature-flag-api).
+For more details on how to configure Piranha to a new language see section [Onboarding a new language flag](onboarding-a-new-language).
+
+## Onboarding a new feature flag API
 
 The example below shows a usage of an feature flag API (`experiment.isTreated(STALE_FLAG)`), in an `if_statement`. 
 ```
@@ -110,7 +125,13 @@ Each rule also contains the `groups` property, that specifies the kind of change
 cleanup rules will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups (like eliminating `consequent` of a `if statement`) to eliminate dead code caused by replacing an expression with a boolean literal. 
 Currently, Piranha provides deep clean ups for edits that belong the groups -  `replace_expression_with_boolean_literal` , `delete_statement`, and `delete_method`. 
 
-### Configuring a new language 
+## Onboarding a new language 
+
+To configure Piranha for a new language one has to build from source using the command `cargo build` inside `generic/piranha-tree-sitter/`. 
+Please install the following, in order to build Piranha : 
+* Git 
+* [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
+
 This section describes how to configure Piranha to support a new language. 
 Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
@@ -179,7 +200,7 @@ We would first define flag API rules as discussed in the section *Configuring Pi
 
 The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file. 
 
-To define how these cleanup rules should be chained, one needs to specify edges (in `edges.toml` file) between the groups and (or) individual rules.
+To define how these cleanup rules should be chained, one needs to specify edges (e.g. the `cleanup_rules/java/edges.toml` file) between the groups and (or) individual rules.
 The edges can be labelled as `ANCESTOR`, `METHOD`, `CLASS` or `GLOBAL`. 
 * An `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` -> `R2`, `R2` -> `R3`, `R3` -> `R4`)
 * A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` -> `R1`)
