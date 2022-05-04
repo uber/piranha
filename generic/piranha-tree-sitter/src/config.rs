@@ -179,25 +179,15 @@ impl Rule {
     &self, query: String, replace: String, substitutions: &HashMap<String, String>,
   ) -> Result<Rule, String> {
     if substitutions.len() != self.holes().len() {
-      Err(format!(
-        "Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}",
-        self,
-        self.holes(),
-        substitutions
-      ))
-    } else if self.holes().is_empty() {
-      Ok(self.clone())
+       #[rustfmt::skip] 
+      return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
     } else {
-      Ok(Rule {
-        name: self.name.to_string(),
-        query: query.substitute_tags(substitutions),
-        replace_node: self.replace_node.to_string(),
-        replace: replace.substitute_tags(substitutions),
-        holes: self.holes.clone(),
-        groups: self.groups.clone(),
-        constraints: self.constraints.clone(),
-        grep_heuristics: self.grep_heuristics.clone(),
-      })
+        let mut updated_rule = self.clone();
+        if !updated_rule.holes().is_empty(){
+            updated_rule.set_query(query.substitute_tags(substitutions));
+            updated_rule.set_replace(replace.substitute_tags(substitutions));
+        }
+        Ok(updated_rule)
     }
   }
 
@@ -309,6 +299,15 @@ impl Rule {
       None => vec![],
     }
   }
+
+    pub fn set_replace(&mut self, replace: String) {
+        self.replace = replace;
+    }
+
+    /// Set the rule's query.
+    pub fn set_query(&mut self, query: String) {
+        self.query = query;
+    }
 }
 
 // Captures an entry from the `edges.toml` file.
