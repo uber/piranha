@@ -150,7 +150,7 @@ impl FlagCleaner {
       .rule_store
       .global_rules()
       .iter()
-      .flat_map(|r| r.grep_heuristics().unwrap().iter())
+      .flat_map(|r| r.grep_heuristics())
       .sorted()
       //Remove duplicates
       .dedup()
@@ -279,7 +279,7 @@ impl SourceCodeUnit {
         }
         // Add Global rules as seed rules
         for r in &next_rules_by_scope[GLOBAL] {
-          rules_store.add_global_rule(r, &self.substitutions);
+          rules_store.add_to_global_rules(r, &self.substitutions);
         }
 
         // Process the parent
@@ -436,36 +436,34 @@ impl SourceCodeUnit {
     &self, node: Node, rule: &Rule, capture_by_tags: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    if let Some(constraints) = rule.constraints() {
-      let mut current_node = node;
-      // Get the scope of the predicate
-      for constraint in constraints {
-        // Loop till you find a parent for the current node
-        while let Some(parent) = current_node.parent() {
-          // Check if the parent matches the `rule.constraint.matcher`
-          // This is the scope in which the constraint query will be applied.
-          if let Some((range, _)) = parent.get_match_for_query(
-            &self.code,
-            &constraint.matcher().create_query(rule_store.language()),
-            false,
-          ) {
-            let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
-            // Apply each query within the `scope_node`
-            for q in constraint.queries() {
-              let query_str = q.substitute_tags(&capture_by_tags);
-              let query = &rule_store.get_query(&query_str);
-              // If this query matches anywhere within the scope, return false.
-              if scope_node
-                .get_match_for_query(&self.code, query, true)
-                .is_some()
-              {
-                return false;
-              }
+    let mut current_node = node;
+    // Get the scope of the predicate
+    for constraint in rule.constraints() {
+      // Loop till you find a parent for the current node
+      while let Some(parent) = current_node.parent() {
+        // Check if the parent matches the `rule.constraint.matcher`
+        // This is the scope in which the constraint query will be applied.
+        if let Some((range, _)) = parent.get_match_for_query(
+          &self.code,
+          &constraint.matcher().create_query(rule_store.language()),
+          false,
+        ) {
+          let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
+          // Apply each query within the `scope_node`
+          for q in constraint.queries() {
+            let query_str = q.substitute_tags(&capture_by_tags);
+            let query = &rule_store.get_query(&query_str);
+            // If this query matches anywhere within the scope, return false.
+            if scope_node
+              .get_match_for_query(&self.code, query, true)
+              .is_some()
+            {
+              return false;
             }
-            break;
           }
-          current_node = parent;
+          break;
         }
+        current_node = parent;
       }
     }
     true
@@ -527,14 +525,10 @@ impl SourceCodeUnit {
     (new_source_code, edit)
   }
 
-  /// Get a reference to the source code unit's code.
-  #[must_use]
   pub fn code(&self) -> String {
     String::from(&self.code)
   }
 
-  /// Get a reference to the source code unit's path.
-  #[must_use]
   pub fn path(&self) -> &PathBuf {
     &self.path
   }

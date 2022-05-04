@@ -67,7 +67,7 @@ pub mod command_line_arguments {
 
   /// Captures the Piranha arguments by from the file at `path_to_feature_flag_rules`.
   #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-  pub struct PiranhaArgsFromConfig {
+  struct PiranhaArgsFromConfig {
     language: Vec<String>,
     substitutions: Vec<Vec<String>>,
   }
@@ -113,32 +113,24 @@ pub mod command_line_arguments {
       }
     }
 
-    /// Get a reference to the piranha arguments's path to code base.
-    #[must_use]
     pub fn path_to_code_base(&self) -> &str {
       self.path_to_code_base.as_ref()
     }
 
-    /// Get a reference to the piranha arguments's input substitutions.
-    #[must_use]
     pub fn input_substitutions(&self) -> &HashMap<String, String> {
       &self.input_substitutions
     }
 
-    /// Get a reference to the piranha arguments's path to configurations.
-    #[must_use]
     pub fn path_to_configurations(&self) -> &str {
       self.path_to_configurations.as_ref()
     }
 
     /// Get the piranha arguments's language.
-    #[must_use]
+
     pub fn language(&self) -> Language {
       self.language
     }
 
-    /// Get a reference to the piranha arguments's language name.
-    #[must_use]
     pub fn language_name(&self) -> &str {
       self.language_name.as_ref()
     }
@@ -174,14 +166,10 @@ pub struct Constraint {
 }
 
 impl Constraint {
-  /// Get a reference to the constraint's queries.
-  #[must_use]
   pub fn queries(&self) -> &[String] {
     &self.queries
   }
 
-  /// Get a reference to the constraint's matcher.
-  #[must_use]
   pub fn matcher(&self) -> String {
     String::from(&self.matcher)
   }
@@ -189,23 +177,34 @@ impl Constraint {
 
 impl Rule {
   /// Create a new query from `self` with the input `query` and `replace`
-  pub fn update(&self, query: String, replace: String) -> Self {
-    Rule {
-      name: self.name.to_string(),
-      query,
-      replace_node: self.replace_node.to_string(),
-      replace,
-      holes: self.holes.clone(),
-      groups: self.groups.clone(),
-      constraints: self.constraints.clone(),
-      grep_heuristics: self.grep_heuristics.clone(),
+  pub fn update(
+    &self, query: String, replace: String, substitutions: &HashMap<String, String>,
+  ) -> Result<Rule, String> {
+    if substitutions.len() != self.holes().len() {
+      Err(format!(
+        "Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}",
+        self,
+        self.holes(),
+        substitutions
+      ))
+    } else if self.holes().is_empty() {
+      Ok(self.clone())
+    } else {
+      Ok(Rule {
+        name: self.name.to_string(),
+        query: query.substitute_tags(substitutions),
+        replace_node: self.replace_node.to_string(),
+        replace: replace.substitute_tags(substitutions),
+        holes: self.holes.clone(),
+        groups: self.groups.clone(),
+        constraints: self.constraints.clone(),
+        grep_heuristics: self.grep_heuristics.clone(),
+      })
     }
   }
 
   pub fn is_feature_flag_cleanup(&self) -> bool {
-    self.groups.as_ref().map_or(false, |tags| {
-      tags.iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
-    })
+    self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
   }
 
   // Dummy rules are helper rules that make it easier to define the rule graph.
@@ -218,14 +217,8 @@ impl Rule {
     if let Ok(r) = self.try_instantiate(substitutions) {
       return r;
     }
-    panic!(
-      "{}",
-      format!(
-        "Could not instantiate the rule {:?} with substitutions {:?}",
-        self, substitutions
-      )
-      .red()
-    );
+    #[rustfmt::skip]
+    panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
   }
 
   /// Groups the rules based on the field `rule.groups`
@@ -237,10 +230,8 @@ impl Rule {
     let mut rules_by_group = HashMap::new();
     for rule in rules {
       rules_by_name.insert(rule.name.to_string(), rule.clone());
-      if let Some(groups) = &rule.groups {
-        for tag in groups {
-          rules_by_group.collect(tag.to_string(), rule.name.to_string());
-        }
+      for tag in rule.groups() {
+        rules_by_group.collect(tag.to_string(), rule.name.to_string());
       }
     }
     (rules_by_name, rules_by_group)
@@ -249,32 +240,21 @@ impl Rule {
   /// Tries to instantiate the rule (`self`) based on the substitutions.
   /// Note this could fail if the `substitutions` does'nt contain mappings for each hole.
   pub fn try_instantiate(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
-    if let Some(holes) = &self.holes {
-      let relevant_substitutions: HashMap<String, String> = holes
-        .iter()
-        .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
-        .map(|(a, b)| (a.clone(), b.clone()))
-        .collect();
-
-      if relevant_substitutions.len() == holes.len() {
-        return Ok(self.update(
-          self.query.substitute_tags(&relevant_substitutions),
-          self.replace.substitute_tags(&relevant_substitutions),
-        ));
-      } else {
-        #[rustfmt::skip]
-                return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes, substitutions));
-      }
-    }
-    return Ok(self.clone());
+    let relevant_substitutions = self
+      .holes()
+      .iter()
+      .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
+      .map(|(a, b)| (a.clone(), b.clone()))
+      .collect::<HashMap<String, String>>();
+    self.update(self.query(), self.replace(), &relevant_substitutions)
   }
 
   /// Records the string that should be grepped in order to find files that
   /// potentially could match this global rule.
   pub fn add_grep_heuristics_for_global_rules(&mut self, substitutions: &HashMap<String, String>) {
     let mut gh = vec![];
-    for h in self.holes.as_ref().unwrap() {
-      if let Some(x) = substitutions.get(h) {
+    for hole in self.holes() {
+      if let Some(x) = substitutions.get(&hole) {
         gh.push(x.clone());
       }
     }
@@ -294,40 +274,70 @@ impl Rule {
     }
   }
 
-  /// Get a reference to the rule's replace node.
-  #[must_use]
   pub fn replace_node(&self) -> String {
     String::from(&self.replace_node)
   }
 
-  /// Get a reference to the rule's replace.
-  #[must_use]
+  pub fn query(&self) -> String {
+    String::from(&self.query)
+  }
+
   pub fn replace(&self) -> String {
     String::from(&self.replace)
   }
 
-  /// Get a reference to the rule's constraints.
-  #[must_use]
-  pub fn constraints(&self) -> Option<&Vec<Constraint>> {
-    self.constraints.as_ref()
+  pub fn constraints(&self) -> Vec<Constraint> {
+    if self.constraints.is_none() {
+      vec![]
+    } else {
+      self.constraints.as_ref().unwrap().clone()
+    }
   }
 
-  /// Get a reference to the rule's grep heuristics.
+  pub fn grep_heuristics(&self) -> Vec<String> {
+    if self.grep_heuristics.is_none() {
+      vec![]
+    } else {
+      self.grep_heuristics.as_ref().unwrap().clone()
+    }
+  }
+
+  /// Get a reference to the rule's holes.
   #[must_use]
-  pub fn grep_heuristics(&self) -> Option<&Vec<String>> {
-    self.grep_heuristics.as_ref()
+  pub fn holes(&self) -> Vec<String> {
+    if self.holes.is_none() {
+      vec![]
+    } else {
+      self.holes.as_ref().unwrap().clone()
+    }
+  }
+
+  /// Get a reference to the rule's groups.
+  #[must_use]
+  pub fn groups(&self) -> Vec<String> {
+    if self.groups.is_none() {
+      vec![]
+    } else {
+      self.groups.as_ref().unwrap().clone()
+    }
+
+    // self.groups.as_ref()
   }
 }
 
+// Captures an entry from the `edges.toml` file.
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-pub struct Edge {
+struct Edge {
   pub from: String,
   pub to: Vec<String>,
-  pub scope: String,
+  pub scope: String, //
 }
 
+// Represents the `rules.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-pub struct Edges {
+
+// Represents the `edges.toml` file
+struct Edges {
   pub edges: Vec<Edge>,
 }
 
@@ -365,7 +375,9 @@ impl RuleStore {
     };
 
     for (_, rule) in rule_store.rules_by_name.clone() {
-      rule_store.add_global_rule(&rule, &args.input_substitutions());
+      if rule.is_feature_flag_cleanup() {
+        rule_store.add_to_global_rules(&rule, &args.input_substitutions());
+      }
     }
     return rule_store;
   }
@@ -387,20 +399,13 @@ impl RuleStore {
   }
 
   /// Add a new global rule, along with grep heuristics.
-  pub fn add_global_rule(&mut self, rule: &Rule, tag_captures: &HashMap<String, String>) {
-    if !rule.is_feature_flag_cleanup() {
-      return;
-    }
+  pub fn add_to_global_rules(&mut self, rule: &Rule, tag_captures: &HashMap<String, String>) {
     if let Ok(mut r) = rule.try_instantiate(&tag_captures) {
       r.add_grep_heuristics_for_global_rules(&tag_captures);
-      info!(
-        "{}",
-        format!("Added Global Rule : {:?} - {}", r.name, r.get_query()).bright_blue()
-      );
+      #[rustfmt::skip]
+      info!("{}", format!("Added Global Rule : {:?} - {}", r.name, r.get_query()).bright_blue());
       self.global_rules.push(r);
     }
-    // let mut new_seed_rule = r.instantiate(&tag_captures);
-    // new_seed_rule.add_grep_heuristics_for_global_rules(tag_captures);
   }
 
   /// Get the compiled query for the `query_str` from the cache
@@ -490,7 +495,7 @@ impl ParameterizedRuleGraph {
   }
 
   /// Get all the outgoing edges for `rule_name`
-  pub fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
+  fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
     self
       .0
       .get(rule_name)
@@ -500,7 +505,7 @@ impl ParameterizedRuleGraph {
 }
 
 /// Read the language specific cleanup rules.
-pub fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) {
+fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_lang_config = &project_root
     .join("src")
@@ -517,7 +522,7 @@ pub fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) 
 }
 
 /// Reads the input configurations and creates a rule graph.
-pub fn read_rule_graph_from_config(
+fn read_rule_graph_from_config(
   args: &PiranhaArguments,
 ) -> (
   ParameterizedRuleGraph,
@@ -550,32 +555,30 @@ pub fn read_rule_graph_from_config(
   (graph, rules_by_name, scopes)
 }
 
+// Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-pub struct ScopeConfig {
+struct ScopeConfig {
   pub scopes: Vec<ScopeGenerator>,
 }
 
+// Represents an entry in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-pub struct ScopeGenerator {
+struct ScopeGenerator {
   name: String,
   rules: Vec<ScopeQueryGenerator>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ScopeQueryGenerator {
-  matcher: String,
-  generator: String,
+  matcher: String, // a tree-sitter query matching some enclosing AST pattern (like method or class)
+  generator: String, // a tree-sitter query matching the exact AST node
 }
 
 impl ScopeQueryGenerator {
-  /// Get a reference to the scope query generator's matcher.
-  #[must_use]
   pub fn matcher(&self) -> String {
     String::from(&self.matcher)
   }
 
-  /// Get a reference to the scope query generator's generator.
-  #[must_use]
   pub fn generator(&self) -> String {
     String::from(&self.generator)
   }
