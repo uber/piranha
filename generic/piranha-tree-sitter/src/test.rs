@@ -115,14 +115,14 @@ fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
 fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let mut results = HashMap::new();
     for source_code_unit in &updated_files {
-        let updated_file_name = &source_code_unit.path
+        let updated_file_name = &source_code_unit.path()
             .file_name()
             .and_then(|f| f.to_str().map(|x| x.to_string()))
             .unwrap();
         let expected_file_path = find_file(&path_to_expected, &updated_file_name);
         let expected_content = read_file(&expected_file_path).unwrap();
-        let result = eq_without_whitespace(&source_code_unit.code, &expected_content);
-        results.insert(source_code_unit.path.clone(), result);
+        let result = eq_without_whitespace(&source_code_unit.code(), &expected_content);
+        results.insert(source_code_unit.path().clone(), result);
     }
 
     let mut all_files_match = true;

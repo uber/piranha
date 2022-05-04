@@ -28,7 +28,7 @@ use std::{
     hash::Hash,
     path::{Path, PathBuf},
 };
-use tree_sitter::Query;
+use tree_sitter::{Query, Language};
 
 use self::command_line_arguments::PiranhaArguments;
 
@@ -79,17 +79,17 @@ pub mod command_line_arguments {
     /// Captures the processed Piranha arguments (PiranhaArgsFromConfig) that are parsed from `path_to_feature_flag_rules`.
     pub struct PiranhaArguments {
         /// Path to source code folder.
-        pub path_to_code_base: String,
+        path_to_code_base: String,
         // Input arguments provided to Piranha, mapped to tag names -
         // @stale_flag_name, @namespace, @treated, @treated_complement
         // These substitutions instantiate the initial set of feature flag rules.
-        pub input_substitutions: HashMap<String, String>,
+        input_substitutions: HashMap<String, String>,
         /// Folder containing the API specific rules
-        pub path_to_configurations: String,
+        path_to_configurations: String,
         /// Tree-sitter language model
-        pub language: Language,
-        // File extension for language
-        pub extension: String,
+        language: Language,
+        // The language name is file the extension used for files in particular language.
+        language_name: String,
     }
 
     impl PiranhaArguments {
@@ -113,39 +113,83 @@ pub mod command_line_arguments {
                 path_to_code_base: args.path_to_codebase.to_string(),
                 input_substitutions,
                 path_to_configurations: args.path_to_feature_flag_rules.to_string(),
-                extension: String::from(&piranha_args.language[0]),
+                language_name: String::from(&piranha_args.language[0]),
                 language: piranha_args.language[0].get_language(),
             }
         }
+    
+    /// Get a reference to the piranha arguments's path to code base.
+    #[must_use]
+    pub fn path_to_code_base(&self) -> &str {
+        self.path_to_code_base.as_ref()
     }
+
+    /// Get a reference to the piranha arguments's input substitutions.
+    #[must_use]
+    pub fn input_substitutions(&self) -> &HashMap<String, String> {
+        &self.input_substitutions
+    }
+
+    /// Get a reference to the piranha arguments's path to configurations.
+    #[must_use]
+    pub fn path_to_configurations(&self) -> &str {
+        self.path_to_configurations.as_ref()
+    }
+
+    /// Get the piranha arguments's language.
+    #[must_use]
+    pub fn language(&self) -> Language {
+        self.language
+    }
+
+    /// Get a reference to the piranha arguments's language name.
+    #[must_use]
+    pub fn language_name(&self) -> &str {
+        self.language_name.as_ref()
+    }
+}
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Rule {
     /// Name of the rule. (It is unique)
-    pub name: String,
+    name: String,
     /// Tree-sitter query as string
     query: String,
     /// The tag corresponding to the node to be replaced
-    pub replace_node: String,
+    replace_node: String,
     /// Replacement pattern
-    pub replace: String,
+    replace: String,
     /// Group(s) to which the rule belongs
-    pub groups: Option<Vec<String>>,
+    groups: Option<Vec<String>>,
     /// Holes that need to be filled, in order to instantiate a rule
-    pub holes: Option<Vec<String>>,
+    holes: Option<Vec<String>>,
     /// Additional constraints for matching the rule
-    pub constraints: Option<Vec<Constraint>>,
+    constraints: Option<Vec<Constraint>>,
     /// Heuristics for identifying potential files containing occurrence of the rule.
-    pub grep_heuristics: Option<Vec<String>>,
+    grep_heuristics: Option<Vec<String>>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Constraint {
     /// Scope in which the constraint query has to be applied
-    pub matcher: String,
+    matcher: String,
     /// The Tree-sitter queries that need to be applied in the matcher scope
-    pub queries: Vec<String>,
+    queries: Vec<String>,
+}
+
+impl Constraint {
+    /// Get a reference to the constraint's queries.
+    #[must_use]
+    pub fn queries(&self) -> &[String] {
+        &self.queries
+    }
+
+    /// Get a reference to the constraint's matcher.
+    #[must_use]
+    pub fn matcher(&self) -> String {
+        String::from(&self.matcher)
+    }
 }
 
 impl Rule {
@@ -252,11 +296,35 @@ impl Rule {
     /// Adds the rule to a new group - "Feature-flag API cleanup"
     pub fn add_to_feature_flag_api_group(&mut self) {
         let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
-        if self.groups.is_none() {
-            self.groups = Some(vec![group_name]);
-        } else {
-            self.groups.as_mut().unwrap().push(group_name);
+        match self.groups.as_mut() {
+            None => self.groups = Some(vec![group_name]),
+            Some(_groups) => _groups.push(group_name)
         }
+    }
+
+
+    /// Get a reference to the rule's replace node.
+    #[must_use]
+    pub fn replace_node(&self) -> String {
+        String::from(&self.replace_node)
+    }
+
+    /// Get a reference to the rule's replace.
+    #[must_use]
+    pub fn replace(&self) -> String {
+        String::from(&self.replace)
+    }
+
+    /// Get a reference to the rule's constraints.
+    #[must_use]
+    pub fn constraints(&self) -> Option<&Vec<Constraint>> {
+        self.constraints.as_ref()
+    }
+
+    /// Get a reference to the rule's grep heuristics.
+    #[must_use]
+    pub fn grep_heuristics(&self) -> Option<&Vec<String>> {
+        self.grep_heuristics.as_ref()
     }
 }
 
@@ -280,17 +348,17 @@ pub struct Rules {
 /// This maintains the state for Piranha.
 pub struct RuleStore {
     // A graph that captures the flow amongst the rules
-    pub rule_graph: ParameterizedRuleGraph,
+    rule_graph: ParameterizedRuleGraph,
     // Caches the compiled tree-sitter queries.
     rule_query_cache: HashMap<String, Query>,
     // All the input rules stored by name
-    pub rules_by_name: HashMap<String, Rule>,
+    rules_by_name: HashMap<String, Rule>,
     // Current global rules to be applied.
-    pub global_rules: Vec<Rule>,
+    global_rules: Vec<Rule>,
     // Scope generators.
-    pub scopes: Vec<ScopeGenerator>,
+    scopes: Vec<ScopeGenerator>,
     // Command line arguments passed to piranha
-    pub piranha_args: PiranhaArguments,
+    piranha_args: PiranhaArguments,
 }
 
 impl RuleStore {
@@ -306,14 +374,27 @@ impl RuleStore {
         };
 
         for (_, rule) in rule_store.rules_by_name.clone() {
-            rule_store.add_global_rule(&rule, &args.input_substitutions);
+            rule_store.add_global_rule(&rule, &args.input_substitutions());
         }
         return rule_store;
     }
 
-    pub fn get_global_rules(&self) -> Vec<Rule> {
+    pub fn global_rules(&self) -> Vec<Rule> {
         self.global_rules.clone()
     }
+
+    pub fn language(&self) -> Language {
+        self.piranha_args.language()
+    }
+    
+    pub fn language_name(&self) -> &str {
+        self.piranha_args.language_name()
+    }
+
+    pub fn input_substitutions(&self) -> HashMap<String, String>  {
+        self.piranha_args.input_substitutions().clone()
+    }
+
 
     /// Add a new global rule, along with grep heuristics.
     pub fn add_global_rule(&mut self, rule: &Rule, tag_captures: &HashMap<String, String>) {
@@ -335,9 +416,10 @@ impl RuleStore {
     /// Get the compiled query for the `query_str` from the cache
     /// else compile it, add it to the cache and return it.
     pub fn get_query(&mut self, query_str: &String) -> &Query {
+        let language = self.language();
         self.rule_query_cache
-            .entry(query_str.clone())
-            .or_insert_with(|| query_str.create_query(self.piranha_args.language))
+            .entry(query_str.to_string())
+            .or_insert_with(|| query_str.create_query(language))
     }
 
     /// Get the next rules to be applied grouped by the scope in which they should be performed.
@@ -429,13 +511,13 @@ impl ParameterizedRuleGraph {
 }
 
 /// Read the language specific cleanup rules.
-pub fn get_cleanup_rules(language: &String) -> (Rules, Edges, Vec<ScopeGenerator>) {
+pub fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) {
     let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let path_to_lang_config = &project_root
         .join("src")
         .join("cleanup_rules")
         .join(language);
-    match language.as_str() {
+    match language {
         "java" => (
             read_toml(&path_to_lang_config.join("rules.toml"), false),
             read_toml(&path_to_lang_config.join("edges.toml"), false),
@@ -453,10 +535,10 @@ pub fn read_rule_graph_from_config(
     HashMap<String, Rule>,
     Vec<ScopeGenerator>,
 ) {
-    let path_to_config = Path::new(args.path_to_configurations.as_str());
+    let path_to_config = Path::new(args.path_to_configurations());
 
     // Read the language specific cleanup rules and edges
-    let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.extension);
+    let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.language_name());
 
     // Read the API specific cleanup rules and edges
     let (mut input_rules, input_edges) : (Rules, Edges) = (
@@ -486,12 +568,26 @@ pub struct ScopeConfig {
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ScopeGenerator {
-    pub name: String,
-    pub rules: Vec<ScopeQueryGenerator>,
+    name: String,
+    rules: Vec<ScopeQueryGenerator>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ScopeQueryGenerator {
-    pub matcher: String,
-    pub generator: String,
+    matcher: String,
+    generator: String,
+}
+
+impl ScopeQueryGenerator {
+    /// Get a reference to the scope query generator's matcher.
+    #[must_use]
+    pub fn matcher(&self) -> String {
+        String::from(&self.matcher)
+    }
+
+    /// Get a reference to the scope query generator's generator.
+    #[must_use]
+    pub fn generator(&self) -> String {
+        String::from(&self.generator)
+    }
 }

@@ -47,12 +47,12 @@ impl FlagCleaner {
         // Setup the parser for the specific language
         let mut parser = Parser::new();
         parser
-            .set_language(self.rule_store.piranha_args.language)
+            .set_language(self.rule_store.language())
             .expect("Could not set the language for the parser.");
 
         // Keep looping until new `global` rules are added.
         loop {
-            let current_rules = self.rule_store.get_global_rules();
+            let current_rules = self.rule_store.global_rules();
 
             info!("{}", format!("Number of global rules {}", current_rules.len()));
             // Iterate over each file containing the usage of the feature flag API
@@ -66,7 +66,7 @@ impl FlagCleaner {
                         SourceCodeUnit::new(
                             &mut parser,
                             content,
-                            &self.rule_store.piranha_args.input_substitutions,
+                            &self.rule_store.input_substitutions(),
                             &path,
                         )
                     })
@@ -74,13 +74,13 @@ impl FlagCleaner {
                     .apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
 
                 // Break when a new `global` rule is added
-                if self.rule_store.global_rules.len() > current_rules.len() {
+                if self.rule_store.global_rules().len() > current_rules.len() {
                     info!("Found a new global rule. Will start scanning all the files again.");
                     break;
                 }
             }
             // If no new `global_rules` were added, break.
-            if self.rule_store.global_rules.len() == current_rules.len() {
+            if self.rule_store.global_rules().len() == current_rules.len() {
                 break;
             }
         }
@@ -105,7 +105,7 @@ impl FlagCleaner {
                     .extension()
                     .and_then(|e| {
                         e.to_str()
-                            .filter(|x| x.eq(&self.rule_store.piranha_args.extension.as_str()))
+                            .filter(|x| x.eq(&self.rule_store.language_name()))
                     })
                     .is_some()
             })
@@ -124,7 +124,7 @@ impl FlagCleaner {
         let graph_rule_store = RuleStore::new(&args);
         Self {
             rule_store: graph_rule_store,
-            path_to_codebase: args.path_to_code_base,
+            path_to_codebase: String::from(args.path_to_code_base()),
             relevant_files: HashMap::new(),
         }
     }
@@ -140,9 +140,9 @@ impl FlagCleaner {
     pub fn get_grep_heuristics(&self) -> Regex {
         let reg_x = self
             .rule_store
-            .get_global_rules()
+            .global_rules()
             .iter()
-            .flat_map(|r| r.grep_heuristics.as_ref().unwrap().iter())
+            .flat_map(|r| r.grep_heuristics().unwrap().iter())
             .sorted()
             //Remove duplicates
             .dedup()
@@ -158,14 +158,14 @@ impl FlagCleaner {
 #[derive(Clone)]
 pub struct SourceCodeUnit {
     // The tree representing the file
-    pub ast: Tree,
+    ast: Tree,
     // The content of a file
-    pub code: String,
+    code: String,
     // The tag substitution cache.
     // This map is looked up to instantiate new rules.
-    pub substitutions: HashMap<String, String>,
+    substitutions: HashMap<String, String>,
     // The path to the source code.
-    pub path: PathBuf,
+    path: PathBuf,
 }
 
 impl SourceCodeUnit {
@@ -347,11 +347,11 @@ impl SourceCodeUnit {
         while let Some(parent) = changed_node.parent() {
             for m in &scope_matchers {
                 if let Some((_, captures_by_tag)) =
-                    parent.get_match_for_query(&self.code, rules_store.get_query(&m.matcher), false)
+                    parent.get_match_for_query(&self.code, rules_store.get_query(&m.matcher()), false)
                 {
                     // Generate the scope query for the specific context by substituting the 
                     // the tags with code snippets appropriately in the `generator` query.
-                    return m.generator.substitute_tags(&captures_by_tag);
+                    return m.generator().substitute_tags(&captures_by_tag);
                 } else {
                     changed_node = parent;
                 }
@@ -430,14 +430,14 @@ impl SourceCodeUnit {
             self.code.clone(),
             rule_store.get_query(&rule.get_query()),
             recursive,
-            Some(rule.replace_node.clone()),
+            Some(rule.replace_node()),
         );
 
         // Return the first match that satisfies constraint of the rule
         for (range, tag_substitutions) in all_query_matches {
             let matched_node = self.get_node_for_range(range.start_byte, range.end_byte);
             if self.satisfies_constraint(matched_node, &rule, &tag_substitutions, rule_store) {
-                let replacement = rule.replace.substitute_tags(&tag_substitutions);
+                let replacement = rule.replace().substitute_tags(&tag_substitutions);
                 return Some((range.clone(), replacement, tag_substitutions));
             }
         }
@@ -455,7 +455,7 @@ impl SourceCodeUnit {
         capture_by_tags: &HashMap<String, String>,
         rule_store: &mut RuleStore,
     ) -> bool {
-        if let Some(constraints) = &rule.constraints {
+        if let Some(constraints) = rule.constraints() {
             let mut current_node = node;
             // Get the scope of the predicate
             for constraint in constraints {
@@ -466,13 +466,13 @@ impl SourceCodeUnit {
                     if let Some((range, _)) = parent.get_match_for_query(
                         &self.code,
                         &constraint
-                            .matcher
-                            .create_query(rule_store.piranha_args.language),
+                            .matcher()
+                            .create_query(rule_store.language()),
                         false,
                     ) {
                         let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
                         // Apply each query within the `scope_node`
-                        for q in &constraint.queries {
+                        for q in constraint.queries() {
                             let query_str = q.substitute_tags(&capture_by_tags);
                             let query = &rule_store.get_query(&query_str);
                              // If this query matches anywhere within the scope, return false.
@@ -544,5 +544,18 @@ impl SourceCodeUnit {
         };
 
         (new_source_code, edit)
+    }
+
+    /// Get a reference to the source code unit's code.
+    #[must_use]
+    pub fn code(&self) -> String {
+        String::from(&self.code)
+    }
+
+
+    /// Get a reference to the source code unit's path.
+    #[must_use]
+    pub fn path(&self) -> &PathBuf {
+        &self.path
     }
 }
