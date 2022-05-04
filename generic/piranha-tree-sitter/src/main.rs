@@ -17,7 +17,7 @@ use std::time::Instant;
 use crate::{piranha::FlagCleaner, utilities::initialize_logger};
 use clap::StructOpt;
 use config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
-use log::{info};
+use log::info;
 
 mod config;
 mod piranha;
@@ -27,10 +27,9 @@ mod tree_sitter;
 mod utilities;
 
 fn main() {
-    
     let now = Instant::now();
     initialize_logger(false);
-    
+
     let args = PiranhaArguments::new(CommandLineArguments::parse());
 
     let mut flag_cleaner = FlagCleaner::new(args);

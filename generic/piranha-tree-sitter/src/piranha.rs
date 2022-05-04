@@ -36,9 +36,8 @@ pub struct FlagCleaner {
 }
 
 impl FlagCleaner {
-    
     /// Getter for `relevant_files`
-    pub fn get_updated_files(&self) -> Vec<SourceCodeUnit>  {
+    pub fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
         self.relevant_files.values().cloned().collect_vec()
     }
 
@@ -54,7 +53,10 @@ impl FlagCleaner {
         loop {
             let current_rules = self.rule_store.global_rules();
 
-            info!("{}", format!("Number of global rules {}", current_rules.len()));
+            info!(
+                "{}",
+                format!("Number of global rules {}", current_rules.len())
+            );
             // Iterate over each file containing the usage of the feature flag API
             for (path, content) in self.get_files_containing_feature_flag_api_usage() {
                 self.relevant_files
@@ -110,7 +112,12 @@ impl FlagCleaner {
                     .is_some()
             })
             // Read the file
-            .map(|f| (f.path().to_path_buf(), read_file(&f.path().to_path_buf()).unwrap()))
+            .map(|f| {
+                (
+                    f.path().to_path_buf(),
+                    read_file(&f.path().to_path_buf()).unwrap(),
+                )
+            })
             // Filter the files containing the desired regex pattern
             .filter(|x| pattern.is_match(x.1.as_str()))
             .collect();
@@ -229,13 +236,14 @@ impl SourceCodeUnit {
         // Get scope node
         let mut scope_node = self.ast.root_node();
         if let Some(query_str) = scope_query {
-            // Apply the scope query in the source code and get the appropriate node 
+            // Apply the scope query in the source code and get the appropriate node
             let tree_sitter_scope_query = rules_store.get_query(query_str);
-            if let Some((range, _)) = &self.ast.root_node().get_match_for_query(
-                &self.code,
-                tree_sitter_scope_query,
-                true,
-            ) {
+            if let Some((range, _)) =
+                &self
+                    .ast
+                    .root_node()
+                    .get_match_for_query(&self.code, tree_sitter_scope_query, true)
+            {
                 scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
             }
         }
@@ -249,7 +257,7 @@ impl SourceCodeUnit {
             any_match = true;
             // Get the edit for applying the matched rule to the source code
             let edit = self.apply_edit(range, rpl, parser);
-            
+
             // Add all the (code_snippet, tag) mapping to the substitution table.
             self.substitutions.extend(code_snippets_by_tag);
 
@@ -266,7 +274,7 @@ impl SourceCodeUnit {
                     // Scope level will be "Class" or "Method"
                     if file_level_scope_names.contains(&scope_level.as_str()) {
                         for rule in rules {
-                            // Generate the scope query for the previously applied edit 
+                            // Generate the scope query for the previously applied edit
                             // This query will precisely capture the enclosing method / class.
                             let scope_query =
                                 self.get_scope_query(scope_level, current_edit, rules_store);
@@ -285,11 +293,18 @@ impl SourceCodeUnit {
 
                 // Process the parent
                 // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
-                if let Some((c_range, replacement_str, matched_rule, code_snippets_by_tag_parent_rule)) = self
-                    .match_rules_to_context(current_edit, rules_store, &next_rules_by_scope[PARENT])
-                {
+                if let Some((
+                    c_range,
+                    replacement_str,
+                    matched_rule,
+                    code_snippets_by_tag_parent_rule,
+                )) = self.match_rules_to_context(
+                    current_edit,
+                    rules_store,
+                    &next_rules_by_scope[PARENT],
+                ) {
                     info!("{}", format!("Matched parent for cleanup").green());
-                    // Apply the matched rule to the parent 
+                    // Apply the matched rule to the parent
                     current_edit = self.apply_edit(c_range, replacement_str, parser);
                     current_rule = matched_rule;
                     // Add the (tag, code_snippet) mapping to substitution table.
@@ -346,10 +361,12 @@ impl SourceCodeUnit {
         // Match the `scope_matcher.matcher` to the parent
         while let Some(parent) = changed_node.parent() {
             for m in &scope_matchers {
-                if let Some((_, captures_by_tag)) =
-                    parent.get_match_for_query(&self.code, rules_store.get_query(&m.matcher()), false)
-                {
-                    // Generate the scope query for the specific context by substituting the 
+                if let Some((_, captures_by_tag)) = parent.get_match_for_query(
+                    &self.code,
+                    rules_store.get_query(&m.matcher()),
+                    false,
+                ) {
+                    // Generate the scope query for the specific context by substituting the
                     // the tags with code snippets appropriately in the `generator` query.
                     return m.generator().substitute_tags(&captures_by_tag);
                 } else {
@@ -382,7 +399,7 @@ impl SourceCodeUnit {
         return None;
     }
 
-    /// Returns the node, its parent, grand parent and great grand parent 
+    /// Returns the node, its parent, grand parent and great grand parent
     fn get_context(&self, previous_edit: InputEdit) -> Vec<Node> {
         let changed_node =
             self.get_node_for_range(previous_edit.start_byte, previous_edit.new_end_byte);
@@ -465,9 +482,7 @@ impl SourceCodeUnit {
                     // This is the scope in which the constraint query will be applied.
                     if let Some((range, _)) = parent.get_match_for_query(
                         &self.code,
-                        &constraint
-                            .matcher()
-                            .create_query(rule_store.language()),
+                        &constraint.matcher().create_query(rule_store.language()),
                         false,
                     ) {
                         let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
@@ -475,8 +490,11 @@ impl SourceCodeUnit {
                         for q in constraint.queries() {
                             let query_str = q.substitute_tags(&capture_by_tags);
                             let query = &rule_store.get_query(&query_str);
-                             // If this query matches anywhere within the scope, return false.
-                            if scope_node.get_match_for_query(&self.code, query, true).is_some() {
+                            // If this query matches anywhere within the scope, return false.
+                            if scope_node
+                                .get_match_for_query(&self.code, query, true)
+                                .is_some()
+                            {
                                 return false;
                             }
                         }
@@ -503,7 +521,6 @@ impl SourceCodeUnit {
         ]
         .concat();
 
-        
         // Log the edit
         let replaced_code_snippet = &source_code[replace_range.start_byte..replace_range.end_byte];
         #[rustfmt::skip]
@@ -551,7 +568,6 @@ impl SourceCodeUnit {
     pub fn code(&self) -> String {
         String::from(&self.code)
     }
-
 
     /// Get a reference to the source code unit's path.
     #[must_use]

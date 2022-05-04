@@ -20,9 +20,8 @@ use log::info;
 
 use crate::config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
 use crate::piranha::{FlagCleaner, SourceCodeUnit};
-use crate::utilities::{read_file, initialize_logger};
+use crate::utilities::{initialize_logger, read_file};
 use std::sync::Once;
-
 
 static INIT: Once = Once::new();
 
@@ -57,7 +56,8 @@ fn test_java_scenarios_treated() {
 
 #[test]
 fn test_java_scenarios_control() {
-    initialize();();
+    initialize();
+    ();
     let language = "Java";
     let path_to_test_resource = get_path_to_test_resource(language);
     let args = PiranhaArguments::new(CommandLineArguments {
@@ -85,14 +85,14 @@ fn get_path_to_test_resource(language: &str) -> PathBuf {
             .join("src")
             .join("test-resources")
             .join("java"),
-        _ => panic!("{} not supported!", language)
+        _ => panic!("{} not supported!", language),
     }
 }
 
 fn get_path_test_configurations(language: &str) -> String {
     match language {
         "Java" => "src/test-resources/java/configurations/".to_string(),
-        _ => panic!("{} not supported!", language)
+        _ => panic!("{} not supported!", language),
     }
 }
 
@@ -115,7 +115,8 @@ fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
 fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let mut results = HashMap::new();
     for source_code_unit in &updated_files {
-        let updated_file_name = &source_code_unit.path()
+        let updated_file_name = &source_code_unit
+            .path()
             .file_name()
             .and_then(|f| f.to_str().map(|x| x.to_string()))
             .unwrap();
@@ -128,7 +129,10 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let mut all_files_match = true;
     for (file_name, is_as_expected) in results {
         if is_as_expected {
-            info!("{}", format!("Match successful for {:?}", file_name).green());
+            info!(
+                "{}",
+                format!("Match successful for {:?}", file_name).green()
+            );
         } else {
             info!("{}", format!("Match failed for {:?}", file_name).red());
             all_files_match = false;

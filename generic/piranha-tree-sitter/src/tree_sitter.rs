@@ -128,14 +128,12 @@ impl PiranhaRuleMatcher for Node<'_> {
         let tag_names_by_index: HashMap<usize, &String> =
             query.capture_names().iter().enumerate().collect();
 
-
-        // In the below code, we get the code snippet corresponding to each tag for each QueryMatch. 
-        // It could happen that we have multiple occurrences of the same tag (in queries 
+        // In the below code, we get the code snippet corresponding to each tag for each QueryMatch.
+        // It could happen that we have multiple occurrences of the same tag (in queries
         // that use the quantifier operator (*/+)). Therefore for each query match, we have to group (join) the codes snippets
         // corresponding to the same tag.
         let mut output = vec![];
         for (captured_node_range, query_matches) in query_matches_by_node_range {
-
             // This ensures that each query pattern in rule.query matches the same node.
             if query_matches.len() != query.pattern_count() {
                 continue;

@@ -28,7 +28,7 @@ use std::{
     hash::Hash,
     path::{Path, PathBuf},
 };
-use tree_sitter::{Query, Language};
+use tree_sitter::{Language, Query};
 
 use self::command_line_arguments::PiranhaArguments;
 
@@ -47,10 +47,7 @@ pub mod command_line_arguments {
     use std::{collections::HashMap, path::PathBuf};
     use tree_sitter::Language;
 
-    use crate::{
-        tree_sitter::TreeSitterHelpers,
-        utilities::{read_toml},
-    };
+    use crate::{tree_sitter::TreeSitterHelpers, utilities::read_toml};
 
     /// Used for parsing command-line arguments passed to Piranha .
     #[derive(Clone, Parser, Debug)]
@@ -96,7 +93,7 @@ pub mod command_line_arguments {
         pub fn new(args: CommandLineArguments) -> Self {
             let path_to_piranha_argument_file =
                 PathBuf::from(args.path_to_piranha_arguments.as_str());
-                
+
             let piranha_args: PiranhaArgsFromConfig =
                 read_toml(&path_to_piranha_argument_file, false);
 
@@ -117,37 +114,37 @@ pub mod command_line_arguments {
                 language: piranha_args.language[0].get_language(),
             }
         }
-    
-    /// Get a reference to the piranha arguments's path to code base.
-    #[must_use]
-    pub fn path_to_code_base(&self) -> &str {
-        self.path_to_code_base.as_ref()
-    }
 
-    /// Get a reference to the piranha arguments's input substitutions.
-    #[must_use]
-    pub fn input_substitutions(&self) -> &HashMap<String, String> {
-        &self.input_substitutions
-    }
+        /// Get a reference to the piranha arguments's path to code base.
+        #[must_use]
+        pub fn path_to_code_base(&self) -> &str {
+            self.path_to_code_base.as_ref()
+        }
 
-    /// Get a reference to the piranha arguments's path to configurations.
-    #[must_use]
-    pub fn path_to_configurations(&self) -> &str {
-        self.path_to_configurations.as_ref()
-    }
+        /// Get a reference to the piranha arguments's input substitutions.
+        #[must_use]
+        pub fn input_substitutions(&self) -> &HashMap<String, String> {
+            &self.input_substitutions
+        }
 
-    /// Get the piranha arguments's language.
-    #[must_use]
-    pub fn language(&self) -> Language {
-        self.language
-    }
+        /// Get a reference to the piranha arguments's path to configurations.
+        #[must_use]
+        pub fn path_to_configurations(&self) -> &str {
+            self.path_to_configurations.as_ref()
+        }
 
-    /// Get a reference to the piranha arguments's language name.
-    #[must_use]
-    pub fn language_name(&self) -> &str {
-        self.language_name.as_ref()
+        /// Get the piranha arguments's language.
+        #[must_use]
+        pub fn language(&self) -> Language {
+            self.language
+        }
+
+        /// Get a reference to the piranha arguments's language name.
+        #[must_use]
+        pub fn language_name(&self) -> &str {
+            self.language_name.as_ref()
+        }
     }
-}
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
@@ -298,10 +295,9 @@ impl Rule {
         let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
         match self.groups.as_mut() {
             None => self.groups = Some(vec![group_name]),
-            Some(_groups) => _groups.push(group_name)
+            Some(_groups) => _groups.push(group_name),
         }
     }
-
 
     /// Get a reference to the rule's replace node.
     #[must_use]
@@ -386,15 +382,14 @@ impl RuleStore {
     pub fn language(&self) -> Language {
         self.piranha_args.language()
     }
-    
+
     pub fn language_name(&self) -> &str {
         self.piranha_args.language_name()
     }
 
-    pub fn input_substitutions(&self) -> HashMap<String, String>  {
+    pub fn input_substitutions(&self) -> HashMap<String, String> {
         self.piranha_args.input_substitutions().clone()
     }
-
 
     /// Add a new global rule, along with grep heuristics.
     pub fn add_global_rule(&mut self, rule: &Rule, tag_captures: &HashMap<String, String>) {
@@ -541,7 +536,7 @@ pub fn read_rule_graph_from_config(
     let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.language_name());
 
     // Read the API specific cleanup rules and edges
-    let (mut input_rules, input_edges) : (Rules, Edges) = (
+    let (mut input_rules, input_edges): (Rules, Edges) = (
         read_toml(&path_to_config.join("rules.toml"), false),
         read_toml(&path_to_config.join("edges.toml"), true),
     );
