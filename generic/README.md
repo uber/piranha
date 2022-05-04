@@ -48,7 +48,8 @@ If not, adapt these examples to your requirements. Look at the [tree-sitter quer
 Now adapt the `/src/test-resources/<language>/configurations/piranha_arguments.toml`
 as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`.
 If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`.
- In most cases, one will not require `/src/test-resources/<language>/configurations/edges.toml`.
+In most cases, one will not require `/src/test-resources/<language>/configurations/edges.toml`.
+Please refer to the `run_piranha_demo.sh` and `demo/` directory to understand how to quickly get stated with Piranha.
 
 For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api).
 For more details on how to configure Piranha to a new language see section [Onboarding a new language flag](onboarding-a-new-language).
