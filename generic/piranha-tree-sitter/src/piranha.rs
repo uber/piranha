@@ -127,7 +127,7 @@ impl FlagCleaner {
     return files;
   }
 
-  /// Instantiate PiranhaArguments
+  /// Instantiate FlagCleaner
   pub fn new(args: PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(&args);
     Self {

@@ -125,8 +125,6 @@ pub mod command_line_arguments {
       self.path_to_configurations.as_ref()
     }
 
-    /// Get the piranha arguments's language.
-
     pub fn language(&self) -> Language {
       self.language
     }
@@ -203,12 +201,12 @@ impl Rule {
     }
   }
 
-  pub fn is_feature_flag_cleanup(&self) -> bool {
+  fn is_feature_flag_cleanup(&self) -> bool {
     self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
   }
 
   // Dummy rules are helper rules that make it easier to define the rule graph.
-  pub fn is_dummy_rule(&self) -> bool {
+  fn is_dummy_rule(&self) -> bool {
     return self.query.is_empty() && self.replace.is_empty();
   }
 
@@ -223,9 +221,7 @@ impl Rule {
 
   /// Groups the rules based on the field `rule.groups`
   /// Note: a rule can belong to more than one group.
-  pub fn get_grouped_rules(
-    rules: &Vec<Rule>,
-  ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
+  fn get_grouped_rules(rules: &Vec<Rule>) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
     let mut rules_by_name = HashMap::new();
     let mut rules_by_group = HashMap::new();
     for rule in rules {
@@ -239,7 +235,7 @@ impl Rule {
 
   /// Tries to instantiate the rule (`self`) based on the substitutions.
   /// Note this could fail if the `substitutions` does'nt contain mappings for each hole.
-  pub fn try_instantiate(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
+  fn try_instantiate(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
     let relevant_substitutions = self
       .holes()
       .iter()
@@ -251,7 +247,7 @@ impl Rule {
 
   /// Records the string that should be grepped in order to find files that
   /// potentially could match this global rule.
-  pub fn add_grep_heuristics_for_global_rules(&mut self, substitutions: &HashMap<String, String>) {
+  fn add_grep_heuristics_for_global_rules(&mut self, substitutions: &HashMap<String, String>) {
     let mut gh = vec![];
     for hole in self.holes() {
       if let Some(x) = substitutions.get(&hole) {
@@ -266,7 +262,7 @@ impl Rule {
   }
 
   /// Adds the rule to a new group - "Feature-flag API cleanup"
-  pub fn add_to_feature_flag_api_group(&mut self) {
+  fn add_to_feature_flag_api_group(&mut self) {
     let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
     match self.groups.as_mut() {
       None => self.groups = Some(vec![group_name]),
@@ -278,7 +274,7 @@ impl Rule {
     String::from(&self.replace_node)
   }
 
-  pub fn query(&self) -> String {
+  fn query(&self) -> String {
     String::from(&self.query)
   }
 
@@ -287,50 +283,40 @@ impl Rule {
   }
 
   pub fn constraints(&self) -> Vec<Constraint> {
-    if self.constraints.is_none() {
-      vec![]
-    } else {
-      self.constraints.as_ref().unwrap().clone()
+    match &self.constraints {
+      Some(cs) => cs.clone(),
+      None => vec![],
     }
   }
 
   pub fn grep_heuristics(&self) -> Vec<String> {
-    if self.grep_heuristics.is_none() {
-      vec![]
-    } else {
-      self.grep_heuristics.as_ref().unwrap().clone()
+    match &self.grep_heuristics {
+      Some(cs) => cs.clone(),
+      None => vec![],
     }
   }
 
-  /// Get a reference to the rule's holes.
-  #[must_use]
-  pub fn holes(&self) -> Vec<String> {
-    if self.holes.is_none() {
-      vec![]
-    } else {
-      self.holes.as_ref().unwrap().clone()
+  fn holes(&self) -> Vec<String> {
+    match &self.holes {
+      Some(cs) => cs.clone(),
+      None => vec![],
     }
   }
 
-  /// Get a reference to the rule's groups.
-  #[must_use]
-  pub fn groups(&self) -> Vec<String> {
-    if self.groups.is_none() {
-      vec![]
-    } else {
-      self.groups.as_ref().unwrap().clone()
+  fn groups(&self) -> Vec<String> {
+    match &self.groups {
+      Some(cs) => cs.clone(),
+      None => vec![],
     }
-
-    // self.groups.as_ref()
   }
 }
 
 // Captures an entry from the `edges.toml` file.
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 struct Edge {
-  pub from: String,
-  pub to: Vec<String>,
-  pub scope: String, //
+  from: String,
+  to: Vec<String>,
+  scope: String, //
 }
 
 // Represents the `rules.toml` file
@@ -338,18 +324,18 @@ struct Edge {
 
 // Represents the `edges.toml` file
 struct Edges {
-  pub edges: Vec<Edge>,
+   edges: Vec<Edge>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Rules {
-  pub rules: Vec<Rule>,
+   rules: Vec<Rule>,
 }
 
 /// This maintains the state for Piranha.
 pub struct RuleStore {
   // A graph that captures the flow amongst the rules
-  rule_graph: ParameterizedRuleGraph,
+  rule_graph: RuleGraph,
   // Caches the compiled tree-sitter queries.
   rule_query_cache: HashMap<String, Query>,
   // All the input rules stored by name
@@ -463,9 +449,9 @@ impl RuleStore {
 }
 
 /// Captures the relationship between the rules as a graph (adjacency list)
-pub struct ParameterizedRuleGraph(HashMap<String, Vec<(String, String)>>);
+pub struct RuleGraph(HashMap<String, Vec<(String, String)>>);
 
-impl ParameterizedRuleGraph {
+impl RuleGraph {
   // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
   fn new(edges: Vec<Edge>, all_rules: Vec<Rule>) -> Self {
     let (rules_by_name, rules_by_group) = Rule::get_grouped_rules(&all_rules);
@@ -491,7 +477,7 @@ impl ParameterizedRuleGraph {
         }
       }
     }
-    ParameterizedRuleGraph(graph)
+    RuleGraph(graph)
   }
 
   /// Get all the outgoing edges for `rule_name`
@@ -525,7 +511,7 @@ fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) {
 fn read_rule_graph_from_config(
   args: &PiranhaArguments,
 ) -> (
-  ParameterizedRuleGraph,
+  RuleGraph,
   HashMap<String, Rule>,
   Vec<ScopeGenerator>,
 ) {
@@ -550,7 +536,7 @@ fn read_rule_graph_from_config(
 
   let (rules_by_name, _) = Rule::get_grouped_rules(&all_rules);
 
-  let graph = ParameterizedRuleGraph::new(all_edges, all_rules);
+  let graph = RuleGraph::new(all_edges, all_rules);
 
   (graph, rules_by_name, scopes)
 }
@@ -558,7 +544,7 @@ fn read_rule_graph_from_config(
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 struct ScopeConfig {
-  pub scopes: Vec<ScopeGenerator>,
+  scopes: Vec<ScopeGenerator>,
 }
 
 // Represents an entry in the `scope_config.toml` file
