@@ -17,16 +17,32 @@ use std::fs::{File, OpenOptions};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
-use colored::Colorize;
+use toml;
 
 // Reads a file.
-pub fn read_file(file_path: &PathBuf) -> String {
-    if let Ok(file) =  File::open(&file_path) {
-        let mut content = String::new();
-        let _ = BufReader::new(file).read_to_string(&mut content);
-        return content;
+pub fn read_file(file_path: &PathBuf) -> Result<String, String>  {
+
+    File::open(&file_path)
+        .map(|file|{
+            let mut content = String::new();
+            let _ = BufReader::new(file).read_to_string(&mut content);
+            content        
+        })
+        .map_err(|error| error.to_string())
+}
+
+// Reads a toml file. In case of error, it returns a default value (if return_default is true) else panics.
+pub fn read_toml<T>(file_path: &PathBuf, return_default: bool) -> T where T: serde::de::DeserializeOwned + Default {
+    let obj = read_file(file_path)
+        .and_then(|content|toml::from_str::<T>(content.as_str()).map_err(|e|e.to_string()));  
+    if obj.is_ok() {
+        return obj.unwrap();
     }
-    panic!("{}",format!("Could not read file {:?}", &file_path).red())
+    if return_default{
+        return T::default();
+    }
+    panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, obj.err().unwrap());
+    
 }
 
 

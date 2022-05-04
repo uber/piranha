@@ -17,13 +17,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::{
     tree_sitter::TreeSitterHelpers,
-    utilities::{read_file, MapOfVec},
+    utilities::{read_toml, MapOfVec},
 };
 
 use colored::Colorize;
 use log::info;
 use serde_derive::Deserialize;
-use std::{collections::HashMap, hash::Hash, path::Path};
+use std::{
+    collections::HashMap,
+    hash::Hash,
+    path::{Path, PathBuf},
+};
 use tree_sitter::Query;
 
 use self::command_line_arguments::PiranhaArguments;
@@ -43,13 +47,15 @@ pub mod command_line_arguments {
     use std::{collections::HashMap, path::PathBuf};
     use tree_sitter::Language;
 
-    use crate::{tree_sitter::TreeSitterHelpers, utilities::read_file};
+    use crate::{
+        tree_sitter::TreeSitterHelpers,
+        utilities::{read_toml},
+    };
 
     /// Used for parsing command-line arguments passed to Piranha .
     #[derive(Clone, Parser, Debug)]
     #[clap(author, version, about, long_about = None)]
-    
-    
+
     pub struct CommandLineArguments {
         /// Path to source code folder.
         #[clap(short = 'c', long)]
@@ -57,19 +63,20 @@ pub mod command_line_arguments {
         /// Folder containing the required configuration files
         #[clap(short = 'f', long)]
         pub path_to_feature_flag_rules: String,
-        /// Path to the file containing arguments for Piranha 
+        /// Path to the file containing arguments for Piranha
         #[clap(short = 'p', long)]
         pub path_to_piranha_arguments: String,
     }
 
-    #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+    /// Captures the Piranha arguments by from the file at `path_to_feature_flag_rules`.
+    #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
     pub struct PiranhaArgsFromConfig {
         language: Vec<String>,
         substitutions: Vec<Vec<String>>,
     }
 
     #[derive(Clone)]
-    /// Captures command-line arguments for Piranha.
+    /// Captures the processed Piranha arguments (PiranhaArgsFromConfig) that are parsed from `path_to_feature_flag_rules`.
     pub struct PiranhaArguments {
         /// Path to source code folder.
         pub path_to_code_base: String,
@@ -87,10 +94,11 @@ pub mod command_line_arguments {
 
     impl PiranhaArguments {
         pub fn new(args: CommandLineArguments) -> Self {
-            let piranha_args = toml::from_str::<PiranhaArgsFromConfig>(
-                read_file(&PathBuf::from(args.path_to_piranha_arguments.as_str())).as_str(),
-            )
-            .unwrap();
+            let path_to_piranha_argument_file =
+                PathBuf::from(args.path_to_piranha_arguments.as_str());
+                
+            let piranha_args: PiranhaArgsFromConfig =
+                read_toml(&path_to_piranha_argument_file, false);
 
             let input_substitutions = piranha_args
                 .substitutions
@@ -112,7 +120,7 @@ pub mod command_line_arguments {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Rule {
     /// Name of the rule. (It is unique)
     pub name: String,
@@ -252,19 +260,19 @@ impl Rule {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Edge {
     pub from: String,
     pub to: Vec<String>,
     pub scope: String,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Edges {
     pub edges: Vec<Edge>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Rules {
     pub rules: Vec<Rule>,
 }
@@ -345,7 +353,7 @@ impl RuleStore {
             let to_rule_name = &self.rules_by_name[&to_rule];
             // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
             if to_rule_name.is_dummy_rule() {
-                // Call this method recursively on the dummy node 
+                // Call this method recursively on the dummy node
                 for (next_next_rules_scope, next_next_rules) in
                     self.get_next(to_rule_name, tag_matches)
                 {
@@ -371,8 +379,7 @@ impl RuleStore {
 
     // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
     pub fn get_scope_query_generators(&self, scope_level: &str) -> Vec<ScopeQueryGenerator> {
-        self
-            .scopes
+        self.scopes
             .iter()
             .find(|level| level.name.eq(scope_level))
             .map(|scope| scope.rules.clone())
@@ -423,13 +430,16 @@ impl ParameterizedRuleGraph {
 
 /// Read the language specific cleanup rules.
 pub fn get_cleanup_rules(language: &String) -> (Rules, Edges, Vec<ScopeGenerator>) {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let path_to_lang_config = &project_root
+        .join("src")
+        .join("cleanup_rules")
+        .join(language);
     match language.as_str() {
         "java" => (
-            toml::from_str::<Rules>(include_str!("cleanup_rules/java/rules.toml")).unwrap(),
-            toml::from_str::<Edges>(include_str!("cleanup_rules/java/edges.toml")).unwrap(),
-            toml::from_str::<ScopeConfig>(include_str!("cleanup_rules/java/scope_config.toml"))
-                .map(|x| x.scopes)
-                .unwrap(),
+            read_toml(&path_to_lang_config.join("rules.toml"), false),
+            read_toml(&path_to_lang_config.join("edges.toml"), false),
+            read_toml::<ScopeConfig>(&path_to_lang_config.join("scope_config.toml"), false).scopes,
         ),
         _ => panic!(),
     }
@@ -449,9 +459,9 @@ pub fn read_rule_graph_from_config(
     let (language_rules, language_edges, scopes) = get_cleanup_rules(&args.extension);
 
     // Read the API specific cleanup rules and edges
-    let (mut input_rules, input_edges) = (
-        toml::from_str::<Rules>(read_file(&path_to_config.join("rules.toml")).as_str()).unwrap(),
-        toml::from_str::<Edges>(read_file(&path_to_config.join("edges.toml")).as_str()).unwrap(),
+    let (mut input_rules, input_edges) : (Rules, Edges) = (
+        read_toml(&path_to_config.join("rules.toml"), false),
+        read_toml(&path_to_config.join("edges.toml"), true),
     );
 
     // Label the input-rules as `Feature-flag API cleanup`
@@ -469,18 +479,18 @@ pub fn read_rule_graph_from_config(
     (graph, rules_by_name, scopes)
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ScopeConfig {
     pub scopes: Vec<ScopeGenerator>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ScopeGenerator {
     pub name: String,
     pub rules: Vec<ScopeQueryGenerator>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub struct ScopeQueryGenerator {
     pub matcher: String,
     pub generator: String,

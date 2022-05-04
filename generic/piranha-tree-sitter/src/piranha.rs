@@ -110,7 +110,7 @@ impl FlagCleaner {
                     .is_some()
             })
             // Read the file
-            .map(|f| (f.path().to_path_buf(), read_file(&f.path().to_path_buf())))
+            .map(|f| (f.path().to_path_buf(), read_file(&f.path().to_path_buf()).unwrap()))
             // Filter the files containing the desired regex pattern
             .filter(|x| pattern.is_match(x.1.as_str()))
             .collect();
