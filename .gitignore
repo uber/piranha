@@ -18,3 +18,4 @@ generic/tree-sitter-src/tree-sitter-swift
 .history
 .vscode
 **/*.log
+generic/piranha-tree-sitter/demo/java/piranha-tree-sitter

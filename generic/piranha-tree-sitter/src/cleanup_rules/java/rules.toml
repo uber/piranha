@@ -478,7 +478,7 @@ queries = [
 ]
 [[rules.constraints]]
 # There should exist no field declaration named `@variable_name` and
-# there should nbe no assignments to @variable_name that are not same as `@init`.
+# there should be no assignments to @variable_name that are not same as `@init`.
 matcher = "(class_declaration) @cd"
 queries = [
   """(
