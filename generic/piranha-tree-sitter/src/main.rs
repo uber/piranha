@@ -27,18 +27,18 @@ mod tree_sitter;
 mod utilities;
 
 fn main() {
-    let now = Instant::now();
-    initialize_logger(false);
+  let now = Instant::now();
+  initialize_logger(false);
 
-    let args = PiranhaArguments::new(CommandLineArguments::parse());
+  let args = PiranhaArguments::new(CommandLineArguments::parse());
 
-    let mut flag_cleaner = FlagCleaner::new(args);
+  let mut flag_cleaner = FlagCleaner::new(args);
 
-    flag_cleaner.perform_cleanup();
+  flag_cleaner.perform_cleanup();
 
-    for source_code_unit in flag_cleaner.get_updated_files() {
-        source_code_unit.persist();
-    }
+  for source_code_unit in flag_cleaner.get_updated_files() {
+    source_code_unit.persist();
+  }
 
-    info!("Time elapsed - {:?}", now.elapsed().as_secs());
+  info!("Time elapsed - {:?}", now.elapsed().as_secs());
 }
