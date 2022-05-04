@@ -27,14 +27,14 @@ class XPFlagCleanerPositiveCases {
   private boolean ftBool = experimentation.isSomeFeature().getCachedValue();
 
   public void conditional_contains_stale_flag() {
-    // 
+    
     if (experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
     }
   }
 
   public void conditional_with_else_contains_stale_flag() {
-    // 
+    
     if (experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
     } else {
@@ -43,7 +43,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool() {
-    // 
+    
     bool tBool = exp.isSomeFeature().getCachedValue();
     if (tBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
@@ -53,7 +53,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
-    // 
+    
     bool tBool = exp.isSomeFeature().getCachedValue();
     if (tBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
@@ -63,7 +63,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
-    // 
+    
     bool tBool = exp.isSomeFeature().getCachedValue();
     if (!tBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
@@ -84,7 +84,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(int a, bool abc, int z) {
-    // 
+    
     bool tBool = exp.isSomeFeature().getCachedValue();
     tBool = true;
     if (!tBool && experimentation.isSomeFeature().getCachedValue()) {
@@ -95,7 +95,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
-    // 
+    
     if (ftBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
     } else {

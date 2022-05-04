@@ -228,4 +228,3 @@ To add new scenarios to the existing tests for a given language, you can add the
 Note that the the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files must be also updated accordingly. 
 
 To add tests for a new language, please add a new <language> folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
-

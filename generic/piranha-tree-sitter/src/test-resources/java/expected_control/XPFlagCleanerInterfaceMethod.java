@@ -27,29 +27,29 @@ class XPFlagCleanerPositiveCases {
   
 
   public void conditional_contains_stale_flag() {
-    // 
+    
     
   }
 
   public void conditional_with_else_contains_stale_flag() {
-    // 
+    
     System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool() {
-    // 
+    
     
     System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
-    // 
+    
     
     System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
-    // 
+    
     
     System.out.println("Hello World");
   }
@@ -66,7 +66,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(int a, bool abc, int z) {
-    // 
+    
     bool tBool = false;
     tBool = true;
     if (!tBool && true) {
@@ -77,7 +77,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
-    // 
+    
     System.out.println("Hi world");
   }
 
