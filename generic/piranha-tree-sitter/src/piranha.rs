@@ -524,10 +524,11 @@ impl SourceCodeUnit {
     (new_source_code, edit)
   }
 
+  #[cfg(test)]// Rust analyzer FP
   pub fn code(&self) -> String {
     String::from(&self.code)
   }
-
+  #[cfg(test)] // Rust analyzer FP
   pub fn path(&self) -> &PathBuf {
     &self.path
   }

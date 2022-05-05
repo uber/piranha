@@ -17,6 +17,8 @@ use std::fs::{File, OpenOptions};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
+#[cfg(test)]
+use std::fs::{DirEntry, self};
 use toml;
 
 // Reads a file.
@@ -38,13 +40,13 @@ where
   let obj = read_file(file_path)
     .and_then(|content| toml::from_str::<T>(content.as_str()).map_err(|e| e.to_string()));
   if obj.is_ok() {
-    return obj.unwrap();
+    obj.unwrap()
+  } else if return_default {
+    T::default()
+  } else{
+    #[rustfmt::skip]
+    panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, obj.err().unwrap());
   }
-  if return_default {
-    return T::default();
-  }
-  #[rustfmt::skip]
-  panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, obj.err().unwrap());
 }
 
 pub trait MapOfVec<T, V> {
@@ -73,4 +75,35 @@ pub fn initialize_logger(is_test: bool) {
     .target(env_logger::Target::Pipe(Box::new(log_file)))
     .is_test(is_test)
     .try_init();
+}
+
+/// Compares two strings, ignoring new lines, and space.
+#[cfg(test)] // Rust analyzer FP
+pub fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
+  s1.replace("\n", "")
+    .replace(" ", "")
+    .eq(&s2.replace("\n", "").replace(" ", ""))
+}
+
+/// Checks if the given `dir_entry` is a file named `file_name`
+#[cfg(test)] // Rust analyzer FP
+pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
+
+  dir_entry
+    .path()
+    .file_name()
+    .map(|e| e.eq(file_name))
+    .unwrap_or(false)
+}
+
+/// Returns the file with the given name within the given directory.
+#[cfg(test)] // Rust analyzer FP
+pub fn find_file(input_dir: &PathBuf, name: &String) -> PathBuf {
+  fs::read_dir(input_dir)
+    .unwrap()
+    .filter_map(|d| d.ok())
+    .filter(|de| has_name(de, name))
+    .next()
+    .unwrap()
+    .path()
 }

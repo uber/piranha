@@ -12,7 +12,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use std::collections::HashMap;
-use std::fs::{self, DirEntry};
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
@@ -20,7 +19,7 @@ use log::info;
 
 use crate::config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
 use crate::piranha::{FlagCleaner, SourceCodeUnit};
-use crate::utilities::{initialize_logger, read_file};
+use crate::utilities::{initialize_logger, read_file, find_file, eq_without_whitespace};
 use std::sync::Once;
 
 static INIT: Once = Once::new();
@@ -74,12 +73,7 @@ fn test_java_scenarios_control() {
   check_result(updated_files, path_to_expected);
 }
 
-/// Compares two strings, ignoring new lines, and space.
-fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
-  s1.replace("\n", "")
-    .replace(" ", "")
-    .eq(&s2.replace("\n", "").replace(" ", ""))
-}
+
 
 /// Checks if the file updates returned by piranha are as expected.
 fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
@@ -109,30 +103,11 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
   assert!(all_files_match);
 }
 
+
 fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
   let mut flag_cleaner = FlagCleaner::new(args);
 
   flag_cleaner.perform_cleanup();
 
   flag_cleaner.get_updated_files()
-}
-
-/// Checks if the given `dir_entry` is a file named `file_name`
-pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
-  dir_entry
-    .path()
-    .file_name()
-    .map(|e| e.eq(file_name))
-    .unwrap_or(false)
-}
-
-/// Returns the file with the given name within the given directory.
-pub fn find_file(input_dir: &PathBuf, name: &String) -> PathBuf {
-  fs::read_dir(input_dir)
-    .unwrap()
-    .filter_map(|d| d.ok())
-    .filter(|de| has_name(de, name))
-    .next()
-    .unwrap()
-    .path()
 }

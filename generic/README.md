@@ -38,6 +38,8 @@ Languages supported :
 * Java
 * Kotlin (planned)
 * Swift (planned)
+* JavaScript (planned)
+* Go (planned)
 * Contributions for other languages are welcome :) 
 
 ## Getting started with Piranha
@@ -45,13 +47,11 @@ Languages supported :
 *Please refer to our demo -`generic/piranha-tree-sitter/run_piranha_demo.sh` and `generic/piranha-tree-sitter/demo/` to quickly get started with Piranha.*
 *Please refer to our test cases at `src/test-resources/<language>/` as a reference to handle more complicated scenarios*
 
-First, check if the current version of Piranha supports the required language.
-If so, then check if the API usage is similar to the ones provided in the test suite at `/demo/<language>/configurations/rules.toml`.
-If not, adapt these examples to your requirements. Look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) for more information on how to construct tree-sitter queries. 
-Now adapt the `/demo/<language>/configurations/piranha_arguments.toml`
-as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`.
-If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`.
-In most cases, one will not require `/demo/<language>/configurations/edges.toml`.
+To get started with Piranha, please follow the below steps:
+* Check if the current version of Piranha supports the required language.
+* If so, then check if the API usage is similar to the ones provided in the test suite at `/demo/<language>/configurations/rules.toml`.
+*  If not, adapt these examples to your requirements. Look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) for more information on how to construct tree-sitter queries. 
+* Now adapt the `/demo/<language>/configurations/piranha_arguments.toml` as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`. In most cases, one will not require `/demo/<language>/configurations/edges.toml`.
 
 For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api).
 For more details on how to configure Piranha to a new language see section [Onboarding a new language flag](onboarding-a-new-language).
