@@ -93,9 +93,10 @@ pub mod command_line_arguments {
     pub fn new(args: CommandLineArguments) -> Self {
       let path_to_piranha_argument_file = PathBuf::from(args.path_to_piranha_arguments.as_str());
 
-      let piranha_args: PiranhaArgsFromConfig = read_toml(&path_to_piranha_argument_file, false);
+      let piranha_args_from_config: PiranhaArgsFromConfig =
+        read_toml(&path_to_piranha_argument_file, false);
 
-      let input_substitutions = piranha_args
+      let input_substitutions = piranha_args_from_config
         .substitutions
         .iter()
         .map(|x| (String::from(&x[0]), String::from(&x[1])))
@@ -108,8 +109,8 @@ pub mod command_line_arguments {
         path_to_code_base: args.path_to_codebase.to_string(),
         input_substitutions,
         path_to_configurations: args.path_to_feature_flag_rules.to_string(),
-        language_name: String::from(&piranha_args.language[0]),
-        language: piranha_args.language[0].get_language(),
+        language_name: String::from(&piranha_args_from_config.language[0]),
+        language: piranha_args_from_config.language[0].get_language(),
       }
     }
 
@@ -179,15 +180,15 @@ impl Rule {
     &self, query: String, replace: String, substitutions: &HashMap<String, String>,
   ) -> Result<Rule, String> {
     if substitutions.len() != self.holes().len() {
-       #[rustfmt::skip] 
+      #[rustfmt::skip]
       return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
     } else {
-        let mut updated_rule = self.clone();
-        if !updated_rule.holes().is_empty(){
-            updated_rule.set_query(query.substitute_tags(substitutions));
-            updated_rule.set_replace(replace.substitute_tags(substitutions));
-        }
-        Ok(updated_rule)
+      let mut updated_rule = self.clone();
+      if !updated_rule.holes().is_empty() {
+        updated_rule.set_query(query.substitute_tags(substitutions));
+        updated_rule.set_replace(replace.substitute_tags(substitutions));
+      }
+      Ok(updated_rule)
     }
   }
 
@@ -300,14 +301,13 @@ impl Rule {
     }
   }
 
-    pub fn set_replace(&mut self, replace: String) {
-        self.replace = replace;
-    }
+  pub fn set_replace(&mut self, replace: String) {
+    self.replace = replace;
+  }
 
-    /// Set the rule's query.
-    pub fn set_query(&mut self, query: String) {
-        self.query = query;
-    }
+  pub fn set_query(&mut self, query: String) {
+    self.query = query;
+  }
 }
 
 // Captures an entry from the `edges.toml` file.
@@ -318,17 +318,16 @@ struct Edge {
   scope: String, //
 }
 
-// Represents the `rules.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-
 // Represents the `edges.toml` file
 struct Edges {
-   edges: Vec<Edge>,
+  edges: Vec<Edge>,
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+// Represents the `rules.toml` file
 pub struct Rules {
-   rules: Vec<Rule>,
+  rules: Vec<Rule>,
 }
 
 /// This maintains the state for Piranha.
@@ -492,10 +491,8 @@ impl RuleGraph {
 /// Read the language specific cleanup rules.
 fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-  let path_to_lang_config = &project_root
-    .join("src")
-    .join("cleanup_rules")
-    .join(language);
+  let path_to_lang_config = &project_root.join(format!("src/cleanup_rules/{}", language));
+
   match language {
     "java" => (
       read_toml(&path_to_lang_config.join("rules.toml"), false),
@@ -509,11 +506,7 @@ fn get_cleanup_rules(language: &str) -> (Rules, Edges, Vec<ScopeGenerator>) {
 /// Reads the input configurations and creates a rule graph.
 fn read_rule_graph_from_config(
   args: &PiranhaArguments,
-) -> (
-  RuleGraph,
-  HashMap<String, Rule>,
-  Vec<ScopeGenerator>,
-) {
+) -> (RuleGraph, HashMap<String, Rule>, Vec<ScopeGenerator>) {
   let path_to_config = Path::new(args.path_to_configurations());
 
   // Read the language specific cleanup rules and edges

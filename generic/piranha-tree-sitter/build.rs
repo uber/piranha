@@ -25,7 +25,7 @@ use std::{
 
 fn build(language: &str) -> Result<&str, &str> {
   let (ts_src, git_url) = match language {
-    "Java" => (
+    "java" => (
       "tree-sitter-java",
       "https://github.com/tree-sitter/tree-sitter-java.git",
     ),
@@ -81,5 +81,5 @@ fn build(language: &str) -> Result<&str, &str> {
 }
 
 fn main() {
-  let _ = build("Java");
+  let _ = build("java");
 }

@@ -36,7 +36,6 @@ pub struct FlagCleaner {
 }
 
 impl FlagCleaner {
-
   pub fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self.relevant_files.values().cloned().collect_vec()
   }
@@ -123,7 +122,7 @@ impl FlagCleaner {
       .filter(|x| pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-        info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     return files;
   }
 
@@ -450,8 +449,8 @@ impl SourceCodeUnit {
         ) {
           let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
           // Apply each query within the `scope_node`
-          for q in constraint.queries() {
-            let query_str = q.substitute_tags(&capture_by_tags);
+          for query_with_holes in constraint.queries() {
+            let query_str = query_with_holes.substitute_tags(&capture_by_tags);
             let query = &rule_store.get_query(&query_str);
             // If this query matches anywhere within the scope, return false.
             if scope_node

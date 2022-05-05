@@ -43,11 +43,8 @@ where
   if return_default {
     return T::default();
   }
-  panic!(
-    "Could not read file: {:?} \n Error : \n {:?}",
-    file_path,
-    obj.err().unwrap()
-  );
+  #[rustfmt::skip]
+  panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, obj.err().unwrap());
 }
 
 pub trait MapOfVec<T, V> {

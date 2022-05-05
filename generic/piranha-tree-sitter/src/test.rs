@@ -33,16 +33,14 @@ pub fn initialize() {
 #[test]
 fn test_java_scenarios_treated() {
   initialize();
-  let language = "Java";
-  let path_to_test_resource = get_path_to_test_resource(language);
+  let language = "java";
+  let path_to_test_resource =
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("src/test-resources/{language}"));
   let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: get_path_to_test_code_base(language),
-    path_to_feature_flag_rules: get_path_test_configurations(language),
-    path_to_piranha_arguments: PathBuf::from(get_path_test_configurations(language))
-      .join("piranha_arguments_treated.toml")
-      .to_str()
-      .unwrap()
-      .to_string(),
+    path_to_codebase: format!("src/test-resources/{language}/input/"),
+    path_to_feature_flag_rules: format!("src/test-resources/{language}/configurations/"),
+    path_to_piranha_arguments: format!("src/test-resources/{language}/configurations/")
+      + "piranha_arguments_treated.toml",
   });
 
   let updated_files = get_cleanups_for_code_base_new(args);
@@ -57,17 +55,14 @@ fn test_java_scenarios_treated() {
 #[test]
 fn test_java_scenarios_control() {
   initialize();
-  ();
-  let language = "Java";
-  let path_to_test_resource = get_path_to_test_resource(language);
+  let language = "java";
+  let path_to_test_resource =
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("src/test-resources/{language}"));
   let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: get_path_to_test_code_base(language),
-    path_to_feature_flag_rules: get_path_test_configurations(language),
-    path_to_piranha_arguments: PathBuf::from(get_path_test_configurations(language))
-      .join("piranha_arguments_control.toml")
-      .to_str()
-      .unwrap()
-      .to_string(),
+    path_to_codebase: format!("src/test-resources/{language}/input/"),
+    path_to_feature_flag_rules: format!("src/test-resources/{language}/configurations/"),
+    path_to_piranha_arguments: format!("src/test-resources/{language}/configurations/")
+      + "piranha_arguments_control.toml",
   });
 
   let updated_files = get_cleanups_for_code_base_new(args);
@@ -77,31 +72,6 @@ fn test_java_scenarios_control() {
   assert_eq!(updated_files.len(), 5);
 
   check_result(updated_files, path_to_expected);
-}
-
-fn get_path_to_test_resource(language: &str) -> PathBuf {
-  match language {
-    "Java" => Path::new(env!("CARGO_MANIFEST_DIR"))
-      .join("src")
-      .join("test-resources")
-      .join("java"),
-    _ => panic!("{} not supported!", language),
-  }
-}
-
-fn get_path_test_configurations(language: &str) -> String {
-  match language {
-    "Java" => "src/test-resources/java/configurations/".to_string(),
-    _ => panic!("{} not supported!", language),
-  }
-}
-
-fn get_path_to_test_code_base(language: &str) -> String {
-  get_path_to_test_resource(language)
-    .join("input")
-    .to_str()
-    .unwrap()
-    .to_string()
 }
 
 /// Compares two strings, ignoring new lines, and space.
@@ -129,10 +99,8 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
   let mut all_files_match = true;
   for (file_name, is_as_expected) in results {
     if is_as_expected {
-      info!(
-        "{}",
-        format!("Match successful for {:?}", file_name).green()
-      );
+      #[rustfmt::skip]
+      info!("{}", format!("Match successful for {:?}", file_name).green());
     } else {
       info!("{}", format!("Match failed for {:?}", file_name).red());
       all_files_match = false;
