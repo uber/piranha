@@ -11,9 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-//! This module contains all the structs and implementations required for - (i) handling Piranha's runtime arguments,
+//! This module contains all the `structs` and implementations required for - (i) handling Piranha's run-time arguments,
 //! (ii) reading language specific configurations, and (iii) API specific configurations.
-//! This module defines all basic building block structs used by Piranha.
+//! This module defines all basic building block `structs` used by Piranha.
 
 use crate::{
   tree_sitter::TreeSitterHelpers,
@@ -39,7 +39,7 @@ pub static CLASS: &str = "Class";
 pub static PARENT: &str = "Parent";
 
 pub mod command_line_arguments {
-  //! This module contains structs and implementations for parsing and managing command line arguments passed to Piranha.
+  //! This module contains `structs` and implementations for parsing and managing command line arguments passed to Piranha.
   use clap::Parser;
   use colored::Colorize;
   use log::info;
@@ -102,7 +102,7 @@ pub mod command_line_arguments {
         .collect();
 
       #[rustfmt::skip]
-            info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
+      info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
       Self {
         path_to_code_base: args.path_to_codebase.to_string(),
@@ -159,7 +159,7 @@ pub struct Rule {
 pub struct Constraint {
   /// Scope in which the constraint query has to be applied
   matcher: String,
-  /// The Tree-sitter queries that need to be applied in the matcher scope
+  /// The Tree-sitter queries that need to be applied in the `matcher` scope
   queries: Vec<String>,
 }
 
@@ -224,7 +224,7 @@ impl Rule {
   }
 
   /// Tries to instantiate the rule (`self`) based on the substitutions.
-  /// Note this could fail if the `substitutions` does'nt contain mappings for each hole.
+  /// Note this could fail if the `substitutions` doesn't contain mappings for each hole.
   fn try_instantiate(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
     let relevant_substitutions = self
       .holes()

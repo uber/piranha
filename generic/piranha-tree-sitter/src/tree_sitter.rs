@@ -27,7 +27,7 @@ pub trait TreeSitterHelpers {
   fn get_language(&self) -> Language;
   /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
   fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
-  /// Compiles query string to tree_sitter::Query
+  /// Compiles query string to `tree_sitter::Query`
   fn create_query(&self, language: Language) -> Query;
 }
 
@@ -79,7 +79,7 @@ pub trait PiranhaRuleMatcher {
     /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
     ///
     /// # Returns
-    /// A vector of tuples containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
+    /// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
     /// By default it returns the range of the outermost node for each query match.
     /// If `specific_tag` is provided, it returns the range of the node corresponding to it.
     fn get_match_for_query(&self, source_code: &String, query: &Query, recursive: bool) -> Option<(Range, HashMap<String, String>)>;

@@ -36,7 +36,7 @@ pub struct FlagCleaner {
 }
 
 impl FlagCleaner {
-  /// Getter for `relevant_files`
+
   pub fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self.relevant_files.values().cloned().collect_vec()
   }
@@ -127,7 +127,7 @@ impl FlagCleaner {
     return files;
   }
 
-  /// Instantiate FlagCleaner
+  /// Instantiate Flag-cleaner
   pub fn new(args: PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(&args);
     Self {
@@ -431,7 +431,7 @@ impl SourceCodeUnit {
   /// Checks if the node satisfies the constraints.
   /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
   /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches i.e. finds scope for constraint.
-  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any subtree.
+  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
   fn satisfies_constraint(
     &self, node: Node, rule: &Rule, capture_by_tags: &HashMap<String, String>,
     rule_store: &mut RuleStore,

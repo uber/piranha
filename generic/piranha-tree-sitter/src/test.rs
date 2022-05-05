@@ -149,6 +149,7 @@ fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> Vec<SourceCodeUnit>
   flag_cleaner.get_updated_files()
 }
 
+/// Checks if the given `dir_entry` is a file named `file_name`
 pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
   dir_entry
     .path()

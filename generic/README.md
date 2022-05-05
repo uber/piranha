@@ -1,14 +1,14 @@
 # Generic Piranha 
-Piranha scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
+It scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 This generic tree-sitter based implementation for Piranha makes it easy to extend it to new languages and new feature flag APIs (and their usages).
 
 ## Motivation 
 
-Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. This is time consuming and expensive to develop and maintain such nearly similar implementations.
+Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. This is time-consuming and expensive to develop and maintain such nearly similar implementations.
 This implementation overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query API based rewrite rules, and applying them to the input program as chains of rules.
 
 ## Usage 
-Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally an `edges.toml`). Piranha can be then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml` . Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
+Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
 
 
 ```
@@ -58,7 +58,7 @@ For more details on how to configure Piranha to a new language see section [Onbo
 
 ## Onboarding a new feature flag API
 
-The example below shows a usage of an feature flag API (`experiment.isTreated(STALE_FLAG)`), in an `if_statement`. 
+The example below shows a usage of a feature flag API (`experiment.isTreated(STALE_FLAG)`), in a `if_statement`. 
 ```
 class PiranhaDemo {
 
@@ -73,7 +73,7 @@ class PiranhaDemo {
     }
 }
 ```
-In the case when STALE_FLAG is treated, we would expect Piranha to refactor the code as shown below (assuming ) : 
+In the case when STALE_FLAG is treated, we would expect Piranha to refactor the code as shown below (assuming) : 
 ```
 class PiranhaDemo {
 
@@ -129,14 +129,14 @@ The `substitutions` field captures mapping between the tags and their correspond
 
 Each rule also contains the `groups` property, that specifies the kind of change performed by this rule. Based on this group, appropriate 
 cleanup rules will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups (like eliminating `consequent` of a `if statement`) to eliminate dead code caused by replacing an expression with a boolean literal. 
-Currently, Piranha provides deep clean ups for edits that belong the groups -  `replace_expression_with_boolean_literal` , `delete_statement`, and `delete_method`. 
+Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. 
 
 ## Onboarding a new language 
 
 This section describes how to configure Piranha to support a new language. 
 Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
-These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or inlining variables.
+These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or in-lining variables.
 For instance, the below example shows a rule that simplifies a `or` operation where its `RHS` is true. 
 ```
 [[rules]]
@@ -189,12 +189,12 @@ int foobar(){
 
 </table>
 
-We would first define flag API rules as discussed in the section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`;  we would have to define more cleanup rules as follows:
+We would first define flag API rules as discussed in the section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
 
 * `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. `cleanup_rules/java/rules.toml: delete_variable_declarations`)
 * `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. `cleanup_rules/java/rules.toml: replace_expression_with_boolean_literal`) 
 * `R2`: simplify the boolean expressions, for example replace `true || someCondition()` with `true`, that encloses the node where `R1` was applied. (E.g. `cleanup_rules/java/rules.toml: true_or_something`)
-* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied(`if (true) { return 100;}` -> `return 100;`. (E.g. `cleanup_rules/java/rules.toml:  simplify_if_statement_true, remove_unnecessary_nested_block`)
+* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied (`if (true) { return 100;}` → `return 100;`). E.g. `cleanup_rules/java/rules.toml:  simplify_if_statement_true, remove_unnecessary_nested_block`
 * `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied.
 (E.g. `cleanup_rules/java/rules.toml:  delete_all_statements_after_return`)
 
@@ -202,10 +202,10 @@ The fact that `R2` has to be applied to the enclosing node where `R1` was applie
 
 To define how these cleanup rules should be chained, one needs to specify edges (e.g. the `cleanup_rules/java/edges.toml` file) between the groups and (or) individual rules.
 The edges can be labelled as `ANCESTOR`, `METHOD`, `CLASS` or `GLOBAL`. 
-* An `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` -> `R2`, `R2` -> `R3`, `R3` -> `R4`)
-* A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` -> `R1`)
-* A `CLASS` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. inlining a private field)
-* A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. inlining a public field).
+* A `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` → `R2`, `R2` → `R3`, `R3` → `R4`)
+* A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` → `R1`)
+* A `CLASS` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. in-lining a private field)
+* A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
 
 One would also have to define how to capture the `METHOD` and `CLASS` scopes for the new language by specifying the `scope_config.toml` file.
 Please refer to `/src/cleanup_rules/java/scope_config.toml`.
@@ -228,6 +228,6 @@ Currently we only maintain integration tests for the implementation and configur
 These integration run Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
 
 To add new scenarios to the existing tests for a given language, you can add them to new file in the `input` directory and then create similarly named files with the expected output in `expected_treated` and `expected_control` directory.
-Note that the the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files must be also updated accordingly. 
+Note that the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files must be also updated accordingly. 
 
-To add tests for a new language, please add a new <language> folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
+To add tests for a new language, please add a new `<language>` folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
