@@ -42,9 +42,8 @@ pub struct PiranhaArguments {
 
 impl PiranhaArguments {
   pub(crate) fn new(args: CommandLineArguments) -> Self {
-
-    let path_to_piranha_argument_file = PathBuf::from(args.path_to_configurations.as_str())
-              .join("piranha_arguments.toml");
+    let path_to_piranha_argument_file =
+      PathBuf::from(args.path_to_configurations.as_str()).join("piranha_arguments.toml");
 
     let piranha_args_from_config: PiranhaConfig = read_toml(&path_to_piranha_argument_file, false);
 

@@ -1,27 +1,29 @@
 name: Rust CI
 on:
   pull_request:
-  push:
+  push: 
     branches:
       - master
 env:
   CARGO_TERM_COLOR: always
 jobs:
+  defaults:
+    run:
+      shell: bash
+      working-directory: generic/piranha-tree-sitter
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Check Format
-        run: cargo fmt -- --check
+      - uses: actions-rs/toolchain@v1
         with:
-          build-root-directory: ./generic/piranha-tree-sitter
-      - name: Build
-        run: cargo test
-        with:
-          build-root-directory: ./generic/piranha-tree-sitter
+          toolchain: stable
+      - name: Install-Tree-Sitter
+        run: cargo install tree-sitter-cli
+      - name: Format the code
+        run: cargo fmt
       - name: Test
         run: cargo test
-        with:
-          build-root-directory: ./generic/piranha-tree-sitter
+        working-directory: generic/piranha-tree-sitter
         env:
           RUST_LOG: warn

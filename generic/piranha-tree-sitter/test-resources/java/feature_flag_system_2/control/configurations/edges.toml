@@ -9,7 +9,7 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The edges in this file specify the the flow between the rules
+# The edges in this file specify the flow between the rules
 [[edges]]
 scope = "Global"
 from = "delete_flag_method_declaration_fully_annotated"

@@ -1,14 +1,3 @@
-use std::path::{Path, PathBuf};
-
-use colored::Colorize;
-use log::info;
-
-use crate::config::CommandLineArguments;
-use crate::piranha::flag_cleaner::FlagCleaner;
-use crate::piranha::piranha_arguments::PiranhaArguments;
-use crate::piranha::source_code_unit::SourceCodeUnit;
-use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -21,6 +10,18 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
+
+use std::path::{Path, PathBuf};
+
+use colored::Colorize;
+use log::info;
+
+use crate::config::CommandLineArguments;
+use crate::piranha::flag_cleaner::FlagCleaner;
+use crate::piranha::piranha_arguments::PiranhaArguments;
+use crate::piranha::source_code_unit::SourceCodeUnit;
+use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
+
 pub mod test_piranha_java;
 
 use std::sync::Once;
@@ -62,27 +63,17 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
 
     if eq_without_whitespace(&source_code_unit.code(), &expected_content) {
       #[rustfmt::skip]
-        info!("{}", format!("Match successful for {:?}", expected_file_path).green());
+      info!("{}", format!("Match successful for {:?}", expected_file_path).green());
     } else {
-      println!(
-        "{}",
-        format!("Match failed for {:?}", expected_file_path).red()
-      );
+      #[rustfmt::skip]
+      println!("{}", format!("Match failed for {:?}", expected_file_path).red());
+
       println!("{}", source_code_unit.code());
       all_files_match = false;
     }
   }
   assert!(all_files_match);
-
-  // results.insert(source_code_unit.path().clone(), result);
 }
-
-// println!("{:?}", results);
-
-// for (file_name, is_as_expected) in results {
-
-//
-// }
 
 fn execute_piranha(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
   let mut flag_cleaner = FlagCleaner::new(args);

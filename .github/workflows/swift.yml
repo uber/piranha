@@ -1,4 +1,4 @@
-# GitHub CI workflow for PiranhaSwift
+# # GitHub CI workflow for PiranhaSwift
 
 name: Swift CI
 on:
@@ -7,24 +7,24 @@ on:
     branches:
       - master
 
-jobs:
-  build:
-    runs-on: macos-latest
-    strategy:
-        matrix:
-          xcode: ['13.1']
-    name: "PiranhaSwift using ${{ matrix.xcode }} on ${{ matrix.os }}"
-    steps:
-      - name: Check out Piranha sources
-        uses: actions/checkout@v2
-      - name: Set Xcode ${{ matrix.xcode }}
-        run: |
-         sudo xcode-select -s /Applications/Xcode_13.0.app
-         xcodebuild -version
-         swift --version
-         swift package --version
-      - name: Build and test
-        run: |
-           cd swift/
-           sh package.sh
-           sh test.sh
+# jobs:
+#   build:
+#     runs-on: macos-latest
+#     strategy:
+#         matrix:
+#           xcode: ['13.1']
+#     name: "PiranhaSwift using ${{ matrix.xcode }} on ${{ matrix.os }}"
+#     steps:
+#       - name: Check out Piranha sources
+#         uses: actions/checkout@v2
+#       - name: Set Xcode ${{ matrix.xcode }}
+#         run: |
+#          sudo xcode-select -s /Applications/Xcode_13.0.app
+#          xcodebuild -version
+#          swift --version
+#          swift package --version
+#       - name: Build and test
+#         run: |
+#            cd swift/
+#            sh package.sh
+#            sh test.sh

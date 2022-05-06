@@ -44,8 +44,12 @@ Languages supported :
 
 ## Getting started with Piranha
 
-*Please refer to our demo -`generic/piranha-tree-sitter/run_piranha_demo.sh` and `generic/piranha-tree-sitter/demo/` to quickly get started with Piranha.*
+*Please refer to our demo -`generic/piranha-tree-sitter/demo/run_piranha_demo.sh` and `generic/piranha-tree-sitter/demo/` to quickly get started with Piranha.*
 *Please refer to our test cases at `src/test-resources/<language>/` as a reference to handle more complicated scenarios*
+
+To run the demo : 
+* `cd generic/piranha-tree-sitter`
+* `./demo/run_piranha_demo.sh`
 
 To get started with Piranha, please follow the below steps:
 * Check if the current version of Piranha supports the required language.

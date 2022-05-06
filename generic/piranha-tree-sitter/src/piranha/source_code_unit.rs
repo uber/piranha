@@ -139,11 +139,10 @@ impl SourceCodeUnit {
         }
       }
 
-      // Apply the next rules from the stack 
+      // Apply the next rules from the stack
       for (sq, rle) in next_rules_stack {
         self.apply_rule(rle, rules_store, parser, &Some(sq.to_string()));
       }
-
     }
     return any_match;
   }

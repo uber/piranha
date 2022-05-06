@@ -58,7 +58,7 @@ pub trait PiranhaRuleMatcher {
     ///
     /// # Returns
     /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
-    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recursive: bool, specific_tag: Option<String>) -> Vec<(Range, HashMap<String, String>)>;
+    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recursive: bool, replace_node_tag: Option<String>) -> Vec<(Range, HashMap<String, String>)>;
 
     /// Applies the query upon `self`, and gets all the matches
     /// # Arguments
@@ -69,7 +69,7 @@ pub trait PiranhaRuleMatcher {
     /// # Returns
     /// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
     /// By default it returns the range of the outermost node for each query match.
-    /// If `specific_tag` is provided, it returns the range of the node corresponding to it.
+    /// If `replace_node` is provided in the rule, it returns the range of the node corresponding to that tag.
     fn get_match_for_query(&self, source_code: &String, query: &Query, recursive: bool) -> Option<(Range, HashMap<String, String>)>;
 }
 

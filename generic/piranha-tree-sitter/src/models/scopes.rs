@@ -21,7 +21,7 @@ pub(crate) struct ScopeConfig {
 }
 
 impl ScopeConfig {
-  /// Get a reference to the scope config's scopes.
+  /// Get a reference to the scope `config's` scopes.
   #[must_use]
   pub(crate) fn scopes(&self) -> Vec<ScopeGenerator> {
     self.scopes.iter().cloned().collect_vec()
