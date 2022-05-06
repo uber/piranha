@@ -38,13 +38,13 @@ fn test_java_scenarios_treated() {
   initialize();
   let language = "java";
   let path_to_test_resource =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}"));
-  let path_to_expected = path_to_test_resource.join("expected_treated");
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}/treated"));
+  let path_to_expected = path_to_test_resource.join("expected");
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("test-resources/{language}/input/"),
-    path_to_feature_flag_rules: format!("test-resources/{language}/configurations/"),
-    path_to_piranha_arguments: format!("test-resources/{language}/configurations/")
-      + "piranha_arguments_treated.toml",
+    path_to_configurations: format!("test-resources/{language}/treated/configurations/"),
+    // path_to_piranha_arguments: format!("test-resources/{language}/configurations/")
+      // + "piranha_arguments_treated.toml",
   });
 
   let updated_files = execute_piranha(args);
@@ -59,13 +59,13 @@ fn test_java_scenarios_control() {
   initialize();
   let language = "java";
   let path_to_test_resource =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}"));
-  let path_to_expected = path_to_test_resource.join("expected_control");
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}/control"));
+  let path_to_expected = path_to_test_resource.join("expected");
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("test-resources/{language}/input/"),
-    path_to_feature_flag_rules: format!("test-resources/{language}/configurations/"),
-    path_to_piranha_arguments: format!("test-resources/{language}/configurations/")
-      + "piranha_arguments_control.toml",
+    path_to_configurations: format!("test-resources/{language}/control/configurations/"),
+    // path_to_piranha_arguments: format!("test-resources/{language}/configurations/")
+      // + "piranha_arguments_control.toml",
   });
 
   let updated_files = execute_piranha(args);

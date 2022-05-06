@@ -39,10 +39,10 @@ pub struct CommandLineArguments {
   pub path_to_codebase: String,
   /// Folder containing the required configuration files
   #[clap(short = 'f', long)]
-  pub path_to_feature_flag_rules: String,
-  /// Path to the file containing arguments for Piranha
-  #[clap(short = 'p', long)]
-  pub path_to_piranha_arguments: String,
+  pub path_to_configurations: String,
+  // Path to the file containing arguments for Piranha
+  // #[clap(short = 'p', long)]
+  // pub path_to_piranha_arguments: String,
 }
 
 pub(crate) fn read_config_files(
