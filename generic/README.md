@@ -15,20 +15,17 @@ Piranha can be configured to recognize different flag APIs by specifying a `rule
 piranha 0.1.0
 
 USAGE:
-    piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-feature-flag-rules <PATH_TO_FEATURE_FLAG_RULES> --path-to-piranha-arguments <PATH_TO_PIRANHA_ARGUMENTS>
+    piranha-tree-sitter --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
 
 OPTIONS:
     -c, --path-to-codebase <PATH_TO_CODEBASE>
             Path to source code folder
 
-    -f, --path-to-feature-flag-rules <PATH_TO_FEATURE_FLAG_RULES>
+    -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
             Folder containing the required configuration files
 
     -h, --help
             Print help information
-
-    -p, --path-to-piranha-arguments <PATH_TO_PIRANHA_ARGUMENTS>
-            Path to the file containing arguments for Piranha
 
     -V, --version
             Print version information
@@ -37,10 +34,13 @@ OPTIONS:
 Languages supported :
 * Java
 * Kotlin (planned)
+* Java / Kotlin (planned)
 * Swift (planned)
 * JavaScript (planned)
-* Go (planned)
-* Contributions for other languages are welcome :) 
+* Go (requested)
+* C# (requested)
+* TypeScript (requested)
+* Contributions for the `requested` languages or any other languages are welcome :) 
 
 ## Getting started with Piranha
 
