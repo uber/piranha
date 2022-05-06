@@ -17,9 +17,11 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use log::info;
 
-use crate::config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
-use crate::piranha::{FlagCleaner, SourceCodeUnit};
-use crate::utilities::{initialize_logger, read_file, find_file, eq_without_whitespace};
+use crate::config::CommandLineArguments;
+use crate::piranha::flag_cleaner::FlagCleaner;
+use crate::piranha::piranha_arguments::PiranhaArguments;
+use crate::piranha::source_code_unit::SourceCodeUnit;
+use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 use std::sync::Once;
 
 static INIT: Once = Once::new();
@@ -34,11 +36,11 @@ fn test_java_scenarios_treated() {
   initialize();
   let language = "java";
   let path_to_test_resource =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("src/test-resources/{language}"));
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}"));
   let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("src/test-resources/{language}/input/"),
-    path_to_feature_flag_rules: format!("src/test-resources/{language}/configurations/"),
-    path_to_piranha_arguments: format!("src/test-resources/{language}/configurations/")
+    path_to_codebase: format!("test-resources/{language}/input/"),
+    path_to_feature_flag_rules: format!("test-resources/{language}/configurations/"),
+    path_to_piranha_arguments: format!("test-resources/{language}/configurations/")
       + "piranha_arguments_treated.toml",
   });
 
@@ -56,11 +58,11 @@ fn test_java_scenarios_control() {
   initialize();
   let language = "java";
   let path_to_test_resource =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("src/test-resources/{language}"));
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}"));
   let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("src/test-resources/{language}/input/"),
-    path_to_feature_flag_rules: format!("src/test-resources/{language}/configurations/"),
-    path_to_piranha_arguments: format!("src/test-resources/{language}/configurations/")
+    path_to_codebase: format!("test-resources/{language}/input/"),
+    path_to_feature_flag_rules: format!("test-resources/{language}/configurations/"),
+    path_to_piranha_arguments: format!("test-resources/{language}/configurations/")
       + "piranha_arguments_control.toml",
   });
 
@@ -72,8 +74,6 @@ fn test_java_scenarios_control() {
 
   check_result(updated_files, path_to_expected);
 }
-
-
 
 /// Checks if the file updates returned by piranha are as expected.
 fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
@@ -103,11 +103,9 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
   assert!(all_files_match);
 }
 
-
 fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
   let mut flag_cleaner = FlagCleaner::new(args);
-
   flag_cleaner.perform_cleanup();
-
+  
   flag_cleaner.get_updated_files()
 }

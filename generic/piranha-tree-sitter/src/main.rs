@@ -14,12 +14,16 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entry-point for Piranha.
 use std::time::Instant;
 
-use crate::{piranha::FlagCleaner, utilities::initialize_logger};
+use crate::{
+  piranha::{flag_cleaner::FlagCleaner, piranha_arguments::PiranhaArguments},
+  utilities::initialize_logger,
+};
 use clap::StructOpt;
-use config::command_line_arguments::{CommandLineArguments, PiranhaArguments};
+use config::CommandLineArguments;
 use log::info;
 
 mod config;
+mod models;
 mod piranha;
 #[cfg(test)]
 mod test;

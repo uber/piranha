@@ -25,8 +25,6 @@ extern "C" {
 pub trait TreeSitterHelpers {
   /// Gets the tree-sitter language model.
   fn get_language(&self) -> Language;
-  /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
-  fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
   /// Compiles query string to `tree_sitter::Query`
   fn create_query(&self, language: Language) -> Query;
 }
@@ -46,16 +44,6 @@ impl TreeSitterHelpers for String {
         _ => panic!("Language not supported"),
       }
     }
-  }
-
-  fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String {
-    let mut output = String::from(self);
-    for (tag, substitute) in substitutions {
-      // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
-      let key = format!("@{}", tag);
-      output = output.replace(&key, &substitute)
-    }
-    output
   }
 }
 

@@ -13,12 +13,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines general utility functions.
 use std::collections::HashMap;
+#[cfg(test)]
+use std::fs::{self, DirEntry};
 use std::fs::{File, OpenOptions};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
-#[cfg(test)]
-use std::fs::{DirEntry, self};
 use toml;
 
 // Reads a file.
@@ -43,7 +43,7 @@ where
     obj.unwrap()
   } else if return_default {
     T::default()
-  } else{
+  } else {
     #[rustfmt::skip]
     panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, obj.err().unwrap());
   }
@@ -88,7 +88,6 @@ pub fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
 /// Checks if the given `dir_entry` is a file named `file_name`
 #[cfg(test)] // Rust analyzer FP
 pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
-
   dir_entry
     .path()
     .file_name()
