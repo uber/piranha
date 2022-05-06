@@ -11,148 +11,32 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-
-use colored::Colorize;
-use log::info;
-
-use crate::config::CommandLineArguments;
-use crate::piranha::flag_cleaner::FlagCleaner;
-use crate::piranha::piranha_arguments::PiranhaArguments;
-use crate::piranha::source_code_unit::SourceCodeUnit;
-use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
-use std::sync::Once;
-
-static INIT: Once = Once::new();
-
-pub fn initialize() {
-  INIT.call_once(|| {
-    initialize_logger(true);
-  });
-}
+use super::{run_test, initialize};
 
 static LANGUAGE: &str = "java";
 
 #[test]
 fn test_java_scenarios_treated_ff1() {
   initialize();
-  let path_to_test_ff = format!("test-resources/{LANGUAGE}/feature_flag_system_1/treated");
-
-  let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
-    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-  });
-
-  let updated_files = execute_piranha(args);
-
-  assert_eq!(updated_files.len(), 1);
-
-  let path_to_expected =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
-
-  check_result(updated_files, path_to_expected);
+  run_test( LANGUAGE, "feature_flag_system_1", "treated", 1);
 }
+
 
 #[test]
 fn test_java_scenarios_treated_ff2() {
   initialize();
-  let path_to_test_ff = format!("test-resources/{LANGUAGE}/feature_flag_system_2/treated");
-
-  let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
-    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-  });
-
-  let updated_files = execute_piranha(args);
-
-  assert_eq!(updated_files.len(), 4);
-
-  let path_to_expected =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
-
-  check_result(updated_files, path_to_expected);
+  run_test( LANGUAGE, "feature_flag_system_2", "treated", 4);
 }
-
 
 #[test]
 fn test_java_scenarios_control_ff1() {
   initialize();
-  let path_to_test_ff = format!("test-resources/{LANGUAGE}/feature_flag_system_1/control");
-
-  let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
-    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-  });
-
-  let updated_files = execute_piranha(args);
-
-  assert_eq!(updated_files.len(), 1);
-
-  let path_to_expected =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
-
-  check_result(updated_files, path_to_expected);
+  run_test( LANGUAGE, "feature_flag_system_1", "control", 1);
 }
 
 #[test]
 fn test_java_scenarios_control_ff2() {
   initialize();
-  let path_to_test_ff = format!("test-resources/{LANGUAGE}/feature_flag_system_2/control");
-
-  let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
-    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-  });
-
-  let updated_files = execute_piranha(args);
-
-  assert_eq!(updated_files.len(), 4);
-
-  let path_to_expected =
-    Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
-
-  check_result(updated_files, path_to_expected);
+  run_test( LANGUAGE, "feature_flag_system_2", "control", 4);
 }
 
-
-/// Checks if the file updates returned by piranha are as expected.
-fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
-
-  let mut all_files_match = true;
-
-  for source_code_unit in &updated_files {
-    let updated_file_name = &source_code_unit
-      .path()
-      .file_name()
-      .and_then(|f| f.to_str().map(|x| x.to_string()))
-      .unwrap();
-    let expected_file_path = find_file(&path_to_expected, &updated_file_name);
-    let expected_content = read_file(&expected_file_path).unwrap();
-
-    if eq_without_whitespace(&source_code_unit.code(), &expected_content) {
-      #[rustfmt::skip]
-      info!("{}", format!("Match successful for {:?}", expected_file_path).green());
-    } else {
-      println!("{}", format!("Match failed for {:?}", expected_file_path).red());
-      println!("{}", source_code_unit.code());
-      all_files_match = false;
-    }
-  }
-  assert!(all_files_match);
-
-  // results.insert(source_code_unit.path().clone(), result);
-}
-
-// println!("{:?}", results);
-
-// for (file_name, is_as_expected) in results {
-
-//
-// }
-
-fn execute_piranha(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
-  let mut flag_cleaner = FlagCleaner::new(args);
-  flag_cleaner.perform_cleanup();
-  flag_cleaner.get_updated_files()
-}
