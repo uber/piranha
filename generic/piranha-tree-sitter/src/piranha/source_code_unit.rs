@@ -16,6 +16,7 @@ use crate::piranha::rule_store::{RuleStore, GLOBAL, PARENT};
 use crate::utilities::tree_sitter_utilities::{PiranhaRuleMatcher, TreeSitterHelpers};
 use colored::Colorize;
 use log::info;
+use std::collections::VecDeque;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Node, Parser, Point, Range, Tree};
 
@@ -99,7 +100,7 @@ impl SourceCodeUnit {
 
       let mut current_edit = edit.clone();
       let mut current_rule = rule.clone();
-      let mut file_level_next_rules = vec![];
+      let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
 
       // Perform the parent edits, while queueing the Method and Class level edits.
       // let file_level_scope_names = [METHOD, CLASS];
@@ -112,7 +113,7 @@ impl SourceCodeUnit {
           &next_rules_by_scope,
           current_edit,
           rules_store,
-          &mut file_level_next_rules,
+          &mut next_rules_stack,
         );
 
         // Add Global rules as seed rules
@@ -137,11 +138,12 @@ impl SourceCodeUnit {
           break;
         }
       }
-      // Apply the method and class level rules
-      file_level_next_rules.reverse(); // to ensure LIFO order
-      for (sq, rle) in file_level_next_rules {
+
+      // Apply the next rules from the stack 
+      for (sq, rle) in next_rules_stack {
         self.apply_rule(rle, rules_store, parser, &Some(sq.to_string()));
       }
+
     }
     return any_match;
   }
@@ -149,7 +151,7 @@ impl SourceCodeUnit {
   /// Adds the "Method" and "Class" scoped next rules to the queue.
   fn add_rules_to_stack(
     &mut self, next_rules_by_scope: &HashMap<String, Vec<Rule>>, current_edit: InputEdit,
-    rules_store: &mut RuleStore, stack: &mut Vec<(String, Rule)>,
+    rules_store: &mut RuleStore, stack: &mut VecDeque<(String, Rule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
       // Scope level is not "PArent" or "Global"
@@ -159,7 +161,7 @@ impl SourceCodeUnit {
           // This query will precisely capture the enclosing method / class.
           let scope_query = self.get_scope_query(scope_level, current_edit, rules_store);
           // Add Method and Class scoped rules to the queue
-          stack.push((
+          stack.push_front((
             scope_query.to_string(),
             rule.instantiate(&self.substitutions),
           ));
