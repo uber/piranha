@@ -1,3 +1,16 @@
+/*
+Copyright (c) 2022 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 use crate::models::rule::{Rule, RuleHelper};
 use crate::piranha::rule_store::{RuleStore, CLASS, GLOBAL, METHOD, PARENT};
 use crate::utilities::tree_sitter_utilities::{PiranhaRuleMatcher, TreeSitterHelpers};
@@ -101,10 +114,10 @@ impl SourceCodeUnit {
       let mut current_rule = rule.clone();
       let mut file_level_next_rules = vec![];
 
-      // perform the parent edits, while queueing the Method and Class level edits.
+      // Perform the parent edits, while queueing the Method and Class level edits.
       let file_level_scope_names = [METHOD, CLASS];
       loop {
-        // Get all the (next) rules that could be after applying the current rule (`rule`)
+        // Get all the (next) rules that could be after applying the current rule (`rule`).
         let next_rules_by_scope = rules_store.get_next(&current_rule, &self.substitutions);
         for (scope_level, rules) in &next_rules_by_scope {
           // Scope level will be "Class" or "Method"
