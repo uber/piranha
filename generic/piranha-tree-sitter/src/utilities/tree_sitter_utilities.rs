@@ -13,8 +13,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
-pub mod source_code_unit;
-
 use crate::utilities::MapOfVec;
 use itertools::Itertools;
 use std::collections::HashMap;

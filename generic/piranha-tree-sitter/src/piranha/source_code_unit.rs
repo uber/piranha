@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use crate::models::rule::{Rule, RuleHelper};
-use crate::piranha::rule_store::{RuleStore, CLASS, GLOBAL, METHOD, PARENT};
+use crate::piranha::rule_store::{RuleStore, GLOBAL, PARENT};
 use crate::utilities::tree_sitter_utilities::{PiranhaRuleMatcher, TreeSitterHelpers};
 use colored::Colorize;
 use log::info;
@@ -82,20 +82,7 @@ impl SourceCodeUnit {
     &mut self, rule: Rule, rules_store: &mut RuleStore, parser: &mut Parser,
     scope_query: &Option<String>,
   ) -> bool {
-    // Get scope node
-    let mut scope_node = self.ast.root_node();
-    if let Some(query_str) = scope_query {
-      // Apply the scope query in the source code and get the appropriate node
-      let tree_sitter_scope_query = rules_store.get_query(query_str);
-      if let Some((range, _)) =
-        &self
-          .ast
-          .root_node()
-          .get_match_for_query(&self.code, tree_sitter_scope_query, true)
-      {
-        scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
-      }
-    }
+    let scope_node = self.get_scope_node(scope_query, rules_store);
 
     let mut any_match = false;
 
@@ -115,25 +102,19 @@ impl SourceCodeUnit {
       let mut file_level_next_rules = vec![];
 
       // Perform the parent edits, while queueing the Method and Class level edits.
-      let file_level_scope_names = [METHOD, CLASS];
+      // let file_level_scope_names = [METHOD, CLASS];
       loop {
         // Get all the (next) rules that could be after applying the current rule (`rule`).
         let next_rules_by_scope = rules_store.get_next(&current_rule, &self.substitutions);
-        for (scope_level, rules) in &next_rules_by_scope {
-          // Scope level will be "Class" or "Method"
-          if file_level_scope_names.contains(&scope_level.as_str()) {
-            for rule in rules {
-              // Generate the scope query for the previously applied edit
-              // This query will precisely capture the enclosing method / class.
-              let scope_query = self.get_scope_query(scope_level, current_edit, rules_store);
-              // Add Method and Class scoped rules to the queue
-              file_level_next_rules.push((
-                scope_query.to_string(),
-                rule.instantiate(&self.substitutions),
-              ));
-            }
-          }
-        }
+
+        // Adds "Method" and "Class" rules to the stack
+        self.add_rules_to_stack(
+          &next_rules_by_scope,
+          current_edit,
+          rules_store,
+          &mut file_level_next_rules,
+        );
+
         // Add Global rules as seed rules
         for r in &next_rules_by_scope[GLOBAL] {
           rules_store.add_to_global_rules(r, &self.substitutions);
@@ -144,7 +125,8 @@ impl SourceCodeUnit {
         if let Some((c_range, replacement_str, matched_rule, code_snippets_by_tag_parent_rule)) =
           self.match_rules_to_context(current_edit, rules_store, &next_rules_by_scope[PARENT])
         {
-          info!("{}", format!("Matched parent for cleanup").green());
+          #[rustfmt::skip]
+          info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", matched_rule.name()).green());
           // Apply the matched rule to the parent
           current_edit = self.apply_edit(c_range, replacement_str, parser);
           current_rule = matched_rule;
@@ -156,12 +138,52 @@ impl SourceCodeUnit {
         }
       }
       // Apply the method and class level rules
-      file_level_next_rules.reverse();
+      file_level_next_rules.reverse(); // to ensure LIFO order
       for (sq, rle) in file_level_next_rules {
         self.apply_rule(rle, rules_store, parser, &Some(sq.to_string()));
       }
     }
     return any_match;
+  }
+
+  /// Adds the "Method" and "Class" scoped next rules to the queue.
+  fn add_rules_to_stack(
+    &mut self, next_rules_by_scope: &HashMap<String, Vec<Rule>>, current_edit: InputEdit,
+    rules_store: &mut RuleStore, stack: &mut Vec<(String, Rule)>,
+  ) {
+    for (scope_level, rules) in next_rules_by_scope {
+      // Scope level is not "PArent" or "Global"
+      if ![PARENT, GLOBAL].contains(&scope_level.as_str()) {
+        for rule in rules {
+          // Generate the scope query for the previously applied edit
+          // This query will precisely capture the enclosing method / class.
+          let scope_query = self.get_scope_query(scope_level, current_edit, rules_store);
+          // Add Method and Class scoped rules to the queue
+          stack.push((
+            scope_query.to_string(),
+            rule.instantiate(&self.substitutions),
+          ));
+        }
+      }
+    }
+  }
+
+  fn get_scope_node(&self, scope_query: &Option<String>, rules_store: &mut RuleStore) -> Node {
+    // Get scope node
+    let mut scope_node = self.ast.root_node();
+    if let Some(query_str) = scope_query {
+      // Apply the scope query in the source code and get the appropriate node
+      let tree_sitter_scope_query = rules_store.get_query(query_str);
+      if let Some((range, _)) =
+        &self
+          .ast
+          .root_node()
+          .get_match_for_query(&self.code, tree_sitter_scope_query, true)
+      {
+        scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
+      }
+    }
+    scope_node
   }
 
   /// Apply all `rules` sequentially.
@@ -330,56 +352,61 @@ impl SourceCodeUnit {
   /// Returns tree-sitter's edit representation along with updated source code.
   /// Note: This method does not update `self`.
   pub fn get_edit(&self, replace_range: Range, replacement: &str) -> (String, InputEdit) {
-    let source_code = self.code.clone();
+    let original_source_code = self.code.clone();
+
     // Create the new source code content by appropriately
     // replacing the range with the replacement string.
-    let new_source_code = [
-      &source_code[..replace_range.start_byte],
+    let updated_source_code = [
+      &original_source_code[..replace_range.start_byte],
       replacement,
-      &source_code[replace_range.end_byte..],
+      &original_source_code[replace_range.end_byte..],
     ]
     .concat();
 
     // Log the edit
-    let replaced_code_snippet = &source_code[replace_range.start_byte..replace_range.end_byte];
+    let replaced_code_snippet =
+      &original_source_code[replace_range.start_byte..replace_range.end_byte];
+
     #[rustfmt::skip]
-        info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(),
-            ((&replace_range.start_point.row, &replace_range.start_point.column),
-                (&replace_range.end_point.row, &replace_range.end_point.column)),
-            if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())
-            } else {format!("{} ", replaced_code_snippet.italic())}
-        );
+    info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(), ((&replace_range.start_point.row, &replace_range.start_point.column), (&replace_range.end_point.row, &replace_range.end_point.column)), if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())} else {format!("{} ", replaced_code_snippet.italic())});
 
-    // Inner function to find the position (Point) for a given offset.
-    fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
-      let mut result = Point { row: 0, column: 0 };
-      for c in &input[0..offset] {
-        if *c as char == '\n' {
-          result.row += 1;
-          result.column = 0;
-        } else {
-          result.column += 1;
-        }
+    let original_bytes = &original_source_code.as_bytes().to_vec();
+
+    let edit =
+      Self::get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), original_bytes);
+
+    (updated_source_code, edit)
+  }
+
+  // Finds the position (col and row number) for a given offset.
+  fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
+    let mut result = Point { row: 0, column: 0 };
+    for c in &input[0..offset] {
+      if *c as char == '\n' {
+        result.row += 1;
+        result.column = 0;
+      } else {
+        result.column += 1;
       }
-      result
     }
+    result
+  }
 
-    let len_new_source_code_bytes = replacement.as_bytes().len();
-    let byte_vec = &source_code.as_bytes().to_vec();
-    // Create the InputEdit as per the tree-sitter api documentation.
-    let edit = InputEdit {
-      start_byte: replace_range.start_byte,
-      old_end_byte: replace_range.end_byte,
-      new_end_byte: replace_range.start_byte + len_new_source_code_bytes,
-      start_position: position_for_offset(byte_vec, replace_range.start_byte),
-      old_end_position: position_for_offset(byte_vec, replace_range.end_byte),
-      new_end_position: position_for_offset(
-        byte_vec,
-        replace_range.start_byte + len_new_source_code_bytes,
-      ),
-    };
-
-    (new_source_code, edit)
+  // Creates the InputEdit as per the tree-sitter api documentation.
+  fn get_tree_sitter_edit(
+    replace_range: Range, len_of_replacement: usize, source_code_bytes: &Vec<u8>,
+  ) -> InputEdit {
+    let start_byte = replace_range.start_byte;
+    let old_end_byte = replace_range.end_byte;
+    let new_end_byte = start_byte + len_of_replacement;
+    InputEdit {
+      start_byte,
+      old_end_byte,
+      new_end_byte,
+      start_position: Self::position_for_offset(source_code_bytes, start_byte),
+      old_end_position: Self::position_for_offset(source_code_bytes, old_end_byte),
+      new_end_position: Self::position_for_offset(source_code_bytes, new_end_byte),
+    }
   }
 
   #[cfg(test)] // Rust analyzer FP

@@ -17,25 +17,12 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use log::info;
 
-/*
-Copyright (c) 2022 Uber Technologies, Inc.
-
- <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- except in compliance with the License. You may obtain a copy of the License at
- <p>http://www.apache.org/licenses/LICENSE-2.0
-
- <p>Unless required by applicable law or agreed to in writing, software distributed under the
- License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing permissions and
- limitations under the License.
-*/
-
 use crate::config::CommandLineArguments;
 use crate::piranha::flag_cleaner::FlagCleaner;
 use crate::piranha::piranha_arguments::PiranhaArguments;
+use crate::piranha::source_code_unit::SourceCodeUnit;
 use crate::utilities::{
-  eq_without_whitespace, find_file, initialize_logger, read_file,
-  tree_sitter_utilities::source_code_unit::SourceCodeUnit,
+  eq_without_whitespace, find_file, initialize_logger, read_file
 };
 use std::sync::Once;
 
@@ -52,6 +39,7 @@ fn test_java_scenarios_treated() {
   let language = "java";
   let path_to_test_resource =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}"));
+  let path_to_expected = path_to_test_resource.join("expected_treated");
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("test-resources/{language}/input/"),
     path_to_feature_flag_rules: format!("test-resources/{language}/configurations/"),
@@ -59,9 +47,7 @@ fn test_java_scenarios_treated() {
       + "piranha_arguments_treated.toml",
   });
 
-  let updated_files = get_cleanups_for_code_base_new(args);
-
-  let path_to_expected = path_to_test_resource.join("expected_treated");
+  let updated_files = execute_piranha(args);
 
   assert_eq!(updated_files.len(), 5);
 
@@ -74,6 +60,7 @@ fn test_java_scenarios_control() {
   let language = "java";
   let path_to_test_resource =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("test-resources/{language}"));
+  let path_to_expected = path_to_test_resource.join("expected_control");
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("test-resources/{language}/input/"),
     path_to_feature_flag_rules: format!("test-resources/{language}/configurations/"),
@@ -81,9 +68,8 @@ fn test_java_scenarios_control() {
       + "piranha_arguments_control.toml",
   });
 
-  let updated_files = get_cleanups_for_code_base_new(args);
+  let updated_files = execute_piranha(args);
 
-  let path_to_expected = path_to_test_resource.join("expected_control");
 
   assert_eq!(updated_files.len(), 5);
 
@@ -118,9 +104,8 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
   assert!(all_files_match);
 }
 
-fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
+fn execute_piranha(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
   let mut flag_cleaner = FlagCleaner::new(args);
   flag_cleaner.perform_cleanup();
-
   flag_cleaner.get_updated_files()
 }
