@@ -1,0 +1,7 @@
+language = ["java"]
+substitutions = [
+    ["stale_flag_name", "STALE_FLAG"],
+    ["treated", "true"],
+    ["treated_complement", "false"],
+    ["namespace", "some_long_name"]
+]

@@ -260,15 +260,6 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
-  public void conditional_with_else_contains_stale_flag() {
-    
-    if (experimentation.isStaleFeature().getCachedValue()) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
-  }
-
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) {
       return true;

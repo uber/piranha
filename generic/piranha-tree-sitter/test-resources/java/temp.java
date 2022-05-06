@@ -24,12 +24,12 @@ class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
     
-
+    
   }
 
   enum AnotherTestExperimentName {
     
-
+    
   }
 
   @Retention(RetentionPolicy.RUNTIME)
@@ -50,6 +50,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_contains_stale_flag() {
     
     System.out.println("Hello World");
+    
   }
 
   public void conditional_with_else_contains_stale_flag() {
@@ -99,29 +100,31 @@ class XPFlagCleanerPositiveCases {
     if ((tBool || true)) {}
 
     
-
-
     
 
-
+    
     
 
-
+    
     
 
+    
+    
   }
 
   public int return_within_if_basic() {
-
-return 20;
-}
+    
+    return 20;
+    
+  }
 
   public int return_within_if_additional(int x) {
     if (x == 0) {
-
-System.out.println();
+      
+      System.out.println();
 return 0;
-}
+      
+    }
 
     if (x == 1)
       
@@ -130,10 +133,11 @@ return 0;
       }
 
     if (x == 2) {
-int y = 3;
-y++;
+      int y = 3;
+      y++;
 return y;
-}
+      
+    }
 
     if (x == 3) {
       int z = 4;
@@ -187,7 +191,7 @@ return y;
   private void testMultipleCalls(int x) {
     if (x > 0) {
       
-
+      
       
       // comment0
 return;
@@ -209,11 +213,6 @@ return;
     } else {
       return 2;
     }
-  }
-
-  public void conditional_with_else_contains_stale_flag() {
-    
-    System.out.println("Hello World");
   }
 
   class XPTest {
