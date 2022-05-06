@@ -1,6 +1,5 @@
 use serde_derive::Deserialize;
 
-
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `edges.toml` file
 pub(crate) struct Edges {

@@ -5,8 +5,9 @@ use log::info;
 use tree_sitter::Language;
 
 use crate::{
-  config::CommandLineArguments, models::piranha_config::PiranhaConfig,
-  tree_sitter::TreeSitterHelpers, utilities::read_toml,
+  config::CommandLineArguments,
+  models::piranha_config::PiranhaConfig,
+  utilities::{read_toml, tree_sitter_utilities::TreeSitterHelpers},
 };
 
 #[derive(Clone)]

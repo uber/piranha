@@ -17,7 +17,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::{
   models::{
-    outgoing_edges::{OutgoingEdges, Edges},
+    outgoing_edges::{Edges, OutgoingEdges},
     rule::{Rule, Rules},
     scopes::{ScopeConfig, ScopeGenerator},
   },
@@ -25,10 +25,7 @@ use crate::{
   utilities::read_toml,
 };
 
-use std::{
-
-  path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
@@ -53,20 +50,27 @@ pub(crate) fn read_config_files(
 ) -> (Vec<Rule>, Vec<OutgoingEdges>, Vec<ScopeGenerator>) {
   let path_to_config = Path::new(args.path_to_configurations());
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-  let path_to_lang_config = &project_root.join(format!("src/cleanup_rules/{}", args.language_name()));
-
+  let path_to_language_specific_cleanup_config =
+    &project_root.join(format!("src/cleanup_rules/{}", args.language_name()));
 
   // Read the language specific cleanup rules and edges
-  let language_rules : Rules = read_toml(&path_to_lang_config.join("rules.toml"), false);
-  let language_edges : Edges = read_toml(&path_to_lang_config.join("edges.toml"), false);
-  let scopes = read_toml::<ScopeConfig>(&path_to_lang_config.join("scope_config.toml"), false).scopes();
-  
+  let language_rules: Rules = read_toml(
+    &path_to_language_specific_cleanup_config.join("rules.toml"),
+    false,
+  );
+  let language_edges: Edges = read_toml(
+    &path_to_language_specific_cleanup_config.join("edges.toml"),
+    false,
+  );
+  let scopes = read_toml::<ScopeConfig>(
+    &path_to_language_specific_cleanup_config.join("scope_config.toml"),
+    false,
+  )
+  .scopes();
 
   // Read the API specific cleanup rules and edges
-  let (mut input_rules, input_edges): (Rules, Edges) = (
-    read_toml(&path_to_config.join("rules.toml"), false),
-    read_toml(&path_to_config.join("edges.toml"), true),
-  );
+  let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), false);
+  let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
 
   // Label the input-rules as `Feature-flag API cleanup`
   for r in input_rules.rules.iter_mut() {

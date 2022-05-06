@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use colored::Colorize;
-use itertools::Itertools;
 use serde_derive::Deserialize;
 
 use crate::utilities::MapOfVec;

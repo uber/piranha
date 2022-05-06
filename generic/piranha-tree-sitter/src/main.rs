@@ -27,7 +27,6 @@ mod models;
 mod piranha;
 #[cfg(test)]
 mod test;
-mod tree_sitter;
 mod utilities;
 
 fn main() {

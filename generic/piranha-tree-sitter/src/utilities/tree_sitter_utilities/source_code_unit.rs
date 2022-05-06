@@ -1,6 +1,6 @@
 use crate::models::rule::{Rule, RuleHelper};
 use crate::piranha::rule_store::{RuleStore, CLASS, GLOBAL, METHOD, PARENT};
-use crate::tree_sitter::{PiranhaRuleMatcher, TreeSitterHelpers};
+use crate::utilities::tree_sitter_utilities::{PiranhaRuleMatcher, TreeSitterHelpers};
 use colored::Colorize;
 use log::info;
 use std::{collections::HashMap, fs, path::PathBuf};

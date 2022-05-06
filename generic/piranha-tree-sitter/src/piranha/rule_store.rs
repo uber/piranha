@@ -12,8 +12,7 @@ use crate::{
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
   piranha::piranha_arguments::PiranhaArguments,
-  tree_sitter::TreeSitterHelpers,
-  utilities::MapOfVec,
+  utilities::{tree_sitter_utilities::TreeSitterHelpers, MapOfVec},
 };
 
 pub static GLOBAL: &str = "Global";
@@ -43,7 +42,7 @@ impl RuleStore {
     let mut rule_store = RuleStore {
       rule_graph,
       rule_query_cache: HashMap::new(),
-      rules_by_name : rules.iter().map(|r|(r.name(), r.clone())).collect(),
+      rules_by_name: rules.iter().map(|r| (r.name(), r.clone())).collect(),
       global_rules: vec![],
       scopes,
       piranha_args: args.clone(),

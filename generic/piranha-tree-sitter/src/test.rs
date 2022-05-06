@@ -20,8 +20,10 @@ use log::info;
 use crate::config::CommandLineArguments;
 use crate::piranha::flag_cleaner::FlagCleaner;
 use crate::piranha::piranha_arguments::PiranhaArguments;
-use crate::piranha::source_code_unit::SourceCodeUnit;
-use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
+use crate::utilities::{
+  eq_without_whitespace, find_file, initialize_logger, read_file,
+  tree_sitter_utilities::source_code_unit::SourceCodeUnit,
+};
 use std::sync::Once;
 
 static INIT: Once = Once::new();
@@ -106,6 +108,6 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
 fn get_cleanups_for_code_base_new(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
   let mut flag_cleaner = FlagCleaner::new(args);
   flag_cleaner.perform_cleanup();
-  
+
   flag_cleaner.get_updated_files()
 }
