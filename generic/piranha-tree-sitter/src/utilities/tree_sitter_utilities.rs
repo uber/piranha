@@ -70,12 +70,12 @@ pub trait PiranhaRuleMatcher {
     /// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
     /// By default it returns the range of the outermost node for each query match.
     /// If `replace_node` is provided in the rule, it returns the range of the node corresponding to that tag.
-    fn get_match_for_query(&self, source_code: &String, query: &Query, recursive: bool) -> Option<(Range, HashMap<String, String>)>;
+    fn get_match_for_query(&self, source_code: &str, query: &Query, recursive: bool) -> Option<(Range, HashMap<String, String>)>;
 }
 
 impl PiranhaRuleMatcher for Node<'_> {
   fn get_match_for_query(
-    &self, source_code: &String, query: &Query, recursive: bool,
+    &self, source_code: &str, query: &Query, recursive: bool,
   ) -> Option<(Range, HashMap<String, String>)> {
     self
       .get_all_matches_for_query(source_code.to_string(), query, recursive, None)

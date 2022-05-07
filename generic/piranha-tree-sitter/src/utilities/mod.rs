@@ -21,7 +21,6 @@ use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
-
 // Reads a file.
 pub fn read_file(file_path: &PathBuf) -> Result<String, String> {
   File::open(&file_path)
@@ -38,15 +37,18 @@ pub fn read_toml<T>(file_path: &PathBuf, return_default: bool) -> T
 where
   T: serde::de::DeserializeOwned + Default,
 {
-  let obj = read_file(file_path)
-    .and_then(|content| toml::from_str::<T>(content.as_str()).map_err(|e| e.to_string()));
-  if obj.is_ok() {
-    obj.unwrap()
-  } else if return_default {
-    T::default()
-  } else {
-    #[rustfmt::skip]
-    panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, obj.err().unwrap());
+  match read_file(file_path)
+    .and_then(|content| toml::from_str::<T>(content.as_str()).map_err(|e| e.to_string()))
+  {
+    Ok(obj) => obj,
+    Err(err) => {
+      if return_default {
+        T::default()
+      } else {
+        #[rustfmt::skip]
+      panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, err);
+      }
+    }
   }
 }
 
@@ -80,7 +82,7 @@ pub fn initialize_logger(is_test: bool) {
 
 /// Compares two strings, ignoring new lines, and space.
 #[cfg(test)] // Rust analyzer FP
-pub fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
+pub fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
   s1.replace('\n', "")
     .replace(' ', "")
     .eq(&s2.replace('\n', "").replace(' ', ""))
@@ -98,10 +100,11 @@ pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
 
 /// Returns the file with the given name within the given directory.
 #[cfg(test)] // Rust analyzer FP
-pub fn find_file(input_dir: &PathBuf, name: &String) -> PathBuf {
+pub fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
   fs::read_dir(input_dir)
     .unwrap()
-    .filter_map(|d| d.ok()).find(|de| has_name(de, name))
+    .filter_map(|d| d.ok())
+    .find(|de| has_name(de, name))
     .unwrap()
     .path()
 }
