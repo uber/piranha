@@ -7,11 +7,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  defaults:
-    run:
-      shell: bash
-      working-directory: generic/piranha-tree-sitter
-  build:
+  build_and_test:
+    name: Piranha
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,8 +17,24 @@ jobs:
           toolchain: stable
       - name: Install-Tree-Sitter
         run: cargo install tree-sitter-cli
-      - name: Test
-        run: cargo test
+      - run: cargo test
         working-directory: generic/piranha-tree-sitter
-        env:
-          RUST_LOG: warn
+  # defaults:
+
+  #   run:
+  #     shell: bash
+  #     working-directory: generic/piranha-tree-sitter
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #     - name: Install-Tree-Sitter
+  #       run: cargo install tree-sitter-cli
+  #     - name: Test
+  #       run: cargo test
+  #       working-directory: generic/piranha-tree-sitter
+  #       env:
+  #         RUST_LOG: warn
