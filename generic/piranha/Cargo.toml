@@ -1,6 +1,6 @@
 [package]
 authors = ["Ameya Ketkar <ketkara@uber.com>", "Murali Krishna Ramanathan <murali@uber.com>"]
-name = "piranha-tree-sitter"
+name = "piranha"
 version = "0.1.0"
 edition = "2021"
 include = [
