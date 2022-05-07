@@ -20,9 +20,6 @@ jobs:
           toolchain: stable
       - name: Install-Tree-Sitter
         run: cargo install tree-sitter-cli
-      - name: Format the code
-        run: cargo fmt 
-        working-directory: generic/piranha-tree-sitter
       - name: Test
         run: cargo test
         working-directory: generic/piranha-tree-sitter
