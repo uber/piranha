@@ -115,8 +115,8 @@ impl FlagCleaner {
       // Read the file
       .map(|f| {
         (
-          f.path().to_path_buf(),
-          read_file(&f.path().to_path_buf()).unwrap(),
+          f.path(),
+          read_file(&f.path()).unwrap(),
         )
       })
       // Filter the files containing the desired regex pattern
@@ -124,7 +124,7 @@ impl FlagCleaner {
       .collect();
     #[rustfmt::skip]
     info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
-    return files;
+    files
   }
 
   /// Instantiate Flag-cleaner

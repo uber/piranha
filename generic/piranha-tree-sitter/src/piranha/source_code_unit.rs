@@ -37,7 +37,7 @@ pub struct SourceCodeUnit {
 impl SourceCodeUnit {
   /// Writes the current contents of `code` to the file system.
   pub fn persist(&self) {
-    fs::write(&self.path.to_path_buf(), self.code.as_str()).expect("Unable to Write file");
+    fs::write(&self.path, self.code.as_str()).expect("Unable to Write file");
   }
 
   /// Applies an edit to the source code unit
@@ -63,7 +63,7 @@ impl SourceCodeUnit {
       .expect("Could not generate new tree!");
     self.ast = new_tree;
     self.code = new_source_code;
-    return edit;
+    edit
   }
 
   /// Will apply the `rule` to all of its occurrences in the source code unit.
@@ -98,7 +98,7 @@ impl SourceCodeUnit {
       // Add all the (code_snippet, tag) mapping to the substitution table.
       self.substitutions.extend(code_snippets_by_tag);
 
-      let mut current_edit = edit.clone();
+      let mut current_edit = edit;
       let mut current_rule = rule.clone();
       let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
 
@@ -144,7 +144,7 @@ impl SourceCodeUnit {
         self.apply_rule(rle, rules_store, parser, &Some(sq.to_string()));
       }
     }
-    return any_match;
+    any_match
   }
 
   /// Adds the "Method" and "Class" scoped next rules to the queue.
@@ -244,13 +244,13 @@ impl SourceCodeUnit {
     for rule in rules {
       for ancestor in &context() {
         if let Some((range, replacement, captures_by_tag)) =
-          self.get_any_match_for_rule(&rule, rules_store, ancestor.clone(), false)
+          self.get_any_match_for_rule(rule, rules_store, *ancestor, false)
         {
           return Some((range, replacement, rule.clone(), captures_by_tag));
         }
       }
     }
-    return None;
+    None
   }
 
   /// Returns the node, its parent, grand parent and great grand parent
@@ -300,9 +300,9 @@ impl SourceCodeUnit {
     // Return the first match that satisfies constraint of the rule
     for (range, tag_substitutions) in all_query_matches {
       let matched_node = self.get_node_for_range(range.start_byte, range.end_byte);
-      if self.satisfies_constraint(matched_node, &rule, &tag_substitutions, rule_store) {
+      if self.satisfies_constraint(matched_node, rule, &tag_substitutions, rule_store) {
         let replacement = rule.replace().substitute_tags(&tag_substitutions);
-        return Some((range.clone(), replacement, tag_substitutions));
+        return Some((range, replacement, tag_substitutions));
       }
     }
     None
@@ -331,7 +331,7 @@ impl SourceCodeUnit {
           let scope_node = self.get_node_for_range(range.start_byte, range.end_byte);
           // Apply each query within the `scope_node`
           for query_with_holes in constraint.queries() {
-            let query_str = query_with_holes.substitute_tags(&capture_by_tags);
+            let query_str = query_with_holes.substitute_tags(capture_by_tags);
             let query = &rule_store.get_query(&query_str);
             // If this query matches anywhere within the scope, return false.
             if scope_node

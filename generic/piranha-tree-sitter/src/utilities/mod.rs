@@ -20,7 +20,7 @@ use std::fs::{File, OpenOptions};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
-use toml;
+
 
 // Reads a file.
 pub fn read_file(file_path: &PathBuf) -> Result<String, String> {
@@ -81,9 +81,9 @@ pub fn initialize_logger(is_test: bool) {
 /// Compares two strings, ignoring new lines, and space.
 #[cfg(test)] // Rust analyzer FP
 pub fn eq_without_whitespace(s1: &String, s2: &String) -> bool {
-  s1.replace("\n", "")
-    .replace(" ", "")
-    .eq(&s2.replace("\n", "").replace(" ", ""))
+  s1.replace('\n', "")
+    .replace(' ', "")
+    .eq(&s2.replace('\n', "").replace(' ', ""))
 }
 
 /// Checks if the given `dir_entry` is a file named `file_name`
@@ -101,9 +101,7 @@ pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
 pub fn find_file(input_dir: &PathBuf, name: &String) -> PathBuf {
   fs::read_dir(input_dir)
     .unwrap()
-    .filter_map(|d| d.ok())
-    .filter(|de| has_name(de, name))
-    .next()
+    .filter_map(|d| d.ok()).find(|de| has_name(de, name))
     .unwrap()
     .path()
 }

@@ -79,8 +79,7 @@ impl PiranhaRuleMatcher for Node<'_> {
   ) -> Option<(Range, HashMap<String, String>)> {
     self
       .get_all_matches_for_query(source_code.to_string(), query, recursive, None)
-      .first()
-      .map(|x| x.clone())
+      .first().cloned()
   }
 
   fn get_all_matches_for_query(
@@ -91,7 +90,7 @@ impl PiranhaRuleMatcher for Node<'_> {
 
     // Match the query to the node get list of QueryMatch instances.
     // a QueryMatch is like a Map<tag, Node>
-    let query_matches = cursor.matches(&query, self.clone(), source_code.as_bytes());
+    let query_matches = cursor.matches(query, *self, source_code.as_bytes());
 
     // Since a node can be a part of multiple QueryMatch instances,
     // we group the query match instances based on the range of the outermost node they matched.

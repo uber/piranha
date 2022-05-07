@@ -50,7 +50,7 @@ pub struct RuleStore {
 
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
-    let (rules, edges, scopes) = read_config_files(&args);
+    let (rules, edges, scopes) = read_config_files(args);
     let rule_graph = RuleGraph::new(&edges, &rules);
     let mut rule_store = RuleStore {
       rule_graph,
@@ -63,10 +63,10 @@ impl RuleStore {
 
     for (_, rule) in rule_store.rules_by_name.clone() {
       if rule.is_feature_flag_cleanup() {
-        rule_store.add_to_global_rules(&rule, &args.input_substitutions());
+        rule_store.add_to_global_rules(&rule, args.input_substitutions());
       }
     }
-    return rule_store;
+    rule_store
   }
 
   pub(crate) fn global_rules(&self) -> Vec<Rule> {
@@ -89,8 +89,8 @@ impl RuleStore {
   pub(crate) fn add_to_global_rules(
     &mut self, rule: &Rule, tag_captures: &HashMap<String, String>,
   ) {
-    if let Ok(mut r) = rule.try_instantiate(&tag_captures) {
-      r.add_grep_heuristics_for_global_rules(&tag_captures);
+    if let Ok(mut r) = rule.try_instantiate(tag_captures) {
+      r.add_grep_heuristics_for_global_rules(tag_captures);
       #[rustfmt::skip]
         info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
       self.global_rules.push(r);
@@ -124,13 +124,13 @@ impl RuleStore {
             // Group the next rules based on the scope
             next_rules.collect(
               String::from(&next_next_rules_scope),
-              next_next_rule.instantiate(&tag_matches),
+              next_next_rule.instantiate(tag_matches),
             )
           }
         }
       } else {
         // Group the next rules based on the scope
-        next_rules.collect(String::from(&scope), to_rule_name.instantiate(&tag_matches));
+        next_rules.collect(String::from(&scope), to_rule_name.instantiate(tag_matches));
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope

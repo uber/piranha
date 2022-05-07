@@ -70,7 +70,7 @@ impl Rule {
 
   // Dummy rules are helper rules that make it easier to define the rule graph.
   pub(crate) fn is_dummy_rule(&self) -> bool {
-    return self.query.is_empty() && self.replace.is_empty();
+    self.query.is_empty() && self.replace.is_empty()
   }
 
   /// Instantiate `self` with substitutions or panic.
@@ -221,7 +221,7 @@ impl RuleHelper for String {
     for (tag, substitute) in substitutions {
       // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
       let key = format!("@{}", tag);
-      output = output.replace(&key, &substitute)
+      output = output.replace(&key, substitute)
     }
     output
   }

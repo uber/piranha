@@ -77,7 +77,7 @@ fn build(language: &str) -> Result<&str, &str> {
   }
   build.compile(ts_src);
 
-  return Ok("Successfully built {ts_src}");
+  Ok("Successfully built {ts_src}")
 }
 
 fn main() {
