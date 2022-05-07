@@ -1,6 +1,6 @@
 # Generic Piranha 
 It scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
-This generic tree-sitter based implementation for Piranha makes it easy to extend it to new languages and new feature flag APIs (and their usages).
+This generic tree-sitter based implementation for Piranha makes it easy to onboard new languages and new feature flag systems.
 
 ## Motivation 
 
@@ -9,7 +9,6 @@ This implementation overcomes this problem by extracting the language specific s
 
 ## Usage 
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
-
 
 ```
 piranha 0.1.0
@@ -40,12 +39,21 @@ Languages supported :
 * Go (requested)
 * C# (requested)
 * TypeScript (requested)
+* Python (requested)
+* PHP (requested)
 * Contributions for the `requested` languages or any other languages are welcome :) 
+
+## Obtain Piranha Binary from source
+* Install [Rust](https://www.rust-lang.org/tools/install), Git and [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
+* Checkout this repository - `git checkout https://github.com/uber/piranha.git` 
+* `cd piranha/generic/piranha-tree-sitter`
+* `cargo build --release`
+* You will see the binary under `target/release`
 
 ## Getting started with Piranha
 
-*Please refer to our demo -`generic/piranha-tree-sitter/demo/run_piranha_demo.sh` and `generic/piranha-tree-sitter/demo/` to quickly get started with Piranha.*
-*Please refer to our test cases at `src/test-resources/<language>/` as a reference to handle more complicated scenarios*
+*Please refer to our demo - `generic/piranha-tree-sitter/demo/` to quickly get started with Piranha.*
+*Please refer to our test cases at `src/test-resources/<language>/` as a reference for handling complicated scenarios*
 
 To run the demo : 
 * `cd generic/piranha-tree-sitter`
@@ -60,8 +68,14 @@ To get started with Piranha, please follow the below steps:
 For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api).
 For more details on how to configure Piranha to a new language see section [Onboarding a new language flag](onboarding-a-new-language).
 
-## Onboarding a new feature flag API
+## Onboarding a new feature flag system
 
+To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files. The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent. 
+For instance, you want to delete a method declaration with specific annotations and then update its usages with some boolean value. 
+Please refer to the `test-resources/java` for detailed examples. 
+
+
+### Adding a new API usage
 The example below shows a usage of a feature flag API (`experiment.isTreated(STALE_FLAG)`), in a `if_statement`. 
 ```
 class PiranhaDemo {
@@ -116,6 +130,11 @@ The `query` property of the rule contains a [tree-sitter query](https://tree-sit
 The node captured by the tag-name specified in the `replace_node` property is replaced with the pattern specified in the `replace` property.
 The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like [regex-replace](https://docs.microsoft.com/en-us/visualstudio/ide/using-regular-expressions-in-visual-studio?view=vs-2022)).
 
+Each rule also contains the `groups` property, that specifies the kind of change performed by this rule. Based on this group, appropriate 
+cleanup will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups to eliminate dead code (like eliminating `consequent` of a `if statement`) caused by replacing an expression with a boolean literal. 
+Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. 
+
+### Defining behavior of the API
 The `rule` contains `holes` or template variables that need to be instantiated.
 For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`.  To specify such a behavior,
 user should create a `piranha_arguments.toml` file as shown below (assuming that the behavior of STALE_FLAG is **treated**): 
@@ -130,13 +149,7 @@ This file specifies that, the user wants to perform this refactoring for `java` 
 The `substitutions` field captures mapping between the tags and their corresponding concrete values. In this example, we specify that the tag named `stale_flag_name` should be replaced with `STALE_FLAG` and `treated` with `true`.
 
 
-
-Each rule also contains the `groups` property, that specifies the kind of change performed by this rule. Based on this group, appropriate 
-cleanup rules will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups (like eliminating `consequent` of a `if statement`) to eliminate dead code caused by replacing an expression with a boolean literal. 
-Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. 
-
 ## Onboarding a new language 
-
 This section describes how to configure Piranha to support a new language. 
 Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
@@ -190,7 +203,6 @@ int foobar(){
 ```
 
 </td>
-
 </table>
 
 We would first define flag API rules as discussed in the section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
@@ -216,12 +228,6 @@ Please refer to `/src/cleanup_rules/java/scope_config.toml`.
 
 
 ## Contributing
-
-### Building from the source
-To configure Piranha for a new language one has to build from source using the command `cargo build` inside `generic/piranha-tree-sitter/`. 
-Please install the following, in order to build Piranha : 
-* Git 
-* [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
 
 ### Naming conventions for the rules 
 * We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`

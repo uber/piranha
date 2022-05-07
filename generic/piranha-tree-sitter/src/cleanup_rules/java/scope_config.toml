@@ -19,9 +19,9 @@
 # Each scope rule consists of a `matcher` and a `generator`. 
 
 # When Piranha encounters a "Method" or "Class" scope, it looks up these configurations to obtain the list of scope rules. 
-# It then applies each `scope.rules.matcher` to the ancestors of changed node in across the previous edit.
-# Upon finding the match (it short-circuits), Piranha substitutes the tags `scope.rules.generator` based on the tag matches obtained from 
-# matching `scope.rules.matcher`. 
+# It then applies each `scope.rules.matcher` to the ancestors of changed node in the previous edit.
+# Upon finding the match (it short-circuits), Piranha substitutes the tags in `scope.rules.generator` based on the tag matches obtained from 
+# matching `scope.rules.matcher` to create a context specific rule for the changed node.
 
  # TODO:  to make this scope generator be scripted instead of hardcoding the parameter count.
 
