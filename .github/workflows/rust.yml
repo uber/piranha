@@ -19,22 +19,3 @@ jobs:
         run: cargo install tree-sitter-cli
       - run: cargo test
         working-directory: generic/piranha-tree-sitter
-  # defaults:
-
-  #   run:
-  #     shell: bash
-  #     working-directory: generic/piranha-tree-sitter
-  # build:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #     - name: Install-Tree-Sitter
-  #       run: cargo install tree-sitter-cli
-  #     - name: Test
-  #       run: cargo test
-  #       working-directory: generic/piranha-tree-sitter
-  #       env:
-  #         RUST_LOG: warn
