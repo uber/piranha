@@ -1,0 +1,264 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file contains rules to the specific feature flag API.
+# Before :
+# interface IExp {
+#  @BoolParam(key = "STALE_FLAG", namespace="NS")    
+#  public void isStaleFeature();
+#  @BoolParam(key = "OTHER_FLAG", namespace="NS")
+#  public void isOtherFeature();
+# }
+# After :
+# interface IExp {
+#  @BoolParam(key = "OTHER_FLAG", namespace="NS")
+#  public void isOtherFeature();
+# }
+#
+[[rules]]
+name = "delete_flag_method_declaration_fully_annotated"
+query = """
+(
+(method_declaration
+     (modifiers (annotation
+                     name: (_) @annotation_name
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k1
+                             value: (_) @v1))))
+      name: (_) @m_name
+ )@method_declaration
+ (#eq? @annotation_name "BoolParam")
+ (#eq? @k1 "key")
+ (#eq? @v1 "\\\"@stale_flag_name\\\"")
+ )
+ (
+(method_declaration
+     (modifiers (annotation
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k2
+                             value: (_) @v2))))
+ )@m2
+ (#eq? @k2 "namespace")
+ (#eq? @v2 "\\\"@namespace\\\"")
+ )
+"""
+replace_node = "method_declaration"
+replace = ""
+groups = ["delete_method_declaration"]
+holes = ["stale_flag_name", "namespace"]
+
+# Before :
+#  @ParamDefinition(namespace="NS")
+#  interface IExp {
+#   @BoolParam(key = "STALE_FLAG")    
+#   public void isStaleFeature();
+#   @BoolParam(key = "OTHER_FLAG", namespace="Some_NS")
+#   public void isOtherFeature();
+#  }
+# After :
+#  interface IExp {
+#   @BoolParam(key = "OTHER_FLAG", namespace="Some_NS")
+#   public void isOtherFeature();
+#  }
+#
+[[rules]]
+name = "delete_flag_method_declaration_inside_annotated_interface"
+query= """
+(
+(interface_declaration
+    (modifiers (annotation
+                     name: (_) @a_name
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k1
+                             value: (_) @v1)))) @mod
+    name: (_) @i_name
+    body: (interface_body
+        (_)* @pre
+        (method_declaration
+             (modifiers (annotation
+                    arguments: (annotation_argument_list
+                        (element_value_pair
+                             key: (_) @k2
+                             value: (_) @v2))))
+                             
+        name: (_) @m_name) @md
+        (_)* @post
+    )
+) @id
+ (#eq? @a_name "ParameterDefinition")
+ (#eq? @k1 "namespace")
+ (#eq? @v1 "\\\"@namespace\\\"")
+ (#eq? @k2 "key")
+ (#eq? @v2 "\\\"@stale_flag_name\\\"")
+)
+"""
+replace_node = "md"
+replace = ""
+groups = ["delete_method_declaration"]
+holes = ["stale_flag_name", "namespace"]
+
+# For @m_name = `isStaleFeature`, @treated = `true`
+# Before :
+#  exp.isStaleFeature().getCachedValue()
+# After: 
+#  true
+#
+[[rules]]
+name = "replace_flag_method_with_boolean_literal"
+query = """
+(
+   ((method_invocation
+       object: (method_invocation 
+                   object: (_) @receiver
+                   name: (identifier) @nested_name)
+       name : (identifier) @name) 
+       @method_invocation)
+   (#eq? @name "getCachedValue")
+   (#eq? @nested_name "@m_name")
+   (#not-match? @receiver "^[A-Z]+.*")
+)"""
+replace_node = "method_invocation"
+replace = "@treated"
+groups = ["replace_expression_with_boolean_literal"]
+holes = ["m_name", "treated"]
+
+# For @m_name = `isStaleFeature`, @treated = `true`
+# Before : 
+# cp.put(e.isStaleFeature(), true);
+# After : 
+# 
+#
+[[rules]]
+name = "delete_put"
+query = """
+(
+(expression_statement ((method_invocation name: (_) @n
+            arguments : (
+            (argument_list 
+                (method_invocation 
+                        name: (_) @an)
+                ([(true) (false)])
+             ))
+
+            ) @m) ) @expression_statement
+ (#eq? @n "put")
+ (#eq? @an "@m_name")
+)
+"""
+replace_node = "expression_statement"
+replace = ""
+holes = ["m_name"]
+
+#
+# For @stale_flag_name = `STALE_FLAG`, @treated = `true`
+# Before : 
+#  @Pval(name = "STALE_FLAG", namespace= "ns", val = true)
+#  void someTestMethod() {
+#   // Test code 
+#  }
+# After :
+#  void someTestMethod() {
+#   // Test code 
+#  }
+#
+[[rules]]
+name = "delete_annotated_test_method_treated"
+query = """(
+(method_declaration
+    (modifiers (annotation name: (_) @n
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k1
+                                    value : (_) @v1))) )) @md1
+(#eq? @k1 "ns")
+(#eq? @v1 "\\\"@namespace\\\"")
+(#eq? @n "ParameterValue")
+)
+(
+(method_declaration
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k2
+                                    value : (_) @v2))))) @md2
+(#eq? @k2 "key")
+(#eq? @v2 "\\\"@stale_flag_name\\\"")
+)
+(
+(method_declaration
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k3
+                                    value : (_) @v3))) @an) ) @md3
+(#eq? @k3 "val")
+(#eq? @v3 "\\\"@treated\\\"")
+)"""
+replace_node = "an"
+replace = ""
+holes = ["stale_flag_name", "treated", "namespace"]
+
+#
+# For @stale_flag_name = `STALE_FLAG`, @treated = `true`
+# Before : 
+#  @Pval(name = "STALE_FLAG", namespace= "ns", val = false)
+#  void someTestMethod() {
+#   // Test code 
+#  }
+# After :
+# 
+#
+[[rules]]
+name = "delete_annotated_test_method_control"
+query = """(
+(method_declaration
+    (modifiers (annotation name: (_) @n
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k1
+                                    value : (_) @v1))) )) @md1
+(#eq? @k1 "ns")
+(#eq? @v1 "\\\"@namespace\\\"")
+(#eq? @n "ParameterValue")
+)
+(
+(method_declaration
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k2
+                                    value : (_) @v2))))) @md2
+(#eq? @k2 "key")
+(#eq? @v2 "\\\"@stale_flag_name\\\"")
+)
+(
+(method_declaration
+    (modifiers (annotation name: (_) 
+                          arguments : 
+                              (annotation_argument_list
+                                (element_value_pair 
+                                    key : (_) @k3
+                                    value : (_) @v3))) @an) ) @md3
+(#eq? @k3 "val")
+(#eq? @v3 "\\\"@treated_complement\\\"")
+)"""
+replace_node = "md3"
+replace = ""
+groups = ["delete_method_declaration"]
+holes = ["stale_flag_name", "treated_complement", "namespace"]

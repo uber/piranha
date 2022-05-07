@@ -1,0 +1,21 @@
+name: Rust CI
+on:
+  pull_request:
+  push: 
+    branches:
+      - master
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build_and_test:
+    name: Piranha
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Install-Tree-Sitter
+        run: cargo install tree-sitter-cli
+      - run: cargo test
+        working-directory: generic/piranha-tree-sitter

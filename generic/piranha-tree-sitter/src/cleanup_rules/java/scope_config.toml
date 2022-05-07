@@ -1,0 +1,221 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This files spcifies the scope generators for `Java`. 
+# In `edges.toml`, we specify how the rules should be chained by constructing an edge labelled graph with rules as nodes. 
+# These edges are labelled as - Parent, Global, Method and Class. These edges determine "scope" where the next rule will be applied with respect
+# to the previously applied rule. 
+# Unlike Parent and Global scopes, Method and Class scopes are language dependent, since each language has its own syntax to define methods and classes. 
+# This file allows users to define these language dependent scopes. 
+# Each scope consists of a scope name and a list of scope rules. 
+# Each scope rule consists of a `matcher` and a `generator`. 
+
+# When Piranha encounters a "Method" or "Class" scope, it looks up these configurations to obtain the list of scope rules. 
+# It then applies each `scope.rules.matcher` to the ancestors of changed node in the previous edit.
+# Upon finding the match (it short-circuits), Piranha substitutes the tags in `scope.rules.generator` based on the tag matches obtained from 
+# matching `scope.rules.matcher` to create a context specific rule for the changed node.
+
+ # TODO:  to make this scope generator be scripted instead of hardcoding the parameter count.
+
+[[scopes]]
+name = "Method"
+[[scopes.rules]]
+# Example : 
+#
+# pub void foo(int a, int b, int c, int d, int e){
+#   // Let's assume that some rule was previously applied within this method body.
+# }  
+#
+# To capture the signature of the enclosing method, Piranha will match the below rule against the method.
+# This will result in matches - {`n`: foo, `t0`: int a, `t1`: int b, `t2`: int c, `t3`: int d, `t4`: int e}
+# Substituting these matches in the `scopes.rules.generator` will result in : 
+#
+#(((method_declaration 
+# 			name : (_) @z
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @r0)
+#                     (formal_parameter type:(_) @r1)
+#                     (formal_parameter type:(_) @r2)
+#                     (formal_parameter type:(_) @r3)
+#                     (formal_parameter type:(_) @r4))) @qd)
+# (#eq? @z "@foo")
+# (#eq? @r0 "int a")
+# (#eq? @r1 "int b")
+# (#eq? @r2 "int c")
+# (#eq? @r3 "int d")
+# (#eq? @r4 "int e")
+# )
+#
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1)
+                    (formal_parameter type:(_) @t2)
+                    (formal_parameter type:(_) @t3)
+                    (formal_parameter type:(_) @t4))) @xd0)"""
+generator = """
+(((method_declaration 
+			name : (_) @z
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2)
+                    (formal_parameter type:(_) @r3)
+                    (formal_parameter type:(_) @r4))) @qd)
+(#eq? @z "@n")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")
+(#eq? @r3 "@t3")
+(#eq? @r4 "@t4")                    
+)"""
+
+# Scope matcher-generator for Java method with 4 parameters.
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1)
+                    (formal_parameter type:(_) @t2)
+                    (formal_parameter type:(_) @t3))) @xd5)"""
+generator = """
+(((method_declaration 
+			name : (_) @z
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2)
+                    (formal_parameter type:(_) @r3))) @qd)
+(#eq? @z "@n")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")
+(#eq? @r3 "@t3")
+)"""
+
+# Scope matcher-generator for Java method with 3 parameters.
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1)
+                    (formal_parameter type:(_) @t2))) @xd2)"""
+generator = """
+(((method_declaration 
+			name : (_) @z
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2))) @qd)
+(#eq? @z "@n")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")
+)"""
+
+# Scope matcher-generator for Java method with 2 parameters.
+[[scopes.rules]]
+matcher =  """
+((method_declaration 
+			name : (_) @n
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @t0)
+                    (formal_parameter type:(_) @t1))) @xd3)"""
+generator = """
+(((method_declaration 
+			name : (_) @z
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1))) @qd)
+(#eq? @z "@n")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+)"""
+
+# Scope matcher-generator for Java method with 1 parameters.
+[[scopes.rules]]
+matcher =  """
+(
+(((method_declaration 
+			name : (_) @n
+            parameters : 
+            	((formal_parameters
+            		(((formal_parameter type: (_) @t0) )? @f )) @zz)
+                )
+    @xd6)
+)
+(#not-match? @zz ",")
+(#not-eq? @zz "()")
+)"""
+generator = """
+(
+(((method_declaration 
+			name : (_) @z
+            parameters : 
+            	((formal_parameters
+            		(((formal_parameter type: (_) @r1) ) @p )) @j)
+                )
+    @4)
+)
+(#not-match? @j ",")
+(#not-eq? @j "()")
+(#eq? @z "@n")
+(#eq? @r1 "@t0")
+)"""
+
+# Scope matcher-generator for Java method with 0 parameters.
+# This is a bit flaky, since it will not support matching ( ) i.e. bracket with space 
+[[scopes.rules]]
+matcher =  """
+(
+(((method_declaration 
+			name : (_) @n
+            parameters : 
+            	((formal_parameters) @gg)
+                )
+    @xd4)
+)
+
+(#not-match? @gg ",")
+(#eq? @gg "()")
+)"""
+generator = """
+(
+(((method_declaration 
+			name : (_) @z
+            parameters : 
+            	((formal_parameters) @j)
+                )
+    @xd1)
+)
+
+(#not-match? @j ",")
+(#eq? @j "()")
+(#eq? @z "@n")
+)"""
+
+# Scope generators for Java Class.
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
+matcher = "(class_declaration name:(_) @n) @c"
+generator = """
+(
+((class_declaration name:(_) @z) @qc)
+(#eq? @z "@n")
+)
+"""
