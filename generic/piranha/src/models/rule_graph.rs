@@ -36,8 +36,8 @@ impl RuleGraph {
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
     for edge in edges {
-      for from_rule in get_rules_for_tag_or_name(&edge.from_rule()) {
-        for outgoing_edge in edge.to_rules() {
+      for from_rule in get_rules_for_tag_or_name(&edge.source()) {
+        for outgoing_edge in edge.destinations() {
           for to_rule in get_rules_for_tag_or_name(&outgoing_edge) {
             // Add edge to the adjacency list
             graph.collect(
@@ -53,8 +53,6 @@ impl RuleGraph {
 
   /// Get all the outgoing edges for `rule_name`
   pub(crate) fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
-    self
-      .0
-      .get(rule_name).cloned().unwrap_or_default()
+    self.0.get(rule_name).cloned().unwrap_or_default()
   }
 }

@@ -4,8 +4,8 @@ This generic tree-sitter based implementation for Piranha makes it easy to onboa
 
 ## Motivation 
 
-Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. This is time-consuming and expensive to develop and maintain such nearly similar implementations.
-This implementation overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query API based rewrite rules, and applying them to the input program as chains of rules.
+Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. It is time-consuming and expensive to develop and maintain such nearly similar implementations.
+This implementation overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query based rewrite rules, and applying them to the input program as chains of rules.
 
 ## Usage 
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
@@ -62,7 +62,7 @@ To run the demo :
 To get started with Piranha, please follow the below steps:
 * Check if the current version of Piranha supports the required language.
 * If so, then check if the API usage is similar to the ones provided in the test suite at `/demo/<language>/configurations/rules.toml`.
-*  If not, adapt these examples to your requirements. Look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) for more information on how to construct tree-sitter queries. 
+*  If not, adapt these examples to your requirements. There are more examples available for reference in `test-resources/**/**/configurations/`. Further, you can look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) for more information on how to construct tree-sitter queries.  
 * Now adapt the `/demo/<language>/configurations/piranha_arguments.toml` as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`. In most cases, one will not require `/demo/<language>/configurations/edges.toml`.
 
 For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api).
@@ -217,13 +217,13 @@ We would first define flag API rules as discussed in the section [Onboarding a n
 The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file. 
 
 To define how these cleanup rules should be chained, one needs to specify edges (e.g. the `cleanup_rules/java/edges.toml` file) between the groups and (or) individual rules.
-The edges can be labelled as `ANCESTOR`, `METHOD`, `CLASS` or `GLOBAL`. 
-* A `ANCESTOR` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` → `R2`, `R2` → `R3`, `R3` → `R4`)
-* A `METHOD` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` → `R1`)
-* A `CLASS` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. in-lining a private field)
-* A `GLOBAL` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
+The edges can be labelled as `Parent`, `Method`, `Class` or `Global`. 
+* A `Parent` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` → `R2`, `R2` → `R3`, `R3` → `R4`)
+* A `Method` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` → `R1`)
+* A `Class` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. in-lining a private field)
+* A `Global` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
 
-One would also have to define how to capture the `METHOD` and `CLASS` scopes for the new language by specifying the `scope_config.toml` file.
+One would also have to define how to capture the `Method` and `Class` scopes for the new language by specifying the `scope_config.toml` file.
 Please refer to `/src/cleanup_rules/java/scope_config.toml`.
 
 

@@ -30,13 +30,13 @@ pub(crate) struct OutgoingEdges {
 impl OutgoingEdges {
   /// Get a reference to the edge's from.
   #[must_use]
-  pub(crate) fn from_rule(&self) -> String {
+  pub(crate) fn source(&self) -> String {
     String::from(&self.from)
   }
 
   /// Get a reference to the edge's to.
   #[must_use]
-  pub(crate) fn to_rules(&self) -> Vec<String> {
+  pub(crate) fn destinations(&self) -> Vec<String> {
     self.to.clone()
   }
 

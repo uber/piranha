@@ -70,7 +70,7 @@ impl FlagCleaner {
               &mut parser,
               content,
               &self.rule_store.input_substitutions(),
-              &path,
+              &path.as_path(),
             )
           })
           // Apply the rules to this file
@@ -113,12 +113,7 @@ impl FlagCleaner {
           .is_some()
       })
       // Read the file
-      .map(|f| {
-        (
-          f.path(),
-          read_file(&f.path()).unwrap(),
-        )
-      })
+      .map(|f| (f.path(), read_file(&f.path()).unwrap()))
       // Filter the files containing the desired regex pattern
       .filter(|x| pattern.is_match(x.1.as_str()))
       .collect();

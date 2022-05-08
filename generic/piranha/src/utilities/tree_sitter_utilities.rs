@@ -79,7 +79,8 @@ impl PiranhaRuleMatcher for Node<'_> {
   ) -> Option<(Range, HashMap<String, String>)> {
     self
       .get_all_matches_for_query(source_code.to_string(), query, recursive, None)
-      .first().cloned()
+      .first()
+      .cloned()
   }
 
   fn get_all_matches_for_query(

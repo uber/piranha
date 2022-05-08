@@ -17,6 +17,7 @@ use crate::utilities::tree_sitter_utilities::{PiranhaRuleMatcher, TreeSitterHelp
 use colored::Colorize;
 use log::info;
 use std::collections::VecDeque;
+use std::path::Path;
 use std::{collections::HashMap, fs, path::PathBuf};
 use tree_sitter::{InputEdit, Node, Parser, Point, Range, Tree};
 
@@ -189,11 +190,11 @@ impl SourceCodeUnit {
 
   /// Apply all `rules` sequentially.
   pub(crate) fn apply_rules(
-    &mut self, rules_store: &mut RuleStore, rules: &Vec<Rule>, parser: &mut Parser,
+    &mut self, rules_store: &mut RuleStore, rules: &[Rule], parser: &mut Parser,
     scope_query: Option<String>,
   ) {
-    for rule in rules.clone() {
-      self.apply_rule(rule.clone(), rules_store, parser, &scope_query)
+    for rule in rules {
+      self.apply_rule(rule.to_owned(), rules_store, parser, &scope_query)
     }
   }
 
@@ -274,7 +275,7 @@ impl SourceCodeUnit {
   }
 
   pub(crate) fn new(
-    parser: &mut Parser, code: String, substitutions: &HashMap<String, String>, path: &PathBuf,
+    parser: &mut Parser, code: String, substitutions: &HashMap<String, String>, path: &Path,
   ) -> Self {
     let ast = parser.parse(&code, None).expect("Could not parse code");
     Self {
@@ -353,34 +354,31 @@ impl SourceCodeUnit {
   /// Returns tree-sitter's edit representation along with updated source code.
   /// Note: This method does not update `self`.
   pub fn get_edit(&self, replace_range: Range, replacement: &str) -> (String, InputEdit) {
-    let original_source_code = self.code.clone();
-
-    // Create the new source code content by appropriately
-    // replacing the range with the replacement string.
-    let updated_source_code = [
-      &original_source_code[..replace_range.start_byte],
-      replacement,
-      &original_source_code[replace_range.end_byte..],
-    ]
-    .concat();
-
     // Log the edit
-    let replaced_code_snippet =
-      &original_source_code[replace_range.start_byte..replace_range.end_byte];
+    let replaced_code_snippet = &self.code[replace_range.start_byte..replace_range.end_byte];
 
     #[rustfmt::skip]
     info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(), ((&replace_range.start_point.row, &replace_range.start_point.column), (&replace_range.end_point.row, &replace_range.end_point.column)), if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())} else {format!("{} ", replaced_code_snippet.italic())});
 
-    let original_bytes = &original_source_code.as_bytes().to_vec();
-
-    let edit =
-      Self::get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), original_bytes);
-
-    (updated_source_code, edit)
+    (
+      // Create the new source code content by appropriately
+      // replacing the range with the replacement string.
+      [
+        &self.code[..replace_range.start_byte],
+        replacement,
+        &self.code[replace_range.end_byte..],
+      ]
+      .concat(),
+      Self::get_tree_sitter_edit(
+        replace_range,
+        replacement.as_bytes().len(),
+        self.code.as_bytes(),
+      ),
+    )
   }
 
   // Finds the position (col and row number) for a given offset.
-  fn position_for_offset(input: &Vec<u8>, offset: usize) -> Point {
+  fn position_for_offset(input: &[u8], offset: usize) -> Point {
     let mut result = Point { row: 0, column: 0 };
     for c in &input[0..offset] {
       if *c as char == '\n' {
@@ -395,7 +393,7 @@ impl SourceCodeUnit {
 
   // Creates the InputEdit as per the tree-sitter api documentation.
   fn get_tree_sitter_edit(
-    replace_range: Range, len_of_replacement: usize, source_code_bytes: &Vec<u8>,
+    replace_range: Range, len_of_replacement: usize, source_code_bytes: &[u8],
   ) -> InputEdit {
     let start_byte = replace_range.start_byte;
     let old_end_byte = replace_range.end_byte;
