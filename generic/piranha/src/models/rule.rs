@@ -15,14 +15,14 @@ use std::collections::HashMap;
 
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::{Node, Range, InputEdit};
+use tree_sitter::{InputEdit, Node, Range};
 
 use crate::utilities::{
-  tree_sitter_utilities::{get_node_for_range, substitute_tags, PiranhaHelpers, get_context},
+  tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
   MapOfVec,
 };
 
-use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
+use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit, constraint::Constraint};
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
@@ -53,22 +53,7 @@ pub(crate) struct Rule {
 }
 
 impl Rule {
-  /// Create a new query from `self` with the input `query` and `replace`
-  /// ```
-  /// let rule = Rule {name = String::from("test"),
-  ///                 query = String::from("(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @assgn) (#eq? @a.lhs "@variable_name"))"),
-  ///                 replace = String::from(""),
-  ///                 holes = Some(vec![String::from("variable_name")])
-  ///                 replace_node = "@assgn",
-  ///                 groups = None,
-  ///                 constraints = None,
-  ///                 grep_heuristics = None}
-  /// let substitutions :HashMap<String, String>  = HashMap::from([(String::from("variable_name"), String::from("foobar"))]);
-  /// let ur = rule.update(&substitutions);
-  /// assert_eq!(ur.query(), "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @assgn) (#eq? @a.lhs "foobar"))")
-  ///
-  ///
-  /// ```
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
   pub(crate) fn update(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
     if substitutions.len() != self.holes().len() {
       #[rustfmt::skip]
@@ -103,7 +88,7 @@ impl Rule {
 
   /// Groups the rules based on the field `rule.groups`
   /// Note: a rule can belong to more than one group.
-  pub(crate) fn get_grouped_rules(
+  pub(crate) fn group_rules(
     rules: &Vec<Rule>,
   ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
     let mut rules_by_name = HashMap::new();
@@ -213,7 +198,8 @@ impl Rule {
   // Apply all the `rules` to the node, parent, grand parent and great grand parent.
   // Short-circuit on the first match.
   pub(crate) fn get_match_replace_for_context(
-    source_code_unit: &SourceCodeUnit, previous_edit: InputEdit, rules_store: &mut RuleStore, rules: &Vec<Rule>,
+    source_code_unit: &SourceCodeUnit, previous_edit: InputEdit, rules_store: &mut RuleStore,
+    rules: &Vec<Rule>,
   ) -> Option<(Range, String, Rule, HashMap<String, String>)> {
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || get_context(source_code_unit.root_node(), previous_edit);
@@ -229,9 +215,10 @@ impl Rule {
     None
   }
 
-   /// Gets the first match for the rule in `self`
-   pub(crate) fn get_match_replace(
-    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node, recursive: bool,
+  /// Gets the first match for the rule in `self`
+  pub(crate) fn get_match_replace(
+    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
+    recursive: bool,
   ) -> Option<(Range, String, HashMap<String, String>)> {
     // Get all matches for the query in the given scope `node`.
     let all_query_matches = node.get_all_matches_for_query(
@@ -243,8 +230,17 @@ impl Rule {
 
     // Return the first match that satisfies constraint of the rule
     for (range, tag_substitutions) in all_query_matches {
-      let matched_node = get_node_for_range(source_code_unit.root_node(), range.start_byte, range.end_byte);
-      if matched_node.satisfies_constraint(source_code_unit.clone(), self, &tag_substitutions, rule_store) {
+      let matched_node = get_node_for_range(
+        source_code_unit.root_node(),
+        range.start_byte,
+        range.end_byte,
+      );
+      if matched_node.satisfies_constraint(
+        source_code_unit.clone(),
+        self,
+        &tag_substitutions,
+        rule_store,
+      ) {
         let replacement = substitute_tags(self.replace(), &tag_substitutions);
         return Some((range, replacement, tag_substitutions));
       }
@@ -253,62 +249,27 @@ impl Rule {
   }
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub(crate) struct Constraint {
-  /// Scope in which the constraint query has to be applied
-  matcher: String,
-  /// The Tree-sitter queries that need to be applied in the `matcher` scope
-  queries: Vec<String>,
-}
+mod test {
+  #[cfg(test)]
+  use {super::Rule, std::collections::HashMap};
 
-impl Constraint {
-  pub(crate) fn queries(&self) -> &[String] {
-    &self.queries
-  }
-
-  pub(crate) fn matcher(&self) -> String {
-    String::from(&self.matcher)
-  }
-
-  /// Checks if the node satisfies the constraints.
-  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
-  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
-  /// i.e. finds scope for constraint.
-  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
-  pub(crate) fn is_satisfied(
-    &self, node: Node, source_code_unit: SourceCodeUnit, rule_store: &mut RuleStore,
-    substitutions: &HashMap<String, String>,
-  ) -> bool {
-    let mut current_node = node;
-    // Get the scope_node of the constraint (`scope.matcher`)
-    while let Some(parent) = current_node.parent() {
-      if let Some((range, _)) = parent.get_match_for_query(
-        &source_code_unit.code(),
-        rule_store.get_query(&self.matcher()),
-        false,
-      ) {
-        let scope_node = get_node_for_range(
-          source_code_unit.root_node(),
-          range.start_byte,
-          range.end_byte,
-        );
-        // Apply each query within the `scope_node`
-        for query_with_holes in self.queries() {
-          let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
-          let query = &rule_store.get_query(&query_str);
-          // If this query matches anywhere within the scope, return false.
-          if scope_node
-            .get_match_for_query(&source_code_unit.code(), query, true)
-            .is_some()
-          {
-            return false;
-          }
-        }
-        break;
-      }
-      current_node = parent;
-    }
-
-    return true;
+  #[test]
+  fn test_rule_instantiate() {
+    let rule = Rule {name : String::from("test"),
+                   query : String::from("(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))"),
+                   replace : String::from(""),
+                   holes : Some(vec![String::from("variable_name")]),
+                   replace_node : String::from("@abc"),
+                   groups : None,
+                   constraints : None,
+                   grep_heuristics : None
+                  };
+    let substitutions: HashMap<String, String> = HashMap::from([
+      (String::from("variable_name"), String::from("foobar")),
+      (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
+    ]);
+    let instantiated_rule = rule.try_instantiate(&substitutions);
+    assert!(instantiated_rule.is_ok());
+    assert_eq!(instantiated_rule.ok().unwrap().query(), "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))")
   }
 }

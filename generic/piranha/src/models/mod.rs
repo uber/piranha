@@ -17,4 +17,5 @@ pub(crate) mod rule;
 pub(crate) mod rule_graph;
 pub(crate) mod rule_store;
 pub(crate) mod scopes;
+pub(crate) mod constraint;
 pub mod source_code_unit;
