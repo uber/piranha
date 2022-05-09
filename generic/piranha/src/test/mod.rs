@@ -17,12 +17,13 @@ use colored::Colorize;
 use log::info;
 
 use crate::config::CommandLineArguments;
+use crate::models::source_code_unit::SourceCodeUnit;
 use crate::piranha::flag_cleaner::FlagCleaner;
 use crate::piranha::piranha_arguments::PiranhaArguments;
-use crate::piranha::source_code_unit::SourceCodeUnit;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
 pub mod test_piranha_java;
+pub mod unit_tests;
 
 use std::sync::Once;
 

@@ -380,7 +380,7 @@ queries = [
 (
 ((assignment_expression
                     left: (_) @a.lhs
-                    right: (_) @a.rhs) @a)
+                    right: (_) @a.rhs) @assignment)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )"""
@@ -409,7 +409,7 @@ queries = [
   """(
 ((assignment_expression
                     left: (_) @a.lhs
-                    right: (_) @a.rhs) @a)
+                    right: (_) @a.rhs) @assignment)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )"""

@@ -43,6 +43,16 @@ impl ScopeGenerator {
   pub(crate) fn rules(&self) -> Vec<ScopeQueryGenerator> {
     self.rules.iter().cloned().collect_vec()
   }
+
+  // pub fn get_query_for(node: Node){
+  //   if let Some((_, captures_by_tag)) =
+  //         node.get_match_for_query(&self.code, rules_store.get_query(&m.matcher()), false)
+  //   {
+  //     // Generate the scope query for the specific context by substituting the
+  //     // the tags with code snippets appropriately in the `generator` query.
+  //     return m.generator().substitute_tags(&captures_by_tag);
+  //   }
+  // }
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]

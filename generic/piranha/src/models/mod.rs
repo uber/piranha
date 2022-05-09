@@ -15,4 +15,6 @@ pub(crate) mod outgoing_edges;
 pub(crate) mod piranha_config;
 pub(crate) mod rule;
 pub(crate) mod rule_graph;
+pub(crate) mod rule_store;
 pub(crate) mod scopes;
+pub mod source_code_unit;

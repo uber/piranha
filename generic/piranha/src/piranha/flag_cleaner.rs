@@ -20,10 +20,10 @@ use log::info;
 use regex::Regex;
 use tree_sitter::Parser;
 
-use crate::utilities::read_file;
+use crate::{utilities::read_file, models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit}};
 
 use super::{
-  piranha_arguments::PiranhaArguments, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+  piranha_arguments::PiranhaArguments,
 };
 
 // Maintains the state of Piranha and the updated content of files in the source code.

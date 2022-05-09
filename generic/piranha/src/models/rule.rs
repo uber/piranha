@@ -14,9 +14,16 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use colored::Colorize;
+use itertools::Itertools;
 use serde_derive::Deserialize;
+use tree_sitter::Node;
 
-use crate::utilities::MapOfVec;
+use crate::utilities::{
+  tree_sitter_utilities::{get_node_for_range, substitute_tags, PiranhaHelpers},
+  MapOfVec,
+};
+
+use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
@@ -48,17 +55,30 @@ pub(crate) struct Rule {
 
 impl Rule {
   /// Create a new query from `self` with the input `query` and `replace`
-  pub(crate) fn update(
-    &self, query: String, replace: String, substitutions: &HashMap<String, String>,
-  ) -> Result<Rule, String> {
+  /// ```
+  /// let rule = Rule {name = String::from("test"),
+  ///                 query = String::from("(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @assgn) (#eq? @a.lhs "@variable_name"))"),
+  ///                 replace = String::from(""),
+  ///                 holes = Some(vec![String::from("variable_name")])
+  ///                 replace_node = "@assgn",
+  ///                 groups = None,
+  ///                 constraints = None,
+  ///                 grep_heuristics = None}
+  /// let substitutions :HashMap<String, String>  = HashMap::from([(String::from("variable_name"), String::from("foobar"))]);
+  /// let ur = rule.update(&substitutions);
+  /// assert_eq!(ur.query(), "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @assgn) (#eq? @a.lhs "foobar"))")
+  ///
+  ///
+  /// ```
+  pub(crate) fn update(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
     if substitutions.len() != self.holes().len() {
       #[rustfmt::skip]
         return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
     } else {
       let mut updated_rule = self.clone();
       if !updated_rule.holes().is_empty() {
-        updated_rule.set_query(query.substitute_tags(substitutions));
-        updated_rule.set_replace(replace.substitute_tags(substitutions));
+        updated_rule.update_query(substitutions);
+        updated_rule.update_replace(substitutions);
       }
       Ok(updated_rule)
     }
@@ -109,7 +129,7 @@ impl Rule {
       .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
       .map(|(a, b)| (a.clone(), b.clone()))
       .collect::<HashMap<String, String>>();
-    self.update(self.query(), self.replace(), &relevant_substitutions)
+    self.update(&relevant_substitutions)
   }
 
   /// Records the string that should be grepped in order to find files that
@@ -179,12 +199,12 @@ impl Rule {
     }
   }
 
-  pub(crate) fn set_replace(&mut self, replace: String) {
-    self.replace = replace;
+  pub(crate) fn update_replace(&mut self, substitutions: &HashMap<String, String>) {
+    self.replace = substitute_tags(self.replace(), substitutions);
   }
 
-  pub(crate) fn set_query(&mut self, query: String) {
-    self.query = query;
+  pub(crate) fn update_query(&mut self, substitutions: &HashMap<String, String>) {
+    self.query = substitute_tags(self.query(), substitutions);
   }
 
   pub(crate) fn name(&self) -> String {
@@ -208,21 +228,46 @@ impl Constraint {
   pub(crate) fn matcher(&self) -> String {
     String::from(&self.matcher)
   }
-}
 
-pub(crate) trait RuleHelper {
-  /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
-  fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
-}
-
-impl RuleHelper for String {
-  fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String {
-    let mut output = String::from(self);
-    for (tag, substitute) in substitutions {
-      // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
-      let key = format!("@{}", tag);
-      output = output.replace(&key, substitute)
+  /// Checks if the node satisfies the constraints.
+  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
+  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
+  /// i.e. finds scope for constraint.
+  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
+  pub(crate) fn is_satisfied(
+    &self, node: Node, source_code_unit: SourceCodeUnit, rule_store: &mut RuleStore,
+    capture_by_tags: &HashMap<String, String>,
+  ) -> bool {
+    let mut current_node = node;
+    // Get the scope_node of the constraint (`scope.matcher`)
+    while let Some(parent) = current_node.parent() {
+      if let Some((range, _)) = parent.get_match_for_query(
+        &source_code_unit.code(),
+        rule_store.get_query(&self.matcher()),
+        false,
+      ) {
+        let scope_node = get_node_for_range(
+          source_code_unit.root_node(),
+          range.start_byte,
+          range.end_byte,
+        );
+        // Apply each query within the `scope_node`
+        for query_with_holes in self.queries() {
+          let query_str = substitute_tags(query_with_holes.to_string(), capture_by_tags);
+          let query = &rule_store.get_query(&query_str);
+          // If this query matches anywhere within the scope, return false.
+          if scope_node
+            .get_match_for_query(&source_code_unit.code(), query, true)
+            .is_some()
+          {
+            return false;
+          }
+        }
+        break;
+      }
+      current_node = parent;
     }
-    output
+
+    return true;
   }
 }
