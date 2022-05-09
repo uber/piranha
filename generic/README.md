@@ -14,7 +14,7 @@ Piranha can be configured to recognize different flag APIs by specifying a `rule
 piranha 0.1.0
 
 USAGE:
-    piranha-tree-sitter --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
+    piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
 
 OPTIONS:
     -c, --path-to-codebase <PATH_TO_CODEBASE>
@@ -46,17 +46,17 @@ Languages supported :
 ## Obtain Piranha Binary from source
 * Install [Rust](https://www.rust-lang.org/tools/install), Git and [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
 * Checkout this repository - `git checkout https://github.com/uber/piranha.git` 
-* `cd piranha/generic/piranha-tree-sitter`
+* `cd piranha/generic/piranha`
 * `cargo build --release`
 * You will see the binary under `target/release`
 
 ## Getting started with Piranha
 
-*Please refer to our demo - `generic/piranha-tree-sitter/demo/` to quickly get started with Piranha.*
+*Please refer to our demo - `generic/piranha/demo/` to quickly get started with Piranha.*
 *Please refer to our test cases at `src/test-resources/<language>/` as a reference for handling complicated scenarios*
 
 To run the demo : 
-* `cd generic/piranha-tree-sitter`
+* `cd generic/piranha`
 * `./demo/run_piranha_demo.sh`
 
 To get started with Piranha, please follow the below steps:

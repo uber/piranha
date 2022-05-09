@@ -18,4 +18,4 @@ jobs:
       - name: Install-Tree-Sitter
         run: cargo install tree-sitter-cli
       - run: cargo test
-        working-directory: generic/piranha-tree-sitter
+        working-directory: generic/piranha
