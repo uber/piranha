@@ -16,7 +16,7 @@ use serde_derive::Deserialize;
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `edges.toml` file
 pub(crate) struct Edges {
-  pub edges: Vec<OutgoingEdges>,
+  pub(crate) edges: Vec<OutgoingEdges>,
 }
 
 // Captures an entry from the `edges.toml` file.

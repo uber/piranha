@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-pub mod flag_cleaner;
-pub mod piranha_arguments;
-pub mod rule_store;
-pub mod source_code_unit;
+pub(crate) mod flag_cleaner;
+pub(crate) mod piranha_arguments;
+pub(crate) mod rule_store;
+pub(crate) mod source_code_unit;

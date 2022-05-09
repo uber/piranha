@@ -46,7 +46,7 @@ impl ScopeGenerator {
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-pub struct ScopeQueryGenerator {
+pub(crate) struct ScopeQueryGenerator {
   matcher: String, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   generator: String, // a tree-sitter query matching the exact AST node
 }

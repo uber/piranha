@@ -22,7 +22,7 @@ static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `rules.toml` file
-pub struct Rules {
+pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
@@ -193,7 +193,7 @@ impl Rule {
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Constraint {
+pub(crate) struct Constraint {
   /// Scope in which the constraint query has to be applied
   matcher: String,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
@@ -210,7 +210,7 @@ impl Constraint {
   }
 }
 
-pub trait RuleHelper {
+pub(crate) trait RuleHelper {
   /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
   fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
 }

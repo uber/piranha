@@ -22,7 +22,7 @@ extern "C" {
   fn tree_sitter_java() -> Language;
 }
 
-pub trait TreeSitterHelpers {
+pub(crate) trait TreeSitterHelpers {
   /// Gets the tree-sitter language model.
   fn get_language(&self) -> Language;
   /// Compiles query string to `tree_sitter::Query`
@@ -48,7 +48,7 @@ impl TreeSitterHelpers for String {
 }
 
 #[rustfmt::skip]
-pub trait PiranhaRuleMatcher {
+pub(crate) trait PiranhaRuleMatcher {
 
     /// Applies the query upon `self`, and gets the first match
     /// # Arguments

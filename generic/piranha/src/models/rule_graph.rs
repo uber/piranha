@@ -17,7 +17,7 @@ use crate::{
 };
 use std::collections::HashMap;
 
-pub struct RuleGraph(HashMap<String, Vec<(String, String)>>);
+pub(crate) struct RuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl RuleGraph {
   // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.

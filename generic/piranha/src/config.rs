@@ -33,7 +33,7 @@ use clap::Parser;
 #[derive(Clone, Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 
-pub struct CommandLineArguments {
+pub(crate) struct CommandLineArguments {
   /// Path to source code folder.
   #[clap(short = 'c', long)]
   pub path_to_codebase: String,
