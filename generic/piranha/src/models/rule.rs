@@ -14,12 +14,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use colored::Colorize;
-use itertools::Itertools;
 use serde_derive::Deserialize;
-use tree_sitter::Node;
+use tree_sitter::{Node, Range, InputEdit};
 
 use crate::utilities::{
-  tree_sitter_utilities::{get_node_for_range, substitute_tags, PiranhaHelpers},
+  tree_sitter_utilities::{get_node_for_range, substitute_tags, PiranhaHelpers, get_context},
   MapOfVec,
 };
 
@@ -210,6 +209,48 @@ impl Rule {
   pub(crate) fn name(&self) -> String {
     String::from(&self.name)
   }
+
+  // Apply all the `rules` to the node, parent, grand parent and great grand parent.
+  // Short-circuit on the first match.
+  pub(crate) fn get_match_replace_for_context(
+    source_code_unit: &SourceCodeUnit, previous_edit: InputEdit, rules_store: &mut RuleStore, rules: &Vec<Rule>,
+  ) -> Option<(Range, String, Rule, HashMap<String, String>)> {
+    // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
+    let context = || get_context(source_code_unit.root_node(), previous_edit);
+    for rule in rules {
+      for ancestor in &context() {
+        if let Some((range, replacement, captures_by_tag)) =
+          rule.get_match_replace(&source_code_unit.clone(), rules_store, *ancestor, false)
+        {
+          return Some((range, replacement, rule.clone(), captures_by_tag));
+        }
+      }
+    }
+    None
+  }
+
+   /// Gets the first match for the rule in `self`
+   pub(crate) fn get_match_replace(
+    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node, recursive: bool,
+  ) -> Option<(Range, String, HashMap<String, String>)> {
+    // Get all matches for the query in the given scope `node`.
+    let all_query_matches = node.get_all_matches_for_query(
+      source_code_unit.code(),
+      rule_store.get_query(&self.get_query()),
+      recursive,
+      Some(self.replace_node()),
+    );
+
+    // Return the first match that satisfies constraint of the rule
+    for (range, tag_substitutions) in all_query_matches {
+      let matched_node = get_node_for_range(source_code_unit.root_node(), range.start_byte, range.end_byte);
+      if matched_node.satisfies_constraint(source_code_unit.clone(), self, &tag_substitutions, rule_store) {
+        let replacement = substitute_tags(self.replace(), &tag_substitutions);
+        return Some((range, replacement, tag_substitutions));
+      }
+    }
+    None
+  }
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
@@ -236,7 +277,7 @@ impl Constraint {
   /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
   pub(crate) fn is_satisfied(
     &self, node: Node, source_code_unit: SourceCodeUnit, rule_store: &mut RuleStore,
-    capture_by_tags: &HashMap<String, String>,
+    substitutions: &HashMap<String, String>,
   ) -> bool {
     let mut current_node = node;
     // Get the scope_node of the constraint (`scope.matcher`)
@@ -253,7 +294,7 @@ impl Constraint {
         );
         // Apply each query within the `scope_node`
         for query_with_holes in self.queries() {
-          let query_str = substitute_tags(query_with_holes.to_string(), capture_by_tags);
+          let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
           let query = &rule_store.get_query(&query_str);
           // If this query matches anywhere within the scope, return false.
           if scope_node

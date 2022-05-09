@@ -13,6 +13,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use itertools::Itertools;
 use serde_derive::Deserialize;
+use tree_sitter::InputEdit;
+
+use crate::utilities::tree_sitter_utilities::{get_node_for_range, PiranhaHelpers, substitute_tags};
+
+use super::{source_code_unit::SourceCodeUnit, rule_store::RuleStore};
 
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
@@ -44,15 +49,37 @@ impl ScopeGenerator {
     self.rules.iter().cloned().collect_vec()
   }
 
-  // pub fn get_query_for(node: Node){
-  //   if let Some((_, captures_by_tag)) =
-  //         node.get_match_for_query(&self.code, rules_store.get_query(&m.matcher()), false)
-  //   {
-  //     // Generate the scope query for the specific context by substituting the
-  //     // the tags with code snippets appropriately in the `generator` query.
-  //     return m.generator().substitute_tags(&captures_by_tag);
-  //   }
-  // }
+  /// Generate a tree-sitter based query representing the scope of the previous edit.
+  /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
+  pub(crate) fn get_scope_query(
+    source_code_unit: SourceCodeUnit, scope_level: &str, previous_edit: InputEdit, rules_store: &mut RuleStore,
+  ) -> String {
+    let root_node = source_code_unit.root_node();
+    let mut changed_node = get_node_for_range(
+      root_node,
+      previous_edit.start_byte,
+      previous_edit.new_end_byte,
+    );
+
+    // Get the scope matchers for `scope_level` from the `scope_config.toml`.
+    let scope_matchers = rules_store.get_scope_query_generators(scope_level);
+
+    // Match the `scope_matcher.matcher` to the parent
+    while let Some(parent) = changed_node.parent() {
+      for m in &scope_matchers {
+        if let Some((_, captures_by_tag)) =
+          parent.get_match_for_query(&source_code_unit.code(), rules_store.get_query(&m.matcher()), false)
+        {
+          // Generate the scope query for the specific context by substituting the
+          // the tags with code snippets appropriately in the `generator` query.
+          return substitute_tags(m.generator(), &captures_by_tag);
+        } else {
+          changed_node = parent;
+        }
+      }
+    }
+    panic!("Could not create scope query for {:?}", scope_level);
+  }
 }
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
