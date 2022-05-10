@@ -20,3 +20,4 @@ pub(crate) mod rule_graph;
 pub(crate) mod rule_store;
 pub(crate) mod scopes;
 pub mod source_code_unit;
+pub(crate) mod piranha_arguments;

@@ -21,7 +21,7 @@ use crate::{
     rule::{Rule, Rules},
     scopes::{ScopeConfig, ScopeGenerator},
   },
-  piranha::piranha_arguments::PiranhaArguments,
+  models::piranha_arguments::PiranhaArguments,
   utilities::read_toml,
 };
 

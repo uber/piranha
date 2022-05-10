@@ -24,7 +24,7 @@ use crate::{
     rule_graph::RuleGraph,
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
-  piranha::piranha_arguments::PiranhaArguments,
+  models::piranha_arguments::PiranhaArguments,
   utilities::{tree_sitter_utilities::TreeSitterHelpers, MapOfVec},
 };
 
@@ -156,7 +156,7 @@ mod test {
     #[cfg(test)]
     use std::collections::HashMap;
     #[cfg(test)]
-    use crate::{piranha::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph, models::scopes::ScopeGenerator};
+    use crate::{models::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph, models::scopes::ScopeGenerator};
     use super::RuleStore;
 
   impl RuleStore{

@@ -14,9 +14,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entry-point for Piranha.
 use std::time::Instant;
 
-use crate::{
-  piranha::{flag_cleaner::FlagCleaner, piranha_arguments::PiranhaArguments},
-  utilities::initialize_logger,
+use crate::{ models::piranha_arguments::PiranhaArguments,
+  utilities::initialize_logger, piranha::FlagCleaner,
 };
 use clap::StructOpt;
 use config::CommandLineArguments;
