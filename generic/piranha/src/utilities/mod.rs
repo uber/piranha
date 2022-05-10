@@ -91,6 +91,7 @@ pub(crate) fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
 /// Checks if the given `dir_entry` is a file named `file_name`
 #[cfg(test)] // Rust analyzer FP
 pub(crate) fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
+  println!("{:?}", dir_entry);
   dir_entry
     .path()
     .file_name()
@@ -107,4 +108,64 @@ pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
     .find(|de| has_name(de, name))
     .unwrap()
     .path()
+}
+
+#[cfg(test)]
+mod test {
+  
+  use std::path::PathBuf;
+  use serde_derive::Deserialize;
+  use crate::utilities::find_file;
+
+#[cfg(test)]
+  use super::{read_file, read_toml};
+  
+
+  #[derive(Deserialize, Default)]
+  struct TestStruct {
+    ip: String,
+  }
+
+  #[test]
+  pub fn test_read_file() {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let path_to_test_file = project_root.join("test-resources/utility_tests/sample.toml");
+    let result = read_file(&path_to_test_file);
+    assert!(result.is_ok());
+    let content = result.ok().unwrap();
+    assert!(!content.is_empty());
+    assert!(content.eq(r#"ip = '127.0.0.1'"#));
+  }
+
+  #[test]
+  pub fn test_read_toml() {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let path_to_test_file = project_root.join("test-resources/utility_tests/sample.toml");
+    let result: TestStruct = read_toml(&path_to_test_file, false);
+    assert!(result.ip.eq("127.0.0.1"));
+  }
+
+  #[test]
+  pub fn test_read_toml_default() {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let path_to_test_file = project_root.join("test-resources/utility_tests/sample1.toml");
+    let result: TestStruct = read_toml(&path_to_test_file, true);
+    assert!(result.ip.eq(""));
+  }
+
+
+  #[test]
+  pub fn test_find_file_positive() {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
+    let f = find_file(&project_root, "sample.toml");
+    assert!(f.is_file());
+  }
+
+  #[test]
+  #[should_panic]
+  pub fn test_find_file_negative() {
+    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
+    let f = find_file(&project_root, "sample1.toml");
+    assert!(f.is_file());
+  }
 }
