@@ -25,7 +25,7 @@ mod config;
 mod models;
 mod piranha;
 #[cfg(test)]
-mod test;
+mod tests;
 mod utilities;
 
 fn main() {
