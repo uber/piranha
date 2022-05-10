@@ -49,6 +49,7 @@ pub struct RuleStore {
 }
 
 impl RuleStore {
+
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
     let (rules, edges, scopes) = read_config_files(args);
     let rule_graph = RuleGraph::new(&edges, &rules);
@@ -148,5 +149,28 @@ impl RuleStore {
       .find(|level| level.name().eq(scope_level))
       .map(|scope| scope.rules())
       .unwrap_or_else(Vec::new)
+  }
+}
+
+mod test {
+    #[cfg(test)]
+    use std::collections::HashMap;
+    #[cfg(test)]
+    use crate::{piranha::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph};
+    use super::RuleStore;
+    
+  impl RuleStore{
+    #[cfg(test)]
+    pub(crate) fn dummy() -> RuleStore {
+      RuleStore {
+        rule_graph: RuleGraph::dummy(),
+        rule_query_cache: HashMap::new(),
+        rules_by_name: HashMap::new(),
+        global_rules: vec![],
+        piranha_args: PiranhaArguments::dummy(),
+        scopes: vec![],
+      }
+    }
+
   }
 }

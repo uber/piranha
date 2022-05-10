@@ -88,9 +88,10 @@ impl SourceCodeUnit {
 
         // Process the parent
         // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
-        if let Some(edit) = Rule::get_rewrite_rule_for_context(
+        if let Some(edit) = Rule::get_edit_for_context(
           &self.clone(),
-          current_edit,
+          current_edit.start_byte,
+          current_edit.new_end_byte,
           rules_store,
           &next_rules_by_scope[PARENT],
         ) {

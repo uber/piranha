@@ -22,6 +22,8 @@ use itertools::Itertools;
 use log::info;
 use std::collections::HashMap;
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCursor, Range};
+#[cfg(test)]
+use tree_sitter::Parser;
 
 extern "C" {
   fn tree_sitter_java() -> Language;
@@ -271,12 +273,12 @@ pub(crate) fn get_node_for_range(root_node: Node, start_byte: usize, end_byte: u
 }
 
 /// Returns the node, its parent, grand parent and great grand parent
-pub(crate) fn get_context(root_node: Node, previous_edit: InputEdit) -> Vec<Node> {
+pub(crate) fn get_context(root_node: Node, previous_edit_start: usize, previous_edit_end: usize) ->  Vec<Node> {
   // let root = self.root_node();
   let changed_node = get_node_for_range(
     root_node,
-    previous_edit.start_byte,
-    previous_edit.new_end_byte,
+    previous_edit_start,
+    previous_edit_end,
   );
   // Add parent of the changed node to the context
   let mut context = vec![changed_node];
@@ -293,3 +295,14 @@ pub(crate) fn get_context(root_node: Node, previous_edit: InputEdit) -> Vec<Node
   }
   context
 }
+
+
+#[cfg(test)]
+pub fn get_parser(language: String) -> Parser {
+  let mut parser = Parser::new();
+  parser
+    .set_language(language.get_language())
+    .expect("Could not set the language for the parser.");
+  parser
+} 
+

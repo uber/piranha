@@ -56,3 +56,16 @@ impl RuleGraph {
     self.0.get(rule_name).cloned().unwrap_or_default()
   }
 }
+
+mod test {
+  #[cfg(test)]
+  use std::collections::HashMap;
+  #[cfg(test)]
+  use super::RuleGraph;
+  #[cfg(test)]
+  impl RuleGraph {
+    pub(crate) fn dummy() -> Self {
+      RuleGraph(HashMap::new())
+    }
+  }
+}

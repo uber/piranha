@@ -82,3 +82,25 @@ impl PiranhaArguments {
     self.language_name.as_ref()
   }
 }
+
+mod test {
+  #[cfg(test)]
+  use super::PiranhaArguments;
+  #[cfg(test)]
+  use crate::utilities::tree_sitter_utilities::TreeSitterHelpers;
+  #[cfg(test)]
+  use std::collections::HashMap;
+  #[cfg(test)]
+  impl PiranhaArguments {
+    pub(crate) fn dummy() -> Self {
+      let language_name = String::from("java");
+      PiranhaArguments {
+        path_to_code_base: String::new(),
+        input_substitutions: HashMap::new(),
+        path_to_configurations: String::new(),
+        language: language_name.get_language(),
+        language_name,
+      }
+    }
+  }
+}
