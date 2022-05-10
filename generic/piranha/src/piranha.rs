@@ -309,4 +309,3 @@ impl FlagCleaner {
     Regex::new(reg_x.as_str()).unwrap()
   }
 }
-

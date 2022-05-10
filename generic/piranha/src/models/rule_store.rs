@@ -152,17 +152,18 @@ impl RuleStore {
 }
 
 mod test {
-  use super::RuleStore;
   #[cfg(test)]
-  use crate::{
-    models::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph,
-    models::scopes::ScopeGenerator,
+  use {
+    super::RuleStore,
+    crate::{
+      models::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph,
+      models::scopes::ScopeGenerator,
+    },
+    std::collections::HashMap,
   };
-  #[cfg(test)]
-  use std::collections::HashMap;
 
+  #[cfg(test)]
   impl RuleStore {
-    #[cfg(test)]
     pub(crate) fn dummy() -> RuleStore {
       RuleStore {
         rule_graph: RuleGraph::dummy(),

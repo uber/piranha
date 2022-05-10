@@ -41,5 +41,3 @@ impl Edit {
     &self.matches
   }
 }
-
-

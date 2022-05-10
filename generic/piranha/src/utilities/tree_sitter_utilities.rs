@@ -300,19 +300,16 @@ pub fn get_parser(language: String) -> Parser {
 
 mod test {
   #[cfg(test)]
-  use crate::models::{
-    constraint::Constraint, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
-  };
-  #[cfg(test)]
   use std::{collections::HashMap, path::PathBuf};
   #[cfg(test)]
-  use super::substitute_tags;
-  #[cfg(test)]
-  use super::PiranhaHelpers;
-  #[cfg(test)]
-  use super::{get_parser, TreeSitterHelpers};
-  #[cfg(test)]
   use tree_sitter::Query;
+  #[cfg(test)]
+  use {
+    super::{get_parser, substitute_tags, PiranhaHelpers, TreeSitterHelpers},
+    crate::models::{
+      constraint::Constraint, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+    },
+  };
 
   #[test]
   fn test_get_all_matches_for_query_positive() {

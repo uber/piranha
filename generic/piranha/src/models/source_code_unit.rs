@@ -96,12 +96,14 @@ mod test {
 
   #[cfg(test)]
   use {
-    super::SourceCodeUnit, tree_sitter::Range, std::{collections::HashMap, path::PathBuf},
+    super::SourceCodeUnit,
     crate::{
-    models::edit::Edit, models::rule::Rule, utilities::eq_without_whitespace,
-    utilities::tree_sitter_utilities::get_parser,
-  }
-};
+      models::edit::Edit, models::rule::Rule, utilities::eq_without_whitespace,
+      utilities::tree_sitter_utilities::get_parser,
+    },
+    std::{collections::HashMap, path::PathBuf},
+    tree_sitter::Range,
+  };
 
   #[test]
   fn test_apply_edit() {

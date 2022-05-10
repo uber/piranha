@@ -292,8 +292,8 @@ mod test {
       }
     }
 
-    pub(crate) fn dummy() -> Rule{
-      Rule::new("","","","",None, None)
+    pub(crate) fn dummy() -> Rule {
+      Rule::new("", "", "", "", None, None)
     }
   }
 

@@ -84,12 +84,13 @@ impl PiranhaArguments {
 }
 
 mod test {
+
   #[cfg(test)]
-  use super::PiranhaArguments;
-  #[cfg(test)]
-  use crate::utilities::tree_sitter_utilities::TreeSitterHelpers;
-  #[cfg(test)]
-  use std::collections::HashMap;
+  use {
+    super::PiranhaArguments, crate::utilities::tree_sitter_utilities::TreeSitterHelpers,
+    std::collections::HashMap,
+  };
+
   #[cfg(test)]
   impl PiranhaArguments {
     pub(crate) fn dummy() -> Self {

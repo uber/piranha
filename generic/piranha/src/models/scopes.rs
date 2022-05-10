@@ -101,16 +101,15 @@ impl ScopeQueryGenerator {
 mod test {
 
   #[cfg(test)]
-  use super::{ScopeGenerator, ScopeQueryGenerator};
-
-  #[cfg(test)]
-  use crate::{
-    models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit},
-    utilities::eq_without_whitespace,
-    utilities::tree_sitter_utilities::get_parser,
+  use {
+    super::{ScopeGenerator, ScopeQueryGenerator},
+    crate::{
+      models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit},
+      utilities::eq_without_whitespace,
+      utilities::tree_sitter_utilities::get_parser,
+    },
+    std::{collections::HashMap, path::PathBuf},
   };
-  #[cfg(test)]
-  use std::{collections::HashMap, path::PathBuf};
   #[cfg(test)]
   impl ScopeQueryGenerator {
     fn new(matcher: &str, generator: &str) -> ScopeQueryGenerator {
