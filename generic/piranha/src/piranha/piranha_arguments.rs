@@ -45,7 +45,8 @@ impl PiranhaArguments {
     let path_to_piranha_argument_file =
       PathBuf::from(args.path_to_configurations.as_str()).join("piranha_arguments.toml");
 
-    let piranha_args_from_config: PiranhaConfiguration = read_toml(&path_to_piranha_argument_file, false);
+    let piranha_args_from_config: PiranhaConfiguration =
+      read_toml(&path_to_piranha_argument_file, false);
 
     let input_substitutions = piranha_args_from_config.substitutions();
 

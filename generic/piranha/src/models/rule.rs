@@ -15,14 +15,16 @@ use std::collections::HashMap;
 
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::{InputEdit, Node, Range};
+use tree_sitter::{InputEdit, Node};
 
 use crate::utilities::{
   tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
   MapOfVec,
 };
 
-use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit, constraint::Constraint};
+use super::{
+  constraint::Constraint, edit::Edit, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+};
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
@@ -53,21 +55,6 @@ pub(crate) struct Rule {
 }
 
 impl Rule {
-  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  pub(crate) fn update(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
-    if substitutions.len() != self.holes().len() {
-      #[rustfmt::skip]
-        return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
-    } else {
-      let mut updated_rule = self.clone();
-      if !updated_rule.holes().is_empty() {
-        updated_rule.update_query(substitutions);
-        updated_rule.update_replace(substitutions);
-      }
-      Ok(updated_rule)
-    }
-  }
-
   pub(crate) fn is_feature_flag_cleanup(&self) -> bool {
     self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
   }
@@ -86,6 +73,35 @@ impl Rule {
       panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
   }
 
+  /// Tries to instantiate the rule (`self`) based on the substitutions.
+  /// Note this could fail if the `substitutions` doesn't contain mappings for each hole.
+  pub(crate) fn try_instantiate(
+    &self, substitutions: &HashMap<String, String>,
+  ) -> Result<Rule, String> {
+    let relevant_substitutions = self
+      .holes()
+      .iter()
+      .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
+      .map(|(a, b)| (a.clone(), b.clone()))
+      .collect::<HashMap<String, String>>();
+    self.update(&relevant_substitutions)
+  }
+
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  fn update(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
+    if substitutions.len() != self.holes().len() {
+      #[rustfmt::skip]
+        return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
+    } else {
+      let mut updated_rule = self.clone();
+      if !updated_rule.holes().is_empty() {
+        updated_rule.update_query(substitutions);
+        updated_rule.update_replace(substitutions);
+      }
+      Ok(updated_rule)
+    }
+  }
+
   /// Groups the rules based on the field `rule.groups`
   /// Note: a rule can belong to more than one group.
   pub(crate) fn group_rules(
@@ -100,20 +116,6 @@ impl Rule {
       }
     }
     (rules_by_name, rules_by_group)
-  }
-
-  /// Tries to instantiate the rule (`self`) based on the substitutions.
-  /// Note this could fail if the `substitutions` doesn't contain mappings for each hole.
-  pub(crate) fn try_instantiate(
-    &self, substitutions: &HashMap<String, String>,
-  ) -> Result<Rule, String> {
-    let relevant_substitutions = self
-      .holes()
-      .iter()
-      .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
-      .map(|(a, b)| (a.clone(), b.clone()))
-      .collect::<HashMap<String, String>>();
-    self.update(&relevant_substitutions)
   }
 
   /// Records the string that should be grepped in order to find files that
@@ -197,18 +199,17 @@ impl Rule {
 
   // Apply all the `rules` to the node, parent, grand parent and great grand parent.
   // Short-circuit on the first match.
-  pub(crate) fn get_match_replace_for_context(
+  pub(crate) fn get_rewrite_rule_for_context(
     source_code_unit: &SourceCodeUnit, previous_edit: InputEdit, rules_store: &mut RuleStore,
     rules: &Vec<Rule>,
-  ) -> Option<(Range, String, Rule, HashMap<String, String>)> {
+  ) -> Option<Edit> {
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || get_context(source_code_unit.root_node(), previous_edit);
     for rule in rules {
       for ancestor in &context() {
-        if let Some((range, replacement, captures_by_tag)) =
-          rule.get_match_replace(&source_code_unit.clone(), rules_store, *ancestor, false)
+        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false)
         {
-          return Some((range, replacement, rule.clone(), captures_by_tag));
+          return Some(edit);
         }
       }
     }
@@ -216,10 +217,10 @@ impl Rule {
   }
 
   /// Gets the first match for the rule in `self`
-  pub(crate) fn get_match_replace(
+  pub(crate) fn get_edit(
     &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
     recursive: bool,
-  ) -> Option<(Range, String, HashMap<String, String>)> {
+  ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
     let all_query_matches = node.get_all_matches_for_query(
       source_code_unit.code(),
@@ -242,7 +243,12 @@ impl Rule {
         rule_store,
       ) {
         let replacement = substitute_tags(self.replace(), &tag_substitutions);
-        return Some((range, replacement, tag_substitutions));
+        return Some(Edit::new(
+          range,
+          replacement,
+          self.clone(),
+          tag_substitutions,
+        ));
       }
     }
     None
@@ -254,7 +260,7 @@ mod test {
   use {super::Rule, std::collections::HashMap};
 
   #[test]
-  fn test_rule_instantiate() {
+  fn test_rule_try_instantiate_positive() {
     let rule = Rule {name : String::from("test"),
                    query : String::from("(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))"),
                    replace : String::from(""),
@@ -271,5 +277,23 @@ mod test {
     let instantiated_rule = rule.try_instantiate(&substitutions);
     assert!(instantiated_rule.is_ok());
     assert_eq!(instantiated_rule.ok().unwrap().query(), "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))")
+  }
+
+  #[test]
+  fn test_rule_try_instantiate_negative() {
+    let rule = Rule {name : String::from("test"),
+                   query : String::from("(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))"),
+                   replace : String::from(""),
+                   holes : Some(vec![String::from("variable_name")]),
+                   replace_node : String::from("@abc"),
+                   groups : None,
+                   constraints : None,
+                   grep_heuristics : None
+                  };
+    let substitutions: HashMap<String, String> = HashMap::from([
+      (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
+    ]);
+    let instantiated_rule = rule.try_instantiate(&substitutions);
+    assert!(instantiated_rule.is_err());
   }
 }

@@ -16,7 +16,7 @@ pub(crate) mod piranha_arguments;
 // pub(crate) mod source_code_unit;
 
 use crate::models::scopes::ScopeGenerator;
-use crate::utilities::tree_sitter_utilities::{PiranhaHelpers};
+use crate::utilities::tree_sitter_utilities::PiranhaHelpers;
 use crate::{
   models::{
     rule::Rule,
@@ -55,17 +55,15 @@ impl SourceCodeUnit {
     let mut any_match = false;
 
     // Match the rule "anywhere" inside the scope_node
-    if let Some((range, rpl, code_snippets_by_tag)) =
-      rule.get_match_replace(&self.clone(), rules_store, scope_node, true)
-    {
+    if let Some(edit_1) = rule.get_edit(&self.clone(), rules_store, scope_node, true) {
       any_match = true;
       // Get the edit for applying the matched rule to the source code
-      let edit = self.apply_edit(range, rpl, parser);
+      let ts_edit = self.apply_edit(&edit_1, parser);
 
       // Add all the (code_snippet, tag) mapping to the substitution table.
-      self.add_to_substitutions(code_snippets_by_tag);
+      self.add_to_substitutions(&edit_1.matches());
 
-      let mut current_edit = edit;
+      let mut current_edit = ts_edit;
       let mut current_rule = rule.clone();
       let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
 
@@ -90,21 +88,19 @@ impl SourceCodeUnit {
 
         // Process the parent
         // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
-        if let Some((c_range, replacement_str, matched_rule, code_snippets_by_tag_parent_rule)) =
-          Rule::get_match_replace_for_context(
-            &self.clone(),
-            current_edit,
-            rules_store,
-            &next_rules_by_scope[PARENT],
-          )
-        {
+        if let Some(edit) = Rule::get_rewrite_rule_for_context(
+          &self.clone(),
+          current_edit,
+          rules_store,
+          &next_rules_by_scope[PARENT],
+        ) {
           #[rustfmt::skip]
-          info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", matched_rule.name()).green());
+          info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", edit.matched_rule().name()).green());
           // Apply the matched rule to the parent
-          current_edit = self.apply_edit(c_range, replacement_str, parser);
-          current_rule = matched_rule;
+          current_edit = self.apply_edit(&edit, parser);
+          current_rule = edit.matched_rule();
           // Add the (tag, code_snippet) mapping to substitution table.
-          self.add_to_substitutions(code_snippets_by_tag_parent_rule);
+          self.add_to_substitutions(edit.matches());
         } else {
           // No more parents found for cleanup
           break;

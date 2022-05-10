@@ -15,9 +15,11 @@ use itertools::Itertools;
 use serde_derive::Deserialize;
 use tree_sitter::InputEdit;
 
-use crate::utilities::tree_sitter_utilities::{get_node_for_range, PiranhaHelpers, substitute_tags};
+use crate::utilities::tree_sitter_utilities::{
+  get_node_for_range, substitute_tags, PiranhaHelpers,
+};
 
-use super::{source_code_unit::SourceCodeUnit, rule_store::RuleStore};
+use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
@@ -52,7 +54,8 @@ impl ScopeGenerator {
   /// Generate a tree-sitter based query representing the scope of the previous edit.
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
   pub(crate) fn get_scope_query(
-    source_code_unit: SourceCodeUnit, scope_level: &str, previous_edit: InputEdit, rules_store: &mut RuleStore,
+    source_code_unit: SourceCodeUnit, scope_level: &str, previous_edit: InputEdit,
+    rules_store: &mut RuleStore,
   ) -> String {
     let root_node = source_code_unit.root_node();
     let mut changed_node = get_node_for_range(
@@ -67,9 +70,11 @@ impl ScopeGenerator {
     // Match the `scope_matcher.matcher` to the parent
     while let Some(parent) = changed_node.parent() {
       for m in &scope_matchers {
-        if let Some((_, captures_by_tag)) =
-          parent.get_match_for_query(&source_code_unit.code(), rules_store.get_query(&m.matcher()), false)
-        {
+        if let Some((_, captures_by_tag)) = parent.get_match_for_query(
+          &source_code_unit.code(),
+          rules_store.get_query(&m.matcher()),
+          false,
+        ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
           return substitute_tags(m.generator(), &captures_by_tag);

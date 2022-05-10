@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
 use crate::{
-  models::{rule::Rule, rule_store::RuleStore, source_code_unit::{SourceCodeUnit}},
+  models::{rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
   utilities::MapOfVec,
 };
 use colored::Colorize;
@@ -86,10 +86,14 @@ impl PiranhaHelpers for Node<'_> {
     &self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    rule
-      .constraints()
-      .iter()
-      .all(|constraint| constraint.is_satisfied(self.clone(), source_code_unit.clone(), rule_store, substitutions))
+    rule.constraints().iter().all(|constraint| {
+      constraint.is_satisfied(
+        self.clone(),
+        source_code_unit.clone(),
+        rule_store,
+        substitutions,
+      )
+    })
   }
 
   fn get_match_for_query(
@@ -195,7 +199,9 @@ impl PiranhaHelpers for Node<'_> {
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
 /// Returns tree-sitter's edit representation along with updated source code.
 /// Note: This method does not update `self`.
-pub fn get_edit(code: String, replace_range: Range, replacement: &str) -> (String, InputEdit) {
+pub fn get_tree_sitter_edit(
+  code: String, replace_range: Range, replacement: &str,
+) -> (String, InputEdit) {
   // Log the edit
   let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
 
@@ -212,7 +218,7 @@ pub fn get_edit(code: String, replace_range: Range, replacement: &str) -> (Strin
     ]
     .concat(),
     // Tree-sitter edit
-    get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes()),
+    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes()),
   )
 }
 
@@ -231,7 +237,7 @@ fn position_for_offset(input: &[u8], offset: usize) -> Point {
 }
 
 // Creates the InputEdit as per the tree-sitter api documentation.
-fn get_tree_sitter_edit(
+fn _get_tree_sitter_edit(
   replace_range: Range, len_of_replacement: usize, source_code_bytes: &[u8],
 ) -> InputEdit {
   let start_byte = replace_range.start_byte;

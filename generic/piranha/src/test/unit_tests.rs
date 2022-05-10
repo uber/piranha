@@ -13,10 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use super::initialize;
 
-
 #[test]
 fn test_rule_update() {
   initialize();
-  
-  
 }
