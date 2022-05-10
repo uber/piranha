@@ -19,12 +19,12 @@ use tree_sitter::{Language, Query};
 
 use crate::{
   config::read_config_files,
+  models::piranha_arguments::PiranhaArguments,
   models::{
     rule::Rule,
     rule_graph::RuleGraph,
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
-  models::piranha_arguments::PiranhaArguments,
   utilities::{tree_sitter_utilities::TreeSitterHelpers, MapOfVec},
 };
 
@@ -49,7 +49,6 @@ pub struct RuleStore {
 }
 
 impl RuleStore {
-
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
     let (rules, edges, scopes) = read_config_files(args);
     let rule_graph = RuleGraph::new(&edges, &rules);
@@ -153,13 +152,16 @@ impl RuleStore {
 }
 
 mod test {
-    #[cfg(test)]
-    use std::collections::HashMap;
-    #[cfg(test)]
-    use crate::{models::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph, models::scopes::ScopeGenerator};
-    use super::RuleStore;
+  use super::RuleStore;
+  #[cfg(test)]
+  use crate::{
+    models::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph,
+    models::scopes::ScopeGenerator,
+  };
+  #[cfg(test)]
+  use std::collections::HashMap;
 
-  impl RuleStore{
+  impl RuleStore {
     #[cfg(test)]
     pub(crate) fn dummy() -> RuleStore {
       RuleStore {
@@ -183,6 +185,5 @@ mod test {
         scopes,
       }
     }
-
   }
 }

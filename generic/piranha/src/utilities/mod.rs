@@ -112,14 +112,13 @@ pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
 
 #[cfg(test)]
 mod test {
-  
-  use std::path::PathBuf;
-  use serde_derive::Deserialize;
-  use crate::utilities::find_file;
 
-#[cfg(test)]
+  use crate::utilities::find_file;
+  use serde_derive::Deserialize;
+  use std::path::PathBuf;
+
+  #[cfg(test)]
   use super::{read_file, read_toml};
-  
 
   #[derive(Deserialize, Default)]
   struct TestStruct {
@@ -153,10 +152,10 @@ mod test {
     assert!(result.ip.eq(""));
   }
 
-
   #[test]
   pub fn test_find_file_positive() {
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
+    let project_root =
+      PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
     let f = find_file(&project_root, "sample.toml");
     assert!(f.is_file());
   }
@@ -164,7 +163,8 @@ mod test {
   #[test]
   #[should_panic]
   pub fn test_find_file_negative() {
-    let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
+    let project_root =
+      PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
     let f = find_file(&project_root, "sample1.toml");
     assert!(f.is_file());
   }

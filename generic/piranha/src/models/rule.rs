@@ -263,13 +263,12 @@ impl Rule {
 
 mod test {
 
-
   #[cfg(test)]
   use {
     super::Rule,
     crate::{
       models::{constraint::Constraint, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
-      utilities::tree_sitter_utilities::{get_parser},
+      utilities::tree_sitter_utilities::get_parser,
     },
     std::collections::HashMap,
     std::path::PathBuf,
@@ -444,7 +443,6 @@ mod test {
     // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
     assert!(edit.is_some());
   }
-
 
   #[test]
   fn test_get_edit_for_context_negative() {

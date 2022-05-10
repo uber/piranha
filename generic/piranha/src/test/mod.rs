@@ -17,8 +17,8 @@ use colored::Colorize;
 use log::info;
 
 use crate::config::CommandLineArguments;
-use crate::models::source_code_unit::SourceCodeUnit;
 use crate::models::piranha_arguments::PiranhaArguments;
+use crate::models::source_code_unit::SourceCodeUnit;
 use crate::piranha::FlagCleaner;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 

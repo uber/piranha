@@ -59,9 +59,9 @@ impl RuleGraph {
 
 mod test {
   #[cfg(test)]
-  use std::collections::HashMap;
-  #[cfg(test)]
   use super::RuleGraph;
+  #[cfg(test)]
+  use std::collections::HashMap;
   #[cfg(test)]
   impl RuleGraph {
     pub(crate) fn dummy() -> Self {

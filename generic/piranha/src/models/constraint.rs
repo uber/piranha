@@ -70,7 +70,7 @@ impl Constraint {
 }
 
 mod test {
-    use super::Constraint;
+  use super::Constraint;
 
   impl Constraint {
     #[cfg(test)]

@@ -16,12 +16,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! This module defines all basic building block `structs` used by Piranha.
 
 use crate::{
+  models::piranha_arguments::PiranhaArguments,
   models::{
     outgoing_edges::{Edges, OutgoingEdges},
     rule::{Rule, Rules},
     scopes::{ScopeConfig, ScopeGenerator},
   },
-  models::piranha_arguments::PiranhaArguments,
   utilities::read_toml,
 };
 

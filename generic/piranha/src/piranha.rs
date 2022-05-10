@@ -24,7 +24,9 @@ use regex::Regex;
 use tree_sitter::Parser;
 
 use crate::{
-  models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit, piranha_arguments::PiranhaArguments},
+  models::{
+    piranha_arguments::PiranhaArguments, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+  },
   utilities::read_file,
 };
 
@@ -34,11 +36,9 @@ use crate::{
   models::{
     rule::Rule,
     rule_store::{GLOBAL, PARENT},
-    
   },
   utilities::tree_sitter_utilities::get_node_for_range,
 };
-
 
 use std::collections::VecDeque;
 use tree_sitter::{InputEdit, Node};
@@ -178,7 +178,6 @@ impl SourceCodeUnit {
     }
   }
 }
-
 
 // Maintains the state of Piranha and the updated content of files in the source code.
 pub struct FlagCleaner {
