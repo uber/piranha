@@ -90,7 +90,7 @@ impl PiranhaHelpers for Node<'_> {
   ) -> bool {
     rule.constraints().iter().all(|constraint| {
       constraint.is_satisfied(
-        self.clone(),
+        *self,
         source_code_unit.clone(),
         rule_store,
         substitutions,
@@ -256,7 +256,7 @@ fn _get_tree_sitter_edit(
 }
 
 pub(crate) fn substitute_tags(s: String, substitutions: &HashMap<String, String>) -> String {
-  let mut output = String::from(s);
+  let mut output = s;
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
     let key = format!("@{}", tag);

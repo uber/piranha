@@ -65,7 +65,7 @@ impl Constraint {
       current_node = parent;
     }
 
-    return true;
+    true
   }
 }
 

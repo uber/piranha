@@ -73,7 +73,7 @@ impl SourceCodeUnit {
       let ts_edit = self.apply_edit(&edit_1, parser);
 
       // Add all the (code_snippet, tag) mapping to the substitution table.
-      self.add_to_substitutions(&edit_1.matches());
+      self.add_to_substitutions(edit_1.matches());
 
       let mut current_edit = ts_edit;
       let mut current_rule = rule.clone();
@@ -223,7 +223,7 @@ impl FlagCleaner {
               &mut parser,
               content,
               &self.rule_store.input_substitutions(),
-              &path.as_path(),
+              path.as_path(),
             )
           })
           // Apply the rules to this file
