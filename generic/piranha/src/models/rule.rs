@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::{InputEdit, Node};
+use tree_sitter::Node;
 
 use crate::utilities::{
   tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
@@ -263,18 +263,13 @@ impl Rule {
 
 mod test {
 
-  // #[cfg(test)]
-  // use ,
-  // };
-
-  use crate::utilities::tree_sitter_utilities::get_tree_sitter_edit;
 
   #[cfg(test)]
   use {
     super::Rule,
     crate::{
       models::{constraint::Constraint, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
-      utilities::tree_sitter_utilities::get_parser,
+      utilities::tree_sitter_utilities::{get_parser},
     },
     std::collections::HashMap,
     std::path::PathBuf,
@@ -409,7 +404,7 @@ mod test {
   }
 
   #[test]
-  fn test_get_edit_positive_non_recursive() {
+  fn test_get_edit_for_context_positive() {
     let rule = Rule::new(
       "test",
       "(
@@ -452,7 +447,7 @@ mod test {
 
 
   #[test]
-  fn test_get_edit_negative_non_recursive() {
+  fn test_get_edit_for_context_negative() {
     let rule = Rule::new(
       "test",
       "(

@@ -125,8 +125,13 @@ impl SourceCodeUnit {
       // Scope level is not "PArent" or "Global"
       if ![PARENT, GLOBAL].contains(&scope_level.as_str()) {
         for rule in rules {
-          let scope_query =
-            ScopeGenerator::get_scope_query(self.clone(), scope_level, current_edit, rules_store);
+          let scope_query = ScopeGenerator::get_scope_query(
+            self.clone(),
+            scope_level,
+            current_edit.start_byte,
+            current_edit.new_end_byte,
+            rules_store,
+          );
           // Add Method and Class scoped rules to the queue
           stack.push_front((scope_query, rule.instantiate(self.substitutions())));
         }

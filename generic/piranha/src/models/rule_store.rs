@@ -156,9 +156,9 @@ mod test {
     #[cfg(test)]
     use std::collections::HashMap;
     #[cfg(test)]
-    use crate::{piranha::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph};
+    use crate::{piranha::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph, models::scopes::ScopeGenerator};
     use super::RuleStore;
-    
+
   impl RuleStore{
     #[cfg(test)]
     pub(crate) fn dummy() -> RuleStore {
@@ -169,6 +169,18 @@ mod test {
         global_rules: vec![],
         piranha_args: PiranhaArguments::dummy(),
         scopes: vec![],
+      }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn dummy_with_scope(scopes: Vec<ScopeGenerator>) -> RuleStore {
+      RuleStore {
+        rule_graph: RuleGraph::dummy(),
+        rule_query_cache: HashMap::new(),
+        rules_by_name: HashMap::new(),
+        global_rules: vec![],
+        piranha_args: PiranhaArguments::dummy(),
+        scopes,
       }
     }
 
