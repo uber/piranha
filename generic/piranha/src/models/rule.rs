@@ -291,6 +291,10 @@ mod test {
         grep_heuristics: None,
       }
     }
+
+    pub(crate) fn dummy() -> Rule{
+      Rule::new("","","","",None, None)
+    }
   }
 
   #[test]

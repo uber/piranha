@@ -95,17 +95,13 @@ impl SourceCodeUnit {
 mod test {
 
   #[cfg(test)]
-  use std::{collections::HashMap, path::PathBuf};
-  #[cfg(test)]
-  use tree_sitter::Range;
-
-  #[cfg(test)]
-  use super::SourceCodeUnit;
-  #[cfg(test)]
-  use crate::{
+  use {
+    super::SourceCodeUnit, tree_sitter::Range, std::{collections::HashMap, path::PathBuf},
+    crate::{
     models::edit::Edit, models::rule::Rule, utilities::eq_without_whitespace,
     utilities::tree_sitter_utilities::get_parser,
-  };
+  }
+};
 
   #[test]
   fn test_apply_edit() {
@@ -128,7 +124,7 @@ mod test {
       PathBuf::new().as_path(),
     );
 
-    let e = source_code_unit.apply_edit(
+    let _ = source_code_unit.apply_edit(
       &Edit::new(
         Range {
           start_byte: 46,

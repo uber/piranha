@@ -300,10 +300,13 @@ pub fn get_parser(language: String) -> Parser {
 
 mod test {
   #[cfg(test)]
+  use crate::models::{
+    constraint::Constraint, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+  };
+  #[cfg(test)]
   use std::{collections::HashMap, path::PathBuf};
   #[cfg(test)]
-  use crate::models::{constraint::Constraint, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
-      
+  use super::substitute_tags;
   #[cfg(test)]
   use super::PiranhaHelpers;
   #[cfg(test)]
@@ -468,11 +471,13 @@ mod test {
     assert!(node.satisfies_constraint(
       source_code_unit.clone(),
       &rule,
-      &HashMap::from([("variable_name".to_string(), "isFlagTreated".to_string()), ("init".to_string(), "true".to_string())]),
+      &HashMap::from([
+        ("variable_name".to_string(), "isFlagTreated".to_string()),
+        ("init".to_string(), "true".to_string())
+      ]),
       &mut rule_store,
     ));
   }
-
 
   #[test]
   fn test_satisfies_constraints_negative() {
@@ -529,8 +534,23 @@ mod test {
     assert!(!node.satisfies_constraint(
       source_code_unit.clone(),
       &rule,
-      &HashMap::from([("variable_name".to_string(), "isFlagTreated".to_string()), ("init".to_string(), "true".to_string())]),
+      &HashMap::from([
+        ("variable_name".to_string(), "isFlagTreated".to_string()),
+        ("init".to_string(), "true".to_string())
+      ]),
       &mut rule_store,
     ));
+  }
+
+  #[test]
+  fn test_substitute_tags() {
+    let substitutions = HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string()),
+    ]);
+    assert_eq!(
+      substitute_tags("@variable_name foo bar @init".to_string(), &substitutions),
+      "isFlagTreated foo bar true"
+    )
   }
 }
