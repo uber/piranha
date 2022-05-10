@@ -324,7 +324,7 @@ mod test {
                                        declarator: (variable_declarator
                                                            name: (_) @variable_name
                                                            value: [(true) (false)] @init)) @variable_declaration)
-                       )", "variable_declaration", "" ,Some(vec![String::from("variable_name")]), 
+                       )", "variable_declaration", "" ,None, 
                        Some(vec![
                       Constraint::new(String::from("(method_declaration) @md"),
                         vec![String::from("(
@@ -367,7 +367,7 @@ mod test {
                                        declarator: (variable_declarator
                                                            name: (_) @variable_name
                                                            value: [(true) (false)] @init)) @variable_declaration)
-                       )", "variable_declaration", "" ,Some(vec![String::from("variable_name")]), 
+                       )", "variable_declaration", "" ,None, 
                        Some(vec![
                       Constraint::new(String::from("(method_declaration) @md"),
                         vec![String::from("(
