@@ -115,9 +115,16 @@ matcher =  """
                     (formal_parameter type:(_) @t1)
                     (formal_parameter type:(_) @t2))) @xd2)"""
 generator = """
-(
-((class_declaration name:(_) @z) @qc)
+(((method_declaration 
+			name : (_) @z
+            parameters : (formal_parameters
+            		(formal_parameter type:(_) @r0)
+                    (formal_parameter type:(_) @r1)
+                    (formal_parameter type:(_) @r2))) @qd)
 (#eq? @z "@n")
+(#eq? @r0 "@t0")
+(#eq? @r1 "@t1")
+(#eq? @r2 "@t2")
 )"""
 
 # Scope matcher-generator for Java method with 2 parameters.
