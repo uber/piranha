@@ -52,24 +52,23 @@ Languages supported :
 ## Getting started with Piranha
 
 *Please refer to our [demo](/generic/piranha/demo/run_piranha_demo.sh) - to quickly get started with Piranha.*
-*Please refer to our test cases at [`src/test-resources/<language>/`](/src/test-resources/) as a reference for handling complicated scenarios*
-
 To run the demo : 
 * `cd generic/piranha`
 * `./demo/run_piranha_demo.sh`
+*Please refer to our test cases at [`/generic/piranha/src/test-resources/<language>/`](/generic/piranha/src/test-resources/) as a reference for handling complicated scenarios*
 
 To get started with Piranha, please follow the below steps:
 * Check if the current version of Piranha supports the required language.
-* If so, then check if the API usage is similar to the ones provided in the test suite at `/demo/<language>/configurations/rules.toml`.
-*  If not, adapt these examples to your requirements. There are more examples available for reference in `test-resources/**/**/configurations/`. Further, you can look at the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) for more information on how to construct tree-sitter queries.  
-* Now adapt the `/demo/<language>/configurations/piranha_arguments.toml` as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your `piranha_arguments.toml`. In most cases, one will not require `/demo/<language>/configurations/edges.toml`.
+* If so, then check if the API usage is similar to the ones shown in the demo ([java-demo](/generic/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml)).
+*  If not, adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work.
+* Now adapt the [argument file](/generic/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/demo/java/configurations/edges.toml) is not required, unless your feature flag system API rules are inter-dependent. 
 
-For more details on how to configure Piranha to a new feature flag API see section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api).
-For more details on how to configure Piranha to a new language see section [Onboarding a new language flag](onboarding-a-new-language).
+More details for configuring Piranha - [Adding support for a new feature flag system](adding-support-for-a-new-feature-flag-system)
+and [Adding Support for a new language](adding-support-for-a-new-language).
 
-## Onboarding a new feature flag system
+## Adding support for a new feature flag system
 
-To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files. The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent. 
+To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files (look [here](/generic/piranha/src/cleanup_rules/java)). The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent. 
 For instance, you want to delete a method declaration with specific annotations and then update its usages with some boolean value. 
 Please refer to the `test-resources/java` for detailed examples. 
 
@@ -148,7 +147,7 @@ This file specifies that, the user wants to perform this refactoring for `java` 
 The `substitutions` field captures mapping between the tags and their corresponding concrete values. In this example, we specify that the tag named `stale_flag_name` should be replaced with `STALE_FLAG` and `treated` with `true`.
 
 
-## Onboarding a new language 
+## Adding Support for a new language
 This section describes how to configure Piranha to support a new language. 
 Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
@@ -204,18 +203,17 @@ int foobar(){
 </td>
 </table>
 
-We would first define flag API rules as discussed in the section [Onboarding a new feature flag API](onboarding-a-new-feature-flag-api). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
+We would first define flag API rules as discussed in the section [Adding Support for a new language](adding-support-for-a-new-language). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
 
-* `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. `cleanup_rules/java/rules.toml: delete_variable_declarations`)
-* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. `cleanup_rules/java/rules.toml: replace_expression_with_boolean_literal`) 
-* `R2`: simplify the boolean expressions, for example replace `true || someCondition()` with `true`, that encloses the node where `R1` was applied. (E.g. `cleanup_rules/java/rules.toml: true_or_something`)
-* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied (`if (true) { return 100;}` → `return 100;`). E.g. `cleanup_rules/java/rules.toml:  simplify_if_statement_true, remove_unnecessary_nested_block`
-* `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied.
-(E.g. `cleanup_rules/java/rules.toml:  delete_all_statements_after_return`)
+* `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml):`delete_variable_declarations`)
+* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml):`replace_expression_with_boolean_literal`) 
+* `R2`: simplify the boolean expressions, for example replace `true || someCondition()` with `true`, that encloses the node where `R1` was applied. (E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml): `true_or_something`)
+* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied (`if (true) { return 100;}` → `return 100;`). E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml): `simplify_if_statement_true, remove_unnecessary_nested_block`
+* `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied. (E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml): `delete_all_statements_after_return`)
 
 The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file. 
 
-To define how these cleanup rules should be chained, one needs to specify edges (e.g. the `cleanup_rules/java/edges.toml` file) between the groups and (or) individual rules.
+To define how these cleanup rules should be chained, one needs to specify edges (e.g. the [java-edges](/generic/piranha/src/cleanup_rules/java/edges.toml) file) between the groups and (or) individual rules.
 The edges can be labelled as `Parent`, `Global` or even much finer scopes like `Method` or `Class` (or let's say `functions` in `go-lang`).
 * A `Parent` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` → `R2`, `R2` → `R3`, `R3` → `R4`)
 * A `Method` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` → `R1`)
@@ -223,14 +221,14 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 * A `Global` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
 
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
-Please refer to `/src/cleanup_rules/java/scope_config.toml`.
+Please refer to [java-scope_config](/generic/piranha/src/cleanup_rules/java/scope_config.toml).
 
 
 ## Contributing
 
 ### Naming conventions for the rules 
 * We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`
-* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. `cleanup_rules/java/rules.toml: boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
+* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml): `boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
 
 ### Writing tests
 Currently we only maintain integration tests for the implementation and configurations. 
