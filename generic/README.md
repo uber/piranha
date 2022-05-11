@@ -1,11 +1,10 @@
-# Generic Piranha 
-It scans source files to delete code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
-This generic tree-sitter based implementation for Piranha makes it easy to onboard new languages and new feature flag systems.
+# Piranha 2.0 
+Piranha 2.0 provides a language-agnostic and flexible solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 
 ## Motivation 
 
-Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. It is time-consuming and expensive to develop and maintain such nearly similar implementations.
-This implementation overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query based rewrite rules, and applying them to the input program as chains of rules.
+Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. It is time-consuming and expensive to develop and maintain these similar implementations.
+Piranha 2.0 overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query based rewrite rules, and applying them to the input program as chains of rules.
 
 ## Usage 
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
@@ -33,7 +32,7 @@ OPTIONS:
 Languages supported :
 * Java
 * Kotlin (planned)
-* Java / Kotlin (planned)
+* Java + Kotlin (planned)
 * Swift (planned)
 * JavaScript (planned)
 * Go (requested)
@@ -43,7 +42,7 @@ Languages supported :
 * PHP (requested)
 * Contributions for the `requested` languages or any other languages are welcome :) 
 
-## Obtain Piranha Binary from source
+## Building Piranha from Source
 * Install [Rust](https://www.rust-lang.org/tools/install), Git and [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
 * Checkout this repository - `git checkout https://github.com/uber/piranha.git` 
 * `cd piranha/generic/piranha`
@@ -52,8 +51,8 @@ Languages supported :
 
 ## Getting started with Piranha
 
-*Please refer to our demo - `generic/piranha/demo/` to quickly get started with Piranha.*
-*Please refer to our test cases at `src/test-resources/<language>/` as a reference for handling complicated scenarios*
+*Please refer to our [demo](generic/piranha/demo/run_piranha_demo.sh) - to quickly get started with Piranha.*
+*Please refer to our test cases at [`src/test-resources/<language>/`](src/test-resources/) as a reference for handling complicated scenarios*
 
 To run the demo : 
 * `cd generic/piranha`
@@ -91,7 +90,7 @@ class PiranhaDemo {
     }
 }
 ```
-In the case when STALE_FLAG is treated, we would expect Piranha to refactor the code as shown below (assuming) : 
+In the case when STALE_FLAG is treated, we would expect Piranha to refactor the code as shown below (assuming that `STALE_FLAG` is treated) : 
 ```
 class PiranhaDemo {
 
@@ -217,13 +216,13 @@ We would first define flag API rules as discussed in the section [Onboarding a n
 The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file. 
 
 To define how these cleanup rules should be chained, one needs to specify edges (e.g. the `cleanup_rules/java/edges.toml` file) between the groups and (or) individual rules.
-The edges can be labelled as `Parent`, `Method`, `Class` or `Global`. 
+The edges can be labelled as `Parent`, `Global` or even much finer scopes like `Method` or `Class` (or let's say `functions` in `go-lang`).
 * A `Parent` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` → `R2`, `R2` → `R3`, `R3` → `R4`)
 * A `Method` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` → `R1`)
 * A `Class` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing class body. (e.g. in-lining a private field)
 * A `Global` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
 
-One would also have to define how to capture the `Method` and `Class` scopes for the new language by specifying the `scope_config.toml` file.
+`scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
 Please refer to `/src/cleanup_rules/java/scope_config.toml`.
 
 
@@ -231,7 +230,7 @@ Please refer to `/src/cleanup_rules/java/scope_config.toml`.
 
 ### Naming conventions for the rules 
 * We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`
-* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`.
+* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. `cleanup_rules/java/rules.toml: boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
 
 ### Writing tests
 Currently we only maintain integration tests for the implementation and configurations. 
