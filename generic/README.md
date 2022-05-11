@@ -51,8 +51,8 @@ Languages supported :
 
 ## Getting started with Piranha
 
-*Please refer to our [demo](generic/piranha/demo/run_piranha_demo.sh) - to quickly get started with Piranha.*
-*Please refer to our test cases at [`src/test-resources/<language>/`](src/test-resources/) as a reference for handling complicated scenarios*
+*Please refer to our [demo](/generic/piranha/demo/run_piranha_demo.sh) - to quickly get started with Piranha.*
+*Please refer to our test cases at [`src/test-resources/<language>/`](/src/test-resources/) as a reference for handling complicated scenarios*
 
 To run the demo : 
 * `cd generic/piranha`
