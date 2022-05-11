@@ -1,10 +1,10 @@
-# Piranha 2.0 
-Piranha 2.0 provides a language-agnostic and flexible solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
+# Generic Piranha
+This variant of Piranha provides a language-agnostic and flexible solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 
 ## Motivation 
 
 Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. It is time-consuming and expensive to develop and maintain these similar implementations.
-Piranha 2.0 overcomes this problem by extracting the language specific syntactic transformations to tree-sitter query based rewrite rules, and applying them to the input program as chains of rules.
+This is overcome by extracting the language specific syntactic transformations to tree-sitter query based rewrite rules, and applying them to the input program as chains of rules.
 
 ## Usage 
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
