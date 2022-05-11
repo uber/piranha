@@ -10,5 +10,5 @@
 # limitations under the License.
 
 cargo build --release
-cp target/release/piranha  demo/java/piranha
+mv target/release/piranha  demo/java/piranha
 ./demo/java/piranha -c demo/java/ -f demo/java/configurations

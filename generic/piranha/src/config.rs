@@ -29,15 +29,15 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
-/// Used for parsing command-line arguments passed to Piranha .
-#[derive(Clone, Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
 
+/// A refactoring tool that eliminates dead code related to stale feature flags.
+#[derive(Clone, Parser, Debug)]
+#[clap(version)]
 pub(crate) struct CommandLineArguments {
   /// Path to source code folder.
   #[clap(short = 'c', long)]
   pub path_to_codebase: String,
-  /// Folder containing the required configuration files
+  /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,  and  `edges.toml` (optional).
   #[clap(short = 'f', long)]
   pub path_to_configurations: String,
 }

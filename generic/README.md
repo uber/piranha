@@ -10,7 +10,8 @@ Piranha 2.0 overcomes this problem by extracting the language specific syntactic
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
 
 ```
-piranha 0.1.0
+piranha 2.0.0
+A refactoring tool that eliminates dead code related to stale feature flags.
 
 USAGE:
     piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
@@ -20,7 +21,8 @@ OPTIONS:
             Path to source code folder
 
     -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
-            Folder containing the required configuration files
+            Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
+            and `edges.toml` (optional)
 
     -h, --help
             Print help information
