@@ -37,7 +37,7 @@ impl RuleGraph {
     // when either edge endpoint is a group name.
     for edge in edges {
       for from_rule in get_rules_for_tag_or_name(&edge.source()) {
-        for outgoing_edge in edge.destinations() {
+        for outgoing_edge in edge.sinks() {
           for to_rule in get_rules_for_tag_or_name(&outgoing_edge) {
             // Add edge to the adjacency list
             graph.collect(
@@ -57,13 +57,9 @@ impl RuleGraph {
   }
 }
 
-mod test {
-  #[cfg(test)]
-  use {super::RuleGraph, std::collections::HashMap};
-  #[cfg(test)]
-  impl RuleGraph {
-    pub(crate) fn dummy() -> Self {
-      RuleGraph(HashMap::new())
-    }
+#[cfg(test)]
+impl RuleGraph {
+  pub(crate) fn dummy() -> Self {
+    RuleGraph(HashMap::new())
   }
 }

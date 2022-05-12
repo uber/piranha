@@ -29,10 +29,9 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
-
 /// A refactoring tool that eliminates dead code related to stale feature flags.
 #[derive(Clone, Parser, Debug)]
-#[clap(version)]
+#[clap(name = "Piranha")]
 pub(crate) struct CommandLineArguments {
   /// Path to source code folder.
   #[clap(short = 'c', long)]

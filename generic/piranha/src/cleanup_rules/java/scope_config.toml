@@ -13,7 +13,7 @@
 # In `edges.toml`, we specify how the rules should be chained by constructing an edge labelled graph with rules as nodes. 
 # These edges are labelled as - Parent, Global, Method and Class. These edges determine "scope" where the next rule will be applied with respect
 # to the previously applied rule. 
-# Unlike Parent and Global scopes, Method and Class scopes are language dependent, since each language has its own syntax to define methods and classes. 
+# Unlike Parent and Global scopes, Method and Class scopes are language dependent, since each language has its own syntax to define methods, classes, functions. 
 # This file allows users to define these language dependent scopes. 
 # Each scope consists of a scope name and a list of scope rules. 
 # Each scope rule consists of a `matcher` and a `generator`. 

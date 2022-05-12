@@ -69,13 +69,9 @@ impl Constraint {
   }
 }
 
-mod test {
-  use super::Constraint;
-
-  impl Constraint {
-    #[cfg(test)]
-    pub(crate) fn new(matcher: String, queries: Vec<String>) -> Self {
-      Self { matcher, queries }
-    }
+impl Constraint {
+  #[cfg(test)]
+  pub(crate) fn new(matcher: String, queries: Vec<String>) -> Self {
+    Self { matcher, queries }
   }
 }
