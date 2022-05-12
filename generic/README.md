@@ -1,5 +1,5 @@
-# Generic Piranha
-This variant of Piranha provides a language-agnostic and flexible solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
+# Multilingual Piranha
+This variant of Piranha provides a flexible multilingual solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 
 ## Motivation 
 
@@ -10,7 +10,7 @@ This is overcome by extracting the language specific syntactic transformations t
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
 
 ```
-piranha 2.0.0
+Piranha
 A refactoring tool that eliminates dead code related to stale feature flags.
 
 USAGE:
@@ -223,7 +223,7 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 * A `Global` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
 
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
-Please refer to [java-scope_config](/generic/piranha/src/cleanup_rules/java/scope_config.toml).
+First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/generic/piranha/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
 
 
 ## Contributing

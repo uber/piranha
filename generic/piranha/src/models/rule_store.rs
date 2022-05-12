@@ -151,40 +151,27 @@ impl RuleStore {
   }
 }
 
-mod test {
-  #[cfg(test)]
-  use {
-    super::RuleStore,
-    crate::{
-      models::piranha_arguments::PiranhaArguments, models::rule_graph::RuleGraph,
-      models::scopes::ScopeGenerator,
-    },
-    std::collections::HashMap,
-  };
-
-  #[cfg(test)]
-  impl RuleStore {
-    pub(crate) fn dummy() -> RuleStore {
-      RuleStore {
-        rule_graph: RuleGraph::dummy(),
-        rule_query_cache: HashMap::new(),
-        rules_by_name: HashMap::new(),
-        global_rules: vec![],
-        piranha_args: PiranhaArguments::dummy(),
-        scopes: vec![],
-      }
+#[cfg(test)]
+impl RuleStore {
+  pub(crate) fn dummy() -> RuleStore {
+    RuleStore {
+      rule_graph: RuleGraph::dummy(),
+      rule_query_cache: HashMap::new(),
+      rules_by_name: HashMap::new(),
+      global_rules: vec![],
+      piranha_args: PiranhaArguments::dummy(),
+      scopes: vec![],
     }
+  }
 
-    #[cfg(test)]
-    pub(crate) fn dummy_with_scope(scopes: Vec<ScopeGenerator>) -> RuleStore {
-      RuleStore {
-        rule_graph: RuleGraph::dummy(),
-        rule_query_cache: HashMap::new(),
-        rules_by_name: HashMap::new(),
-        global_rules: vec![],
-        piranha_args: PiranhaArguments::dummy(),
-        scopes,
-      }
+  pub(crate) fn dummy_with_scope(scopes: Vec<ScopeGenerator>) -> RuleStore {
+    RuleStore {
+      rule_graph: RuleGraph::dummy(),
+      rule_query_cache: HashMap::new(),
+      rules_by_name: HashMap::new(),
+      global_rules: vec![],
+      piranha_args: PiranhaArguments::dummy(),
+      scopes,
     }
   }
 }

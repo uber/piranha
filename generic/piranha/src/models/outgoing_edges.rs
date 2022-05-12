@@ -28,20 +28,14 @@ pub(crate) struct OutgoingEdges {
 }
 
 impl OutgoingEdges {
-  /// Get a reference to the edge's from.
-  #[must_use]
   pub(crate) fn source(&self) -> String {
     String::from(&self.from)
   }
 
-  /// Get a reference to the edge's to.
-  #[must_use]
-  pub(crate) fn destinations(&self) -> Vec<String> {
+  pub(crate) fn sinks(&self) -> Vec<String> {
     self.to.clone()
   }
 
-  /// Get a reference to the edge's scope.
-  #[must_use]
   pub(crate) fn scope(&self) -> &str {
     self.scope.as_ref()
   }
