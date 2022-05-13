@@ -80,12 +80,12 @@ pub(crate) fn initialize_logger(is_test: bool) {
     .try_init();
 }
 
-/// Compares two strings, ignoring new lines, and space.
+/// Compares two strings, ignoring whitespace
 #[cfg(test)] // Rust analyzer FP
 pub(crate) fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
-  s1.replace('\n', "")
-    .replace(' ', "")
-    .eq(&s2.replace('\n', "").replace(' ', ""))
+  s1.split_whitespace()
+    .collect::<String>()
+    .eq(&s2.split_whitespace().collect::<String>())
 }
 
 /// Checks if the given `dir_entry` is a file named `file_name`

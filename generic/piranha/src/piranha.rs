@@ -69,13 +69,13 @@ impl SourceCodeUnit {
     // Match the rule "anywhere" inside the scope_node
     if let Some(edit_1) = rule.get_edit(&self.clone(), rules_store, scope_node, true) {
       any_match = true;
-      // Get the edit for applying the matched rule to the source code
-      let ts_edit = self.apply_edit(&edit_1, parser);
+      // Apply edit_1 
+      let applied_ts_edit = self.apply_edit(&edit_1, parser);
 
       // Add all the (code_snippet, tag) mapping to the substitution table.
       self.add_to_substitutions(edit_1.matches());
 
-      let mut current_edit = ts_edit;
+      let mut current_edit = applied_ts_edit;
       let mut current_rule = rule.clone();
       let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
 
@@ -180,7 +180,7 @@ impl SourceCodeUnit {
 }
 
 // Maintains the state of Piranha and the updated content of files in the source code.
-pub struct FlagCleaner {
+pub(crate) struct FlagCleaner {
   // Maintains Piranha's state
   rule_store: RuleStore,
   // Path to source code folder
@@ -190,12 +190,12 @@ pub struct FlagCleaner {
 }
 
 impl FlagCleaner {
-  pub fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
+  pub(crate) fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self.relevant_files.values().cloned().collect_vec()
   }
 
   /// Performs cleanup related to stale flags
-  pub fn perform_cleanup(&mut self) {
+  pub(crate) fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
@@ -244,7 +244,7 @@ impl FlagCleaner {
 
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
-  pub fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
+  pub(crate) fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
     let pattern = self.get_grep_heuristics();
     info!(
       "{}",
@@ -276,7 +276,7 @@ impl FlagCleaner {
   }
 
   /// Instantiate Flag-cleaner
-  pub fn new(args: PiranhaArguments) -> Self {
+  pub(crate) fn new(args: PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(&args);
     Self {
       rule_store: graph_rule_store,
@@ -293,7 +293,7 @@ impl FlagCleaner {
   /// heuristic to find the (upper bound) files that would match one of our current global rules.
   /// This heuristic reduces the number of files to parse.
   ///
-  pub fn get_grep_heuristics(&self) -> Regex {
+  pub(crate) fn get_grep_heuristics(&self) -> Regex {
     let reg_x = self
       .rule_store
       .global_rules()
