@@ -233,10 +233,11 @@ First decide, what scopes you need to capture, for instance, in Java we capture 
 * We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. [java-rules](/generic/piranha/src/cleanup_rules/java/rules.toml): `boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
 
 ### Writing tests
-Currently we only maintain integration tests for the implementation and configurations. 
-These integration run Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
+Currently we maintain 
+* Unit tests for the internal functionality can be found under `<models|utilities>/unit_test`.
+* End-to-end tests for the configurations execute  Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
 
 To add new scenarios to the existing tests for a given language, you can add them to new file in the `input` directory and then create similarly named files with the expected output in `expected_treated` and `expected_control` directory.
-Note that the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files must be also updated accordingly. 
+Update the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files too.
 
 To add tests for a new language, please add a new `<language>` folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
