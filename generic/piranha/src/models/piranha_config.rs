@@ -17,12 +17,12 @@ use serde_derive::Deserialize;
 
 /// Captures the Piranha arguments by from the file at `path_to_feature_flag_rules`.
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
-pub(crate) struct PiranhaConfig {
+pub(crate) struct PiranhaConfiguration {
   language: Vec<String>,
   substitutions: Vec<Vec<String>>,
 }
 
-impl PiranhaConfig {
+impl PiranhaConfiguration {
   pub(crate) fn substitutions(&self) -> HashMap<String, String> {
     self
       .substitutions

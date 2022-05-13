@@ -11,11 +11,22 @@ jobs:
     name: Piranha
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: Checkout Piranha sources
+        uses: actions/checkout@v2
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-      - name: Install-Tree-Sitter
+          override: true
+          components: rustfmt, clippy
+      - name: Install Tree-Sitter
         run: cargo install tree-sitter-cli
+      - name: Build Piranha
+        run: cargo build
+        working-directory: generic/piranha
+      - name: Clippy check
+        run: cargo clippy
+        working-directory: generic/piranha
       - run: cargo test
         working-directory: generic/piranha

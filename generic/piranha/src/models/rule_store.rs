@@ -19,21 +19,19 @@ use tree_sitter::{Language, Query};
 
 use crate::{
   config::read_config_files,
+  models::piranha_arguments::PiranhaArguments,
   models::{
     rule::Rule,
     rule_graph::RuleGraph,
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
-  piranha::piranha_arguments::PiranhaArguments,
   utilities::{tree_sitter_utilities::TreeSitterHelpers, MapOfVec},
 };
 
-pub static GLOBAL: &str = "Global";
-pub static METHOD: &str = "Method";
-pub static CLASS: &str = "Class";
-pub static PARENT: &str = "Parent";
+pub(crate) static GLOBAL: &str = "Global";
+pub(crate) static PARENT: &str = "Parent";
 /// This maintains the state for Piranha.
-pub struct RuleStore {
+pub(crate) struct RuleStore {
   // A graph that captures the flow amongst the rules
   rule_graph: RuleGraph,
   // Caches the compiled tree-sitter queries.
@@ -92,7 +90,7 @@ impl RuleStore {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
       r.add_grep_heuristics_for_global_rules(tag_captures);
       #[rustfmt::skip]
-        info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
+      info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
       self.global_rules.push(r);
     }
   }
@@ -134,7 +132,7 @@ impl RuleStore {
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope
-    for scope in [PARENT, METHOD, CLASS, GLOBAL] {
+    for scope in [PARENT, GLOBAL] {
       next_rules.entry(scope.to_string()).or_default();
     }
     next_rules
@@ -148,5 +146,30 @@ impl RuleStore {
       .find(|level| level.name().eq(scope_level))
       .map(|scope| scope.rules())
       .unwrap_or_else(Vec::new)
+  }
+}
+
+#[cfg(test)]
+impl RuleStore {
+  pub(crate) fn dummy() -> RuleStore {
+    RuleStore {
+      rule_graph: RuleGraph::dummy(),
+      rule_query_cache: HashMap::new(),
+      rules_by_name: HashMap::new(),
+      global_rules: vec![],
+      piranha_args: PiranhaArguments::dummy(),
+      scopes: vec![],
+    }
+  }
+
+  pub(crate) fn dummy_with_scope(scopes: Vec<ScopeGenerator>) -> RuleStore {
+    RuleStore {
+      rule_graph: RuleGraph::dummy(),
+      rule_query_cache: HashMap::new(),
+      rules_by_name: HashMap::new(),
+      global_rules: vec![],
+      piranha_args: PiranhaArguments::dummy(),
+      scopes,
+    }
   }
 }

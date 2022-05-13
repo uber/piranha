@@ -19,13 +19,13 @@ use tree_sitter::Language;
 
 use crate::{
   config::CommandLineArguments,
-  models::piranha_config::PiranhaConfig,
+  models::piranha_config::PiranhaConfiguration,
   utilities::{read_toml, tree_sitter_utilities::TreeSitterHelpers},
 };
 
 #[derive(Clone)]
-/// Captures the processed Piranha arguments (PiranhaArgsFromConfig) that are parsed from `path_to_feature_flag_rules`.
-pub struct PiranhaArguments {
+/// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
+pub(crate) struct PiranhaArguments {
   /// Path to source code folder.
   path_to_code_base: String,
   // Input arguments provided to Piranha, mapped to tag names -
@@ -45,7 +45,8 @@ impl PiranhaArguments {
     let path_to_piranha_argument_file =
       PathBuf::from(args.path_to_configurations.as_str()).join("piranha_arguments.toml");
 
-    let piranha_args_from_config: PiranhaConfig = read_toml(&path_to_piranha_argument_file, false);
+    let piranha_args_from_config: PiranhaConfiguration =
+      read_toml(&path_to_piranha_argument_file, false);
 
     let input_substitutions = piranha_args_from_config.substitutions();
 
@@ -79,5 +80,19 @@ impl PiranhaArguments {
 
   pub(crate) fn language_name(&self) -> &str {
     self.language_name.as_ref()
+  }
+}
+
+#[cfg(test)]
+impl PiranhaArguments {
+  pub(crate) fn dummy() -> Self {
+    let language_name = String::from("java");
+    PiranhaArguments {
+      path_to_code_base: String::new(),
+      input_substitutions: HashMap::new(),
+      path_to_configurations: String::new(),
+      language: language_name.get_language(),
+      language_name,
+    }
   }
 }

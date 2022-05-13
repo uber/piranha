@@ -13,16 +13,23 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
-use crate::utilities::MapOfVec;
+use crate::{
+  models::{rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
+  utilities::MapOfVec,
+};
+use colored::Colorize;
 use itertools::Itertools;
+use log::info;
 use std::collections::HashMap;
-use tree_sitter::{Language, Node, Query, QueryCursor, Range};
+#[cfg(test)]
+use tree_sitter::Parser;
+use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCursor, Range};
 
 extern "C" {
   fn tree_sitter_java() -> Language;
 }
 
-pub trait TreeSitterHelpers {
+pub(crate) trait TreeSitterHelpers {
   /// Gets the tree-sitter language model.
   fn get_language(&self) -> Language;
   /// Compiles query string to `tree_sitter::Query`
@@ -48,8 +55,10 @@ impl TreeSitterHelpers for String {
 }
 
 #[rustfmt::skip]
-pub trait PiranhaRuleMatcher {
+pub(crate) trait PiranhaHelpers {
 
+    /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
+    fn satisfies_constraint(&self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,rule_store: &mut RuleStore,) -> bool ;
     /// Applies the query upon `self`, and gets the first match
     /// # Arguments
     /// * `source_code` - the corresponding source code string for the node.
@@ -73,13 +82,24 @@ pub trait PiranhaRuleMatcher {
     fn get_match_for_query(&self, source_code: &str, query: &Query, recursive: bool) -> Option<(Range, HashMap<String, String>)>;
 }
 
-impl PiranhaRuleMatcher for Node<'_> {
+impl PiranhaHelpers for Node<'_> {
+  /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
+  fn satisfies_constraint(
+    &self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+    rule_store: &mut RuleStore,
+  ) -> bool {
+    rule.constraints().iter().all(|constraint| {
+      constraint.is_satisfied(*self, source_code_unit.clone(), rule_store, substitutions)
+    })
+  }
+
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,
   ) -> Option<(Range, HashMap<String, String>)> {
     self
       .get_all_matches_for_query(source_code.to_string(), query, recursive, None)
-      .first().cloned()
+      .first()
+      .cloned()
   }
 
   fn get_all_matches_for_query(
@@ -172,3 +192,112 @@ impl PiranhaRuleMatcher for Node<'_> {
     output
   }
 }
+
+/// Replaces the given byte range (`replace_range`) with the `replacement`.
+/// Returns tree-sitter's edit representation along with updated source code.
+/// Note: This method does not update `self`.
+pub(crate) fn get_tree_sitter_edit(
+  code: String, replace_range: Range, replacement: &str,
+) -> (String, InputEdit) {
+  // Log the edit
+  let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
+
+  #[rustfmt::skip]
+    info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(), ((&replace_range.start_point.row, &replace_range.start_point.column), (&replace_range.end_point.row, &replace_range.end_point.column)), if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())} else {format!("{} ", replaced_code_snippet.italic())});
+
+  (
+    // Create the new source code content by appropriately
+    // replacing the range with the replacement string.
+    [
+      &code[..replace_range.start_byte],
+      replacement,
+      &code[replace_range.end_byte..],
+    ]
+    .concat(),
+    // Tree-sitter edit
+    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes()),
+  )
+}
+
+// Finds the position (col and row number) for a given offset.
+fn position_for_offset(input: &[u8], offset: usize) -> Point {
+  let mut result = Point { row: 0, column: 0 };
+  for c in &input[0..offset] {
+    if *c as char == '\n' {
+      result.row += 1;
+      result.column = 0;
+    } else {
+      result.column += 1;
+    }
+  }
+  result
+}
+
+// Creates the InputEdit as per the tree-sitter api documentation.
+fn _get_tree_sitter_edit(
+  replace_range: Range, len_of_replacement: usize, source_code_bytes: &[u8],
+) -> InputEdit {
+  let start_byte = replace_range.start_byte;
+  let old_end_byte = replace_range.end_byte;
+  let new_end_byte = start_byte + len_of_replacement;
+  InputEdit {
+    start_byte,
+    old_end_byte,
+    new_end_byte,
+    start_position: position_for_offset(source_code_bytes, start_byte),
+    old_end_position: position_for_offset(source_code_bytes, old_end_byte),
+    new_end_position: position_for_offset(source_code_bytes, new_end_byte),
+  }
+}
+
+pub(crate) fn substitute_tags(s: String, substitutions: &HashMap<String, String>) -> String {
+  let mut output = s;
+  for (tag, substitute) in substitutions {
+    // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
+    let key = format!("@{}", tag);
+    output = output.replace(&key, substitute)
+  }
+  output
+}
+
+/// Get the smallest node within `self` that spans the given range.
+pub(crate) fn get_node_for_range(root_node: Node, start_byte: usize, end_byte: usize) -> Node {
+  root_node
+    .descendant_for_byte_range(start_byte, end_byte)
+    .unwrap()
+}
+
+/// Returns the node, its parent, grand parent and great grand parent
+pub(crate) fn get_context(
+  root_node: Node, previous_edit_start: usize, previous_edit_end: usize,
+) -> Vec<Node> {
+  // let root = self.root_node();
+  let changed_node = get_node_for_range(root_node, previous_edit_start, previous_edit_end);
+  // Add parent of the changed node to the context
+  let mut context = vec![changed_node];
+  if let Some(parent) = changed_node.parent() {
+    context.push(parent);
+    // Add grand parent of the changed node to the context
+    if let Some(grand_parent) = parent.parent() {
+      context.push(grand_parent);
+      // Add great grand parent of the changed node to the context
+      if let Some(great_grand_parent) = grand_parent.parent() {
+        context.push(great_grand_parent);
+      }
+    }
+  }
+  context
+}
+
+#[cfg(test)]
+pub(crate) fn get_parser(language: String) -> Parser {
+  let mut parser = Parser::new();
+  parser
+    .set_language(language.get_language())
+    .expect("Could not set the language for the parser.");
+  parser
+}
+
+#[cfg(test)]
+#[path = "unit_tests/tree_sitter_utilities_test.rs"]
+mod tree_sitter_utilities_test;

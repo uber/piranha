@@ -16,7 +16,7 @@ use serde_derive::Deserialize;
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `edges.toml` file
 pub(crate) struct Edges {
-  pub edges: Vec<OutgoingEdges>,
+  pub(crate) edges: Vec<OutgoingEdges>,
 }
 
 // Captures an entry from the `edges.toml` file.
@@ -28,20 +28,14 @@ pub(crate) struct OutgoingEdges {
 }
 
 impl OutgoingEdges {
-  /// Get a reference to the edge's from.
-  #[must_use]
-  pub(crate) fn from_rule(&self) -> String {
+  pub(crate) fn source(&self) -> String {
     String::from(&self.from)
   }
 
-  /// Get a reference to the edge's to.
-  #[must_use]
-  pub(crate) fn to_rules(&self) -> Vec<String> {
+  pub(crate) fn sinks(&self) -> Vec<String> {
     self.to.clone()
   }
 
-  /// Get a reference to the edge's scope.
-  #[must_use]
   pub(crate) fn scope(&self) -> &str {
     self.scope.as_ref()
   }

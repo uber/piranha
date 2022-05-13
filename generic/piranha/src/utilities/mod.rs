@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-pub mod tree_sitter_utilities;
+pub(crate) mod tree_sitter_utilities;
 
 use std::collections::HashMap;
 #[cfg(test)]
@@ -22,7 +22,7 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
 // Reads a file.
-pub fn read_file(file_path: &PathBuf) -> Result<String, String> {
+pub(crate) fn read_file(file_path: &PathBuf) -> Result<String, String> {
   File::open(&file_path)
     .map(|file| {
       let mut content = String::new();
@@ -33,7 +33,7 @@ pub fn read_file(file_path: &PathBuf) -> Result<String, String> {
 }
 
 // Reads a toml file. In case of error, it returns a default value (if return_default is true) else panics.
-pub fn read_toml<T>(file_path: &PathBuf, return_default: bool) -> T
+pub(crate) fn read_toml<T>(file_path: &PathBuf, return_default: bool) -> T
 where
   T: serde::de::DeserializeOwned + Default,
 {
@@ -52,7 +52,7 @@ where
   }
 }
 
-pub trait MapOfVec<T, V> {
+pub(crate) trait MapOfVec<T, V> {
   fn collect(&mut self, key: T, value: V);
 }
 
@@ -66,7 +66,7 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
 }
 
 /// Initialize logger.
-pub fn initialize_logger(is_test: bool) {
+pub(crate) fn initialize_logger(is_test: bool) {
   let log_file = OpenOptions::new()
     .write(true)
     .create(true) // Create a log file if it doesn't exists
@@ -80,17 +80,18 @@ pub fn initialize_logger(is_test: bool) {
     .try_init();
 }
 
-/// Compares two strings, ignoring new lines, and space.
+/// Compares two strings, ignoring whitespace
 #[cfg(test)] // Rust analyzer FP
-pub fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
-  s1.replace('\n', "")
-    .replace(' ', "")
-    .eq(&s2.replace('\n', "").replace(' ', ""))
+pub(crate) fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
+  s1.split_whitespace()
+    .collect::<String>()
+    .eq(&s2.split_whitespace().collect::<String>())
 }
 
 /// Checks if the given `dir_entry` is a file named `file_name`
 #[cfg(test)] // Rust analyzer FP
-pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
+pub(crate) fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
+  println!("{:?}", dir_entry);
   dir_entry
     .path()
     .file_name()
@@ -100,7 +101,7 @@ pub fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
 
 /// Returns the file with the given name within the given directory.
 #[cfg(test)] // Rust analyzer FP
-pub fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
+pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
   fs::read_dir(input_dir)
     .unwrap()
     .filter_map(|d| d.ok())
@@ -108,3 +109,7 @@ pub fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
     .unwrap()
     .path()
 }
+
+#[cfg(test)]
+#[path = "unit_tests/utilities_test.rs"]
+mod utilities_test;

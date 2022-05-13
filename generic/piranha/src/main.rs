@@ -15,8 +15,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::time::Instant;
 
 use crate::{
-  piranha::{flag_cleaner::FlagCleaner, piranha_arguments::PiranhaArguments},
-  utilities::initialize_logger,
+  models::piranha_arguments::PiranhaArguments, piranha::{execute_piranha}, utilities::initialize_logger,
 };
 use clap::StructOpt;
 use config::CommandLineArguments;
@@ -26,7 +25,7 @@ mod config;
 mod models;
 mod piranha;
 #[cfg(test)]
-mod test;
+mod tests;
 mod utilities;
 
 fn main() {
@@ -35,11 +34,9 @@ fn main() {
 
   let args = PiranhaArguments::new(CommandLineArguments::parse());
 
-  let mut flag_cleaner = FlagCleaner::new(args);
+  let updated_files = execute_piranha(args);
 
-  flag_cleaner.perform_cleanup();
-
-  for source_code_unit in flag_cleaner.get_updated_files() {
+  for source_code_unit in updated_files {
     source_code_unit.persist();
   }
 

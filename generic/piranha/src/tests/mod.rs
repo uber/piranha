@@ -17,18 +17,19 @@ use colored::Colorize;
 use log::info;
 
 use crate::config::CommandLineArguments;
-use crate::piranha::flag_cleaner::FlagCleaner;
-use crate::piranha::piranha_arguments::PiranhaArguments;
-use crate::piranha::source_code_unit::SourceCodeUnit;
+use crate::models::piranha_arguments::PiranhaArguments;
+use crate::models::source_code_unit::SourceCodeUnit;
+use crate::piranha::{execute_piranha};
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
-pub mod test_piranha_java;
+mod test_piranha_java;
+mod unit_tests;
 
 use std::sync::Once;
 
 static INIT: Once = Once::new();
 
-pub fn initialize() {
+fn initialize() {
   INIT.call_once(|| {
     initialize_logger(true);
   });
@@ -73,10 +74,4 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     }
   }
   assert!(all_files_match);
-}
-
-fn execute_piranha(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
-  let mut flag_cleaner = FlagCleaner::new(args);
-  flag_cleaner.perform_cleanup();
-  flag_cleaner.get_updated_files()
 }

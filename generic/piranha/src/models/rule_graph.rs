@@ -17,12 +17,12 @@ use crate::{
 };
 use std::collections::HashMap;
 
-pub struct RuleGraph(HashMap<String, Vec<(String, String)>>);
+pub(crate) struct RuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl RuleGraph {
   // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
   pub(crate) fn new(edges: &Vec<OutgoingEdges>, all_rules: &Vec<Rule>) -> Self {
-    let (rules_by_name, rules_by_group) = Rule::get_grouped_rules(all_rules);
+    let (rules_by_name, rules_by_group) = Rule::group_rules(all_rules);
 
     // A closure that gets the rules corresponding to the given rule name or group name.
     let get_rules_for_tag_or_name = |val: &String| {
@@ -36,8 +36,8 @@ impl RuleGraph {
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
     for edge in edges {
-      for from_rule in get_rules_for_tag_or_name(&edge.from_rule()) {
-        for outgoing_edge in edge.to_rules() {
+      for from_rule in get_rules_for_tag_or_name(&edge.source()) {
+        for outgoing_edge in edge.sinks() {
           for to_rule in get_rules_for_tag_or_name(&outgoing_edge) {
             // Add edge to the adjacency list
             graph.collect(
@@ -53,8 +53,13 @@ impl RuleGraph {
 
   /// Get all the outgoing edges for `rule_name`
   pub(crate) fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
-    self
-      .0
-      .get(rule_name).cloned().unwrap_or_default()
+    self.0.get(rule_name).cloned().unwrap_or_default()
+  }
+}
+
+#[cfg(test)]
+impl RuleGraph {
+  pub(crate) fn dummy() -> Self {
+    RuleGraph(HashMap::new())
   }
 }

@@ -11,7 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-pub mod flag_cleaner;
-pub mod piranha_arguments;
-pub mod rule_store;
-pub mod source_code_unit;
+use super::initialize;
+
+#[test]
+fn test_rule_update() {
+  initialize();
+}

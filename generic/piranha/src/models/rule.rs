@@ -15,14 +15,22 @@ use std::collections::HashMap;
 
 use colored::Colorize;
 use serde_derive::Deserialize;
+use tree_sitter::Node;
 
-use crate::utilities::MapOfVec;
+use crate::utilities::{
+  tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
+  MapOfVec,
+};
+
+use super::{
+  constraint::Constraint, edit::Edit, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+};
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `rules.toml` file
-pub struct Rules {
+pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
@@ -47,23 +55,6 @@ pub(crate) struct Rule {
 }
 
 impl Rule {
-  /// Create a new query from `self` with the input `query` and `replace`
-  pub(crate) fn update(
-    &self, query: String, replace: String, substitutions: &HashMap<String, String>,
-  ) -> Result<Rule, String> {
-    if substitutions.len() != self.holes().len() {
-      #[rustfmt::skip]
-        return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
-    } else {
-      let mut updated_rule = self.clone();
-      if !updated_rule.holes().is_empty() {
-        updated_rule.set_query(query.substitute_tags(substitutions));
-        updated_rule.set_replace(replace.substitute_tags(substitutions));
-      }
-      Ok(updated_rule)
-    }
-  }
-
   pub(crate) fn is_feature_flag_cleanup(&self) -> bool {
     self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
   }
@@ -82,22 +73,6 @@ impl Rule {
       panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
   }
 
-  /// Groups the rules based on the field `rule.groups`
-  /// Note: a rule can belong to more than one group.
-  pub(crate) fn get_grouped_rules(
-    rules: &Vec<Rule>,
-  ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
-    let mut rules_by_name = HashMap::new();
-    let mut rules_by_group = HashMap::new();
-    for rule in rules {
-      rules_by_name.insert(rule.name.to_string(), rule.clone());
-      for tag in rule.groups() {
-        rules_by_group.collect(tag.to_string(), rule.name.to_string());
-      }
-    }
-    (rules_by_name, rules_by_group)
-  }
-
   /// Tries to instantiate the rule (`self`) based on the substitutions.
   /// Note this could fail if the `substitutions` doesn't contain mappings for each hole.
   pub(crate) fn try_instantiate(
@@ -109,7 +84,38 @@ impl Rule {
       .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
       .map(|(a, b)| (a.clone(), b.clone()))
       .collect::<HashMap<String, String>>();
-    self.update(self.query(), self.replace(), &relevant_substitutions)
+    self.update(&relevant_substitutions)
+  }
+
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  fn update(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
+    if substitutions.len() != self.holes().len() {
+      #[rustfmt::skip]
+        return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
+    } else {
+      let mut updated_rule = self.clone();
+      if !updated_rule.holes().is_empty() {
+        updated_rule.update_query(substitutions);
+        updated_rule.update_replace(substitutions);
+      }
+      Ok(updated_rule)
+    }
+  }
+
+  /// Groups the rules based on the field `rule.groups`
+  /// Note: a rule can belong to more than one group.
+  pub(crate) fn group_rules(
+    rules: &Vec<Rule>,
+  ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
+    let mut rules_by_name = HashMap::new();
+    let mut rules_by_group = HashMap::new();
+    for rule in rules {
+      rules_by_name.insert(rule.name.to_string(), rule.clone());
+      for tag in rule.groups() {
+        rules_by_group.collect(tag.to_string(), rule.name.to_string());
+      }
+    }
+    (rules_by_name, rules_by_group)
   }
 
   /// Records the string that should be grepped in order to find files that
@@ -179,50 +185,105 @@ impl Rule {
     }
   }
 
-  pub(crate) fn set_replace(&mut self, replace: String) {
-    self.replace = replace;
+  pub(crate) fn update_replace(&mut self, substitutions: &HashMap<String, String>) {
+    self.replace = substitute_tags(self.replace(), substitutions);
   }
 
-  pub(crate) fn set_query(&mut self, query: String) {
-    self.query = query;
+  pub(crate) fn update_query(&mut self, substitutions: &HashMap<String, String>) {
+    self.query = substitute_tags(self.query(), substitutions);
   }
 
   pub(crate) fn name(&self) -> String {
     String::from(&self.name)
   }
-}
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Constraint {
-  /// Scope in which the constraint query has to be applied
-  matcher: String,
-  /// The Tree-sitter queries that need to be applied in the `matcher` scope
-  queries: Vec<String>,
-}
-
-impl Constraint {
-  pub(crate) fn queries(&self) -> &[String] {
-    &self.queries
-  }
-
-  pub(crate) fn matcher(&self) -> String {
-    String::from(&self.matcher)
-  }
-}
-
-pub trait RuleHelper {
-  /// replaces the all the occurrences of keys (of `substitutions` map) in the string with its corresponding value.
-  fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String;
-}
-
-impl RuleHelper for String {
-  fn substitute_tags(&self, substitutions: &HashMap<String, String>) -> String {
-    let mut output = String::from(self);
-    for (tag, substitute) in substitutions {
-      // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
-      let key = format!("@{}", tag);
-      output = output.replace(&key, substitute)
+  // Apply all the `rules` to the node, parent, grand parent and great grand parent.
+  // Short-circuit on the first match.
+  pub(crate) fn get_edit_for_context(
+    source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
+    rules_store: &mut RuleStore, rules: &Vec<Rule>,
+  ) -> Option<Edit> {
+    // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
+    let context = || {
+      get_context(
+        source_code_unit.root_node(),
+        previous_edit_start,
+        previous_edit_end,
+      )
+    };
+    for rule in rules {
+      for ancestor in &context() {
+        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false)
+        {
+          return Some(edit);
+        }
+      }
     }
-    output
+    None
+  }
+
+  /// Gets the first match for the rule in `self`
+  pub(crate) fn get_edit(
+    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
+    recursive: bool,
+  ) -> Option<Edit> {
+    // Get all matches for the query in the given scope `node`.
+    let all_query_matches = node.get_all_matches_for_query(
+      source_code_unit.code(),
+      rule_store.get_query(&self.get_query()),
+      recursive,
+      Some(self.replace_node()),
+    );
+
+    // Return the first match that satisfies constraint of the rule
+    for (range, tag_substitutions) in all_query_matches {
+      let matched_node = get_node_for_range(
+        source_code_unit.root_node(),
+        range.start_byte,
+        range.end_byte,
+      );
+      if matched_node.satisfies_constraint(
+        source_code_unit.clone(),
+        self,
+        &tag_substitutions,
+        rule_store,
+      ) {
+        let replacement = substitute_tags(self.replace(), &tag_substitutions);
+        return Some(Edit::new(
+          range,
+          replacement,
+          self.clone(),
+          tag_substitutions,
+        ));
+      }
+    }
+    None
   }
 }
+
+#[cfg(test)]
+impl Rule {
+  pub(crate) fn new(
+    name: &str, query: &str, replace_node: &str, replace: &str, holes: Option<Vec<String>>,
+    constraints: Option<Vec<Constraint>>,
+  ) -> Self {
+    Self {
+      name: name.to_string(),
+      query: query.to_string(),
+      replace_node: replace_node.to_string(),
+      replace: replace.to_string(),
+      groups: None,
+      holes,
+      constraints,
+      grep_heuristics: None,
+    }
+  }
+
+  pub(crate) fn dummy() -> Rule {
+    Rule::new("", "", "", "", None, None)
+  }
+}
+
+#[cfg(test)]
+#[path = "unit_tests/rule_test.rs"]
+mod rule_test;

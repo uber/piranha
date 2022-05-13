@@ -380,7 +380,7 @@ queries = [
 (
 ((assignment_expression
                     left: (_) @a.lhs
-                    right: (_) @a.rhs) @a)
+                    right: (_) @a.rhs) @assignment)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )"""
@@ -409,7 +409,7 @@ queries = [
   """(
 ((assignment_expression
                     left: (_) @a.lhs
-                    right: (_) @a.rhs) @a)
+                    right: (_) @a.rhs) @assignment)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )"""
@@ -526,6 +526,10 @@ queries = [
 ]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
+# Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
+# A pattern here is - if there is an outgoing edge to B there is another to C.
+# In these cases, you can use a dummy rule X as shown below:
+# X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
 query = """

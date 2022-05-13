@@ -16,12 +16,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! This module defines all basic building block `structs` used by Piranha.
 
 use crate::{
+  models::piranha_arguments::PiranhaArguments,
   models::{
     outgoing_edges::{Edges, OutgoingEdges},
     rule::{Rule, Rules},
     scopes::{ScopeConfig, ScopeGenerator},
   },
-  piranha::piranha_arguments::PiranhaArguments,
   utilities::read_toml,
 };
 
@@ -29,17 +29,16 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
-/// Used for parsing command-line arguments passed to Piranha .
+/// A refactoring tool that eliminates dead code related to stale feature flags.
 #[derive(Clone, Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-
-pub struct CommandLineArguments {
+#[clap(name = "Piranha")]
+pub(crate) struct CommandLineArguments {
   /// Path to source code folder.
   #[clap(short = 'c', long)]
-  pub path_to_codebase: String,
-  /// Folder containing the required configuration files
+  pub(crate) path_to_codebase: String,
+  /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,  and  `edges.toml` (optional).
   #[clap(short = 'f', long)]
-  pub path_to_configurations: String,
+  pub(crate) path_to_configurations: String,
 }
 
 pub(crate) fn read_config_files(
