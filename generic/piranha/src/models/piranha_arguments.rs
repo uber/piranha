@@ -25,7 +25,7 @@ use crate::{
 
 #[derive(Clone)]
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
-pub struct PiranhaArguments {
+pub(crate) struct PiranhaArguments {
   /// Path to source code folder.
   path_to_code_base: String,
   // Input arguments provided to Piranha, mapped to tag names -

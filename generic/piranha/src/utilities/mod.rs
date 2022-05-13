@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-pub mod tree_sitter_utilities;
+pub(crate) mod tree_sitter_utilities;
 
 use std::collections::HashMap;
 #[cfg(test)]

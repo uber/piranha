@@ -10,7 +10,7 @@ struct TestStruct {
 }
 
 #[test]
-pub fn test_read_file() {
+fn test_read_file() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_test_file = project_root.join("test-resources/utility_tests/sample.toml");
   let result = read_file(&path_to_test_file);
@@ -21,7 +21,7 @@ pub fn test_read_file() {
 }
 
 #[test]
-pub fn test_read_toml() {
+fn test_read_toml() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_test_file = project_root.join("test-resources/utility_tests/sample.toml");
   let result: TestStruct = read_toml(&path_to_test_file, false);
@@ -29,7 +29,7 @@ pub fn test_read_toml() {
 }
 
 #[test]
-pub fn test_read_toml_default() {
+fn test_read_toml_default() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_test_file =
     project_root.join("test-resources/utility_tests/another_sample.toml.toml");
@@ -38,7 +38,7 @@ pub fn test_read_toml_default() {
 }
 
 #[test]
-pub fn test_find_file_positive() {
+fn test_find_file_positive() {
   let project_root =
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
   let f = find_file(&project_root, "sample.toml");
@@ -47,7 +47,7 @@ pub fn test_find_file_positive() {
 
 #[test]
 #[should_panic]
-pub fn test_find_file_negative() {
+fn test_find_file_negative() {
   let project_root =
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-resources/utility_tests/");
   let f = find_file(&project_root, "another_sample.toml.toml");

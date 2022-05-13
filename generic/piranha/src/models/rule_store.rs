@@ -28,12 +28,10 @@ use crate::{
   utilities::{tree_sitter_utilities::TreeSitterHelpers, MapOfVec},
 };
 
-pub static GLOBAL: &str = "Global";
-pub static METHOD: &str = "Method";
-pub static CLASS: &str = "Class";
-pub static PARENT: &str = "Parent";
+pub(crate) static GLOBAL: &str = "Global";
+pub(crate) static PARENT: &str = "Parent";
 /// This maintains the state for Piranha.
-pub struct RuleStore {
+pub(crate) struct RuleStore {
   // A graph that captures the flow amongst the rules
   rule_graph: RuleGraph,
   // Caches the compiled tree-sitter queries.
@@ -134,7 +132,7 @@ impl RuleStore {
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope
-    for scope in [PARENT, METHOD, CLASS, GLOBAL] {
+    for scope in [PARENT, GLOBAL] {
       next_rules.entry(scope.to_string()).or_default();
     }
     next_rules

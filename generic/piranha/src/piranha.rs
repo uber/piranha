@@ -11,9 +11,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-// pub(crate) mod flag_cleaner;
-// pub(crate) mod source_code_unit;
-
 use std::{collections::HashMap, path::PathBuf};
 
 use colored::Colorize;
@@ -42,6 +39,12 @@ use crate::{
 
 use std::collections::VecDeque;
 use tree_sitter::{InputEdit, Node};
+
+pub(crate) fn execute_piranha(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
+  let mut flag_cleaner = FlagCleaner::new(args);
+  flag_cleaner.perform_cleanup();
+  flag_cleaner.get_updated_files()
+}
 
 impl SourceCodeUnit {
   /// Will apply the `rule` to all of its occurrences in the source code unit.
@@ -169,7 +172,7 @@ impl SourceCodeUnit {
   }
 
   /// Apply all `rules` sequentially.
-  pub(crate) fn apply_rules(
+  fn apply_rules(
     &mut self, rules_store: &mut RuleStore, rules: &[Rule], parser: &mut Parser,
     scope_query: Option<String>,
   ) {
@@ -180,7 +183,7 @@ impl SourceCodeUnit {
 }
 
 // Maintains the state of Piranha and the updated content of files in the source code.
-pub(crate) struct FlagCleaner {
+struct FlagCleaner {
   // Maintains Piranha's state
   rule_store: RuleStore,
   // Path to source code folder
@@ -190,12 +193,12 @@ pub(crate) struct FlagCleaner {
 }
 
 impl FlagCleaner {
-  pub(crate) fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
+   fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self.relevant_files.values().cloned().collect_vec()
   }
 
   /// Performs cleanup related to stale flags
-  pub(crate) fn perform_cleanup(&mut self) {
+   fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
@@ -244,7 +247,7 @@ impl FlagCleaner {
 
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
-  pub(crate) fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
+   fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
     let pattern = self.get_grep_heuristics();
     info!(
       "{}",
@@ -276,7 +279,7 @@ impl FlagCleaner {
   }
 
   /// Instantiate Flag-cleaner
-  pub(crate) fn new(args: PiranhaArguments) -> Self {
+   fn new(args: PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(&args);
     Self {
       rule_store: graph_rule_store,
@@ -293,7 +296,7 @@ impl FlagCleaner {
   /// heuristic to find the (upper bound) files that would match one of our current global rules.
   /// This heuristic reduces the number of files to parse.
   ///
-  pub(crate) fn get_grep_heuristics(&self) -> Regex {
+   fn get_grep_heuristics(&self) -> Regex {
     let reg_x = self
       .rule_store
       .global_rules()

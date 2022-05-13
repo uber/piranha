@@ -35,10 +35,10 @@ use clap::Parser;
 pub(crate) struct CommandLineArguments {
   /// Path to source code folder.
   #[clap(short = 'c', long)]
-  pub path_to_codebase: String,
+  pub(crate) path_to_codebase: String,
   /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,  and  `edges.toml` (optional).
   #[clap(short = 'f', long)]
-  pub path_to_configurations: String,
+  pub(crate) path_to_configurations: String,
 }
 
 pub(crate) fn read_config_files(

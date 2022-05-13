@@ -196,7 +196,7 @@ impl PiranhaHelpers for Node<'_> {
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
 /// Returns tree-sitter's edit representation along with updated source code.
 /// Note: This method does not update `self`.
-pub fn get_tree_sitter_edit(
+pub(crate) fn get_tree_sitter_edit(
   code: String, replace_range: Range, replacement: &str,
 ) -> (String, InputEdit) {
   // Log the edit
@@ -290,7 +290,7 @@ pub(crate) fn get_context(
 }
 
 #[cfg(test)]
-pub fn get_parser(language: String) -> Parser {
+pub(crate) fn get_parser(language: String) -> Parser {
   let mut parser = Parser::new();
   parser
     .set_language(language.get_language())
