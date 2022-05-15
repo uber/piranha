@@ -64,8 +64,8 @@ const (
 
 // Some useful global variables
 var (
-	treated = "treated"
-	control = "control"
+	modeTreated = "treated"
+	modeControl = "control"
 )
 var (
 	strTrue  = "true"
@@ -152,9 +152,9 @@ func (sfc *staleFlagCleaner) flagTypeAPI(callExpr *dst.CallExpr) API {
 			case *dst.Ident:
 				if arg.Name == sfc.flagName {
 					switch element.OfType {
-					case treated:
+					case modeTreated:
 						return _isTreated
-					case control:
+					case modeControl:
 						return _isControl
 					default:
 						return _isUnknown
@@ -304,9 +304,8 @@ If Value is isUndefined or it is a bool literal, then we are not adding that to 
 otherwise we will add it to valueMap.
 This signifies whether variable has effect of flag or not.
 */
-func (sfc *staleFlagCleaner) updateValueMapPost(name dst.Expr, value dst.Expr) {
+func (sfc *staleFlagCleaner) updateValueMapPost(name dst.Expr, value dst.Expr, doNotDelLiterals bool) {
 	valOfExpr := sfc.evaluateExprNode(value)
-	doNotDelLiterals := sfc.checkForBoolLiterals(value)
 	switch d := name.(type) {
 	case *dst.Ident:
 		if valOfExpr == isUndefined || doNotDelLiterals {
@@ -348,7 +347,7 @@ func (sfc *staleFlagCleaner) DelValStmt(names *[]*dst.Ident, values *[]dst.Expr)
 		if len((*values)) != 0 {
 			valOfExpr = sfc.evaluateExprNode((*values)[ind])
 			doNotDelLiterals = sfc.checkForBoolLiterals((*values)[ind])
-			sfc.updateValueMapPost((*names)[ind], (*values)[ind])
+			sfc.updateValueMapPost((*names)[ind], (*values)[ind], doNotDelLiterals)
 		}
 
 		if (valOfExpr != isUndefined && !doNotDelLiterals) || (*names)[ind].Name == sfc.flagName || delCallExpr {
@@ -386,7 +385,7 @@ func (sfc *staleFlagCleaner) DelAssStmt(names *[]dst.Expr, values *[]dst.Expr) b
 		doNotDelLiterals = sfc.checkForBoolLiterals((*values)[ind])
 
 		// Need to see what to do with this thing
-		sfc.updateValueMapPost((*names)[ind], (*values)[ind])
+		sfc.updateValueMapPost((*names)[ind], (*values)[ind], doNotDelLiterals)
 
 		if (valOfExpr != isUndefined && !doNotDelLiterals) || delCallExpr {
 			var trueIdent dst.Ident

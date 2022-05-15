@@ -102,4 +102,5 @@ func RunPiranha(sourceFile string, configFile string, flagName string, outputFil
 		always starts with the dst.File type.
 	*/
 	decorator.Fprint(outputFile, newRoot.(*dst.File))
+	outputFile.Close()
 }

@@ -31,14 +31,14 @@ func main() {
 	flag.StringVar(&flagName, "f", "STALE_FLAG", "Name of the stale flag.")
 	// check treatedMode
 	flag.StringVar(&modeName, "mode", "MODE_NAME", "If MODE_NAME=treated, then flag is treated, otherwise MODE_NAME=control, it is control.")
-	if modeName == "treated" {
-		isTreated = true
-	}
 	// get outputFileName
 	flag.StringVar(&outputFileName, "o", "OUTPUT", "Destination of the refactored output from piranha. If -o is not provided, then the source file is updated in place.")
 
 	flag.Parse()
 	
+	if modeName == "treated" {
+		isTreated = true
+	}
 	
 	src.RunPiranha(sourceFile, configFile, flagName, outputFileName, isTreated)
 }

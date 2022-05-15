@@ -127,13 +127,9 @@ func TestFiles(t *testing.T) {
 			fmt.Println("File Matched Sucessfully")
 		}
 		fmt.Println()
-		del := os.Remove("temp.go")
-		if del != nil {
-			log.Fatal(del)
-		}
 	}
 	fmt.Print("Testing with -mode control\n")
-	isTreated=false
+	isTreated = false
 	for _, table := range tables {
 		fmt.Print("Matching with: ")
 		fmt.Println(table.outputControl)
@@ -146,9 +142,9 @@ func TestFiles(t *testing.T) {
 			fmt.Println("File Matched Sucessfully")
 		}
 		fmt.Println()
-		del := os.Remove("temp.go")
-		if del != nil {
-			log.Fatal(del)
-		}
+	}
+	del := os.Remove("temp.go")
+	if del != nil {
+		log.Fatal(del)
 	}
 }
