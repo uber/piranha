@@ -44,8 +44,6 @@ fn test_apply_edit_positive() {
     ),
     &mut parser,
   );
-
-  println!("{}", source_code_unit.code());
   assert!(eq_without_whitespace(
     r#"class Test {
       pub void foobar(){

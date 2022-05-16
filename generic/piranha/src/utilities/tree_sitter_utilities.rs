@@ -25,6 +25,8 @@ use std::collections::HashMap;
 use tree_sitter::Parser;
 use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCursor, Range};
 
+use super::eq_without_whitespace;
+
 extern "C" {
   fn tree_sitter_java() -> Language;
 }
@@ -48,6 +50,7 @@ impl TreeSitterHelpers for String {
     unsafe {
       match self.as_str() {
         "java" => tree_sitter_java(),
+        "kt" => tree_sitter_kotlin::language(), 
         _ => panic!("Language not supported"),
       }
     }
@@ -267,26 +270,32 @@ pub(crate) fn get_node_for_range(root_node: Node, start_byte: usize, end_byte: u
     .unwrap()
 }
 
-/// Returns the node, its parent, grand parent and great grand parent
-pub(crate) fn get_context(
-  root_node: Node, previous_edit_start: usize, previous_edit_end: usize,
-) -> Vec<Node> {
-  // let root = self.root_node();
-  let changed_node = get_node_for_range(root_node, previous_edit_start, previous_edit_end);
-  // Add parent of the changed node to the context
-  let mut context = vec![changed_node];
-  if let Some(parent) = changed_node.parent() {
-    context.push(parent);
-    // Add grand parent of the changed node to the context
-    if let Some(grand_parent) = parent.parent() {
-      context.push(grand_parent);
-      // Add great grand parent of the changed node to the context
-      if let Some(great_grand_parent) = grand_parent.parent() {
-        context.push(great_grand_parent);
-      }
+fn get_non_str_eq_parent(node: Node, source_code: String) -> Option<Node> {
+  if let Some(parent) = node.parent(){
+    if !eq_without_whitespace(
+      parent.utf8_text(source_code.as_bytes()).unwrap(),
+      node.utf8_text(source_code.as_bytes()).unwrap(),
+    ) {
+     return Some(parent);
+    }else {
+      return get_non_str_eq_parent(parent, source_code);
     }
   }
-  context
+  None
+}
+
+/// Returns the node, its parent, grand parent and great grand parent
+pub(crate) fn get_context<'a>(
+  root_node: Node, prev_node: Node<'a>, source_code: String, count: u8
+) -> Vec<Node<'a>>{
+  let mut output = Vec::new();
+  if count > 0 {
+      output.push(prev_node);
+      if let Some(parent) = get_non_str_eq_parent(prev_node, source_code.to_string()){    
+          output.extend(get_context(root_node, parent, source_code, count-1));
+      }
+  }
+  output
 }
 
 #[cfg(test)]

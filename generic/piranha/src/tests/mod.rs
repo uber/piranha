@@ -23,6 +23,7 @@ use crate::piranha::{execute_piranha};
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
 mod test_piranha_java;
+mod test_piranha_kt;
 mod unit_tests;
 
 use std::sync::Once;
@@ -67,9 +68,9 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
       info!("{}", format!("Match successful for {:?}", expected_file_path).green());
     } else {
       #[rustfmt::skip]
-      println!("{}", format!("Match failed for {:?}", expected_file_path).red());
+      info!("{}", format!("Match failed for {:?}", expected_file_path).red());
 
-      println!("{}", source_code_unit.code());
+      info!("{}", source_code_unit.code());
       all_files_match = false;
     }
   }

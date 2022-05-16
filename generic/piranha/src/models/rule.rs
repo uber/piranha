@@ -203,13 +203,11 @@ impl Rule {
     source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
     rules_store: &mut RuleStore, rules: &Vec<Rule>,
   ) -> Option<Edit> {
+    let changed_node = get_node_for_range(source_code_unit.root_node(), previous_edit_start, previous_edit_end);
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
-        source_code_unit.root_node(),
-        previous_edit_start,
-        previous_edit_end,
-      )
+        source_code_unit.root_node(),changed_node,source_code_unit.code(), 4)
     };
     for rule in rules {
       for ancestor in &context() {

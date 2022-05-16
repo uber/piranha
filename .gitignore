@@ -15,6 +15,7 @@ generic/piranha/Cargo.lock
 generic/piranha/.idea
 generic/tree-sitter-src/tree-sitter-java
 generic/tree-sitter-src/tree-sitter-swift
+generic/tree-sitter-src/tree-sitter-kotlin
 .history
 .vscode
 **/*.log
