@@ -5,13 +5,13 @@ import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
     enum class TestExperimentName {
-
-
+        
+        
     }
 
     enum class AnotherTestExperimentName {
-
-
+        
+        
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -24,107 +24,98 @@ internal class XPFlagCleanerPositiveCases {
     private val experimentation: XPTest? = null
     private var tBool = false
     fun conditional_contains_stale_flag() {
-
-
+        
+        
     }
 
     fun conditional_with_else_contains_stale_flag() {
-        {
-            println("Hi world")
-        }
+        println("Hi world")
     }
 
      fun complex_conditional_contains_stale_flag() {
         println("Hello World")
-
     }
 
     fun other_api_stale_flag() {
-        {
-            println("Hi world")
-        }
+        println("Hi world")
     }
 
     fun assignments_containing_stale_flag() {
-
+        
         tBool = false
 
-
+        
         tBool = false
 
-
+        
         tBool = true
 
-
+        
         tBool = tBool
 
-
+        
         tBool = false
     }
 
     fun return_contains_stale_flag(): Boolean {
         // FIXME:
-        return experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)
+        return false
     }
 
     fun condexp_contains_stale_flag() {
-
+        
         tBool = false
     }
 
     fun misc_xp_apis_containing_stale_flag() {
+        
+        
 
+        
+        
 
+        
+        
 
+        
+        
 
-
-
-
-
-
-
-
-
-
+        
         if ((tBool || true)) {
             println("Hello World")
         }
     }
 
     fun return_within_if_basic(): Int {
-
+        
         return 30
     }
 
     fun return_within_if_additional(x: Int): Int {
         if (x == 0) {
-
+            
             return 75
         }
-        if (x == 1)
-            return {
-                76
-            }
+        if (x == 1) 
+            return 76
         if (x == 2) {
             var y = 3
-
-
+            
+            
             return y + 10
         }
         if (x == 3) {
             var z = 4
-
-            {
-                z = z * 5
+            
+            z = z * 5
                 return z + 10
-            }
-            return 10000
+            
         }
         return 100
     }
 
     private fun testRemovingInjectField(): Int {
-
+        
      return 2
     }
 
@@ -134,12 +125,12 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     private fun testNotRemovingInjectField(): Int {
-
+        
         return 2
     }
 
     fun unusedParamTestWithDeletion(): Int {
-
+        
         return 2
     }
 
@@ -147,18 +138,16 @@ internal class XPFlagCleanerPositiveCases {
         if (x != null) {
         }
 
-
+        
         return 2
     }
 
     private fun testMultipleCalls(x: Int):Int {
         if (x > 0) {
-
-
-
-            {
-                return 2000
-            }
+            
+            
+            
+            return 2000
         }
 
         // do something here
@@ -166,7 +155,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun or_compounded_with_not(x: Int, extra_toggle: Boolean): Int {
-
+        
         if (extra_toggle) {
             return 0
         } else {
@@ -175,7 +164,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun remove_else_if(extra_toggle: Boolean): Int {
-
+        
         return if (extra_toggle) {
             0
         } else {

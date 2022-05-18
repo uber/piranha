@@ -139,7 +139,7 @@ query = """
 (
 (if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
 			   (control_structure_body (_)? ) @consquent
-			   (control_structure_body (_)? ) @alternative) @if_expression
+			   (control_structure_body (_)? @alternative) ) @if_expression
 (#eq? @condition "false")
 )"""
 replace = "@alternative"
@@ -386,6 +386,17 @@ replace_node = "post"
 # }
 #
 
+
+[[rules]]
+name = "delete_property_declaration_named"
+query = """(
+(property_declaration (variable_declaration (simple_identifier)@v_name ) (_)) @property_declaration
+(#eq? @v_name "@variable_name")
+)"""
+replace = ""
+replace_node = "property_declaration"
+holes = ["variable_name"]
+
 [[rules]]
 name = "delete_local_var_property_declaration"
 query = """
@@ -399,10 +410,18 @@ replace_node = "property_declaration"
 # # assigned to a value other than @init, within the method body
 # # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
 # # These holes will be filled contextually based on the code snippet matched to `rule.query
+# [[rules.constraints]]
+# matcher = "(function_declaration) @md"
+# queries = [] 
 [[rules.constraints]]
 matcher = "(function_declaration) @md"
-queries = [] 
-
+queries = [
+  """(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@assignment
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)""",
+]
 
 # # This rule is part (and entry point) of the inline field declaration cleanup.
 # # Same as the rule `delete_variable_declaration`, but applicable to fields.
@@ -421,7 +440,7 @@ replace_node = "property_declaration"
 matcher = "(class_declaration) @cd"
 queries = [
   """(
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@assignment
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )""",
@@ -436,8 +455,8 @@ name = "delete_boolean_assignments_for_local_variable"
 query = """
 (
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
-(#eq? @l "@variable_name")
-(#eq? @r "@init")
+(#eq? @a.lhs "@variable_name")
+(#eq? @a.rhs "@init")
 ) 
 """
 replace = ""
@@ -460,8 +479,8 @@ name = "delete_boolean_assignments_for_field"
 query = """
 (
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
-(#eq? @l "@variable_name")
-(#eq? @r "@init")
+(#eq? @a.lhs "@variable_name")
+(#eq? @a.rhs "@init")
 ) 
 """
 replace = ""
@@ -484,18 +503,55 @@ queries = [
 # # (i) if it is the only assignment in the entire class in the enclosing class
 # # (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
 # # (iii) There is no local variable declaration of the same name in the enclosing method
-# [[rules]]
-# name = "delete_parent_assignment"
-# query = """
-# (
-# (expression_statement (assignment_expression
-#                                 left: (_) @variable_name
-#                     right: (_) @init)) @expression_statement
-# ) 
-# """
-# replace = ""
-# replace_node = "expression_statement"
-# # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+[[rules]]
+name = "delete_parent_assignment"
+query = """
+(assignment (directly_assignable_expression (simple_identifier)@variable_name) (boolean_literal) @init)	@assignment
+"""
+replace = ""
+replace_node = "assignment"
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+"""(
+(property_declaration (variable_declaration (simple_identifier)@f_vdcl.lhs ) 
+ 								(_)@f_vdcl.init) @property_declaration
+  (#eq? @f_vdcl.lhs "@variable_name")
+  (#not-eq? @f_vdcl.init "@init")
+)""",
+]
+
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+"""(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@f_assignment
+  (#eq? @a.lhs "@variable_name")
+  (#not-eq? @a.rhs "@init")
+)""",
+]
+
+[[rules.constraints]]
+matcher = "(class_declaration) @md"
+queries = [
+  """(
+(property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+ 								(_)@vdcl.init ) @property_declaration
+(#eq? @vdcl.lhs "@variable_name")
+(#not-eq? @vdcl.init "@init")
+)""",
+]
+
+[[rules.constraints]]
+matcher = "(class_declaration) @md"
+queries = [
+"""(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@c_assignment
+  (#eq? @a.lhs "@variable_name")
+  (#not-eq? @a.rhs "@init")
+)""",
+]
 # [[rules.constraints]]
 # matcher = "(method_declaration) @md"
 # queries = [

@@ -18,51 +18,35 @@ package com.uber.input
 
 internal class XPFlagCleanerPositiveCases {
     private val experimentation: SomeOtherParameter = SomeOtherParameter.create()
-    private var ftBool = experimentation.isStaleFeature().cachedValue
+    
+    private var ftBool1 = true
+    private var ftBool2 = true
     fun conditional_contains_stale_flag() {
-        if (experimentation.isStaleFeature().cachedValue) {
-            println("Hello World")
-        }
+        println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag() {
-        if (experimentation.isStaleFeature().cachedValue) {
-            println("Hello World")
-        } else {
-            println("Hi world")
-        }
+        println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool() {
-        val tBool = experimentation.isStaleFeature().cachedValue
-        if (tBool && true) {
-            println("Hello World")
-        } else {
-            println("Hi world")
-        }
+        
+        println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool(a: Int) {
-        val tBool = experimentation.isStaleFeature().cachedValue
-        if (tBool && true) {
-            println("Hello World")
-        } else {
-            println("Hi world")
-        }
+        
+        println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool(a: Int, abc: Boolean) {
-        val tBool = experimentation.isStaleFeature().cachedValue
-        if (!tBool && true) {
-            println("Hello World")
-        } else {
-            println("Hi world")
-        }
+        
+        println("Hi world")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
-        var tBool = experimentation.isStaleFeature().cachedValue
+        var tBool = true
         tBool = abc() && tBool
         if (!tBool && true) {
             println("Hello World")
@@ -76,38 +60,43 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(a: Int, z: Int) {
-        var tBool = experimentation.isStaleFeature().cachedValue
-        tBool = true
-        if (!tBool && true) {
-            println("Hello World")
-        } else {
-            println("Hi world")
-        }
+        
+        
+        println("Hi world")
     }
 
     fun conditional_with_else_contains_stale_flag_ftbool(a: Int) {
-        if (ftBool && true) {
-            println("Hello World")
-        } else {
-            println("Hi world")
-        }
+        println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
-        ftBool = experimentation.isStaleFeature().cachedValue
-        if (!ftBool && true) {
+        
+        println("Hi world")
+    }
+
+    fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(a: Int, z: Int) {
+        // Currently if there is another assignment, variable will not be inlined.
+        
+        println("Hi world")
+    }
+
+    fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_2(a: Int, z: Int) {
+        // Currently if there is another assignment, variable will not be inlined.
+        ftBool1 = false
+        if (!ftBool1 && true) {
             println("Hello World")
         } else {
             println("Hi world")
         }
     }
 
-    fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(a: Int, z: Int) {
+
+    fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_3(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
-        var ftBool = abc()
-        ftBool = experimentation.isStaleFeature().cachedValue
-        if (!ftBool && true) {
+        ftBool2 = true
+        ftBool2 = false
+        if (!ftBool2 && true) {
             println("Hello World")
         } else {
             println("Hi world")

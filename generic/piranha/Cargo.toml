@@ -24,4 +24,4 @@ jwalk= "0.6.0"
 clap = { version = "3.1.12", features = ["derive"] }
 log = "0.4.16"
 env_logger = "0.9.0"
-tree-sitter-kotlin = "0.2.11"
+tree-sitter-kotlin = { path = "../tree-sitter-src/tree-sitter-kotlin" }

@@ -13,67 +13,67 @@
 # The edges in this file specify the flow between the rules.
 
 [[edges]]
-scope = "Parent"
 from = "replace_expression_with_boolean_literal"
+scope = "Parent"
 to = ["boolean_literal_cleanup"]
 
 [[edges]]
-scope = "Parent"
 from = "boolean_literal_cleanup"
+scope = "Parent"
 to = ["statement_cleanup", "boolean_expression_simplify"]
 
 [[edges]]
-scope = "Parent"
 from = "statement_cleanup"
-to = ["delete_local_var_property_declaration"]
-
-[[edges]]
 scope = "Parent"
-from = "boolean_expression_simplify"
-to = ["boolean_literal_cleanup"]
-
-# [[edges]]
-# scope = "Parent"
-# from = "statement_cleanup"
-# to = [
-#   "if_cleanup"
-# ]
-
-[[edges]]
-scope = "Parent"
-from = "if_cleanup"
-to = [ "delete_all_statements_after_return"]
-
-# [[edges]]
-# scope = "Parent"
-# from = "replace_identifier_with_value"
-# to = ["boolean_literal_cleanup"]
-
-[[edges]]
-scope = "Method"
-from = "delete_local_var_property_declaration"
 to = [
-  "replace_identifier_with_value",
-  "delete_boolean_assignments_for_local_variable"
+  "delete_local_var_property_declaration",
+  "delete_field_property_declaration",
+  "delete_parent_assignment",
 ]
 
-# # Another workflow for inline variable
-# [[edges]]
-# scope = "Method"
-# from = "delete_parent_assignment"
-# to = ["delete_variable_declaration"]
+[[edges]]
+from = "boolean_expression_simplify"
+scope = "Parent"
+to = ["boolean_literal_cleanup"]
 
-# [[edges]]
-# scope = "Class"
-# from = "delete_field_declaration"
-# to = [
-#   "replace_identifier_with_value",
-#   "delete_boolean_assignments_for_variable",
-# ]
+[[edges]]
+from = "if_cleanup"
+scope = "Parent"
+to = ["delete_all_statements_after_return"]
 
+[[edges]]
+from = "replace_identifier_with_value"
+scope = "Parent"
+to = ["boolean_literal_cleanup"]
 
-# # Another workflow for inline field
-# [[edges]]
-# scope = "Class"
-# from = "delete_parent_assignment"
-# to = ["delete_field_declaration"]
+[[edges]]
+from = "delete_local_var_property_declaration"
+scope = "Method"
+to = [
+  "replace_identifier_with_value",
+  "delete_boolean_assignments_for_local_variable",
+  "delete_parent_assignment",
+]
+
+[[edges]]
+from = "delete_property_declaration_named"
+scope = "Method"
+to = [
+  "replace_identifier_with_value",
+  "delete_boolean_assignments_for_local_variable",
+  "delete_boolean_assignments_for_field",
+  "delete_parent_assignment",
+]
+
+[[edges]]
+from = "delete_parent_assignment"
+scope = "Method"
+to = ["delete_property_declaration_named"]
+
+[[edges]]
+from = "delete_field_property_declaration"
+scope = "Class"
+to = [
+  "replace_identifier_with_value",
+  "delete_boolean_assignments_for_field",
+]

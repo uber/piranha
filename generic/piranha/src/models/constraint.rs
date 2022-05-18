@@ -55,10 +55,6 @@ impl Constraint {
           range.start_byte,
           range.end_byte,
         );
-        // Apply each query within the `scope_node`
-        if self.queries.is_empty() {
-          return matched_matcher;
-        }
         for query_with_holes in self.queries() {
           let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
           let query = &rule_store.get_query(&query_str);

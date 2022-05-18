@@ -29,6 +29,10 @@ fn build(language: &str) -> Result<&str, &str> {
       "tree-sitter-java",
       "https://github.com/tree-sitter/tree-sitter-java.git",
     ),
+    // "kt" => (
+    //   "tree-sitter-kotlin",
+    //   "https://github.com/fwcd/tree-sitter-kotlin.git",
+    // ),
     _ => panic!("Language not supported!"),
   };
 
@@ -54,17 +58,17 @@ fn build(language: &str) -> Result<&str, &str> {
       return Err("Could not clone tree-sitter language repository - {git_url}");
     }
 
-    let mut build_repo_cmd = Command::new("tree-sitter")
-      .stdout(Stdio::piped())
-      .current_dir(&path_to_tree_sitter_language)
-      .arg("generate")
-      .spawn()
-      .unwrap();
+    // let mut build_repo_cmd = Command::new("tree-sitter")
+    //   .stdout(Stdio::piped())
+    //   .current_dir(&path_to_tree_sitter_language)
+    //   .arg("generate")
+    //   .spawn()
+    //   .unwrap();
 
-    let build_repo = build_repo_cmd.wait().unwrap();
-    if !build_repo.success() {
-      return Err("Could not generate tree-sitter parser/scanner");
-    }
+    // let build_repo = build_repo_cmd.wait().unwrap();
+    // if !build_repo.success() {
+    //   return Err("Could not generate tree-sitter parser/scanner");
+    // }
   }
 
   let mut build = cc::Build::new();
@@ -82,4 +86,5 @@ fn build(language: &str) -> Result<&str, &str> {
 
 fn main() {
   let _ = build("java");
+  // let _ = build("kt");
 }

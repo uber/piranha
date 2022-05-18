@@ -29,12 +29,12 @@
 name = "Method"
 [[scopes.rules]]
 matcher =  """
-((function_declaration (simple_identifier)@n  ((parameter) ("," (parameter))*) @sign) @qd5)
+((function_declaration (simple_identifier)@n  (function_value_parameters) @sign (function_body) @fb) @qd5)
 """
-generator = """
-((function_declaration (simple_identifier)@n  ((parameter) ("," (parameter))*) @sign) @qd5)
+generator = """(
+((function_declaration (simple_identifier)@z  (function_value_parameters) @g_sign (function_body) @g_fb) @g_qd5)
 (#eq? @z "@n")
-(#eq? @sign "@g_sign")                
+(#eq? @g_sign "@sign")                
 )"""
 
 # Scope generators for Java Class.

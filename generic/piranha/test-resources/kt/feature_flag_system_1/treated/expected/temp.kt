@@ -26,22 +26,18 @@ internal class XPFlagCleanerPositiveCases {
     fun conditional_contains_stale_flag() {
         
         println("Hello World")
-
     }
 
     fun conditional_with_else_contains_stale_flag() {
         println("Hello World")
-
     }
 
      fun complex_conditional_contains_stale_flag() {
         println("Hello World")
-
     }
 
     fun other_api_stale_flag() {
         println("Hello World")
-
     }
 
     fun assignments_containing_stale_flag() {
@@ -63,7 +59,7 @@ internal class XPFlagCleanerPositiveCases {
 
     fun return_contains_stale_flag(): Boolean {
         // FIXME:
-        return experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)
+        return true
     }
 
     fun condexp_contains_stale_flag() {
@@ -92,31 +88,26 @@ internal class XPFlagCleanerPositiveCases {
     fun return_within_if_basic(): Int {
         
         return 20
-
     }
 
     fun return_within_if_additional(x: Int): Int {
         if (x == 0) {
             
             return 0
-
         }
         if (x == 1) 
             return 1
-
         if (x == 2) {
             var y = 3
             
             y++
                 return 1000
-
-            return y + 10
+            
         }
         if (x == 3) {
             var z = 4
             
             z++
-
             return 10000
         }
         return 100
@@ -156,7 +147,6 @@ internal class XPFlagCleanerPositiveCases {
             
             
             return 1000
-
         }
 
         // do something here
@@ -166,7 +156,6 @@ internal class XPFlagCleanerPositiveCases {
     fun or_compounded_with_not(x: Int, extra_toggle: Boolean): Int {
         
         return 0
-
     }
 
     fun remove_else_if(extra_toggle: Boolean): Int {

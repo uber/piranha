@@ -29,9 +29,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun conditional_with_else_contains_stale_flag() {
-        {
-            println("Hi world")
-        }
+        println("Hi world")
     }
 
      fun complex_conditional_contains_stale_flag() {
@@ -40,9 +38,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun other_api_stale_flag() {
-        {
-            println("Hi world")
-        }
+        println("Hi world")
     }
 
     fun assignments_containing_stale_flag() {
@@ -64,7 +60,7 @@ internal class XPFlagCleanerPositiveCases {
 
     fun return_contains_stale_flag(): Boolean {
         // FIXME:
-        return experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)
+        return false
     }
 
     fun condexp_contains_stale_flag() {
@@ -102,9 +98,7 @@ internal class XPFlagCleanerPositiveCases {
             return 75
         }
         if (x == 1)
-            return {
-                76
-            }
+            return 76
         if (x == 2) {
             var y = 3
 
@@ -114,12 +108,11 @@ internal class XPFlagCleanerPositiveCases {
         if (x == 3) {
             var z = 4
 
-            {
+            
                 z = z * 5
                 return z + 10
             }
-            return 10000
-        }
+        
         return 100
     }
 
@@ -156,9 +149,9 @@ internal class XPFlagCleanerPositiveCases {
 
 
 
-            {
+            
                 return 2000
-            }
+            
         }
 
         // do something here

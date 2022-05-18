@@ -30,17 +30,23 @@ internal class XPMethodChainCases {
         fun foobar(cp: Parameter) {
             val sp = SomeParameter.create()
             // Matches API
-            println("!")
+            if (sp.isStaleFeature().cachedValue) {
+                println("!")
+            }
             // Matches API
-            
+            if (!sp.isStaleFeature().cachedValue) {
+                println("!!!")
+            }
             // Does not match API
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
             }
-            if (sp.isOtherFlag().cachedValue) {
+            if (sp.isOtherFlag().cachedValue && sp.isStaleFeature().cachedValue) {
                 println("!!!")
             }
-            println("!!!")
+            if (sp.isOtherFlag().cachedValue || sp.isStaleFeature().cachedValue) {
+                println("!!!")
+            }
             val spr = SomeParamRev.create(cp)
             // Does not match API- is reverse order
             if (spr.cachedValue.isStaleFeature()) {
@@ -61,8 +67,8 @@ internal class XPMethodChainCases {
             }
             println("done!")
             // Matches API
-            
-            
+            cp.put(sp.isStaleFeature(), true)
+            cp.put(sp.isStaleFeature(), false)
 
             // Do not match API
             cp.put(sp.isOtherFlag(), true)

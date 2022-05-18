@@ -45,7 +45,7 @@ internal class XPFlagCleanerPositiveCases {
 
     fun return_contains_stale_flag(): Boolean {
       // FIXME:
-       return experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)
+       return true
     }
 
     fun condexp_contains_stale_flag() {
