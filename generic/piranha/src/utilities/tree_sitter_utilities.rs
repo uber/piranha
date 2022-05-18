@@ -129,6 +129,8 @@ impl PiranhaHelpers for Node<'_> {
       }
     }
 
+    println!("query match length {}", query_matches_by_node_range.len());
+
     let tag_names_by_index: HashMap<usize, &String> =
       query.capture_names().iter().enumerate().collect();
 
@@ -140,12 +142,23 @@ impl PiranhaHelpers for Node<'_> {
     for (captured_node_range, query_matches) in query_matches_by_node_range {
       // This ensures that each query pattern in rule.query matches the same node.
       if query_matches.len() != query.pattern_count() {
+        println!("ow! {} {}", query_matches.len(), query.pattern_count());
+        for q in query_matches{
+          for c in q {
+            println!("{}", c.node.utf8_text(source_code.as_bytes()).unwrap());
+          }
+          println!("=====");
+        }
+
+        
         continue;
+        
       }
 
       // Check if the range of the self (node), and the range of outermost node captured by the query are equal.
       let range_matches_self = self.start_byte() == captured_node_range.start_byte
         && self.end_byte() == captured_node_range.end_byte;
+      println!("Range matches {}", range_matches_self);
 
       // If `recursive` it allows matches to the subtree of self (Node)
       // Else it ensure that the query perfectly matches the node (`self`).
@@ -206,7 +219,7 @@ pub(crate) fn get_tree_sitter_edit(
   let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
 
   #[rustfmt::skip]
-    info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(), ((&replace_range.start_point.row, &replace_range.start_point.column), (&replace_range.end_point.row, &replace_range.end_point.column)), if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())} else {format!("{} ", replaced_code_snippet.italic())});
+    println!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(), ((&replace_range.start_point.row, &replace_range.start_point.column), (&replace_range.end_point.row, &replace_range.end_point.column)), if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())} else {format!("{} ", replaced_code_snippet.italic())});
 
   (
     // Create the new source code content by appropriately

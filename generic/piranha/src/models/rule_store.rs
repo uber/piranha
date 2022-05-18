@@ -76,6 +76,7 @@ impl RuleStore {
   }
 
   pub(crate) fn language_name(&self) -> &str {
+    println!("{}", self.piranha_args.language_name());
     self.piranha_args.language_name()
   }
 
@@ -90,7 +91,7 @@ impl RuleStore {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
       r.add_grep_heuristics_for_global_rules(tag_captures);
       #[rustfmt::skip]
-      info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
+      println!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
       self.global_rules.push(r);
     }
   }

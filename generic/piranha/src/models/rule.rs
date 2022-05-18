@@ -243,7 +243,7 @@ impl Rule {
       if matched_node.satisfies_constraint(
         source_code_unit.clone(),
         self,
-        &tag_substitutions,
+        &tag_substitutions.clone().into_iter().chain(rule_store.input_substitutions()).collect(),
         rule_store,
       ) {
         let replacement = substitute_tags(self.replace(), &tag_substitutions);

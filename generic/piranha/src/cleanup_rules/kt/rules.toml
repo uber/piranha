@@ -360,13 +360,6 @@ query = """
 replace = ""
 replace_node = "post"
 
-[[rules]]
-name = "remove_unnecessary_nested_block"
-query = """
-(statements (_)* @pre (lambda_literal (statements (_) @nested_statements))@block (_)* @post)"""
-replace = "@nested_statements"
-replace_node = "block"
-
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
@@ -393,97 +386,98 @@ replace_node = "block"
 # }
 #
 
-# [[rules]]
-# name = "delete_variable_declaration"
-# query = """
-# (
-# ((local_variable_declaration 
-#                 declarator: (variable_declarator 
-#                                     name: (_) @variable_name
-#                                     value: [(true) (false)] @init)) @variable_declaration)
-# )
-# """
-# replace = ""
-# replace_node = "variable_declaration"
+[[rules]]
+name = "delete_local_var_property_declaration"
+query = """
+(property_declaration (variable_declaration (simple_identifier)@variable_name ) 
+ 								[(boolean_literal) @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+"""
+replace = ""
+replace_node = "property_declaration"
 
 # # Check if there is no assignment where the variable @variable_name is 
 # # assigned to a value other than @init, within the method body
 # # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
 # # These holes will be filled contextually based on the code snippet matched to `rule.query
-# [[rules.constraints]]
-# matcher = "(method_declaration) @md"
-# queries = [
-#   """
-# (
-# ((assignment_expression
-#                     left: (_) @a.lhs
-#                     right: (_) @a.rhs) @assignment)
-# (#eq? @a.lhs "@variable_name")
-# (#not-eq? @a.rhs "@init")
-# )""",
-# ]
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [] 
+
 
 # # This rule is part (and entry point) of the inline field declaration cleanup.
 # # Same as the rule `delete_variable_declaration`, but applicable to fields.
-# [[rules]]
-# name = "delete_field_declaration"
-# query = """
-# (
-# ((field_declaration 
-#                 declarator: (variable_declarator 
-#                                     name: (_) @variable_name
-#                                     value: [(true) (false) (parenthesized_expression (true)) (parenthesized_expression (false))] @init)) @field_declaration)
-# )
-# """
-# replace = ""
-# replace_node = "field_declaration"
+[[rules]]
+name = "delete_field_property_declaration"
+query = """
+(property_declaration (variable_declaration (simple_identifier)@variable_name ) 
+ 								[(boolean_literal)  @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+"""
+replace = ""
+replace_node = "property_declaration"
 
 # # Check if there is no assignment where the variable @variable_name is 
 # # assigned to a value other than @init, within the method body
-# [[rules.constraints]]
-# matcher = "(class_declaration) @cd"
-# queries = [
-#   """(
-# ((assignment_expression
-#                     left: (_) @a.lhs
-#                     right: (_) @a.rhs) @assignment)
-# (#eq? @a.lhs "@variable_name")
-# (#not-eq? @a.rhs "@init")
-# )""",
-# ]
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  """(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)""",
+]
 
 # # This rule is part of inline variable declaration and field declaration cleanup. 
 # # Delete assignment for a particular (@variable_name, @init) if: 
 # # (i) If the enclosing method does not contain a variable declaration for @variable_name
 # # (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
-# [[rules]]
-# name = "delete_boolean_assignments_for_variable"
-# query = """
-# (
-# (expression_statement (assignment_expression
-#                                 left: (_) @l
-#                     right: (_) @r)) @expression_statement
-# (#eq? @l "@variable_name")
-# (#eq? @r "@init")
-# ) 
-# """
-# replace = ""
-# replace_node = "expression_statement"
+[[rules]]
+name = "delete_boolean_assignments_for_local_variable"
+query = """
+(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(#eq? @l "@variable_name")
+(#eq? @r "@init")
+) 
+"""
+replace = ""
+replace_node = "assignment"
+holes = ["variable_name", "init"]
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+# which is initialized to "@init".
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+  """(
+(property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+ 								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+(#eq? @vdcl.lhs "@l")
+)""",
+]
 
-# holes = ["variable_name", "init"]
-# # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
-# # which is initialized to "@init".
-# [[rules.constraints]]
-# matcher = "(method_declaration) @md"
-# queries = [
-#   """(
-# ((local_variable_declaration 
-#                 declarator: (variable_declarator 
-#                                     name: (_) @vdcl.lhs
-#                                     value: (_) @vdcl.init)) @field_declaration)
-# (#eq? @vdcl.lhs "@l")
-# )""",
-# ]
+[[rules]]
+name = "delete_boolean_assignments_for_field"
+query = """
+(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(#eq? @l "@variable_name")
+(#eq? @r "@init")
+) 
+"""
+replace = ""
+replace_node = "assignment"
+holes = ["variable_name", "init"]
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+# which is initialized to "@init".
+[[rules.constraints]]
+matcher = "(class_declaration) @md"
+queries = [
+  """(
+(property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+ 								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+(#eq? @vdcl.lhs "@l")
+)""",
+]
 
 # # This rule is part (and entry point) of the inline variable / field declaration. 
 # # delete assignment if 
@@ -538,26 +532,24 @@ replace_node = "block"
 # # Replace identifier with value if :
 # # (i) There is no local variable declaration in the enclosing method with the name as the identifier 
 # # TODO: Add field constraint
-# [[rules]]
-# holes = ["variable_name", "init"]
-# name = "replace_identifier_with_value"
-# query = """
-# (
-# (identifier) @identifier
-# (#eq? @identifier "@variable_name")
-# )
-# """
-# replace = "@init"
-# replace_node = "identifier"
+[[rules]]
+holes = ["variable_name", "init"]
+name = "replace_identifier_with_value"
+query = """
+(
+(simple_identifier) @identifier
+(#eq? @identifier "@variable_name")
+)
+"""
+replace = "@init"
+replace_node = "identifier"
 # [[rules.constraints]]
 # # There should exist no local variable declaration named `@identifer`
-# matcher = "(method_declaration) @md"
+# matcher = "(function_declaration) @md"
 # queries = [
 #   """(
-# ((local_variable_declaration 
-#                 declarator: (variable_declarator 
-#                                     name: (_) @vdcl.lhs
-#                                     value: (_) @vdcl.init)) @field_declaration)
+# (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+#  								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
 # (#eq? @vdcl.lhs "@identifier")
 # )""",
 # ]

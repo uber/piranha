@@ -21,11 +21,11 @@ fn test_java_scenarios_treated_ff1() {
   run_test(LANGUAGE, "feature_flag_system_1", "treated", 1);
 }
 
-// #[test]
-// fn test_java_scenarios_treated_ff2() {
-//   initialize();
-//   run_test(LANGUAGE, "feature_flag_system_2", "treated", 4);
-// }
+#[test]
+fn test_java_scenarios_treated_ff2() {
+  initialize();
+  run_test(LANGUAGE, "feature_flag_system_2", "treated", 4);
+}
 
 #[test]
 fn test_java_scenarios_control_ff1() {

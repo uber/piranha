@@ -57,156 +57,142 @@ name = "Method"
 matcher =  """
 ((method_declaration 
 			name : (_) @n
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @t0)
-                    (formal_parameter type:(_) @t1)
-                    (formal_parameter type:(_) @t2)
-                    (formal_parameter type:(_) @t3)
-                    (formal_parameter type:(_) @t4))) @xd0)"""
+            parameters : (formal_parameters)@fp) @xdn)"""
 generator = """
 (((method_declaration 
 			name : (_) @z
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @r0)
-                    (formal_parameter type:(_) @r1)
-                    (formal_parameter type:(_) @r2)
-                    (formal_parameter type:(_) @r3)
-                    (formal_parameter type:(_) @r4))) @qd)
+            parameters : (formal_parameters)@tp) @qdn)
 (#eq? @z "@n")
-(#eq? @r0 "@t0")
-(#eq? @r1 "@t1")
-(#eq? @r2 "@t2")
-(#eq? @r3 "@t3")
-(#eq? @r4 "@t4")                    
+(#eq? @tp "@fp")                  
 )"""
 
 # Scope matcher-generator for Java method with 4 parameters.
-[[scopes.rules]]
-matcher =  """
-((method_declaration 
-			name : (_) @n
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @t0)
-                    (formal_parameter type:(_) @t1)
-                    (formal_parameter type:(_) @t2)
-                    (formal_parameter type:(_) @t3))) @xd5)"""
-generator = """
-(((method_declaration 
-			name : (_) @z
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @r0)
-                    (formal_parameter type:(_) @r1)
-                    (formal_parameter type:(_) @r2)
-                    (formal_parameter type:(_) @r3))) @qd)
-(#eq? @z "@n")
-(#eq? @r0 "@t0")
-(#eq? @r1 "@t1")
-(#eq? @r2 "@t2")
-(#eq? @r3 "@t3")
-)"""
+# [[scopes.rules]]
+# matcher =  """
+# ((method_declaration 
+# 			name : (_) @n
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @t0)
+#                     (formal_parameter type:(_) @t1)
+#                     (formal_parameter type:(_) @t2)
+#                     (formal_parameter type:(_) @t3))) @xd5)"""
+# generator = """
+# (((method_declaration 
+# 			name : (_) @z
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @r0)
+#                     (formal_parameter type:(_) @r1)
+#                     (formal_parameter type:(_) @r2)
+#                     (formal_parameter type:(_) @r3))) @qd)
+# (#eq? @z "@n")
+# (#eq? @r0 "@t0")
+# (#eq? @r1 "@t1")
+# (#eq? @r2 "@t2")
+# (#eq? @r3 "@t3")
+# )"""
 
-# Scope matcher-generator for Java method with 3 parameters.
-[[scopes.rules]]
-matcher =  """
-((method_declaration 
-			name : (_) @n
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @t0)
-                    (formal_parameter type:(_) @t1)
-                    (formal_parameter type:(_) @t2))) @xd2)"""
-generator = """
-(((method_declaration 
-			name : (_) @z
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @r0)
-                    (formal_parameter type:(_) @r1)
-                    (formal_parameter type:(_) @r2))) @qd)
-(#eq? @z "@n")
-(#eq? @r0 "@t0")
-(#eq? @r1 "@t1")
-(#eq? @r2 "@t2")
-)"""
+# # Scope matcher-generator for Java method with 3 parameters.
+# [[scopes.rules]]
+# matcher =  """
+# ((method_declaration 
+# 			name : (_) @n
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @t0)
+#                     (formal_parameter type:(_) @t1)
+#                     (formal_parameter type:(_) @t2))) @xd2)"""
+# generator = """
+# (((method_declaration 
+# 			name : (_) @z
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @r0)
+#                     (formal_parameter type:(_) @r1)
+#                     (formal_parameter type:(_) @r2))) @qd)
+# (#eq? @z "@n")
+# (#eq? @r0 "@t0")
+# (#eq? @r1 "@t1")
+# (#eq? @r2 "@t2")
+# )"""
 
-# Scope matcher-generator for Java method with 2 parameters.
-[[scopes.rules]]
-matcher =  """
-((method_declaration 
-			name : (_) @n
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @t0)
-                    (formal_parameter type:(_) @t1))) @xd3)"""
-generator = """
-(((method_declaration 
-			name : (_) @z
-            parameters : (formal_parameters
-            		(formal_parameter type:(_) @r0)
-                    (formal_parameter type:(_) @r1))) @qd)
-(#eq? @z "@n")
-(#eq? @r0 "@t0")
-(#eq? @r1 "@t1")
-)"""
+# # Scope matcher-generator for Java method with 2 parameters.
+# [[scopes.rules]]
+# matcher =  """
+# ((method_declaration 
+# 			name : (_) @n
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @t0)
+#                     (formal_parameter type:(_) @t1))) @xd3)"""
+# generator = """
+# (((method_declaration 
+# 			name : (_) @z
+#             parameters : (formal_parameters
+#             		(formal_parameter type:(_) @r0)
+#                     (formal_parameter type:(_) @r1))) @qd)
+# (#eq? @z "@n")
+# (#eq? @r0 "@t0")
+# (#eq? @r1 "@t1")
+# )"""
 
-# Scope matcher-generator for Java method with 1 parameters.
-[[scopes.rules]]
-matcher =  """
-(
-(((method_declaration 
-			name : (_) @n
-            parameters : 
-            	((formal_parameters
-            		(((formal_parameter type: (_) @t0) )? @f )) @zz)
-                )
-    @xd6)
-)
-(#not-match? @zz ",")
-(#not-eq? @zz "()")
-)"""
-generator = """
-(
-(((method_declaration 
-			name : (_) @z
-            parameters : 
-            	((formal_parameters
-            		(((formal_parameter type: (_) @r1) ) @p )) @j)
-                )
-    @4)
-)
-(#not-match? @j ",")
-(#not-eq? @j "()")
-(#eq? @z "@n")
-(#eq? @r1 "@t0")
-)"""
+# # Scope matcher-generator for Java method with 1 parameters.
+# [[scopes.rules]]
+# matcher =  """
+# (
+# (((method_declaration 
+# 			name : (_) @n
+#             parameters : 
+#             	((formal_parameters
+#             		(((formal_parameter type: (_) @t0) )? @f )) @zz)
+#                 )
+#     @xd6)
+# )
+# (#not-match? @zz ",")
+# (#not-eq? @zz "()")
+# )"""
+# generator = """
+# (
+# (((method_declaration 
+# 			name : (_) @z
+#             parameters : 
+#             	((formal_parameters
+#             		(((formal_parameter type: (_) @r1) ) @p )) @j)
+#                 )
+#     @4)
+# )
+# (#not-match? @j ",")
+# (#not-eq? @j "()")
+# (#eq? @z "@n")
+# (#eq? @r1 "@t0")
+# )"""
 
-# Scope matcher-generator for Java method with 0 parameters.
-# This is a bit flaky, since it will not support matching ( ) i.e. bracket with space 
-[[scopes.rules]]
-matcher =  """
-(
-(((method_declaration 
-			name : (_) @n
-            parameters : 
-            	((formal_parameters) @gg)
-                )
-    @xd4)
-)
+# # Scope matcher-generator for Java method with 0 parameters.
+# # This is a bit flaky, since it will not support matching ( ) i.e. bracket with space 
+# [[scopes.rules]]
+# matcher =  """
+# (
+# (((method_declaration 
+# 			name : (_) @n
+#             parameters : 
+#             	((formal_parameters) @gg)
+#                 )
+#     @xd4)
+# )
 
-(#not-match? @gg ",")
-(#eq? @gg "()")
-)"""
-generator = """
-(
-(((method_declaration 
-			name : (_) @z
-            parameters : 
-            	((formal_parameters) @j)
-                )
-    @xd1)
-)
+# (#not-match? @gg ",")
+# (#eq? @gg "()")
+# )"""
+# generator = """
+# (
+# (((method_declaration 
+# 			name : (_) @z
+#             parameters : 
+#             	((formal_parameters) @j)
+#                 )
+#     @xd1)
+# )
 
-(#not-match? @j ",")
-(#eq? @j "()")
-(#eq? @z "@n")
-)"""
+# (#not-match? @j ",")
+# (#eq? @j "()")
+# (#eq? @z "@n")
+# )"""
 
 # Scope generators for Java Class.
 [[scopes]]

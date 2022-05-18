@@ -111,7 +111,7 @@ impl SourceCodeUnit {
           &next_rules_by_scope[PARENT],
         ) {
           #[rustfmt::skip]
-          info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", edit.matched_rule().name()).green());
+          println!( "{}", format!( "Cleaning up the context, by applying the rule - {}", edit.matched_rule().name()).green());
           // Apply the matched rule to the parent
           current_edit = self.apply_edit(&edit, parser);
           current_rule = edit.matched_rule();
@@ -209,7 +209,7 @@ impl FlagCleaner {
     loop {
       let current_rules = self.rule_store.global_rules();
 
-      info!(
+      println!(
         "{}",
         format!("Number of global rules {}", current_rules.len())
       );
@@ -234,7 +234,7 @@ impl FlagCleaner {
 
         // Break when a new `global` rule is added
         if self.rule_store.global_rules().len() > current_rules.len() {
-          info!("Found a new global rule. Will start scanning all the files again.");
+          println!("Found a new global rule. Will start scanning all the files again.");
           break;
         }
       }
@@ -249,7 +249,7 @@ impl FlagCleaner {
   /// Note that `WalkDir` traverses the directory with parallelism.
    fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
     let pattern = self.get_grep_heuristics();
-    info!(
+    println!(
       "{}",
       format!("Searching for pattern {}", pattern.as_str()).green()
     );
@@ -274,7 +274,7 @@ impl FlagCleaner {
       .filter(|x| pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 
