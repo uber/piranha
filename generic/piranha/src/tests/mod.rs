@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 use crate::config::CommandLineArguments;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::source_code_unit::SourceCodeUnit;
-use crate::piranha::{execute_piranha};
+use crate::piranha::execute_piranha;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
 mod test_piranha_java;
@@ -62,7 +62,7 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
 
     if !eq_without_whitespace(&source_code_unit.code(), &expected_content) {
       all_files_match = false;
-    } 
+    }
   }
   assert!(all_files_match);
 }

@@ -209,7 +209,7 @@ impl FlagCleaner {
     loop {
       let current_rules = self.rule_store.global_rules();
 
-      info!( "{}", format!("# Global rules {}", current_rules.len()));
+      info!("{}", format!("# Global rules {}", current_rules.len()));
       // Iterate over each file containing the usage of the feature flag API
       for (path, content) in self.get_files_containing_feature_flag_api_usage() {
         self

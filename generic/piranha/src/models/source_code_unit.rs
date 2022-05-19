@@ -63,16 +63,12 @@ impl SourceCodeUnit {
       edit.replacement_range(),
       edit.replacement_string(),
     );
-
-    
     // Apply edit to the tree
     self.ast.edit(&ts_edit);
     // Create a new updated tree from the previous tree
     let new_tree = parser
       .parse(&new_source_code, Some(&self.ast))
       .expect("Could not generate new tree!");
-    
-    
     self.ast = new_tree;
     self.code = new_source_code;
     ts_edit

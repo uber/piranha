@@ -24,7 +24,6 @@ impl Constraint {
 
   pub(crate) fn matcher(&self, substitutions: &HashMap<String, String>) -> String {
     substitute_tags(String::from(&self.matcher), substitutions)
-    
   }
 
   /// Checks if the node satisfies the constraints.
