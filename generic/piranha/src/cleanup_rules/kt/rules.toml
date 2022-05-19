@@ -552,38 +552,7 @@ queries = [
   (#not-eq? @a.rhs "@init")
 )""",
 ]
-# [[rules.constraints]]
-# matcher = "(method_declaration) @md"
-# queries = [
-#   """(
-# ((local_variable_declaration
-#                 declarator: (variable_declarator 
-#                                     name: (_) @vdcl.lhs
-#                                     value: (_)? @vdcl.init)) @variable_declaration)
-# (#eq? @vdcl.lhs "@variable_name")
-# )""",
-# ]
-# [[rules.constraints]]
-# # There should exist no field declaration named `@variable_name` and
-# # there should be no assignments to @variable_name that are not same as `@init`.
-# matcher = "(class_declaration) @cd"
-# queries = [
-#   """(
-# ((assignment_expression
-#                     left: (_) @a.lhs
-#                     right: (_) @a.rhs) @a)
-# (#eq? @a.lhs "@variable_name")
-# (#not-eq? @a.rhs "@init")
-# )""",
-#   """(
-# ((field_declaration 
-#                 declarator: (variable_declarator 
-#                                     name: (_) @fdcl.lhs
-#                                     value: (_) @fdcl.init)) @field_declaration)
-# (#eq? @fdcl.lhs "@variable_name")
-# (#not-eq? @fdcl.init "@init")
-# )""",
-# ]
+
 
 # # Replace identifier with value if :
 # # (i) There is no local variable declaration in the enclosing method with the name as the identifier 
