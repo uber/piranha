@@ -23,25 +23,22 @@ use std::{
 // Prerequisite: (i) Tree-sitter CLI and (ii) git.
 // Installing tree-sitter's CLI: https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md
 
-fn build(language: &str) -> Result<&str, &str> {
+fn get_tree_sitter_parser(language: &str) -> Result<&str, &str> {
   let (ts_src, git_url) = match language {
     "java" => (
       "tree-sitter-java",
       "https://github.com/tree-sitter/tree-sitter-java.git",
     ),
-    // "kt" => (
-    //   "tree-sitter-kotlin",
-    //   "https://github.com/fwcd/tree-sitter-kotlin.git",
-    // ),
+    "kt" => (
+      "tree-sitter-kotlin",
+      "https://github.com/ketkarameya/tree-sitter-kotlin.git",
+    ),
     _ => panic!("Language not supported!"),
   };
 
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_all_tree_sitter_src = project_root.parent().unwrap().join("tree-sitter-src");
   let path_to_tree_sitter_language = path_to_all_tree_sitter_src.join(ts_src);
-  let path_to_tree_sitter_language_src = path_to_tree_sitter_language.join("src");
-  let path_to_tree_sitter_language_parser = path_to_tree_sitter_language_src.join("parser.c");
-  let path_to_tree_sitter_language_scanner = path_to_tree_sitter_language.join("scanner.c");
 
   if !path_to_tree_sitter_language.exists() {
     let mut clone_repo_cmd = Command::new("git")
@@ -56,34 +53,12 @@ fn build(language: &str) -> Result<&str, &str> {
     if !clone_repo.success() {
       return Err("Could not clone tree-sitter language repository - {git_url}");
     }
-
-    // let mut build_repo_cmd = Command::new("tree-sitter")
-    //   .stdout(Stdio::piped())
-    //   .current_dir(&path_to_tree_sitter_language)
-    //   .arg("generate")
-    //   .spawn()
-    //   .unwrap();
-
-    // let build_repo = build_repo_cmd.wait().unwrap();
-    // if !build_repo.success() {
-    //   return Err("Could not generate tree-sitter parser/scanner");
-    // }
+    return Ok("Successfully cloned {ts_src}");
   }
-
-  let mut build = cc::Build::new();
-  build
-    .include(&path_to_tree_sitter_language_src)
-    .warnings(false);
-  build.file(path_to_tree_sitter_language_parser);
-  if path_to_tree_sitter_language_scanner.exists() {
-    build.file(path_to_tree_sitter_language_scanner);
-  }
-  build.compile(ts_src);
-
-  Ok("Successfully built {ts_src}")
+  Ok("{ts_src} already exists!")
 }
 
 fn main() {
-  let _ = build("java");
-  // let _ = build("kt");
+  // let _ = get_tree_sitter_parser("java");
+  // let _ = get_tree_sitter_parser("kt");
 }
