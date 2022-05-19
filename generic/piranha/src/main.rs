@@ -40,5 +40,5 @@ fn main() {
     source_code_unit.persist();
   }
 
-  println!("Time elapsed - {:?}", now.elapsed().as_secs());
+  info!("Time elapsed - {:?}", now.elapsed().as_secs());
 }

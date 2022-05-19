@@ -61,18 +61,15 @@ impl ScopeGenerator {
 
     // Get the scope matchers for `scope_level` from the `scope_config.toml`.
     let scope_matchers = rules_store.get_scope_query_generators(scope_level);
-    println!("Found scope matchers {scope_level} {:?}", changed_node.utf8_text(source_code_unit.code().as_bytes()));
 
     // Match the `scope_matcher.matcher` to the parent
     while let Some(parent) = changed_node.parent() {
-      println!("parent {}", parent.utf8_text(source_code_unit.code().as_bytes()).unwrap());
       for m in &scope_matchers {
         if let Some((_, substitutions)) = parent.get_match_for_query(
           &source_code_unit.code(),
           rules_store.get_query(&m.matcher()),
           false,
         ) {
-          println!("Found match ! {scope_level} {:?}", substitutions);
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
           return substitute_tags(m.generator(), &substitutions);
@@ -93,7 +90,6 @@ pub(crate) struct ScopeQueryGenerator {
 
 impl ScopeQueryGenerator {
   pub(crate) fn matcher(&self) -> String {
-    println!("{}", String::from(&self.matcher));
     String::from(&self.matcher)
   }
 

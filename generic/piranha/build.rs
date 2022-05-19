@@ -43,7 +43,6 @@ fn build(language: &str) -> Result<&str, &str> {
   let path_to_tree_sitter_language_parser = path_to_tree_sitter_language_src.join("parser.c");
   let path_to_tree_sitter_language_scanner = path_to_tree_sitter_language.join("scanner.c");
 
-  println!("{:?}", project_root.as_os_str().to_str());
   if !path_to_tree_sitter_language.exists() {
     let mut clone_repo_cmd = Command::new("git")
       .stdout(Stdio::piped())

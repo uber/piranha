@@ -51,7 +51,7 @@ impl PiranhaArguments {
     let input_substitutions = piranha_args_from_config.substitutions();
 
     #[rustfmt::skip]
-      println!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
+      info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
     Self {
       path_to_code_base: args.path_to_codebase.to_string(),

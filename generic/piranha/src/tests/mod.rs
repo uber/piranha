@@ -13,9 +13,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::path::{Path, PathBuf};
 
-use colored::Colorize;
-use log::info;
-
 use crate::config::CommandLineArguments;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::source_code_unit::SourceCodeUnit;
@@ -44,7 +41,7 @@ fn run_test(language: &str, ff_system: &str, treatment: &str, n_files_changed: u
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
   });
   let updated_files = execute_piranha(args);
-  // assert_eq!(updated_files.len(), n_files_changed);
+  assert_eq!(updated_files.len(), n_files_changed);
   let path_to_expected =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
   check_result(updated_files, path_to_expected);
@@ -63,16 +60,9 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let expected_file_path = find_file(&path_to_expected, updated_file_name);
     let expected_content = read_file(&expected_file_path).unwrap();
 
-    if eq_without_whitespace(&source_code_unit.code(), &expected_content) {
-      #[rustfmt::skip]
-      println!("{}", format!("Match successful for {:?}", expected_file_path).green());
-    } else {
-      #[rustfmt::skip]
-      println!("{}", format!("Match failed for {:?}", expected_file_path).red());
-
-      println!("{}", source_code_unit.code());
+    if !eq_without_whitespace(&source_code_unit.code(), &expected_content) {
       all_files_match = false;
-    }
+    } 
   }
   assert!(all_files_match);
 }

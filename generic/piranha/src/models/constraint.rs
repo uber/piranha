@@ -36,19 +36,16 @@ impl Constraint {
     &self, node: Node, source_code_unit: SourceCodeUnit, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
-    println!("Checking constraint");
     let mut current_node = node;
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
       let query_str = &self.matcher(&substitutions);
-      println!("query_str {} {}", query_str, parent.utf8_text(source_code_unit.code().as_bytes()).unwrap());
       if let Some((range, _)) = parent.get_match_for_query(
         &source_code_unit.code(),
         rule_store.get_query(query_str),
         false,
       ) {
-        println!("Found match");
         matched_matcher = true;
         let scope_node = get_node_for_range(
           source_code_unit.root_node(),
@@ -63,7 +60,6 @@ impl Constraint {
             .get_match_for_query(&source_code_unit.code(), query, true)
             .is_some()
           {
-            println!("Is satisfied -- {}", false);
             return false;
           }
         }
@@ -71,7 +67,6 @@ impl Constraint {
       }
       current_node = parent;
     }
-    println!("Is satisfied {}", matched_matcher);
     matched_matcher
   }
 }
