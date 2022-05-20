@@ -56,4 +56,4 @@ query = """(
 replace_node = "call_expression"
 replace = "@treated_complement"
 groups = [ "replace_expression_with_boolean_literal"]
-holes = ["treated", "stale_flag_name"]
+holes = ["treated_complement", "stale_flag_name"]
