@@ -19,4 +19,4 @@ generic/tree-sitter-src/tree-sitter-kotlin
 .history
 .vscode
 **/*.log
-generic/piranha/demo/java/piranha
+generic/piranha/demo/piranha

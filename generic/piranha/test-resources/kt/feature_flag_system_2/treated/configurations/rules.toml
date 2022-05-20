@@ -74,22 +74,6 @@ query = """
 (#eq? @lhs "key")
 (#eq? @rhs "\\\"@stale_flag_name\\\"")
 )"""
-# query= """
-# (class_declaration 
-# 	(modifiers (annotation (constructor_invocation (_)@interface_annotation_name (value_arguments
-#                                                         (value_argument (_)@lhs (_)@rhs)))))
-# 	(class_body 
-#      	((function_declaration 
-#   			(modifiers (annotation (constructor_invocation (_)@property_annotation_name 
-#                           (value_arguments (value_argument (_)@prop_lhs (_)@prop_rhs)))))
-# 			  	((simple_identifier) @m_name))) @function_declaration))
-# (#eq? @lhs "namespace")
-# (#eq? @rhs "\\\"@namespace\\\"")
-# (#eq? @interface_annotation_name "ParameterDefinition")
-# (#eq? @property_annotation_name "BoolParam")
-# (#eq? @prop_lhs "key")
-# (#eq? @prop_rhs "\\\"@stale_flag_name\\\"")
-# """
 replace_node = "function_declaration"
 replace = ""
 groups = ["delete_property_declaration"]

@@ -39,7 +39,7 @@ impl Constraint {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-      let query_str = &self.matcher(&substitutions);
+      let query_str = &self.matcher(substitutions);
       if let Some((range, _)) = parent.get_match_for_query(
         &source_code_unit.code(),
         rule_store.get_query(query_str),
