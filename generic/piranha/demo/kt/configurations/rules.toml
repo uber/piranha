@@ -34,13 +34,7 @@ replace_node = "call_expression"
 replace = "@treated"
 groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
-#
-# For @stale_flag_name = STALE_FLAG and @treated = true
-# Before :
-#  exp.isToggleDisabled(STALE_FLAG)
-# After :
-#  false
-#
+
 [[rules]]
 name = "replace_isToggleDisabled_with_boolean_literal"
 query = """(

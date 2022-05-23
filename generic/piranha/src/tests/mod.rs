@@ -21,7 +21,6 @@ use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read
 
 mod test_piranha_java;
 mod test_piranha_kt;
-mod unit_tests;
 
 use std::sync::Once;
 
