@@ -1,0 +1,609 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The language specific rules in this file are applied after the API specific change has been performed.
+
+# Before : 
+# else if (true) { doSomething() }
+# After :
+# { doSomething(); } 
+# abc()
+# 
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_ladder_if_true"
+query = """
+(
+(if_expression (_) (_) 
+               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_) ) @consequence) @if_expression) )) @outer_if
+(#eq? @condition "true")
+)
+"""
+replace = "@consequence"
+replace_node = "if_expression"
+
+# Before :
+# else if (true) { doSomething() } else { doSomethingElse()}
+# else if (true) abc() else xyz()
+# After :
+# { doSomething(); } 
+# { doSomething(); } 
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_ladder_if_true_with_alternative"
+query = """
+(
+(if_expression (_) @x (_) @y
+               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_))  @consequence 
+               (control_structure_body (_) ) @alternative) @if_expression ) )) @outer_if
+(#eq? @condition "true")
+)
+"""
+replace = "@consequence"
+replace_node = "if_expression"
+
+# Before : 
+#  else if (false) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomethingElse(); } 
+#
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_ladder_if_false_with_alternative"
+query = """
+(
+(if_expression (_) (_) 
+               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_) ) @consquent
+			   (_) @alternative) @if_expression) )) @outer_if
+(#eq? @condition "false")
+)
+"""
+replace = "@alternative"
+replace_node = "if_expression"
+
+# Before : 
+#  else if (false) { doSomething(); }
+# After :
+#  
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_ladder_if_false"
+query = """
+(
+(if_expression (_) (_) 
+               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_) ) @consquent)) ) @alternative) @if_expression
+(#eq? @condition "false")
+)
+"""
+replace = ""
+replace_node = "if_expression"
+
+# Before : 
+# if (true) { doSomething() }
+# After :
+# { doSomething(); } 
+# 
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_if_true"
+query = """
+(
+(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_) @consequence ) ) @if_expression
+(#eq? @condition "true")
+)
+"""
+replace = "@consequence"
+replace_node = "if_expression"
+
+# Before : 
+# if (true) { doSomething() } else { doSomethingElse()}
+# if (true) abc() else xyz()
+# After : 
+# { doSomething(); } 
+# abc()
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_if_true_with_alternative"
+query = """
+(
+(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_) @consequence ) 
+               (control_structure_body (_) ) @alternative) @if_expression
+(#eq? @condition "true")
+)
+"""
+replace = "@consequence"
+replace_node = "if_expression"
+
+# Before : 
+#  if (false) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomethingElse(); } 
+#
+# Before : 
+#  if (false) { doSomething(); }
+# After :
+#  
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_if_false_with_alternative"
+query = """
+(
+(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_)? ) @consquent
+			   (control_structure_body (_)? @alternative) ) @if_expression
+(#eq? @condition "false")
+)"""
+replace = "@alternative"
+replace_node = "if_expression"
+
+# Before : 
+#  else if (false) { doSomething(); }
+# After :
+#  
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_if_false"
+query = """
+(
+(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+			   (control_structure_body (_)? ) @consquent) @if_expression
+(#eq? @condition "false")
+)"""
+replace = ""
+replace_node = "if_expression"
+
+# Before : 
+#  !false
+# After :
+#  true 
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_false"
+query = """
+(
+(prefix_expression [((boolean_literal) @exp) (parenthesized_expression (boolean_literal) @exp)]) @prefix_expression
+(#eq? @exp "false")
+(#match @prefix_expression "!.*")  
+)
+"""
+replace = "true"
+replace_node = "prefix_expression"
+
+# Before : 
+#  !true
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_true"
+query = """
+(
+(prefix_expression [((boolean_literal) @exp) (parenthesized_expression (boolean_literal) @exp)]) @prefix_expression
+(#eq? @exp "true")
+(#match @prefix_expression "!.*")  
+)
+"""
+replace = "false"
+replace_node = "prefix_expression"
+
+# Before : 
+#  true && abc()
+# After :
+#  abc()
+#
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_true_and_something"
+query = """
+(
+(conjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+                        (_) @rhs ) @conjunction_expression
+(#eq? @lhs "true")  
+)
+"""
+replace = "@rhs"
+replace_node = "conjunction_expression"
+
+# Before :
+#  abc() && true
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_and_true"
+query = """
+(
+(conjunction_expression (_) @lhs 
+                    [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @conjunction_expression
+(#eq? @rhs "true")  
+)"""
+replace = "@lhs"
+replace_node = "conjunction_expression"
+
+# Before :
+#  false && abc()
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_false_and_something"
+query = """
+(
+(conjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+                         (_) @rhs ) @conjunction_expression
+(#eq? @lhs "false")  
+)"""
+replace = "false"
+replace_node = "conjunction_expression"
+
+# Before :
+#  abc() && false
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_and_false"
+query = """
+(
+(conjunction_expression (_) @lhs 
+                        [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @conjunction_expression
+(#eq? @rhs "false")  
+)
+"""
+replace = "false"
+replace_node = "conjunction_expression"
+
+# Before :
+#  abc() || true
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_or_true"
+query = """
+(
+(disjunction_expression (_) @lhs 
+                        [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
+(#eq? @rhs "true")  
+)"""
+replace = "true"
+replace_node = "disjunction_expression"
+
+# Before :
+#  true || abc()
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_true_or_something"
+query = """
+(
+(disjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+                         (_) @rhs ) @disjunction_expression
+(#eq? @lhs "true")  
+)
+"""
+replace = "true"
+replace_node = "disjunction_expression"
+
+# Before: 
+#  abc() || false
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_or_false"
+query = """
+(
+(disjunction_expression (_) @lhs 
+                        [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
+(#eq? @rhs "false")  
+)"""
+replace = "@lhs"
+replace_node = "disjunction_expression"
+
+# Before: 
+#  false || abc()
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_false_or_something"
+query = """
+(
+(disjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+                         (_) @rhs ) @disjunction_expression
+(#eq? @lhs "false")  
+)"""
+replace = "@rhs"
+replace_node = "disjunction_expression"
+
+# Before :
+#  {
+#    something();
+#    return 10;
+#    somethingMore();  
+#    return 100;
+#  } 
+# After :
+#  {
+#    something();
+#    return 10;
+#  } 
+#
+[[rules]]
+name = "delete_all_statements_after_return"
+query = """
+(
+(statements 
+ 	(_)* @pre
+	(jump_expression) @jump_expression	
+	(_)+ @post
+) @statements
+(#match? @jump_expression "return")
+)"""
+replace = ""
+replace_node = "post"
+
+
+# This rule is part (and entry point) for the inline local variable cleanup. Example: 
+# 
+# Before :
+# public foo someMethod() { 
+#  boolean isFlag = true; 
+#  somethingElse();
+# }
+#
+# After :
+# public foo someMethod() { 
+#  somethingElse();
+# }
+#
+# Before inlining a variable we need to ensure that the variable is not re assigned anywhere within the method body 
+# to a value which is not the same as the initializer of variable we are inlining..
+# Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's 
+# initializer is `true`. In such a scenario the variable `isFlag` should not be inlined.
+# 
+# public foo someMethod() { 
+#  boolean isFlag = true; 
+#  isFlag = getFlagStatus();
+#  somethingElse();
+# }
+#
+
+
+[[rules]]
+name = "delete_property_declaration_named"
+query = """(
+(property_declaration (variable_declaration (simple_identifier)@v_name ) (_)) @property_declaration
+(#eq? @v_name "@variable_name")
+)"""
+replace = ""
+replace_node = "property_declaration"
+holes = ["variable_name"]
+
+[[rules]]
+name = "delete_local_var_property_declaration"
+query = """
+(property_declaration (variable_declaration (simple_identifier)@variable_name ) 
+ 								[(boolean_literal) @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+"""
+replace = ""
+replace_node = "property_declaration"
+
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
+# Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
+# These holes will be filled contextually based on the code snippet matched to `rule.query
+# [[rules.constraints]]
+# matcher = "(function_declaration) @md"
+# queries = [] 
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+  """(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@assignment
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)""",
+]
+
+# This rule is part (and entry point) of the inline field declaration cleanup.
+# Same as the rule `delete_variable_declaration`, but applicable to fields.
+[[rules]]
+name = "delete_field_property_declaration"
+query = """
+(property_declaration (variable_declaration (simple_identifier)@variable_name ) 
+ 								[(boolean_literal)  @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+"""
+replace = ""
+replace_node = "property_declaration"
+
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  """(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@assignment
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)""",
+]
+
+# This rule is part of inline variable declaration and field declaration cleanup. 
+# Delete assignment for a particular (@variable_name, @init) if: 
+# (i) If the enclosing method does not contain a variable declaration for @variable_name
+# (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
+[[rules]]
+name = "delete_boolean_assignments_for_local_variable"
+query = """
+(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(#eq? @a.lhs "@variable_name")
+(#eq? @a.rhs "@init")
+) 
+"""
+replace = ""
+replace_node = "assignment"
+holes = ["variable_name", "init"]
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+# which is initialized to "@init".
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+  """(
+(property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+ 								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+(#eq? @vdcl.lhs "@l")
+)""",
+]
+
+[[rules]]
+name = "delete_boolean_assignments_for_field"
+query = """
+(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(#eq? @a.lhs "@variable_name")
+(#eq? @a.rhs "@init")
+) 
+"""
+replace = ""
+replace_node = "assignment"
+holes = ["variable_name", "init"]
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+# which is initialized to "@init".
+[[rules.constraints]]
+matcher = "(class_declaration) @md"
+queries = [
+  """(
+(property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+ 								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+(#eq? @vdcl.lhs "@l")
+)""",
+]
+
+# This rule is part (and entry point) of the inline variable / field declaration. 
+# delete assignment if 
+# (i) if it is the only assignment in the entire class in the enclosing class
+# (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
+# (iii) There is no local variable declaration of the same name in the enclosing method
+[[rules]]
+name = "delete_parent_assignment"
+query = """
+(assignment (directly_assignable_expression (simple_identifier)@variable_name) (boolean_literal) @init)	@assignment
+"""
+replace = ""
+replace_node = "assignment"
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+"""(
+(property_declaration (variable_declaration (simple_identifier)@f_vdcl.lhs ) 
+ 								(_)@f_vdcl.init) @property_declaration
+  (#eq? @f_vdcl.lhs "@variable_name")
+  (#not-eq? @f_vdcl.init "@init")
+)""",
+]
+
+[[rules.constraints]]
+matcher = "(function_declaration) @md"
+queries = [
+"""(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@f_assignment
+  (#eq? @a.lhs "@variable_name")
+  (#not-eq? @a.rhs "@init")
+)""",
+]
+
+[[rules.constraints]]
+matcher = "(class_declaration) @md"
+queries = [
+  """(
+(property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+ 								(_)@vdcl.init ) @property_declaration
+(#eq? @vdcl.lhs "@variable_name")
+(#not-eq? @vdcl.init "@init")
+)""",
+]
+
+[[rules.constraints]]
+matcher = "(class_declaration) @md"
+queries = [
+"""(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@c_assignment
+  (#eq? @a.lhs "@variable_name")
+  (#not-eq? @a.rhs "@init")
+)""",
+]
+
+
+# Replace identifier with value if :
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+# TODO: Add field constraint
+[[rules]]
+holes = ["variable_name", "init"]
+name = "replace_identifier_with_value"
+query = """
+(
+(simple_identifier) @identifier
+(#eq? @identifier "@variable_name")
+)
+"""
+replace = "@init"
+replace_node = "identifier"
+# [[rules.constraints]]
+# There should exist no local variable declaration named `@identifer`
+# matcher = "(function_declaration) @md"
+# queries = [
+#   """(
+# (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
+#  								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+# (#eq? @vdcl.lhs "@identifier")
+# )""",
+# ]
+
+# Dummy rule that acts as a junction for all boolean based cleanups
+# Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
+# A pattern here is - if there is an outgoing edge to B there is another to C.
+# In these cases, you can use a dummy rule X as shown below:
+# X -> B, X - C, A -> X, D -> X, ...
+[[rules]]
+name = "boolean_literal_cleanup"
+query = """
+"""
+replace = ""
+replace_node = ""
+
+# Dummy rule that acts as a junction for all statement based cleanups
+[[rules]]
+name = "statement_cleanup"
+query = """
+"""
+replace = ""
+replace_node = ""

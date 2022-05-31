@@ -11,9 +11,31 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::initialize;
+use super::{initialize, run_test};
+
+static LANGUAGE: &str = "kt";
 
 #[test]
-fn test_rule_update() {
+fn test_kotlin_scenarios_treated_ff1() {
   initialize();
+  run_test(LANGUAGE, "feature_flag_system_1", "treated", 1);
+  
+}
+
+#[test]
+fn test_kotlin_scenarios_treated_ff2() {
+  initialize();
+  run_test(LANGUAGE, "feature_flag_system_2", "treated", 4);
+}
+
+#[test]
+fn test_kotlin_scenarios_control_ff1() {
+  initialize();
+  run_test(LANGUAGE, "feature_flag_system_1", "control", 1);
+}
+
+#[test]
+fn test_kotlin_scenarios_control_ff2() {
+  initialize();
+  run_test(LANGUAGE, "feature_flag_system_2", "control", 4);
 }

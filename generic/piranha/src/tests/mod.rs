@@ -13,17 +13,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::path::{Path, PathBuf};
 
-use colored::Colorize;
-use log::info;
-
 use crate::config::CommandLineArguments;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::source_code_unit::SourceCodeUnit;
-use crate::piranha::{execute_piranha};
+use crate::piranha::execute_piranha;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
 mod test_piranha_java;
-mod unit_tests;
+mod test_piranha_kt;
 
 use std::sync::Once;
 
@@ -62,14 +59,7 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let expected_file_path = find_file(&path_to_expected, updated_file_name);
     let expected_content = read_file(&expected_file_path).unwrap();
 
-    if eq_without_whitespace(&source_code_unit.code(), &expected_content) {
-      #[rustfmt::skip]
-      info!("{}", format!("Match successful for {:?}", expected_file_path).green());
-    } else {
-      #[rustfmt::skip]
-      println!("{}", format!("Match failed for {:?}", expected_file_path).red());
-
-      println!("{}", source_code_unit.code());
+    if !eq_without_whitespace(&source_code_unit.code(), &expected_content) {
       all_files_match = false;
     }
   }

@@ -15,7 +15,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::time::Instant;
 
 use crate::{
-  models::piranha_arguments::PiranhaArguments, piranha::{execute_piranha}, utilities::initialize_logger,
+  models::piranha_arguments::PiranhaArguments, piranha::execute_piranha,
+  utilities::initialize_logger,
 };
 use clap::StructOpt;
 use config::CommandLineArguments;

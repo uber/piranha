@@ -203,12 +203,18 @@ impl Rule {
     source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
     rules_store: &mut RuleStore, rules: &Vec<Rule>,
   ) -> Option<Edit> {
+    let changed_node = get_node_for_range(
+      source_code_unit.root_node(),
+      previous_edit_start,
+      previous_edit_end,
+    );
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
         source_code_unit.root_node(),
-        previous_edit_start,
-        previous_edit_end,
+        changed_node,
+        source_code_unit.code(),
+        4,
       )
     };
     for rule in rules {
@@ -245,7 +251,11 @@ impl Rule {
       if matched_node.satisfies_constraint(
         source_code_unit.clone(),
         self,
-        &tag_substitutions,
+        &tag_substitutions
+          .clone()
+          .into_iter()
+          .chain(rule_store.input_substitutions())
+          .collect(),
         rule_store,
       ) {
         let replacement = substitute_tags(self.replace(), &tag_substitutions);

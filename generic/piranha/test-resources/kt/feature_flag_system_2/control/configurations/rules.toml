@@ -1,0 +1,138 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file contains rules to the specific feature flag API.
+# Before :
+# internal interface SomeParameter {
+#     @BoolParam(key = "STALE_FLAG", namespace = "some_long_name")
+#     fun isStaleFeature(): BoolParameter
+#     @BoolParam(key = "other_flag", namespace = "some_long_name")
+#     fun isOtherFlag(): BoolParameter
+# }
+# After :
+# internal interface SomeParameter {
+#     @BoolParam(key = "other_flag", namespace = "some_long_name")
+#     fun isOtherFlag(): BoolParameter
+# }
+#
+[[rules]]
+name = "delete_flag_method_declaration_fully_annotated"
+query = """
+(
+(function_declaration 
+  (modifiers (annotation (constructor_invocation (_)@annotation_name (value_arguments (value_argument (_)@lhs (_)@rhs))@args )  ) )
+  ((simple_identifier) @m_name) 
+) @function_declaration
+(#eq? @lhs "key")
+(#eq? @rhs "\\\"@stale_flag_name\\\"")
+)
+(
+(function_declaration 
+  (modifiers (annotation (constructor_invocation (_) (value_arguments (value_argument (_)@lhs (_)@rhs))@args ) )) 
+) @pd2
+(#eq? @lhs "namespace")
+(#eq? @annotation_name "BoolParam")
+(#eq? @rhs "\\\"@namespace\\\"")
+)
+"""
+replace_node = "function_declaration"
+replace = ""
+groups = ["delete_property_declaration"]
+holes = ["stale_flag_name", "namespace"]
+
+# Before :
+# @ParameterDefinition(namespace = "some_long_name")
+# internal interface SomeOtherParameter {
+#     @BoolParam(key = "STALE_FLAG")
+#     fun isStaleFeature(): BoolParameter
+#     @BoolParam(key = "other_flag", namespace = "some_long_name")
+#     fun isOtherFlag(): BoolParameter
+# }
+# After :
+# @ParameterDefinition(namespace = "some_long_name")
+# internal interface SomeOtherParameter {
+#     @BoolParam(key = "other_flag", namespace = "some_long_name")
+#     fun isOtherFlag(): BoolParameter
+# }
+#
+[[rules]]
+name = "delete_flag_method_declaration_inside_annotated_interface"
+query = """
+(
+(function_declaration 
+  (modifiers (annotation (constructor_invocation (_)@annotation_name (value_arguments (value_argument (_)@lhs (_)@rhs))@args )  ) )
+  ((simple_identifier) @m_name) 
+) @function_declaration
+(#eq? @lhs "key")
+(#eq? @rhs "\\\"@stale_flag_name\\\"")
+)"""
+replace_node = "function_declaration"
+replace = ""
+groups = ["delete_property_declaration"]
+holes = ["stale_flag_name", "namespace"]
+[[rules.constraints]]
+matcher =   """(
+(class_declaration 
+ 	(modifiers (annotation (constructor_invocation (_)@interface_annotation_name (value_arguments
+                                                         (value_argument (_)@clhs (_)@crhs)))))) @cd
+(#eq? @clhs "namespace")
+(#eq? @crhs "\\\"@namespace\\\"")
+(#eq? @interface_annotation_name "ParameterDefinition")
+)"""
+queries = [] 
+
+# For @m_name = `isStaleFeature`, @treated = `true`
+# Before :
+#  experimentation.isStaleFeature().cachedValue
+# After: 
+#  true
+#
+[[rules]]
+name = "replace_flag_method_with_boolean_literal"
+query = """
+(
+(navigation_expression (call_expression
+                       	(navigation_expression (simple_identifier)@receiver (navigation_suffix (_)@inner_nav_suffix_name))
+                       ) (navigation_suffix (_) @nav_suffix_name)) @navigation_expression
+(#eq? @nav_suffix_name "cachedValue")
+(#eq? @inner_nav_suffix_name "@m_name")
+(#not-match? @receiver "^[A-Z]+.*")
+)"""
+replace_node = "navigation_expression"
+replace = "@treated"
+groups = ["replace_expression_with_boolean_literal"]
+holes = ["m_name", "treated"]
+
+# For @m_name = `isStaleFeature`, @treated = `true`
+# Before : 
+# cp.put(e.isStaleFeature(), true);
+# After : 
+# 
+#
+[[rules]]
+name = "delete_put"
+query = """
+(
+(call_expression (navigation_expression (simple_identifier)@name (navigation_suffix (simple_identifier) @outer_call_name))
+				(call_suffix (value_arguments (value_argument (call_expression 
+	                                                              (navigation_expression
+                                                                   	(simple_identifier) @arg_method_receiver
+                                                                    (navigation_suffix (_)@arg_method_name)
+    	                                                          	)
+                                                              )))))@ce
+(#eq? @arg_method_name "@m_name")
+(#eq? @outer_call_name "put")
+(#not-match? @arg_method_receiver "^[A-Z]+.*")
+)
+"""
+replace_node = "expression_statement"
+replace = ""
+holes = ["m_name"]

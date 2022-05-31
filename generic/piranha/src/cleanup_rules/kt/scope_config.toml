@@ -1,0 +1,54 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# For information about why this file is needed, please refere to /src/cleanup_rules/java/scope_config.rs. 
+# This file specifies how functions and classes should be captured by Piranha. 
+
+# fun add(int a, int b, int c, int d, int e): Int{
+#   // Let's assume that some rule was previously applied within this method body.
+# }  
+#
+# To capture the signature of the enclosing method, Piranha will match the below rule against the method.
+# This will result in matches - { n: "add", fp: "(int a, int b, int c, int d, int e): Int"} 
+# Substituting these matches in the `scopes.rules.generator` will result in : 
+#
+#(((method_declaration 
+#           name : (_) @z
+#           parameters : (formal_parameters)@fp) @xdn)
+
+# (#eq? @z "add")
+# (#eq? @tp "(int a, int b, int c, int d, int e): Int")
+# )
+#
+[[scopes]]
+name = "Function"
+[[scopes.rules]]
+matcher =  """
+((function_declaration (simple_identifier) @n  (function_value_parameters) @sign (function_body) @fb) @qd5)
+"""
+generator = """(
+((function_declaration (simple_identifier) @z  (function_value_parameters) @g_sign (function_body) @g_fb) @g_qd5)
+(#eq? @z "@n")
+(#eq? @g_sign "@sign")                
+)"""
+
+# Scope generator for Kotlin class.
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
+matcher = "(class_declaration (type_identifier) @n) @c"
+generator = """
+(
+((class_declaration (type_identifier) @z) @qc)
+(#eq? @z "@n")
+)
+"""

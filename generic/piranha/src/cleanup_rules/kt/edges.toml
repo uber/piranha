@@ -1,0 +1,79 @@
+
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The edges in this file specify the flow between the rules.
+
+[[edges]]
+scope = "Parent"
+from = "replace_expression_with_boolean_literal"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "boolean_literal_cleanup"
+to = ["statement_cleanup", "boolean_expression_simplify"]
+
+[[edges]]
+scope = "Parent"
+from = "statement_cleanup"
+to = [
+  "delete_local_var_property_declaration",
+  "delete_field_property_declaration",
+  "delete_parent_assignment",
+]
+
+[[edges]]
+scope = "Parent"
+from = "boolean_expression_simplify"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "if_cleanup"
+to = ["delete_all_statements_after_return"]
+
+[[edges]]
+scope = "Parent"
+from = "replace_identifier_with_value"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Function"
+from = "delete_local_var_property_declaration"
+to = [
+  "replace_identifier_with_value",
+  "delete_boolean_assignments_for_local_variable",
+  "delete_parent_assignment",
+]
+
+[[edges]]
+scope = "Function"
+from = "delete_property_declaration_named"
+to = [
+  "replace_identifier_with_value",
+  "delete_boolean_assignments_for_local_variable",
+  "delete_boolean_assignments_for_field",
+  "delete_parent_assignment",
+]
+
+[[edges]]
+scope = "Function"
+from = "delete_parent_assignment"
+to = ["delete_property_declaration_named"]
+
+[[edges]]
+scope = "Class"
+from = "delete_field_property_declaration"
+to = [
+  "replace_identifier_with_value",
+  "delete_boolean_assignments_for_field",
+]

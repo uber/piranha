@@ -22,8 +22,8 @@ impl Constraint {
     &self.queries
   }
 
-  pub(crate) fn matcher(&self) -> String {
-    String::from(&self.matcher)
+  pub(crate) fn matcher(&self, substitutions: &HashMap<String, String>) -> String {
+    substitute_tags(String::from(&self.matcher), substitutions)
   }
 
   /// Checks if the node satisfies the constraints.
@@ -37,18 +37,20 @@ impl Constraint {
   ) -> bool {
     let mut current_node = node;
     // Get the scope_node of the constraint (`scope.matcher`)
+    let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
+      let query_str = &self.matcher(substitutions);
       if let Some((range, _)) = parent.get_match_for_query(
         &source_code_unit.code(),
-        rule_store.get_query(&self.matcher()),
+        rule_store.get_query(query_str),
         false,
       ) {
+        matched_matcher = true;
         let scope_node = get_node_for_range(
           source_code_unit.root_node(),
           range.start_byte,
           range.end_byte,
         );
-        // Apply each query within the `scope_node`
         for query_with_holes in self.queries() {
           let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
           let query = &rule_store.get_query(&query_str);
@@ -64,8 +66,7 @@ impl Constraint {
       }
       current_node = parent;
     }
-
-    true
+    matched_matcher
   }
 }
 

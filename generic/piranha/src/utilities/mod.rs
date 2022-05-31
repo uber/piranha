@@ -81,7 +81,6 @@ pub(crate) fn initialize_logger(is_test: bool) {
 }
 
 /// Compares two strings, ignoring whitespace
-#[cfg(test)] // Rust analyzer FP
 pub(crate) fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
   s1.split_whitespace()
     .collect::<String>()
@@ -91,7 +90,6 @@ pub(crate) fn eq_without_whitespace(s1: &str, s2: &str) -> bool {
 /// Checks if the given `dir_entry` is a file named `file_name`
 #[cfg(test)] // Rust analyzer FP
 pub(crate) fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
-  println!("{:?}", dir_entry);
   dir_entry
     .path()
     .file_name()
