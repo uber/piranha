@@ -1,8 +1,3 @@
-package com.uber.input
-
-import com.uber.BoolParam
-import com.uber.BoolParameter
-import com.uber.Parameter
 
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
@@ -15,7 +10,13 @@ Copyright (c) 2022 Uber Technologies, Inc.
  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
-*/internal interface SomeParameter {
+*/
+
+package com.uber.input
+import com.uber.BoolParam
+import com.uber.BoolParameter
+import com.uber.Parameter
+internal interface SomeParameter {
 
     @BoolParam(key = "other_flag", namespace = "some_long_name")
     fun isOtherFlag(): BoolParameter

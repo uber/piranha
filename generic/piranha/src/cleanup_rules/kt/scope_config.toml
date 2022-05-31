@@ -9,8 +9,28 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# For information about why this file is needed, please refere to /src/cleanup_rules/java/scope_config.rs. 
+# This file specifies how functions and classes should be captured by Piranha. 
+
+# fun add(int a, int b, int c, int d, int e): Int{
+#   // Let's assume that some rule was previously applied within this method body.
+# }  
+#
+# To capture the signature of the enclosing method, Piranha will match the below rule against the method.
+# This will result in matches - { n: "add", fp: "(int a, int b, int c, int d, int e): Int"} 
+# Substituting these matches in the `scopes.rules.generator` will result in : 
+#
+#(((method_declaration 
+#           name : (_) @z
+#           parameters : (formal_parameters)@fp) @xdn)
+
+# (#eq? @z "add")
+# (#eq? @tp "(int a, int b, int c, int d, int e): Int")
+# )
+#
 [[scopes]]
-name = "Method"
+name = "Function"
 [[scopes.rules]]
 matcher =  """
 ((function_declaration (simple_identifier) @n  (function_value_parameters) @sign (function_body) @fb) @qd5)
@@ -21,7 +41,7 @@ generator = """(
 (#eq? @g_sign "@sign")                
 )"""
 
-
+# Scope generator for Kotlin class.
 [[scopes]]
 name = "Class"
 [[scopes.rules]]

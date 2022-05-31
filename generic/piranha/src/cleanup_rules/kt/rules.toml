@@ -13,10 +13,7 @@
 
 # Before : 
 # else if (true) { doSomething() }
-# else if (true) { doSomething() } else { doSomethingElse()}
-# else if (true) abc() else xyz()
 # After :
-# { doSomething(); } 
 # { doSomething(); } 
 # abc()
 # 
@@ -34,6 +31,12 @@ query = """
 replace = "@consequence"
 replace_node = "if_expression"
 
+# Before :
+# else if (true) { doSomething() } else { doSomethingElse()}
+# else if (true) abc() else xyz()
+# After :
+# { doSomething(); } 
+# { doSomething(); } 
 [[rules]]
 groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_ladder_if_true_with_alternative"
@@ -54,10 +57,6 @@ replace_node = "if_expression"
 # After :
 #  { doSomethingElse(); } 
 #
-# Before : 
-#  else if (false) { doSomething(); }
-# After :
-#  
 [[rules]]
 groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_ladder_if_false_with_alternative"
@@ -73,6 +72,10 @@ query = """
 replace = "@alternative"
 replace_node = "if_expression"
 
+# Before : 
+#  else if (false) { doSomething(); }
+# After :
+#  
 [[rules]]
 groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_ladder_if_false"
@@ -89,12 +92,8 @@ replace_node = "if_expression"
 
 # Before : 
 # if (true) { doSomething() }
-# if (true) { doSomething() } else { doSomethingElse()}
-# if (true) abc() else xyz()
 # After :
 # { doSomething(); } 
-# { doSomething(); } 
-# abc()
 # 
 [[rules]]
 groups = ["if_cleanup", "boolean_expression_simplify"]
@@ -109,6 +108,12 @@ query = """
 replace = "@consequence"
 replace_node = "if_expression"
 
+# Before : 
+# if (true) { doSomething() } else { doSomethingElse()}
+# if (true) abc() else xyz()
+# After : 
+# { doSomething(); } 
+# abc()
 [[rules]]
 groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_if_true_with_alternative"
@@ -145,6 +150,10 @@ query = """
 replace = "@alternative"
 replace_node = "if_expression"
 
+# Before : 
+#  else if (false) { doSomething(); }
+# After :
+#  
 [[rules]]
 groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_if_false"
@@ -406,10 +415,10 @@ query = """
 replace = ""
 replace_node = "property_declaration"
 
-# # Check if there is no assignment where the variable @variable_name is 
-# # assigned to a value other than @init, within the method body
-# # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
-# # These holes will be filled contextually based on the code snippet matched to `rule.query
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
+# Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
+# These holes will be filled contextually based on the code snippet matched to `rule.query
 # [[rules.constraints]]
 # matcher = "(function_declaration) @md"
 # queries = [] 
@@ -423,8 +432,8 @@ queries = [
 )""",
 ]
 
-# # This rule is part (and entry point) of the inline field declaration cleanup.
-# # Same as the rule `delete_variable_declaration`, but applicable to fields.
+# This rule is part (and entry point) of the inline field declaration cleanup.
+# Same as the rule `delete_variable_declaration`, but applicable to fields.
 [[rules]]
 name = "delete_field_property_declaration"
 query = """
@@ -434,8 +443,8 @@ query = """
 replace = ""
 replace_node = "property_declaration"
 
-# # Check if there is no assignment where the variable @variable_name is 
-# # assigned to a value other than @init, within the method body
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
 queries = [
@@ -446,10 +455,10 @@ queries = [
 )""",
 ]
 
-# # This rule is part of inline variable declaration and field declaration cleanup. 
-# # Delete assignment for a particular (@variable_name, @init) if: 
-# # (i) If the enclosing method does not contain a variable declaration for @variable_name
-# # (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
+# This rule is part of inline variable declaration and field declaration cleanup. 
+# Delete assignment for a particular (@variable_name, @init) if: 
+# (i) If the enclosing method does not contain a variable declaration for @variable_name
+# (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
 [[rules]]
 name = "delete_boolean_assignments_for_local_variable"
 query = """
@@ -498,11 +507,11 @@ queries = [
 )""",
 ]
 
-# # This rule is part (and entry point) of the inline variable / field declaration. 
-# # delete assignment if 
-# # (i) if it is the only assignment in the entire class in the enclosing class
-# # (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
-# # (iii) There is no local variable declaration of the same name in the enclosing method
+# This rule is part (and entry point) of the inline variable / field declaration. 
+# delete assignment if 
+# (i) if it is the only assignment in the entire class in the enclosing class
+# (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
+# (iii) There is no local variable declaration of the same name in the enclosing method
 [[rules]]
 name = "delete_parent_assignment"
 query = """
@@ -554,9 +563,9 @@ queries = [
 ]
 
 
-# # Replace identifier with value if :
-# # (i) There is no local variable declaration in the enclosing method with the name as the identifier 
-# # TODO: Add field constraint
+# Replace identifier with value if :
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+# TODO: Add field constraint
 [[rules]]
 holes = ["variable_name", "init"]
 name = "replace_identifier_with_value"
@@ -569,7 +578,7 @@ query = """
 replace = "@init"
 replace_node = "identifier"
 # [[rules.constraints]]
-# # There should exist no local variable declaration named `@identifer`
+# There should exist no local variable declaration named `@identifer`
 # matcher = "(function_declaration) @md"
 # queries = [
 #   """(

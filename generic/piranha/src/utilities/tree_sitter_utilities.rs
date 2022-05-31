@@ -196,11 +196,17 @@ impl PiranhaHelpers for Node<'_> {
 pub(crate) fn get_tree_sitter_edit(
   code: String, replace_range: Range, replacement: &str,
 ) -> (String, InputEdit) {
+
   // Log the edit
   let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
-
+  let mut edit_kind = "Delete code".red(); //;
+  let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
+  if !replacement.is_empty() {
+    edit_kind = "Update code".green();
+    replacement_snippet_fmt.push_str(&format!("\n to \n{}", replacement.italic()))
+  }
   #[rustfmt::skip]
-  info!("{} at ({:?}) -\n {}", if replacement.is_empty() { "Delete code" } else {"Update code" }.green(), ((&replace_range.start_point.row, &replace_range.start_point.column), (&replace_range.end_point.row, &replace_range.end_point.column)), if !replacement.is_empty() {format!("{}\n to \n{}",replaced_code_snippet.italic(),replacement.italic())} else {format!("{} ", replaced_code_snippet.italic())});
+  info!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
 
   (
     // Create the new source code content by appropriately

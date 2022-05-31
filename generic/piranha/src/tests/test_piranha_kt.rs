@@ -19,6 +19,7 @@ static LANGUAGE: &str = "kt";
 fn test_kotlin_scenarios_treated_ff1() {
   initialize();
   run_test(LANGUAGE, "feature_flag_system_1", "treated", 1);
+  
 }
 
 #[test]

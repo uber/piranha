@@ -32,7 +32,6 @@ internal class XPMethodChainCases {
             // Matches API
             println("!")
             // Matches API
-            
             // Does not match API
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
@@ -61,9 +60,6 @@ internal class XPMethodChainCases {
             }
             println("done!")
             // Matches API
-            
-            
-
             // Do not match API
             cp.put(sp.isOtherFlag(), true)
             cp.put(sp.isOtherFlag(), false)

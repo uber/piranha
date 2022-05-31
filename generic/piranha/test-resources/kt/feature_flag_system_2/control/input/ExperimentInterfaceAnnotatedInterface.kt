@@ -1,9 +1,3 @@
-package com.uber.input
-
-import com.uber.BoolParam
-import com.uber.BoolParameter
-import com.uber.Parameter
-import com.uber.ParameterDefinition
 
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
@@ -16,7 +10,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
-*/@ParameterDefinition(namespace = "some_long_name")
+*/
+package com.uber.input
+
+import com.uber.BoolParam
+import com.uber.BoolParameter
+import com.uber.Parameter
+import com.uber.ParameterDefinition
+@ParameterDefinition(namespace = "some_long_name")
 internal interface SomeOtherParameter {
     @BoolParam(key = "STALE_FLAG")
     fun isStaleFeature(): BoolParameter
