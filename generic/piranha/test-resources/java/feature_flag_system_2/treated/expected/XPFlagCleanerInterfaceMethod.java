@@ -13,48 +13,35 @@
  */
 package com.uber.piranha;
 
-import dagger.Provides;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.inject.Inject;
 
 class XPFlagCleanerPositiveCases {
 
   private ExperimentInterface experimentation;
 
-  
-
   public void conditional_contains_stale_flag() {
-    
+
     System.out.println("Hello World");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag() {
-    
+
     System.out.println("Hello World");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag_tbool() {
-    
+
     System.out.println("Hello World");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
-    
+
     System.out.println("Hello World");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
-    
+
     System.out.println("Hi world");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned(int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
@@ -67,25 +54,25 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
-  public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(int a, bool abc, int z) {
-    
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(
+      int a, bool abc, int z) {
+
     System.out.println("Hi world");
-    
-}
+  }
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
-    
-    System.out.println("Hello World");
-    
-}
 
-  public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(int a, bool abc, int z) {
+    System.out.println("Hello World");
+  }
+
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(
+      int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
     System.out.println("Hi world");
-    
-}
+  }
 
- public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(int a, bool abc, int z) {
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(
+      int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
     bool ftBool = abc();
     ftBool = true;

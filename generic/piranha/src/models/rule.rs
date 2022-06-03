@@ -258,7 +258,7 @@ impl Rule {
           .collect(),
         rule_store,
       ) {
-        let replacement = substitute_tags(self.replace(), &tag_substitutions);
+        let replacement = substitute_tags(self.replace(), &tag_substitutions).replace("\\n", "\n");
         return Some(Edit::new(
           range,
           replacement,

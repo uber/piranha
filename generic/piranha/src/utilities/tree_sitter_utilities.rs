@@ -258,7 +258,7 @@ pub(crate) fn substitute_tags(s: String, substitutions: &HashMap<String, String>
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
     let key = format!("@{}", tag);
-    output = output.replace(&key, substitute)
+    output = output.replace(&key, &substitute.replace("\n", "\\n"))
   }
   output
 }

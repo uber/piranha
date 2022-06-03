@@ -13,12 +13,6 @@
  */
 package com.uber.piranha;
 
-import dagger.Provides;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import javax.inject.Inject;
 
 class XPFlagCleanerPositiveCases {
 
@@ -27,14 +21,14 @@ class XPFlagCleanerPositiveCases {
   private boolean ftBool = experimentation.isSomeFeature().getCachedValue();
 
   public void conditional_contains_stale_flag() {
-    
+
     if (experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
     }
   }
 
   public void conditional_with_else_contains_stale_flag() {
-    
+
     if (experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
     } else {
@@ -43,7 +37,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool() {
-    
+
     bool tBool = exp.isSomeFeature().getCachedValue();
     if (tBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
@@ -53,7 +47,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
-    
+
     bool tBool = exp.isSomeFeature().getCachedValue();
     if (tBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
@@ -63,7 +57,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
-    
+
     bool tBool = exp.isSomeFeature().getCachedValue();
     if (!tBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
@@ -83,8 +77,9 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
-  public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(int a, bool abc, int z) {
-    
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(
+      int a, bool abc, int z) {
+
     bool tBool = exp.isSomeFeature().getCachedValue();
     tBool = true;
     if (!tBool && experimentation.isSomeFeature().getCachedValue()) {
@@ -95,7 +90,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
-    
+
     if (ftBool && experimentation.isSomeFeature().getCachedValue()) {
       System.out.println("Hello World");
     } else {
@@ -103,7 +98,8 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
-  public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(int a, bool abc, int z) {
+  public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(
+      int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
     ftBool = exp.isSomeFeature().getCachedValue();
     if (!ftBool && experimentation.isSomeFeature().getCachedValue()) {
@@ -111,5 +107,5 @@ class XPFlagCleanerPositiveCases {
     } else {
       System.out.println("Hi world");
     }
-  }  
+  }
 }

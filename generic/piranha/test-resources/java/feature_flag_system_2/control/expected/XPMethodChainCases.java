@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2022 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -26,14 +26,14 @@ class XPMethodChainCases {
   public static void foobar(Parameter cp) {
     SomeParam sp = SomeParam.create(cp);
     // Matches API
-    
+
     // Matches API
     System.out.println("!!!");
     // Does not match API
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    
+
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
@@ -58,8 +58,6 @@ class XPMethodChainCases {
 
     System.out.println("done!");
     // Matches API
-    
-    
 
     // Do not match API
     cp.put(sp.otherFlag(), true);
@@ -68,7 +66,6 @@ class XPMethodChainCases {
 
   class TestMethodChainTest {
     // Matches annotation
-    
 
     // Matches annotation
 
