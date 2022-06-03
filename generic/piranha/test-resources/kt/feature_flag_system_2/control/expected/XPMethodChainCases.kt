@@ -36,7 +36,7 @@ internal class XPMethodChainCases {
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
             }
-            
+
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
             }

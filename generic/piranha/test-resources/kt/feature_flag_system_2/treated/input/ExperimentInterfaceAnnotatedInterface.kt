@@ -1,4 +1,3 @@
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -25,14 +24,15 @@ internal interface SomeOtherParameter {
     fun isStaleFeature(): BoolParameter
 
     @BoolParam(key = "other_flag", namespace = "some_long_name")
-
     fun isOtherFlag(): BoolParameter
+
     companion object {
         fun create(): SomeOtherParameter {
             return object : SomeOtherParameter {
                 override fun isStaleFeature(): BoolParameter {
                     TODO("Not yet implemented")
                 }
+
                 override fun isOtherFlag(): BoolParameter {
                     TODO("Not yet implemented")
                 }

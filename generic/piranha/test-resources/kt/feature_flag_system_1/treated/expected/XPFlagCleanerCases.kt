@@ -16,10 +16,10 @@ import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
-    enum class TestExperimentName { 
+    enum class TestExperimentName {
     }
 
-    enum class AnotherTestExperimentName { 
+    enum class AnotherTestExperimentName {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -39,7 +39,7 @@ internal class XPFlagCleanerPositiveCases {
         println("Hello World")
     }
 
-     fun complex_conditional_contains_stale_flag() {
+    fun complex_conditional_contains_stale_flag() {
         println("Hello World")
     }
 
@@ -56,8 +56,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun return_contains_stale_flag(): Boolean {
-      // FIXME:
-       return true
+        return true
     }
 
     fun condexp_contains_stale_flag() {
@@ -65,7 +64,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun misc_xp_apis_containing_stale_flag() {
-           if ((tBool || true)) {
+        if ((tBool || true)) {
         }
     }
 
@@ -91,10 +90,8 @@ internal class XPFlagCleanerPositiveCases {
         return 100
     }
 
-    
-
     private fun testRemovingInjectField(): Int {
-         return 1
+        return 1
     }
 
     var injectedExperimentsMultipleUses: XPTest? = null
@@ -103,13 +100,10 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     private fun testNotRemovingInjectField(): Int {
-        
         return 1
     }
 
-    
     fun unusedParamTestWithDeletion(): Int {
-        
         return 1
     }
 
@@ -119,13 +113,12 @@ internal class XPFlagCleanerPositiveCases {
         return 1
     }
 
-
-    private fun testMultipleCalls(x: Int):Int {
+    private fun testMultipleCalls(x: Int): Int {
         if (x > 0) {
             return 1000
         }
 
-        // do something here
+
         return 3000
     }
 

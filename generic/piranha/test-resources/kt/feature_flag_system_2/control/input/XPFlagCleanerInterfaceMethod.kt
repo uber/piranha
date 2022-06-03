@@ -125,7 +125,6 @@ internal class XPFlagCleanerPositiveCases {
         }
     }
 
-
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_3(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
         ftBool2 = experimentation.isStaleFeature().cachedValue

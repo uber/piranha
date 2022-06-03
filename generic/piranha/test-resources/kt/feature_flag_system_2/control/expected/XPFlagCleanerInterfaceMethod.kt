@@ -18,11 +18,10 @@ package com.uber.input
 
 internal class XPFlagCleanerPositiveCases {
     private val experimentation: SomeOtherParameter = SomeOtherParameter.create()
-    
     private var ftBool1 = false
     private var ftBool2 = false
     fun conditional_contains_stale_flag() {
-        
+
     }
 
     fun conditional_with_else_contains_stale_flag() {
@@ -30,17 +29,14 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun conditional_with_else_contains_stale_flag_tbool() {
-        
         println("Hi world")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool(a: Int) {
-        
         println("Hi world")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool(a: Int, abc: Boolean) {
-        
         println("Hello World")
     }
 
@@ -75,13 +71,11 @@ internal class XPFlagCleanerPositiveCases {
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
-        
         println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
-        
         println("Hello World")
     }
 
@@ -94,7 +88,6 @@ internal class XPFlagCleanerPositiveCases {
             println("Hi world")
         }
     }
-
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_3(a: Int, z: Int) {
         // Currently if there is another assignment, variable will not be inlined.
