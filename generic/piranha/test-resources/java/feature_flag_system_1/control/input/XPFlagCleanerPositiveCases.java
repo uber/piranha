@@ -23,12 +23,10 @@ import javax.inject.Inject;
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
-    
     STALE_FLAG
   }
 
   enum AnotherTestExperimentName {
-    
     @Autorollout
     STALE_FLAG
   }
@@ -49,7 +47,7 @@ class XPFlagCleanerPositiveCases {
   private boolean tBool = false;
 
   public void conditional_contains_stale_flag() {
-    
+
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
       System.out.println("Hello World");
     }
@@ -59,7 +57,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void conditional_with_else_contains_stale_flag() {
-    
+
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
       System.out.println("Hello World");
     } else {
@@ -68,7 +66,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void complex_conditional_contains_stale_flag(boolean tBool) {
-    
+
     if (tBool || (true || exp9.isToggleEnabled(TestExperimentName.STALE_FLAG))) {
       System.out.println("Hello World");
     } else {
@@ -77,7 +75,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void other_api_stale_flag() {
-    
+
     if (experimentation.isFlagTreated(TestExperimentName.STALE_FLAG)) {
       System.out.println("Hello World");
     } else {
@@ -86,51 +84,43 @@ class XPFlagCleanerPositiveCases {
   }
 
   public void assignments_containing_stale_flag() {
-    
+
     tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG);
 
-    
     tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && true;
 
-    
     tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) || true;
 
-    
     tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) || tBool;
 
-    
     tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && (tBool || true);
   }
 
   public boolean return_contains_stale_flag() {
-    
+
     return experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG);
   }
 
   public void condexp_contains_stale_flag() {
-    
+
     tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) ? true : false;
   }
 
   public void misc_xp_apis_containing_stale_flag() {
-    
+
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && (tBool || true)) {}
 
-    
     experimentation.putToggleEnabled(TestExperimentName.STALE_FLAG);
 
-    
     experimentation.includeEvent(TestExperimentName.STALE_FLAG);
 
-    
     experimentation.putToggleDisabled(TestExperimentName.STALE_FLAG);
 
-    
     if (experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG) && (tBool || true)) {}
   }
 
   public int return_within_if_basic() {
-    
+
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
       return 20;
     }
@@ -139,7 +129,7 @@ class XPFlagCleanerPositiveCases {
 
   public int return_within_if_additional(int x) {
     if (x == 0) {
-      
+
       if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
         System.out.println();
         return 0;
@@ -148,7 +138,6 @@ class XPFlagCleanerPositiveCases {
     }
 
     if (x == 1)
-      
       if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
         return 1;
       } else {
@@ -166,7 +155,7 @@ class XPFlagCleanerPositiveCases {
 
     if (x == 3) {
       int z = 4;
-      
+
       if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
         z++;
       } else {
@@ -180,13 +169,12 @@ class XPFlagCleanerPositiveCases {
   }
 
   @ToggleTesting(treated = TestExperimentName.STALE_FLAG)
-  
   public void annotation_test() {}
 
   @Inject XPTest injectedExperimentsShouldBeDeleted;
 
   private int testRemovingInjectField() {
-    
+
     if (injectedExperimentsShouldBeDeleted.isToggleEnabled(TestExperimentName.STALE_FLAG)) return 1;
     else return 2;
   }
@@ -198,14 +186,14 @@ class XPFlagCleanerPositiveCases {
   }
 
   private int testNotRemovingInjectField() {
-    
+
     if (injectedExperimentsMultipleUses.isToggleEnabled(TestExperimentName.STALE_FLAG)) return 1;
     else return 2;
   }
 
   @Provides
   public int unusedParamTestWithDeletion(XPTest x) {
-    
+
     if (x.isToggleEnabled(TestExperimentName.STALE_FLAG)) return 1;
     else return 2;
   }
@@ -217,16 +205,15 @@ class XPFlagCleanerPositiveCases {
       // just another use to prevent deletion of this parameter.
     }
 
-    
     if (x.isToggleEnabled(TestExperimentName.STALE_FLAG)) return 1;
     else return 2;
   }
 
   private void testMultipleCalls(int x) {
     if (x > 0) {
-      
+
       experimentation.includeEvent(TestExperimentName.STALE_FLAG);
-      
+
       if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
         // comment0
         return;
@@ -241,7 +228,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public int or_compounded_with_not(int x, boolean extra_toggle) {
-    
+
     if (extra_toggle || !experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG)) {
       return 0;
     } else {
@@ -250,7 +237,7 @@ class XPFlagCleanerPositiveCases {
   }
 
   public int remove_else_if(boolean extra_toggle) {
-    
+
     if (extra_toggle) {
       return 0;
     } else if (experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG)) {

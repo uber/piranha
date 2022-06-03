@@ -18,7 +18,6 @@ import com.uber.BoolParameter
 import com.uber.Parameter
 
 internal interface SomeParameter {
-
     @BoolParam(key = "other_flag", namespace = "some_long_name")
     fun isOtherFlag(): BoolParameter
 
@@ -28,6 +27,7 @@ internal interface SomeParameter {
                 override fun isStaleFeature(): BoolParameter {
                     TODO("Not yet implemented")
                 }
+
                 override fun isOtherFlag(): BoolParameter {
                     TODO("Not yet implemented")
                 }

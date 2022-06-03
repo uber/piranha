@@ -1,4 +1,3 @@
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -17,20 +16,22 @@ import com.uber.BoolParam
 import com.uber.BoolParameter
 import com.uber.Parameter
 import com.uber.ParameterDefinition
+
 @ParameterDefinition(namespace = "some_long_name")
 internal interface SomeOtherParameter {
     @BoolParam(key = "STALE_FLAG")
     fun isStaleFeature(): BoolParameter
 
     @BoolParam(key = "other_flag", namespace = "some_long_name")
-
     fun isOtherFlag(): BoolParameter
+
     companion object {
         fun create(): SomeOtherParameter {
             return object : SomeOtherParameter {
                 override fun isStaleFeature(): BoolParameter {
                     TODO("Not yet implemented")
                 }
+
                 override fun isOtherFlag(): BoolParameter {
                     TODO("Not yet implemented")
                 }

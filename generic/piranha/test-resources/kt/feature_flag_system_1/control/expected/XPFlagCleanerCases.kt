@@ -39,7 +39,7 @@ internal class XPFlagCleanerPositiveCases {
         println("Hi world")
     }
 
-     fun complex_conditional_contains_stale_flag() {
+    fun complex_conditional_contains_stale_flag() {
         println("Hello World")
 
     }
@@ -57,12 +57,10 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun return_contains_stale_flag(): Boolean {
-        // FIXME:
         return false
     }
 
     fun condexp_contains_stale_flag() {
-
         tBool = false
     }
 
@@ -78,7 +76,6 @@ internal class XPFlagCleanerPositiveCases {
 
     fun return_within_if_additional(x: Int): Int {
         if (x == 0) {
-
             return 75
         }
         if (x == 1)
@@ -96,7 +93,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     private fun testRemovingInjectField(): Int {
-     return 2
+        return 2
     }
 
     var injectedExperimentsMultipleUses: XPTest? = null
@@ -118,11 +115,11 @@ internal class XPFlagCleanerPositiveCases {
         return 2
     }
 
-    private fun testMultipleCalls(x: Int):Int {
+    private fun testMultipleCalls(x: Int): Int {
         if (x > 0) {
             return 2000
         }
-        // do something here
+
         return 3000
     }
 

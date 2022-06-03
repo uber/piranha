@@ -18,7 +18,6 @@ package com.uber.input
 
 internal class XPFlagCleanerPositiveCases {
     private val experimentation: SomeParameter = SomeParameter.create()
-    
     private var ftBool: Boolean = experimentation.isOtherFlag().cachedValue
     fun conditional_contains_stale_flag() {
         if (experimentation.isOtherFlag().cachedValue) {

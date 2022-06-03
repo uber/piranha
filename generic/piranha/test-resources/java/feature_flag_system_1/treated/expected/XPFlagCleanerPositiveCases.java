@@ -22,15 +22,9 @@ import javax.inject.Inject;
 
 class XPFlagCleanerPositiveCases {
 
-  enum TestExperimentName {
-    
+  enum TestExperimentName {}
 
-  }
-
-  enum AnotherTestExperimentName {
-    
-
-  }
+  enum AnotherTestExperimentName {}
 
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Autorollout {
@@ -48,96 +42,79 @@ class XPFlagCleanerPositiveCases {
   private boolean tBool = false;
 
   public void conditional_contains_stale_flag() {
-    
+
     System.out.println("Hello World");
   }
 
   public void conditional_with_else_contains_stale_flag() {
-    
+
     System.out.println("Hello World");
   }
 
   public void complex_conditional_contains_stale_flag(boolean tBool) {
-    
+
     System.out.println("Hello World");
   }
 
   public void other_api_stale_flag() {
-    
+
     System.out.println("Hello World");
   }
 
   public void assignments_containing_stale_flag() {
-    
+
     tBool = true;
 
-    
     tBool = true;
 
-    
     tBool = true;
 
-    
     tBool = true;
 
-    
     tBool = (tBool || true);
   }
 
   public boolean return_contains_stale_flag() {
-    
+
     return true;
   }
 
   public void condexp_contains_stale_flag() {
-    
+
     tBool = true;
   }
 
   public void misc_xp_apis_containing_stale_flag() {
-    
+
     if ((tBool || true)) {}
-
-    
-
-
-    
-
-
-    
-
-
-    
-
   }
 
   public int return_within_if_basic() {
 
-return 20;
-}
+    return 20;
+  }
 
   public int return_within_if_additional(int x) {
     if (x == 0) {
 
-System.out.println();
-return 0;
-}
+      System.out.println();
+      return 0;
+    }
 
-    if (x == 1)
-      
-      {
-        return 1;
-      }
+    if (x == 1) {
+
+      return 1;
+    }
 
     if (x == 2) {
-int y = 3;
-y++;
-return y;
-}
+      int y = 3;
+      y++;
+      return y;
+    }
 
     if (x == 3) {
       int z = 4;
-      
+
       z++;
       return z;
     }
@@ -146,13 +123,12 @@ return y;
   }
 
   @ToggleTesting(treated = TestExperimentName.STALE_FLAG)
-  
   public void annotation_test() {}
 
   @Inject XPTest injectedExperimentsShouldBeDeleted;
 
   private int testRemovingInjectField() {
-    
+
     return 1;
   }
 
@@ -163,13 +139,13 @@ return y;
   }
 
   private int testNotRemovingInjectField() {
-    
+
     return 1;
   }
 
   @Provides
   public int unusedParamTestWithDeletion(XPTest x) {
-    
+
     return 1;
   }
 
@@ -180,17 +156,14 @@ return y;
       // just another use to prevent deletion of this parameter.
     }
 
-    
     return 1;
   }
 
   private void testMultipleCalls(int x) {
     if (x > 0) {
-      
 
-      
       // comment0
-return;
+      return;
     }
 
     // do something here
@@ -198,19 +171,18 @@ return;
   }
 
   public int or_compounded_with_not(int x, boolean extra_toggle) {
-    
+
     return 0;
   }
 
   public int remove_else_if(boolean extra_toggle) {
-    
+
     if (extra_toggle) {
       return 0;
     } else {
       return 2;
     }
   }
-
 
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) {

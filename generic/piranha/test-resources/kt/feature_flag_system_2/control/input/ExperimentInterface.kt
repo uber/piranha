@@ -1,4 +1,3 @@
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -17,6 +16,7 @@ package com.uber.input
 import com.uber.BoolParam
 import com.uber.BoolParameter
 import com.uber.Parameter
+
 internal interface SomeParameter {
     @BoolParam(key = "STALE_FLAG", namespace = "some_long_name")
     fun isStaleFeature(): BoolParameter
@@ -30,6 +30,7 @@ internal interface SomeParameter {
                 override fun isStaleFeature(): BoolParameter {
                     TODO("Not yet implemented")
                 }
+
                 override fun isOtherFlag(): BoolParameter {
                     TODO("Not yet implemented")
                 }

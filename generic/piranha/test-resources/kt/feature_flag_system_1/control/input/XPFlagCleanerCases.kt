@@ -18,12 +18,10 @@ import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
     enum class TestExperimentName {
-        
         STALE_FLAG
     }
 
     enum class AnotherTestExperimentName {
-        
         @Autorollout
         STALE_FLAG
     }
@@ -38,7 +36,6 @@ internal class XPFlagCleanerPositiveCases {
     private val experimentation: XPTest? = null
     private var tBool = false
     fun conditional_contains_stale_flag() {
-        
         if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
             println("Hello World")
         }
@@ -52,7 +49,7 @@ internal class XPFlagCleanerPositiveCases {
         }
     }
 
-     fun complex_conditional_contains_stale_flag() {
+    fun complex_conditional_contains_stale_flag() {
         if (true || tBool && experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
             println("Hello World")
         } else {
@@ -69,54 +66,41 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun assignments_containing_stale_flag() {
-        
         tBool = experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)
 
-        
         tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && true
 
-        
         tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) || true
 
-        
         tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) || tBool
 
-        
         tBool = experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) && (tBool || true)
     }
 
     fun return_contains_stale_flag(): Boolean {
-        // FIXME:
         return experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)
     }
 
     fun condexp_contains_stale_flag() {
-        
         tBool = if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) true else false
     }
 
     fun misc_xp_apis_containing_stale_flag() {
-        
         if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG) && (tBool || true)) {
         }
 
-        
         experimentation.putToggleEnabled(TestExperimentName.STALE_FLAG)
 
-        
         experimentation.includeEvent(TestExperimentName.STALE_FLAG)
 
-        
         experimentation.putToggleDisabled(TestExperimentName.STALE_FLAG)
 
-        
         if (experimentation.isToggleDisabled(TestExperimentName.STALE_FLAG) && (tBool || true)) {
             println("Hello World")
         }
     }
 
     fun return_within_if_basic(): Int {
-        
         return if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
             20
         } else 30
@@ -124,12 +108,11 @@ internal class XPFlagCleanerPositiveCases {
 
     fun return_within_if_additional(x: Int): Int {
         if (x == 0) {
-            
             return if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
                 0
             } else 75
         }
-        if (x == 1) 
+        if (x == 1)
             return if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
                 1
             } else {
@@ -137,7 +120,7 @@ internal class XPFlagCleanerPositiveCases {
             }
         if (x == 2) {
             var y = 3
-            
+
             if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
                 y++
                 return 1000
@@ -146,7 +129,7 @@ internal class XPFlagCleanerPositiveCases {
         }
         if (x == 3) {
             var z = 4
-            
+
             if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
                 z++
             } else {
@@ -159,8 +142,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     private fun testRemovingInjectField(): Int {
-        
-     return if (injectedExperimentsShouldBeDeleted!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) 1 else 2
+        return if (injectedExperimentsShouldBeDeleted!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) 1 else 2
     }
 
     var injectedExperimentsMultipleUses: XPTest? = null
@@ -169,12 +151,10 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     private fun testNotRemovingInjectField(): Int {
-        
         return if (injectedExperimentsMultipleUses!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) 1 else 2
     }
 
     fun unusedParamTestWithDeletion(): Int {
-        
         return if (x.isToggleEnabled(TestExperimentName.STALE_FLAG)) 1 else 2
     }
 
@@ -182,15 +162,14 @@ internal class XPFlagCleanerPositiveCases {
         if (x != null) {
         }
 
-        
+
         return if (x!!.isToggleEnabled(TestExperimentName.STALE_FLAG)) 1 else 2
     }
 
-    private fun testMultipleCalls(x: Int):Int {
+    private fun testMultipleCalls(x: Int): Int {
         if (x > 0) {
-            
             experimentation!!.includeEvent(TestExperimentName.STALE_FLAG)
-            
+
             if (experimentation1.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
                 return 1000
             } else {
@@ -198,12 +177,11 @@ internal class XPFlagCleanerPositiveCases {
             }
         }
 
-        // do something here
+
         return 3000
     }
 
     fun or_compounded_with_not(x: Int, extra_toggle: Boolean): Int {
-        
         if (extra_toggle || !experimentation!!.isToggleDisabled(TestExperimentName.STALE_FLAG)) {
             return 0
         } else {
@@ -212,7 +190,6 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun remove_else_if(extra_toggle: Boolean): Int {
-        
         return if (extra_toggle) {
             0
         } else if (experimentation1!!.isToggleDisabled(TestExperimentName.STALE_FLAG)) {

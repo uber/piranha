@@ -1,4 +1,4 @@
-/* 
+/*
 Copyright (c) 2022 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -11,13 +11,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-@ParameterDefinition(namespace="some_long_name")
+@ParameterDefinition(namespace = "some_long_name")
 interface SomeParameter {
 
-    @BoolParam(key="STALE_FLAG")
-    BoolParameter isStaleFeature();
+  @BoolParam(key = "STALE_FLAG")
+  BoolParameter isStaleFeature();
 
-    @BoolParam(key="other_flag", namespace = "some_long_name")
-    BoolParameter isOtherFlag();
-
+  @BoolParam(key = "other_flag", namespace = "some_long_name")
+  BoolParameter isOtherFlag();
 }
