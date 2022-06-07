@@ -13,6 +13,7 @@ cc = "1.0.73"
 
 [dependencies]
 tree-sitter = "0.20.6"
+tree-sitter-traversal = "0.1.2"
 json = "0.12.4"
 toml = "0.5.9"
 serde = "1.0.136"

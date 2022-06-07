@@ -17,9 +17,11 @@ import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
     enum class TestExperimentName {
+        SOME_FLAG,
     }
 
     enum class AnotherTestExperimentName {
+        SOME_OTHER_FLAG
     }
 
     @Retention(RetentionPolicy.RUNTIME)
