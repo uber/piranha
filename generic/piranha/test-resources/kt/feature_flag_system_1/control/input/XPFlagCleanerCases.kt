@@ -18,7 +18,6 @@ import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
     enum class TestExperimentName {
-
         SOME_FLAG,
         STALE_FLAG
     }
