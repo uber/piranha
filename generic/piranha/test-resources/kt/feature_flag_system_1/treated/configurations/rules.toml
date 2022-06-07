@@ -106,6 +106,7 @@ query = """
 replace_node = "enum_entry"
 replace = ""
 holes = ["stale_flag_name"]
+groups = [ "delete_enum_entry"]
 
 #
 # For @stale_flag_name = STALE_FLAG and @treated = true
