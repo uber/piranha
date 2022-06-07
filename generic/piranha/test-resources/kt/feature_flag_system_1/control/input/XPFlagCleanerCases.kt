@@ -18,12 +18,14 @@ import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
     enum class TestExperimentName {
+        SOME_FLAG,
         STALE_FLAG
     }
 
     enum class AnotherTestExperimentName {
         @Autorollout
-        STALE_FLAG
+        STALE_FLAG,
+        SOME_OTHER_FLAG
     }
 
     @Retention(RetentionPolicy.RUNTIME)

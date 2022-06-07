@@ -4,9 +4,10 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use tree_sitter::{InputEdit, Node, Parser, Tree};
+use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
+use tree_sitter_traversal::{traverse, Order};
 
-use crate::utilities::tree_sitter_utilities::get_tree_sitter_edit;
+use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
 
 use super::edit::Edit;
 
@@ -46,6 +47,12 @@ impl SourceCodeUnit {
     fs::write(&self.path, self.code.as_str()).expect("Unable to Write file");
   }
 
+ 
+  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
+    // Get the tree_sitter's input edit representation
+    self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser)
+  }
+
   /// Applies an edit to the source code unit
   /// # Arguments
   /// * `replace_range` - the range of code to be replaced
@@ -56,13 +63,12 @@ impl SourceCodeUnit {
   /// The `edit:InputEdit` performed.
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
-  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
+  pub(crate) fn _apply_edit(
+    &mut self, range: Range, replacement_string: &str, parser: &mut Parser,
+  ) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    let (new_source_code, ts_edit) = get_tree_sitter_edit(
-      self.code.clone(),
-      edit.replacement_range(),
-      edit.replacement_string(),
-    );
+    let (new_source_code, ts_edit) =
+      get_tree_sitter_edit(self.code.clone(), range, replacement_string);
     // Apply edit to the tree
     self.ast.edit(&ts_edit);
     // Create a new updated tree from the previous tree
@@ -71,7 +77,29 @@ impl SourceCodeUnit {
       .expect("Could not generate new tree!");
     self.ast = new_tree;
     self.code = new_source_code;
+    // Handle errors, like removing extra comma.
+    self.remove_additional_comma_from_sequence_list(parser);
+    if self.ast.root_node().has_error() {
+      panic!("Produced syntactically incorrect source code {}", self.code());
+  }
     ts_edit
+  }
+
+  /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
+  /// This function, applies the recovery strategies.
+  /// Currently, we only support recovering from extra comma. 
+  fn remove_additional_comma_from_sequence_list(&mut self, parser: &mut Parser) {
+    if self.ast.root_node().has_error() {
+      let c_ast = self.ast.clone();
+      for n in traverse(c_ast.walk(), Order::Post) {
+        // Remove the extra comma
+        if n.is_extra() && eq_without_whitespace(n.utf8_text(self.code().as_bytes()).unwrap(), ",")
+        {
+          self._apply_edit(n.range(), "", parser);
+          break;
+        }
+      }
+    }
   }
 
   // #[cfg(test)] // Rust analyzer FP

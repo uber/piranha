@@ -12,7 +12,7 @@ use {
 #[test]
 fn test_apply_edit_positive() {
   let source_code = "class Test {
-      pub void foobar(){
+      public void foobar(){
         boolean isFlagTreated = true;
         isFlagTreated = true;
         if (isFlagTreated) {
@@ -33,8 +33,8 @@ fn test_apply_edit_positive() {
   let _ = source_code_unit.apply_edit(
     &Edit::new(
       Range {
-        start_byte: 46,
-        end_byte: 75,
+        start_byte: 49,
+        end_byte: 78,
         start_point: tree_sitter::Point { row: 3, column: 9 },
         end_point: tree_sitter::Point { row: 3, column: 38 },
       },
@@ -46,7 +46,7 @@ fn test_apply_edit_positive() {
   );
   assert!(eq_without_whitespace(
     r#"class Test {
-      pub void foobar(){
+      public void foobar(){
         
         isFlagTreated = true;
         if (isFlagTreated) {
@@ -63,7 +63,7 @@ fn test_apply_edit_positive() {
 #[should_panic(expected = "byte index 1000 is out of bounds")]
 fn test_apply_edit_negative() {
   let source_code = "class Test {
-      pub void foobar(){
+      public void foobar(){
         boolean isFlagTreated = true;
         isFlagTreated = false;
         if (isFlagTreated) {

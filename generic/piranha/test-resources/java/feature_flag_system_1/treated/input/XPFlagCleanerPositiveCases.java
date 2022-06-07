@@ -23,12 +23,14 @@ import javax.inject.Inject;
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
+    SOME_FLAG,
     STALE_FLAG
   }
 
   enum AnotherTestExperimentName {
     @Autorollout
-    STALE_FLAG
+    STALE_FLAG,
+    SOME_OTHER_FLAG
   }
 
   @Retention(RetentionPolicy.RUNTIME)
