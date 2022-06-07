@@ -136,7 +136,6 @@ class RefactorEngine {
         if (func.body === null || func.body.body == null) {
             return false;
         }
-
         const returnIndex = func.body.body.length - 1;
 
         if (returnIndex < 0)
@@ -144,7 +143,6 @@ class RefactorEngine {
             return false;
         else {
             var returnNode = func.body.body[returnIndex];
-
             if (
                 returnNode.type === 'ReturnStatement' &&
                 returnNode.argument !== null &&
@@ -322,24 +320,23 @@ class RefactorEngine {
             enter: function (node) {
                 if (node.type === 'CallExpression') {
                     if (methodHashMap.has(node.callee.name)) {
-                        const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
-                        const nodeArgument = node.arguments[argumentIndex];
-
+                        const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex; // 0
+                        const nodeArgument = node.arguments[argumentIndex]; // node.arguments[0] = 'featureFlag' || featureFlag
                         let nodeArgumentIsFlag = false;
                         switch (nodeArgument.type) {
-                            case 'Identifier':
-                                nodeArgumentIsFlag = nodeArgument.name === engine.flagname;
+                            case 'Identifier': // node.arguments[0] =  featureFlag
+                                nodeArgumentIsFlag = nodeArgument.name === engine.flagname; // checks if the flag under consideration is the required flag
                                 break;
-                            case 'Literal':
+                            case 'Literal': // node.arguments[0] = 'featureFlag'
                                 nodeArgumentIsFlag = nodeArgument.value === engine.flagname;
                                 break;
                         }
                         if (nodeArgumentIsFlag) {
-                            const flagType = methodHashMap.get(node.callee.name).flagType;
+                            const flagType = methodHashMap.get(node.callee.name).flagType; // control || treated
                             engine.changed = true;
 
                             if (
-                                (flagType === 'treated' && engine.behaviour) ||
+                                (flagType === 'treated' && engine.behaviour) || // engine.behaviour = true => treated
                                 (flagType === 'control' && !engine.behaviour)
                             ) {
                                 return engine.trueLiteral();
@@ -352,6 +349,8 @@ class RefactorEngine {
             },
 
             fallback: 'iteration', // Ignore nodes in the AST that estraverse does not recognize
+            // By passing visitor.fallback option, we can control the behavior when encountering unknown nodes.
+            // Iterating the child **nodes** of unknown nodes.
         });
     }
 
@@ -361,7 +360,6 @@ class RefactorEngine {
     //  NOT true -> false, NOT false -> true
     evalBoolExpressions() {
         var engine = this;
-
         estraverse.replace(this.ast, {
             leave: function (node) {
                 if (node.type === 'LogicalExpression') {
@@ -409,10 +407,10 @@ class RefactorEngine {
                     engine.isPiranhaLiteral(node.test)
                 ) {
                     if (node.test.value === true) {
+                        // If statement is true
                         // node.consequent is always non-null so no check required
                         engine.changed = true;
                         engine.moveCommentsToConsequent(node);
-
                         return node.consequent;
                     } else if (node.test.value === false) {
                         if (node.alternate == null) {
@@ -448,9 +446,9 @@ class RefactorEngine {
     // var foo = cond -> _
     // where cond evaluates to a Boolean literal in a previous step
     getRedundantVarnames() {
+        // Makes the assignment between literal and value
         var assignments = {};
         var engine = this;
-
         // Get a list of variable names which are assigned to a boolean literal
         estraverse.traverse(this.ast, {
             enter: function (node) {
@@ -462,7 +460,7 @@ class RefactorEngine {
                             engine.isPiranhaLiteral(declaration.init) &&
                             typeof declaration.init.value === 'boolean'
                         ) {
-                            assignments[declaration.id.name] = declaration.init.value;
+                            assignments[declaration.id.name] = declaration.init.value; // Assigning a -> true
                         }
                     }
                 } else if (node.type === 'AssignmentExpression') {
@@ -478,11 +476,39 @@ class RefactorEngine {
         return assignments;
     }
 
+    adjustFunctionParams(parameterList) {
+        var engine = this;
+        var assignments = {};
+        estraverse.replace(this.ast, {
+            enter: function (node, parent) {
+                if (node.type === 'Identifier' && parent.type === 'FunctionDeclaration') {
+                    for (let i = 0; i < parent.params.length; i++) {
+                        if (node.name === parent.params[i].name) {
+                            for (let j = 0; j < parameterList.length; j++) {
+                                if (
+                                    parameterList[j].functionName === parent.id.name &&
+                                    parameterList[j].parameterIdx === i
+                                ) {
+                                    assignments[parent.params[i].name] = parameterList[j].value;
+                                    engine.pruneVarReferencesinFunc(parent, assignments);
+                                    engine.changed = true;
+                                    if (parameterList[j].value === true) return engine.trueLiteral();
+                                    return engine.falseLiteral();
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            fallback: 'iteration',
+        });
+    }
+
     // Remove all variable declarations corresponding variables in `assignments`
     // Replace all references of variables in `assignments` with the corresponding literal
-    pruneVarReferences(assignments) {
+    pruneVarReferences(assignments, parameterList) {
         var engine = this;
-
         // Remove redundant variables by deleting declarations and replacing variable references
         estraverse.replace(this.ast, {
             enter: function (node, parent) {
@@ -498,6 +524,64 @@ class RefactorEngine {
                         return this.remove();
                     }
                 } else if (node.type === 'Identifier') {
+                    // this is the part where the function arguments are substituted values if they are a part of the assignments
+                    if (node.name in assignments) {
+                        if (assignments[node.name] === true) {
+                            engine.changed = true;
+                            return engine.trueLiteral();
+                        } else if (assignments[node.name] === false) {
+                            engine.changed = true;
+                            return engine.falseLiteral();
+                        }
+                    }
+                } else if (node.type === 'CallExpression') {
+                    for (let i = 0; i < node.arguments.length; i++) {
+                        let argValue;
+                        if (node.arguments[i].createdByPiranha) {
+                            argValue = node.arguments[i].value;
+                            parameterList.push({
+                                functionName: node.callee.name,
+                                parameterIdx: i,
+                                value: argValue,
+                            });
+                        }
+                    }
+                }
+            },
+
+            // After previous step, some declaration may have no declarators, delete them.
+            leave: function (node, parent) {
+                if (node.type === 'VariableDeclaration') {
+                    if (node.declarations.length === 0) {
+                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
+                        engine.changed = true;
+                        return this.remove();
+                    }
+                }
+            },
+
+            fallback: 'iteration',
+        });
+        return parameterList;
+    }
+
+    pruneVarReferencesinFunc(nn, assignments) {
+        var engine = this;
+        estraverse.replace(nn, {
+            enter: function (node, parent) {
+                if (node.type === 'VariableDeclarator') {
+                    if (node.id.name in assignments) {
+                        engine.changed = true;
+                        return this.remove();
+                    }
+                } else if (node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression') {
+                    if (node.expression.left.name in assignments) {
+                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
+                        engine.changed = true;
+                        return this.remove();
+                    }
+                } else if (node.type === 'Identifier') {
+                    // this is the part where the function arguments are substituted values if they are a part of the assignments
                     if (node.name in assignments) {
                         if (assignments[node.name] === true) {
                             engine.changed = true;
@@ -536,7 +620,7 @@ class RefactorEngine {
         estraverse.traverse(this.ast, {
             enter: function (node, parent) {
                 if (node.type === 'FunctionDeclaration') {
-                    current = node.id.name;
+                    current = node.id.name; // name of the function
                     numReturns[current] = 0;
                 } else if (node.type === 'FunctionExpression') {
                     if (parent.type === 'VariableDeclarator') {
@@ -567,7 +651,6 @@ class RefactorEngine {
                 singleReturn[fun] = 1;
             }
         }
-
         return singleReturn;
     }
 
@@ -679,15 +762,16 @@ class RefactorEngine {
             this.reduceIfStatements();
 
             var redundantVarnames = this.getRedundantVarnames();
-            this.pruneVarReferences(redundantVarnames);
-
+            let parameterList = [];
+            this.pruneVarReferences(redundantVarnames, parameterList);
+            this.adjustFunctionParams(parameterList);
             var functionsWithSingleReturn = this.getFunctionsWithSingleReturn();
             var redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
             this.pruneFuncReferences(redundantFunctions);
 
             iterations++;
         }
-
+        console.log(this.changed);
         this.finalizeLiterals();
 
         if (this.print_to_console) {
