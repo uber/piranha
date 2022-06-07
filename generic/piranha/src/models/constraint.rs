@@ -35,7 +35,13 @@ impl Constraint {
     &self, node: Node, source_code_unit: SourceCodeUnit, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
+
     let mut current_node = node;
+    // This ensures that the below while loop considers the current node too when checking for constraints.
+    // It does not make sense to check for constraint if current node is a "leaf" node.
+    if node.child_count() > 0 {
+       current_node = node.child(0).unwrap();
+    }
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {

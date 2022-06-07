@@ -61,6 +61,7 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
 
     if !eq_without_whitespace(&source_code_unit.code(), &expected_content) {
       all_files_match = false;
+      println!("{}", &source_code_unit.code());
     }
   }
   assert!(all_files_match);

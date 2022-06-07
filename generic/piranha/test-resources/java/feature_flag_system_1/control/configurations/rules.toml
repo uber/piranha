@@ -117,6 +117,7 @@ query = """
 replace_node = "ec"
 replace = ""
 holes = ["stale_flag_name"]
+groups = [ "delete_enum_entry"]
 
 #
 # For @stale_flag_name = STALE_FLAG and @treated = true
@@ -141,7 +142,6 @@ query = """
 """
 replace_node = "expression_statement"
 replace = ""
-
 holes = ["stale_flag_name"]
 
 #
