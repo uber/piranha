@@ -78,7 +78,7 @@ impl SourceCodeUnit {
     self.ast = new_tree;
     self.code = new_source_code;
     // Handle errors, like removing extra comma.
-    self.handle_error(parser);
+    self.remove_additional_comma_from_sequence_list(parser);
     if self.ast.root_node().has_error() {
       panic!("Produced syntactically incorrect source code {}", self.code());
   }
@@ -88,7 +88,7 @@ impl SourceCodeUnit {
   /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
   /// This function, applies the recovery strategies.
   /// Currently, we only support recovering from extra comma. 
-  fn handle_error(&mut self, parser: &mut Parser) {
+  fn remove_additional_comma_from_sequence_list(&mut self, parser: &mut Parser) {
     if self.ast.root_node().has_error() {
       let c_ast = self.ast.clone();
       for n in traverse(c_ast.walk(), Order::Post) {
