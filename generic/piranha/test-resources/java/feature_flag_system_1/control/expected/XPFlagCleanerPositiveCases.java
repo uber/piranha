@@ -23,13 +23,13 @@ import javax.inject.Inject;
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
-    
+    SOME_FLAG,
 
   }
 
   enum AnotherTestExperimentName {
     
-
+    SOME_OTHER_FLAG
   }
 
   @Retention(RetentionPolicy.RUNTIME)
