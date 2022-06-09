@@ -33,6 +33,9 @@ class XPFlagCleanerPositiveCases {
     SOME_OTHER_FLAG
   }
 
+  enum TestEmptyEnum {
+  }
+
   enum TestExperimentName {
     STALE_FLAG,
   }

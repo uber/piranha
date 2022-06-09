@@ -343,6 +343,15 @@ matcher = "(enum_declaration) @ed"
 queries = ["(enum_constant) @ec"]
 
 
+[[rules]]
+name = "delete_file_with_no_type_declarations"
+query = """
+(program) @program"""
+replace = ""
+replace_node = "program"
+[[rules.constraints]]
+matcher = "(program) @prgrm"
+queries = ["(enum_declaration) @ec", "(class_declaration) @cd"]
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 

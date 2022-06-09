@@ -66,3 +66,27 @@ replace_node = "method_invocation"
 replace = "@treated_complement"
 groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated_complement", "stale_flag_name"]
+
+#
+# For @stale_flag_name = STALE_FLAG 
+# Before :
+#  enum Flags {
+#   ABC, STALE_FLAG, OTHER_FLAG    
+#  }
+# After :
+#  enum Flags {
+#   ABC, OTHER_FLAG    
+#  }
+#
+[[rules]]
+name = "delete_enum_constant"
+query = """
+    (
+    ((enum_constant name : (_) @n) @ec)       
+    (#eq? @n  "@stale_flag_name")
+    )
+    """
+replace_node = "ec"
+replace = ""
+holes = ["stale_flag_name"]
+groups = [ "delete_enum_entry"]
