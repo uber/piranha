@@ -351,7 +351,7 @@ replace = ""
 replace_node = "program"
 [[rules.constraints]]
 matcher = "(program) @prgrm"
-queries = ["(enum_declaration) @ec", "(class_declaration) @cd"]
+queries = ["(enum_declaration) @ec", "(class_declaration) @cd", "(interface_declaration) @id"]
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 

@@ -33,6 +33,9 @@ internal class XPFlagCleanerPositiveCases {
         STALE_FLAG,
     }
 
+    enum class TestEmptyEnum {
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     annotation class Autorollout(val staged: Boolean = false)
 

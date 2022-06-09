@@ -38,6 +38,11 @@ to = ["delete_empty_enum_declaration"]
 
 [[edges]]
 scope = "Parent"
+from = "delete_empty_enum_declaration"
+to = ["delete_file_with_no_declarations"]
+
+[[edges]]
+scope = "Parent"
 from = "boolean_expression_simplify"
 to = ["boolean_literal_cleanup"]
 

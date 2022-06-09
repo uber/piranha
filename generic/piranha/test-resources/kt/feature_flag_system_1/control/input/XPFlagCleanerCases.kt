@@ -28,10 +28,14 @@ internal class XPFlagCleanerPositiveCases {
         SOME_OTHER_FLAG
     }
 
+    enum class TestEmptyEnum {
+    }
+
     enum class YetAnotherTestExperimentName {
         @Autorollout
         STALE_FLAG,
     }
+    
 
     @Retention(RetentionPolicy.RUNTIME)
     annotation class Autorollout(val staged: Boolean = false)
