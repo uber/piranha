@@ -29,6 +29,18 @@ to = ["boolean_literal_cleanup"]
 
 [[edges]]
 scope = "Parent"
+from = "delete_enum_entry"
+to = ["delete_empty_enum_declaration"]
+
+
+[[edges]]
+scope = "Parent"
+from = "delete_empty_enum_declaration"
+to = ["delete_file_with_no_type_declarations"]
+
+
+[[edges]]
+scope = "Parent"
 from = "statement_cleanup"
 to = [
   "if_cleanup",

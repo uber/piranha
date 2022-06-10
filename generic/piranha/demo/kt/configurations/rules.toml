@@ -35,6 +35,8 @@ replace = "@treated"
 groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 
+
+
 [[rules]]
 name = "replace_isToggleDisabled_with_boolean_literal"
 query = """(
@@ -51,3 +53,30 @@ replace_node = "call_expression"
 replace = "@treated_complement"
 groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated_complement", "stale_flag_name"]
+
+
+
+#
+# For @stale_flag_name = STALE_FLAG 
+# Before :
+#  enum Flags {
+#   ABC, STALE_FLAG, OTHER_FLAG    
+#  }
+# After :
+#  enum Flags {
+#   ABC, OTHER_FLAG    
+#  }
+#
+[[rules]]
+name = "delete_enum_constant"
+query = """
+   (
+(class_declaration (_) @name 
+	(enum_class_body (enum_entry (simple_identifier) @enum_name) @enum_entry))
+  (#eq? @enum_name "@stale_flag_name")
+)
+    """
+replace_node = "enum_entry"
+replace = ""
+holes = ["stale_flag_name"]
+groups = [ "delete_enum_entry"]

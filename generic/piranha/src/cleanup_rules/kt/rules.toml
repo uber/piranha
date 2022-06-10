@@ -369,6 +369,30 @@ query = """
 replace = ""
 replace_node = "post"
 
+[[rules]]
+name = "delete_empty_enum_declaration"
+query = """
+(class_declaration (_) @name 
+	(enum_class_body)) @enum_declaration"""
+replace = ""
+replace_node = "enum_declaration"
+[[rules.constraints]]
+matcher = """(class_declaration (_) @nm
+	(enum_class_body)) @ed"""
+queries = ["(enum_entry) @ee"]
+
+# Delete all file contents if 
+[[rules]]
+name = "delete_file_with_no_declarations"
+query = """
+(source_file) @source_file"""
+replace = ""
+replace_node = "program"
+[[rules.constraints]]
+matcher = "(source_file) @sf"
+queries = ["(class_declaration) @cd", "(object_declaration) @od", "(function_declaration) @fd", "(property_declaration) @pd"]
+
+
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 

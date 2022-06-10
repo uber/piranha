@@ -44,7 +44,12 @@ impl SourceCodeUnit {
 
   /// Writes the current contents of `code` to the file system.
   pub fn persist(&self) {
-    fs::write(&self.path, self.code.as_str()).expect("Unable to Write file");
+    if self.code.as_str().is_empty(){
+      _ = fs::remove_file(&self.path).expect("Unable to Delete file");
+    }else{
+      fs::write(&self.path, self.code.as_str()).expect("Unable to Write file");
+    }
+    
   }
 
  

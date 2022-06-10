@@ -30,6 +30,9 @@ class XPFlagCleanerPositiveCases {
     SOME_OTHER_FLAG
   }
 
+  enum TestEmptyEnum {
+  }
+
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Autorollout {
     boolean staged() default false;

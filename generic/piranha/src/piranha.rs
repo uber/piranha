@@ -268,7 +268,7 @@ impl FlagCleaner {
       .filter(|x| pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 

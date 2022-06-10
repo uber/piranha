@@ -331,6 +331,28 @@ query = """
 replace = "@alternative"
 replace_node = "ternary_expression"
 
+
+[[rules]]
+name = "delete_empty_enum_declaration"
+query = """
+(enum_declaration) @enum_declaration"""
+replace = ""
+replace_node = "enum_declaration"
+[[rules.constraints]]
+matcher = "(enum_declaration) @ed"
+queries = ["(enum_constant) @ec"]
+
+
+[[rules]]
+name = "delete_file_with_no_type_declarations"
+query = """
+(program) @program"""
+replace = ""
+replace_node = "program"
+[[rules.constraints]]
+matcher = "(program) @prgrm"
+queries = ["(enum_declaration) @ec", "(class_declaration) @cd", "(interface_declaration) @id"]
+
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
 # Before :
