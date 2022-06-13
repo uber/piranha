@@ -19,7 +19,7 @@
 #  
 #
 [[rules]]
-name = "replace_isToggleEnabled_with_boolean_literal"
+name = "delete_case_enum_entry"
 query = """
 (
 (enum_entry name: (_) @flag_name)  @ee
