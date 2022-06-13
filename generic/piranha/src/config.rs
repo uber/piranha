@@ -52,20 +52,20 @@ pub(crate) fn read_config_files(
   // Read the language specific cleanup rules and edges
   let language_rules: Rules = read_toml(
     &path_to_language_specific_cleanup_config.join("rules.toml"),
-    false,
+    true,
   );
   let language_edges: Edges = read_toml(
     &path_to_language_specific_cleanup_config.join("edges.toml"),
-    false,
+    true,
   );
   let scopes = read_toml::<ScopeConfig>(
     &path_to_language_specific_cleanup_config.join("scope_config.toml"),
-    false,
+    true,
   )
   .scopes();
 
   // Read the API specific cleanup rules and edges
-  let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), false);
+  let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
 
   // Label the input-rules as `Feature-flag API cleanup`
