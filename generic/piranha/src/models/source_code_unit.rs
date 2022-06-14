@@ -4,6 +4,7 @@ use std::{
   path::{Path, PathBuf},
 };
 
+use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
@@ -44,15 +45,13 @@ impl SourceCodeUnit {
 
   /// Writes the current contents of `code` to the file system.
   pub fn persist(&self) {
-    if self.code.as_str().is_empty(){
+    if self.code.as_str().is_empty() {
       _ = fs::remove_file(&self.path).expect("Unable to Delete file");
-    }else{
+    } else {
       fs::write(&self.path, self.code.as_str()).expect("Unable to Write file");
     }
-    
   }
 
- 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
     self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser)
@@ -84,15 +83,29 @@ impl SourceCodeUnit {
     self.code = new_source_code;
     // Handle errors, like removing extra comma.
     self.remove_additional_comma_from_sequence_list(parser);
-    if self.ast.root_node().has_error() {
-      panic!("Produced syntactically incorrect source code {}", self.code());
-  }
     ts_edit
+  }
+
+  /// Applies an edit to the source code unit
+  /// # Arguments
+  /// * `replacement_content` - new content of file
+  /// * `parser`
+  ///
+  /// Note - Causes side effect. - Updates `self.ast` and `self.code`
+  pub(crate) fn _apply_edit_replace_file_contents(
+    &mut self, replacement_content: &str, parser: &mut Parser,
+  ) {
+    // Create a new updated tree from the previous tree
+    let new_tree = parser
+      .parse(&replacement_content, None)
+      .expect("Could not generate new tree!");
+    self.ast = new_tree;
+    self.code = replacement_content.to_string();
   }
 
   /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
   /// This function, applies the recovery strategies.
-  /// Currently, we only support recovering from extra comma. 
+  /// Currently, we only support recovering from extra comma.
   fn remove_additional_comma_from_sequence_list(&mut self, parser: &mut Parser) {
     if self.ast.root_node().has_error() {
       let c_ast = self.ast.clone();
@@ -105,6 +118,18 @@ impl SourceCodeUnit {
         }
       }
     }
+
+    if self.ast.root_node().has_error() {
+      let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
+      let current_content = self.code();
+      let updated_content = consecutive_comma_pattern.replace_all(&current_content, ",");
+      if !current_content.eq(&updated_content) {
+        self._apply_edit_replace_file_contents(&updated_content, parser);
+      }
+      if self.ast.root_node().has_error() {
+        panic!("Produced syntactically incorrect source code {}", self.code());
+      }  
+    } 
   }
 
   // #[cfg(test)] // Rust analyzer FP
