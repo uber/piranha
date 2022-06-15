@@ -107,7 +107,7 @@ class RefactorEngine {
     // Verify this is a literal introduced by Piranha.
     // We only refactor code associated with literals having this property and leave original code untouched
     isPiranhaLiteral(node) {
-        return node.type === 'Literal' && node.createdByPiranha !== undefined;
+        return node != null && node.type === 'Literal' && node.createdByPiranha !== undefined;
     }
 
     reduceLogicalExpression(literal, expression, operator) {
@@ -320,23 +320,23 @@ class RefactorEngine {
             enter: function (node) {
                 if (node.type === 'CallExpression') {
                     if (methodHashMap.has(node.callee.name)) {
-                        const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex; // 0
-                        const nodeArgument = node.arguments[argumentIndex]; // node.arguments[0] = 'featureFlag' || featureFlag
+                        const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
+                        const nodeArgument = node.arguments[argumentIndex];
                         let nodeArgumentIsFlag = false;
                         switch (nodeArgument.type) {
-                            case 'Identifier': // node.arguments[0] =  featureFlag
-                                nodeArgumentIsFlag = nodeArgument.name === engine.flagname; // checks if the flag under consideration is the required flag
+                            case 'Identifier':
+                                nodeArgumentIsFlag = nodeArgument.name === engine.flagname;
                                 break;
-                            case 'Literal': // node.arguments[0] = 'featureFlag'
+                            case 'Literal':
                                 nodeArgumentIsFlag = nodeArgument.value === engine.flagname;
                                 break;
                         }
                         if (nodeArgumentIsFlag) {
-                            const flagType = methodHashMap.get(node.callee.name).flagType; // control || treated
+                            const flagType = methodHashMap.get(node.callee.name).flagType;
                             engine.changed = true;
 
                             if (
-                                (flagType === 'treated' && engine.behaviour) || // engine.behaviour = true => treated
+                                (flagType === 'treated' && engine.behaviour) ||
                                 (flagType === 'control' && !engine.behaviour)
                             ) {
                                 return engine.trueLiteral();
@@ -460,7 +460,7 @@ class RefactorEngine {
                             engine.isPiranhaLiteral(declaration.init) &&
                             typeof declaration.init.value === 'boolean'
                         ) {
-                            assignments[declaration.id.name] = declaration.init.value; // Assigning a -> true
+                            assignments[declaration.id.name] = declaration.init.value;
                         }
                     }
                 } else if (node.type === 'AssignmentExpression') {
@@ -476,28 +476,45 @@ class RefactorEngine {
         return assignments;
     }
 
+    // This function helps in passing the refactored value of a parameter in the function call to the corresponding argument in the function declaration
     adjustFunctionParams(parameterList) {
         var engine = this;
         var assignments = {};
         estraverse.replace(this.ast, {
             enter: function (node, parent) {
                 if (node.type === 'Identifier' && parent.type === 'FunctionDeclaration') {
+                    // this is the part where the function arguments are substituted values if they are a part of the assignments
                     for (let i = 0; i < parent.params.length; i++) {
                         if (node.name === parent.params[i].name) {
                             for (let j = 0; j < parameterList.length; j++) {
                                 if (
                                     parameterList[j].functionName === parent.id.name &&
+                                    parent.params.length === parameterList[j].totalParameters &&
                                     parameterList[j].parameterIdx === i
                                 ) {
                                     assignments[parent.params[i].name] = parameterList[j].value;
                                     engine.pruneVarReferencesinFunc(parent, assignments);
-                                    engine.changed = true;
                                     if (parameterList[j].value === true) return engine.trueLiteral();
                                     return engine.falseLiteral();
                                 }
                             }
                         }
                     }
+                }
+            },
+
+            fallback: 'iteration',
+        });
+    }
+
+    // this function removes the literals after the refactoring is terminated.
+    // f1(true) -> a function call becomes f1()
+    removeLiteralParameters() {
+        // var engine = this;
+        estraverse.replace(this.ast, {
+            enter: function (node, parent) {
+                if (node.type === 'Literal' && node.createdByPiranha === true) {
+                    return this.remove();
                 }
             },
 
@@ -526,12 +543,9 @@ class RefactorEngine {
                 } else if (node.type === 'Identifier') {
                     // this is the part where the function arguments are substituted values if they are a part of the assignments
                     if (node.name in assignments) {
-                        if (assignments[node.name] === true) {
+                        if (assignments[node.name] === true || assignments[node.name] === false) {
                             engine.changed = true;
-                            return engine.trueLiteral();
-                        } else if (assignments[node.name] === false) {
-                            engine.changed = true;
-                            return engine.falseLiteral();
+                            return assignments[node.name] === true ? engine.trueLiteral() : engine.falseLiteral();
                         }
                     }
                 } else if (node.type === 'CallExpression') {
@@ -543,6 +557,7 @@ class RefactorEngine {
                                 functionName: node.callee.name,
                                 parameterIdx: i,
                                 value: argValue,
+                                totalParameters: node.arguments.length,
                             });
                         }
                     }
@@ -565,6 +580,7 @@ class RefactorEngine {
         return parameterList;
     }
 
+    // The references of the refactored function parameters, within the function are pruned with their new refactored value in this function
     pruneVarReferencesinFunc(nn, assignments) {
         var engine = this;
         estraverse.replace(nn, {
@@ -620,7 +636,7 @@ class RefactorEngine {
         estraverse.traverse(this.ast, {
             enter: function (node, parent) {
                 if (node.type === 'FunctionDeclaration') {
-                    current = node.id.name; // name of the function
+                    current = node.id.name;
                     numReturns[current] = 0;
                 } else if (node.type === 'FunctionExpression') {
                     if (parent.type === 'VariableDeclarator') {
@@ -768,10 +784,9 @@ class RefactorEngine {
             var functionsWithSingleReturn = this.getFunctionsWithSingleReturn();
             var redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
             this.pruneFuncReferences(redundantFunctions);
-
             iterations++;
         }
-        console.log(this.changed);
+        this.removeLiteralParameters();
         this.finalizeLiterals();
 
         if (this.print_to_console) {
