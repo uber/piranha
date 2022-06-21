@@ -27,4 +27,4 @@ jobs:
         with:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
-          working-directory: generic/piranha
+          SRC_DIR: generic/piranha
