@@ -5,6 +5,9 @@ on:
     types: [created]
 
 jobs:
+  defaults:
+    run:
+      working-directory: generic/piranha
   release:
     name: release ${{ matrix.target }}
     runs-on: ubuntu-latest
@@ -18,9 +21,6 @@ jobs:
             archive: tar.gz tar.xz
           - target: x86_64-apple-darwin
             archive: zip
-    defaults:
-      run:
-        working-directory: generic/piranha
     
     steps:
       - uses: actions/checkout@master
