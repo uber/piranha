@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+    defaults:
+      run:
+        working-directory: generic/piranha
       matrix:
         include:
           - target: x86_64-pc-windows-gnu
@@ -21,7 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
-        working-directory: generic/piranha
         uses: rust-build/rust-build.action@v1.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
