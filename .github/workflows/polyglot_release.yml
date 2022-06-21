@@ -18,9 +18,6 @@ jobs:
             archive: tar.gz tar.xz
           - target: x86_64-apple-darwin
             archive: zip
-    defaults:
-      run:
-        working-directory: ./generic/piranha
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
@@ -30,3 +27,4 @@ jobs:
         with:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
+          working-directory: generic/piranha
