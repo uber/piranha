@@ -1,5 +1,5 @@
 # .github/workflows/release.yml
-
+name: Release Polyglot Piranha
 on:
   release:
     types: [created]
