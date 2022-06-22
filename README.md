@@ -10,7 +10,7 @@ Feature flags are commonly used to enable gradual rollout or experiment with new
 
 Piranha is a tool to automatically refactor code related to stale flags. At a higher level, the input to the tool is the name of the flag and the expected behavior, after specifying a list of APIs related to flags in a properties file. Piranha will use these inputs to automatically refactor the code according to the expected behavior. 
 
-This repository contains four independent versions of Piranha, one for each of the four supported languages: Java, JavaScript, Objective-C and Swift. **It also contains a redesigned variant of Piranha (as of May 2022) that is a common refactoring tool to support multiple languages and feature flag APIs. If interested in this generic variant, goto [PiranhaGeneric](generic/README.md)**.
+This repository contains four independent versions of Piranha, one for each of the four supported languages: Java, JavaScript, Objective-C and Swift. **It also contains a redesigned variant of Piranha (as of May 2022) that is a common refactoring tool to support multiple languages and feature flag APIs. If interested in this polyglot variant, goto [Polyglot Piranha](polyglot/README.md)**.
 
 To use/build each version, look under the corresponding [lang]/ directory and follow instructions in the corresponding [lang]/README.md file. Make sure to cd into that directory to build any related code following the instructions in the README. 
 
