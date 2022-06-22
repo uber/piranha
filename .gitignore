@@ -13,9 +13,6 @@ swift/Package.resolved
 polyglot/piranha/target
 polyglot/piranha/Cargo.lock
 polyglot/piranha/.idea
-polyglot/tree-sitter-src/tree-sitter-java
-polyglot/tree-sitter-src/tree-sitter-swift
-polyglot/tree-sitter-src/tree-sitter-kotlin
 .history
 .vscode
 **/*.log

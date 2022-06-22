@@ -20,8 +20,6 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
-      - name: Install Tree-Sitter
-        run: cargo install tree-sitter-cli
       - name: Build Piranha
         run: cargo build
         working-directory: polyglot/piranha
