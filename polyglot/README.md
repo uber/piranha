@@ -30,10 +30,10 @@ OPTIONS:
     -V, --version
             Print version information
 ```
-
+**The binaries for polyglot piranha are available in the release archives.**
 Languages supported :
-* Java
-* Kotlin (planned)
+* Java (available at [v0.1.0-polyglot-piranha](https://github.com/uber/piranha/releases/tag/v0.1.0-polyglot-piranha))
+* Kotlin (available at [v0.1.0-polyglot-piranha](https://github.com/uber/piranha/releases/tag/v0.1.0-polyglot-piranha))
 * Java + Kotlin (planned)
 * Swift (planned)
 * JavaScript (planned)
