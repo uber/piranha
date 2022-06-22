@@ -10,13 +10,10 @@ swift/artifact
 swift/Piranha.xcodeproj
 swift/Package.resolved
 **/*.iml
-generic/piranha/target
-generic/piranha/Cargo.lock
-generic/piranha/.idea
-generic/tree-sitter-src/tree-sitter-java
-generic/tree-sitter-src/tree-sitter-swift
-generic/tree-sitter-src/tree-sitter-kotlin
+polyglot/piranha/target
+polyglot/piranha/Cargo.lock
+polyglot/piranha/.idea
 .history
 .vscode
 **/*.log
-generic/piranha/demo/piranha
+polyglot/piranha/demo/piranha

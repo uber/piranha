@@ -1,4 +1,3 @@
-# .github/workflows/release.yml
 name: Release Polyglot Piranha
 on:
   release:
@@ -27,4 +26,4 @@ jobs:
         with:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
-          SRC_DIR: generic/piranha
+          SRC_DIR: polyglot/piranha
