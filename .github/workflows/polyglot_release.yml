@@ -1,5 +1,4 @@
-# .github/workflows/release.yml
-
+name: Release Polyglot Piranha
 on:
   release:
     types: [created]
@@ -21,10 +20,10 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
-        working-directory: generic/piranha
         uses: rust-build/rust-build.action@v1.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
+          SRC_DIR: polyglot/piranha
