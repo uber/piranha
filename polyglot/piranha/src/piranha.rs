@@ -187,7 +187,7 @@ struct FlagCleaner {
   // Maintains Piranha's state
   rule_store: RuleStore,
   // Path to source code folder
-  path_to_codebase: String,
+  path_to_targets: Vec<String>,
   // Files updated by Piranha.
   relevant_files: HashMap<PathBuf, SourceCodeUnit>,
 }
@@ -247,7 +247,10 @@ impl FlagCleaner {
   fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
     let pattern = self.get_grep_heuristics();
     info!("{}", format!("Searching pattern {}", pattern).green());
-    let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
+
+
+
+    let files: HashMap<PathBuf, String> =  self.path_to_targets.iter().flat_map(|path| WalkDir::new(path)
       // Walk over the entire code base
       .into_iter()
       // Ignore errors
@@ -265,8 +268,8 @@ impl FlagCleaner {
       // Read the file
       .map(|f| (f.path(), read_file(&f.path()).unwrap()))
       // Filter the files containing the desired regex pattern
-      .filter(|x| pattern.is_match(x.1.as_str()))
-      .collect();
+      .filter(|x| pattern.is_match(x.1.as_str())))
+      .collect();    
     #[rustfmt::skip]
     println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
@@ -277,7 +280,7 @@ impl FlagCleaner {
     let graph_rule_store = RuleStore::new(&args);
     Self {
       rule_store: graph_rule_store,
-      path_to_codebase: String::from(args.path_to_code_base()),
+      path_to_targets: args.path_to_targets(),
       relevant_files: HashMap::new(),
     }
   }
@@ -301,7 +304,8 @@ impl FlagCleaner {
       .dedup()
       //FIXME: Dirty trick to remove true and false. Ideally, grep heuristic could be a field in itself for a rule.
       // Since not all "holes" could be used as grep heuristic.
-      .filter(|x| !x.as_str().eq("true") && !x.as_str().eq("false"))
+      .filter(|x| !x.as_str().eq("true") && !x.as_str().eq("false") && !x.as_str().is_empty())
+      .map(|word| format!("\\b{}\\b", word))
       .join("|");
     Regex::new(reg_x.as_str()).unwrap()
   }

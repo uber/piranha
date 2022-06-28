@@ -27,7 +27,7 @@ use crate::{
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
 pub(crate) struct PiranhaArguments {
   /// Path to source code folder.
-  path_to_code_base: String,
+  path_to_targets: Vec<String>,
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
   // These substitutions instantiate the initial set of feature flag rules.
@@ -54,7 +54,7 @@ impl PiranhaArguments {
       info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
     Self {
-      path_to_code_base: args.path_to_codebase.to_string(),
+      path_to_targets: args.path_to_targets,
       input_substitutions,
       path_to_configurations: args.path_to_configurations,
       language_name: String::from(&piranha_args_from_config.language()),
@@ -62,8 +62,8 @@ impl PiranhaArguments {
     }
   }
 
-  pub(crate) fn path_to_code_base(&self) -> &str {
-    self.path_to_code_base.as_ref()
+  pub(crate) fn path_to_targets(&self) -> Vec<String> {
+    self.path_to_targets.clone()
   }
 
   pub(crate) fn input_substitutions(&self) -> &HashMap<String, String> {
@@ -88,7 +88,7 @@ impl PiranhaArguments {
   pub(crate) fn dummy() -> Self {
     let language_name = String::from("java");
     PiranhaArguments {
-      path_to_code_base: String::new(),
+      path_to_targets: Vec::new(),
       input_substitutions: HashMap::new(),
       path_to_configurations: String::new(),
       language: language_name.get_language(),

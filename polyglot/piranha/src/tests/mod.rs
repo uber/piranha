@@ -36,7 +36,7 @@ fn run_test(language: &str, ff_system: &str, treatment: &str, n_files_changed: u
   let path_to_test_ff = format!("test-resources/{language}/{ff_system}/{treatment}");
 
   let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
+    path_to_targets: vec![format!("{path_to_test_ff}/input/")],
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
   });
   let updated_files = execute_piranha(args);

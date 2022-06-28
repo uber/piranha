@@ -4,6 +4,7 @@ use std::{
   path::{Path, PathBuf},
 };
 
+use colored::Colorize;
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
@@ -54,7 +55,12 @@ impl SourceCodeUnit {
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser)
+    self._apply_edit(
+      edit.replacement_range(),
+      edit.replacement_string(),
+      parser,
+      true,
+    )
   }
 
   /// Applies an edit to the source code unit
@@ -68,7 +74,7 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn _apply_edit(
-    &mut self, range: Range, replacement_string: &str, parser: &mut Parser,
+    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool,
   ) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) =
@@ -82,7 +88,9 @@ impl SourceCodeUnit {
     self.ast = new_tree;
     self.code = new_source_code;
     // Handle errors, like removing extra comma.
-    self.remove_additional_comma_from_sequence_list(parser);
+    if handle_error {
+      self.remove_additional_comma_from_sequence_list(parser);
+    }
     ts_edit
   }
 
@@ -95,6 +103,7 @@ impl SourceCodeUnit {
   pub(crate) fn _apply_edit_replace_file_contents(
     &mut self, replacement_content: &str, parser: &mut Parser,
   ) {
+    println!("Replacing file contents");
     // Create a new updated tree from the previous tree
     let new_tree = parser
       .parse(&replacement_content, None)
@@ -113,23 +122,43 @@ impl SourceCodeUnit {
         // Remove the extra comma
         if n.is_extra() && eq_without_whitespace(n.utf8_text(self.code().as_bytes()).unwrap(), ",")
         {
-          self._apply_edit(n.range(), "", parser);
-          break;
+          let current_version_code = self.code().clone();
+          self._apply_edit(n.range(), "", parser, false);
+          if self.ast.root_node().has_error() {
+            // Undo the edit applied above
+            self._apply_edit_replace_file_contents(&current_version_code, parser);
+          } else {
+            break;
+          }
         }
       }
     }
 
     if self.ast.root_node().has_error() {
       let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
+      let square_bracket_comma_pattern = Regex::new(r"\[\s*\n*,").unwrap();
       let current_content = self.code();
-      let updated_content = consecutive_comma_pattern.replace_all(&current_content, ",");
+      let updated_content = square_bracket_comma_pattern
+        .replace_all(
+          &consecutive_comma_pattern
+            .replace_all(&current_content, ",")
+            .to_string(),
+          "[",
+        )
+        .to_string();
       if !current_content.eq(&updated_content) {
         self._apply_edit_replace_file_contents(&updated_content, parser);
       }
+
       if self.ast.root_node().has_error() {
-        panic!("Produced syntactically incorrect source code {}", self.code());
-      }  
-    } 
+        if traverse(self.ast.walk(), Order::Post).any(|n| n.is_error()) {
+          panic!(
+            "Produced syntactically incorrect source code {}",
+            self.code()
+          );
+        }
+      }
+    }
   }
 
   // #[cfg(test)] // Rust analyzer FP

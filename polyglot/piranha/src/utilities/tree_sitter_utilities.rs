@@ -207,7 +207,7 @@ pub(crate) fn get_tree_sitter_edit(
     replacement_snippet_fmt.push_str(&format!("\n to \n{}", replacement.italic()))
   }
   #[rustfmt::skip]
-  info!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
+  println!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
 
   (
     // Create the new source code content by appropriately
