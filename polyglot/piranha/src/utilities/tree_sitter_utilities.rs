@@ -195,7 +195,7 @@ impl PiranhaHelpers for Node<'_> {
 /// Returns tree-sitter's edit representation along with updated source code.
 /// Note: This method does not update `self`.
 pub(crate) fn get_tree_sitter_edit(
-  code: String, replace_range: Range, replacement: &str,
+  code: String, replace_range: Range, replacement: &str, do_not_replace: bool
 ) -> (String, InputEdit) {
 
   // Log the edit
@@ -206,8 +206,10 @@ pub(crate) fn get_tree_sitter_edit(
     edit_kind = "Update code".green();
     replacement_snippet_fmt.push_str(&format!("\n to \n{}", replacement.italic()))
   }
-  #[rustfmt::skip]
-  println!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
+  if !do_not_replace{
+    #[rustfmt::skip]
+    println!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
+  }
 
   (
     // Create the new source code content by appropriately

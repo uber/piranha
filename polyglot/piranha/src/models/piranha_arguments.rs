@@ -70,6 +70,10 @@ impl PiranhaArguments {
     &self.input_substitutions
   }
 
+  pub(crate) fn add_to_input_substitutions(&mut self, new_entries: &HashMap<String, String>) {
+    let _ = &self.input_substitutions.extend(new_entries.clone());
+  }
+
   pub(crate) fn path_to_configurations(&self) -> &str {
     self.path_to_configurations.as_ref()
   }

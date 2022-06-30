@@ -72,12 +72,10 @@ impl SourceCodeUnit {
     // Match the rule "anywhere" inside the scope_node
     if let Some(edit_1) = rule.get_edit(&self.clone(), rules_store, scope_node, true) {
       any_match = true;
-      // Apply edit_1
-      let applied_ts_edit = self.apply_edit(&edit_1, parser);
-
       // Add all the (code_snippet, tag) mapping to the substitution table.
-      self.add_to_substitutions(edit_1.matches());
-
+      self.add_to_substitutions(edit_1.matches(), rules_store);
+      // Apply edit_1
+      let applied_ts_edit = self.apply_edit(&edit_1, parser, rule.is_read_only_rule());
       let mut current_edit = applied_ts_edit;
       let mut current_rule = rule.clone();
       let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
@@ -87,7 +85,7 @@ impl SourceCodeUnit {
       loop {
         // Get all the (next) rules that could be after applying the current rule (`rule`).
         let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
-
+        println!("Next rules {:?}", next_rules_by_scope);
         // Adds "Method" and "Class" rules to the stack
         self.add_rules_to_stack(
           &next_rules_by_scope,
@@ -113,10 +111,10 @@ impl SourceCodeUnit {
           #[rustfmt::skip]
           info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", edit.matched_rule().name()).green());
           // Apply the matched rule to the parent
-          current_edit = self.apply_edit(&edit, parser);
+          current_edit = self.apply_edit(&edit, parser, false);
           current_rule = edit.matched_rule();
           // Add the (tag, code_snippet) mapping to substitution table.
-          self.add_to_substitutions(edit.matches());
+          self.add_to_substitutions(edit.matches(), rules_store);
         } else {
           // No more parents found for cleanup
           break;
@@ -128,6 +126,11 @@ impl SourceCodeUnit {
         self.apply_rule(rle, rules_store, parser, &Some(sq.to_string()));
       }
     }
+
+    if rule.is_read_only_rule() {
+      return false;
+    }
+
     any_match
   }
 
@@ -247,9 +250,6 @@ impl FlagCleaner {
   fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
     let pattern = self.get_grep_heuristics();
     info!("{}", format!("Searching pattern {}", pattern).green());
-
-
-
     let files: HashMap<PathBuf, String> =  self.path_to_targets.iter().flat_map(|path| WalkDir::new(path)
       // Walk over the entire code base
       .into_iter()
@@ -271,7 +271,7 @@ impl FlagCleaner {
       .filter(|x| pattern.is_match(x.1.as_str())))
       .collect();    
     #[rustfmt::skip]
-    println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    println!("{}", format!("Will parse and analyze {} files. {:?}", files.len(), files.keys()).green());
     files
   }
 

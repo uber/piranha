@@ -34,7 +34,7 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash,PartialEq, Eq, Default)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
   name: String,
@@ -51,10 +51,25 @@ pub(crate) struct Rule {
   /// Additional constraints for matching the rule
   constraints: Option<Vec<Constraint>>,
   /// Heuristics for identifying potential files containing occurrence of the rule.
-  grep_heuristics: Option<Vec<String>>,
+  grep_heuristics: Option<Vec<String>>
+
 }
 
 impl Rule {
+
+  pub(crate) fn is_same(&self, other: &Rule) -> bool {
+        self.name() == other.name() && self.replace_node == other.replace_node
+                 && self.query == other.query
+                && self.replace() == other.replace()
+                && self.holes() == other.holes()
+  }
+
+  pub(crate) fn is_read_only_rule(&self) -> bool {
+     self.name().starts_with("read_only_")
+  }
+  // This ensures that the dummy_rule are not applied at all
+  
+
   pub(crate) fn is_feature_flag_cleanup(&self) -> bool {
     self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
   }

@@ -4,14 +4,13 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use colored::Colorize;
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
 
-use super::edit::Edit;
+use super::{edit::Edit, rule_store::RuleStore};
 
 // Maintains the updated source code content and AST of the file
 #[derive(Clone)]
@@ -53,13 +52,14 @@ impl SourceCodeUnit {
     }
   }
 
-  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
+  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser, do_not_replace: bool) -> InputEdit {
     // Get the tree_sitter's input edit representation
     self._apply_edit(
       edit.replacement_range(),
       edit.replacement_string(),
       parser,
       true,
+      do_not_replace
     )
   }
 
@@ -74,12 +74,15 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn _apply_edit(
-    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool,
+    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool, do_not_replace: bool
   ) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) =
-      get_tree_sitter_edit(self.code.clone(), range, replacement_string);
+      get_tree_sitter_edit(self.code.clone(), range, replacement_string, do_not_replace);
     // Apply edit to the tree
+    if do_not_replace{
+      return ts_edit;
+    }
     self.ast.edit(&ts_edit);
     // Create a new updated tree from the previous tree
     let new_tree = parser
@@ -123,7 +126,7 @@ impl SourceCodeUnit {
         if n.is_extra() && eq_without_whitespace(n.utf8_text(self.code().as_bytes()).unwrap(), ",")
         {
           let current_version_code = self.code().clone();
-          self._apply_edit(n.range(), "", parser, false);
+          self._apply_edit(n.range(), "", parser, false, false);
           if self.ast.root_node().has_error() {
             // Undo the edit applied above
             self._apply_edit_replace_file_contents(&current_version_code, parser);
@@ -174,8 +177,13 @@ impl SourceCodeUnit {
     &self.substitutions
   }
 
-  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>) {
+  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>, rule_store: &mut RuleStore) {
     let _ = &self.substitutions.extend(new_entries.clone());
+    let global_substitutions : HashMap<String, String>= new_entries.iter()
+                        .filter(|e|e.0.starts_with("global_var_"))
+                        .map(|(a,b)| (a.to_string(), b.to_string()))
+                        .collect();
+      rule_store.add_to_input_substitutions(&global_substitutions);
   }
 }
 

@@ -34,7 +34,7 @@ use clap::Parser;
 #[clap(name = "Piranha")]
 pub(crate) struct CommandLineArguments {
   /// Path to source code folder.
-  #[clap(short = 'c', long)]
+  #[clap(short = 'c', long, multiple_values = true, min_values = 1)]
   pub(crate) path_to_targets: Vec<String>,
   /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,  and  `edges.toml` (optional).
   #[clap(short = 'f', long)]

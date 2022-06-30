@@ -43,6 +43,7 @@ fn test_apply_edit_positive() {
       HashMap::new(),
     ),
     &mut parser,
+    false
   );
   assert!(eq_without_whitespace(
     r#"class Test {
@@ -93,6 +94,6 @@ fn test_apply_edit_negative() {
       Rule::dummy(),
       HashMap::new(),
     ),
-    &mut parser,
+    &mut parser, false
   );
 }
