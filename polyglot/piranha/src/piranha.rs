@@ -56,6 +56,7 @@ impl SourceCodeUnit {
     loop {
       // We always apply edits from bottom up. 
       applied_edit_start = self._apply_rule(rule.clone(), rules_store, parser, scope_query, &applied_edit_start);
+      
       if applied_edit_start.is_none() {
         break;
       }

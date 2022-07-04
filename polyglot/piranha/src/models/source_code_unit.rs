@@ -52,14 +52,16 @@ impl SourceCodeUnit {
     }
   }
 
-  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser, do_not_replace: bool) -> InputEdit {
+  pub(crate) fn apply_edit(
+    &mut self, edit: &Edit, parser: &mut Parser, do_not_replace: bool,
+  ) -> InputEdit {
     // Get the tree_sitter's input edit representation
     self._apply_edit(
       edit.replacement_range(),
       edit.replacement_string(),
       parser,
       true,
-      do_not_replace
+      do_not_replace,
     )
   }
 
@@ -74,25 +76,25 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn _apply_edit(
-    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool, do_not_replace: bool
+    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool,
+    is_match_only: bool,
   ) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) =
-      get_tree_sitter_edit(self.code.clone(), range, replacement_string, do_not_replace);
+      get_tree_sitter_edit(self.code.clone(), range, replacement_string, is_match_only);
     // Apply edit to the tree
-    if do_not_replace{
-      return ts_edit;
-    }
-    self.ast.edit(&ts_edit);
-    // Create a new updated tree from the previous tree
-    let new_tree = parser
-      .parse(&new_source_code, Some(&self.ast))
-      .expect("Could not generate new tree!");
-    self.ast = new_tree;
-    self.code = new_source_code;
-    // Handle errors, like removing extra comma.
-    if handle_error {
-      self.remove_additional_comma_from_sequence_list(parser);
+    if !is_match_only {
+      self.ast.edit(&ts_edit);
+      // Create a new updated tree from the previous tree
+      let new_tree = parser
+        .parse(&new_source_code, Some(&self.ast))
+        .expect("Could not generate new tree!");
+      self.ast = new_tree;
+      self.code = new_source_code;
+      // Handle errors, like removing extra comma.
+      if self.ast.root_node().has_error() && handle_error {
+        self.fix_syntax_for_comma_separated_expressions(parser);
+      }
     }
     ts_edit
   }
@@ -115,12 +117,15 @@ impl SourceCodeUnit {
     self.code = replacement_content.to_string();
   }
 
-  /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
-  /// This function, applies the recovery strategies.
-  /// Currently, we only support recovering from extra comma.
-  fn remove_additional_comma_from_sequence_list(&mut self, parser: &mut Parser) {
-    if self.ast.root_node().has_error() {
-      let c_ast = self.ast.clone();
+
+
+  // Tries to remove the extra comma - 
+  // -->  Remove comma if extra
+  //    --> Check if AST is correct 
+  //      ---> No: Undo the change
+  // Returns true if the comma was successfully removed.
+  fn try_to_remove_extra_comma(&mut self, parser: &mut Parser) -> bool{
+    let c_ast = self.ast.clone();
       for n in traverse(c_ast.walk(), Order::Post) {
         // Remove the extra comma
         if n.is_extra() && eq_without_whitespace(n.utf8_text(self.code().as_bytes()).unwrap(), ",")
@@ -131,35 +136,47 @@ impl SourceCodeUnit {
             // Undo the edit applied above
             self._apply_edit_replace_file_contents(&current_version_code, parser);
           } else {
-            break;
+            return true;
           }
         }
       }
-    }
+      false
+  }
 
-    if self.ast.root_node().has_error() {
-      let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
-      let square_bracket_comma_pattern = Regex::new(r"\[\s*\n*,").unwrap();
-      let current_content = self.code();
-      let updated_content = square_bracket_comma_pattern
-        .replace_all(
-          &consecutive_comma_pattern
-            .replace_all(&current_content, ",")
-            .to_string(),
-          "[",
-        )
-        .to_string();
-      if !current_content.eq(&updated_content) {
-        self._apply_edit_replace_file_contents(&updated_content, parser);
-      }
 
-      if self.ast.root_node().has_error() {
-        if traverse(self.ast.walk(), Order::Post).any(|n| n.is_error()) {
-          panic!(
-            "Produced syntactically incorrect source code {}",
-            self.code()
-          );
+  // Tries to remove the extra comma - 
+  // Applies some Regex Replacements to the source file
+  // Returns true if the comma was successfully removed.
+  fn try_to_fix_code_with_regex_replace(&mut self, parser: &mut Parser) -> bool{
+    let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
+    let square_bracket_comma_pattern = Regex::new(r"\[\s*\n*,").unwrap();
+    let strategies = [(consecutive_comma_pattern, ","), (square_bracket_comma_pattern, "[")];
+    
+    let mut content = self.code();
+    for (regex_pattern, replacement ) in strategies{
+        if regex_pattern.is_match(&content){
+          content = regex_pattern.replace_all(&content, replacement).to_string();
+          self._apply_edit_replace_file_contents(&content, parser);
         }
+    }
+    return !self.ast.root_node().has_error();
+  }
+
+
+  /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
+  /// This function, applies the recovery strategies.
+  /// Currently, we only support recovering from extra comma.
+  fn fix_syntax_for_comma_separated_expressions(&mut self, parser: &mut Parser) {
+   
+    let is_fixed = self.try_to_remove_extra_comma(parser) 
+        || self.try_to_fix_code_with_regex_replace(parser);
+
+    if !is_fixed{
+      if traverse(self.ast.walk(), Order::Post).any(|n| n.is_error()) {
+        panic!(
+          "Produced syntactically incorrect source code {}",
+          self.code()
+        );
       }
     }
   }
@@ -177,13 +194,16 @@ impl SourceCodeUnit {
     &self.substitutions
   }
 
-  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>, rule_store: &mut RuleStore) {
+  pub(crate) fn add_to_substitutions(
+    &mut self, new_entries: &HashMap<String, String>, rule_store: &mut RuleStore,
+  ) {
     let _ = &self.substitutions.extend(new_entries.clone());
-    let global_substitutions : HashMap<String, String>= new_entries.iter()
-                        .filter(|e|e.0.starts_with("global_var_"))
-                        .map(|(a,b)| (a.to_string(), b.to_string()))
-                        .collect();
-      rule_store.add_to_input_substitutions(&global_substitutions);
+    let global_substitutions: HashMap<String, String> = new_entries
+      .iter()
+      .filter(|e| e.0.starts_with("global_var_"))
+      .map(|(a, b)| (a.to_string(), b.to_string()))
+      .collect();
+    rule_store.add_to_input_substitutions(&global_substitutions);
   }
 }
 
