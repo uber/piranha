@@ -34,7 +34,7 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash,PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
   name: String,
@@ -51,24 +51,22 @@ pub(crate) struct Rule {
   /// Additional constraints for matching the rule
   constraints: Option<Vec<Constraint>>,
   /// Heuristics for identifying potential files containing occurrence of the rule.
-  grep_heuristics: Option<Vec<String>>
-
+  grep_heuristics: Option<Vec<String>>,
 }
 
 impl Rule {
-
   pub(crate) fn is_same(&self, other: &Rule) -> bool {
-        self.name() == other.name() && self.replace_node == other.replace_node
-                 && self.query == other.query
-                && self.replace() == other.replace()
-                && self.holes() == other.holes()
+    self.name() == other.name()
+      && self.replace_node == other.replace_node
+      && self.query == other.query
+      && self.replace() == other.replace()
+      && self.holes() == other.holes()
   }
 
   pub(crate) fn is_read_only_rule(&self) -> bool {
-     self.name().starts_with("read_only_")
+    self.name().starts_with("read_only_")
   }
   // This ensures that the dummy_rule are not applied at all
-  
 
   pub(crate) fn is_feature_flag_cleanup(&self) -> bool {
     self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
@@ -234,7 +232,7 @@ impl Rule {
     };
     for rule in rules {
       for ancestor in &context() {
-        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false)
+        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false, &None)
         {
           return Some(edit);
         }
@@ -246,7 +244,7 @@ impl Rule {
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_edit(
     &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
-    recursive: bool,
+    recursive: bool, applied_edit_start: &Option<usize>,
   ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
     let all_query_matches = node.get_all_matches_for_query(
@@ -257,29 +255,29 @@ impl Rule {
     );
 
     // Return the first match that satisfies constraint of the rule
-    for (range, tag_substitutions) in all_query_matches {
+    for (replacement_range, matches) in all_query_matches {
       let matched_node = get_node_for_range(
         source_code_unit.root_node(),
-        range.start_byte,
-        range.end_byte,
+        replacement_range.start_byte,
+        replacement_range.end_byte,
       );
       if matched_node.satisfies_constraint(
         source_code_unit.clone(),
         self,
-        &tag_substitutions
+        &matches
           .clone()
           .into_iter()
           .chain(rule_store.input_substitutions())
           .collect(),
         rule_store,
       ) {
-        let replacement = substitute_tags(self.replace(), &tag_substitutions).replace("\\n", "\n");
-        return Some(Edit::new(
-          range,
-          replacement,
-          self.clone(),
-          tag_substitutions,
-        ));
+        if applied_edit_start.is_none()
+          || (replacement_range.start_byte < applied_edit_start.unwrap())
+        {
+          let replacement_string = substitute_tags(self.replace(), &matches).replace("\\n", "\n");
+          let edit = Edit::new(replacement_range, replacement_string, self.clone(), matches);
+          return Some(edit);
+        }
       }
     }
     None

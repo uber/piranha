@@ -52,8 +52,11 @@ impl SourceCodeUnit {
     &mut self, rule: Rule, rules_store: &mut RuleStore, parser: &mut Parser,
     scope_query: &Option<String>,
   ) {
+    let mut applied_edit_start = None;
     loop {
-      if !self._apply_rule(rule.clone(), rules_store, parser, scope_query) {
+      // We always apply edits from bottom up. 
+      applied_edit_start = self._apply_rule(rule.clone(), rules_store, parser, scope_query, &applied_edit_start);
+      if applied_edit_start.is_none() {
         break;
       }
     }
@@ -63,15 +66,15 @@ impl SourceCodeUnit {
   // This is implements the main algorithm of piranha.
   fn _apply_rule(
     &mut self, rule: Rule, rules_store: &mut RuleStore, parser: &mut Parser,
-    scope_query: &Option<String>,
-  ) -> bool {
+    scope_query: &Option<String>, applied_edit_start: &Option<usize>
+  ) -> Option<usize> {
     let scope_node = self.get_scope_node(scope_query, rules_store);
 
-    let mut any_match = false;
+    let mut match_start  = None;
 
     // Match the rule "anywhere" inside the scope_node
-    if let Some(edit_1) = rule.get_edit(&self.clone(), rules_store, scope_node, true) {
-      any_match = true;
+    if let Some(edit_1) = rule.get_edit(&self.clone(), rules_store, scope_node, true, applied_edit_start) {
+      match_start = Option::Some(edit_1.replacement_range().start_byte);
       // Add all the (code_snippet, tag) mapping to the substitution table.
       self.add_to_substitutions(edit_1.matches(), rules_store);
       // Apply edit_1
@@ -127,11 +130,11 @@ impl SourceCodeUnit {
       }
     }
 
-    if rule.is_read_only_rule() {
-      return false;
-    }
+    // if rule.is_read_only_rule() {
+    //   return None;
+    // }
 
-    any_match
+    match_start
   }
 
   /// Adds the "Method" and "Class" scoped next rules to the queue.

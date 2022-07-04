@@ -77,7 +77,7 @@ fn test_get_edit_positive_recursive() {
     PathBuf::new().as_path(),
   );
   let node = source_code_unit.root_node();
-  let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+  let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true, &None);
   assert!(edit.is_some());
 }
 
@@ -120,7 +120,7 @@ fn test_get_edit_negative_recursive() {
     PathBuf::new().as_path(),
   );
   let node = source_code_unit.root_node();
-  let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+  let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true, &None);
   assert!(edit.is_none());
 }
 

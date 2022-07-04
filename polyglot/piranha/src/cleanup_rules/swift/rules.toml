@@ -1,0 +1,10 @@
+[[rules]]
+name = "delete_test_file"
+query = """
+(source_file
+	(class_declaration name: (type_identifier) @z)
+    (#match? @z "Tests$")
+) @source            
+"""
+replace_node = "source"
+replace = ""
