@@ -61,12 +61,12 @@ To run the demo :
 
 To get started with Piranha, please follow the below steps:
 * Check if the current version of Piranha supports the required language.
-* If so, then check if the API usage is similar to the ones shown in the demo ([java-demo](/polyglot/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml)).
+* If so, then check if the API usage is similar to the ones shown in the demo ([java-demo](/polyglot/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/polyglot/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/polyglot/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml)).
 *  If not, adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work.
-* Now adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/demo/java/configurations/edges.toml) is not required, unless your feature flag system API rules are inter-dependent. 
+* Now adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/polyglot/piranha/src/cleanup_rules/java/edges.toml) is not required, unless your feature flag system API rules are inter-dependent. 
 
-More details for configuring Piranha - [Adding support for a new feature flag system](adding-support-for-a-new-feature-flag-system)
-and [Adding Support for a new language](adding-support-for-a-new-language).
+More details for configuring Piranha - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
+and [Adding Support for a new language](#adding-support-for-a-new-language).
 
 ## Adding support for a new feature flag system
 
@@ -205,7 +205,7 @@ int foobar(){
 </td>
 </table>
 
-We would first define flag API rules as discussed in the section [Adding Support for a new language](adding-support-for-a-new-language). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
+We would first define flag API rules as discussed in the section [Adding Support for a new language](#adding-support-for-a-new-language). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
 
 * `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml):`delete_variable_declarations`)
 * `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml):`replace_expression_with_boolean_literal`) 
