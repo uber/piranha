@@ -53,7 +53,7 @@ impl SourceCodeUnit {
   }
 
   pub(crate) fn apply_edit(
-    &mut self, edit: &Edit, parser: &mut Parser, do_not_replace: bool,
+    &mut self, edit: &Edit, parser: &mut Parser, is_match_only: bool,
   ) -> InputEdit {
     // Get the tree_sitter's input edit representation
     self._apply_edit(
@@ -61,7 +61,7 @@ impl SourceCodeUnit {
       edit.replacement_string(),
       parser,
       true,
-      do_not_replace,
+      is_match_only,
     )
   }
 
