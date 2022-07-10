@@ -35,7 +35,7 @@ Languages supported :
 * Java
 * Kotlin (planned)
 * Java + Kotlin (planned)
-* Swift (planned)
+* Swift 
 * JavaScript (planned)
 * Go (requested)
 * C# (requested)
@@ -241,3 +241,9 @@ To add new scenarios to the existing tests for a given language, you can add the
 Update the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files too.
 
 To add tests for a new language, please add a new `<language>` folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
+
+## Piranha Rules
+Piranha supports three kinds of rules that can be used to propagate edits throughout the code base:
+* **Rewrite rules** match a specific AST node, adds tag matches to the substitutions' table and replaces the AST appropriately
+* **Match rules** match a specific AST node and adds tag matches to the substitutions' table (Contains no`replace` and `replace_node`)
+* **Dummy rules** match any AST node (Contains no `query`, `replace` and `replace_node`)
