@@ -40,7 +40,7 @@ use crate::{
 use std::collections::VecDeque;
 use tree_sitter::{InputEdit, Node};
 
-pub(crate) fn execute_piranha(args: PiranhaArguments) -> Vec<SourceCodeUnit> {
+pub(crate) fn execute_piranha(args: &PiranhaArguments) -> Vec<SourceCodeUnit> {
   let mut flag_cleaner = FlagCleaner::new(args);
   flag_cleaner.perform_cleanup();
   flag_cleaner.get_updated_files()
@@ -273,8 +273,8 @@ impl FlagCleaner {
   }
 
   /// Instantiate Flag-cleaner
-  fn new(args: PiranhaArguments) -> Self {
-    let graph_rule_store = RuleStore::new(&args);
+  fn new(args: &PiranhaArguments) -> Self {
+    let graph_rule_store = RuleStore::new(args);
     Self {
       rule_store: graph_rule_store,
       path_to_codebase: String::from(args.path_to_code_base()),
