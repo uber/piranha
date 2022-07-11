@@ -4,12 +4,13 @@ use std::{
   path::{Path, PathBuf},
 };
 
+use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
 
-use super::edit::Edit;
+use super::{edit::Edit, piranha_arguments::PiranhaArguments};
 
 // Maintains the updated source code content and AST of the file
 #[derive(Clone)]
@@ -43,16 +44,24 @@ impl SourceCodeUnit {
   }
 
   /// Writes the current contents of `code` to the file system.
-  pub fn persist(&self) {
-    if self.code.as_str().is_empty(){
-      _ = fs::remove_file(&self.path).expect("Unable to Delete file");
-    }else{
-      fs::write(&self.path, self.code.as_str()).expect("Unable to Write file");
+  /// Based on the user's specifications, this function will delete a file if empty
+  /// and replace three consecutive newline characters with two.
+  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
+    if self.code.as_str().is_empty() {
+      if piranha_arguments.delete_file_if_empty() {
+        _ = fs::remove_file(&self.path).expect("Unable to Delete file");
+      }
+    } else {
+      let content = if piranha_arguments.delete_consecutive_new_lines() {
+        let regex = Regex::new(r"\n\s*\n(\s*\n)").unwrap();
+        regex.replace_all(&self.code(), "\n${1}").to_string()
+      } else {
+        self.code()
+      };
+      fs::write(&self.path, content).expect("Unable to Write file");
     }
-    
   }
 
- 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
     self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser)
@@ -85,14 +94,17 @@ impl SourceCodeUnit {
     // Handle errors, like removing extra comma.
     self.remove_additional_comma_from_sequence_list(parser);
     if self.ast.root_node().has_error() {
-      panic!("Produced syntactically incorrect source code {}", self.code());
-  }
+      panic!(
+        "Produced syntactically incorrect source code {}",
+        self.code()
+      );
+    }
     ts_edit
   }
 
   /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
   /// This function, applies the recovery strategies.
-  /// Currently, we only support recovering from extra comma. 
+  /// Currently, we only support recovering from extra comma.
   fn remove_additional_comma_from_sequence_list(&mut self, parser: &mut Parser) {
     if self.ast.root_node().has_error() {
       let c_ast = self.ast.clone();

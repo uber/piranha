@@ -20,6 +20,8 @@ use serde_derive::Deserialize;
 pub(crate) struct PiranhaConfiguration {
   language: Vec<String>,
   substitutions: Vec<Vec<String>>,
+  delete_file_if_empty: Option<bool>,
+  delete_consecutive_new_lines: Option<bool>,
 }
 
 impl PiranhaConfiguration {
@@ -34,4 +36,12 @@ impl PiranhaConfiguration {
   pub(crate) fn language(&self) -> String {
     self.language[0].clone()
   }
+
+    pub(crate) fn delete_file_if_empty(&self) -> Option<bool> {
+        self.delete_file_if_empty
+    }
+
+    pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
+        self.delete_consecutive_new_lines
+    }
 }
