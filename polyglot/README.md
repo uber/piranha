@@ -235,7 +235,7 @@ First decide, what scopes you need to capture, for instance, in Java we capture 
 ### Writing tests
 Currently we maintain 
 * Unit tests for the internal functionality can be found under `<models|utilities>/unit_test`.
-* End-to-end tests for the configurations execute  Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
+* End-to-end tests for the configurations execute Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
 
 To add new scenarios to the existing tests for a given language, you can add them to new file in the `input` directory and then create similarly named files with the expected output in `expected_treated` and `expected_control` directory.
 Update the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files too.
