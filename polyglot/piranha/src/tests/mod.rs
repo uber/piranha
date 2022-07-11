@@ -22,6 +22,8 @@ use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read
 mod test_piranha_java;
 mod test_piranha_kt;
 
+mod test_piranha_strings;
+
 use std::sync::Once;
 
 static INIT: Once = Once::new();
@@ -32,8 +34,8 @@ fn initialize() {
   });
 }
 
-fn run_test(language: &str, ff_system: &str, treatment: &str, n_files_changed: usize) {
-  let path_to_test_ff = format!("test-resources/{language}/{ff_system}/{treatment}");
+fn run_test(relative_path_to_tests: &str, n_files_changed: usize) {
+  let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
 
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("{path_to_test_ff}/input/"),

@@ -18,23 +18,23 @@ static LANGUAGE: &str = "java";
 #[test]
 fn test_java_scenarios_treated_ff1() {
   initialize();
-  run_test(LANGUAGE, "feature_flag_system_1", "treated", 2);
+  run_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_1", "treated"), 2);
 }
 
 #[test]
 fn test_java_scenarios_treated_ff2() {
   initialize();
-  run_test(LANGUAGE, "feature_flag_system_2", "treated", 4);
+  run_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_2", "treated"), 4);
 }
 
 #[test]
 fn test_java_scenarios_control_ff1() {
   initialize();
-  run_test(LANGUAGE, "feature_flag_system_1", "control", 2);
+  run_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_1", "control"), 2);
 }
 
 #[test]
 fn test_java_scenarios_control_ff2() {
   initialize();
-  run_test(LANGUAGE, "feature_flag_system_2", "control", 4);
+  run_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_2", "control"), 4);
 }

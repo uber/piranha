@@ -36,10 +36,11 @@ pub(crate) trait TreeSitterHelpers {
 
 impl TreeSitterHelpers for String {
   fn create_query(&self, language: Language) -> Query {
-    if let Ok(q) = Query::new(language, self.as_str()) {
+    let query = Query::new(language, self.as_str());
+    if let Ok(q) = query {
       return q;
     }
-    panic!("Could not parse the query : {}", self);
+    panic!("Could not parse the query : {} {:?}", self, query.err());
   }
 
   fn get_language(&self) -> Language {
@@ -47,6 +48,7 @@ impl TreeSitterHelpers for String {
       "java" => tree_sitter_java::language(),
       "kt" => tree_sitter_kotlin::language(),
       "swift" => tree_sitter_swift::language(),
+      "strings" => tree_sitter_strings::language(),
       _ => panic!("Language not supported"),
     }
   }
