@@ -24,6 +24,16 @@ impl Edit {
     }
   }
 
+  #[cfg(test)]
+  pub(crate) fn dummy_edit(replacement_range: Range, replacement_string: String) -> Self {
+    Self::new(
+      replacement_range,
+      replacement_string,
+      Rule::dummy(),
+      HashMap::new(),
+    )
+  }
+
   /// Get the edit's replacement range.
   pub(crate) fn replacement_range(&self) -> Range {
     self.replacement_range
