@@ -9,12 +9,12 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file contains rules to the specific feature flag API.
+# This file contains rules to update a strings file.
 
 #
-# For @stale_flag_name = test_second_experiment and @treated = true
+# For @stake_key = "foobar" 
 # Before 
-# case test_second_experiment
+# "foobar" = "Some String"
 # After 
 #  
 #
