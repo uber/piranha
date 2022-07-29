@@ -1,0 +1,5 @@
+/* This is a key value pair */
+"orange" = "This is an orange.";
+
+/* This is another key value pair */
+"apple" = "This is an apple.";
