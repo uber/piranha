@@ -35,10 +35,10 @@ fn main() {
 
   let args = PiranhaArguments::new(CommandLineArguments::parse());
 
-  let updated_files = execute_piranha(args);
+  let updated_files = execute_piranha(&args);
 
   for source_code_unit in updated_files {
-    source_code_unit.persist();
+    source_code_unit.persist(&args);
   }
 
   info!("Time elapsed - {:?}", now.elapsed().as_secs());

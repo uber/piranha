@@ -38,6 +38,11 @@ pub(crate) struct PiranhaArguments {
   language: Language,
   // The language name is file the extension used for files in particular language.
   language_name: String,
+  // User option that determines whether an empty file will be deleted
+  delete_file_if_empty: bool,
+  // User option that determines whether consecutive newline characters will be
+  // replaced with a newline character
+  delete_consecutive_new_lines: bool,
 }
 
 impl PiranhaArguments {
@@ -59,6 +64,12 @@ impl PiranhaArguments {
       path_to_configurations: args.path_to_configurations,
       language_name: String::from(&piranha_args_from_config.language()),
       language: piranha_args_from_config.language().get_language(),
+      delete_file_if_empty: piranha_args_from_config
+        .delete_file_if_empty()
+        .unwrap_or(true),
+      delete_consecutive_new_lines: piranha_args_from_config
+        .delete_consecutive_new_lines()
+        .unwrap_or(true),
     }
   }
 
@@ -81,10 +92,26 @@ impl PiranhaArguments {
   pub(crate) fn language_name(&self) -> &str {
     self.language_name.as_ref()
   }
+
+  pub(crate) fn delete_file_if_empty(&self) -> bool {
+    self.delete_file_if_empty
+  }
+
+  pub(crate) fn delete_consecutive_new_lines(&self) -> bool {
+    self.delete_consecutive_new_lines
+  }
 }
 
 #[cfg(test)]
 impl PiranhaArguments {
+  pub(crate) fn set_delete_file_if_empty(&mut self, value: bool) {
+    self.delete_file_if_empty = value;
+  }
+
+  pub(crate) fn set_delete_consecutive_new_lines(&mut self, value: bool) {
+    self.delete_consecutive_new_lines = value;
+  }
+
   pub(crate) fn dummy() -> Self {
     let language_name = String::from("java");
     PiranhaArguments {
@@ -93,6 +120,24 @@ impl PiranhaArguments {
       path_to_configurations: String::new(),
       language: language_name.get_language(),
       language_name,
+      delete_consecutive_new_lines: false,
+      delete_file_if_empty: false,
     }
+  }
+
+  pub(crate) fn dummy_with_user_opt(delete_file_if_empty: bool, delete_consecutive_new_lines: bool) -> Self {
+    let language_name = String::from("java");
+    let mut args = PiranhaArguments {
+      path_to_code_base: String::new(),
+      input_substitutions: HashMap::new(),
+      path_to_configurations: String::new(),
+      language: language_name.get_language(),
+      language_name,
+      delete_consecutive_new_lines: false,
+      delete_file_if_empty: false,
+    };
+    args.set_delete_consecutive_new_lines(delete_consecutive_new_lines);
+    args.set_delete_file_if_empty(delete_file_if_empty);
+    args
   }
 }

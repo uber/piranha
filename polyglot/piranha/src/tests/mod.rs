@@ -41,7 +41,7 @@ fn run_test(relative_path_to_tests: &str, n_files_changed: usize) {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
   });
-  let updated_files = execute_piranha(args);
+  let updated_files = execute_piranha(&args);
   assert_eq!(updated_files.len(), n_files_changed);
   let path_to_expected =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
