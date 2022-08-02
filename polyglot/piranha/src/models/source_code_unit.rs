@@ -120,8 +120,9 @@ impl SourceCodeUnit {
 
   // Tries to remove the extra comma -
   // -->  Remove comma if extra
-  //    --> Check if AST is correct
-  //      ---> No: Undo the change
+  //    --> Check if AST has no errors, to decide if the replacement was successful. 
+  //      --->  if No: Undo the change
+  //      --->  if Yes: Return   
   // Returns true if the comma was successfully removed.
   fn try_to_remove_extra_comma(&mut self, parser: &mut Parser) -> bool {
     let c_ast = self.ast.clone();
@@ -142,7 +143,10 @@ impl SourceCodeUnit {
   }
 
   // Tries to remove the extra comma - 
-  // Applies some Regex Replacements to the source file
+  // Applies three Regex-Replacements strategies to the source file to remove the extra comma. 
+  // *  replace consecutive commas with comma 
+  // *  replace ( `(,` or `[,` ) with just `(` or `[`)
+  // Check if AST has no errors, to decide if the replacement was successful. 
   // Returns true if the comma was successfully removed.
   fn try_to_fix_code_with_regex_replace(&mut self, parser: &mut Parser) -> bool{
     let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
