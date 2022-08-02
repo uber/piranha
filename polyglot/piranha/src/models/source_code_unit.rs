@@ -53,8 +53,9 @@ impl SourceCodeUnit {
       }
     } else {
       let content = if piranha_arguments.delete_consecutive_new_lines() {
-        let regex = Regex::new(r"\n\s*\n(\s*\n)").unwrap();
-        regex.replace_all(&self.code(), "\n${1}").to_string()
+
+        let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
+        regex.replace_all(&self.code(), "\n${2}").to_string()
       } else {
         self.code()
       };

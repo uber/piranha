@@ -153,10 +153,21 @@ fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
 #[test]
 fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArguments::dummy_with_user_opt(true, true);
-  let source_code = "class Test {
+  let source_code_test_1 = "class Test {
     public void foobar() {
 
       System.out.println(\"Hello World!\");
+
+
+      System.out.println();
+    }
+  }";
+  let source_code_test_2 = "class Test {
+    public void foobar() {
+
+      System.out.println(\"Hello World!\");
+
+
 
 
       System.out.println();
@@ -176,7 +187,17 @@ fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
     let actual_content = fs::read_to_string(path.path().as_path())?;
     return Ok(actual_content.eq(&expected_str));
   }
-  assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
+
+  assert!(execute_persist_in_temp_folder(
+    source_code_test_1,
+    &args,
+    &check
+  )?);
+  assert!(execute_persist_in_temp_folder(
+    source_code_test_2,
+    &args,
+    &check
+  )?);
   Ok(())
 }
 

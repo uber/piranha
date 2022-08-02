@@ -13,3 +13,4 @@ language = ["strings"]
 substitutions = [
     ["stale_key", "apple"],
 ]
+delete_consecutive_new_lines = true

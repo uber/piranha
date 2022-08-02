@@ -3,3 +3,9 @@
 
 /* This is another key value pair */
 "apple" = "This is an apple.";
+
+/* This is another key value pair */
+"banana" = "This is a banana.";
+
+/* This is another key value pair */
+"melon" = "This is a melon.";
