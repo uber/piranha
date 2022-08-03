@@ -211,7 +211,6 @@ fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
 #[test]
 fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArguments::dummy_with_user_opt(true, true);
-
   let source_code_test_1 = "class Test {
     public void foobar() {
 
