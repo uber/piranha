@@ -88,7 +88,11 @@ impl RuleStore {
     &mut self, rule: &Rule, tag_captures: &HashMap<String, String>,
   ) {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
-      if !self.global_rules.contains(&r) {
+      if !self.global_rules.iter().any(|r| {
+        r.name().eq(&rule.name())
+          && r.replace().eq(&rule.replace())
+          && r.get_query().eq(&rule.get_query())
+      }) {
         r.add_grep_heuristics_for_global_rules(tag_captures);
         #[rustfmt::skip]
         info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());

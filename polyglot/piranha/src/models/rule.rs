@@ -28,7 +28,7 @@ use super::{
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, Default)]
 // Represents the `rules.toml` file
 pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
@@ -53,17 +53,6 @@ pub(crate) struct Rule {
   /// Heuristics for identifying potential files containing occurrence of the rule.
   grep_heuristics: Option<Vec<String>>,
 }
-
-impl PartialEq for Rule {
-  fn eq(&self, other: &Self) -> bool {
-    self.name() == other.name()
-    && self.replace_node == other.replace_node
-    && self.query == other.query
-    && self.replace() == other.replace()
-    && self.holes() == other.holes()
-  }
-}
-impl Eq for Rule {}
 
 impl Rule {
   pub(crate) fn is_feature_flag_cleanup(&self) -> bool {
