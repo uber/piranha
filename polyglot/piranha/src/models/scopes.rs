@@ -67,7 +67,7 @@ impl ScopeGenerator {
       for m in &scope_matchers {
         if let Some((_, substitutions)) = parent.get_match_for_query(
           &source_code_unit.code(),
-          rules_store.get_query(&m.matcher()),
+          rules_store.query(&m.matcher()),
           false,
         ) {
           // Generate the scope query for the specific context by substituting the

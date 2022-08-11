@@ -48,7 +48,7 @@ impl Constraint {
       let query_str = &self.matcher(substitutions);
       if let Some((range, _)) = parent.get_match_for_query(
         &source_code_unit.code(),
-        rule_store.get_query(query_str),
+        rule_store.query(query_str),
         false,
       ) {
         matched_matcher = true;
@@ -59,7 +59,7 @@ impl Constraint {
         );
         for query_with_holes in self.queries() {
           let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
-          let query = &rule_store.get_query(&query_str);
+          let query = &rule_store.query(&query_str);
           // If this query matches anywhere within the scope, return false.
           if scope_node
             .get_match_for_query(&source_code_unit.code(), query, true)
