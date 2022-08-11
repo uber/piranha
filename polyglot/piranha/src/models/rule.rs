@@ -132,13 +132,6 @@ impl Rule {
     self.grep_heuristics = Some(gh.clone());
   }
 
-  // pub(crate) fn query(&self) -> String {
-  //   if self.query.is_none(){
-  //     panic!("No Query Available")
-  //   }
-  //   self.query.unwrap().clone()
-  // }
-
   /// Adds the rule to a new group - "Feature-flag API cleanup"
   pub(crate) fn add_to_feature_flag_api_group(&mut self) {
     let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
