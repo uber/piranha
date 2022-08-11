@@ -4,7 +4,6 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use log::info;
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};

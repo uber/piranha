@@ -11,14 +11,33 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-pub(crate) mod constraint;
-pub(crate) mod edit;
-pub(crate) mod outgoing_edges;
-pub(crate) mod piranha_arguments;
-pub(crate) mod piranha_config;
-pub(crate) mod rule;
-pub(crate) mod rule_graph;
-pub(crate) mod rule_store;
-pub(crate) mod scopes;
-pub(crate) mod source_code_unit;
-pub(crate) mod matches;
+use std::collections::HashMap;
+
+use tree_sitter::{Range};
+
+pub(crate) struct Match {
+  range: Range,
+  matches: HashMap<String, String>,
+}
+
+impl Match {
+  pub(crate) fn new(
+    range: Range, matches: HashMap<String, String>,
+  ) -> Self {
+    Self {
+      range,
+      matches,
+    }
+  }
+
+  /// Get the edit's replacement range.
+  pub(crate) fn range(&self) -> Range {
+    self.range
+  }
+
+  pub(crate) fn matches(&self) -> &HashMap<String, String> {
+    &self.matches
+  }
+
+
+}

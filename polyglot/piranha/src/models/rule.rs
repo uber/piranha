@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::Node;
+use tree_sitter::{Node};
 
 use crate::utilities::{
   tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
@@ -248,28 +248,24 @@ impl Rule {
     );
 
     // Return the first match that satisfies constraint of the rule
-    for (range, tag_substitutions) in all_query_matches {
+    for p_match in all_query_matches {
       let matched_node = get_node_for_range(
         source_code_unit.root_node(),
-        range.start_byte,
-        range.end_byte,
+        p_match.range().start_byte,
+        p_match.range().end_byte,
       );
+      
       if matched_node.satisfies_constraint(
         source_code_unit.clone(),
         self,
-        &tag_substitutions
-          .clone()
-          .into_iter()
-          .chain(rule_store.input_substitutions())
-          .collect(),
+        &p_match.matches(),
         rule_store,
       ) {
-        let replacement = substitute_tags(self.replace(), &tag_substitutions).replace("\\n", "\n");
+        let replacement = substitute_tags(self.replace(), &p_match.matches()).replace("\\n", "\n");
         return Some(Edit::new(
-          range,
+          p_match,
           replacement,
-          self.clone(),
-          tag_substitutions,
+          self.clone()
         ));
       }
     }

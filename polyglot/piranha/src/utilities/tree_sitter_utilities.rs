@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
 use crate::{
-  models::{rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
+  models::{rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, matches::Match},
   utilities::MapOfVec,
 };
 use colored::Colorize;
@@ -67,7 +67,7 @@ pub(crate) trait PiranhaHelpers {
     ///
     /// # Returns
     /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
-    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recursive: bool, replace_node_tag: Option<String>) -> Vec<(Range, HashMap<String, String>)>;
+    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recursive: bool, replace_node_tag: Option<String>) -> Vec<Match> ;
 
     /// Applies the query upon `self`, and gets all the matches
     /// # Arguments
@@ -79,7 +79,7 @@ pub(crate) trait PiranhaHelpers {
     /// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
     /// By default it returns the range of the outermost node for each query match.
     /// If `replace_node` is provided in the rule, it returns the range of the node corresponding to that tag.
-    fn get_match_for_query(&self, source_code: &str, query: &Query, recursive: bool) -> Option<(Range, HashMap<String, String>)>;
+    fn get_match_for_query(&self, source_code: &str, query: &Query, recursive: bool) -> Option<Match>;
 }
 
 impl PiranhaHelpers for Node<'_> {
@@ -88,23 +88,28 @@ impl PiranhaHelpers for Node<'_> {
     &self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
+    let updated_substitutions = &substitutions
+          .clone()
+          .into_iter()
+          .chain(rule_store.input_substitutions())
+          .collect();
     rule.constraints().iter().all(|constraint| {
-      constraint.is_satisfied(*self, source_code_unit.clone(), rule_store, substitutions)
+      constraint.is_satisfied(*self, source_code_unit.clone(), rule_store, updated_substitutions)
     })
   }
 
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,
-  ) -> Option<(Range, HashMap<String, String>)> {
-    self
-      .get_all_matches_for_query(source_code.to_string(), query, recursive, None)
-      .first()
-      .cloned()
+  ) -> Option<Match> {
+    for m in self.get_all_matches_for_query(source_code.to_string(), query, recursive, None){
+      return Some(m);
+    }
+    return None;
   }
 
   fn get_all_matches_for_query(
     &self, source_code: String, query: &Query, recursive: bool, replace_node: Option<String>,
-  ) -> Vec<(Range, HashMap<String, String>)> {
+  ) -> Vec<Match> {
     let mut cursor = QueryCursor::new();
     let node_as_str = |n: &Node| n.utf8_text(source_code.as_bytes()).unwrap();
 
@@ -189,7 +194,8 @@ impl PiranhaHelpers for Node<'_> {
     // This sorts the matches from bottom to top
     output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
     output.reverse();
-    output
+    return output.iter().map(|(r, subs)| Match::new(r.clone(), subs.clone() ))
+    .collect();
   }
 }
 

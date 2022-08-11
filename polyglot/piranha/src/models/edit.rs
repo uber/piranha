@@ -2,41 +2,38 @@ use std::collections::HashMap;
 
 use tree_sitter::Range;
 
-use super::rule::Rule;
+use super::{rule::Rule, matches::Match};
 
 pub(crate) struct Edit {
-  replacement_range: Range,
+  p_match: Match,
   replacement_string: String,
   matched_rule: Rule,
-  matches: HashMap<String, String>,
+  
 }
 
 impl Edit {
   pub(crate) fn new(
-    replacement_range: Range, replacement_string: String, matched_rule: Rule,
-    matches: HashMap<String, String>,
+    p_match: Match, replacement_string: String, matched_rule: Rule,
   ) -> Self {
     Self {
-      replacement_range,
+      p_match,
       replacement_string,
       matched_rule,
-      matches,
     }
   }
 
   #[cfg(test)]
   pub(crate) fn dummy_edit(replacement_range: Range, replacement_string: String) -> Self {
     Self::new(
-      replacement_range,
+      Match::new(replacement_range, HashMap::new()),
       replacement_string,
       Rule::dummy(),
-      HashMap::new(),
     )
   }
 
   /// Get the edit's replacement range.
   pub(crate) fn replacement_range(&self) -> Range {
-    self.replacement_range
+    self.p_match.range()
   }
 
   pub(crate) fn replacement_string(&self) -> &str {
@@ -48,6 +45,6 @@ impl Edit {
   }
 
   pub(crate) fn matches(&self) -> &HashMap<String, String> {
-    &self.matches
+    &self.p_match.matches()
   }
 }

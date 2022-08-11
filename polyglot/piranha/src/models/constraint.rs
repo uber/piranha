@@ -46,7 +46,7 @@ impl Constraint {
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
       let query_str = &self.matcher(substitutions);
-      if let Some((range, _)) = parent.get_match_for_query(
+      if let Some(p_match) = parent.get_match_for_query(
         &source_code_unit.code(),
         rule_store.query(query_str),
         false,
@@ -54,8 +54,8 @@ impl Constraint {
         matched_matcher = true;
         let scope_node = get_node_for_range(
           source_code_unit.root_node(),
-          range.start_byte,
-          range.end_byte,
+          p_match.range().start_byte,
+          p_match.range().end_byte,
         );
         for query_with_holes in self.queries() {
           let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
