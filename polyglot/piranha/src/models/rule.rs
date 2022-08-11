@@ -258,10 +258,10 @@ impl Rule {
       if matched_node.satisfies_constraint(
         source_code_unit.clone(),
         self,
-        &p_match.matches(),
+        p_match.matches(),
         rule_store,
       ) {
-        let replacement = substitute_tags(self.replace(), &p_match.matches()).replace("\\n", "\n");
+        let replacement = substitute_tags(self.replace(), p_match.matches()).replace("\\n", "\n");
         return Some(Edit::new(
           p_match,
           replacement,

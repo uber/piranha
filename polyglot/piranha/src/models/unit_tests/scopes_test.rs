@@ -90,7 +90,7 @@ fn test_get_scope_query_positive() {
   ));
 
   let scope_query_class =
-    ScopeGenerator::get_scope_query(source_code_unit.clone(), "Class", 133, 134, &mut rule_store);
+    ScopeGenerator::get_scope_query(source_code_unit, "Class", 133, 134, &mut rule_store);
   assert!(eq_without_whitespace(
     scope_query_class.as_str(),
     "(
@@ -160,7 +160,7 @@ fn test_get_scope_query_negative() {
   );
 
   let _ = ScopeGenerator::get_scope_query(
-    source_code_unit.clone(),
+    source_code_unit,
     "Method",
     133,
     134,

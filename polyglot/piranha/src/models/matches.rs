@@ -15,6 +15,7 @@ use std::collections::HashMap;
 
 use tree_sitter::{Range};
 
+#[derive(Debug, Clone)]
 pub(crate) struct Match {
   // Range of the entire AST node captured by the match
   range: Range,

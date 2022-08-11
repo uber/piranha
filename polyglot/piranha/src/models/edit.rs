@@ -4,6 +4,7 @@ use tree_sitter::Range;
 
 use super::{rule::Rule, matches::Match};
 
+#[derive(Debug, Clone)]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
   p_match: Match,
@@ -48,6 +49,6 @@ impl Edit {
   }
 
   pub(crate) fn matches(&self) -> &HashMap<String, String> {
-    &self.p_match.matches()
+    self.p_match.matches()
   }
 }

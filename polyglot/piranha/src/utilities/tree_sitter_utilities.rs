@@ -115,10 +115,10 @@ impl PiranhaHelpers for Node<'_> {
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,
   ) -> Option<Match> {
-    for m in self.get_all_matches_for_query(source_code.to_string(), query, recursive, None) {
-      return Some(m);
+    if let Some(m) = self.get_all_matches_for_query(source_code.to_string(), query, recursive, None).first(){
+        return Some(m.clone());
     }
-    return None;
+    None
   }
 
   fn get_all_matches_for_query(
@@ -147,18 +147,18 @@ impl PiranhaHelpers for Node<'_> {
         let mut replace_node_range = captured_node_range;
 
         if let Some(replace_node_name) = &replace_node {
-          if let Some(r) = get_range_for_replace_node(query, &query_matches, &replace_node_name) {
+          if let Some(r) = get_range_for_replace_node(query, &query_matches, replace_node_name) {
             replace_node_range = r;
           }
         }
         let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
-        output.push(Match::new(replace_node_range.clone(), code_snippet_by_tag));
+        output.push(Match::new(replace_node_range, code_snippet_by_tag));
       }
     }
     // This sorts the matches from bottom to top
     output.sort_by(|a, b| a.range().start_byte.cmp(&b.range().start_byte));
     output.reverse();
-    return output;
+    output
   }
 
   fn get_query_capture_groups(
@@ -183,7 +183,7 @@ impl PiranhaHelpers for Node<'_> {
         );
       }
     }
-    return query_matches_by_node_range;
+    query_matches_by_node_range
   }
 }
 
@@ -218,7 +218,7 @@ fn accumulate_repeated_tags(
       .entry(tag_name.clone())
       .or_insert(String::new());
   }
-  return code_snippet_by_tag;
+  code_snippet_by_tag
 }
 
 // In some queries, the `rule.query` matches a larger node, while the rewrite rule replaces the a sub-AST with a new pattern
@@ -246,7 +246,7 @@ fn get_range_for_replace_node(
       }
     }
   }
-  return None;
+  None
 }
 
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
@@ -316,7 +316,7 @@ pub(crate) fn substitute_tags(s: String, substitutions: &HashMap<String, String>
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
     let key = format!("@{}", tag);
-    output = output.replace(&key, &substitute.replace("\n", "\\n"))
+    output = output.replace(&key, &substitute.replace('\n', "\\n"))
   }
   output
 }
