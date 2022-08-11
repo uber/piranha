@@ -38,3 +38,9 @@ fn test_java_scenarios_control_ff2() {
   initialize();
   run_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_2", "control"), 4);
 }
+
+#[test]
+fn test_java_identity_rule() {
+  initialize();
+  run_test(&format!("{}/{}",LANGUAGE,"identity_rule"), 1);
+}

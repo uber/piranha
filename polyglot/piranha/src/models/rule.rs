@@ -232,7 +232,7 @@ impl Rule {
     };
     for rule in rules {
       for ancestor in &context() {
-        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false)
+        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false, &None)
         {
           return Some(edit);
         }
@@ -244,7 +244,7 @@ impl Rule {
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_edit(
     &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
-    recursive: bool,
+    recursive: bool, applied_edit_start: &Option<usize>
   ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
     let all_query_matches = node.get_all_matches_for_query(
@@ -271,13 +271,12 @@ impl Rule {
           .collect(),
         rule_store,
       ) {
-        let replacement = substitute_tags(self.replace(), &tag_substitutions).replace("\\n", "\n");
-        return Some(Edit::new(
-          range,
-          replacement,
-          self.clone(),
-          tag_substitutions,
-        ));
+        if applied_edit_start.is_none()  || (range.start_byte < applied_edit_start.unwrap())
+        {
+          let replacement_string = substitute_tags(self.replace(), &tag_substitutions).replace("\\n", "\n");
+          let edit = Edit::new(range, replacement_string, self.clone(), tag_substitutions);
+          return Some(edit);
+        }
       }
     }
     None
