@@ -5,8 +5,11 @@ use tree_sitter::Range;
 use super::{rule::Rule, matches::Match};
 
 pub(crate) struct Edit {
+  // The match representing the target site of the edit
   p_match: Match,
+  // The string to replace the substring encompassed by the match
   replacement_string: String,
+  // The rule used for creating this match-replace
   matched_rule: Rule,
   
 }

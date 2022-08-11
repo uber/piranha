@@ -16,7 +16,9 @@ use std::collections::HashMap;
 use tree_sitter::{Range};
 
 pub(crate) struct Match {
+  // Range of the entire AST node captured by the match
   range: Range,
+  // The mapping between tags and string representation of the AST captured.
   matches: HashMap<String, String>,
 }
 
