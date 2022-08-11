@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
 use crate::{
-  models::{rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, matches::Match},
+  models::{matches::Match, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
   utilities::MapOfVec,
 };
 use colored::Colorize;
@@ -23,7 +23,7 @@ use log::info;
 use std::collections::HashMap;
 #[cfg(test)]
 use tree_sitter::Parser;
-use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCursor, Range};
+use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 use super::eq_without_whitespace;
 
@@ -57,6 +57,15 @@ impl TreeSitterHelpers for String {
 #[rustfmt::skip]
 pub(crate) trait PiranhaHelpers {
 
+     /// Applies the query upon `self`, and gets the first match
+    /// # Arguments
+    /// * `source_code` - the corresponding source code string for the node.
+    /// * `query` - the query to be applied
+    ///
+    /// # Returns
+    /// List of matches (list of captures), grouped by the outermost tag of the query
+    fn get_query_capture_groups(&self, source_code: &String, query: &Query) -> HashMap<Range, Vec<Vec<QueryCapture>>> ;
+
     /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
     fn satisfies_constraint(&self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,rule_store: &mut RuleStore,) -> bool ;
     /// Applies the query upon `self`, and gets the first match
@@ -89,19 +98,24 @@ impl PiranhaHelpers for Node<'_> {
     rule_store: &mut RuleStore,
   ) -> bool {
     let updated_substitutions = &substitutions
-          .clone()
-          .into_iter()
-          .chain(rule_store.input_substitutions())
-          .collect();
+      .clone()
+      .into_iter()
+      .chain(rule_store.input_substitutions())
+      .collect();
     rule.constraints().iter().all(|constraint| {
-      constraint.is_satisfied(*self, source_code_unit.clone(), rule_store, updated_substitutions)
+      constraint.is_satisfied(
+        *self,
+        source_code_unit.clone(),
+        rule_store,
+        updated_substitutions,
+      )
     })
   }
 
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,
   ) -> Option<Match> {
-    for m in self.get_all_matches_for_query(source_code.to_string(), query, recursive, None){
+    for m in self.get_all_matches_for_query(source_code.to_string(), query, recursive, None) {
       return Some(m);
     }
     return None;
@@ -110,36 +124,14 @@ impl PiranhaHelpers for Node<'_> {
   fn get_all_matches_for_query(
     &self, source_code: String, query: &Query, recursive: bool, replace_node: Option<String>,
   ) -> Vec<Match> {
-    let mut cursor = QueryCursor::new();
-    let node_as_str = |n: &Node| n.utf8_text(source_code.as_bytes()).unwrap();
-
-    // Match the query to the node get list of QueryMatch instances.
-    // a QueryMatch is like a Map<tag, Node>
-    let query_matches = cursor.matches(query, *self, source_code.as_bytes());
-
-    // Since a node can be a part of multiple QueryMatch instances,
-    // we group the query match instances based on the range of the outermost node they matched.
-    let mut query_matches_by_node_range = HashMap::new();
-    for query_match in query_matches {
-      // The first capture in any query match is it's outermost tag.
-      // Ensure the outermost s-expression for is tree-sitter query is tagged.
-      if let Some(captured_node) = query_match.captures.first() {
-        query_matches_by_node_range.collect(
-          captured_node.node.range(),
-          query_match.captures.iter().cloned().collect_vec(),
-        );
-      }
-    }
-
-    let tag_names_by_index: HashMap<usize, &String> =
-      query.capture_names().iter().enumerate().collect();
-
+    let query_capture_groups = self.get_query_capture_groups(&source_code, query);
     // In the below code, we get the code snippet corresponding to each tag for each QueryMatch.
     // It could happen that we have multiple occurrences of the same tag (in queries
     // that use the quantifier operator (*/+)). Therefore for each query match, we have to group (join) the codes snippets
     // corresponding to the same tag.
     let mut output = vec![];
-    for (captured_node_range, query_matches) in query_matches_by_node_range {
+    for (captured_node_range, query_matches) in query_capture_groups {
+       
       // This ensures that each query pattern in rule.query matches the same node.
       if query_matches.len() != query.pattern_count() {
         continue;
@@ -152,51 +144,109 @@ impl PiranhaHelpers for Node<'_> {
       // If `recursive` it allows matches to the subtree of self (Node)
       // Else it ensure that the query perfectly matches the node (`self`).
       if recursive || range_matches_self {
-        let mut code_snippet_by_tag: HashMap<String, String> = HashMap::new();
         let mut replace_node_range = captured_node_range;
 
-        // Iterate over each tag name in the query
-        for tag_name in query.capture_names().iter() {
-          // Iterate over each query match for this range of code snippet
-          for captures in query_matches.clone() {
-            // Iterate over each capture
-            for capture in captures {
-              if tag_names_by_index[&(capture.index as usize)].eq(tag_name) {
-                // In some queries, the `rule.query` matches a larger node, while the rewrite rule replaces the a sub-AST with a new pattern
-                // For instance: cleanup_riles/java/rules:remove_unnecessary_nested_block (here the outermost tag is @block while the
-                // replace_node is @nested.block)
-                // If parameter `replace_node` is provided we group the captures by this replace node and not the
-                // outermost node captured by the query.
-                let code_snippet = node_as_str(&capture.node);
-                if let Some(sp) = &replace_node {
-                  if tag_name.eq(sp) {
-                    replace_node_range = capture.node.range();
-                  }
-                }
-                // Join code snippets corresponding to the corresponding to the same tag with `\n`.
-                // This scenario occurs when we use the `*` or the `+` quantifier in the tree-sitter query
-                // Look at - cleanup_riles/java/rules:remove_unnecessary_nested_block
-                code_snippet_by_tag
-                  .entry(tag_name.clone())
-                  .and_modify(|x| x.push_str(format!("\n{}", code_snippet).as_str()))
-                  .or_insert_with(|| code_snippet.to_string());
-              }
-            }
+        if let Some(replace_node_name) = &replace_node {
+          if let Some(r) = get_range_for_replace_node(query, &query_matches, &replace_node_name) {
+            replace_node_range = r;
           }
-          // If tag name did not match a code snippet, add an empty string.
-          code_snippet_by_tag
-            .entry(tag_name.clone())
-            .or_insert(String::new());
         }
-        output.push((replace_node_range, code_snippet_by_tag));
+        let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
+        output.push(Match::new(replace_node_range.clone(), code_snippet_by_tag));
       }
     }
     // This sorts the matches from bottom to top
-    output.sort_by(|a, b| a.0.start_byte.cmp(&b.0.start_byte));
+    output.sort_by(|a, b| a.range().start_byte.cmp(&b.range().start_byte));
     output.reverse();
-    return output.iter().map(|(r, subs)| Match::new(r.clone(), subs.clone() ))
-    .collect();
+    return output;
   }
+
+  fn get_query_capture_groups(
+    &self, source_code: &String, query: &Query,
+  ) -> HashMap<Range, Vec<Vec<QueryCapture>>> {
+    let mut cursor = QueryCursor::new();
+
+    // Match the query to the node get list of QueryMatch instances.
+    // a QueryMatch is like a Map<tag, Node>
+    let query_matches = cursor.matches(query, *self, source_code.as_bytes());
+
+    // Since a node can be a part of multiple QueryMatch instances,
+    // we group the query match instances based on the range of the outermost node they matched.
+    let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> = HashMap::new();
+    for query_match in query_matches {
+      // The first capture in any query match is it's outermost tag.
+      // Ensure the outermost s-expression for is tree-sitter query is tagged.
+      if let Some(captured_node) = query_match.captures.first() {
+        query_matches_by_node_range.collect(
+          captured_node.node.range(),
+          query_match.captures.iter().cloned().collect_vec(),
+        );
+      }
+    }
+    return query_matches_by_node_range;
+  }
+}
+
+// Join code snippets corresponding to the corresponding to the same tag with `\n`.
+// This scenario occurs when we use the `*` or the `+` quantifier in the tree-sitter query
+// Look at - cleanup_riles/java/rules:remove_unnecessary_nested_block
+// If tag name did not match a code snippet, add an empty string.
+// Returns the mapping between the tag and source code snippet (accumulated).
+fn accumulate_repeated_tags(
+  query: &Query, query_matches: Vec<Vec<tree_sitter::QueryCapture>>, source_code: &String,
+) -> HashMap<String, String> {
+  let mut code_snippet_by_tag: HashMap<String, String> = HashMap::new();
+  let tag_names_by_index: HashMap<usize, &String> =
+    query.capture_names().iter().enumerate().collect();
+  // Iterate over each tag name in the query
+  for tag_name in query.capture_names().iter() {
+    // Iterate over each query match for this range of code snippet
+    for captures in query_matches.clone() {
+      // Iterate over each capture
+      for capture in captures {
+        if tag_names_by_index[&(capture.index as usize)].eq(tag_name) {
+          let code_snippet = &capture.node.utf8_text(source_code.as_bytes()).unwrap();
+          code_snippet_by_tag
+            .entry(tag_name.clone())
+            .and_modify(|x| x.push_str(format!("\n{}", code_snippet).as_str()))
+            .or_insert_with(|| code_snippet.to_string());
+        }
+      }
+    }
+    // If tag name did not match a code snippet, add an empty string.
+    code_snippet_by_tag
+      .entry(tag_name.clone())
+      .or_insert(String::new());
+  }
+  return code_snippet_by_tag;
+}
+
+// In some queries, the `rule.query` matches a larger node, while the rewrite rule replaces the a sub-AST with a new pattern
+// For instance: cleanup_riles/java/rules:remove_unnecessary_nested_block (here the outermost tag is @block while the
+// replace_node is @nested.block)
+// If parameter `replace_node` is provided we group the captures by this replace node and not the
+// outermost node captured by the query.
+// This function gets the range of the ast corresponding to the `replace_node` tag of the query.
+fn get_range_for_replace_node(
+  query: &Query, query_matches: &Vec<Vec<tree_sitter::QueryCapture>>, replace_node_name: &String,
+) -> Option<Range> {
+  let tag_names_by_index: HashMap<usize, &String> =
+    query.capture_names().iter().enumerate().collect();
+  // Iterate over each tag name in the query
+  for tag_name in query.capture_names().iter() {
+    // Iterate over each query match for this range of code snippet
+    for captures in query_matches.clone() {
+      // Iterate over each capture
+      for capture in captures {
+        if tag_names_by_index[&(capture.index as usize)].eq(tag_name)
+          && tag_name.eq(replace_node_name)
+        {
+          return Some(capture.node.range());
+        }
+      }
+    }
+  }
+  return None;
 }
 
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
@@ -205,7 +255,6 @@ impl PiranhaHelpers for Node<'_> {
 pub(crate) fn get_tree_sitter_edit(
   code: String, replace_range: Range, replacement: &str,
 ) -> (String, InputEdit) {
-
   // Log the edit
   let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
   let mut edit_kind = "Delete code".red(); //;
