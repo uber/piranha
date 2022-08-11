@@ -83,15 +83,21 @@ impl RuleStore {
     self.piranha_args.input_substitutions().clone()
   }
 
-  /// Add a new global rule, along with grep heuristics.
+  /// Add a new global rule, along with grep heuristics (If it doesn't already exist)
   pub(crate) fn add_to_global_rules(
     &mut self, rule: &Rule, tag_captures: &HashMap<String, String>,
   ) {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
-      r.add_grep_heuristics_for_global_rules(tag_captures);
-      #[rustfmt::skip]
-      info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
-      self.global_rules.push(r);
+      if !self.global_rules.iter().any(|r| {
+        r.name().eq(&rule.name())
+          && r.replace().eq(&rule.replace())
+          && r.get_query().eq(&rule.get_query())
+      }) {
+        r.add_grep_heuristics_for_global_rules(tag_captures);
+        #[rustfmt::skip]
+        info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
+        self.global_rules.push(r);
+      }
     }
   }
 

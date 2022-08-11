@@ -28,13 +28,13 @@ use super::{
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, Default)]
 // Represents the `rules.toml` file
 pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, Default)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
   name: String,
@@ -171,7 +171,7 @@ impl Rule {
     }
   }
 
-  fn holes(&self) -> Vec<String> {
+  pub(crate) fn holes(&self) -> Vec<String> {
     match &self.holes {
       Some(cs) => cs.clone(),
       None => vec![],

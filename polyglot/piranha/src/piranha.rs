@@ -244,7 +244,9 @@ impl FlagCleaner {
 
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
+  /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target. 
   fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
+    let no_global_rules_with_holes = self.rule_store.global_rules().iter().any(|x|x.holes().is_empty());
     let pattern = self.get_grep_heuristics();
     info!("{}", format!("Searching pattern {}", pattern).green());
     let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
@@ -265,7 +267,8 @@ impl FlagCleaner {
       // Read the file
       .map(|f| (f.path(), read_file(&f.path()).unwrap()))
       // Filter the files containing the desired regex pattern
-      .filter(|x| pattern.is_match(x.1.as_str()))
+      .filter(|x| no_global_rules_with_holes || 
+              pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
     println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
@@ -301,7 +304,7 @@ impl FlagCleaner {
       .dedup()
       //FIXME: Dirty trick to remove true and false. Ideally, grep heuristic could be a field in itself for a rule.
       // Since not all "holes" could be used as grep heuristic.
-      .filter(|x| !x.as_str().eq("true") && !x.as_str().eq("false"))
+      .filter(|x| !x.is_empty() && !x.to_lowercase().eq("true") && !x.to_lowercase().as_str().eq("false")) 
       .join("|");
     Regex::new(reg_x.as_str()).unwrap()
   }
