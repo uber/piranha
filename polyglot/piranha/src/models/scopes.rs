@@ -65,14 +65,14 @@ impl ScopeGenerator {
     // Match the `scope_matcher.matcher` to the parent
     while let Some(parent) = changed_node.parent() {
       for m in &scope_matchers {
-        if let Some((_, substitutions)) = parent.get_match_for_query(
+        if let Some(p_match) = parent.get_match_for_query(
           &source_code_unit.code(),
-          rules_store.get_query(&m.matcher()),
+          rules_store.query(&m.matcher()),
           false,
         ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return substitute_tags(m.generator(), &substitutions);
+          return substitute_tags(m.generator(), p_match.matches());
         } else {
           changed_node = parent;
         }

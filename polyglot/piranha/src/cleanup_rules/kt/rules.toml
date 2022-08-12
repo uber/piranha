@@ -619,15 +619,9 @@ replace_node = "identifier"
 # X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
-query = """
-"""
-replace = ""
-replace_node = ""
+
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
-query = """
-"""
-replace = ""
-replace_node = ""
+

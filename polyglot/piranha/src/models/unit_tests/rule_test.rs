@@ -158,8 +158,8 @@ fn test_get_edit_for_context_positive() {
   );
   let edit = Rule::get_edit_for_context(
     &source_code_unit,
-    41 as usize,
-    44 as usize,
+    41_usize,
+    44_usize,
     &mut rule_store,
     &vec![rule],
   );
@@ -202,8 +202,8 @@ fn test_get_edit_for_context_negative() {
   );
   let edit = Rule::get_edit_for_context(
     &source_code_unit,
-    29 as usize,
-    33 as usize,
+    29_usize,
+    33_usize,
     &mut rule_store,
     &vec![rule],
   );

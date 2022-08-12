@@ -172,12 +172,12 @@ fn execute_persist_in_temp_folder(
   let mut parser = get_parser(String::from("java"));
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
-  _ = fs::write(&file_path.as_path(), source_code.to_string());
+  _ = fs::write(&file_path.as_path(), source_code);
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
-    &file_path.as_path(),
+    file_path.as_path(),
   );
   source_code_unit.persist(args);
   check_predicate(&tmp_dir)
@@ -243,7 +243,7 @@ fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
     }
   }";
     let actual_content = fs::read_to_string(path.path().as_path())?;
-    return Ok(actual_content.eq(&expected_str));
+    Ok(actual_content.eq(&expected_str))
   }
   assert!(execute_persist_in_temp_folder(
     source_code_test_1,
@@ -274,7 +274,7 @@ fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
     let paths = fs::read_dir(temp_dir)?;
     let path = paths.find_or_first(|_| true).unwrap()?;
     let actual_content = fs::read_to_string(path.path().as_path())?;
-    return Ok(actual_content.eq(&actual_content));
+    Ok(actual_content.eq(&actual_content))
   }
   assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
   Ok(())

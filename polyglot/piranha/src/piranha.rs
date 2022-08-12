@@ -159,13 +159,13 @@ impl SourceCodeUnit {
     // let mut scope_node = self.root_node();
     if let Some(query_str) = scope_query {
       // Apply the scope query in the source code and get the appropriate node
-      let tree_sitter_scope_query = rules_store.get_query(query_str);
-      if let Some((range, _)) =
+      let tree_sitter_scope_query = rules_store.query(query_str);
+      if let Some(p_match) =
         &self
           .root_node()
           .get_match_for_query(&self.code(), tree_sitter_scope_query, true)
       {
-        return get_node_for_range(self.root_node(), range.start_byte, range.end_byte);
+        return get_node_for_range(self.root_node(), p_match.range().start_byte, p_match.range().end_byte);
       }
     }
     self.root_node()

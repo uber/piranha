@@ -4,7 +4,6 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use log::info;
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
@@ -171,13 +170,11 @@ impl SourceCodeUnit {
     let is_fixed =
       self.try_to_remove_extra_comma(parser) || self.try_to_fix_code_with_regex_replace(parser);
 
-    if !is_fixed {
-      if traverse(self.ast.walk(), Order::Post).any(|n| n.is_error()) {
-        panic!(
-          "Produced syntactically incorrect source code {}",
-          self.code()
-        );
-      }
+    if !is_fixed && traverse(self.ast.walk(), Order::Post).any(|n| n.is_error()) {
+      panic!(
+        "Produced syntactically incorrect source code {}",
+        self.code()
+      );
     }
   }
   // #[cfg(test)] // Rust analyzer FP

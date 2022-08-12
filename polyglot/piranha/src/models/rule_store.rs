@@ -91,11 +91,11 @@ impl RuleStore {
       if !self.global_rules.iter().any(|r| {
         r.name().eq(&rule.name())
           && r.replace().eq(&rule.replace())
-          && r.get_query().eq(&rule.get_query())
+          && r.query().eq(&rule.query())
       }) {
         r.add_grep_heuristics_for_global_rules(tag_captures);
         #[rustfmt::skip]
-        info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.get_query()).bright_blue());
+        info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
         self.global_rules.push(r);
       }
     }
@@ -103,7 +103,7 @@ impl RuleStore {
 
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
-  pub(crate) fn get_query(&mut self, query_str: &String) -> &Query {
+  pub(crate) fn query(&mut self, query_str: &String) -> &Query {
     let language = self.language();
     self
       .rule_query_cache
