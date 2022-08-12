@@ -160,7 +160,6 @@ impl Rule {
       return rp.to_string();
     }
     panic!("No replace pattern!")
-    
   }
 
   pub(crate) fn constraints(&self) -> Vec<Constraint> {
