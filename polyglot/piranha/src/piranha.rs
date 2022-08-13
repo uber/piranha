@@ -99,7 +99,7 @@ impl SourceCodeUnit {
     // When rule is a "rewrite" rule :
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
-    // Propagate
+    // Propagate each applied edit. The next rule will be applied relative to the application of this edit. 
     if !rule.is_match_only_rule() {
       if let Some(edit_1) = rule.get_edit(&self.clone(), rule_store, scope_node, true) {
         self.rewrites_mut().push(edit_1.clone());
@@ -117,7 +117,8 @@ impl SourceCodeUnit {
     // When rule is a "match-only" rule :
     // Get all the matches
     // Add mappings to the substitution
-    // Propagate each match
+    // Propagate each match. Note that,  we pass a identity edit (where old range == new range) in to the propagate logic. 
+    // The next edit will be applied relative to the identity edit. 
     else {
       for m in rule.get_matches(&self.clone(), rule_store, scope_node, true) {
         self.matches_mut().push((rule.clone(), m.clone()));
