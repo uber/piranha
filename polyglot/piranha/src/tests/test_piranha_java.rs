@@ -39,6 +39,13 @@ fn test_java_scenarios_control_ff2() {
   run_rewrite_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_2", "control"), 4);
 }
 
+#[test]
+fn test_java_scenarios_find_and_propagate() {
+  initialize();
+  run_rewrite_test(&format!("{}/{}",LANGUAGE, "find_and_propagate"), 2);
+}
+
+
 // run_match_test
 #[test]
 fn test_java_match_only() {
