@@ -41,10 +41,20 @@ use crate::{
 use std::collections::VecDeque;
 use tree_sitter::{InputEdit, Node};
 
-pub(crate) fn execute_piranha(args: &PiranhaArguments) -> (Vec<SourceCodeUnit>, HashMap<PathBuf, Vec<(Rule, Match)>>, HashMap<PathBuf, Vec<Edit>>) {
+pub(crate) fn execute_piranha(
+  args: &PiranhaArguments,
+) -> (
+  Vec<SourceCodeUnit>,
+  HashMap<PathBuf, Vec<(Rule, Match)>>,
+  HashMap<PathBuf, Vec<Edit>>,
+) {
   let mut flag_cleaner = FlagCleaner::new(args);
   flag_cleaner.perform_cleanup();
-  (flag_cleaner.get_updated_files(), flag_cleaner.get_all_matches(), flag_cleaner.get_all_rewrites())
+  (
+    flag_cleaner.get_updated_files(),
+    flag_cleaner.get_all_matches(),
+    flag_cleaner.get_all_rewrites(),
+  )
 }
 
 impl SourceCodeUnit {
@@ -63,21 +73,21 @@ impl SourceCodeUnit {
   /// Applies the rule to the first match in the source code
   /// This is implements the main algorithm of piranha.
   /// Parameters:
-  /// * `rule` : the rule to be applied 
+  /// * `rule` : the rule to be applied
   /// * `rule_store`: contains the input rule graph.
-  /// 
+  ///
   /// Algo:
-  /// * check if the rule is match only 
-  /// ** IF not (i.e. it is a rewrite): 
-  /// *** Get the first match of the rule for the file 
+  /// * check if the rule is match only
+  /// ** IF not (i.e. it is a rewrite):
+  /// *** Get the first match of the rule for the file
   ///  (We only get the first match because the idea is that we will apply this change, and keep calling this method `_apply_rule` until all
-  /// *** Apply the rewrite 
-  /// *** Update the substitution table 
-  /// *** Propagate the change 
+  /// *** Apply the rewrite
+  /// *** Update the substitution table
+  /// *** Propagate the change
   /// ** Else (i.e. it is a match only rule):
-  /// *** Get all the matches , and for each match 
-  /// *** Update the substitution table 
-  /// *** Propagate the change 
+  /// *** Get all the matches , and for each match
+  /// *** Update the substitution table
+  /// *** Propagate the change
   fn _apply_rule(
     &mut self, rule: Rule, rule_store: &mut RuleStore, parser: &mut Parser,
     scope_query: &Option<String>,
@@ -86,7 +96,10 @@ impl SourceCodeUnit {
 
     let mut query_again = false;
 
-    // Match the rule "anywhere" inside the scope_node
+    // When rule is a "rewrite" rule :
+    // Update the first match of the rewrite rule
+    // Add mappings to the substitution
+    // Propagate
     if !rule.is_match_only_rule() {
       if let Some(edit_1) = rule.get_edit(&self.clone(), rule_store, scope_node, true) {
         self.rewrites_mut().push(edit_1.clone());
@@ -100,7 +113,12 @@ impl SourceCodeUnit {
 
         self.propagate(applied_ts_edit, rule, rule_store, parser);
       }
-    } else {
+    }
+    // When rule is a "match-only" rule :
+    // Get all the matches
+    // Add mappings to the substitution
+    // Propagate each match
+    else {
       for m in rule.get_matches(&self.clone(), rule_store, scope_node, true) {
         self.matches_mut().push((rule.clone(), m.clone()));
 
@@ -120,23 +138,23 @@ impl SourceCodeUnit {
     }
     query_again
   }
-  
-  /// This is the propagation logic of the Piranha's main algorithm. 
-  /// Parameters: 
-  ///  * Rule `rule` that was just applied 
-  ///  * `applied_ts_edit` -  it's(`rule`'s) application site (in terms of replacement range) 
+
+  /// This is the propagation logic of the Piranha's main algorithm.
+  /// Parameters:
+  ///  * Rule `rule` that was just applied
+  ///  * `applied_ts_edit` -  it's(`rule`'s) application site (in terms of replacement range)
   ///  * `rule_store` - contains the input "rule graph"
-  /// 
+  ///
   /// Algo:
-  /// 
+  ///
   /// (i) Lookup the `rule_store` and get all the (next) rules that could be after applying the current rule (`rule`).
-  ///   * We will receive the rules grouped by scope:  `GLOBAL` and `PARENT` are applicable to each language. However, other scopes are determined 
+  ///   * We will receive the rules grouped by scope:  `GLOBAL` and `PARENT` are applicable to each language. However, other scopes are determined
   ///     based on the `<language>/scope_config.toml`.
   /// (ii) Add the `GLOBAL` rule to the global rule list in the `rule_store` (This will be performed in the next iteration)
-  /// (iii) Apply the local cleanup i.e. `PARENT` scoped rules 
+  /// (iii) Apply the local cleanup i.e. `PARENT` scoped rules
   ///  (iv) Go to step 1 (and repeat this for the applicable parent scoped rule. Do this until, no parent scoped rule is applicable.) (recursive)
   ///  (iv) Apply the rules based on custom language specific scopes (as defined in `<language>/scope_config.toml`) (recursive)
-  /// 
+  ///
   fn propagate(
     &mut self, applied_ts_edit: InputEdit, rule: Rule, rules_store: &mut RuleStore,
     parser: &mut Parser,
@@ -390,7 +408,9 @@ impl FlagCleaner {
       .dedup()
       //FIXME: Dirty trick to remove true and false. Ideally, grep heuristic could be a field in itself for a rule.
       // Since not all "holes" could be used as grep heuristic.
-      .filter(|x| !x.is_empty() && !x.to_lowercase().eq("true") && !x.to_lowercase().as_str().eq("false")) 
+      .filter(|x| {
+        !x.is_empty() && !x.to_lowercase().eq("true") && !x.to_lowercase().as_str().eq("false")
+      })
       .join("|");
     Regex::new(reg_x.as_str()).unwrap()
   }
