@@ -31,7 +31,7 @@ update_standard_hours = Rule("update_standard_hours",
                                          filter_eq("receiver", "@type_name"), filter_eq("name", "standardHours")]),
                              replace="ofHours",
                              replace_node="method_invocation.name",
-                             holes=["duration.type"])
+                             holes=["type_name"])
 
 
 rg = RuleGraph(["java"])

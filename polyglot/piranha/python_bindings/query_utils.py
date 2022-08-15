@@ -12,10 +12,10 @@ parser = Parser()
 parser.set_language(QUERY_LANGUAGE)
 
 def filter_eq(tag, value):
-    return f'(#eq? @tag "value")'
+    return f'(#eq? @{tag} "{value}")'
 
 def filter_not_eq(tag, value):
-    return f'(#not-eq? @tag "value")'
+    return f'(#not-eq? @{tag} "{value}")'
 
 def query(s_exp, constraints):
     template = """(
