@@ -17,3 +17,4 @@ polyglot/piranha/.idea
 .vscode
 **/*.log
 polyglot/piranha/demo/piranha
+polyglot/piranha/build/*
