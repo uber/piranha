@@ -5,8 +5,7 @@ from query_utils import java_import_declaration_type, filter_eq, java_method_inv
 udi_query = query(java_import_declaration_type, [filter_eq("imported_type", "org.joda.time.Duration")])
 
 cns = Constraint(matcher=query(java_file, []),
-                 queries=[ query
-                    
+                 queries=[ 
                     """
 (
 (import_declaration (scoped_identifier (scoped_identifier)@c_fqn (identifier)@c_name) @c_type) @c_i
