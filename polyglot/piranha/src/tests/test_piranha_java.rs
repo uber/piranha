@@ -46,9 +46,20 @@ fn test_java_scenarios_find_and_propagate() {
 }
 
 
+#[test]
+fn test_java_scenarios_joda_to_java_expression_only() {
+  initialize();
+  run_rewrite_test(&format!("{}/{}/{}",LANGUAGE, "joda_to_java", "only_expressions_usage"), 3);
+}
+
+
 // run_match_test
 #[test]
 fn test_java_match_only() {
   initialize();
   run_match_test(&format!("{}/{}",LANGUAGE, "structural_find"), 22);
 }
+
+
+
+
