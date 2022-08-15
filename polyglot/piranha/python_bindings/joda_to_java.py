@@ -1,8 +1,24 @@
 from polyglot_piranha import Rule, Edge, Constraint, RuleGraph
-from query_utils import java_import_declaration_type, filter_eq, java_method_invocation, java_method_declaration
+from query_utils import java_import_declaration_type, filter_eq, java_method_invocation, java_method_declaration, java_file
 
 
 udi_query = query(java_import_declaration_type, [filter_eq("imported_type", "org.joda.time.Duration")])
+
+cns = Constraint(matcher=query(java_file, []),
+                 queries=[ query
+                    
+                    """
+(
+(import_declaration (scoped_identifier (scoped_identifier)@c_fqn (identifier)@c_name) @c_type) @c_i
+(#eq? @c_fqn "org.joda.time")
+(#not-eq? @c_name "Duration")
+)
+""",
+                          """
+(type_identifier) @ty_id
+(#eq? @ty_id "Duration")
+"""])
+
 
 cns = Constraint(matcher="(program) @prg",
                  queries=["""
@@ -15,9 +31,7 @@ cns = Constraint(matcher="(program) @prg",
                           """
 (type_identifier) @ty_id
 (#eq? @ty_id "Duration")
-"""
-                          ]
-                 )
+"""])
 
 update_standard_hours = Rule("update_standard_hours",
                             query=query(java_method_invocation, [eq("receiver", "@type_name"), eq("name", "standardHours")]),

@@ -1,0 +1,3 @@
+[submodule "polyglot/piranha/vendor/tree-sitter-query"]
+	path = polyglot/piranha/vendor/tree-sitter-query
+	url = https://github.com/nvim-treesitter/tree-sitter-query.git

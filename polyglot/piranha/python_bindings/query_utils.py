@@ -1,3 +1,14 @@
+from tree_sitter import Language, Parser
+
+Language.build_library(
+  'build/my-languages.so',
+  [
+    '../vendor/tree-sitter-query',
+  ]
+)
+
+
+
 def filter_eq(tag, value):
     return '(#eq? @tag "value")'
 
@@ -18,6 +29,7 @@ def rename_tags(query, renames):
     for k, v in renames.items():
         nq = nq.replace('@'+k, v)
     return nq
+
 
 java_import_declaration_type = "((import_declaration (scoped_identifier (scoped_identifier)@type_qualifier (identifier)@type_name) @imported_type) @import)"
 java_file = "((program) @compilation_unit)"
