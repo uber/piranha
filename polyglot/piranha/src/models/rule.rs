@@ -238,7 +238,6 @@ impl Rule {
     None
   }
 
-
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_matches(
     &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
