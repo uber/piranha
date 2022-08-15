@@ -13,8 +13,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::path::{Path, PathBuf};
 
-use itertools::Itertools;
-
 use crate::config::CommandLineArguments;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::source_code_unit::SourceCodeUnit;
@@ -46,7 +44,7 @@ fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
   });
   let (_updated_files, matches,_rewrites) = execute_piranha(&args);
-  print!("{:?}", matches);
+  
   assert_eq!(matches.values().flat_map(|x|x.iter()).count(), number_of_matches);
 }
 
@@ -64,9 +62,6 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   // Checks if there are any rewrites performed for the file
   assert!(rewrites.values().flat_map(|x|x.iter()).count() > 0);
 
-  for r in rewrites.values().flat_map(|x|x.iter()).collect_vec() {
-    print!("{:?}", r);
-  }
   assert_eq!(updated_files.len(), n_files_changed);
   let path_to_expected =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));

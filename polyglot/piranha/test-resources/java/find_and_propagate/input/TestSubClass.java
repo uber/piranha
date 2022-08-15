@@ -13,7 +13,7 @@
  */
 package com.uber.piranha;
 
-class TestClassUsage extends TestClass {
+class TestSubClass extends TestClass {
   
   @Override
   void testMethod(){

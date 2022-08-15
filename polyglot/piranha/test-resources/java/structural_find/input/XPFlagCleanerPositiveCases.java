@@ -130,7 +130,7 @@ class XPFlagCleanerPositiveCases {
 
   public int return_within_if_basic() {
 
-    if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+    if (experimentation.isToggleEnabled(TestExperimentName.SOME_OTHER_FLAG)) {
       return 20;
     }
     return 30;
@@ -139,7 +139,7 @@ class XPFlagCleanerPositiveCases {
   public int return_within_if_additional(int x) {
     if (x == 0) {
 
-      if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+      if (experimentation.isToggleEnabled(TestExperimentName.SOME_OTHER_FLAG)) {
         System.out.println();
         return 0;
       }

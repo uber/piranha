@@ -78,16 +78,17 @@ impl SourceCodeUnit {
   /// * `rule` : the rule to be applied
   /// * `rule_store`: contains the input rule graph.
   ///
-  /// Algo:
+  /// Algorithm:
   /// * check if the rule is match only
   /// ** IF not (i.e. it is a rewrite):
   /// *** Get the first match of the rule for the file
   ///  (We only get the first match because the idea is that we will apply this change, and keep calling this method `_apply_rule` until all
+  /// matches have been exhaustively updated.
   /// *** Apply the rewrite
   /// *** Update the substitution table
   /// *** Propagate the change
   /// ** Else (i.e. it is a match only rule):
-  /// *** Get all the matches , and for each match
+  /// *** Get all the matches, and for each match
   /// *** Update the substitution table
   /// *** Propagate the change
   fn _apply_rule(
@@ -145,11 +146,11 @@ impl SourceCodeUnit {
 
   /// This is the propagation logic of the Piranha's main algorithm.
   /// Parameters:
-  ///  * Rule `rule` that was just applied
   ///  * `applied_ts_edit` -  it's(`rule`'s) application site (in terms of replacement range)
+  ///  * `rule` - The `rule` that was just applied
   ///  * `rule_store` - contains the input "rule graph"
-  ///
-  /// Algo:
+  ///  * `parser` - parser for the language
+  /// Algorithm:
   ///
   /// (i) Lookup the `rule_store` and get all the (next) rules that could be after applying the current rule (`rule`).
   ///   * We will receive the rules grouped by scope:  `GLOBAL` and `PARENT` are applicable to each language. However, other scopes are determined

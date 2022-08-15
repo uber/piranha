@@ -50,5 +50,5 @@ fn test_java_scenarios_find_and_propagate() {
 #[test]
 fn test_java_match_only() {
   initialize();
-  run_match_test(&format!("{}/{}",LANGUAGE, "structural_find"), 22);
+  run_match_test(&format!("{}/{}",LANGUAGE, "structural_find"), 20);
 }
