@@ -25,7 +25,6 @@ queries = {queries_str}
             queries_str = get_as_toml_literal_list(self.queries))
 
 
-
 class Rule :
     def __init__(self, name, query = None, replace_node = None, replace = None, groups = None, holes = None, constraints = []):
         self.name = name

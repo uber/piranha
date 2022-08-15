@@ -1,4 +1,8 @@
 from polyglot_piranha import Rule, Edge, Constraint, RuleGraph
+from query_utils import java_import_declaration_type, filter_eq, java_method_invocation, java_method_declaration
+
+
+udi_query = query(java_import_declaration_type, [filter_eq("imported_type", "org.joda.time.Duration")])
 
 cns = Constraint(matcher="(program) @prg",
                  queries=["""
@@ -14,25 +18,27 @@ cns = Constraint(matcher="(program) @prg",
 """
                           ]
                  )
-update_duration_import = Rule("update_duration_import",
-                              query="""(
-(import_declaration 
-	(scoped_identifier 
-    scope: (_) @duration.scop
-    name: (_) @duration.type
-)@duration.fqn)
-(#eq? @duration.fqn "org.joda.time.Duration"))""", replace="java.time.Duration", replace_node="duration.fqn",
-                              constraints=[cns])
 
 update_standard_hours = Rule("update_standard_hours",
-                             query="""(
-(method_invocation 
-	object: (_) @method_invocation.object
-    name: (_) @method_invocation.name
-    arguments : (_) @args
-) @mi
-(#eq? @method_invocation.object "@duration.type")
-(#eq? @method_invocation.name "standardHours"))""", replace="ofHours", replace_node="method_invocation.name", holes=["duration.type"])
+                            query=query(java_method_invocation, [eq("receiver", "@type_name"), eq("name", "standardHours")]),
+                            replace="ofHours",
+                            replace_node="method_invocation.name",
+                            holes=["duration.type"])
+
+
+rg = RuleGraph(["java"])
+
+for (kind, file_name, line_no) in data: # ensure that things are ordered by file by line number descending 
+    if kind == 'function':
+        r =Rule ("r", query = java_method_declaration, replace="", replace_node = "method_declaration", line= line_no, file_name = file_name)
+    if kind == 'var':
+        r = Rule ("r", query = java_var, replace="", replace_node = "var",  line= line_no, file_name = file_name)
+    rg.add_rule(r)
+
+
+rg.apply(path_to_piranha_bin, path_to_target, path_to_configurations)
+
+
 
 
 rg = RuleGraph(["java"])
@@ -42,7 +48,7 @@ rg.add_rule(update_standard_hours)
 rg.add_edge(Edge("update_duration_import", ["update_standard_hours"], "File"))
 
 rules, edges, piranha_arguments = rg.as_tomls()
-rg.apply("/Users/ketkara/repositories/open-source/test_piranha_config",
+matches. rewrites = rg.apply("/Users/ketkara/repositories/open-source/test_piranha_config",
          "/Users/ketkara/repositories/open-source/uber_piranha/polyglot/piranha/test-resources/java/joda_to_java/only_expressions_usage/input",
          "/Users/ketkara/repositories/open-source/test_piranha_config")
 
