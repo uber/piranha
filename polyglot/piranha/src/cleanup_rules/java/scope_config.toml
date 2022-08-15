@@ -68,3 +68,10 @@ generator = """
 (#eq? @z "@n")
 )
 """
+
+
+[[scopes]]
+name = "File"
+[[scopes.rules]]
+matcher = "(program) @prg"
+generator = "(program) @program"

@@ -66,7 +66,7 @@ class Edge :
         template = """[[edges]]
 scope = {}
 from =  {}
-to = [{}]
+to = {}
 
 """
         return template.format(get_as_toml_literal(self.scope), get_as_toml_literal(self.source_rule), get_as_toml_literal_list(self.target_rules))
@@ -112,8 +112,8 @@ substitutions = {}
         self._write_to_file(edges, join(path_to_configurations, 'edges.toml'))
         piranha_arguments = self.piranha_arguments_as_toml()
         self._write_to_file(piranha_arguments, join(path_to_configurations, 'piranha_arguments.toml'))
-        args = ("."+ path_to_piranha_bin, "-c", path_to_target, "-f", path_to_configurations )
-        popen = subprocess.Popen(args, stdout=subprocess.PIPE)
+        args = ("./piranha", "-c", path_to_target, "-f", path_to_configurations )
+        popen = subprocess.Popen(args, cwd= path_to_piranha_bin ,stdout=subprocess.PIPE)
         popen.wait()
         output = popen.stdout.read()
         print(output)
@@ -150,7 +150,7 @@ rg.add_rule(update_standard_hours)
 rg.add_edge(Edge("update_duration_import", ["update_standard_hours"], "File"))
 
 rules, edges, piranha_arguments = rg.as_tomls()
-rg.apply("/Users/ketkara/repositories/open-source/uber_piranha/polyglot/piranha/target/release/piranha",
+rg.apply("/Users/ketkara/repositories/open-source/test_piranha_config",
  "/Users/ketkara/repositories/open-source/uber_piranha/polyglot/piranha/test-resources/java/joda_to_java/only_expressions_usage/input",
  "/Users/ketkara/repositories/open-source/test_piranha_config" )
 
