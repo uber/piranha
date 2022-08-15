@@ -35,7 +35,7 @@ def rename_tags(query_str, renames):
     for c in captures:
         tag_range[c[0].text.decode('utf-8')] = (c[0].start_byte, c[0].end_byte)
     for k, v in renames.items():
-        query_str_clone = query_str_clone[0:tag_range['@'+k][0]] + '@' + v +  query_str_clone[tag_range['@'+k][1]+1:]
+        query_str_clone = query_str_clone[0:tag_range['@'+k][0]] + ' @' + v + ' ' +  query_str_clone[tag_range['@'+k][1]+1:]
     return query_str_clone
 
 
@@ -48,7 +48,7 @@ def transform_tags(query_str, rename_fn):
     for c in captures:
         tag_name = c[0].text.decode('utf-8')[1:]
         new_tag_name = rename_fn(tag_name)
-        query_str_clone = query_str_clone[0:c[0].start_byte] + '@' + new_tag_name +  query_str_clone[c[0].end_byte + 1:]
+        query_str_clone = query_str_clone[0:c[0].start_byte] + ' @' + new_tag_name + ' ' +  query_str_clone[c[0].end_byte + 1:]
     return query_str_clone
 
 java_import_declaration_type = "((import_declaration (scoped_identifier (scoped_identifier)@type_qualifier (identifier)@type_name) @imported_type) @import)"
