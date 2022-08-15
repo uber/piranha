@@ -101,15 +101,15 @@ impl SourceCodeUnit {
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit. 
     if !rule.is_match_only_rule() {
-      if let Some(edit_1) = rule.get_edit(&self.clone(), rule_store, scope_node, true) {
-        self.rewrites_mut().push(edit_1.clone());
+      if let Some(edit) = rule.get_edit(&self.clone(), rule_store, scope_node, true) {
+        self.rewrites_mut().push(edit.clone());
         query_again = true;
 
         // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit_1.matches());
+        self.add_to_substitutions(edit.matches());
 
         // Apply edit_1
-        let applied_ts_edit = self.apply_edit(&edit_1, parser);
+        let applied_ts_edit = self.apply_edit(&edit, parser);
 
         self.propagate(applied_ts_edit, rule, rule_store, parser);
       }
@@ -124,7 +124,8 @@ impl SourceCodeUnit {
         self.matches_mut().push((rule.clone(), m.clone()));
 
         self.add_to_substitutions(m.matches());
-
+        
+        // Create identity edit, that replaces a range with itself. 
         let identity_edit = InputEdit {
           start_byte: m.range().start_byte,
           old_end_byte: m.range().end_byte,
