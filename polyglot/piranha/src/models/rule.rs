@@ -64,7 +64,7 @@ impl Rule {
     self.query.is_none() && self.replace.is_none()
   }
 
-  // Dummy rules are helper rules that make it easier to define the rule graph.
+  // Checks if a rule is `match-only` i.e. it has a query but no replace. 
   pub(crate) fn is_match_only_rule(&self) -> bool {
     self.query.is_some() && self.replace.is_none()
   }
