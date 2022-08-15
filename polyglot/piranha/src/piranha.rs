@@ -41,14 +41,16 @@ use crate::{
 use std::collections::VecDeque;
 use tree_sitter::{InputEdit, Node};
 
+/// Executes piranha for the given configuration 
+/// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
 pub(crate) fn execute_piranha(
-  args: &PiranhaArguments,
+  configuration: &PiranhaArguments,
 ) -> (
   Vec<SourceCodeUnit>,
   HashMap<PathBuf, Vec<(Rule, Match)>>,
   HashMap<PathBuf, Vec<Edit>>,
 ) {
-  let mut flag_cleaner = FlagCleaner::new(args);
+  let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
   (
     flag_cleaner.get_updated_files(),
@@ -282,6 +284,8 @@ impl FlagCleaner {
     self.relevant_files.values().cloned().collect_vec()
   }
 
+  ///  Reports all the matches found by Piranha grouped by the file path.
+  ///  Returns a map where key is the file path, and value is a list of matches found for a rule(s) in this file.
   fn get_all_matches(&self) -> HashMap<PathBuf, Vec<(Rule, Match)>> {
     self
       .relevant_files
@@ -291,6 +295,8 @@ impl FlagCleaner {
       .collect()
   }
 
+  ///  Reports all the matches found by Piranha grouped by the file path.
+  ///  Returns a map where key is the file path, and value is a list of edits performed in this file.
   fn get_all_rewrites(&self) -> HashMap<PathBuf, Vec<Edit>> {
     self
       .relevant_files
