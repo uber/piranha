@@ -90,3 +90,8 @@ replace_node = "ec"
 replace = ""
 holes = ["stale_flag_name"]
 groups = [ "delete_enum_entry"]
+
+
+[[rules]]
+name = "find_method_declarations"
+query = "((method_declaration) @method_decl)"
