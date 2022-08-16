@@ -57,8 +57,8 @@ name = {}
 
 class Edge :
     def __init__(self, source_rule , target_rules, scope):
-        self.source_rule = source_rule
-        self.target_rules = target_rules
+        self.source_rule = source_rule.name
+        self.target_rules = [t.name for t in target_rules]
         self.scope = scope
     
     def as_toml(self):

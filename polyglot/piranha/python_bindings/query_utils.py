@@ -45,9 +45,7 @@ def transform_tags(query_str, rename_fn):
     query = QUERY_LANGUAGE.query("((capture) @capture)")
     captures = query.captures(tree.root_node)
     tag_range = {}
-    all_captures = []
-    for c in captures:
-        all_captures.append(c)
+    all_captures = [c for c in captures]
     all_captures = sorted(all_captures, key = lambda x: x[0].start_byte, reverse= True)
     for c in all_captures:
         tag_name = c[0].text.decode('utf-8')[1:]
