@@ -42,10 +42,11 @@ fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
+    path_to_output_summary: None
   });
-  let (_updated_files, matches,_rewrites) = execute_piranha(&args);
+  let (_updated_files, output_summaries) = execute_piranha(&args);
   
-  assert_eq!(matches.values().flat_map(|x|x.iter()).count(), number_of_matches);
+  assert_eq!(output_summaries.iter().flat_map(|os|os.matches().iter()).count(), number_of_matches);
 }
 
 // Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`) 
@@ -57,10 +58,11 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
+    path_to_output_summary: None
   });
-  let (updated_files, _matches, rewrites) = execute_piranha(&args);
+  let (updated_files, output_summaries) = execute_piranha(&args);
   // Checks if there are any rewrites performed for the file
-  assert!(rewrites.values().flat_map(|x|x.iter()).count() > 0);
+  assert!(output_summaries.iter().flat_map(|os|os.rewrites().iter()).count() > 0);
 
   assert_eq!(updated_files.len(), n_files_changed);
   let path_to_expected =

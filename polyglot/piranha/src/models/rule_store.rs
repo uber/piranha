@@ -113,9 +113,9 @@ impl RuleStore {
 
   /// Get the next rules to be applied grouped by the scope in which they should be performed.
   pub(crate) fn get_next(
-    &self, rule: &Rule, tag_matches: &HashMap<String, String>,
+    &self, rule_name: &String, tag_matches: &HashMap<String, String>,
   ) -> HashMap<String, Vec<Rule>> {
-    let rule_name = rule.name();
+    // let rule_name = rule.name();
     let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
     for (scope, to_rule) in self.rule_graph.get_neighbors(&rule_name) {
@@ -123,7 +123,7 @@ impl RuleStore {
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
-        for (next_next_rules_scope, next_next_rules) in self.get_next(to_rule_name, tag_matches) {
+        for (next_next_rules_scope, next_next_rules) in self.get_next(&to_rule_name.name(), tag_matches) {
           for next_next_rule in next_next_rules {
             // Group the next rules based on the scope
             next_rules.collect(
