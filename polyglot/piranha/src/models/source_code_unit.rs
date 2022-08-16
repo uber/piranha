@@ -10,7 +10,7 @@ use tree_sitter_traversal::{traverse, Order};
 
 use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
 
-use super::{edit::Edit, piranha_arguments::PiranhaArguments};
+use super::{edit::Edit, piranha_arguments::PiranhaArguments, matches::Match, rule::Rule};
 
 // Maintains the updated source code content and AST of the file
 #[derive(Clone)]
@@ -24,6 +24,12 @@ pub struct SourceCodeUnit {
   substitutions: HashMap<String, String>,
   // The path to the source code.
   path: PathBuf,
+  // Rewrites applied to this source code unit
+  rewrites: Vec<Edit>,
+  // Matches for the read_only rules in this source code unit
+  matches: Vec<(Rule, Match)>
+
+
 }
 
 impl SourceCodeUnit {
@@ -36,6 +42,8 @@ impl SourceCodeUnit {
       code,
       substitutions: substitutions.clone(),
       path: path.to_path_buf(),
+      rewrites: Vec::new(),
+      matches: Vec::new()
     }
   }
 
@@ -189,6 +197,22 @@ impl SourceCodeUnit {
   pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>) {
     let _ = &self.substitutions.extend(new_entries.clone());
   }
+
+    pub(crate) fn rewrites(&self) -> &[Edit] {
+        self.rewrites.as_ref()
+    }
+
+    pub(crate) fn rewrites_mut(&mut self) -> &mut Vec<Edit> {
+        &mut self.rewrites
+    }
+
+    pub(crate) fn matches(&self) -> &[(Rule, Match)] {
+        self.matches.as_ref()
+    }
+
+    pub(crate) fn matches_mut(&mut self) -> &mut Vec<(Rule, Match)> {
+        &mut self.matches
+    }
 }
 
 #[cfg(test)]

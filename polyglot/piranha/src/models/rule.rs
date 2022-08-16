@@ -23,7 +23,7 @@ use crate::utilities::{
 };
 
 use super::{
-  constraint::Constraint, edit::Edit, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+  constraint::Constraint, edit::Edit, rule_store::RuleStore, source_code_unit::SourceCodeUnit, matches::Match,
 };
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
@@ -62,6 +62,11 @@ impl Rule {
   // Dummy rules are helper rules that make it easier to define the rule graph.
   pub(crate) fn is_dummy_rule(&self) -> bool {
     self.query.is_none() && self.replace.is_none()
+  }
+
+  // Checks if a rule is `match-only` i.e. it has a query but no replace. 
+  pub(crate) fn is_match_only_rule(&self) -> bool {
+    self.query.is_some() && self.replace.is_none()
   }
 
   /// Instantiate `self` with substitutions or panic.
@@ -234,16 +239,18 @@ impl Rule {
   }
 
   /// Gets the first match for the rule in `self`
-  pub(crate) fn get_edit(
+  pub(crate) fn get_matches(
     &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
     recursive: bool,
-  ) -> Option<Edit> {
+  ) -> Vec<Match> {
+    let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
+    let replace_node_tag = if self.is_match_only_rule() || self.is_dummy_rule() { None } else {Some(self.replace_node())};
     let all_query_matches = node.get_all_matches_for_query(
       source_code_unit.code(),
       rule_store.query(&self.query()),
       recursive,
-      Some(self.replace_node()),
+      replace_node_tag
     );
 
     // Return the first match that satisfies constraint of the rule
@@ -260,15 +267,29 @@ impl Rule {
         p_match.matches(),
         rule_store,
       ) {
-        let replacement = substitute_tags(self.replace(), p_match.matches()).replace("\\n", "\n");
-        return Some(Edit::new(
-          p_match,
-          replacement,
-          self.clone()
-        ));
+        output.push(p_match);
       }
     }
-    None
+    output
+  }
+
+
+  /// Gets the first match for the rule in `self`
+  pub(crate) fn get_edit(
+    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
+    recursive: bool,
+  ) -> Option<Edit> {
+    // Get all matches for the query in the given scope `node`.
+
+    return self.get_matches(source_code_unit, rule_store, node, recursive)
+      .first().map(|p_match| {
+        let replacement = substitute_tags(self.replace(), p_match.matches()).replace("\\n", "\n");
+        return Edit::new(
+          p_match.clone(),
+          replacement,
+          self.clone()
+        );
+      });
   }
 
   pub(crate) fn set_replace(&mut self, replace: String) {

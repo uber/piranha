@@ -356,6 +356,23 @@ pub(crate) fn get_context<'a>(
   output
 }
 
+pub(crate) fn get_match_and_replace_range(input_edit: InputEdit) -> (Range, Range) {
+  return (
+    Range {
+      start_byte: input_edit.start_byte,
+      end_byte: input_edit.old_end_byte,
+      start_point: input_edit.start_position,
+      end_point: input_edit.old_end_position,
+    },
+    Range {
+      start_byte: input_edit.start_byte,
+      end_byte: input_edit.new_end_byte,
+      start_point: input_edit.start_position,
+      end_point: input_edit.new_end_position,
+    },
+  );
+}
+
 #[cfg(test)]
 pub(crate) fn get_parser(language: String) -> Parser {
   let mut parser = Parser::new();

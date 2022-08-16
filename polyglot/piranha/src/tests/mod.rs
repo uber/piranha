@@ -34,14 +34,34 @@ fn initialize() {
   });
 }
 
-fn run_test(relative_path_to_tests: &str, n_files_changed: usize) {
+// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`) 
+// and checks if the number of matches == `number_of_matches`. 
+fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
   let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
 
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
   });
-  let updated_files = execute_piranha(&args);
+  let (_updated_files, matches,_rewrites) = execute_piranha(&args);
+  
+  assert_eq!(matches.values().flat_map(|x|x.iter()).count(), number_of_matches);
+}
+
+// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`) 
+// and checks if the output of piranha is same as `<relative_path_to_tests>/expected`. 
+// It also asserts the number of changed files in the expected output.
+fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
+  let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
+
+  let args = PiranhaArguments::new(CommandLineArguments {
+    path_to_codebase: format!("{path_to_test_ff}/input/"),
+    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
+  });
+  let (updated_files, _matches, rewrites) = execute_piranha(&args);
+  // Checks if there are any rewrites performed for the file
+  assert!(rewrites.values().flat_map(|x|x.iter()).count() > 0);
+
   assert_eq!(updated_files.len(), n_files_changed);
   let path_to_expected =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
