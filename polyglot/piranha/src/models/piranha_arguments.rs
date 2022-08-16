@@ -72,7 +72,7 @@ impl PiranhaArguments {
         .unwrap_or(true),
       delete_consecutive_new_lines: piranha_args_from_config
         .delete_consecutive_new_lines()
-        .unwrap_or(true),
+        .unwrap_or(false),
     }
   }
 

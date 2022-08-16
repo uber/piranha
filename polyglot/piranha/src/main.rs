@@ -43,19 +43,26 @@ fn main() {
   }
 
   if args.path_to_output_summaries().is_some() {
-    write_output_summary(piranha_output_summaries, args);
+    write_output_summary(
+      piranha_output_summaries,
+      args.path_to_output_summaries().unwrap(),
+    );
   }
-  
+
   info!("Time elapsed - {:?}", now.elapsed().as_secs());
 }
 
-fn write_output_summary(piranha_output_summaries: Vec<PiranhaOutputSummary>, args: PiranhaArguments) {
-    let serialized_summary = serde_json::to_string_pretty(&piranha_output_summaries);
-    
-    fs::write(
-      args.path_to_output_summaries().unwrap(),
-      serialized_summary.expect("Unable to Write file"),
-    )
-    .expect("Unable to Write file");
-    
+/// Writes the output summaries to a Json file named `path_to_output_summaries` .
+fn write_output_summary(
+  piranha_output_summaries: Vec<PiranhaOutputSummary>, path_to_json: &String,
+) {
+  if let Ok(contents) = serde_json::to_string_pretty(&piranha_output_summaries) {
+    if let Ok(_) = fs::write(path_to_json, contents) {
+      return;
+    }
+  }
+  panic!(
+    "Could not write the output summary to the file - {}",
+    path_to_json
+  );
 }

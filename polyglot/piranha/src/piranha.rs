@@ -125,7 +125,7 @@ impl SourceCodeUnit {
         // This is equivalent to propagating an identity rule
         //  i.e. a rule that replaces the matched code with itself
         // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
-        // But NOT invoking this we simulate the application of an identity rule
+        // By NOT invoking this we simulate the application of an identity rule
         //
         self.add_to_substitutions(m.matches());
 
@@ -288,28 +288,6 @@ impl FlagCleaner {
       .cloned()
       .collect_vec()
   }
-
-  // ///  Reports all the matches found by Piranha grouped by the file path.
-  // ///  Returns a map where key is the file path, and value is a list of matches found for a rule(s) in this file.
-  // fn get_all_matches(&self) -> HashMap<PathBuf, Vec<(String, Match)>> {
-  //   self
-  //     .relevant_files
-  //     .iter()
-  //     .map(|(k, v)| (k.clone(), v.matches().iter().cloned().collect_vec()))
-  //     .filter(|(_, v)| !v.is_empty())
-  //     .collect()
-  // }
-
-  // ///  Reports all the matches found by Piranha grouped by the file path.
-  // ///  Returns a map where key is the file path, and value is a list of edits performed in this file.
-  // fn get_all_rewrites(&self) -> HashMap<PathBuf, Vec<Edit>> {
-  //   self
-  //     .relevant_files
-  //     .iter()
-  //     .map(|(k, v)| (k.clone(), v.rewrites().iter().cloned().collect_vec()))
-  //     .filter(|(_, v)| !v.is_empty())
-  //     .collect()
-  // }
 
   /// Performs cleanup related to stale flags
   fn perform_cleanup(&mut self) {
