@@ -11,7 +11,7 @@
 
 cargo build --release
 mv target/release/piranha  demo/piranha
-./demo/piranha -c demo/java/ -f demo/java/configurations
-./demo/piranha -c demo/kt/ -f demo/kt/configurations
-./demo/piranha -c demo/swift/ -f demo/swift/configurations
-./demo/piranha -c demo/strings/ -f demo/strings/configurations
+./demo/piranha -c demo/java/ -f demo/java/configurations -j demo/java/output.json
+./demo/piranha -c demo/kt/ -f demo/kt/configurations -j demo/kt/output.json
+./demo/piranha -c demo/swift/ -f demo/swift/configurations -j demo/swift/output.json
+./demo/piranha -c demo/strings/ -f demo/strings/configurations -j demo/strings/output.json

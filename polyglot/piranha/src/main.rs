@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 //! Defines the entry-point for Piranha.
-use std::time::Instant;
+use std::{fs, time::Instant};
 
 use crate::{
   models::piranha_arguments::PiranhaArguments, piranha::execute_piranha,
@@ -21,6 +21,7 @@ use crate::{
 use clap::StructOpt;
 use config::CommandLineArguments;
 use log::info;
+use models::piranha_output::PiranhaOutputSummary;
 
 mod config;
 mod models;
@@ -40,8 +41,21 @@ fn main() {
   for scu in source_code_units {
     scu.persist(&args);
   }
-  
 
+  if args.path_to_output_summaries().is_some() {
+    write_output_summary(piranha_output_summaries, args);
+  }
 
   info!("Time elapsed - {:?}", now.elapsed().as_secs());
+}
+
+fn write_output_summary(piranha_output_summaries: Vec<PiranhaOutputSummary>, args: PiranhaArguments) {
+    let serialized_summary = serde_json::to_string_pretty(&piranha_output_summaries);
+    
+    fs::write(
+      args.path_to_output_summaries().unwrap(),
+      serialized_summary.expect("Unable to Write file"),
+    )
+    .expect("Unable to Write file");
+    
 }
