@@ -41,7 +41,6 @@ impl Match {
 }
 
 fn ser_range<S: Serializer>(range: &Range, serializer: S) -> Result<S::Ok, S::Error> {
-  // First convert the vector into a Vec<LocalColor>.
   let local_range = LocalRange {
     start_byte: range.start_byte,
     end_byte: range.end_byte,
