@@ -40,6 +40,9 @@ impl Match {
   }
 }
 
+/// This method serializes the `tree_sitter::Range` struct. Originally, it does not derive serde::Serialize
+/// So in this method, we cast `Range` to a local type `LocalRange` and serialize this casted object. 
+/// Note `LocalRange` derives serialize.
 fn ser_range<S: Serializer>(range: &Range, serializer: S) -> Result<S::Ok, S::Error> {
   let local_range = LocalRange {
     start_byte: range.start_byte,
@@ -60,6 +63,7 @@ fn ser_range<S: Serializer>(range: &Range, serializer: S) -> Result<S::Ok, S::Er
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
+/// Note `LocalRange` derives serialize.
 #[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 struct LocalRange {
   start_byte: usize,
