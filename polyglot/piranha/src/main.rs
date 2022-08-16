@@ -45,7 +45,7 @@ fn main() {
   if args.path_to_output_summaries().is_some() {
     write_output_summary(piranha_output_summaries, args);
   }
-
+  
   info!("Time elapsed - {:?}", now.elapsed().as_secs());
 }
 
