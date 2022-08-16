@@ -22,14 +22,16 @@ OPTIONS:
 
     -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
             Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
-            and `edges.toml` (optional)
+            and  `edges.toml` (optional)
 
     -h, --help
             Print help information
 
-    -V, --version
-            Print version information
+    -j, --path-to-output-summary <PATH_TO_OUTPUT_SUMMARY>
+            Path to output summary json
 ```
+
+The output JSON format is - `models.PiranhaOutputSummary`.
 
 Languages supported :
 * Java

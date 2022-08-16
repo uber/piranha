@@ -34,6 +34,8 @@ pub(crate) struct PiranhaArguments {
   input_substitutions: HashMap<String, String>,
   /// Folder containing the API specific rules
   path_to_configurations: String,
+  /// File to which the output summary should be written 
+  path_to_output_summaries : Option<String>,
   /// Tree-sitter language model
   language: Language,
   // The language name is file the extension used for files in particular language.
@@ -62,6 +64,7 @@ impl PiranhaArguments {
       path_to_code_base: args.path_to_codebase.to_string(),
       input_substitutions,
       path_to_configurations: args.path_to_configurations,
+      path_to_output_summaries: args.path_to_output_summary,
       language_name: String::from(&piranha_args_from_config.language()),
       language: piranha_args_from_config.language().get_language(),
       delete_file_if_empty: piranha_args_from_config
@@ -69,7 +72,7 @@ impl PiranhaArguments {
         .unwrap_or(true),
       delete_consecutive_new_lines: piranha_args_from_config
         .delete_consecutive_new_lines()
-        .unwrap_or(true),
+        .unwrap_or(false),
     }
   }
 
@@ -100,6 +103,10 @@ impl PiranhaArguments {
   pub(crate) fn delete_consecutive_new_lines(&self) -> bool {
     self.delete_consecutive_new_lines
   }
+
+    pub(crate) fn path_to_output_summaries(&self) -> Option<&String> {
+        self.path_to_output_summaries.as_ref()
+    }
 }
 
 #[cfg(test)]
@@ -118,6 +125,7 @@ impl PiranhaArguments {
       path_to_code_base: String::new(),
       input_substitutions: HashMap::new(),
       path_to_configurations: String::new(),
+      path_to_output_summaries: None,
       language: language_name.get_language(),
       language_name,
       delete_consecutive_new_lines: false,
@@ -131,6 +139,7 @@ impl PiranhaArguments {
       path_to_code_base: String::new(),
       input_substitutions: HashMap::new(),
       path_to_configurations: String::new(),
+      path_to_output_summaries: None,
       language: language_name.get_language(),
       language_name,
       delete_consecutive_new_lines: false,

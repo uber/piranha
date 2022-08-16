@@ -21,9 +21,8 @@ use regex::Regex;
 use tree_sitter::{Parser, Range};
 
 use crate::{
-  models::{
-    edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
-    source_code_unit::SourceCodeUnit,
+  models::{piranha_arguments::PiranhaArguments,
+    piranha_output::PiranhaOutputSummary, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
   },
   utilities::{read_file, tree_sitter_utilities::get_match_and_replace_range},
 };
@@ -39,24 +38,15 @@ use crate::{
 };
 
 use std::collections::VecDeque;
-use tree_sitter::{Node};
+use tree_sitter::Node;
 
-/// Executes piranha for the given configuration 
+/// Executes piranha for the given configuration
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
-pub(crate) fn execute_piranha(
-  configuration: &PiranhaArguments,
-) -> (
-  Vec<SourceCodeUnit>,
-  HashMap<PathBuf, Vec<(Rule, Match)>>,
-  HashMap<PathBuf, Vec<Edit>>,
-) {
+pub(crate) fn execute_piranha(configuration: &PiranhaArguments) -> (Vec<SourceCodeUnit>, Vec<PiranhaOutputSummary>) {
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
-  (
-    flag_cleaner.get_updated_files(),
-    flag_cleaner.get_all_matches(),
-    flag_cleaner.get_all_rewrites(),
-  )
+  // flag_cleaner.relevant_files
+  (flag_cleaner.get_updated_files(), flag_cleaner.get_updated_files().iter().map(|f|PiranhaOutputSummary::new(f)).collect_vec())
 }
 
 impl SourceCodeUnit {
@@ -102,7 +92,7 @@ impl SourceCodeUnit {
     // When rule is a "rewrite" rule :
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
-    // Propagate each applied edit. The next rule will be applied relative to the application of this edit. 
+    // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
     if !rule.is_match_only_rule() {
       if let Some(edit) = rule.get_edit(&self.clone(), rule_store, scope_node, true) {
         self.rewrites_mut().push(edit.clone());
@@ -114,24 +104,29 @@ impl SourceCodeUnit {
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
-        self.propagate(get_match_and_replace_range(applied_ts_edit), rule, rule_store, parser);
+        self.propagate(
+          get_match_and_replace_range(applied_ts_edit),
+          rule,
+          rule_store,
+          parser,
+        );
       }
     }
     // When rule is a "match-only" rule :
     // Get all the matches
     // Add mappings to the substitution
-    // Propagate each match. Note that,  we pass a identity edit (where old range == new range) in to the propagate logic. 
-    // The next edit will be applied relative to the identity edit. 
+    // Propagate each match. Note that,  we pass a identity edit (where old range == new range) in to the propagate logic.
+    // The next edit will be applied relative to the identity edit.
     else {
       for m in rule.get_matches(&self.clone(), rule_store, scope_node, true) {
-        self.matches_mut().push((rule.clone(), m.clone()));
-                
+        self.matches_mut().push((rule.name(), m.clone()));
+
         // In this scenario we pass the match and replace range as the range of the match `m`
         // This is equivalent to propagating an identity rule
         //  i.e. a rule that replaces the matched code with itself
         // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
-        // But NOT invoking this we simulate the application of an identity rule 
-        // 
+        // By NOT invoking this we simulate the application of an identity rule
+        //
         self.add_to_substitutions(m.matches());
 
         self.propagate((m.range(), m.range()), rule.clone(), rule_store, parser);
@@ -157,12 +152,12 @@ impl SourceCodeUnit {
   ///  (iv) Apply the rules based on custom language specific scopes (as defined in `<language>/scope_config.toml`) (recursive)
   ///
   fn propagate(
-    &mut self, (match_range, replace_range): (Range, Range), rule: Rule, rules_store: &mut RuleStore,
-    parser: &mut Parser,
+    &mut self, (match_range, replace_range): (Range, Range), rule: Rule,
+    rules_store: &mut RuleStore, parser: &mut Parser,
   ) {
     let (mut current_match_range, mut current_replace_range) = (match_range, replace_range);
 
-    let mut current_rule = rule.clone();
+    let mut current_rule = rule.name();
     let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
     // Perform the parent edits, while queueing the Method and Class level edits.
     // let file_level_scope_names = [METHOD, CLASS];
@@ -193,9 +188,16 @@ impl SourceCodeUnit {
         &next_rules_by_scope[PARENT],
       ) {
         self.rewrites_mut().push(edit.clone());
-        info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", edit.matched_rule().name()).green());
+        info!(
+          "{}",
+          format!(
+            "Cleaning up the context, by applying the rule - {}",
+            edit.matched_rule()
+          )
+          .green()
+        );
         // Apply the matched rule to the parent
-        let applied_edit = self.apply_edit(&edit, parser); 
+        let applied_edit = self.apply_edit(&edit, parser);
         (current_match_range, current_replace_range) = get_match_and_replace_range(applied_edit);
         current_rule = edit.matched_rule();
         // Add the (tag, code_snippet) mapping to substitution table.
@@ -279,29 +281,12 @@ struct FlagCleaner {
 
 impl FlagCleaner {
   fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
-    self.relevant_files.values().cloned().collect_vec()
-  }
-
-  ///  Reports all the matches found by Piranha grouped by the file path.
-  ///  Returns a map where key is the file path, and value is a list of matches found for a rule(s) in this file.
-  fn get_all_matches(&self) -> HashMap<PathBuf, Vec<(Rule, Match)>> {
     self
       .relevant_files
-      .iter()
-      .map(|(k, v)| (k.clone(), v.matches().iter().cloned().collect_vec()))
-      .filter(|(_, v)| !v.is_empty())
-      .collect()
-  }
-
-  ///  Reports all the matches found by Piranha grouped by the file path.
-  ///  Returns a map where key is the file path, and value is a list of edits performed in this file.
-  fn get_all_rewrites(&self) -> HashMap<PathBuf, Vec<Edit>> {
-    self
-      .relevant_files
-      .iter()
-      .map(|(k, v)| (k.clone(), v.rewrites().iter().cloned().collect_vec()))
-      .filter(|(_, v)| !v.is_empty())
-      .collect()
+      .values()
+      .filter(|r| !r.matches().is_empty() || !r.rewrites().is_empty())
+      .cloned()
+      .collect_vec()
   }
 
   /// Performs cleanup related to stale flags

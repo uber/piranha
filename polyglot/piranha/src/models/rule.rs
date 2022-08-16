@@ -287,7 +287,7 @@ impl Rule {
         return Edit::new(
           p_match.clone(),
           replacement,
-          self.clone()
+          self.name()
         );
       });
   }
@@ -317,10 +317,6 @@ impl Rule {
       constraints,
       grep_heuristics: None,
     }
-  }
-
-  pub(crate) fn dummy() -> Rule {
-    Rule::new("", "", "", "", None, None)
   }
 }
 

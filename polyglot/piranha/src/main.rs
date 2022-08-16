@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 //! Defines the entry-point for Piranha.
-use std::time::Instant;
+use std::{fs, time::Instant};
 
 use crate::{
   models::piranha_arguments::PiranhaArguments, piranha::execute_piranha,
@@ -21,6 +21,7 @@ use crate::{
 use clap::StructOpt;
 use config::CommandLineArguments;
 use log::info;
+use models::piranha_output::PiranhaOutputSummary;
 
 mod config;
 mod models;
@@ -35,11 +36,33 @@ fn main() {
 
   let args = PiranhaArguments::new(CommandLineArguments::parse());
 
-  let (updated_files, _matches, _rewrites) = execute_piranha(&args);
+  let (source_code_units, piranha_output_summaries) = execute_piranha(&args);
 
-  for source_code_unit in updated_files {
-    source_code_unit.persist(&args);
+  for scu in source_code_units {
+    scu.persist(&args);
+  }
+
+  if args.path_to_output_summaries().is_some() {
+    write_output_summary(
+      piranha_output_summaries,
+      args.path_to_output_summaries().unwrap(),
+    );
   }
 
   info!("Time elapsed - {:?}", now.elapsed().as_secs());
+}
+
+/// Writes the output summaries to a Json file named `path_to_output_summaries` .
+fn write_output_summary(
+  piranha_output_summaries: Vec<PiranhaOutputSummary>, path_to_json: &String,
+) {
+  if let Ok(contents) = serde_json::to_string_pretty(&piranha_output_summaries) {
+    if let Ok(_) = fs::write(path_to_json, contents) {
+      return;
+    }
+  }
+  panic!(
+    "Could not write the output summary to the file - {}",
+    path_to_json
+  );
 }
