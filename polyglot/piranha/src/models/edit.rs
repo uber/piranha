@@ -1,23 +1,24 @@
 use std::collections::HashMap;
 
+use serde_derive::{Serialize};
 use tree_sitter::Range;
 
-use super::{rule::Rule, matches::Match};
+use super::{matches::Match};
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
   p_match: Match,
   // The string to replace the substring encompassed by the match
   replacement_string: String,
   // The rule used for creating this match-replace
-  matched_rule: Rule,
+  matched_rule: String,
   
 }
 
 impl Edit {
   pub(crate) fn new(
-    p_match: Match, replacement_string: String, matched_rule: Rule,
+    p_match: Match, replacement_string: String, matched_rule: String,
   ) -> Self {
     Self {
       p_match,
@@ -31,7 +32,7 @@ impl Edit {
     Self::new(
       Match::new(replacement_range, HashMap::new()),
       replacement_string,
-      Rule::dummy(),
+      String::new(),
     )
   }
 
@@ -44,7 +45,7 @@ impl Edit {
     self.replacement_string.as_ref()
   }
 
-  pub(crate) fn matched_rule(&self) -> Rule {
+  pub(crate) fn matched_rule(&self) -> String {
     self.matched_rule.clone()
   }
 

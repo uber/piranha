@@ -22,11 +22,6 @@ use {
 
 impl SourceCodeUnit {
   
-  pub(crate) fn path(&self) -> &PathBuf {
-    &self.path
-  }
-
-
   pub(crate) fn dummy_unit(content: &str, parser: &mut Parser) -> Self{
     SourceCodeUnit::new(
       parser,

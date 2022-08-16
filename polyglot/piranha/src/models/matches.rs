@@ -13,24 +13,21 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
-use tree_sitter::{Range};
+use serde::{Serialize, Serializer};
+use tree_sitter::Range;
 
-#[derive(Debug, Clone)]
+#[derive(serde_derive::Serialize, Debug, Clone)]
 pub(crate) struct Match {
   // Range of the entire AST node captured by the match
+  #[serde(serialize_with = "ser_range")]
   range: Range,
   // The mapping between tags and string representation of the AST captured.
   matches: HashMap<String, String>,
 }
 
 impl Match {
-  pub(crate) fn new(
-    range: Range, matches: HashMap<String, String>,
-  ) -> Self {
-    Self {
-      range,
-      matches,
-    }
+  pub(crate) fn new(range: Range, matches: HashMap<String, String>) -> Self {
+    Self { range, matches }
   }
 
   /// Get the edit's replacement range.
@@ -41,5 +38,41 @@ impl Match {
   pub(crate) fn matches(&self) -> &HashMap<String, String> {
     &self.matches
   }
+}
 
+fn ser_range<S: Serializer>(range: &Range, serializer: S) -> Result<S::Ok, S::Error> {
+  // First convert the vector into a Vec<LocalColor>.
+  let local_range = LocalRange {
+    start_byte: range.start_byte,
+    end_byte: range.end_byte,
+    start_point: LocalPoint {
+      row: range.start_point.row,
+      column: range.start_point.column,
+    },
+    end_point: LocalPoint {
+      row: range.end_point.row,
+      column: range.end_point.column,
+    },
+  };
+
+  // Instead of serializing Vec<ExternalCrateColor>, we serialize Vec<LocalColor>.
+  local_range.serialize(serializer)
+}
+
+/// A range of positions in a multi-line text document, both in terms of bytes and of
+/// rows and columns.
+#[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct LocalRange {
+  pub start_byte: usize,
+  pub end_byte: usize,
+  pub start_point: LocalPoint,
+  pub end_point: LocalPoint,
+}
+
+/// A range of positions in a multi-line text document, both in terms of bytes and of
+/// rows and columns.
+#[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct LocalPoint {
+  pub row: usize,
+  pub column: usize,
 }
