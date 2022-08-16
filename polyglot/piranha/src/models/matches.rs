@@ -62,17 +62,17 @@ fn ser_range<S: Serializer>(range: &Range, serializer: S) -> Result<S::Ok, S::Er
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
 #[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct LocalRange {
-  pub start_byte: usize,
-  pub end_byte: usize,
-  pub start_point: LocalPoint,
-  pub end_point: LocalPoint,
+struct LocalRange {
+  start_byte: usize,
+  end_byte: usize,
+  start_point: LocalPoint,
+  end_point: LocalPoint,
 }
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
 #[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct LocalPoint {
-  pub row: usize,
-  pub column: usize,
+struct LocalPoint {
+  row: usize,
+  column: usize,
 }
