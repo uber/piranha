@@ -18,14 +18,14 @@ use itertools::Itertools;
 use jwalk::WalkDir;
 use log::info;
 use regex::Regex;
-use tree_sitter::Parser;
+use tree_sitter::{Parser, Range};
 
 use crate::{
   models::{
     edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
     source_code_unit::SourceCodeUnit,
   },
-  utilities::read_file,
+  utilities::{read_file, tree_sitter_utilities::get_match_and_replace_range},
 };
 
 use crate::models::scopes::ScopeGenerator;
@@ -39,7 +39,7 @@ use crate::{
 };
 
 use std::collections::VecDeque;
-use tree_sitter::{InputEdit, Node};
+use tree_sitter::{Node};
 
 /// Executes piranha for the given configuration 
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
@@ -114,7 +114,7 @@ impl SourceCodeUnit {
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
-        self.propagate(applied_ts_edit, rule, rule_store, parser);
+        self.propagate(get_match_and_replace_range(applied_ts_edit), rule, rule_store, parser);
       }
     }
     // When rule is a "match-only" rule :
@@ -125,20 +125,16 @@ impl SourceCodeUnit {
     else {
       for m in rule.get_matches(&self.clone(), rule_store, scope_node, true) {
         self.matches_mut().push((rule.clone(), m.clone()));
-
+                
+        // In this scenario we pass the match and replace range as the range of the match `m`
+        // This is equivalent to propagating an identity rule
+        //  i.e. a rule that replaces the matched code with itself
+        // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
+        // But NOT invoking this we simulate the application of an identity rule 
+        // 
         self.add_to_substitutions(m.matches());
-        
-        // Create identity edit, that replaces a range with itself. 
-        let identity_edit = InputEdit {
-          start_byte: m.range().start_byte,
-          old_end_byte: m.range().end_byte,
-          new_end_byte: m.range().end_byte,
-          start_position: m.range().start_point,
-          old_end_position: m.range().end_point,
-          new_end_position: m.range().end_point,
-        };
 
-        self.propagate(identity_edit, rule.clone(), rule_store, parser);
+        self.propagate((m.range(), m.range()), rule.clone(), rule_store, parser);
       }
     }
     query_again
@@ -161,10 +157,11 @@ impl SourceCodeUnit {
   ///  (iv) Apply the rules based on custom language specific scopes (as defined in `<language>/scope_config.toml`) (recursive)
   ///
   fn propagate(
-    &mut self, applied_ts_edit: InputEdit, rule: Rule, rules_store: &mut RuleStore,
+    &mut self, (match_range, replace_range): (Range, Range), rule: Rule, rules_store: &mut RuleStore,
     parser: &mut Parser,
   ) {
-    let mut current_edit = applied_ts_edit;
+    let (mut current_match_range, mut current_replace_range) = (match_range, replace_range);
+
     let mut current_rule = rule.clone();
     let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
     // Perform the parent edits, while queueing the Method and Class level edits.
@@ -176,7 +173,7 @@ impl SourceCodeUnit {
       // Adds "Method" and "Class" rules to the stack
       self.add_rules_to_stack(
         &next_rules_by_scope,
-        current_edit,
+        current_match_range,
         rules_store,
         &mut next_rules_stack,
       );
@@ -190,16 +187,16 @@ impl SourceCodeUnit {
       // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
       if let Some(edit) = Rule::get_edit_for_context(
         &self.clone(),
-        current_edit.start_byte,
-        current_edit.new_end_byte,
+        current_replace_range.start_byte,
+        current_replace_range.end_byte,
         rules_store,
         &next_rules_by_scope[PARENT],
       ) {
         self.rewrites_mut().push(edit.clone());
-        #[rustfmt::skip]
         info!( "{}", format!( "Cleaning up the context, by applying the rule - {}", edit.matched_rule().name()).green());
         // Apply the matched rule to the parent
-        current_edit = self.apply_edit(&edit, parser);
+        let applied_edit = self.apply_edit(&edit, parser); 
+        (current_match_range, current_replace_range) = get_match_and_replace_range(applied_edit);
         current_rule = edit.matched_rule();
         // Add the (tag, code_snippet) mapping to substitution table.
         self.add_to_substitutions(edit.matches());
@@ -217,7 +214,7 @@ impl SourceCodeUnit {
 
   /// Adds the "Method" and "Class" scoped next rules to the queue.
   fn add_rules_to_stack(
-    &mut self, next_rules_by_scope: &HashMap<String, Vec<Rule>>, current_edit: InputEdit,
+    &mut self, next_rules_by_scope: &HashMap<String, Vec<Rule>>, current_match_range: Range,
     rules_store: &mut RuleStore, stack: &mut VecDeque<(String, Rule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
@@ -227,8 +224,8 @@ impl SourceCodeUnit {
           let scope_query = ScopeGenerator::get_scope_query(
             self.clone(),
             scope_level,
-            current_edit.start_byte,
-            current_edit.new_end_byte,
+            current_match_range.start_byte,
+            current_match_range.end_byte,
             rules_store,
           );
           // Add Method and Class scoped rules to the queue
