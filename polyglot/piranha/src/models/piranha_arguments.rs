@@ -46,6 +46,10 @@ pub struct PiranhaArguments {
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
   delete_consecutive_new_lines: bool,
+  // User option that determines the prefix used for tag names that should be considered 
+  /// global i.e. if a global tag is found when rewriting a source code unit
+  /// All source code units from this point will have access to this global tag. 
+  global_tag_prefix: Option<String>,
 }
 
 impl PiranhaArguments {
@@ -78,6 +82,7 @@ impl PiranhaArguments {
       delete_consecutive_new_lines: piranha_args_from_config
         .delete_consecutive_new_lines()
         .unwrap_or(false),
+      global_tag_prefix: piranha_args_from_config.global_tag_prefix(),
     }
   }
 
@@ -110,7 +115,17 @@ impl PiranhaArguments {
   }
 
   pub fn path_to_output_summaries(&self) -> Option<&String> {
-    self.path_to_output_summaries.as_ref()
+        self.path_to_output_summaries.as_ref()
+    }
+  
+  /// Returns default Global prefix tag as "GLOBAL_TAG."
+  /// i.e. it expects global tag names to lok like 
+  /// @GLOBAL_TAG.class_name
+  pub(crate) fn global_tag_prefix(&self) -> &str {
+    if let Some(t) = &self.global_tag_prefix{
+      return t.as_str();
+    }
+    return "GLOBAL_TAG."
   }
 }
 
@@ -135,6 +150,7 @@ impl PiranhaArguments {
       language_name,
       delete_consecutive_new_lines: false,
       delete_file_if_empty: false,
+      global_tag_prefix: None
     }
   }
 
@@ -151,6 +167,7 @@ impl PiranhaArguments {
       language_name,
       delete_consecutive_new_lines: false,
       delete_file_if_empty: false,
+      global_tag_prefix: None
     };
     args.set_delete_consecutive_new_lines(delete_consecutive_new_lines);
     args.set_delete_file_if_empty(delete_file_if_empty);

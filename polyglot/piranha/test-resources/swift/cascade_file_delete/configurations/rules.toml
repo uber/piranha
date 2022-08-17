@@ -1,0 +1,71 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Matchs an enum entry named `GLOBAL_TAG.enum_entry_name`
+[[rules]]
+name = "delete_enum_entry"
+query = """
+(
+class_declaration name: (type_identifier) @enum_declaration_name
+	(enum_class_body (enum_entry name: (simple_identifier) @name)  @ee)
+(#eq? @name "@GLOBAL_TAG.enum_entry_name")
+)"""
+replace_node = "ee"
+replace = ""
+holes = ["GLOBAL_TAG.enum_entry_name"]
+
+# Matches a switch case that returns the "stale_flag_name" string literal.
+[[rules]]
+name = "delete_switch_entry"
+query = """
+(
+(switch_entry (switch_pattern (pattern (simple_identifier)@GLOBAL_TAG.enum_entry_name) @pattern)
+(statements (control_transfer_statement (line_string_literal (line_str_text) @flag_name)))
+) @entry
+
+(#eq? @flag_name "@stale_flag_name")
+)
+"""
+replace_node = "entry"
+replace = ""
+holes = ["stale_flag_name"]
+
+
+# Looks for type aliases using `enum_declaration_name`
+[[rules]] 
+name = "read_only_detect_type_alias"
+query = """
+((typealias_declaration name: (type_identifier)@inherits_plugin_switch 
+	(user_type (type_arguments name : (user_type (type_identifier)@type_arg))))@tdn
+(#eq? @type_arg "@enum_declaration_name")
+)
+"""
+holes = [ "enum_declaration_name"]
+
+# Deletes factory calss that uses the GLOBAL_TAG.enum_entry_name and inherits the relevant type alias.
+[[rules]]
+name = "delete_factory_class_inherits_relevant_type_alias"
+query = """
+(
+(source_file
+((class_declaration name: (type_identifier)
+    (inheritance_specifier inherits_from: (user_type (type_identifier)@container ))
+        body: (class_body (function_declaration 
+            body: (function_body (statements (call_expression (call_expression
+                (call_suffix (value_arguments (value_argument 
+                    value: (prefix_expression target: (simple_identifier) @name))))))))))))) @source_file
+(#eq? @name "@GLOBAL_TAG.enum_entry_name")
+(#eq? @container "@inherits_plugin_switch")
+)
+"""
+replace_node = "source_file"
+replace = ""
+holes = ["GLOBAL_TAG.enum_entry_name", "inherits_plugin_switch"]

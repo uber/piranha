@@ -10,7 +10,9 @@ use tree_sitter_traversal::{traverse, Order};
 
 use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
 
-use super::{edit::Edit, matches::Match, piranha_arguments::PiranhaArguments};
+
+use super::{edit::Edit, piranha_arguments::PiranhaArguments, matches::Match, rule_store::RuleStore};
+
 
 // Maintains the updated source code content and AST of the file
 #[derive(Clone)]
@@ -200,8 +202,9 @@ impl SourceCodeUnit {
     &self.substitutions
   }
 
-  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>) {
+  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>, rule_store: &mut RuleStore) {
     let _ = &self.substitutions.extend(new_entries.clone());
+    rule_store.add_global_tags(new_entries);
   }
 
   pub(crate) fn rewrites(&self) -> &[Edit] {

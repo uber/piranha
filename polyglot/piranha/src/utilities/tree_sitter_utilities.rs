@@ -100,7 +100,7 @@ impl PiranhaHelpers for Node<'_> {
     let updated_substitutions = &substitutions
       .clone()
       .into_iter()
-      .chain(rule_store.input_substitutions())
+      .chain(rule_store.default_substitutions())
       .collect();
     rule.constraints().iter().all(|constraint| {
       constraint.is_satisfied(
