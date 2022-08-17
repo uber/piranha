@@ -15,7 +15,6 @@ use models::{piranha_arguments::PiranhaArguments, source_code_unit::SourceCodeUn
 
 mod config;
 pub mod models;
-// pub mod piranha;
 #[cfg(test)]
 mod tests;
 pub mod utilities;
@@ -48,11 +47,20 @@ use tree_sitter::Node;
 
 /// Executes piranha for the given configuration
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
-pub fn execute_piranha(configuration: &PiranhaArguments) -> (Vec<SourceCodeUnit>, Vec<PiranhaOutputSummary>) {
+pub fn execute_piranha(configuration: &PiranhaArguments, should_rewrite_files : bool) -> Vec<PiranhaOutputSummary> {
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
+
+  let source_code_units = flag_cleaner.get_updated_files();
+
+  if should_rewrite_files {
+    for scu in source_code_units {
+      scu.persist(&configuration);
+    }  
+  }
+  
   // flag_cleaner.relevant_files
-  (flag_cleaner.get_updated_files(), flag_cleaner.get_updated_files().iter().map(|f|PiranhaOutputSummary::new(f)).collect_vec())
+  flag_cleaner.get_updated_files().iter().map(|f|PiranhaOutputSummary::new(f)).collect_vec()
 }
 
 impl SourceCodeUnit {
@@ -276,7 +284,7 @@ impl SourceCodeUnit {
 }
 
 // Maintains the state of Piranha and the updated content of files in the source code.
-pub(crate) struct FlagCleaner {
+struct FlagCleaner {
   // Maintains Piranha's state
   rule_store: RuleStore,
   // Path to source code folder
