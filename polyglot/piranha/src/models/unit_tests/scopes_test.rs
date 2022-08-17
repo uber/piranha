@@ -159,11 +159,5 @@ fn test_get_scope_query_negative() {
     PathBuf::new().as_path(),
   );
 
-  let _ = ScopeGenerator::get_scope_query(
-    source_code_unit,
-    "Method",
-    133,
-    134,
-    &mut rule_store,
-  );
+  let _ = ScopeGenerator::get_scope_query(source_code_unit, "Method", 133, 134, &mut rule_store);
 }

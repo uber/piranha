@@ -37,11 +37,11 @@ impl PiranhaConfiguration {
     self.language[0].clone()
   }
 
-    pub(crate) fn delete_file_if_empty(&self) -> Option<bool> {
-        self.delete_file_if_empty
-    }
+  pub(crate) fn delete_file_if_empty(&self) -> Option<bool> {
+    self.delete_file_if_empty
+  }
 
-    pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
-        self.delete_consecutive_new_lines
-    }
+  pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
+    self.delete_consecutive_new_lines
+  }
 }

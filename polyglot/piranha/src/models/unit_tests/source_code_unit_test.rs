@@ -19,10 +19,8 @@ use {
   tree_sitter::Range,
 };
 
-
 impl SourceCodeUnit {
-  
-  pub(crate) fn dummy_unit(content: &str, parser: &mut Parser) -> Self{
+  pub(crate) fn dummy_unit(content: &str, parser: &mut Parser) -> Self {
     SourceCodeUnit::new(
       parser,
       content.to_string(),
@@ -68,9 +66,7 @@ fn test_apply_edit_positive() {
   let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
 
   let _ = source_code_unit.apply_edit(
-    &Edit::dummy_edit(
-      range(49, 78, 3, 9, 3, 38),
-      String::new()),
+    &Edit::dummy_edit(range(49, 78, 3, 9, 3, 38), String::new()),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -97,14 +93,13 @@ fn test_apply_edit_negative() {
   let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
 
   let _ = source_code_unit.apply_edit(
-    &Edit::dummy_edit(range(1000, 2000, 0, 0, 0, 0),
-      String::new()),
+    &Edit::dummy_edit(range(1000, 2000, 0, 0, 0, 0), String::new()),
     &mut parser,
   );
 }
 
 /// Positive test of an edit being applied  given replacement range  and replacement string.
-/// This scenario checks the logic that removes the comma identified by tree-sitter. 
+/// This scenario checks the logic that removes the comma identified by tree-sitter.
 #[test]
 fn test_apply_edit_comma_handling_via_grammar() {
   let source_code = "class Test {
@@ -119,9 +114,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
   let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
 
   let _ = source_code_unit.apply_edit(
-    &Edit::dummy_edit(
-      range(37, 47, 2, 26, 2, 36),
-      String::new()),
+    &Edit::dummy_edit(range(37, 47, 2, 26, 2, 36), String::new()),
     &mut parser,
   );
   println!("{}", &source_code_unit.code());
@@ -131,10 +124,9 @@ fn test_apply_edit_comma_handling_via_grammar() {
   ));
 }
 
-
 /// Positive test of an edit being applied  given replacement range  and replacement string.
 /// Currently swift grammar does not always identify extra commas, we use regex replace at this point.
-/// This test scenario checks the regex replacement logic. 
+/// This test scenario checks the regex replacement logic.
 #[test]
 fn test_apply_edit_comma_handling_via_regex() {
   let source_code = "class Test {
@@ -149,9 +141,7 @@ fn test_apply_edit_comma_handling_via_regex() {
   let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
 
   let _ = source_code_unit.apply_edit(
-    &Edit::dummy_edit(
-      range(59, 75, 3, 23, 3, 41),
-      String::new()),
+    &Edit::dummy_edit(range(59, 75, 3, 23, 3, 41), String::new()),
     &mut parser,
   );
   println!("{}", &source_code_unit.code());

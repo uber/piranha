@@ -14,11 +14,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entry-point for Piranha.
 use std::{fs, time::Instant};
 
-use polyglot_piranha::{
-  models::piranha_arguments::PiranhaArguments,
-  models::piranha_output::PiranhaOutputSummary, utilities::initialize_logger, execute_piranha,
-};
 use log::info;
+use polyglot_piranha::{
+  execute_piranha, models::piranha_arguments::PiranhaArguments,
+  models::piranha_output::PiranhaOutputSummary, utilities::initialize_logger,
+};
 
 fn main() {
   let now = Instant::now();

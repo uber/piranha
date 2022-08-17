@@ -89,9 +89,7 @@ impl RuleStore {
   ) {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
       if !self.global_rules.iter().any(|r| {
-        r.name().eq(&rule.name())
-          && r.replace().eq(&rule.replace())
-          && r.query().eq(&rule.query())
+        r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
       }) {
         r.add_grep_heuristics_for_global_rules(tag_captures);
         #[rustfmt::skip]
@@ -123,7 +121,9 @@ impl RuleStore {
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
-        for (next_next_rules_scope, next_next_rules) in self.get_next(&to_rule_name.name(), tag_matches) {
+        for (next_next_rules_scope, next_next_rules) in
+          self.get_next(&to_rule_name.name(), tag_matches)
+        {
           for next_next_rule in next_next_rules {
             // Group the next rules based on the scope
             next_rules.collect(
