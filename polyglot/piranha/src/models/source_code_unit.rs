@@ -10,11 +10,13 @@ use tree_sitter_traversal::{traverse, Order};
 
 use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
 
-use super::{edit::Edit, piranha_arguments::PiranhaArguments, matches::Match};
+
+use super::{edit::Edit, piranha_arguments::PiranhaArguments, matches::Match, rule_store::RuleStore};
+
 
 // Maintains the updated source code content and AST of the file
 #[derive(Clone)]
-pub struct SourceCodeUnit {
+pub(crate) struct SourceCodeUnit {
   // The tree representing the file
   ast: Tree,
   // The content of a file
@@ -27,9 +29,7 @@ pub struct SourceCodeUnit {
   // Rewrites applied to this source code unit
   rewrites: Vec<Edit>,
   // Matches for the read_only rules in this source code unit
-  matches: Vec<(String, Match)>
-
-
+  matches: Vec<(String, Match)>,
 }
 
 impl SourceCodeUnit {
@@ -43,11 +43,11 @@ impl SourceCodeUnit {
       substitutions: substitutions.clone(),
       path: path.to_path_buf(),
       rewrites: Vec::new(),
-      matches: Vec::new()
+      matches: Vec::new(),
     }
   }
 
-  pub fn root_node(&self) -> Node<'_> {
+  pub(crate) fn root_node(&self) -> Node<'_> {
     self.ast.root_node()
   }
 
@@ -61,7 +61,6 @@ impl SourceCodeUnit {
       }
     } else {
       let content = if piranha_arguments.delete_consecutive_new_lines() {
-
         let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
         regex.replace_all(&self.code(), "\n${2}").to_string()
       } else {
@@ -73,7 +72,12 @@ impl SourceCodeUnit {
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser, true)
+    self._apply_edit(
+      edit.replacement_range(),
+      edit.replacement_string(),
+      parser,
+      true,
+    )
   }
 
   /// Applies an edit to the source code unit
@@ -87,7 +91,7 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn _apply_edit(
-    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool
+    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool,
   ) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) =
@@ -127,9 +131,9 @@ impl SourceCodeUnit {
 
   // Tries to remove the extra comma -
   // -->  Remove comma if extra
-  //    --> Check if AST has no errors, to decide if the replacement was successful. 
+  //    --> Check if AST has no errors, to decide if the replacement was successful.
   //      --->  if No: Undo the change
-  //      --->  if Yes: Return   
+  //      --->  if Yes: Return
   // Returns true if the comma was successfully removed.
   fn try_to_remove_extra_comma(&mut self, parser: &mut Parser) -> bool {
     let c_ast = self.ast.clone();
@@ -149,24 +153,28 @@ impl SourceCodeUnit {
     false
   }
 
-  // Tries to remove the extra comma - 
-  // Applies three Regex-Replacements strategies to the source file to remove the extra comma. 
-  // *  replace consecutive commas with comma 
+  // Tries to remove the extra comma -
+  // Applies three Regex-Replacements strategies to the source file to remove the extra comma.
+  // *  replace consecutive commas with comma
   // *  replace ( `(,` or `[,` ) with just `(` or `[`)
-  // Check if AST has no errors, to decide if the replacement was successful. 
+  // Check if AST has no errors, to decide if the replacement was successful.
   // Returns true if the comma was successfully removed.
-  fn try_to_fix_code_with_regex_replace(&mut self, parser: &mut Parser) -> bool{
+  fn try_to_fix_code_with_regex_replace(&mut self, parser: &mut Parser) -> bool {
     let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
     let square_bracket_comma_pattern = Regex::new(r"\[\s*\n*,").unwrap();
     let round_bracket_comma_pattern = Regex::new(r"\(\s*\n*,").unwrap();
-    let strategies = [(consecutive_comma_pattern, ","), (square_bracket_comma_pattern, "["), (round_bracket_comma_pattern, "(")];
+    let strategies = [
+      (consecutive_comma_pattern, ","),
+      (square_bracket_comma_pattern, "["),
+      (round_bracket_comma_pattern, "("),
+    ];
 
     let mut content = self.code();
-    for (regex_pattern, replacement ) in strategies{
-        if regex_pattern.is_match(&content){
-          content = regex_pattern.replace_all(&content, replacement).to_string();
-          self._replace_file_contents_and_re_parse(&content, parser, false);
-        }
+    for (regex_pattern, replacement) in strategies {
+      if regex_pattern.is_match(&content) {
+        content = regex_pattern.replace_all(&content, replacement).to_string();
+        self._replace_file_contents_and_re_parse(&content, parser, false);
+      }
     }
     return !self.ast.root_node().has_error();
   }
@@ -186,7 +194,7 @@ impl SourceCodeUnit {
     }
   }
   // #[cfg(test)] // Rust analyzer FP
-  pub fn code(&self) -> String {
+  pub(crate) fn code(&self) -> String {
     String::from(&self.code)
   }
 
@@ -194,29 +202,30 @@ impl SourceCodeUnit {
     &self.substitutions
   }
 
-  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>) {
+  pub(crate) fn add_to_substitutions(&mut self, new_entries: &HashMap<String, String>, rule_store: &mut RuleStore) {
     let _ = &self.substitutions.extend(new_entries.clone());
+    rule_store.add_global_tags(new_entries);
   }
 
-    pub(crate) fn rewrites(&self) -> &[Edit] {
-        self.rewrites.as_ref()
-    }
+  pub(crate) fn rewrites(&self) -> &[Edit] {
+    self.rewrites.as_ref()
+  }
 
-    pub(crate) fn path(&self) -> &PathBuf {
-      &self.path
-    }
+  pub(crate) fn path(&self) -> &PathBuf {
+    &self.path
+  }
 
-    pub(crate) fn rewrites_mut(&mut self) -> &mut Vec<Edit> {
-        &mut self.rewrites
-    }
+  pub(crate) fn rewrites_mut(&mut self) -> &mut Vec<Edit> {
+    &mut self.rewrites
+  }
 
-    pub(crate) fn matches(&self) -> &[(String, Match)] {
-        self.matches.as_ref()
-    }
+  pub(crate) fn matches(&self) -> &[(String, Match)] {
+    self.matches.as_ref()
+  }
 
-    pub(crate) fn matches_mut(&mut self) -> &mut Vec<(String, Match)> {
-        &mut self.matches
-    }
+  pub(crate) fn matches_mut(&mut self) -> &mut Vec<(String, Match)> {
+    &mut self.matches
+  }
 }
 
 #[cfg(test)]

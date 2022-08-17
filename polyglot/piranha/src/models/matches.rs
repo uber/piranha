@@ -41,7 +41,7 @@ impl Match {
 }
 
 /// This method serializes the `tree_sitter::Range` struct. Originally, it does not derive serde::Serialize
-/// So in this method, we cast `Range` to a local type `LocalRange` and serialize this casted object. 
+/// So in this method, we cast `Range` to a local type `LocalRange` and serialize this casted object.
 /// Note `LocalRange` derives serialize.
 fn ser_range<S: Serializer>(range: &Range, serializer: S) -> Result<S::Ok, S::Error> {
   let local_range = LocalRange {

@@ -22,6 +22,7 @@ pub(crate) struct PiranhaConfiguration {
   substitutions: Vec<Vec<String>>,
   delete_file_if_empty: Option<bool>,
   delete_consecutive_new_lines: Option<bool>,
+  global_tag_prefix: Option<String>,
 }
 
 impl PiranhaConfiguration {
@@ -37,11 +38,15 @@ impl PiranhaConfiguration {
     self.language[0].clone()
   }
 
-    pub(crate) fn delete_file_if_empty(&self) -> Option<bool> {
-        self.delete_file_if_empty
-    }
+  pub(crate) fn delete_file_if_empty(&self) -> Option<bool> {
+    self.delete_file_if_empty
+  }
 
     pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
         self.delete_consecutive_new_lines
     }
+
+  pub(crate) fn global_tag_prefix(&self) -> Option<String> {
+      self.global_tag_prefix.clone()
+  }
 }

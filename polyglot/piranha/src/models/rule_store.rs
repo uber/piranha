@@ -44,6 +44,8 @@ pub(crate) struct RuleStore {
   scopes: Vec<ScopeGenerator>,
   // Command line arguments passed to piranha
   piranha_args: PiranhaArguments,
+  // Command line arguments passed to piranha
+  global_tags: HashMap<String, String>,
 }
 
 impl RuleStore {
@@ -57,6 +59,7 @@ impl RuleStore {
       global_rules: vec![],
       scopes,
       piranha_args: args.clone(),
+      global_tags: HashMap::new(),
     };
 
     for (_, rule) in rule_store.rules_by_name.clone() {
@@ -79,8 +82,10 @@ impl RuleStore {
     self.piranha_args.language_name()
   }
 
-  pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
-    self.piranha_args.input_substitutions().clone()
+  pub(crate) fn default_substitutions(&self) -> HashMap<String, String> {
+    let mut default_subs = self.piranha_args.input_substitutions().clone();
+    default_subs.extend(self.global_tags().clone());
+    return default_subs;
   }
 
   /// Add a new global rule, along with grep heuristics (If it doesn't already exist)
@@ -89,9 +94,7 @@ impl RuleStore {
   ) {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
       if !self.global_rules.iter().any(|r| {
-        r.name().eq(&rule.name())
-          && r.replace().eq(&rule.replace())
-          && r.query().eq(&rule.query())
+        r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
       }) {
         r.add_grep_heuristics_for_global_rules(tag_captures);
         #[rustfmt::skip]
@@ -123,7 +126,9 @@ impl RuleStore {
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
-        for (next_next_rules_scope, next_next_rules) in self.get_next(&to_rule_name.name(), tag_matches) {
+        for (next_next_rules_scope, next_next_rules) in
+          self.get_next(&to_rule_name.name(), tag_matches)
+        {
           for next_next_rule in next_next_rules {
             // Group the next rules based on the scope
             next_rules.collect(
@@ -153,6 +158,19 @@ impl RuleStore {
       .map(|scope| scope.rules())
       .unwrap_or_else(Vec::new)
   }
+
+  pub(crate) fn global_tags(&self) -> &HashMap<String, String> {
+    &self.global_tags
+  }
+
+  pub(crate) fn add_global_tags(&mut self, new_entries: &HashMap<String, String>) {
+    let global_substitutions: HashMap<String, String> = new_entries
+      .iter()
+      .filter(|e| e.0.starts_with(self.piranha_args.global_tag_prefix()))
+      .map(|(a, b)| (a.to_string(), b.to_string()))
+      .collect();
+    let _ = &self.global_tags.extend(global_substitutions.clone());
+  }
 }
 
 #[cfg(test)]
@@ -165,6 +183,7 @@ impl RuleStore {
       global_rules: vec![],
       piranha_args: PiranhaArguments::dummy(),
       scopes: vec![],
+      global_tags: HashMap::new(),
     }
   }
 
@@ -176,6 +195,7 @@ impl RuleStore {
       global_rules: vec![],
       piranha_args: PiranhaArguments::dummy(),
       scopes,
+      global_tags : HashMap::new()
     }
   }
 }

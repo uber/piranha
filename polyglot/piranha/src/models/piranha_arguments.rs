@@ -13,6 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::{collections::HashMap, path::PathBuf};
 
+use clap::Parser;
 use colored::Colorize;
 use log::info;
 use tree_sitter::Language;
@@ -25,7 +26,7 @@ use crate::{
 
 #[derive(Clone)]
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
-pub(crate) struct PiranhaArguments {
+pub struct PiranhaArguments {
   /// Path to source code folder.
   path_to_code_base: String,
   // Input arguments provided to Piranha, mapped to tag names -
@@ -34,8 +35,8 @@ pub(crate) struct PiranhaArguments {
   input_substitutions: HashMap<String, String>,
   /// Folder containing the API specific rules
   path_to_configurations: String,
-  /// File to which the output summary should be written 
-  path_to_output_summaries : Option<String>,
+  /// File to which the output summary should be written
+  path_to_output_summaries: Option<String>,
   /// Tree-sitter language model
   language: Language,
   // The language name is file the extension used for files in particular language.
@@ -45,9 +46,17 @@ pub(crate) struct PiranhaArguments {
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
   delete_consecutive_new_lines: bool,
+  // User option that determines the prefix used for tag names that should be considered 
+  /// global i.e. if a global tag is found when rewriting a source code unit
+  /// All source code units from this point will have access to this global tag. 
+  global_tag_prefix: Option<String>,
 }
 
 impl PiranhaArguments {
+  pub fn from_command_line() -> Self {
+    Self::new(CommandLineArguments::parse())
+  }
+
   pub(crate) fn new(args: CommandLineArguments) -> Self {
     let path_to_piranha_argument_file =
       PathBuf::from(args.path_to_configurations.as_str()).join("piranha_arguments.toml");
@@ -73,6 +82,7 @@ impl PiranhaArguments {
       delete_consecutive_new_lines: piranha_args_from_config
         .delete_consecutive_new_lines()
         .unwrap_or(false),
+      global_tag_prefix: piranha_args_from_config.global_tag_prefix(),
     }
   }
 
@@ -104,9 +114,19 @@ impl PiranhaArguments {
     self.delete_consecutive_new_lines
   }
 
-    pub(crate) fn path_to_output_summaries(&self) -> Option<&String> {
+  pub fn path_to_output_summaries(&self) -> Option<&String> {
         self.path_to_output_summaries.as_ref()
     }
+  
+  /// Returns default Global prefix tag as "GLOBAL_TAG."
+  /// i.e. it expects global tag names to lok like 
+  /// @GLOBAL_TAG.class_name
+  pub(crate) fn global_tag_prefix(&self) -> &str {
+    if let Some(t) = &self.global_tag_prefix{
+      return t.as_str();
+    }
+    return "GLOBAL_TAG."
+  }
 }
 
 #[cfg(test)]
@@ -130,10 +150,13 @@ impl PiranhaArguments {
       language_name,
       delete_consecutive_new_lines: false,
       delete_file_if_empty: false,
+      global_tag_prefix: None
     }
   }
 
-  pub(crate) fn dummy_with_user_opt(delete_file_if_empty: bool, delete_consecutive_new_lines: bool) -> Self {
+  pub(crate) fn dummy_with_user_opt(
+    delete_file_if_empty: bool, delete_consecutive_new_lines: bool,
+  ) -> Self {
     let language_name = String::from("java");
     let mut args = PiranhaArguments {
       path_to_code_base: String::new(),
@@ -144,6 +167,7 @@ impl PiranhaArguments {
       language_name,
       delete_consecutive_new_lines: false,
       delete_file_if_empty: false,
+      global_tag_prefix: None
     };
     args.set_delete_consecutive_new_lines(delete_consecutive_new_lines);
     args.set_delete_file_if_empty(delete_file_if_empty);

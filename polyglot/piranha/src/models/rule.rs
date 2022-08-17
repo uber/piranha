@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::{Node};
+use tree_sitter::Node;
 
 use crate::utilities::{
   tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
@@ -23,7 +23,8 @@ use crate::utilities::{
 };
 
 use super::{
-  constraint::Constraint, edit::Edit, rule_store::RuleStore, source_code_unit::SourceCodeUnit, matches::Match,
+  constraint::Constraint, edit::Edit, matches::Match, rule_store::RuleStore,
+  source_code_unit::SourceCodeUnit,
 };
 
 static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
@@ -64,7 +65,7 @@ impl Rule {
     self.query.is_none() && self.replace.is_none()
   }
 
-  // Checks if a rule is `match-only` i.e. it has a query but no replace. 
+  // Checks if a rule is `match-only` i.e. it has a query but no replace.
   pub(crate) fn is_match_only_rule(&self) -> bool {
     self.query.is_some() && self.replace.is_none()
   }
@@ -101,7 +102,9 @@ impl Rule {
       let mut updated_rule = self.clone();
       if !updated_rule.holes().is_empty() {
         updated_rule.update_query(substitutions);
-        updated_rule.update_replace(substitutions);
+        if !updated_rule.is_match_only_rule(){
+          updated_rule.update_replace(substitutions);
+        }
       }
       Ok(updated_rule)
     }
@@ -147,21 +150,21 @@ impl Rule {
   }
 
   pub(crate) fn replace_node(&self) -> String {
-    if let Some(rn) = &self.replace_node{
+    if let Some(rn) = &self.replace_node {
       return rn.to_string();
     }
     panic!("No replace_node pattern!")
   }
 
   pub(crate) fn query(&self) -> String {
-    if let Some(q) = &self.query{
+    if let Some(q) = &self.query {
       return q.to_string();
     }
     panic!("No query pattern!")
   }
 
   pub(crate) fn replace(&self) -> String {
-    if let Some(rp) = &self.replace{
+    if let Some(rp) = &self.replace {
       return rp.to_string();
     }
     panic!("No replace pattern!")
@@ -245,12 +248,16 @@ impl Rule {
   ) -> Vec<Match> {
     let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
-    let replace_node_tag = if self.is_match_only_rule() || self.is_dummy_rule() { None } else {Some(self.replace_node())};
+    let replace_node_tag = if self.is_match_only_rule() || self.is_dummy_rule() {
+      None
+    } else {
+      Some(self.replace_node())
+    };
     let all_query_matches = node.get_all_matches_for_query(
       source_code_unit.code(),
       rule_store.query(&self.query()),
       recursive,
-      replace_node_tag
+      replace_node_tag,
     );
 
     // Return the first match that satisfies constraint of the rule
@@ -260,7 +267,7 @@ impl Rule {
         p_match.range().start_byte,
         p_match.range().end_byte,
       );
-      
+
       if matched_node.satisfies_constraint(
         source_code_unit.clone(),
         self,
@@ -273,7 +280,6 @@ impl Rule {
     output
   }
 
-
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_edit(
     &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
@@ -281,14 +287,12 @@ impl Rule {
   ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
 
-    return self.get_matches(source_code_unit, rule_store, node, recursive)
-      .first().map(|p_match| {
+    return self
+      .get_matches(source_code_unit, rule_store, node, recursive)
+      .first()
+      .map(|p_match| {
         let replacement = substitute_tags(self.replace(), p_match.matches()).replace("\\n", "\n");
-        return Edit::new(
-          p_match.clone(),
-          replacement,
-          self.name()
-        );
+        return Edit::new(p_match.clone(), replacement, self.name());
       });
   }
 

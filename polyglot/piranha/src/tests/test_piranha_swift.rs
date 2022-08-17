@@ -13,40 +13,23 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use super::{initialize, run_rewrite_test};
 
-static LANGUAGE: &str = "kt";
+static LANGUAGE: &str = "swift";
 
+// Tests cascading file delete based on enum and type alias. 
+// This scenario is "derived" from plugin cleanup.
+// This cleanup requires the concept of global tags
 #[test]
-fn test_kotlin_scenarios_treated_ff1() {
+fn test_cascading_delete_file() {
   initialize();
-  run_rewrite_test(
-    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_1", "treated"),
-    2,
-  );
+  run_rewrite_test(&format!("{}/{}",LANGUAGE, "cascade_file_delete"), 3);
 }
 
-#[test]
-fn test_kotlin_scenarios_treated_ff2() {
-  initialize();
-  run_rewrite_test(
-    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_2", "treated"),
-    4,
-  );
-}
 
+// Tests cascading file delete based on enum and type alias. 
+// This scenario is "derived" from plugin cleanup.
+// Checks custom global_tags
 #[test]
-fn test_kotlin_scenarios_control_ff1() {
+fn test_cascading_delete_file_custom_global_tag() {
   initialize();
-  run_rewrite_test(
-    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_1", "control"),
-    2,
-  );
-}
-
-#[test]
-fn test_kotlin_scenarios_control_ff2() {
-  initialize();
-  run_rewrite_test(
-    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_2", "control"),
-    4,
-  );
+  run_rewrite_test(&format!("{}/{}",LANGUAGE, "cascade_file_delete_custom_global_tag"), 3);
 }

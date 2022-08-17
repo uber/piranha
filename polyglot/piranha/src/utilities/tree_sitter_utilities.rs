@@ -100,7 +100,7 @@ impl PiranhaHelpers for Node<'_> {
     let updated_substitutions = &substitutions
       .clone()
       .into_iter()
-      .chain(rule_store.input_substitutions())
+      .chain(rule_store.default_substitutions())
       .collect();
     rule.constraints().iter().all(|constraint| {
       constraint.is_satisfied(
@@ -115,8 +115,11 @@ impl PiranhaHelpers for Node<'_> {
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,
   ) -> Option<Match> {
-    if let Some(m) = self.get_all_matches_for_query(source_code.to_string(), query, recursive, None).first(){
-        return Some(m.clone());
+    if let Some(m) = self
+      .get_all_matches_for_query(source_code.to_string(), query, recursive, None)
+      .first()
+    {
+      return Some(m.clone());
     }
     None
   }
@@ -131,7 +134,6 @@ impl PiranhaHelpers for Node<'_> {
     // corresponding to the same tag.
     let mut output = vec![];
     for (captured_node_range, query_matches) in query_capture_groups {
-       
       // This ensures that each query pattern in rule.query matches the same node.
       if query_matches.len() != query.pattern_count() {
         continue;

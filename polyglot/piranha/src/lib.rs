@@ -11,6 +11,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use models::{
+  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
+  source_code_unit::SourceCodeUnit,
+};
+
+mod config;
+pub mod models;
+#[cfg(test)]
+mod tests;
+pub mod utilities;
+
 use std::{collections::HashMap, path::PathBuf};
 
 use colored::Colorize;
@@ -21,9 +32,7 @@ use regex::Regex;
 use tree_sitter::{Parser, Range};
 
 use crate::{
-  models::{piranha_arguments::PiranhaArguments,
-    piranha_output::PiranhaOutputSummary, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
-  },
+  models::rule_store::RuleStore,
   utilities::{read_file, tree_sitter_utilities::get_match_and_replace_range},
 };
 
@@ -42,11 +51,26 @@ use tree_sitter::Node;
 
 /// Executes piranha for the given configuration
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
-pub(crate) fn execute_piranha(configuration: &PiranhaArguments) -> (Vec<SourceCodeUnit>, Vec<PiranhaOutputSummary>) {
+pub fn execute_piranha(
+  configuration: &PiranhaArguments, should_rewrite_files: bool,
+) -> Vec<PiranhaOutputSummary> {
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
+
+  let source_code_units = flag_cleaner.get_updated_files();
+
+  if should_rewrite_files {
+    for scu in source_code_units {
+      scu.persist(&configuration);
+    }
+  }
+
   // flag_cleaner.relevant_files
-  (flag_cleaner.get_updated_files(), flag_cleaner.get_updated_files().iter().map(|f|PiranhaOutputSummary::new(f)).collect_vec())
+  flag_cleaner
+    .get_updated_files()
+    .iter()
+    .map(|f| PiranhaOutputSummary::new(f))
+    .collect_vec()
 }
 
 impl SourceCodeUnit {
@@ -99,7 +123,7 @@ impl SourceCodeUnit {
         query_again = true;
 
         // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit.matches());
+        self.add_to_substitutions(edit.matches(), rule_store);
 
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
@@ -127,7 +151,7 @@ impl SourceCodeUnit {
         // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
         // By NOT invoking this we simulate the application of an identity rule
         //
-        self.add_to_substitutions(m.matches());
+        self.add_to_substitutions(m.matches(), rule_store);
 
         self.propagate((m.range(), m.range()), rule.clone(), rule_store, parser);
       }
@@ -201,7 +225,7 @@ impl SourceCodeUnit {
         (current_match_range, current_replace_range) = get_match_and_replace_range(applied_edit);
         current_rule = edit.matched_rule();
         // Add the (tag, code_snippet) mapping to substitution table.
-        self.add_to_substitutions(edit.matches());
+        self.add_to_substitutions(edit.matches(), rules_store);
       } else {
         // No more parents found for cleanup
         break;
@@ -314,7 +338,7 @@ impl FlagCleaner {
             SourceCodeUnit::new(
               &mut parser,
               content,
-              &self.rule_store.input_substitutions(),
+              &self.rule_store.default_substitutions(),
               path.as_path(),
             )
           })
