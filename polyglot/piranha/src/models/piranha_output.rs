@@ -1,4 +1,4 @@
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 use itertools::Itertools;
 use serde_derive::Serialize;
@@ -16,19 +16,13 @@ pub struct PiranhaOutputSummary {
 impl PiranhaOutputSummary {
   pub(crate) fn new(source_code_unit: &SourceCodeUnit) -> PiranhaOutputSummary {
     return PiranhaOutputSummary {
-      path: String::from(
-        source_code_unit
-          .path()
-          .as_os_str()
-          .to_str()
-          .unwrap(),
-      ),
+      path: String::from(source_code_unit.path().as_os_str().to_str().unwrap()),
       content: source_code_unit.code(),
       matches: source_code_unit.matches().iter().cloned().collect_vec(),
       rewrites: source_code_unit.rewrites().iter().cloned().collect_vec(),
     };
   }
-  
+
   #[cfg(test)]
   pub(crate) fn matches(&self) -> &[(String, Match)] {
     self.matches.as_ref()
@@ -39,11 +33,11 @@ impl PiranhaOutputSummary {
     self.rewrites.as_ref()
   }
 
-    pub fn path(&self) -> PathBuf {
-        PathBuf::from(self.path.as_str())
-    }
+  pub fn path(&self) -> PathBuf {
+    PathBuf::from(self.path.as_str())
+  }
 
-    pub fn content(&self) -> &str {
-        self.content.as_ref()
-    }
+  pub fn content(&self) -> &str {
+    self.content.as_ref()
+  }
 }

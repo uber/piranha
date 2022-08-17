@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use serde_derive::{Serialize};
+use serde_derive::Serialize;
 use tree_sitter::Range;
 
-use super::{matches::Match};
+use super::matches::Match;
 
 #[derive(Serialize, Debug, Clone)]
 pub(crate) struct Edit {
@@ -13,13 +13,10 @@ pub(crate) struct Edit {
   replacement_string: String,
   // The rule used for creating this match-replace
   matched_rule: String,
-  
 }
 
 impl Edit {
-  pub(crate) fn new(
-    p_match: Match, replacement_string: String, matched_rule: String,
-  ) -> Self {
+  pub(crate) fn new(p_match: Match, replacement_string: String, matched_rule: String) -> Self {
     Self {
       p_match,
       replacement_string,

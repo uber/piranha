@@ -11,44 +11,55 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::{initialize, run_rewrite_test, run_match_test};
+use super::{initialize, run_match_test, run_rewrite_test};
 
 static LANGUAGE: &str = "java";
 
 #[test]
 fn test_java_scenarios_treated_ff1() {
   initialize();
-  run_rewrite_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_1", "treated"), 2);
+  run_rewrite_test(
+    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_1", "treated"),
+    2,
+  );
 }
 
 #[test]
 fn test_java_scenarios_treated_ff2() {
   initialize();
-  run_rewrite_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_2", "treated"), 4);
+  run_rewrite_test(
+    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_2", "treated"),
+    4,
+  );
 }
 
 #[test]
 fn test_java_scenarios_control_ff1() {
   initialize();
-  run_rewrite_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_1", "control"), 2);
+  run_rewrite_test(
+    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_1", "control"),
+    2,
+  );
 }
 
 #[test]
 fn test_java_scenarios_control_ff2() {
   initialize();
-  run_rewrite_test(&format!("{}/{}/{}",LANGUAGE, "feature_flag_system_2", "control"), 4);
+  run_rewrite_test(
+    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_2", "control"),
+    4,
+  );
 }
 
 #[test]
 fn test_java_scenarios_find_and_propagate() {
   initialize();
-  run_rewrite_test(&format!("{}/{}",LANGUAGE, "find_and_propagate"), 2);
+  run_rewrite_test(&format!("{}/{}", LANGUAGE, "find_and_propagate"), 2);
 }
-
 
 // run_match_test
 #[test]
 fn test_java_match_only() {
   initialize();
-  run_match_test(&format!("{}/{}",LANGUAGE, "structural_find"), 20);
+  run_match_test(&format!("{}/{}", LANGUAGE, "structural_find"), 20);
 }

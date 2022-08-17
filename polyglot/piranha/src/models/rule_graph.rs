@@ -30,11 +30,11 @@ impl RuleGraph {
         .get(val)
         .map(|v| vec![v.name()])
         .unwrap_or_else(|| {
-          if rules_by_group.contains_key(val){
+          if rules_by_group.contains_key(val) {
             return rules_by_group[val].clone();
           }
           return vec![];
-      })
+        })
     };
 
     let mut graph = HashMap::new();

@@ -94,9 +94,7 @@ impl RuleStore {
   ) {
     if let Ok(mut r) = rule.try_instantiate(tag_captures) {
       if !self.global_rules.iter().any(|r| {
-        r.name().eq(&rule.name())
-          && r.replace().eq(&rule.replace())
-          && r.query().eq(&rule.query())
+        r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
       }) {
         r.add_grep_heuristics_for_global_rules(tag_captures);
         #[rustfmt::skip]

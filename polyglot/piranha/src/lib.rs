@@ -11,7 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use models::{piranha_arguments::PiranhaArguments, source_code_unit::SourceCodeUnit, piranha_output::PiranhaOutputSummary};
+use models::{
+  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
+  source_code_unit::SourceCodeUnit,
+};
 
 mod config;
 pub mod models;
@@ -28,7 +31,8 @@ use log::info;
 use regex::Regex;
 use tree_sitter::{Parser, Range};
 
-use crate::{models::{rule_store::RuleStore,},
+use crate::{
+  models::rule_store::RuleStore,
   utilities::{read_file, tree_sitter_utilities::get_match_and_replace_range},
 };
 
@@ -47,7 +51,9 @@ use tree_sitter::Node;
 
 /// Executes piranha for the given configuration
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
-pub fn execute_piranha(configuration: &PiranhaArguments, should_rewrite_files : bool) -> Vec<PiranhaOutputSummary> {
+pub fn execute_piranha(
+  configuration: &PiranhaArguments, should_rewrite_files: bool,
+) -> Vec<PiranhaOutputSummary> {
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
 
@@ -56,11 +62,15 @@ pub fn execute_piranha(configuration: &PiranhaArguments, should_rewrite_files : 
   if should_rewrite_files {
     for scu in source_code_units {
       scu.persist(&configuration);
-    }  
+    }
   }
-  
+
   // flag_cleaner.relevant_files
-  flag_cleaner.get_updated_files().iter().map(|f|PiranhaOutputSummary::new(f)).collect_vec()
+  flag_cleaner
+    .get_updated_files()
+    .iter()
+    .map(|f| PiranhaOutputSummary::new(f))
+    .collect_vec()
 }
 
 impl SourceCodeUnit {
@@ -294,7 +304,7 @@ struct FlagCleaner {
 }
 
 impl FlagCleaner {
-   fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
+  fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self
       .relevant_files
       .values()
@@ -304,7 +314,7 @@ impl FlagCleaner {
   }
 
   /// Performs cleanup related to stale flags
-    fn perform_cleanup(&mut self) {
+  fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
@@ -385,7 +395,7 @@ impl FlagCleaner {
   }
 
   /// Instantiate Flag-cleaner
-fn new(args: &PiranhaArguments) -> Self {
+  fn new(args: &PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(args);
     Self {
       rule_store: graph_rule_store,

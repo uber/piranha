@@ -35,8 +35,8 @@ pub struct PiranhaArguments {
   input_substitutions: HashMap<String, String>,
   /// Folder containing the API specific rules
   path_to_configurations: String,
-  /// File to which the output summary should be written 
-  path_to_output_summaries : Option<String>,
+  /// File to which the output summary should be written
+  path_to_output_summaries: Option<String>,
   /// Tree-sitter language model
   language: Language,
   // The language name is file the extension used for files in particular language.
@@ -53,11 +53,9 @@ pub struct PiranhaArguments {
 }
 
 impl PiranhaArguments {
-
   pub fn from_command_line() -> Self {
     Self::new(CommandLineArguments::parse())
   }
-
 
   pub(crate) fn new(args: CommandLineArguments) -> Self {
     let path_to_piranha_argument_file =
@@ -156,7 +154,9 @@ impl PiranhaArguments {
     }
   }
 
-  pub(crate) fn dummy_with_user_opt(delete_file_if_empty: bool, delete_consecutive_new_lines: bool) -> Self {
+  pub(crate) fn dummy_with_user_opt(
+    delete_file_if_empty: bool, delete_consecutive_new_lines: bool,
+  ) -> Self {
     let language_name = String::from("java");
     let mut args = PiranhaArguments {
       path_to_code_base: String::new(),

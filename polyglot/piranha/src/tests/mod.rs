@@ -14,9 +14,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::path::{Path, PathBuf};
 
 use crate::config::CommandLineArguments;
+use crate::execute_piranha;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::piranha_output::PiranhaOutputSummary;
-use crate::execute_piranha;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
 mod test_piranha_java;
@@ -36,23 +36,29 @@ fn initialize() {
   });
 }
 
-// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`) 
-// and checks if the number of matches == `number_of_matches`. 
+// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
+// and checks if the number of matches == `number_of_matches`.
 fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
   let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
 
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-    path_to_output_summary: None
+    path_to_output_summary: None,
   });
   let output_summaries = execute_piranha(&args, false);
-  
-  assert_eq!(output_summaries.iter().flat_map(|os|os.matches().iter()).count(), number_of_matches);
+
+  assert_eq!(
+    output_summaries
+      .iter()
+      .flat_map(|os| os.matches().iter())
+      .count(),
+    number_of_matches
+  );
 }
 
-// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`) 
-// and checks if the output of piranha is same as `<relative_path_to_tests>/expected`. 
+// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
+// and checks if the output of piranha is same as `<relative_path_to_tests>/expected`.
 // It also asserts the number of changed files in the expected output.
 fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
@@ -60,11 +66,17 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   let args = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-    path_to_output_summary: None
+    path_to_output_summary: None,
   });
   let output_summaries = execute_piranha(&args, false);
   // Checks if there are any rewrites performed for the file
-  assert!(output_summaries.iter().flat_map(|os|os.rewrites().iter()).count() > 0);
+  assert!(
+    output_summaries
+      .iter()
+      .flat_map(|os| os.rewrites().iter())
+      .count()
+      > 0
+  );
 
   assert_eq!(output_summaries.len(), n_files_changed);
   let path_to_expected =
