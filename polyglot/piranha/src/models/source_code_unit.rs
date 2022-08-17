@@ -14,7 +14,7 @@ use super::{edit::Edit, piranha_arguments::PiranhaArguments, matches::Match};
 
 // Maintains the updated source code content and AST of the file
 #[derive(Clone)]
-pub struct SourceCodeUnit {
+pub(crate) struct SourceCodeUnit {
   // The tree representing the file
   ast: Tree,
   // The content of a file
@@ -54,7 +54,7 @@ impl SourceCodeUnit {
   /// Writes the current contents of `code` to the file system.
   /// Based on the user's specifications, this function will delete a file if empty
   /// and replace three consecutive newline characters with two.
-  pub fn persist(&self, piranha_arguments: &PiranhaArguments) {
+  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
     if self.code.as_str().is_empty() {
       if piranha_arguments.delete_file_if_empty() {
         _ = fs::remove_file(&self.path).expect("Unable to Delete file");

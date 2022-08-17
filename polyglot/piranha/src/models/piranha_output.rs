@@ -1,3 +1,5 @@
+use std::path::{PathBuf};
+
 use itertools::Itertools;
 use serde_derive::Serialize;
 
@@ -36,4 +38,12 @@ impl PiranhaOutputSummary {
   pub(crate) fn rewrites(&self) -> &[Edit] {
     self.rewrites.as_ref()
   }
+
+    pub fn path(&self) -> PathBuf {
+        PathBuf::from(self.path.as_str())
+    }
+
+    pub fn content(&self) -> &str {
+        self.content.as_ref()
+    }
 }

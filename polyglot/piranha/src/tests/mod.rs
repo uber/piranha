@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 use crate::config::CommandLineArguments;
 use crate::models::piranha_arguments::PiranhaArguments;
-use crate::models::source_code_unit::SourceCodeUnit;
+use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::execute_piranha;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
@@ -44,7 +44,7 @@ fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
     path_to_output_summary: None
   });
-  let (_updated_files, output_summaries) = execute_piranha(&args);
+  let output_summaries = execute_piranha(&args, false);
   
   assert_eq!(output_summaries.iter().flat_map(|os|os.matches().iter()).count(), number_of_matches);
 }
@@ -60,18 +60,18 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
     path_to_output_summary: None
   });
-  let (updated_files, output_summaries) = execute_piranha(&args);
+  let output_summaries = execute_piranha(&args, false);
   // Checks if there are any rewrites performed for the file
   assert!(output_summaries.iter().flat_map(|os|os.rewrites().iter()).count() > 0);
 
-  assert_eq!(updated_files.len(), n_files_changed);
+  assert_eq!(output_summaries.len(), n_files_changed);
   let path_to_expected =
     Path::new(env!("CARGO_MANIFEST_DIR")).join(format!("{path_to_test_ff}/expected"));
-  check_result(updated_files, path_to_expected);
+  check_result(output_summaries, path_to_expected);
 }
 
 /// Checks if the file updates returned by piranha are as expected.
-fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
+fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: PathBuf) {
   let mut all_files_match = true;
 
   for source_code_unit in &updated_files {
@@ -83,9 +83,9 @@ fn check_result(updated_files: Vec<SourceCodeUnit>, path_to_expected: PathBuf) {
     let expected_file_path = find_file(&path_to_expected, updated_file_name);
     let expected_content = read_file(&expected_file_path).unwrap();
 
-    if !eq_without_whitespace(&source_code_unit.code(), &expected_content) {
+    if !eq_without_whitespace(&source_code_unit.content(), &expected_content) {
       all_files_match = false;
-      println!("{}", &source_code_unit.code());
+      println!("{}", &source_code_unit.content());
     }
   }
   assert!(all_files_match);

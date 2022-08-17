@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 //! Defines the entry-point for Piranha.
-use std::{fs::{self}, time::Instant};
+use std::{fs, time::Instant};
 
 use polyglot_piranha::{
   models::piranha_arguments::PiranhaArguments,
@@ -26,11 +26,7 @@ fn main() {
 
   let args = PiranhaArguments::from_command_line();
 
-  let (source_code_units, piranha_output_summaries) = execute_piranha(&args);
-
-  for scu in source_code_units {
-    scu.persist(&args);
-  }
+  let piranha_output_summaries = execute_piranha(&args, true);
 
   if args.path_to_output_summaries().is_some() {
     write_output_summary(
