@@ -12,29 +12,19 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 //! Defines the entry-point for Piranha.
-use std::{fs, time::Instant};
+use std::{fs::{self}, time::Instant};
 
-use crate::{
-  models::piranha_arguments::PiranhaArguments, piranha::execute_piranha,
-  utilities::initialize_logger,
+use polyglot_piranha::{
+  models::piranha_arguments::PiranhaArguments,
+  models::piranha_output::PiranhaOutputSummary, utilities::initialize_logger, execute_piranha,
 };
-use clap::StructOpt;
-use config::CommandLineArguments;
 use log::info;
-use models::piranha_output::PiranhaOutputSummary;
-
-mod config;
-mod models;
-mod piranha;
-#[cfg(test)]
-mod tests;
-mod utilities;
 
 fn main() {
   let now = Instant::now();
   initialize_logger(false);
 
-  let args = PiranhaArguments::new(CommandLineArguments::parse());
+  let args = PiranhaArguments::from_command_line();
 
   let (source_code_units, piranha_output_summaries) = execute_piranha(&args);
 

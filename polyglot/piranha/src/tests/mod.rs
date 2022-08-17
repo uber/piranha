@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 use crate::config::CommandLineArguments;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::source_code_unit::SourceCodeUnit;
-use crate::piranha::execute_piranha;
+use crate::execute_piranha;
 use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
 
 mod test_piranha_java;

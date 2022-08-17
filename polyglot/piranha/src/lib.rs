@@ -11,6 +11,15 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use models::{piranha_arguments::PiranhaArguments, source_code_unit::SourceCodeUnit, piranha_output::PiranhaOutputSummary};
+
+mod config;
+pub mod models;
+// pub mod piranha;
+#[cfg(test)]
+mod tests;
+pub mod utilities;
+
 use std::{collections::HashMap, path::PathBuf};
 
 use colored::Colorize;
@@ -20,10 +29,7 @@ use log::info;
 use regex::Regex;
 use tree_sitter::{Parser, Range};
 
-use crate::{
-  models::{piranha_arguments::PiranhaArguments,
-    piranha_output::PiranhaOutputSummary, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
-  },
+use crate::{models::{rule_store::RuleStore,},
   utilities::{read_file, tree_sitter_utilities::get_match_and_replace_range},
 };
 
@@ -42,7 +48,7 @@ use tree_sitter::Node;
 
 /// Executes piranha for the given configuration
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
-pub(crate) fn execute_piranha(configuration: &PiranhaArguments) -> (Vec<SourceCodeUnit>, Vec<PiranhaOutputSummary>) {
+pub fn execute_piranha(configuration: &PiranhaArguments) -> (Vec<SourceCodeUnit>, Vec<PiranhaOutputSummary>) {
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
   // flag_cleaner.relevant_files
@@ -270,7 +276,7 @@ impl SourceCodeUnit {
 }
 
 // Maintains the state of Piranha and the updated content of files in the source code.
-struct FlagCleaner {
+pub(crate) struct FlagCleaner {
   // Maintains Piranha's state
   rule_store: RuleStore,
   // Path to source code folder
@@ -280,7 +286,7 @@ struct FlagCleaner {
 }
 
 impl FlagCleaner {
-  fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
+   fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self
       .relevant_files
       .values()
@@ -290,7 +296,7 @@ impl FlagCleaner {
   }
 
   /// Performs cleanup related to stale flags
-  fn perform_cleanup(&mut self) {
+    fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
@@ -371,7 +377,7 @@ impl FlagCleaner {
   }
 
   /// Instantiate Flag-cleaner
-  fn new(args: &PiranhaArguments) -> Self {
+fn new(args: &PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(args);
     Self {
       rule_store: graph_rule_store,

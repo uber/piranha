@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 pub(crate) mod constraint;
 pub(crate) mod edit;
 pub(crate) mod outgoing_edges;
-pub(crate) mod piranha_arguments;
+pub mod piranha_arguments;
 pub(crate) mod piranha_config;
 pub(crate) mod rule;
 pub(crate) mod rule_graph;
@@ -22,4 +22,4 @@ pub(crate) mod rule_store;
 pub(crate) mod scopes;
 pub(crate) mod source_code_unit;
 pub(crate) mod matches;
-pub(crate) mod piranha_output;
+pub mod piranha_output;

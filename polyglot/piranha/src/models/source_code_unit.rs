@@ -47,14 +47,14 @@ impl SourceCodeUnit {
     }
   }
 
-  pub fn root_node(&self) -> Node<'_> {
+  pub(crate) fn root_node(&self) -> Node<'_> {
     self.ast.root_node()
   }
 
   /// Writes the current contents of `code` to the file system.
   /// Based on the user's specifications, this function will delete a file if empty
   /// and replace three consecutive newline characters with two.
-  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
+  pub fn persist(&self, piranha_arguments: &PiranhaArguments) {
     if self.code.as_str().is_empty() {
       if piranha_arguments.delete_file_if_empty() {
         _ = fs::remove_file(&self.path).expect("Unable to Delete file");
@@ -186,7 +186,7 @@ impl SourceCodeUnit {
     }
   }
   // #[cfg(test)] // Rust analyzer FP
-  pub fn code(&self) -> String {
+  pub(crate) fn code(&self) -> String {
     String::from(&self.code)
   }
 

@@ -13,6 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::{collections::HashMap, path::PathBuf};
 
+use clap::Parser;
 use colored::Colorize;
 use log::info;
 use tree_sitter::Language;
@@ -25,7 +26,7 @@ use crate::{
 
 #[derive(Clone)]
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
-pub(crate) struct PiranhaArguments {
+pub struct PiranhaArguments {
   /// Path to source code folder.
   path_to_code_base: String,
   // Input arguments provided to Piranha, mapped to tag names -
@@ -48,6 +49,12 @@ pub(crate) struct PiranhaArguments {
 }
 
 impl PiranhaArguments {
+
+  pub fn from_command_line() -> Self {
+    Self::new(CommandLineArguments::parse())
+  }
+
+
   pub(crate) fn new(args: CommandLineArguments) -> Self {
     let path_to_piranha_argument_file =
       PathBuf::from(args.path_to_configurations.as_str()).join("piranha_arguments.toml");
@@ -104,7 +111,7 @@ impl PiranhaArguments {
     self.delete_consecutive_new_lines
   }
 
-    pub(crate) fn path_to_output_summaries(&self) -> Option<&String> {
+  pub fn path_to_output_summaries(&self) -> Option<&String> {
         self.path_to_output_summaries.as_ref()
     }
 }

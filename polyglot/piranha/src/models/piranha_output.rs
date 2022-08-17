@@ -4,7 +4,7 @@ use serde_derive::Serialize;
 use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
 
 #[derive(Serialize, Debug, Clone, Default)]
-pub(crate) struct PiranhaOutputSummary {
+pub struct PiranhaOutputSummary {
   path: String,
   content: String,
   matches: Vec<(String, Match)>,
