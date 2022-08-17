@@ -101,7 +101,9 @@ impl Rule {
       let mut updated_rule = self.clone();
       if !updated_rule.holes().is_empty() {
         updated_rule.update_query(substitutions);
-        updated_rule.update_replace(substitutions);
+        if !updated_rule.is_match_only_rule(){
+          updated_rule.update_replace(substitutions);
+        }
       }
       Ok(updated_rule)
     }

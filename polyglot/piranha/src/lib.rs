@@ -113,7 +113,7 @@ impl SourceCodeUnit {
         query_again = true;
 
         // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit.matches());
+        self.add_to_substitutions(edit.matches(), rule_store);
 
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
@@ -141,7 +141,7 @@ impl SourceCodeUnit {
         // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
         // By NOT invoking this we simulate the application of an identity rule
         //
-        self.add_to_substitutions(m.matches());
+        self.add_to_substitutions(m.matches(), rule_store);
 
         self.propagate((m.range(), m.range()), rule.clone(), rule_store, parser);
       }
@@ -215,7 +215,7 @@ impl SourceCodeUnit {
         (current_match_range, current_replace_range) = get_match_and_replace_range(applied_edit);
         current_rule = edit.matched_rule();
         // Add the (tag, code_snippet) mapping to substitution table.
-        self.add_to_substitutions(edit.matches());
+        self.add_to_substitutions(edit.matches(), rules_store);
       } else {
         // No more parents found for cleanup
         break;
@@ -328,7 +328,7 @@ impl FlagCleaner {
             SourceCodeUnit::new(
               &mut parser,
               content,
-              &self.rule_store.input_substitutions(),
+              &self.rule_store.default_substitutions(),
               path.as_path(),
             )
           })

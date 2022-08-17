@@ -24,6 +24,8 @@ mod test_piranha_kt;
 
 mod test_piranha_strings;
 
+mod test_piranha_swift;
+
 use std::sync::Once;
 
 static INIT: Once = Once::new();
