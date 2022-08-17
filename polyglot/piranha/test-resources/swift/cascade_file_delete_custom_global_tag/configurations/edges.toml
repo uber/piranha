@@ -9,23 +9,18 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+[[edges]]
+from = "delete_switch_entry"
+scope = "Class"
+to = ["delete_enum_entry"]
 
-[[scopes]]
-name = "Class"
-[[scopes.rules]]
-matcher =  """
-(class_declaration name: (_) @cls_name) @class
-"""
-generator = """(
-(class_declaration name: (_) @name) @cs
-(#eq? @name "@cls_name")              
-)"""
+[[edges]]
+from = "delete_enum_entry"
+scope = "Global"
+to = ["read_only_detect_type_alias"]
 
 
-[[scopes]]
-name = "File"
-[[scopes.rules]]
-matcher =  """
-(source_file) @source_file
-"""
-generator = """(source_file) @sf"""
+[[edges]]
+from = "read_only_detect_type_alias"
+scope = "Global"
+to = ["delete_factory_class_inherits_relevant_type_alias"]

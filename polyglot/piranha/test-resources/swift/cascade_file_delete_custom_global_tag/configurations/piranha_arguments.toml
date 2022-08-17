@@ -9,23 +9,8 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-[[scopes]]
-name = "Class"
-[[scopes.rules]]
-matcher =  """
-(class_declaration name: (_) @cls_name) @class
-"""
-generator = """(
-(class_declaration name: (_) @name) @cs
-(#eq? @name "@cls_name")              
-)"""
-
-
-[[scopes]]
-name = "File"
-[[scopes.rules]]
-matcher =  """
-(source_file) @source_file
-"""
-generator = """(source_file) @sf"""
+language = ["swift"]
+substitutions = [
+    ["stale_flag_name", "Premium-Icon"],
+]
+global_tag_prefix = "universal_tag."

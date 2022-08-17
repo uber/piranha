@@ -9,25 +9,25 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Matchs an enum entry named `GLOBAL_TAG.enum_entry_name`
+# Matchs an enum entry named `universal_tag.enum_entry_name`
 [[rules]]
 name = "delete_enum_entry"
 query = """
 (
 class_declaration name: (type_identifier) @enum_declaration_name
 	(enum_class_body (enum_entry name: (simple_identifier) @name)  @ee)
-(#eq? @name "@GLOBAL_TAG.enum_entry_name")
+(#eq? @name "@universal_tag.enum_entry_name")
 )"""
 replace_node = "ee"
 replace = ""
-holes = ["GLOBAL_TAG.enum_entry_name"]
+holes = ["universal_tag.enum_entry_name"]
 
 # Matches a switch case that returns the "stale_flag_name" string literal.
 [[rules]]
 name = "delete_switch_entry"
 query = """
 (
-(switch_entry (switch_pattern (pattern (simple_identifier)@GLOBAL_TAG.enum_entry_name) @pattern)
+(switch_entry (switch_pattern (pattern (simple_identifier)@universal_tag.enum_entry_name) @pattern)
 (statements (control_transfer_statement (line_string_literal (line_str_text) @flag_name)))
 ) @entry
 
@@ -50,7 +50,7 @@ query = """
 """
 holes = [ "enum_declaration_name"]
 
-# Deletes factory calss that uses the GLOBAL_TAG.enum_entry_name and inherits the relevant type alias.
+# Deletes factory calss that uses the universal_tag.enum_entry_name and inherits the relevant type alias.
 [[rules]]
 name = "delete_factory_class_inherits_relevant_type_alias"
 query = """
@@ -62,10 +62,10 @@ query = """
             body: (function_body (statements (call_expression (call_expression
                 (call_suffix (value_arguments (value_argument 
                     value: (prefix_expression target: (simple_identifier) @name))))))))))))) @source_file
-(#eq? @name "@GLOBAL_TAG.enum_entry_name")
+(#eq? @name "@universal_tag.enum_entry_name")
 (#eq? @container "@inherits_plugin_switch")
 )
 """
 replace_node = "source_file"
 replace = ""
-holes = ["GLOBAL_TAG.enum_entry_name", "inherits_plugin_switch"]
+holes = ["universal_tag.enum_entry_name", "inherits_plugin_switch"]
