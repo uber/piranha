@@ -97,7 +97,7 @@ fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: Path
     let expected_file_path = find_file(&path_to_expected, updated_file_name);
     let expected_content = read_file(&expected_file_path).unwrap();
 
-    if !eq_without_whitespace(&source_code_unit.content(), &expected_content) {
+    if !eq_without_whitespace(source_code_unit.content(), &expected_content) {
       all_files_match = false;
       println!("{}", &source_code_unit.content());
     }

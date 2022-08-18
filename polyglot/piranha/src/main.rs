@@ -43,7 +43,7 @@ fn write_output_summary(
   piranha_output_summaries: Vec<PiranhaOutputSummary>, path_to_json: &String,
 ) {
   if let Ok(contents) = serde_json::to_string_pretty(&piranha_output_summaries) {
-    if let Ok(_) = fs::write(path_to_json, contents) {
+    if fs::write(path_to_json, contents).is_ok() {
       return;
     }
   }

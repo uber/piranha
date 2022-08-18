@@ -64,7 +64,7 @@ pub(crate) trait PiranhaHelpers {
     ///
     /// # Returns
     /// List of matches (list of captures), grouped by the outermost tag of the query
-    fn get_query_capture_groups(&self, source_code: &String, query: &Query) -> HashMap<Range, Vec<Vec<QueryCapture>>> ;
+    fn get_query_capture_groups(&self, source_code: &str, query: &Query) -> HashMap<Range, Vec<Vec<QueryCapture>>> ;
 
     /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
     fn satisfies_constraint(&self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,rule_store: &mut RuleStore,) -> bool ;
@@ -164,7 +164,7 @@ impl PiranhaHelpers for Node<'_> {
   }
 
   fn get_query_capture_groups(
-    &self, source_code: &String, query: &Query,
+    &self, source_code: &str, query: &Query,
   ) -> HashMap<Range, Vec<Vec<QueryCapture>>> {
     let mut cursor = QueryCursor::new();
 
@@ -195,7 +195,7 @@ impl PiranhaHelpers for Node<'_> {
 // If tag name did not match a code snippet, add an empty string.
 // Returns the mapping between the tag and source code snippet (accumulated).
 fn accumulate_repeated_tags(
-  query: &Query, query_matches: Vec<Vec<tree_sitter::QueryCapture>>, source_code: &String,
+  query: &Query, query_matches: Vec<Vec<tree_sitter::QueryCapture>>, source_code: &str,
 ) -> HashMap<String, String> {
   let mut code_snippet_by_tag: HashMap<String, String> = HashMap::new();
   let tag_names_by_index: HashMap<usize, &String> =
@@ -359,7 +359,7 @@ pub(crate) fn get_context<'a>(
 }
 
 pub(crate) fn get_match_and_replace_range(input_edit: InputEdit) -> (Range, Range) {
-  return (
+  (
     Range {
       start_byte: input_edit.start_byte,
       end_byte: input_edit.old_end_byte,
@@ -372,7 +372,7 @@ pub(crate) fn get_match_and_replace_range(input_edit: InputEdit) -> (Range, Rang
       start_point: input_edit.start_position,
       end_point: input_edit.new_end_position,
     },
-  );
+  )
 }
 
 #[cfg(test)]
