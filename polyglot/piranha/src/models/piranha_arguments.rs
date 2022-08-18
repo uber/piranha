@@ -125,7 +125,7 @@ impl PiranhaArguments {
     if let Some(t) = &self.global_tag_prefix{
       return t.as_str();
     }
-    return "GLOBAL_TAG."
+    "GLOBAL_TAG."
   }
 }
 

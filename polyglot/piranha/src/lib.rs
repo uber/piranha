@@ -61,7 +61,7 @@ pub fn execute_piranha(
 
   if should_rewrite_files {
     for scu in source_code_units {
-      scu.persist(&configuration);
+      scu.persist(configuration);
     }
   }
 
@@ -69,7 +69,7 @@ pub fn execute_piranha(
   flag_cleaner
     .get_updated_files()
     .iter()
-    .map(|f| PiranhaOutputSummary::new(f))
+    .map(PiranhaOutputSummary::new)
     .collect_vec()
 }
 

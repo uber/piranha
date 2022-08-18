@@ -292,7 +292,7 @@ impl Rule {
       .first()
       .map(|p_match| {
         let replacement = substitute_tags(self.replace(), p_match.matches()).replace("\\n", "\n");
-        return Edit::new(p_match.clone(), replacement, self.name());
+        Edit::new(p_match.clone(), replacement, self.name())
       });
   }
 
