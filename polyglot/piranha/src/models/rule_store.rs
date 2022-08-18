@@ -85,7 +85,7 @@ impl RuleStore {
   pub(crate) fn default_substitutions(&self) -> HashMap<String, String> {
     let mut default_subs = self.piranha_args.input_substitutions().clone();
     default_subs.extend(self.global_tags().clone());
-    return default_subs;
+    default_subs
   }
 
   /// Add a new global rule, along with grep heuristics (If it doesn't already exist)
@@ -121,7 +121,7 @@ impl RuleStore {
     // let rule_name = rule.name();
     let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
-    for (scope, to_rule) in self.rule_graph.get_neighbors(&rule_name) {
+    for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
       let to_rule_name = &self.rules_by_name[&to_rule];
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
@@ -169,7 +169,7 @@ impl RuleStore {
       .filter(|e| e.0.starts_with(self.piranha_args.global_tag_prefix()))
       .map(|(a, b)| (a.to_string(), b.to_string()))
       .collect();
-    let _ = &self.global_tags.extend(global_substitutions.clone());
+    let _ = &self.global_tags.extend(global_substitutions);
   }
 }
 
