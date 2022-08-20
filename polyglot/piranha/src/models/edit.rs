@@ -4,14 +4,19 @@ use serde_derive::Serialize;
 use tree_sitter::Range;
 
 use super::matches::Match;
+use pyo3::prelude::pyclass;
 
 #[derive(Serialize, Debug, Clone)]
+#[pyclass]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
+  #[pyo3(get)]
   p_match: Match,
   // The string to replace the substring encompassed by the match
+  #[pyo3(get)]
   replacement_string: String,
   // The rule used for creating this match-replace
+  #[pyo3(get)]
   matched_rule: String,
 }
 

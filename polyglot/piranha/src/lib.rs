@@ -11,9 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use config::CommandLineArguments;
 use models::{
-  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
-  source_code_unit::SourceCodeUnit,
+  piranha_arguments::PiranhaArguments,
+  piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,
 };
 
 mod config;
@@ -46,11 +47,29 @@ use crate::{
   utilities::tree_sitter_utilities::get_node_for_range,
 };
 
+use pyo3::prelude::{PyModule, PyResult, Python, pyfunction, pymodule, wrap_pyfunction};
 use std::collections::VecDeque;
 use tree_sitter::Node;
 
 /// Executes piranha for the given configuration
 /// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
+#[pyfunction]
+pub fn run_piranha_cli(
+  path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool) -> Vec<PiranhaOutputSummary> {
+  let configuration = PiranhaArguments::new(CommandLineArguments {
+    path_to_codebase,
+    path_to_configurations,
+    path_to_output_summary: None,
+  });
+  execute_piranha(&configuration, should_rewrite_files)
+}
+
+#[pymodule]
+fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+  m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
+  Ok(())
+}
+
 pub fn execute_piranha(
   configuration: &PiranhaArguments, should_rewrite_files: bool,
 ) -> Vec<PiranhaOutputSummary> {
@@ -128,12 +147,7 @@ impl SourceCodeUnit {
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
-        self.propagate(
-          get_replace_range(applied_ts_edit),
-          rule,
-          rule_store,
-          parser,
-        );
+        self.propagate(get_replace_range(applied_ts_edit), rule, rule_store, parser);
       }
     }
     // When rule is a "match-only" rule :
@@ -176,8 +190,7 @@ impl SourceCodeUnit {
   ///  (iv) Apply the rules based on custom language specific scopes (as defined in `<language>/scope_config.toml`) (recursive)
   ///
   fn propagate(
-    &mut self, replace_range: Range, rule: Rule,
-    rules_store: &mut RuleStore, parser: &mut Parser,
+    &mut self, replace_range: Range, rule: Rule, rules_store: &mut RuleStore, parser: &mut Parser,
   ) {
     let mut current_replace_range = replace_range;
 
