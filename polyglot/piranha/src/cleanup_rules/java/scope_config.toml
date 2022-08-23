@@ -68,3 +68,12 @@ generator = """
 (#eq? @z "@n")
 )
 """
+
+# Scope generator for java compilation unit
+[[scopes]]
+name = "File"
+[[scopes.rules]]
+matcher =  """
+(program) @c_u
+"""
+generator = "(program) @compilation_unit"

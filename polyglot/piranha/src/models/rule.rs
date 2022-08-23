@@ -27,7 +27,8 @@ use super::{
   source_code_unit::SourceCodeUnit,
 };
 
-static FEATURE_FLAG_API_GROUP: &str = "Feature-flag API cleanup";
+static SEED: &str = "Seed Rule";
+static CLEAN_UP: &str = "Cleanup Rule";
 
 #[derive(Deserialize, Debug, Clone, Hash, Default)]
 // Represents the `rules.toml` file
@@ -56,8 +57,8 @@ pub(crate) struct Rule {
 }
 
 impl Rule {
-  pub(crate) fn is_feature_flag_cleanup(&self) -> bool {
-    self.groups().iter().any(|t| t.eq(FEATURE_FLAG_API_GROUP))
+  pub(crate) fn is_seed_rule(&self) -> bool {
+    self.groups().contains(&SEED.to_string())
   }
 
   // Dummy rules are helper rules that make it easier to define the rule graph.
@@ -102,7 +103,7 @@ impl Rule {
       let mut updated_rule = self.clone();
       if !updated_rule.holes().is_empty() {
         updated_rule.update_query(substitutions);
-        if !updated_rule.is_match_only_rule(){
+        if !updated_rule.is_match_only_rule() {
           updated_rule.update_replace(substitutions);
         }
       }
@@ -141,11 +142,12 @@ impl Rule {
   }
 
   /// Adds the rule to a new group - "Feature-flag API cleanup"
-  pub(crate) fn add_to_feature_flag_api_group(&mut self) {
-    let group_name: String = FEATURE_FLAG_API_GROUP.to_string();
-    match self.groups.as_mut() {
-      None => self.groups = Some(vec![group_name]),
-      Some(_groups) => _groups.push(group_name),
+  pub(crate) fn add_to_seed_rules_group(&mut self) {
+    if !self.groups().contains(&CLEAN_UP.to_string()) {
+      match self.groups.as_mut() {
+        None => self.groups = Some(vec![SEED.to_string()]),
+        Some(_groups) => _groups.push(SEED.to_string()),
+      }
     }
   }
 

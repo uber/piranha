@@ -63,7 +63,7 @@ impl RuleStore {
     };
 
     for (_, rule) in rule_store.rules_by_name.clone() {
-      if rule.is_feature_flag_cleanup() {
+      if rule.is_seed_rule() {
         rule_store.add_to_global_rules(&rule, args.input_substitutions());
       }
     }
