@@ -141,7 +141,7 @@ impl Rule {
     self.grep_heuristics = Some(gh.clone());
   }
 
-  /// Adds the rule to a new group - "Feature-flag API cleanup"
+  /// Adds the rule to a new group - "SEED" if applicable.
   pub(crate) fn add_to_seed_rules_group(&mut self) {
     if !self.groups().contains(&CLEAN_UP.to_string()) {
       match self.groups.as_mut() {
