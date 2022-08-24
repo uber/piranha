@@ -80,9 +80,9 @@ impl PiranhaArguments {
     #[rustfmt::skip]
       info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
-    let mut a = PiranhaArgumentsBuilder::default();
+    let mut args_builder = PiranhaArgumentsBuilder::default();
 
-    a.path_to_code_base(args.path_to_codebase.to_string())
+    args_builder.path_to_code_base(args.path_to_codebase.to_string())
       .input_substitutions(input_substitutions)
       .path_to_configurations(args.path_to_configurations)
       .path_to_output_summaries(args.path_to_output_summary)
@@ -90,15 +90,15 @@ impl PiranhaArguments {
       .language(piranha_args_from_config.language().get_language());
 
     if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
-      a.delete_file_if_empty(v);
+      args_builder.delete_file_if_empty(v);
     }
     if let Some(v) = piranha_args_from_config.delete_consecutive_new_lines() {
-      a.delete_consecutive_new_lines(v);
+      args_builder.delete_consecutive_new_lines(v);
     }
     if let Some(v) = piranha_args_from_config.global_tag_prefix() {
-      a.global_tag_prefix(v);
+      args_builder.global_tag_prefix(v);
     }
-    return a.build().unwrap();
+    return args_builder.build().unwrap();
   }
 }
 
