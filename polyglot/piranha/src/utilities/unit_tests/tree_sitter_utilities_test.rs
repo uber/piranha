@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::{HashMap, HashSet}, path::PathBuf};
 
 use tree_sitter::Query;
 
@@ -123,8 +123,8 @@ fn test_satisfies_constraints_positive() {
       )",
     "variable_declaration",
     "",
-    None,
-    Some(vec![Constraint::new(
+    HashSet::new(),
+    HashSet::from([Constraint::new(
       String::from("(method_declaration) @md"),
       vec![String::from(
         "(
@@ -186,8 +186,8 @@ fn test_satisfies_constraints_negative() {
       )",
     "variable_declaration",
     "",
-    None,
-    Some(vec![Constraint::new(
+    HashSet::new(),
+    HashSet::from([Constraint::new(
       String::from("(method_declaration) @md"),
       vec![String::from(
         "(

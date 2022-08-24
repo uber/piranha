@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
 use serde_derive::Deserialize;
@@ -30,13 +30,13 @@ use super::{
 static SEED: &str = "Seed Rule";
 static CLEAN_UP: &str = "Cleanup Rule";
 
-#[derive(Deserialize, Debug, Clone, Hash, Default)]
+#[derive(Deserialize, Debug, Clone, Default)]
 // Represents the `rules.toml` file
 pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, Default)]
+#[derive(Deserialize, Debug, Clone, Default)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
   name: String,
@@ -47,13 +47,13 @@ pub(crate) struct Rule {
   /// Replacement pattern
   replace: Option<String>,
   /// Group(s) to which the rule belongs
-  groups: Option<Vec<String>>,
+  groups: Option<HashSet<String>>,
   /// Holes that need to be filled, in order to instantiate a rule
-  holes: Option<Vec<String>>,
+  holes: Option<HashSet<String>>,
   /// Additional constraints for matching the rule
-  constraints: Option<Vec<Constraint>>,
+  constraints: Option<HashSet<Constraint>>,
   /// Heuristics for identifying potential files containing occurrence of the rule.
-  grep_heuristics: Option<Vec<String>>,
+  grep_heuristics: Option<HashSet<String>>,
 }
 
 impl Rule {
@@ -132,10 +132,10 @@ impl Rule {
   pub(crate) fn add_grep_heuristics_for_global_rules(
     &mut self, substitutions: &HashMap<String, String>,
   ) {
-    let mut gh = vec![];
+    let mut gh = HashSet::new();
     for hole in self.holes() {
       if let Some(x) = substitutions.get(&hole) {
-        gh.push(x.clone());
+        gh.insert(x.clone());
       }
     }
     self.grep_heuristics = Some(gh.clone());
@@ -147,11 +147,9 @@ impl Rule {
       return;
     }
     match self.groups.as_mut() {
-      None => self.groups = Some(vec![SEED.to_string()]),
+      None => self.groups = Some(HashSet::from([SEED.to_string()])),
       Some(_groups) => {
-        if !_groups.contains(&SEED.to_string()) {
-          _groups.push(SEED.to_string())
-        }
+          _groups.insert(SEED.to_string());
       }
     }
   }
@@ -177,31 +175,31 @@ impl Rule {
     panic!("No replace pattern!")
   }
 
-  pub(crate) fn constraints(&self) -> Vec<Constraint> {
+  pub(crate) fn constraints(&self) -> HashSet<Constraint> {
     match &self.constraints {
       Some(cs) => cs.clone(),
-      None => vec![],
+      None => HashSet::new(),
     }
   }
 
-  pub(crate) fn grep_heuristics(&self) -> Vec<String> {
+  pub(crate) fn grep_heuristics(&self) -> HashSet<String> {
     match &self.grep_heuristics {
       Some(cs) => cs.clone(),
-      None => vec![],
+      None => HashSet::new(),
     }
   }
 
-  pub(crate) fn holes(&self) -> Vec<String> {
+  pub(crate) fn holes(&self) -> HashSet<String> {
     match &self.holes {
       Some(cs) => cs.clone(),
-      None => vec![],
+      None => HashSet::new(),
     }
   }
 
-  fn groups(&self) -> Vec<String> {
+  fn groups(&self) -> HashSet<String> {
     match &self.groups {
       Some(cs) => cs.clone(),
-      None => vec![],
+      None => HashSet::new(),
     }
   }
 
@@ -315,8 +313,8 @@ impl Rule {
 #[cfg(test)]
 impl Rule {
   pub(crate) fn new(
-    name: &str, query: &str, replace_node: &str, replace: &str, holes: Option<Vec<String>>,
-    constraints: Option<Vec<Constraint>>,
+    name: &str, query: &str, replace_node: &str, replace: &str, holes: HashSet<String>,
+    constraints: HashSet<Constraint>,
   ) -> Self {
     Self {
       name: name.to_string(),
@@ -324,8 +322,8 @@ impl Rule {
       replace_node: Some(replace_node.to_string()),
       replace: Some(replace.to_string()),
       groups: None,
-      holes,
-      constraints,
+      holes: if holes.is_empty() { None} else {Some(holes)},
+      constraints: if constraints.is_empty() { None} else {Some(constraints)},
       grep_heuristics: None,
     }
   }
