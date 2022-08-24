@@ -57,6 +57,13 @@ fn test_java_scenarios_find_and_propagate() {
   run_rewrite_test(&format!("{}/{}", LANGUAGE, "find_and_propagate"), 2);
 }
 
+
+#[test]
+fn test_java_scenarios_user_defined_non_seed_rules() {
+  initialize();
+  run_rewrite_test(&format!("{}/{}", LANGUAGE, "non_seed_user_rule"), 1);
+}
+
 // run_match_test
 #[test]
 fn test_java_match_only() {

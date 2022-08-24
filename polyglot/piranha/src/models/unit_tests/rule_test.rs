@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use {
   super::Rule,
   crate::{
@@ -11,8 +13,9 @@ use {
 /// Tests whether a valid rule can be correctly instantiated given valid substitutions.
 #[test]
 fn test_rule_try_instantiate_positive() {
+  let holes = HashSet::from([String::from("variable_name")]);
   let rule = Rule::new("test","(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))",
-        "@abc", "",Some(vec![String::from("variable_name")]), None);
+        "@abc", "",holes, HashSet::new());
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("variable_name"), String::from("foobar")),
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
@@ -29,7 +32,7 @@ fn test_rule_try_instantiate_positive() {
 #[test]
 fn test_rule_try_instantiate_negative() {
   let rule = Rule::new("test","(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))",
-        "abc", "",Some(vec![String::from("variable_name")]), None);
+        "abc", "",HashSet::from([String::from("variable_name")]), HashSet::new());
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
@@ -45,8 +48,8 @@ fn test_get_edit_positive_recursive() {
                                            declarator: (variable_declarator
                                                                name: (_) @variable_name
                                                                value: [(true) (false)] @init)) @variable_declaration)
-                           )", "variable_declaration", "" ,None, 
-                           Some(vec![
+                           )", "variable_declaration", "" ,HashSet::new(), 
+                           HashSet::from([
                           Constraint::new(String::from("(method_declaration) @md"),
                             vec![String::from("(
                               ((assignment_expression
@@ -92,8 +95,8 @@ fn test_get_edit_negative_recursive() {
                                            declarator: (variable_declarator
                                                                name: (_) @variable_name
                                                                value: [(true) (false)] @init)) @variable_declaration)
-                           )", "variable_declaration", "" ,None, 
-                           Some(vec![
+                           )", "variable_declaration", "" ,HashSet::new(), 
+                           HashSet::from([
                           Constraint::new(String::from("(method_declaration) @md"),
                             vec![String::from("(
                               ((assignment_expression
@@ -143,8 +146,8 @@ fn test_get_edit_for_context_positive() {
       @binary_expression)",
     "binary_expression",
     "",
-    None,
-    None,
+    HashSet::new(),
+    HashSet::new(),
   );
 
   let source_code = "class A {
@@ -186,8 +189,8 @@ fn test_get_edit_for_context_negative() {
       @binary_expression)",
     "binary_expression",
     "",
-    None,
-    None,
+    HashSet::new(),
+    HashSet::new(),
   );
 
   let source_code = "class A {
