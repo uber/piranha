@@ -71,7 +71,6 @@ pub(crate) fn read_config_files(
   let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
 
-  // Label the input-rules as `Feature-flag API cleanup`
   for r in input_rules.rules.iter_mut() {
     r.add_to_seed_rules_group();
   }

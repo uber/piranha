@@ -143,10 +143,15 @@ impl Rule {
 
   /// Adds the rule to a new group - "SEED" if applicable.
   pub(crate) fn add_to_seed_rules_group(&mut self) {
-    if !self.groups().contains(&CLEAN_UP.to_string()) {
-      match self.groups.as_mut() {
-        None => self.groups = Some(vec![SEED.to_string()]),
-        Some(_groups) => _groups.push(SEED.to_string()),
+    if self.groups().contains(&CLEAN_UP.to_string()) {
+      return;
+    }
+    match self.groups.as_mut() {
+      None => self.groups = Some(vec![SEED.to_string()]),
+      Some(_groups) => {
+        if !_groups.contains(&SEED.to_string()) {
+          _groups.push(SEED.to_string())
+        }
       }
     }
   }
