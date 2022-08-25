@@ -61,6 +61,10 @@ pub struct PiranhaArguments {
   /// All source code units from this point will have access to this global tag.
   #[getset(get = "pub")]
   global_tag_prefix: String,
+  /// Add a user option to configure the number of ancestors considered when applying 
+  /// parent scoped rules 
+  #[getset(get = "pub")]
+  number_of_ancestors_in_parent_scope: u8 
 }
 
 impl PiranhaArguments {
@@ -118,6 +122,7 @@ impl Default for PiranhaArguments {
       /// i.e. it expects global tag names to look like
       /// @GLOBAL_TAG.class_name
       global_tag_prefix: "GLOBAL_TAG.".to_string(),
+      number_of_ancestors_in_parent_scope: 4
     }
   }
 }
