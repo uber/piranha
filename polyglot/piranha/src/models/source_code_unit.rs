@@ -56,11 +56,11 @@ impl SourceCodeUnit {
   /// and replace three consecutive newline characters with two.
   pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
     if self.code.as_str().is_empty() {
-      if piranha_arguments.delete_file_if_empty() {
+      if *piranha_arguments.delete_file_if_empty() {
         _ = fs::remove_file(&self.path).expect("Unable to Delete file");
       }
     } else {
-      let content = if piranha_arguments.delete_consecutive_new_lines() {
+      let content = if *piranha_arguments.delete_consecutive_new_lines() {
         let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
         regex.replace_all(&self.code(), "\n${2}").to_string()
       } else {

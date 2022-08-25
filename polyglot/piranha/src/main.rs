@@ -28,10 +28,10 @@ fn main() {
 
   let piranha_output_summaries = execute_piranha(&args, true);
 
-  if args.path_to_output_summaries().is_some() {
+  if let Some(path) = args.path_to_output_summaries() {
     write_output_summary(
       piranha_output_summaries,
-      args.path_to_output_summaries().unwrap(),
+      path,
     );
   }
 

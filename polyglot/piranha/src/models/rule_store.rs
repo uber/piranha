@@ -181,7 +181,7 @@ impl RuleStore {
       rule_query_cache: HashMap::new(),
       rules_by_name: HashMap::new(),
       global_rules: vec![],
-      piranha_args: PiranhaArguments::dummy(),
+      piranha_args: PiranhaArguments::default(),
       scopes: vec![],
       global_tags: HashMap::new(),
     }
@@ -193,7 +193,7 @@ impl RuleStore {
       rule_query_cache: HashMap::new(),
       rules_by_name: HashMap::new(),
       global_rules: vec![],
-      piranha_args: PiranhaArguments::dummy(),
+      piranha_args: PiranhaArguments::default(),
       scopes,
       global_tags : HashMap::new()
     }

@@ -12,9 +12,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use std::{collections::HashMap, path::PathBuf};
-
+use getset::{Getters, CopyGetters};
 use clap::Parser;
 use colored::Colorize;
+use derive_builder::Builder;
 use log::info;
 use tree_sitter::Language;
 
@@ -24,32 +25,42 @@ use crate::{
   utilities::{read_toml, tree_sitter_utilities::TreeSitterHelpers},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Builder, Getters, CopyGetters)]
+#[builder(default)]
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
 pub struct PiranhaArguments {
   /// Path to source code folder.
+  #[getset(get = "pub")]
   path_to_code_base: String,
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
   // These substitutions instantiate the initial set of feature flag rules.
+  #[getset(get = "pub")]
   input_substitutions: HashMap<String, String>,
   /// Folder containing the API specific rules
+  #[getset(get = "pub")]
   path_to_configurations: String,
   /// File to which the output summary should be written
+  #[getset(get = "pub")]
   path_to_output_summaries: Option<String>,
   /// Tree-sitter language model
+  #[getset(get_copy = "pub")]
   language: Language,
   // The language name is file the extension used for files in particular language.
+  #[getset(get = "pub")]
   language_name: String,
   // User option that determines whether an empty file will be deleted
+  #[getset(get = "pub")]
   delete_file_if_empty: bool,
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
+  #[getset(get = "pub")]
   delete_consecutive_new_lines: bool,
-  // User option that determines the prefix used for tag names that should be considered 
+  // User option that determines the prefix used for tag names that should be considered
   /// global i.e. if a global tag is found when rewriting a source code unit
-  /// All source code units from this point will have access to this global tag. 
-  global_tag_prefix: Option<String>,
+  /// All source code units from this point will have access to this global tag.
+  #[getset(get = "pub")]
+  global_tag_prefix: String,
 }
 
 impl PiranhaArguments {
@@ -69,77 +80,30 @@ impl PiranhaArguments {
     #[rustfmt::skip]
       info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
-    Self {
-      path_to_code_base: args.path_to_codebase.to_string(),
-      input_substitutions,
-      path_to_configurations: args.path_to_configurations,
-      path_to_output_summaries: args.path_to_output_summary,
-      language_name: String::from(&piranha_args_from_config.language()),
-      language: piranha_args_from_config.language().get_language(),
-      delete_file_if_empty: piranha_args_from_config
-        .delete_file_if_empty()
-        .unwrap_or(true),
-      delete_consecutive_new_lines: piranha_args_from_config
-        .delete_consecutive_new_lines()
-        .unwrap_or(false),
-      global_tag_prefix: piranha_args_from_config.global_tag_prefix(),
+    let mut args_builder = PiranhaArgumentsBuilder::default();
+
+    args_builder.path_to_code_base(args.path_to_codebase.to_string())
+      .input_substitutions(input_substitutions)
+      .path_to_configurations(args.path_to_configurations)
+      .path_to_output_summaries(args.path_to_output_summary)
+      .language_name(piranha_args_from_config.language())
+      .language(piranha_args_from_config.language().get_language());
+
+    if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
+      args_builder.delete_file_if_empty(v);
     }
-  }
-
-  pub(crate) fn path_to_code_base(&self) -> &str {
-    self.path_to_code_base.as_ref()
-  }
-
-  pub(crate) fn input_substitutions(&self) -> &HashMap<String, String> {
-    &self.input_substitutions
-  }
-
-  pub(crate) fn path_to_configurations(&self) -> &str {
-    self.path_to_configurations.as_ref()
-  }
-
-  pub(crate) fn language(&self) -> Language {
-    self.language
-  }
-
-  pub(crate) fn language_name(&self) -> &str {
-    self.language_name.as_ref()
-  }
-
-  pub(crate) fn delete_file_if_empty(&self) -> bool {
-    self.delete_file_if_empty
-  }
-
-  pub(crate) fn delete_consecutive_new_lines(&self) -> bool {
-    self.delete_consecutive_new_lines
-  }
-
-  pub fn path_to_output_summaries(&self) -> Option<&String> {
-        self.path_to_output_summaries.as_ref()
+    if let Some(v) = piranha_args_from_config.delete_consecutive_new_lines() {
+      args_builder.delete_consecutive_new_lines(v);
     }
-  
-  /// Returns default Global prefix tag as "GLOBAL_TAG."
-  /// i.e. it expects global tag names to lok like 
-  /// @GLOBAL_TAG.class_name
-  pub(crate) fn global_tag_prefix(&self) -> &str {
-    if let Some(t) = &self.global_tag_prefix{
-      return t.as_str();
+    if let Some(v) = piranha_args_from_config.global_tag_prefix() {
+      args_builder.global_tag_prefix(v);
     }
-    "GLOBAL_TAG."
+    return args_builder.build().unwrap();
   }
 }
 
-#[cfg(test)]
-impl PiranhaArguments {
-  pub(crate) fn set_delete_file_if_empty(&mut self, value: bool) {
-    self.delete_file_if_empty = value;
-  }
-
-  pub(crate) fn set_delete_consecutive_new_lines(&mut self, value: bool) {
-    self.delete_consecutive_new_lines = value;
-  }
-
-  pub(crate) fn dummy() -> Self {
+impl Default for PiranhaArguments {
+  fn default() -> Self {
     let language_name = String::from("java");
     PiranhaArguments {
       path_to_code_base: String::new(),
@@ -149,28 +113,11 @@ impl PiranhaArguments {
       language: language_name.get_language(),
       language_name,
       delete_consecutive_new_lines: false,
-      delete_file_if_empty: false,
-      global_tag_prefix: None
+      delete_file_if_empty: true,
+      /// default Global prefix tag us "GLOBAL_TAG."
+      /// i.e. it expects global tag names to look like
+      /// @GLOBAL_TAG.class_name
+      global_tag_prefix: "GLOBAL_TAG.".to_string(),
     }
-  }
-
-  pub(crate) fn dummy_with_user_opt(
-    delete_file_if_empty: bool, delete_consecutive_new_lines: bool,
-  ) -> Self {
-    let language_name = String::from("java");
-    let mut args = PiranhaArguments {
-      path_to_code_base: String::new(),
-      input_substitutions: HashMap::new(),
-      path_to_configurations: String::new(),
-      path_to_output_summaries: None,
-      language: language_name.get_language(),
-      language_name,
-      delete_consecutive_new_lines: false,
-      delete_file_if_empty: false,
-      global_tag_prefix: None
-    };
-    args.set_delete_consecutive_new_lines(delete_consecutive_new_lines);
-    args.set_delete_file_if_empty(delete_file_if_empty);
-    args
   }
 }
