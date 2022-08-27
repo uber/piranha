@@ -72,7 +72,7 @@ impl ScopeGenerator {
         ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return substitute_tags(m.generator(), p_match.matches());
+          return substitute_tags(m.generator(), p_match.matches(), true);
         } else {
           changed_node = parent;
         }

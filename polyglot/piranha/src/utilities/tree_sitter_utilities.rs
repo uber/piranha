@@ -314,12 +314,19 @@ fn _get_tree_sitter_edit(
   }
 }
 
-pub(crate) fn substitute_tags(s: String, substitutions: &HashMap<String, String>) -> String {
-  let mut output = s;
+pub(crate) fn substitute_tags(
+  input_string: String, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
+) -> String {
+  let mut output = input_string;
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
     let key = format!("@{}", tag);
-    output = output.replace(&key, &substitute.replace('\n', "\\n"))
+    let substitution_value = if is_tree_sitter_query {
+      substitute.replace('\n', "\\n").to_string()
+    } else {
+      substitute.to_string()
+    };
+    output = output.replace(&key, &substitution_value);
   }
   output
 }
@@ -360,12 +367,12 @@ pub(crate) fn get_context<'a>(
 }
 
 pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
-    Range {
-      start_byte: input_edit.start_byte,
-      end_byte: input_edit.new_end_byte,
-      start_point: input_edit.start_position,
-      end_point: input_edit.new_end_position,
-    }
+  Range {
+    start_byte: input_edit.start_byte,
+    end_byte: input_edit.new_end_byte,
+    start_point: input_edit.start_position,
+    end_point: input_edit.new_end_position,
+  }
 }
 
 #[cfg(test)]
