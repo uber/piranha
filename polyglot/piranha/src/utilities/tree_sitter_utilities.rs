@@ -358,21 +358,13 @@ pub(crate) fn get_context<'a>(
   output
 }
 
-pub(crate) fn get_match_and_replace_range(input_edit: InputEdit) -> (Range, Range) {
-  (
-    Range {
-      start_byte: input_edit.start_byte,
-      end_byte: input_edit.old_end_byte,
-      start_point: input_edit.start_position,
-      end_point: input_edit.old_end_position,
-    },
+pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
     Range {
       start_byte: input_edit.start_byte,
       end_byte: input_edit.new_end_byte,
       start_point: input_edit.start_position,
       end_point: input_edit.new_end_position,
-    },
-  )
+    }
 }
 
 #[cfg(test)]
