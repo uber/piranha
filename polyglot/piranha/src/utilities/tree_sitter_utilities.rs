@@ -267,18 +267,18 @@ pub(crate) fn get_tree_sitter_edit(
   }
   #[rustfmt::skip]
   info!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
-
-  (
-    // Create the new source code content by appropriately
+  // Create the new source code content by appropriately
     // replacing the range with the replacement string.
-    [
+  let new_source_code =  [
       &code[..replace_range.start_byte],
       replacement,
       &code[replace_range.end_byte..],
     ]
-    .concat(),
+    .concat();
+  (
+    new_source_code.to_string(),
     // Tree-sitter edit
-    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes()),
+    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes(), &new_source_code.as_bytes()),
   )
 }
 
@@ -298,7 +298,8 @@ fn position_for_offset(input: &[u8], offset: usize) -> Point {
 
 // Creates the InputEdit as per the tree-sitter api documentation.
 fn _get_tree_sitter_edit(
-  replace_range: Range, len_of_replacement: usize, source_code_bytes: &[u8],
+  replace_range: Range, len_of_replacement: usize, old_source_code_bytes: &[u8],
+  new_source_code_bytes: &[u8],
 ) -> InputEdit {
   let start_byte = replace_range.start_byte;
   let old_end_byte = replace_range.end_byte;
@@ -307,9 +308,9 @@ fn _get_tree_sitter_edit(
     start_byte,
     old_end_byte,
     new_end_byte,
-    start_position: position_for_offset(source_code_bytes, start_byte),
-    old_end_position: position_for_offset(source_code_bytes, old_end_byte),
-    new_end_position: position_for_offset(source_code_bytes, new_end_byte),
+    start_position: position_for_offset(old_source_code_bytes, start_byte),
+    old_end_position: position_for_offset(old_source_code_bytes, old_end_byte),
+    new_end_position: position_for_offset(new_source_code_bytes, new_end_byte),
   }
 }
 
