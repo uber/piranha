@@ -82,6 +82,10 @@ impl RuleStore {
     self.piranha_args.language_name()
   }
 
+  pub(crate) fn get_number_of_ancestors_in_parent_scope(&self) -> &u8 {
+    self.piranha_args.number_of_ancestors_in_parent_scope()
+  }
+
   pub(crate) fn default_substitutions(&self) -> HashMap<String, String> {
     let mut default_subs = self.piranha_args.input_substitutions().clone();
     default_subs.extend(self.global_tags().clone());

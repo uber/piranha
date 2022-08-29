@@ -221,6 +221,7 @@ impl Rule {
     source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
     rules_store: &mut RuleStore, rules: &Vec<Rule>,
   ) -> Option<Edit> {
+    let number_of_ancestors_in_parent_scope = rules_store.get_number_of_ancestors_in_parent_scope().clone();
     let changed_node = get_node_for_range(
       source_code_unit.root_node(),
       previous_edit_start,
@@ -232,7 +233,7 @@ impl Rule {
         source_code_unit.root_node(),
         changed_node,
         source_code_unit.code(),
-        4,
+        number_of_ancestors_in_parent_scope
       )
     };
     for rule in rules {
