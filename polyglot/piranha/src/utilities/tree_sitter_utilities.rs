@@ -314,11 +314,17 @@ fn _get_tree_sitter_edit(
   }
 }
 
-/// As input, `substitute_tags` requires the (i) `input_string`, (ii) substitutions for the tags (i.e. @<var>) 
-/// and whether the input string is a tree-sitter query (else it is considered as a replacement pattern).
-/// `substitute_tags` replaces the all the occurrences of a specific tag  with the corresponding string values 
-/// specified in `substitutions`, 
-/// Not it escapes newline characters for tree-sitter-queries. 
+/// Replaces the all the occurrences of a specific tag  with the corresponding string values 
+/// specified in `substitutions`, and returns this new string. 
+/// 
+/// # Arguments 
+/// 
+/// * `input_string` : the string to be transformed 
+/// * `substitutions` : a map between tree-sitter tag and the replacement string 
+/// * `is_tree_sitter_query` : true if the `input_string` is a tree-sitter query, false if it is a 
+///     replacement pattern.
+/// 
+/// Note that,  it escapes newline characters for tree-sitter-queries. 
 pub(crate) fn substitute_tags(
   input_string: String, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
 ) -> String {
