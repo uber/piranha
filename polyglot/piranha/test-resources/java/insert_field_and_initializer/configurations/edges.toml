@@ -14,10 +14,3 @@
 scope = "File"
 from = "add_field_declaration"
 to = ["add_import"]
-
-
-# The edges in this file specify the flow between the rules
-[[edges]]
-scope = "Class"
-from = "add_initializer"
-to = ["add_import"]
