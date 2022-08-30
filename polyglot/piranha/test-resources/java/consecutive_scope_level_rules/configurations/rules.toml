@@ -45,9 +45,11 @@ query = """(
 )"""
 replace_node = "class_body"
 replace = "{\n private String address;\n @class_members \n}"
+groups = ["Cleanup Rule"]
 [[rules.constraints]]
 matcher = "(class_declaration ) @c_cd"
 queries = ["""(
 (field_declaration (variable_declarator name:(_) @name )) @field
 (#eq? @name "address")
 )"""]
+
