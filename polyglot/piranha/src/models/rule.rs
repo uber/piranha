@@ -204,11 +204,11 @@ impl Rule {
   }
 
   pub(crate) fn update_replace(&mut self, substitutions: &HashMap<String, String>) {
-    self.set_replace(substitute_tags(self.replace(), substitutions));
+    self.set_replace(substitute_tags(self.replace(), substitutions, false));
   }
 
   pub(crate) fn update_query(&mut self, substitutions: &HashMap<String, String>) {
-    self.set_query(substitute_tags(self.query(), substitutions));
+    self.set_query(substitute_tags(self.query(), substitutions, false));
   }
 
   pub(crate) fn name(&self) -> String {
@@ -297,7 +297,7 @@ impl Rule {
       .get_matches(source_code_unit, rule_store, node, recursive)
       .first()
       .map(|p_match| {
-        let replacement = substitute_tags(self.replace(), p_match.matches()).replace("\\n", "\n");
+        let replacement = substitute_tags(self.replace(), p_match.matches(), false);
         Edit::new(p_match.clone(), replacement, self.name())
       });
   }
