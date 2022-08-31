@@ -343,15 +343,25 @@ matcher = "(enum_declaration) @ed"
 queries = ["(enum_constant) @ec"]
 
 
+# This rule deltes all the content of the file if it contains 
+# no type declaration, enum declaration and annotation type declaration. 
+#
+# It optionally captures the @package_name for the deleted file. 
 [[rules]]
 name = "delete_file_with_no_type_declarations"
-query = """
-(program) @program"""
+query = """(
+(program 
+  (package_declaration (_) @package_name)?) @program)"""
 replace = ""
 replace_node = "program"
 [[rules.constraints]]
-matcher = "(program) @prgrm"
-queries = ["(enum_declaration) @ec", "(class_declaration) @cd", "(interface_declaration) @id"]
+matcher = "(program) @c_program"
+queries = ["(enum_declaration) @c_enum_declaration", 
+            "(class_declaration) @c_class_declaration",
+            "(interface_declaration) @c_interface_declaration",
+            "(annotation_type_declaration) @c_annotation_type_declaration",
+            "(module_declaration) @c_module_declaration",
+            "(record_declaration) @c_arecord_declaration"]
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
