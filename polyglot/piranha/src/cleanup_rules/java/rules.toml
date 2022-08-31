@@ -359,7 +359,9 @@ matcher = "(program) @c_program"
 queries = ["(enum_declaration) @c_enum_declaration", 
             "(class_declaration) @c_class_declaration",
             "(interface_declaration) @c_interface_declaration",
-            "(annotation_type_declaration) @c_annotation_type_declaration"]
+            "(annotation_type_declaration) @c_annotation_type_declaration",
+            "(module_declaration) @c_module_declaration",
+            "(record_declaration) @c_arecord_declaration"]
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
