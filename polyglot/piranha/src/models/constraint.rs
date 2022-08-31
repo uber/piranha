@@ -23,7 +23,7 @@ impl Constraint {
   }
 
   pub(crate) fn matcher(&self, substitutions: &HashMap<String, String>) -> String {
-    substitute_tags(String::from(&self.matcher), substitutions)
+    substitute_tags(String::from(&self.matcher), substitutions, true)
   }
 
   /// Checks if the node satisfies the constraints.
@@ -55,7 +55,7 @@ impl Constraint {
           p_match.range().end_byte,
         );
         for query_with_holes in self.queries() {
-          let query_str = substitute_tags(query_with_holes.to_string(), substitutions);
+          let query_str = substitute_tags(query_with_holes.to_string(), substitutions, true);
           let query = &rule_store.query(&query_str);
           // If this query matches anywhere within the scope, return false.
           if scope_node

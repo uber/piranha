@@ -267,18 +267,18 @@ pub(crate) fn get_tree_sitter_edit(
   }
   #[rustfmt::skip]
   info!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
-
-  (
-    // Create the new source code content by appropriately
+  // Create the new source code content by appropriately
     // replacing the range with the replacement string.
-    [
+  let new_source_code =  [
       &code[..replace_range.start_byte],
       replacement,
       &code[replace_range.end_byte..],
     ]
-    .concat(),
+    .concat();
+  (
+    new_source_code.to_string(),
     // Tree-sitter edit
-    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes()),
+    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes(), &new_source_code.as_bytes()),
   )
 }
 
@@ -298,7 +298,8 @@ fn position_for_offset(input: &[u8], offset: usize) -> Point {
 
 // Creates the InputEdit as per the tree-sitter api documentation.
 fn _get_tree_sitter_edit(
-  replace_range: Range, len_of_replacement: usize, source_code_bytes: &[u8],
+  replace_range: Range, len_of_replacement: usize, old_source_code_bytes: &[u8],
+  new_source_code_bytes: &[u8],
 ) -> InputEdit {
   let start_byte = replace_range.start_byte;
   let old_end_byte = replace_range.end_byte;
@@ -307,18 +308,36 @@ fn _get_tree_sitter_edit(
     start_byte,
     old_end_byte,
     new_end_byte,
-    start_position: position_for_offset(source_code_bytes, start_byte),
-    old_end_position: position_for_offset(source_code_bytes, old_end_byte),
-    new_end_position: position_for_offset(source_code_bytes, new_end_byte),
+    start_position: position_for_offset(old_source_code_bytes, start_byte),
+    old_end_position: position_for_offset(old_source_code_bytes, old_end_byte),
+    new_end_position: position_for_offset(new_source_code_bytes, new_end_byte),
   }
 }
 
-pub(crate) fn substitute_tags(s: String, substitutions: &HashMap<String, String>) -> String {
-  let mut output = s;
+/// Replaces the all the occurrences of a specific tag  with the corresponding string values 
+/// specified in `substitutions`, and returns this new string. 
+/// 
+/// # Arguments 
+/// 
+/// * `input_string` : the string to be transformed 
+/// * `substitutions` : a map between tree-sitter tag and the replacement string 
+/// * `is_tree_sitter_query` : true if the `input_string` is a tree-sitter query, false if it is a 
+///     replacement pattern.
+/// 
+/// Note that,  it escapes newline characters for tree-sitter-queries. 
+pub(crate) fn substitute_tags(
+  input_string: String, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
+) -> String {
+  let mut output = input_string;
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
     let key = format!("@{}", tag);
-    output = output.replace(&key, &substitute.replace('\n', "\\n"))
+    let substitution_value = if is_tree_sitter_query {
+      substitute.replace('\n', "\\n").to_string()
+    } else {
+      substitute.to_string()
+    };
+    output = output.replace(&key, &substitution_value);
   }
   output
 }
@@ -358,21 +377,13 @@ pub(crate) fn get_context<'a>(
   output
 }
 
-pub(crate) fn get_match_and_replace_range(input_edit: InputEdit) -> (Range, Range) {
-  (
-    Range {
-      start_byte: input_edit.start_byte,
-      end_byte: input_edit.old_end_byte,
-      start_point: input_edit.start_position,
-      end_point: input_edit.old_end_position,
-    },
-    Range {
-      start_byte: input_edit.start_byte,
-      end_byte: input_edit.new_end_byte,
-      start_point: input_edit.start_position,
-      end_point: input_edit.new_end_position,
-    },
-  )
+pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
+  Range {
+    start_byte: input_edit.start_byte,
+    end_byte: input_edit.new_end_byte,
+    start_point: input_edit.start_position,
+    end_point: input_edit.new_end_position,
+  }
 }
 
 #[cfg(test)]

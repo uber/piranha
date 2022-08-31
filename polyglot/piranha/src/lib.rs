@@ -33,7 +33,7 @@ use tree_sitter::{Parser, Range};
 
 use crate::{
   models::rule_store::RuleStore,
-  utilities::{read_file, tree_sitter_utilities::get_match_and_replace_range},
+  utilities::{read_file, tree_sitter_utilities::get_replace_range},
 };
 
 use crate::models::scopes::ScopeGenerator;
@@ -129,7 +129,7 @@ impl SourceCodeUnit {
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
         self.propagate(
-          get_match_and_replace_range(applied_ts_edit),
+          get_replace_range(applied_ts_edit),
           rule,
           rule_store,
           parser,
@@ -153,7 +153,7 @@ impl SourceCodeUnit {
         //
         self.add_to_substitutions(m.matches(), rule_store);
 
-        self.propagate((m.range(), m.range()), rule.clone(), rule_store, parser);
+        self.propagate(m.range(), rule.clone(), rule_store, parser);
       }
     }
     query_again
@@ -176,10 +176,10 @@ impl SourceCodeUnit {
   ///  (iv) Apply the rules based on custom language specific scopes (as defined in `<language>/scope_config.toml`) (recursive)
   ///
   fn propagate(
-    &mut self, (match_range, replace_range): (Range, Range), rule: Rule,
+    &mut self, replace_range: Range, rule: Rule,
     rules_store: &mut RuleStore, parser: &mut Parser,
   ) {
-    let (mut current_match_range, mut current_replace_range) = (match_range, replace_range);
+    let mut current_replace_range = replace_range;
 
     let mut current_rule = rule.name();
     let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
@@ -192,7 +192,7 @@ impl SourceCodeUnit {
       // Adds "Method" and "Class" rules to the stack
       self.add_rules_to_stack(
         &next_rules_by_scope,
-        current_match_range,
+        current_replace_range,
         rules_store,
         &mut next_rules_stack,
       );
@@ -222,7 +222,7 @@ impl SourceCodeUnit {
         );
         // Apply the matched rule to the parent
         let applied_edit = self.apply_edit(&edit, parser);
-        (current_match_range, current_replace_range) = get_match_and_replace_range(applied_edit);
+        current_replace_range = get_replace_range(applied_edit);
         current_rule = edit.matched_rule();
         // Add the (tag, code_snippet) mapping to substitution table.
         self.add_to_substitutions(edit.matches(), rules_store);
