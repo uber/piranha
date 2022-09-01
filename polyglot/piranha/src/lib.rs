@@ -51,8 +51,15 @@ use pyo3::prelude::{PyModule, PyResult, Python, pyfunction, pymodule, wrap_pyfun
 use std::collections::VecDeque;
 use tree_sitter::Node;
 
-/// Executes piranha for the given configuration
-/// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
+/// Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}. 
+/// 
+/// # Arguments:
+/// * path_to_codebase: Path to the root of the code base that Piranha will update
+/// * path_to_configuration: PAth to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+/// * should_rewrite: determines if Piranha should actually update the code.
+/// 
+/// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
+/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites. 
 #[pyfunction]
 pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool) -> Vec<PiranhaOutputSummary> {
