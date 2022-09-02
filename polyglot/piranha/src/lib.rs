@@ -388,7 +388,6 @@ impl FlagCleaner {
       .iter()
       .any(|x| x.holes().is_empty());
     let pattern = self.get_grep_heuristics();
-    info!("{}", format!("Searching pattern {}", pattern).green());
     let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
       // Walk over the entire code base
       .into_iter()
@@ -410,7 +409,7 @@ impl FlagCleaner {
       .filter(|x| no_global_rules_with_holes || pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 

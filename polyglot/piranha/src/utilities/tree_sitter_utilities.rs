@@ -19,7 +19,7 @@ use crate::{
 };
 use colored::Colorize;
 use itertools::Itertools;
-use log::info;
+use log::{info};
 use std::collections::HashMap;
 #[cfg(test)]
 use tree_sitter::Parser;

@@ -120,7 +120,6 @@ impl SourceCodeUnit {
     } else {
       None
     };
-    println!("Replacing file contents");
     // Create a new updated tree from the previous tree
     let new_tree = parser
       .parse(&replacement_content, prev_tree)

@@ -117,7 +117,6 @@ fn test_apply_edit_comma_handling_via_grammar() {
     &Edit::dummy_edit(range(37, 47, 2, 26, 2, 36), String::new()),
     &mut parser,
   );
-  println!("{}", &source_code_unit.code());
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
     &source_code_unit.code()
@@ -144,7 +143,6 @@ fn test_apply_edit_comma_handling_via_regex() {
     &Edit::dummy_edit(range(59, 75, 3, 23, 3, 41), String::new()),
     &mut parser,
   );
-  println!("{}", &source_code_unit.code());
   assert!(eq_without_whitespace(
     &source_code.replace("name: \"BMX Bike\",", ""),
     &source_code_unit.code()

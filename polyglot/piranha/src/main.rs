@@ -17,12 +17,12 @@ use std::{fs, time::Instant};
 use log::info;
 use polyglot_piranha::{
   execute_piranha, models::piranha_arguments::PiranhaArguments,
-  models::piranha_output::PiranhaOutputSummary, utilities::initialize_logger,
+  models::piranha_output::PiranhaOutputSummary,
 };
 
 fn main() {
   let now = Instant::now();
-  initialize_logger(false);
+  env_logger::init();
 
   let args = PiranhaArguments::from_command_line();
 
