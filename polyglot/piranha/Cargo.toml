@@ -1,12 +1,15 @@
 [package]
-authors = ["Ameya Ketkar <ketkara@uber.com>", "Murali Krishna Ramanathan <murali@uber.com>"]
+authors = ["Ameya Ketkar <ketkara@uber.com>", "Lazaro Clapp <lazaro@uber.com>", "Murali Krishna Ramanathan", "Uber Technologies Inc."]
 name = "piranha"
+description = "Piranha is a structural find and replace library based on tree-sitter."
 version = "0.1.1"
 edition = "2021"
 include = [
     "build.rs",
     "src/"
 ]
+license-file = "LICENSE"
+categories = ["structural find-replace", "find-replace", "structural seearch", "structural search and replace", "tree-sitter"]
 
 [[bin]]
 name = "polyglot_piranha"
@@ -15,6 +18,7 @@ path = "src/main.rs"
 [lib]
 name = "polyglot_piranha"
 path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
 
 [build-dependencies]
 cc = "1.0.73"
@@ -41,4 +45,9 @@ tree-sitter-swift = { git = "https://github.com/ketkarameya/tree-sitter-swift.gi
 tree-sitter-strings = { git = "https://github.com/ketkarameya/tree-sitter-strings.git" }
 derive_builder = "0.11.2"
 getset = "0.1.2"
+pyo3 =  "0.17.1"
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
 

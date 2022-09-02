@@ -17,22 +17,19 @@ use std::{fs, time::Instant};
 use log::info;
 use polyglot_piranha::{
   execute_piranha, models::piranha_arguments::PiranhaArguments,
-  models::piranha_output::PiranhaOutputSummary, utilities::initialize_logger,
+  models::piranha_output::PiranhaOutputSummary,
 };
 
 fn main() {
   let now = Instant::now();
-  initialize_logger(false);
+  env_logger::init();
 
   let args = PiranhaArguments::from_command_line();
 
   let piranha_output_summaries = execute_piranha(&args, true);
 
   if let Some(path) = args.path_to_output_summaries() {
-    write_output_summary(
-      piranha_output_summaries,
-      path,
-    );
+    write_output_summary(piranha_output_summaries, path);
   }
 
   info!("Time elapsed - {:?}", now.elapsed().as_secs());

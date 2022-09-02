@@ -11,6 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use config::CommandLineArguments;
 use models::{
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
   source_code_unit::SourceCodeUnit,
@@ -46,11 +47,37 @@ use crate::{
   utilities::tree_sitter_utilities::get_node_for_range,
 };
 
+use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 use std::collections::VecDeque;
 use tree_sitter::Node;
 
-/// Executes piranha for the given configuration
-/// Returns (List of updated piranha files, Map of matches found for each file, map of rewrites performed in each file)
+/// Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}.
+///
+/// # Arguments:
+/// * path_to_codebase: Path to the root of the code base that Piranha will update
+/// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+/// * should_rewrite: determines if Piranha should actually update the code.
+///
+/// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
+/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
+#[pyfunction]
+pub fn run_piranha_cli(
+  path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool,
+) -> Vec<PiranhaOutputSummary> {
+  let configuration = PiranhaArguments::new(CommandLineArguments {
+    path_to_codebase,
+    path_to_configurations,
+    path_to_output_summary: None,
+  });
+  execute_piranha(&configuration, should_rewrite_files)
+}
+
+#[pymodule]
+fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+  m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
+  Ok(())
+}
+
 pub fn execute_piranha(
   configuration: &PiranhaArguments, should_rewrite_files: bool,
 ) -> Vec<PiranhaOutputSummary> {
@@ -128,12 +155,7 @@ impl SourceCodeUnit {
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
-        self.propagate(
-          get_replace_range(applied_ts_edit),
-          rule,
-          rule_store,
-          parser,
-        );
+        self.propagate(get_replace_range(applied_ts_edit), rule, rule_store, parser);
       }
     }
     // When rule is a "match-only" rule :
@@ -176,8 +198,7 @@ impl SourceCodeUnit {
   ///  (iv) Apply the rules based on custom language specific scopes (as defined in `<language>/scope_config.toml`) (recursive)
   ///
   fn propagate(
-    &mut self, replace_range: Range, rule: Rule,
-    rules_store: &mut RuleStore, parser: &mut Parser,
+    &mut self, replace_range: Range, rule: Rule, rules_store: &mut RuleStore, parser: &mut Parser,
   ) {
     let mut current_replace_range = replace_range;
 
@@ -368,7 +389,6 @@ impl FlagCleaner {
       .iter()
       .any(|x| x.holes().is_empty());
     let pattern = self.get_grep_heuristics();
-    info!("{}", format!("Searching pattern {}", pattern).green());
     let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
       // Walk over the entire code base
       .into_iter()
@@ -390,7 +410,7 @@ impl FlagCleaner {
       .filter(|x| no_global_rules_with_holes || pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 

@@ -13,11 +13,13 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::path::{Path, PathBuf};
 
+use log::error;
+
 use crate::config::CommandLineArguments;
 use crate::execute_piranha;
 use crate::models::piranha_arguments::PiranhaArguments;
 use crate::models::piranha_output::PiranhaOutputSummary;
-use crate::utilities::{eq_without_whitespace, find_file, initialize_logger, read_file};
+use crate::utilities::{eq_without_whitespace, find_file, read_file};
 
 mod test_piranha_java;
 mod test_piranha_kt;
@@ -32,7 +34,7 @@ static INIT: Once = Once::new();
 
 fn initialize() {
   INIT.call_once(|| {
-    initialize_logger(true);
+    env_logger::init();
   });
 }
 
@@ -99,7 +101,7 @@ fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: Path
 
     if !eq_without_whitespace(source_code_unit.content(), &expected_content) {
       all_files_match = false;
-      println!("{}", &source_code_unit.content());
+      error!("{}", &source_code_unit.content());
     }
   }
   assert!(all_files_match);

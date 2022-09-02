@@ -1,0 +1,20 @@
+[project]
+name = "polyglot_piranha"
+requires-python = ">=3.7"
+description = "Piranha is a structural find and replace library based on tree-sitter."
+authors = [{name = "Ameya Ketkar", email="ketkara@uber.com"}, {name = "Lazaro Clapp", email="lazaro@uber.com"}, {name = "Uber Technologies Inc."}]
+license = {file = "LICENSE"}
+readme = "README.md"
+keywords = ["refactoring", "code update", "structural find-replace","structural search and replace", "structural search"]
+
+[project.urls]
+homepage = "https://github.com/uber/piranha"
+documentation = "https://github.com/uber/piranha"
+repository = "https://github.com/uber/piranha"
+
+[build-system]
+requires = ["maturin>=0.13,<0.14"]
+build-backend = "maturin"
+
+[tool.maturin]
+bindings = "pyo3"

@@ -1,4 +1,4 @@
-# Multilingual Piranha
+# Polyglot Piranha
 This variant of Piranha provides a flexible multilingual solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 
 ## Motivation 

@@ -57,7 +57,6 @@ fn test_java_scenarios_find_and_propagate() {
   run_rewrite_test(&format!("{}/{}", LANGUAGE, "find_and_propagate"), 2);
 }
 
-
 #[test]
 fn test_java_scenarios_user_defined_non_seed_rules() {
   initialize();
@@ -67,19 +66,31 @@ fn test_java_scenarios_user_defined_non_seed_rules() {
 #[test]
 fn test_java_scenarios_insert_field_and_initializer() {
   initialize();
-  run_rewrite_test(&format!("{}/{}", LANGUAGE, "insert_field_and_initializer"), 1);
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "insert_field_and_initializer"),
+    1,
+  );
 }
 
 #[test]
 fn test_java_scenarios_new_line_character_used_in_string_literal() {
   initialize();
-  run_rewrite_test(&format!("{}/{}", LANGUAGE, "new_line_character_used_in_string_literal"), 1);
+  run_rewrite_test(
+    &format!(
+      "{}/{}",
+      LANGUAGE, "new_line_character_used_in_string_literal"
+    ),
+    1,
+  );
 }
 
 #[test]
 fn test_java_scenarios_consecutive_scope_level_rules() {
   initialize();
-  run_rewrite_test(&format!("{}/{}", LANGUAGE, "consecutive_scope_level_rules"), 1);
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "consecutive_scope_level_rules"),
+    1,
+  );
 }
 
 // run_match_test

@@ -199,7 +199,7 @@ impl RuleStore {
       global_rules: vec![],
       piranha_args: PiranhaArguments::default(),
       scopes,
-      global_tags : HashMap::new()
+      global_tags: HashMap::new(),
     }
   }
 }

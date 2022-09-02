@@ -13,13 +13,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
+use pyo3::prelude::pyclass;
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, Clone)]
+#[pyclass]
 pub(crate) struct Match {
   // Range of the entire AST node captured by the match
+  #[pyo3(get)]
   range: Range,
   // The mapping between tags and string representation of the AST captured.
+  #[pyo3(get)]
   matches: HashMap<String, String>,
 }
 
@@ -66,17 +70,25 @@ impl Match {
 /// rows and columns.
 /// Note `LocalRange` derives serialize.
 #[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[pyclass]
 struct Range {
+  #[pyo3(get)]
   start_byte: usize,
+  #[pyo3(get)]
   end_byte: usize,
+  #[pyo3(get)]
   start_point: Point,
+  #[pyo3(get)]
   end_point: Point,
 }
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
 #[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[pyclass]
 struct Point {
+  #[pyo3(get)]
   row: usize,
+  #[pyo3(get)]
   column: usize,
 }

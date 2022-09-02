@@ -11,12 +11,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{collections::HashMap, path::PathBuf};
-use getset::{Getters, CopyGetters};
 use clap::Parser;
 use colored::Colorize;
 use derive_builder::Builder;
+use getset::{CopyGetters, Getters};
 use log::info;
+use std::{collections::HashMap, path::PathBuf};
 use tree_sitter::Language;
 
 use crate::{
@@ -61,10 +61,10 @@ pub struct PiranhaArguments {
   /// All source code units from this point will have access to this global tag.
   #[getset(get = "pub")]
   global_tag_prefix: String,
-  /// Add a user option to configure the number of ancestors considered when applying 
-  /// parent scoped rules 
+  /// Add a user option to configure the number of ancestors considered when applying
+  /// parent scoped rules
   #[getset(get = "pub")]
-  number_of_ancestors_in_parent_scope: u8 
+  number_of_ancestors_in_parent_scope: u8,
 }
 
 impl PiranhaArguments {
@@ -82,11 +82,12 @@ impl PiranhaArguments {
     let input_substitutions = piranha_args_from_config.substitutions();
 
     #[rustfmt::skip]
-      info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
+    info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
     let mut args_builder = PiranhaArgumentsBuilder::default();
 
-    args_builder.path_to_code_base(args.path_to_codebase.to_string())
+    args_builder
+      .path_to_code_base(args.path_to_codebase.to_string())
       .input_substitutions(input_substitutions)
       .path_to_configurations(args.path_to_configurations)
       .path_to_output_summaries(args.path_to_output_summary)
@@ -102,7 +103,7 @@ impl PiranhaArguments {
     if let Some(v) = piranha_args_from_config.global_tag_prefix() {
       args_builder.global_tag_prefix(v);
     }
-    return args_builder.build().unwrap();
+    args_builder.build().unwrap()
   }
 }
 
@@ -122,7 +123,7 @@ impl Default for PiranhaArguments {
       /// i.e. it expects global tag names to look like
       /// @GLOBAL_TAG.class_name
       global_tag_prefix: "GLOBAL_TAG.".to_string(),
-      number_of_ancestors_in_parent_scope: 4
+      number_of_ancestors_in_parent_scope: 4,
     }
   }
 }

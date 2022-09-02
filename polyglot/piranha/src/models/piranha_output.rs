@@ -4,12 +4,17 @@ use itertools::Itertools;
 use serde_derive::Serialize;
 
 use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
-
+use pyo3::prelude::pyclass;
 #[derive(Serialize, Debug, Clone, Default)]
+#[pyclass]
 pub struct PiranhaOutputSummary {
+  #[pyo3(get)]
   path: String,
+  #[pyo3(get)]
   content: String,
+  #[pyo3(get)]
   matches: Vec<(String, Match)>,
+  #[pyo3(get)]
   rewrites: Vec<Edit>,
 }
 

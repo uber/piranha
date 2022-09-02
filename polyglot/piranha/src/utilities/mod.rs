@@ -12,11 +12,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 pub(crate) mod tree_sitter_utilities;
-
 use std::collections::HashMap;
+use std::fs::File;
 #[cfg(test)]
 use std::fs::{self, DirEntry};
-use std::fs::{File, OpenOptions};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
@@ -63,21 +62,6 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
   fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
     self.entry(key).or_insert_with(Vec::new).push(value);
   }
-}
-
-/// Initialize logger.
-pub fn initialize_logger(is_test: bool) {
-  let log_file = OpenOptions::new()
-    .write(true)
-    .create(true) // Create a log file if it doesn't exists
-    .append(true) // Append to the log file if it exists
-    .open("piranha.log")
-    .unwrap();
-  let _ = env_logger::builder()
-    .format_timestamp(None)
-    .target(env_logger::Target::Pipe(Box::new(log_file)))
-    .is_test(is_test)
-    .try_init();
 }
 
 /// Compares two strings, ignoring whitespace

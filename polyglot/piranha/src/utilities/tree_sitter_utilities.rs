@@ -268,17 +268,22 @@ pub(crate) fn get_tree_sitter_edit(
   #[rustfmt::skip]
   info!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
   // Create the new source code content by appropriately
-    // replacing the range with the replacement string.
-  let new_source_code =  [
-      &code[..replace_range.start_byte],
-      replacement,
-      &code[replace_range.end_byte..],
-    ]
-    .concat();
+  // replacing the range with the replacement string.
+  let new_source_code = [
+    &code[..replace_range.start_byte],
+    replacement,
+    &code[replace_range.end_byte..],
+  ]
+  .concat();
   (
     new_source_code.to_string(),
     // Tree-sitter edit
-    _get_tree_sitter_edit(replace_range, replacement.as_bytes().len(), code.as_bytes(), &new_source_code.as_bytes()),
+    _get_tree_sitter_edit(
+      replace_range,
+      replacement.as_bytes().len(),
+      code.as_bytes(),
+      new_source_code.as_bytes(),
+    ),
   )
 }
 
@@ -314,17 +319,17 @@ fn _get_tree_sitter_edit(
   }
 }
 
-/// Replaces the all the occurrences of a specific tag  with the corresponding string values 
-/// specified in `substitutions`, and returns this new string. 
-/// 
-/// # Arguments 
-/// 
-/// * `input_string` : the string to be transformed 
-/// * `substitutions` : a map between tree-sitter tag and the replacement string 
-/// * `is_tree_sitter_query` : true if the `input_string` is a tree-sitter query, false if it is a 
+/// Replaces the all the occurrences of a specific tag  with the corresponding string values
+/// specified in `substitutions`, and returns this new string.
+///
+/// # Arguments
+///
+/// * `input_string` : the string to be transformed
+/// * `substitutions` : a map between tree-sitter tag and the replacement string
+/// * `is_tree_sitter_query` : true if the `input_string` is a tree-sitter query, false if it is a
 ///     replacement pattern.
-/// 
-/// Note that,  it escapes newline characters for tree-sitter-queries. 
+///
+/// Note that,  it escapes newline characters for tree-sitter-queries.
 pub(crate) fn substitute_tags(
   input_string: String, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
 ) -> String {
