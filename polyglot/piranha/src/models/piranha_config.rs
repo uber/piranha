@@ -42,11 +42,11 @@ impl PiranhaConfiguration {
     self.delete_file_if_empty
   }
 
-    pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
-        self.delete_consecutive_new_lines
-    }
+  pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
+    self.delete_consecutive_new_lines
+  }
 
   pub(crate) fn global_tag_prefix(&self) -> Option<String> {
-      self.global_tag_prefix.clone()
+    self.global_tag_prefix.clone()
   }
 }

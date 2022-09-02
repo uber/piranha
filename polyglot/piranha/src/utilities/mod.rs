@@ -13,9 +13,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 pub(crate) mod tree_sitter_utilities;
 use std::collections::HashMap;
+use std::fs::File;
 #[cfg(test)]
 use std::fs::{self, DirEntry};
-use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;

@@ -29,10 +29,7 @@ fn main() {
   let piranha_output_summaries = execute_piranha(&args, true);
 
   if let Some(path) = args.path_to_output_summaries() {
-    write_output_summary(
-      piranha_output_summaries,
-      path,
-    );
+    write_output_summary(piranha_output_summaries, path);
   }
 
   info!("Time elapsed - {:?}", now.elapsed().as_secs());

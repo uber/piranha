@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use colored::Colorize;
-use log::{info};
+use log::info;
 use tree_sitter::{Language, Query};
 
 use crate::{
@@ -199,7 +199,7 @@ impl RuleStore {
       global_rules: vec![],
       piranha_args: PiranhaArguments::default(),
       scopes,
-      global_tags : HashMap::new()
+      global_tags: HashMap::new(),
     }
   }
 }

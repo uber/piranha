@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::path::{Path, PathBuf};
 
-use log::{error};
+use log::error;
 
 use crate::config::CommandLineArguments;
 use crate::execute_piranha;

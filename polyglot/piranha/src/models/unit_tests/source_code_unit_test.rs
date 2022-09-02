@@ -169,9 +169,10 @@ fn execute_persist_in_temp_folder(
 #[test]
 fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(true)
-      .delete_file_if_empty(true)
-      .build().unwrap();
+    .delete_consecutive_new_lines(true)
+    .delete_file_if_empty(true)
+    .build()
+    .unwrap();
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;
@@ -184,9 +185,10 @@ fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
 #[test]
 fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(true)
-      .delete_file_if_empty(false)
-      .build().unwrap();
+    .delete_consecutive_new_lines(true)
+    .delete_file_if_empty(false)
+    .build()
+    .unwrap();
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;
@@ -200,9 +202,10 @@ fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
 #[test]
 fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(true)
-      .delete_file_if_empty(true)
-      .build().unwrap();
+    .delete_consecutive_new_lines(true)
+    .delete_file_if_empty(true)
+    .build()
+    .unwrap();
   let source_code_test_1 = "class Test {
     public void foobar() {
 
@@ -253,9 +256,10 @@ fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
 #[test]
 fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(false)
-      .delete_file_if_empty(true)
-      .build().unwrap();
+    .delete_consecutive_new_lines(false)
+    .delete_file_if_empty(true)
+    .build()
+    .unwrap();
   let source_code = "class Test {
     public void foobar() {
 
