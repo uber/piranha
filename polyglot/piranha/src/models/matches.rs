@@ -13,8 +13,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
-use serde_derive::Serialize;
 use pyo3::prelude::pyclass;
+use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, Clone)]
 #[pyclass]

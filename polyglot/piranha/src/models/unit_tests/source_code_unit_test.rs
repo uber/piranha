@@ -117,7 +117,6 @@ fn test_apply_edit_comma_handling_via_grammar() {
     &Edit::dummy_edit(range(37, 47, 2, 26, 2, 36), String::new()),
     &mut parser,
   );
-  println!("{}", &source_code_unit.code());
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
     &source_code_unit.code()
@@ -144,7 +143,6 @@ fn test_apply_edit_comma_handling_via_regex() {
     &Edit::dummy_edit(range(59, 75, 3, 23, 3, 41), String::new()),
     &mut parser,
   );
-  println!("{}", &source_code_unit.code());
   assert!(eq_without_whitespace(
     &source_code.replace("name: \"BMX Bike\",", ""),
     &source_code_unit.code()
@@ -171,9 +169,10 @@ fn execute_persist_in_temp_folder(
 #[test]
 fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(true)
-      .delete_file_if_empty(true)
-      .build().unwrap();
+    .delete_consecutive_new_lines(true)
+    .delete_file_if_empty(true)
+    .build()
+    .unwrap();
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;
@@ -186,9 +185,10 @@ fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
 #[test]
 fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(true)
-      .delete_file_if_empty(false)
-      .build().unwrap();
+    .delete_consecutive_new_lines(true)
+    .delete_file_if_empty(false)
+    .build()
+    .unwrap();
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;
@@ -202,9 +202,10 @@ fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
 #[test]
 fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(true)
-      .delete_file_if_empty(true)
-      .build().unwrap();
+    .delete_consecutive_new_lines(true)
+    .delete_file_if_empty(true)
+    .build()
+    .unwrap();
   let source_code_test_1 = "class Test {
     public void foobar() {
 
@@ -255,9 +256,10 @@ fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
 #[test]
 fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
-      .delete_consecutive_new_lines(false)
-      .delete_file_if_empty(true)
-      .build().unwrap();
+    .delete_consecutive_new_lines(false)
+    .delete_file_if_empty(true)
+    .build()
+    .unwrap();
   let source_code = "class Test {
     public void foobar() {
 

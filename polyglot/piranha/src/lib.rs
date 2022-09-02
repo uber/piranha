@@ -13,8 +13,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use config::CommandLineArguments;
 use models::{
-  piranha_arguments::PiranhaArguments,
-  piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,
+  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
+  source_code_unit::SourceCodeUnit,
 };
 
 mod config;
@@ -47,22 +47,23 @@ use crate::{
   utilities::tree_sitter_utilities::get_node_for_range,
 };
 
-use pyo3::prelude::{PyModule, PyResult, Python, pyfunction, pymodule, wrap_pyfunction};
+use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 use std::collections::VecDeque;
 use tree_sitter::Node;
 
-/// Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}. 
-/// 
+/// Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}.
+///
 /// # Arguments:
 /// * path_to_codebase: Path to the root of the code base that Piranha will update
 /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
 /// * should_rewrite: determines if Piranha should actually update the code.
-/// 
+///
 /// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
-/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites. 
+/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
 pub fn run_piranha_cli(
-  path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool) -> Vec<PiranhaOutputSummary> {
+  path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool,
+) -> Vec<PiranhaOutputSummary> {
   let configuration = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase,
     path_to_configurations,
@@ -388,7 +389,6 @@ impl FlagCleaner {
       .iter()
       .any(|x| x.holes().is_empty());
     let pattern = self.get_grep_heuristics();
-    info!("{}", format!("Searching pattern {}", pattern).green());
     let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
       // Walk over the entire code base
       .into_iter()
@@ -410,7 +410,7 @@ impl FlagCleaner {
       .filter(|x| no_global_rules_with_holes || pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    println!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 

@@ -149,7 +149,7 @@ impl Rule {
     match self.groups.as_mut() {
       None => self.groups = Some(HashSet::from([SEED.to_string()])),
       Some(_groups) => {
-          _groups.insert(SEED.to_string());
+        _groups.insert(SEED.to_string());
       }
     }
   }
@@ -221,7 +221,8 @@ impl Rule {
     source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
     rules_store: &mut RuleStore, rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope = rules_store.get_number_of_ancestors_in_parent_scope().clone();
+    let number_of_ancestors_in_parent_scope = *rules_store
+      .get_number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(
       source_code_unit.root_node(),
       previous_edit_start,
@@ -233,7 +234,7 @@ impl Rule {
         source_code_unit.root_node(),
         changed_node,
         source_code_unit.code(),
-        number_of_ancestors_in_parent_scope
+        number_of_ancestors_in_parent_scope,
       )
     };
     for rule in rules {
@@ -323,8 +324,12 @@ impl Rule {
       replace_node: Some(replace_node.to_string()),
       replace: Some(replace.to_string()),
       groups: None,
-      holes: if holes.is_empty() { None} else {Some(holes)},
-      constraints: if constraints.is_empty() { None} else {Some(constraints)},
+      holes: if holes.is_empty() { None } else { Some(holes) },
+      constraints: if constraints.is_empty() {
+        None
+      } else {
+        Some(constraints)
+      },
       grep_heuristics: None,
     }
   }

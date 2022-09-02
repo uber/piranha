@@ -15,21 +15,23 @@ use super::{initialize, run_rewrite_test};
 
 static LANGUAGE: &str = "swift";
 
-// Tests cascading file delete based on enum and type alias. 
+// Tests cascading file delete based on enum and type alias.
 // This scenario is "derived" from plugin cleanup.
 // This cleanup requires the concept of global tags
 #[test]
 fn test_cascading_delete_file() {
   initialize();
-  run_rewrite_test(&format!("{}/{}",LANGUAGE, "cascade_file_delete"), 3);
+  run_rewrite_test(&format!("{}/{}", LANGUAGE, "cascade_file_delete"), 3);
 }
 
-
-// Tests cascading file delete based on enum and type alias. 
+// Tests cascading file delete based on enum and type alias.
 // This scenario is "derived" from plugin cleanup.
 // Checks custom global_tags
 #[test]
 fn test_cascading_delete_file_custom_global_tag() {
   initialize();
-  run_rewrite_test(&format!("{}/{}",LANGUAGE, "cascade_file_delete_custom_global_tag"), 3);
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "cascade_file_delete_custom_global_tag"),
+    3,
+  );
 }
