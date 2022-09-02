@@ -13,11 +13,11 @@ def test_piranha_match_only():
 
 def is_as_expected(path_to_scenario, output_summary):
     expected_output = join(path_to_scenario, 'expected')
-    is_as_expected = True
     for file_name in listdir(expected_output):
         with open(join(expected_output, file_name), 'r') as f:
             file_content = f.read()
             expected_content = ''.join(file_content.split())
             updated_content = [''.join(o.content.split()) for o in output_summary if basename(o.path) == file_name][0]
-            is_as_expected = is_as_expected and (is_as_expected and expected_content == updated_content)
-    return is_as_expected
+            if expected_content != updated_content:
+                return False
+    return True

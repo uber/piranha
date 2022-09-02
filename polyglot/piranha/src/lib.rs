@@ -55,7 +55,7 @@ use tree_sitter::Node;
 /// 
 /// # Arguments:
 /// * path_to_codebase: Path to the root of the code base that Piranha will update
-/// * path_to_configuration: PAth to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+/// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
 /// * should_rewrite: determines if Piranha should actually update the code.
 /// 
 /// Returns Piranha Output Summary for each file touched or analyzed by Piranha.

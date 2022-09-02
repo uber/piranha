@@ -2,7 +2,7 @@
 name = "polyglot_piranha"
 requires-python = ">=3.7"
 description = "Piranha is a structural find and replace library based on tree-sitter."
-authors = [{name = "Ameya Ketkar", email="ketkara@uber.com"}, {name = "Lazaro Clapp", email="lazaro@uber.com"}]
+authors = [{name = "Ameya Ketkar", email="ketkara@uber.com"}, {name = "Lazaro Clapp", email="lazaro@uber.com"}, {name = "Uber Technologies Inc."}]
 license = {file = "LICENSE"}
 readme = "README.md"
 keywords = ["refactoring", "code update", "structural find-replace","structural search and replace", "structural search"]
