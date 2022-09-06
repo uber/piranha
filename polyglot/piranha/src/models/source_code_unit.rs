@@ -97,6 +97,18 @@ impl SourceCodeUnit {
     return applied_edit;
   }
 
+  /// This function reports the range of the comment associated to the deleted element. 
+  /// 
+  /// # Arguments:
+  /// * row : The row number where the deleted element started
+  /// * buffer: Number of lines that we want to look up to find associated comment 
+  /// 
+  /// # Algorithm : 
+  /// Get all the nodes that either start and end at [row]
+  /// If **all** nodes are comments 
+  /// * return the range of the comment
+  /// If the [row] has no node that either starts/ends there:
+  /// * recursively call this method for [row] -1 (until buffer is positive)
   fn get_comment_at_line(&mut self, row: usize, buffer: usize) -> Option<Range> {
     // Get all nodes that start or end on `updated_row`.
     let mut relevant_nodes_found = false;
