@@ -175,6 +175,10 @@ impl RuleStore {
       .collect();
     let _ = &self.global_tags.extend(global_substitutions);
   }
+
+  pub(crate) fn piranha_args(&self) -> &PiranhaArguments {
+      &self.piranha_args
+  }
 }
 
 #[cfg(test)]

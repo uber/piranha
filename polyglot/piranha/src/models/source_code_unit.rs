@@ -15,7 +15,10 @@ use crate::utilities::{
 };
 
 use super::{
-  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
+  edit::Edit,
+  matches::Match,
+  piranha_arguments::{PiranhaArguments},
+  rule_store::RuleStore,
 };
 
 // Maintains the updated source code content and AST of the file
@@ -34,14 +37,14 @@ pub(crate) struct SourceCodeUnit {
   rewrites: Vec<Edit>,
   // Matches for the read_only rules in this source code unit
   matches: Vec<(String, Match)>,
-  language_name: String
-
+  // Piranha Arguments passed by the user
+  piranha_arguments: PiranhaArguments,
 }
 
 impl SourceCodeUnit {
   pub(crate) fn new(
     parser: &mut Parser, code: String, substitutions: &HashMap<String, String>, path: &Path,
-    language_name: String
+    piranha_arguments: &PiranhaArguments,
   ) -> Self {
     let ast = parser.parse(&code, None).expect("Could not parse code");
     Self {
@@ -51,7 +54,7 @@ impl SourceCodeUnit {
       path: path.to_path_buf(),
       rewrites: Vec::new(),
       matches: Vec::new(),
-      language_name
+      piranha_arguments: piranha_arguments.clone(),
     }
   }
 
@@ -87,9 +90,13 @@ impl SourceCodeUnit {
       true,
     );
     // Check if the edit kind is "DELETE something"
-    if edit.replacement_string().is_empty() {
+    if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty()
+    {
       let deleted_at = edit.replacement_range().start_point.row;
-      if let Some(comment_range) = self.get_comment_at_line(deleted_at, 2) {
+      if let Some(comment_range) = self.get_comment_at_line(
+        deleted_at,
+        self.piranha_arguments.cleanup_comments_buffer().clone(),
+      ) {
         info!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser, false);
       }
@@ -97,15 +104,15 @@ impl SourceCodeUnit {
     return applied_edit;
   }
 
-  /// This function reports the range of the comment associated to the deleted element. 
-  /// 
+  /// This function reports the range of the comment associated to the deleted element.
+  ///
   /// # Arguments:
   /// * row : The row number where the deleted element started
-  /// * buffer: Number of lines that we want to look up to find associated comment 
-  /// 
-  /// # Algorithm : 
+  /// * buffer: Number of lines that we want to look up to find associated comment
+  ///
+  /// # Algorithm :
   /// Get all the nodes that either start and end at [row]
-  /// If **all** nodes are comments 
+  /// If **all** nodes are comments
   /// * return the range of the comment
   /// If the [row] has no node that either starts/ends there:
   /// * recursively call this method for [row] -1 (until buffer is positive)
@@ -115,15 +122,19 @@ impl SourceCodeUnit {
     let mut relevant_nodes_are_comments = true;
     let mut comment_range = None;
     for node in traverse(self.ast.walk(), Order::Post) {
-      if node.start_position().row == row || node.end_position().row == row {
-        relevant_nodes_found = true;
-        let is_comment: bool = self.language_name.is_comment(node.kind());
-        relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
-        if is_comment {
-          comment_range = Some(node.range());
-        }
+    
+    if node.start_position().row == row || node.end_position().row == row {
+      relevant_nodes_found = true;
+      let is_comment: bool = self
+        .piranha_arguments
+        .language_name()
+        .is_comment(node.kind());
+      relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
+      if is_comment {
+        comment_range = Some(node.range());
       }
     }
+  }
 
     if relevant_nodes_found {
       if relevant_nodes_are_comments {

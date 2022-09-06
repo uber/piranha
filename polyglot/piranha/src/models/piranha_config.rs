@@ -23,6 +23,8 @@ pub(crate) struct PiranhaConfiguration {
   delete_file_if_empty: Option<bool>,
   delete_consecutive_new_lines: Option<bool>,
   global_tag_prefix: Option<String>,
+  cleanup_comments_buffer: Option<usize>,
+  cleanup_comments: Option<bool>
 }
 
 impl PiranhaConfiguration {
@@ -49,4 +51,12 @@ impl PiranhaConfiguration {
   pub(crate) fn global_tag_prefix(&self) -> Option<String> {
     self.global_tag_prefix.clone()
   }
+
+    pub(crate) fn cleanup_comments_buffer(&self) -> Option<usize> {
+        self.cleanup_comments_buffer
+    }
+
+    pub(crate) fn cleanup_comments(&self) -> Option<bool> {
+        self.cleanup_comments
+    }
 }

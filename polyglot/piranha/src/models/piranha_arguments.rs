@@ -65,6 +65,13 @@ pub struct PiranhaArguments {
   /// parent scoped rules
   #[getset(get = "pub")]
   number_of_ancestors_in_parent_scope: u8,
+  /// The number of lines to consider for cleaning up the comments 
+  #[getset(get = "pub")]
+  cleanup_comments_buffer: usize,
+  /// The AST Kinds for which comments should be deleted
+  #[getset(get = "pub")]
+  cleanup_comments: bool,
+  
 }
 
 impl PiranhaArguments {
@@ -103,6 +110,15 @@ impl PiranhaArguments {
     if let Some(v) = piranha_args_from_config.global_tag_prefix() {
       args_builder.global_tag_prefix(v);
     }
+
+    if let Some(buffer_size) = piranha_args_from_config.cleanup_comments_buffer(){
+      args_builder.cleanup_comments_buffer(buffer_size);
+    }
+
+    if let Some(ast_kinds) = piranha_args_from_config.cleanup_comments(){
+      args_builder.cleanup_comments(ast_kinds);
+    }
+
     args_builder.build().unwrap()
   }
 }
@@ -124,6 +140,8 @@ impl Default for PiranhaArguments {
       /// @GLOBAL_TAG.class_name
       global_tag_prefix: "GLOBAL_TAG.".to_string(),
       number_of_ancestors_in_parent_scope: 4,
+      cleanup_comments_buffer: 2,
+      cleanup_comments: false,
     }
   }
 }

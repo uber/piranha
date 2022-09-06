@@ -14,3 +14,5 @@ substitutions = [
     ["stale_flag_name", "Premium-Icon"],
 ]
 global_tag_prefix = "universal_tag."
+cleanup_comments=true
+cleanup_comments_buffer=3

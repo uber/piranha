@@ -1,3 +1,5 @@
+
+
 use {
   super::{ScopeGenerator, ScopeQueryGenerator},
   crate::{
@@ -64,7 +66,7 @@ fn test_get_scope_query_positive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.language_name().to_string()
+    rule_store.piranha_args()
   );
 
   let scope_query_method = ScopeGenerator::get_scope_query(
@@ -158,7 +160,7 @@ fn test_get_scope_query_negative() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.language_name().to_string()
+    rule_store.piranha_args()
   );
 
   let _ = ScopeGenerator::get_scope_query(source_code_unit, "Method", 133, 134, &mut rule_store);
