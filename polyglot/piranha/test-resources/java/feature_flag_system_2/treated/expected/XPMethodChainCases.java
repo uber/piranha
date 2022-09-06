@@ -27,7 +27,7 @@ class XPMethodChainCases {
     SomeParam sp = SomeParam.create(cp);
     // Matches API
     System.out.println("!");
-    // Matches API
+
 
     // Does not match API
     if (sp.otherFlag().getCachedValue()) {
@@ -57,7 +57,7 @@ class XPMethodChainCases {
     }
 
     System.out.println("done!");
-    // Matches API
+    
 
     // Do not match API
     cp.put(sp.otherFlag(), true);
@@ -65,12 +65,12 @@ class XPMethodChainCases {
   }
 
   class TestMethodChainTest {
-    // Matches annotation
+    
     public void testSomethingTreated() {
       System.out.println();
     }
 
-    // Matches annotation
+    
 
     // Does not match annotation
     @ParameterValue(ns = "some_long_name", key = "other_flag", val = "false")
