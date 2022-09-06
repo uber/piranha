@@ -59,6 +59,7 @@ impl TreeSitterHelpers for String {
     match self.as_str() {
       "java" => kind.eq("line_comment") || kind.eq("block_comment"),
       "kt" => kind.eq("comment"),
+      "swift" => kind.eq("comment") || kind.eq("multiline_comment"),
       _ => false,
     }
   }
