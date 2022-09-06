@@ -4,11 +4,15 @@ use std::{
   path::{Path, PathBuf},
 };
 
+use log::info;
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
-use crate::utilities::{eq_without_whitespace, tree_sitter_utilities::get_tree_sitter_edit};
+use crate::utilities::{
+  eq_without_whitespace,
+  tree_sitter_utilities::{get_tree_sitter_edit, TreeSitterHelpers},
+};
 
 use super::{
   edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
@@ -30,11 +34,14 @@ pub(crate) struct SourceCodeUnit {
   rewrites: Vec<Edit>,
   // Matches for the read_only rules in this source code unit
   matches: Vec<(String, Match)>,
+  language_name: String
+
 }
 
 impl SourceCodeUnit {
   pub(crate) fn new(
     parser: &mut Parser, code: String, substitutions: &HashMap<String, String>, path: &Path,
+    language_name: String
   ) -> Self {
     let ast = parser.parse(&code, None).expect("Could not parse code");
     Self {
@@ -44,6 +51,7 @@ impl SourceCodeUnit {
       path: path.to_path_buf(),
       rewrites: Vec::new(),
       matches: Vec::new(),
+      language_name
     }
   }
 
@@ -72,12 +80,47 @@ impl SourceCodeUnit {
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    self._apply_edit(
+    let mut applied_edit = self._apply_edit(
       edit.replacement_range(),
       edit.replacement_string(),
       parser,
       true,
-    )
+    );
+    // Check if the edit kind is "DELETE something"
+    if edit.replacement_string().is_empty() {
+      let deleted_at = edit.replacement_range().start_point.row;
+      if let Some(comment_range) = self.get_comment_at_line(deleted_at, 2) {
+        info!("Deleting an associated comment");
+        applied_edit = self._apply_edit(comment_range, "", parser, false);
+      }
+    }
+    return applied_edit;
+  }
+
+  fn get_comment_at_line(&mut self, row: usize, buffer: usize) -> Option<Range> {
+    // Get all nodes that start or end on `updated_row`.
+    let mut relevant_nodes_found = false;
+    let mut relevant_nodes_are_comments = true;
+    let mut comment_range = None;
+    for node in traverse(self.ast.walk(), Order::Post) {
+      if node.start_position().row == row || node.end_position().row == row {
+        relevant_nodes_found = true;
+        let is_comment: bool = self.language_name.is_comment(node.kind());
+        relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
+        if is_comment {
+          comment_range = Some(node.range());
+        }
+      }
+    }
+
+    if relevant_nodes_found {
+      if relevant_nodes_are_comments {
+        return comment_range;
+      }
+    } else if buffer > 0 {
+      return self.get_comment_at_line(row - 1, buffer - 1);
+    }
+    return None;
   }
 
   /// Applies an edit to the source code unit

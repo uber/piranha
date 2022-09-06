@@ -151,14 +151,15 @@ fn test_satisfies_constraints_positive() {
       }";
 
   let mut rule_store = RuleStore::dummy();
-
-  let mut parser = get_parser(String::from("java"));
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    language_name
   );
 
   let node = &source_code_unit
@@ -214,14 +215,15 @@ fn test_satisfies_constraints_negative() {
       }";
 
   let mut rule_store = RuleStore::dummy();
-
-  let mut parser = get_parser(String::from("java"));
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    language_name
   );
 
   let node = &source_code_unit

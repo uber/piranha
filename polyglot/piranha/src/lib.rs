@@ -361,6 +361,7 @@ impl FlagCleaner {
               content,
               &self.rule_store.default_substitutions(),
               path.as_path(),
+              self.rule_store.language_name().to_string(),
             )
           })
           // Apply the rules to this file

@@ -24,12 +24,13 @@ class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
     SOME_FLAG,
+    // Some stale enum
     STALE_FLAG
   }
 
   enum AnotherTestExperimentName {
     @Autorollout
-    STALE_FLAG,
+    STALE_FLAG, // Some stale enum
     SOME_OTHER_FLAG
   }
 

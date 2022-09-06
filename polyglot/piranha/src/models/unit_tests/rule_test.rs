@@ -78,6 +78,7 @@ fn test_get_edit_positive_recursive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    rule_store.language_name().to_string()
   );
   let node = source_code_unit.root_node();
   let matches = rule.get_matches(&source_code_unit, &mut rule_store, node, true);
@@ -124,6 +125,7 @@ fn test_get_edit_negative_recursive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    rule_store.language_name().to_string()
   );
   let node = source_code_unit.root_node();
   let matches = rule.get_matches(&source_code_unit, &mut rule_store, node, true);
@@ -163,6 +165,7 @@ fn test_get_edit_for_context_positive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    rule_store.language_name().to_string()
   );
   let edit = Rule::get_edit_for_context(
     &source_code_unit,
@@ -207,6 +210,7 @@ fn test_get_edit_for_context_negative() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    rule_store.language_name().to_string()
   );
   let edit = Rule::get_edit_for_context(
     &source_code_unit,
