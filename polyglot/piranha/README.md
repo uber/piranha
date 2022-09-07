@@ -35,7 +35,7 @@ The output JSON format is - `models.PiranhaOutputSummary`.
 
 Languages supported :
 * Java
-* Kotlin (planned)
+* Kotlin
 * Java + Kotlin (planned)
 * Swift (planned)
 * JavaScript (planned)
@@ -50,7 +50,7 @@ Languages supported :
 * Install [Rust](https://www.rust-lang.org/tools/install), Git and [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
 * Checkout this repository - `git checkout https://github.com/uber/piranha.git` 
 * `cd piranha/polyglot/piranha`
-* `cargo build --release`
+* `cargo build --release` (you should add the flag `--no-default-features` on macOS)
 * You will see the binary under `target/release`
 
 ## Getting started with Piranha
@@ -59,7 +59,8 @@ Languages supported :
 To run the demo : 
 * `cd polyglot/piranha`
 * `./demo/run_piranha_demo.sh`
-*Please refer to our test cases at [`/polyglot/piranha/src/test-resources/<language>/`](/polyglot/piranha/src/test-resources/) as a reference for handling complicated scenarios*
+
+*Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
 To get started with Piranha, please follow the below steps:
 * Check if the current version of Piranha supports the required language.
