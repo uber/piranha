@@ -29,7 +29,7 @@ internal class XPMethodChainCases {
     companion object {
         fun foobar(cp: Parameter) {
             val sp = SomeParameter.create()
-            // Matches API
+
             // Matches API
             println("!!!")
             // Does not match API
@@ -60,6 +60,7 @@ internal class XPMethodChainCases {
             }
             println("done!")
             // Matches API
+            if (someCond()) {}
             // Do not match API
             cp.put(sp.isOtherFlag(), true)
             cp.put(sp.isOtherFlag(), false)

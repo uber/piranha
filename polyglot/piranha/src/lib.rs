@@ -33,7 +33,7 @@ use regex::Regex;
 use tree_sitter::{Parser, Range};
 
 use crate::{
-  models::rule_store::RuleStore,
+  models::rule_store::{RuleStore},
   utilities::{read_file, tree_sitter_utilities::get_replace_range},
 };
 
@@ -361,6 +361,7 @@ impl FlagCleaner {
               content,
               &self.rule_store.default_substitutions(),
               path.as_path(),
+              self.rule_store.piranha_args(),
             )
           })
           // Apply the rules to this file

@@ -1,9 +1,24 @@
+
+/*
+Copyright (c) 2022 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
 use std::{
   collections::{HashMap, HashSet},
   path::PathBuf,
 };
 
 use tree_sitter::Query;
+
+use crate::models::piranha_arguments::{PiranhaArgumentsBuilder};
 
 use {
   super::{get_parser, substitute_tags, PiranhaHelpers, TreeSitterHelpers},
@@ -151,14 +166,15 @@ fn test_satisfies_constraints_positive() {
       }";
 
   let mut rule_store = RuleStore::dummy();
-
-  let mut parser = get_parser(String::from("java"));
-
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
+  let piranha_args = PiranhaArgumentsBuilder::default().language_name(language_name).build().unwrap();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    &piranha_args
   );
 
   let node = &source_code_unit
@@ -214,14 +230,15 @@ fn test_satisfies_constraints_negative() {
       }";
 
   let mut rule_store = RuleStore::dummy();
-
-  let mut parser = get_parser(String::from("java"));
-
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
+  let piranha_arguments = &PiranhaArgumentsBuilder::default().language_name(language_name).build().unwrap();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
+    piranha_arguments
   );
 
   let node = &source_code_unit

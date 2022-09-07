@@ -70,12 +70,12 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(a: Int, z: Int) {
-        // Currently if there is another assignment, variable will not be inlined.
+   
         println("Hello World")
     }
 
     fun conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(a: Int, z: Int) {
-        // Currently if there is another assignment, variable will not be inlined.
+     
         println("Hello World")
     }
 

@@ -16,3 +16,4 @@ substitutions = [
     ["treated_complement", "false"],
     ["namespace", "some_long_name"]
 ]
+cleanup_comments= false

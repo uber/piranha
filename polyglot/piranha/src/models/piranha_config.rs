@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -12,7 +10,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-
+use std::collections::HashMap;
 use serde_derive::Deserialize;
 
 /// Captures the Piranha arguments by from the file at `path_to_feature_flag_rules`.
@@ -23,6 +21,8 @@ pub(crate) struct PiranhaConfiguration {
   delete_file_if_empty: Option<bool>,
   delete_consecutive_new_lines: Option<bool>,
   global_tag_prefix: Option<String>,
+  cleanup_comments_buffer: Option<usize>,
+  cleanup_comments: Option<bool>
 }
 
 impl PiranhaConfiguration {
@@ -49,4 +49,12 @@ impl PiranhaConfiguration {
   pub(crate) fn global_tag_prefix(&self) -> Option<String> {
     self.global_tag_prefix.clone()
   }
+
+    pub(crate) fn cleanup_comments_buffer(&self) -> Option<usize> {
+        self.cleanup_comments_buffer
+    }
+
+    pub(crate) fn cleanup_comments(&self) -> Option<bool> {
+        self.cleanup_comments
+    }
 }

@@ -16,6 +16,9 @@ import Experiment
 
 public enum SomePluginSwitch: PluginSwitch {
     case defaultIcon
+    // Premium icon
+
+    
     case premiumIcon
     case defaultTitle
     case premiumTitle

@@ -13,3 +13,4 @@ language = ["swift"]
 substitutions = [
     ["stale_flag_name", "Premium-Icon"],
 ]
+cleanup_comments=true

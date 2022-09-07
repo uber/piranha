@@ -21,7 +21,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_contains_stale_flag() {}
 
   public void conditional_with_else_contains_stale_flag() {
-
+    
     System.out.println("Hi world");
   }
 
@@ -70,7 +70,6 @@ class XPFlagCleanerPositiveCases {
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(
       int a, bool abc, int z) {
-    // Currently if there is another assignment, variable will not be inlined.
 
     System.out.println("Hello World");
   }

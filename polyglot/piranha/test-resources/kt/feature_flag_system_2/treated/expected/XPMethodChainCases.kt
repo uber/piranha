@@ -31,7 +31,7 @@ internal class XPMethodChainCases {
             val sp = SomeParameter.create()
             // Matches API
             println("!")
-            // Matches API
+
             // Does not match API
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
@@ -59,7 +59,7 @@ internal class XPMethodChainCases {
                 print("!!")
             }
             println("done!")
-            // Matches API
+
             // Do not match API
             cp.put(sp.isOtherFlag(), true)
             cp.put(sp.isOtherFlag(), false)

@@ -32,6 +32,8 @@ pub(crate) trait TreeSitterHelpers {
   fn get_language(&self) -> Language;
   /// Compiles query string to `tree_sitter::Query`
   fn create_query(&self, language: Language) -> Query;
+  /// Determines if the given node kind is a comment for the respective language (`self`)
+  fn is_comment(&self, kind: &str) -> bool ;
 }
 
 impl TreeSitterHelpers for String {
@@ -50,6 +52,15 @@ impl TreeSitterHelpers for String {
       "swift" => tree_sitter_swift::language(),
       "strings" => tree_sitter_strings::language(),
       _ => panic!("Language not supported"),
+    }
+  }
+
+  fn is_comment(&self, kind: &str) -> bool {
+    match self.as_str() {
+      "java" => kind.eq("line_comment") || kind.eq("block_comment"),
+      "kt" => kind.eq("comment"),
+      "swift" => kind.eq("comment") || kind.eq("multiline_comment"),
+      _ => false,
     }
   }
 }

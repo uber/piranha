@@ -1,3 +1,15 @@
+/*
+Copyright (c) 2022 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
 use std::{
   fs::{self},
   io,
@@ -20,12 +32,13 @@ use {
 };
 
 impl SourceCodeUnit {
-  pub(crate) fn dummy_unit(content: &str, parser: &mut Parser) -> Self {
+  pub(crate) fn default(content: &str, parser: &mut Parser, language_name: String) -> Self {
     SourceCodeUnit::new(
       parser,
       content.to_string(),
       &HashMap::new(),
       PathBuf::new().as_path(),
+      &PiranhaArgumentsBuilder::default().language_name(language_name).build().unwrap()
     )
   }
 }
@@ -60,14 +73,15 @@ fn test_apply_edit_positive() {
         }
       }
     }";
+  
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
 
-  let mut parser = get_parser(String::from("java"));
-
-  let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(49, 78, 3, 9, 3, 38), String::new()),
-    &mut parser,
+    &mut parser
   );
   assert!(eq_without_whitespace(
     &source_code.replace("boolean isFlagTreated = true;", ""),
@@ -88,13 +102,14 @@ fn test_apply_edit_negative() {
         }
       }
     }";
-
-  let mut parser = get_parser(String::from("java"));
-  let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
+  
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(1000, 2000, 0, 0, 0, 0), String::new()),
-    &mut parser,
+    &mut parser
   );
 }
 
@@ -109,13 +124,14 @@ fn test_apply_edit_comma_handling_via_grammar() {
       }
     }";
 
-  let mut parser = get_parser(String::from("java"));
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
 
-  let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(37, 47, 2, 26, 2, 36), String::new()),
-    &mut parser,
+    &mut parser
   );
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
@@ -135,13 +151,16 @@ fn test_apply_edit_comma_handling_via_regex() {
   }
 }";
 
-  let mut parser = get_parser(String::from("swift"));
 
-  let mut source_code_unit = SourceCodeUnit::dummy_unit(source_code, &mut parser);
+  let language_name = String::from("swift");
+
+  let mut parser = get_parser(language_name.to_string());
+
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(59, 75, 3, 23, 3, 41), String::new()),
-    &mut parser,
+    &mut parser
   );
   assert!(eq_without_whitespace(
     &source_code.replace("name: \"BMX Bike\",", ""),
@@ -152,15 +171,18 @@ fn execute_persist_in_temp_folder(
   source_code: &str, args: &PiranhaArguments,
   check_predicate: &dyn Fn(&TempDir) -> Result<bool, io::Error>,
 ) -> Result<bool, io::Error> {
-  let mut parser = get_parser(String::from("java"));
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(&file_path.as_path(), source_code);
+  let piranha_args = PiranhaArgumentsBuilder::default().language_name(language_name).build().unwrap();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     file_path.as_path(),
+    &piranha_args
   );
   source_code_unit.persist(args);
   check_predicate(&tmp_dir)
