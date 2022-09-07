@@ -15,10 +15,7 @@ use crate::utilities::{
 };
 
 use super::{
-  edit::Edit,
-  matches::Match,
-  piranha_arguments::{PiranhaArguments},
-  rule_store::RuleStore,
+  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
 };
 
 // Maintains the updated source code content and AST of the file
@@ -90,12 +87,12 @@ impl SourceCodeUnit {
       true,
     );
     // Check if the edit kind is "DELETE something"
-    if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty()
-    {
+    if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty() {
       let deleted_at = edit.replacement_range().start_point.row;
       if let Some(comment_range) = self.get_comment_at_line(
         deleted_at,
         self.piranha_arguments.cleanup_comments_buffer().clone(),
+        edit.replacement_range().start_byte,
       ) {
         info!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser, false);
@@ -116,32 +113,38 @@ impl SourceCodeUnit {
   /// * return the range of the comment
   /// If the [row] has no node that either starts/ends there:
   /// * recursively call this method for [row] -1 (until buffer is positive)
-  fn get_comment_at_line(&mut self, row: usize, buffer: usize) -> Option<Range> {
+  fn get_comment_at_line(&mut self, row: usize, buffer: usize, start_byte: usize) -> Option<Range> {
     // Get all nodes that start or end on `updated_row`.
     let mut relevant_nodes_found = false;
     let mut relevant_nodes_are_comments = true;
     let mut comment_range = None;
-    for node in traverse(self.ast.walk(), Order::Post) {
-    
-    if node.start_position().row == row || node.end_position().row == row {
-      relevant_nodes_found = true;
-      let is_comment: bool = self
-        .piranha_arguments
-        .language_name()
-        .is_comment(node.kind());
-      relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
-      if is_comment {
-        comment_range = Some(node.range());
+    // Since the previous edit was a delete, the start and end of the replacement range is [start_byte].
+    let node = self.ast.root_node()
+      .descendant_for_byte_range(start_byte, start_byte)
+      .unwrap_or(self.ast.root_node());
+
+    for node in traverse(node.walk(), Order::Post) {
+      if node.start_position().row == row || node.end_position().row == row {
+        relevant_nodes_found = true;
+        let is_comment: bool = self
+          .piranha_arguments
+          .language_name()
+          .is_comment(node.kind());
+        relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
+        if is_comment {
+          comment_range = Some(node.range());
+        }
       }
     }
-  }
 
     if relevant_nodes_found {
       if relevant_nodes_are_comments {
         return comment_range;
       }
     } else if buffer > 0 {
-      return self.get_comment_at_line(row - 1, buffer - 1);
+      // We pass [start_byte] itself, because we know that parent of the current row is the parent of the above row too.
+      // If that's not the case, its okay, because we will not find any comments in these scenarios.
+      return self.get_comment_at_line(row - 1, buffer - 1, start_byte);
     }
     return None;
   }
