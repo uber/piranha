@@ -67,7 +67,7 @@ internal class XPMethodChainCases {
             }
             println("done!")
             // Matches API
-            cp.put(sp.isStaleFeature(), true)
+            if (someCond()) {cp.put(sp.isStaleFeature(), true)}
             cp.put(sp.isStaleFeature(), false)
             // Do not match API
             cp.put(sp.isOtherFlag(), true)

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -12,7 +10,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-
+use std::collections::HashMap;
 use serde_derive::Deserialize;
 
 /// Captures the Piranha arguments by from the file at `path_to_feature_flag_rules`.

@@ -59,7 +59,8 @@ internal class XPMethodChainCases {
                 print("!!")
             }
             println("done!")
-
+            // Matches API
+            if (someCond()) {}
             // Do not match API
             cp.put(sp.isOtherFlag(), true)
             cp.put(sp.isOtherFlag(), false)
