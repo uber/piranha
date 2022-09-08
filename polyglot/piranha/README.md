@@ -1,12 +1,62 @@
 # Polyglot Piranha
-This variant of Piranha provides a flexible multilingual solution for deleting code related to stale feature flags leading to a cleaner, safer, more performant, and more maintainable code base.
 
-## Motivation 
+Polyglot Piranha is a flexible multilingual structural search/replace engine that allows users to apply chains (actually, a graph) of interdependent structural search/replace rules. Polyglot Piranha builds upon tree-sitter queries for expressing the structural search/replace rules.
 
-Adding Piranha support for a new language requires re-implementing the entire refactoring logic for that particular language. It is time-consuming and expensive to develop and maintain these similar implementations.
-This is overcome by extracting the language specific syntactic transformations to tree-sitter query based rewrite rules, and applying them to the input program as chains of rules.
+__This repository contains the Polyglot Piranha framework and its instantiation for deleting code related to stale feature flags__.
 
-## Usage 
+
+## Getting started 
+
+
+
+### Python API
+
+### Installing the Python API
+
+`pip install polyglot_piranha`
+
+Currently, we support one simple API (`run_piranha_cli`) that wraps the command line usage of Polyglot Piranha. We believe this makes it easy to incorporate Piranha in *"pipelining"*. 
+
+#### `run_piranha_cli`
+
+```
+from polyglot_piranha import run_piranha_cli
+
+path_to_codebase = "..." 
+path_to_configurations = "..." 
+piranha_summary = run_piranha_cli(path_to_codebase,
+                                  path_to_configurations,
+                                  should_rewrite_files=True)
+```
+##### Arguments 
+- `path_to_codebase` : Path to source code folder
+- `path_to_configuration` : A directory containing files named `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+  * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules
+  * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place)
+  * `edges.toml` (_optional_): expresses the flow between the rules 
+- `should_rewrite_files` : Enables in-place rewriting of code 
+
+##### Returns:
+
+`[Piranha_Output]` : a [`PiranhaOutput`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `should_rewrite_files` is passed as `false`. 
+
+### Command-line Interface
+
+#### Getting the Binaries :
+
+Build the binary:
+
+
+or 
+
+Get the platform specific binaries are available as part of our [releases](https://github.com/uber/piranha/releases).
+
+
+
+
+
+
+
 Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
 
 ```
@@ -32,6 +82,16 @@ OPTIONS:
 ```
 
 The output JSON format is - `models.PiranhaOutputSummary`.
+
+
+In context of __Stale Feature Flag Cleanup__ : 
+* `rules.toml` : expresses how to capture different feature flag APIs
+* `piranha_arguments.toml` : expresses the flag behavior, for instance, the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
+* For this workflow usually `edges.toml` will not be required. But incase 
+
+
+## Usage 
+
 
 Languages supported :
 * Java
