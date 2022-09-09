@@ -1,9 +1,18 @@
 # Polyglot Piranha 
 
-Polyglot Piranha is a flexible multilingual structural search/replace engine that allows users to apply chains (actually, a graph) of interdependent structural search/replace rules. Polyglot Piranha builds upon tree-sitter queries for expressing the structural search/replace rules.
+Polyglot Piranha is a flexible multilingual structural search/replace engine that allows users to apply chains of interdependent structural search/replace rules for deeper cleanups. Polyglot Piranha builds upon tree-sitter queries for expressing the structural search/replace rules.
 
-__This repository contains the Polyglot Piranha framework and its instantiation for deleting code related to stale feature flags__.
+__This repository contains the Polyglot Piranha framework and pre-built cleanup rules that can be leveraged for deleting code related to stale feature flags__.
 
+
+## Overview
+<p style="text-align:center;">
+<img src="images/piranha_architecture.svg" width="800" height="500" alt="Polyglot Piranha Architecture"/>
+</p>
+
+This is the higher level architecture of Polyglot Piranha. 
+At the heart of Polyglot Piranha is a structural find/replacement (rewrite) engine.
+A user provides a set (or, a graph) of structural find/replace rules and path to the code base.  When Piranha applies these user defined rules, they trigger the __pre-built__ language specific cleanup rules (like simplifying boolean expressions, simplifying `if-else` statements, deleting empty class, deleting files with no type declarations, inline local variables, and many more). 
 
 ## Using Polyglot Piranha
 
@@ -32,7 +41,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
 - `path_to_codebase` : Path to source code folder
 - `path_to_configuration` : A directory containing files named `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
   * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules
-  * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place).
+  * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place). These rules can also specify the pre-built language specific cleanups to trigger.
   * `edges.toml` (_optional_): expresses the flow between the rules 
 - `should_rewrite_files` : Enables in-place rewriting of code 
 
@@ -80,7 +89,7 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/pira
 
 ### Languages supported
 
-| Language   | Structural <br>Find-Replace  | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  <br>  :broom: |
+| Language   | Structural <br>Find-Replace  | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  <br>   |
 |------------|------------------------------|------------------------------------------|---------------------------------|
 | Java       | :heavy_check_mark:           | :heavy_check_mark:                       | :heavy_check_mark:              |
 | Kotlin     | :heavy_check_mark:           | :heavy_check_mark:                       | :heavy_check_mark:              |
@@ -102,22 +111,31 @@ Contributions for the :calendar: (`planned`) languages or any other languages ar
 
 #### Running the Demos
 *Please refer to our [demo](/polyglot/piranha/demo/run_piranha_demo.sh) - to quickly get started with using Piranha stale feature flag cleanup.* 
-To run the demo : 
+
+Set-up for the demo : 
 * `cd polyglot/piranha`
-* `./demo/run_piranha_demo.sh`
+* Create a virtual environment:
+  - `python3 -m venv .env`
+  - `source .env/bin/activate`
+* Install Polyglot Piranha 
+  - `pip install .` to run demo against current source code (please install [Rust](https://www.rust-lang.org/tools/install), it takes less than a minute)
+  - Or, `pip install polyglot_piranha` to run demos against the latest release.
 
 
-Currently, we have 4 demos : 
-- [demo/java](/polyglot/piranha/demo/java/configurations/rules.toml) and [demo/kt](/polyglot/piranha/demo/kt/configurations/rules.toml) showcase *stale feature flag cleanups* :broom: for a simple feature flag API using Piranha. 
-  * In these demos the `/demo/java/configurations` and `/demo/kt/configurations` contain :
+Currently, we have demos for the following : 
+- Structural Find: 
+- Structural Find/Replace [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha - like regex/replace but using tree-sitter query.
+- :broom: Stale Feature Flag Cleanup: 
+  * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/polyglot/piranha/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/polyglot/piranha/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API. 
+  * In these demos the `configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
     * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
-- [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha - like regex/replace but using tree-sitter query.
+- Creating custom rule chains (graphs)
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
 
-#### Customizing *stale feature flag cleanup* demo
+#### Building upon the *stale feature flag cleanup* demo
 
 First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
 

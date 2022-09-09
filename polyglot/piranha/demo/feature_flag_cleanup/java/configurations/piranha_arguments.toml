@@ -9,16 +9,9 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file contains rules to the specific feature flag API.
-
-[[rules]]
-name = "find_foobar"
-query = """((
-    (method_invocation 
-        name : (_) @name
-        arguments: ((argument_list 
-                        (string_literal) )
-    ) @method_invocation
-)
-(#eq? @name "fooBar")
-))"""
+language = ["java"]
+substitutions = [
+    ["stale_flag_name", "SAMPLE_STALE_FLAG"],
+    ["treated", "true"],
+    ["treated_complement", "false"],
+]
