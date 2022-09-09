@@ -36,7 +36,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
   * `edges.toml` (_optional_): expresses the flow between the rules 
 - `should_rewrite_files` : Enables in-place rewriting of code 
 
-##### Returns:
+##### Returns
 
 `[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `should_rewrite_files` is passed as `false`. 
 
@@ -78,7 +78,7 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/pira
 
 *It can be seen that the Python API is basically a wrapper around this command line interface.*
 
-### Languages supported :
+### Languages supported
 
 | Language   | Structural <br>Find-Replace  | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  <br>  :broom: |
 |------------|------------------------------|------------------------------------------|---------------------------------|
@@ -117,7 +117,7 @@ Currently, we have 4 demos :
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
 
-#### Building upon the  *stale feature flag cleanup* :broom: demos: 
+#### Customizing *stale feature flag cleanup* demo
 
 First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
 
@@ -132,7 +132,7 @@ More details for configuring Piranha - [Adding support for a new feature flag sy
 and [Adding Cleanup Rules](#adding-cleanup-rules).
 
 
-## :toolbox: *Stale Feature Flag Cleanup* Under the hood 
+## *Stale Feature Flag Cleanup* in depth
 
 ### Adding support for a new feature flag system
 To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files (look [here](/polyglot/piranha/src/cleanup_rules/java)). The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent. 
@@ -215,7 +215,7 @@ The `substitutions` field captures mapping between the tags and their correspond
 
 
 ### Adding Cleanup Rules
-
+This section describes how to configure Piranha to support a new language. Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
 These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or in-lining variables.
 For instance, the below example shows a rule that simplifies a `or` operation where its `RHS` is true. 
@@ -237,7 +237,7 @@ replace = "true"
 Currently, Piranha picks up the language specific configurations from `src/cleanup_rule/<language>`.
 
 
-### Example
+#### Example
 Let's consider an example where we want to define a cleanup for the scenario where 
 <table>
 <tr>
@@ -288,6 +288,27 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
 First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/polyglot/piranha/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
+
+## *Structural Find/Replace* in Depth
+
+Polyglot Piranha can be used for both just matching and rewriting AST patterns. One can also encode their own custom cleanups.
+
+
+### Match-only rules 
+A match-only rule allows users 
+
+- Match-only rules (occurrence of variable declarations for "FooBar")
+- Rewrite rule (delete specific enum)
+- Chain of rewrite rule : (ArraysList -> collection singleton + add import)
+  - Talk about cleanup rules 
+
+## Piranha Arguments : 
+- language 
+- substitutions 
+- comments 
+- consecutive line deletion 
+
+
 
 
 ## Contributing
