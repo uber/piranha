@@ -4,6 +4,36 @@ Polyglot Piranha is a flexible multilingual structural search/replace engine tha
 
 __This repository contains the Polyglot Piranha framework and pre-built cleanup rules that can be leveraged for deleting code related to stale feature flags__.
 
+- [Polyglot Piranha](#polyglot-piranha)
+  - [Overview](#overview)
+      - [Example 1 (Stale Feature Flag Cleanup)](#example-1-stale-feature-flag-cleanup)
+      - [Example 2 (Structural Find/Replace with built-in cleanup)](#example-2-structural-findreplace-with-built-in-cleanup)
+      - [Example 3 (Structural Find/Replace with custom cleanup)](#example-3-structural-findreplace-with-custom-cleanup)
+  - [Using Polyglot Piranha](#using-polyglot-piranha)
+    - [:snake: Python API](#snake-python-api)
+    - [Installing the Python API](#installing-the-python-api)
+      - [`run_piranha_cli`](#run_piranha_cli)
+        - [Arguments](#arguments)
+        - [Returns](#returns)
+    - [:computer: Command-line Interface](#computer-command-line-interface)
+        - [Get platform-specific binary from releases or build it from source following the below steps:](#get-platform-specific-binary-from-releases-or-build-it-from-source-following-the-below-steps)
+    - [Languages supported](#languages-supported)
+  - [Getting Started](#getting-started)
+    - [Demos](#demos)
+      - [Running the Demos](#running-the-demos)
+      - [Building upon the *stale feature flag cleanup* demo](#building-upon-the-stale-feature-flag-cleanup-demo)
+  - [*Stale Feature Flag Cleanup* in depth](#stale-feature-flag-cleanup-in-depth)
+    - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
+      - [Adding a new API usage](#adding-a-new-api-usage)
+      - [Parameterizing the behavior of the feature flag API:](#parameterizing-the-behavior-of-the-feature-flag-api)
+    - [Adding Cleanup Rules](#adding-cleanup-rules)
+      - [Example](#example)
+  - [*Structural Find/Replace* in Depth](#structural-findreplace-in-depth)
+    - [Match-only rules](#match-only-rules)
+  - [Piranha Arguments :](#piranha-arguments-)
+  - [Contributing](#contributing)
+    - [Naming conventions for the rules](#naming-conventions-for-the-rules)
+    - [Writing tests](#writing-tests)
 
 ## Overview
 <p style="text-align:center;">
@@ -11,8 +41,70 @@ __This repository contains the Polyglot Piranha framework and pre-built cleanup 
 </p>
 
 This is the higher level architecture of Polyglot Piranha. 
-At the heart of Polyglot Piranha is a structural find/replacement (rewrite) engine.
-A user provides a set (or, a graph) of structural find/replace rules and path to the code base.  When Piranha applies these user defined rules, they trigger the __pre-built__ language specific cleanup rules (like simplifying boolean expressions, simplifying `if-else` statements, deleting empty class, deleting files with no type declarations, inline local variables, and many more). 
+At its heart, Polyglot Piranha is a structural find/replacement (rewrite) engine and pre-build language specific cleanup rules like - like simplifying boolean expressions, simplifying `if-else` statements, deleting empty class, deleting files with no type declarations, inline local variables, and many more. 
+A user provides :
+- a set (or, a graph) of structural find/replace rules and path to the code base. 
+- a source code
+- arguments that modify Piranha's behavior (like deleting associated comments)
+When Piranha applies the set (or graph) of user defined rules, it trigger the __pre-built__ language specific cleanup rules to do a deep cleanup. 
+
+#### Example 1 (Stale Feature Flag Cleanup)
+Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU")` always returns `true` (i.e. the feature *Show Menu* is treated)
+```
+public String fooBar(boolean x) {
+    if(exp.isTreated("SHOW_MENU")|| x){
+        String menu = getMenu();
+        return menu;
+    }
+    return "";
+}
+```
+To cleanup this code with Piranha, a user would have to *one* rule to update the expressions like `exp.isTreated("SHOW_MENU")` to `true` and hook it to the pre-built boolean simplification rules. It would result in : 
+```
+public String fooBar(boolean x) {
+    String menu = getMenu();
+    return menu;
+}
+```
+Note how, user only specified the seed rule to update the expression to true, and Piranha simplified the disjunction (`exp.isTreated("SHOW_MENU")|| x` => `true`), then removed the stale if condition and finally deleted the unreachable return statement (`return "";`).
+
+#### Example 2 (Structural Find/Replace with built-in cleanup)
+Let's say a user writes a piranha rule to delete an unused enum case (let's say `LOW`). However, this enum case "co-incidentally" is the only enum case in this enum declaration.  
+```
+enum Level {
+  LOW,
+}
+```
+If the user hooks up this *enum case deletion* rule to the pre-built rules, it would not only delete the enum case (`LOW`), but also the consequent empty enum declaration and also optionally delete the consequently empty compilation unit. 
+
+
+#### Example 3 (Structural Find/Replace with custom cleanup)
+
+Let's take a canonical example of replacing `Arrays.asList` with `Collections.singletonList`, when possible. 
+This task involves two steps (i) Replacing the expression (ii) Adding the import statement for `Collections` if absent (Assuming *google java format* takes care of the unused imports :))
+However, Piranha does not contain pre-built rules to add such a custom import statements.  
+```
+import java.util.ArrayList;
+import java.util.Arrays;
++ import java.util.Collections;
+class Character{
+    String name;
+    List<String> friends;
+    List<String> enemies; 
+
+    Character(String name) {
+        this.name = name;
+        this.friends = new ArrayList<>();
+ -         this.enemies = Arrays.asList(this.name);
+ +         this.enemies = Collections.singletonList(this.name);
+    }
+}
+```
+For such a scenario a developer could first write a seed rule for replacing the expression and then craft a custom "cleanup" rule (that would be triggered by the seed rule) to add the import statement if absent within the same file.
+
+*Note a user can also craft a set of rules that trigger no other rule, i.e. use piranha as a simple structural find/replace tool*
+
+*If you end up implementing a cleanup rule that could be useful for the community, feel free to make a PR to add it into the pre-built language specific rules*
 
 ## Using Polyglot Piranha
 
@@ -55,7 +147,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
 ##### Get platform-specific binary from [releases](https://github.com/uber/piranha/releases) or build it from source following the below steps:
 
 * Install [Rust](https://www.rust-lang.org/tools/install)
-* `git checkout https://github.com/uber/piranha.git` 
+* `git clone https://github.com/uber/piranha.git` 
 * `cd piranha/polyglot/piranha`
 * `cargo build --release` (`cargo build --release --no-default-features` for macOS)
 * Binary will be generated under `target/release`
@@ -110,9 +202,11 @@ Contributions for the :calendar: (`planned`) languages or any other languages ar
 ### Demos
 
 #### Running the Demos
-*Please refer to our [demo](/polyglot/piranha/demo/run_piranha_demo.sh) - to quickly get started with using Piranha stale feature flag cleanup.* 
 
-Set-up for the demo : 
+We believe, the easiest way to get started with Piranha is to build upon the demos. 
+
+To setup the demo please follow the below steps:
+* `git clone https://github.com/uber/piranha.git` 
 * `cd polyglot/piranha`
 * Create a virtual environment:
   - `python3 -m venv .env`
@@ -123,13 +217,17 @@ Set-up for the demo :
 
 
 Currently, we have demos for the following : 
-- Structural Find: 
-- Structural Find/Replace [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha - like regex/replace but using tree-sitter query.
-- :broom: Stale Feature Flag Cleanup: 
+##### Stale Feature Flag Cleanup: 
   * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/polyglot/piranha/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/polyglot/piranha/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API. 
   * In these demos the `configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
     * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
+##### Match-only rules: 
+  * run `python3 demo/match_only_demos.py`
+  * This demo also shows how the piranha summary output can be used. 
+    * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in static methods)
+##### Structural Find/Replace
+ [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha - like regex/replace but using tree-sitter query.
 - Creating custom rule chains (graphs)
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
@@ -217,7 +315,7 @@ Each rule also contains the `groups` property, that specifies the kind of change
 cleanup will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups to eliminate dead code (like eliminating `consequent` of a `if statement`) caused by replacing an expression with a boolean literal. 
 Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. 
 
-#### Defining behavior of the API
+#### Parameterizing the behavior of the feature flag API:
 The `rule` contains `holes` or template variables that need to be instantiated.
 For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`.  To specify such a behavior,
 user should create a `piranha_arguments.toml` file as shown below (assuming that the behavior of STALE_FLAG is **treated**): 

@@ -9,9 +9,10 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This file contains rules to the specific feature flag API.
 
 [[rules]]
-name = "find_foobar_in_static"
+name = "find_fooBar_anywhere"
 query = """((
     (method_invocation 
         name : (_) @name
@@ -20,6 +21,18 @@ query = """((
     ) @method_invocation
 )
 (#eq? @name "fooBar")
+))"""
+
+[[rules]]
+name = "find_barFoo_in_static_method"
+query = """((
+    (method_invocation 
+        name : (_) @name
+        arguments: ((argument_list 
+                        (string_literal) )
+    ) @method_invocation
+)
+(#eq? @name "barFoo")
 ))"""
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
