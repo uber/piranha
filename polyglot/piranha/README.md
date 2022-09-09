@@ -198,12 +198,11 @@ Currently, we have demos for the following :
   * This demo also shows how the piranha summary output can be used. 
     * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in static methods)
 ##### Structural Find/Replace
-  * run `python3 demo/find_Replace_demos.py`
+  * run `python3 demo/find_replace_demos.py`
   * This demo shows how to use Piranha as a simple structural find/replace tool (that optionally hooks up to built-in cleanup rules)
 ##### Structural Find/Replace with Custom Cleanup
-
-
-
+   * run `python3 demo/find_replace_custom_cleanup_demos.py`
+   * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()`. Note it also adds the required import statement. 
 
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
@@ -290,8 +289,14 @@ The node captured by the tag-name specified in the `replace_node` property is re
 The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like [regex-replace](https://docs.microsoft.com/en-us/visualstudio/ide/using-regular-expressions-in-visual-studio?view=vs-2022)).
 
 Each rule also contains the `groups` property, that specifies the kind of change performed by this rule. Based on this group, appropriate 
-cleanup will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups to eliminate dead code (like eliminating `consequent` of a `if statement`) caused by replacing an expression with a boolean literal. 
-Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. 
+cleanup will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups to eliminate dead code (like eliminating `consequent` of a `if statement`) caused by replacing an expression with a boolean literal.
+Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. Basically, by adding an appropriate entry to the groups, a user can hook up their rules to the pre-built cleanup rules.
+
+Adding `"Cleanup Rule"` to the `groups` which ensures that the user defined rule is treated as a cleanup rule not as a seed rule (For more details refer to `demo/find_replace_custom_cleanup`). 
+
+A user can also define exclusion filters for a rule (`rules.constraints`). These constraints allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that do not occur inside static methods (For more details, refer to the `demo/match_only`). 
+
+At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.constraints.queries` (within `rules.constraints.matcher`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
 
 #### Parameterizing the behavior of the feature flag API:
 The `rule` contains `holes` or template variables that need to be instantiated.
@@ -383,24 +388,16 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
 First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/polyglot/piranha/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
 
-## *Structural Find/Replace* in Depth
-
-Polyglot Piranha can be used for both just matching and rewriting AST patterns. One can also encode their own custom cleanups.
-
-
-### Match-only rules 
-A match-only rule allows users 
-
-- Match-only rules (occurrence of variable declarations for "FooBar")
-- Rewrite rule (delete specific enum)
-- Chain of rewrite rule : (ArraysList -> collection singleton + add import)
-  - Talk about cleanup rules 
 
 ## Piranha Arguments : 
-- language 
-- substitutions 
-- comments 
-- consecutive line deletion 
+
+The purpose of Piranha Arguments is determining the behavior of Piranha. 
+- `language` : The programming language used by the source code 
+- `substitutions` : Seed substitutions for the rules (if any). In case of stale feature flag cleanup, we pass the stale feature flag name and whether it is treated or not.
+- `delete_file_if_empty` : enables delete file if it consequently becomes empty
+-  `delete_consecutive_new_lines` : enables deleting consecutive empty new line  
+-  `cleanup_comments` : enables cleaning up the comments associated to the deleted code elements like fields, methods or classes 
+-  `cleanup_comments_buffer` : determines how many lines above to look up for a comment. 
 
 
 
