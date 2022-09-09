@@ -16,3 +16,4 @@ def demo():
     assert rule_match_counter['find_barFoo_in_static_method'] == 1
 
 demo()
+print("Completed running the Match-only demo")
