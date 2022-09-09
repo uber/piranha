@@ -4,7 +4,9 @@ Polyglot Piranha is a flexible multilingual structural search/replace engine tha
 
 __This repository contains the Polyglot Piranha framework and pre-built cleanup rules that can be leveraged for deleting code related to stale feature flags__.
 
+## Table of Contents
 - [Polyglot Piranha](#polyglot-piranha)
+  - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [When is Polyglot Piranha useful?](#when-is-polyglot-piranha-useful)
       - [Example 1 (Stale Feature Flag Cleanup)](#example-1-stale-feature-flag-cleanup)
