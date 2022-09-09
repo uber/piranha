@@ -5,7 +5,7 @@ feature_flag_dir = join(dirname(__file__), 'feature_flag_cleanup')
 
 def run_java_ff_demo():
     print("Running the stale feature flag cleanup demo for Java")
-    output_summary_java = run_piranha_cli(join(feature_flag_dir, "java"), join(feature_flag_dir, 'java/ff/configurations'), True)
+    output_summary_java = run_piranha_cli(join(feature_flag_dir, "java"), join(feature_flag_dir, "java/configurations"), True)
 
     assert len(output_summary_java) == 2
 
@@ -14,7 +14,7 @@ def run_java_ff_demo():
 
 def run_kt_ff_demo():
     print("Running the stale feature flag cleanup demo for Kotlin")
-    output_summary_kt = run_piranha_cli(join(feature_flag_dir, 'kt'), join(feature_flag_dir, 'kt/ff/configurations'), True)
+    output_summary_kt = run_piranha_cli(join(feature_flag_dir, "kt"), join(feature_flag_dir, 'kt/configurations'), True)
     assert len(output_summary_kt) == 2
 
     for summary in output_summary_kt:
