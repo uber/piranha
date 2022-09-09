@@ -4,36 +4,6 @@ Polyglot Piranha is a flexible multilingual structural search/replace engine tha
 
 __This repository contains the Polyglot Piranha framework and pre-built cleanup rules that can be leveraged for deleting code related to stale feature flags__.
 
-- [Polyglot Piranha](#polyglot-piranha)
-  - [Overview](#overview)
-      - [Example 1 (Stale Feature Flag Cleanup)](#example-1-stale-feature-flag-cleanup)
-      - [Example 2 (Structural Find/Replace with built-in cleanup)](#example-2-structural-findreplace-with-built-in-cleanup)
-      - [Example 3 (Structural Find/Replace with custom cleanup)](#example-3-structural-findreplace-with-custom-cleanup)
-  - [Using Polyglot Piranha](#using-polyglot-piranha)
-    - [:snake: Python API](#snake-python-api)
-    - [Installing the Python API](#installing-the-python-api)
-      - [`run_piranha_cli`](#run_piranha_cli)
-        - [Arguments](#arguments)
-        - [Returns](#returns)
-    - [:computer: Command-line Interface](#computer-command-line-interface)
-        - [Get platform-specific binary from releases or build it from source following the below steps:](#get-platform-specific-binary-from-releases-or-build-it-from-source-following-the-below-steps)
-    - [Languages supported](#languages-supported)
-  - [Getting Started](#getting-started)
-    - [Demos](#demos)
-      - [Running the Demos](#running-the-demos)
-      - [Building upon the *stale feature flag cleanup* demo](#building-upon-the-stale-feature-flag-cleanup-demo)
-  - [*Stale Feature Flag Cleanup* in depth](#stale-feature-flag-cleanup-in-depth)
-    - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
-      - [Adding a new API usage](#adding-a-new-api-usage)
-      - [Parameterizing the behavior of the feature flag API:](#parameterizing-the-behavior-of-the-feature-flag-api)
-    - [Adding Cleanup Rules](#adding-cleanup-rules)
-      - [Example](#example)
-  - [*Structural Find/Replace* in Depth](#structural-findreplace-in-depth)
-    - [Match-only rules](#match-only-rules)
-  - [Piranha Arguments :](#piranha-arguments-)
-  - [Contributing](#contributing)
-    - [Naming conventions for the rules](#naming-conventions-for-the-rules)
-    - [Writing tests](#writing-tests)
 
 ## Overview
 <p style="text-align:center;">
@@ -43,11 +13,12 @@ __This repository contains the Polyglot Piranha framework and pre-built cleanup 
 This is the higher level architecture of Polyglot Piranha. 
 At its heart, Polyglot Piranha is a structural find/replacement (rewrite) engine and pre-build language specific cleanup rules like - like simplifying boolean expressions, simplifying `if-else` statements, deleting empty class, deleting files with no type declarations, inline local variables, and many more. 
 A user provides :
-- a set (or, a graph) of structural find/replace rules and path to the code base. 
-- a source code
-- arguments that modify Piranha's behavior (like deleting associated comments)
+- A set (or, a graph) of structural find/replace rules 
+- Path to the code base
+- Arguments to modify Piranha's behavior (like deleting associated comments)
 When Piranha applies the set (or graph) of user defined rules, it trigger the __pre-built__ language specific cleanup rules to do a deep cleanup. 
 
+## When is Polyglot Piranha useful?
 #### Example 1 (Stale Feature Flag Cleanup)
 Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU")` always returns `true` (i.e. the feature *Show Menu* is treated)
 ```
@@ -227,8 +198,13 @@ Currently, we have demos for the following :
   * This demo also shows how the piranha summary output can be used. 
     * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in static methods)
 ##### Structural Find/Replace
- [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha - like regex/replace but using tree-sitter query.
-- Creating custom rule chains (graphs)
+  * run `python3 demo/find_Replace_demos.py`
+  * This demo shows how to use Piranha as a simple structural find/replace tool (that optionally hooks up to built-in cleanup rules)
+##### Structural Find/Replace with Custom Cleanup
+
+
+
+
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
@@ -247,6 +223,8 @@ Then adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranh
 More details for configuring Piranha - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
 and [Adding Cleanup Rules](#adding-cleanup-rules).
 
+
+*One can similarly build upon the other demos too.*
 
 ## *Stale Feature Flag Cleanup* in depth
 
