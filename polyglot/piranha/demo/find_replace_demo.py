@@ -19,6 +19,13 @@ def strings_demo():
     print("Running the Find/Replace demo for Strings")
     _ = run_piranha_cli(join(find_Replace_dir, "strings"), join(find_Replace_dir, "strings/configurations"), True)
 
+def java_demo():
+    """
+    This shows how we can use Piranha to execute structural find/replace without hooking up anything.
+    """    
+    print("Running the Find/Replace demo for Java")
+    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
+
 
 
 swift_demo()
