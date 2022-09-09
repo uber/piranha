@@ -56,9 +56,12 @@ Languages supported :
 ## Getting started with Piranha
 
 *Please refer to our [demo](/polyglot/piranha/demo/run_piranha_demo.sh) - to quickly get started with Piranha.*
+The demo assumes that `Rust` is installed.
 To run the demo : 
 * `cd polyglot/piranha`
-* `./demo/run_piranha_demo.sh`
+* `./demo/run_piranha_demo.sh [language]`
+  * language is one of: `ALL`, `java`, `kt`, `strings`, `swift`
+  * example: `./demo/run_piranha.demo.sh ALL`
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 

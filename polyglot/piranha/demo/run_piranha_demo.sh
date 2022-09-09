@@ -10,6 +10,30 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+if [ $0 != "./demo/run_piranha_demo.sh" ]; then
+    echo "Please run the script from 'piranha/polyglot/piranha'"
+    exit 1
+fi
+
+if [ $# -eq 0 ]; then
+    echo "Please provide a target language or 'ALL' as argument."
+    exit 1
+fi
+
+demo_directories=()
+if [ $1 = "ALL" ]; then
+    for language_directory in "demo/*/"; do
+        demo_directories+=$language_directory
+    done
+else
+    demo_dir="demo/${1}/"
+    if [ ! -d "$demo_dir" ]; then
+        echo "No demo for language '${1}'"
+        exit 1
+    fi
+    demo_directories+=$demo_dir
+fi
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
     cargo build --release --no-default-features
@@ -18,7 +42,7 @@ else
 fi
 
 mv target/release/polyglot_piranha demo/polyglot_piranha
-./demo/polyglot_piranha -c demo/java/ -f demo/java/configurations -j demo/java/output.json
-./demo/polyglot_piranha -c demo/kt/ -f demo/kt/configurations -j demo/kt/output.json
-./demo/polyglot_piranha -c demo/swift/ -f demo/swift/configurations -j demo/swift/output.json
-./demo/polyglot_piranha -c demo/strings/ -f demo/strings/configurations -j demo/strings/output.json
+
+for demo_directory in $demo_directories; do
+    ./demo/polyglot_piranha -c $demo_directory -f "$demo_directory/configurations" -j "$demo_directory/output.json"
+done
