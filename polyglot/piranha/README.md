@@ -80,13 +80,13 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/pira
 
 ### Languages supported :
 
-| Language   | Structural <br>Find-Replace  | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  |
+| Language   | Structural <br>Find-Replace  | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  <br>  :broom: |
 |------------|------------------------------|------------------------------------------|---------------------------------|
 | Java       | :heavy_check_mark:           | :heavy_check_mark:                       | :heavy_check_mark:              |
 | Kotlin     | :heavy_check_mark:           | :heavy_check_mark:                       | :heavy_check_mark:              |
 | Java + Kotlin      | :x:           | :calendar:        | :calendar:  |
-| Swift      | :heavy_check_mark:           | :heavy_check_mark:       | :calendar:  |
-| Go         | :calendar:                    | :calendar:                                | :calendar:                       |
+| Swift      | :heavy_check_mark:           | :construction:        | :construction:   |
+| Go         | :construction:                    | :construction:                                | :construction:                       |
 | Python     | :calendar:                    | :calendar:                                | :calendar: |
 | TypeScript | :calendar:                    | :calendar:                                | :calendar:                       |
 | C#         | :calendar:                 | :calendar:                          | :calendar:                    |
@@ -99,7 +99,8 @@ Contributions for the :calendar: (`planned`) languages or any other languages ar
 ## Getting Started
 
 ### Demos
-Check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
+
+#### Running the Demos
 *Please refer to our [demo](/polyglot/piranha/demo/run_piranha_demo.sh) - to quickly get started with using Piranha stale feature flag cleanup.* 
 To run the demo : 
 * `cd polyglot/piranha`
@@ -107,35 +108,39 @@ To run the demo :
 
 
 Currently, we have 4 demos : 
-- [demo/java](/polyglot/piranha/demo/java/configurations/rules.toml) and [demo/kt](/polyglot/piranha/demo/kt/configurations/rules.toml) showcase *stale feature flag cleanups* for a simple feature flag API using Piranha. 
+- [demo/java](/polyglot/piranha/demo/java/configurations/rules.toml) and [demo/kt](/polyglot/piranha/demo/kt/configurations/rules.toml) showcase *stale feature flag cleanups* :broom: for a simple feature flag API using Piranha. 
   * In these demos the `/demo/java/configurations` and `/demo/kt/configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
     * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
-- [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha.
-
-Building upon the demos for *stale feature flag cleanup* :broom: : 
-
-
-
+- [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha - like regex/replace but using tree-sitter query.
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
-To get started with Piranha, please follow the below steps:
-* If so, then check if the API usage is similar to the ones shown in the demo ([java-demo](/polyglot/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/polyglot/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/polyglot/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml)).
-*  If not, adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work.
-* Now adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/polyglot/piranha/src/cleanup_rules/java/edges.toml) is not required, unless your feature flag system API rules are inter-dependent. 
+
+#### Building upon the  *stale feature flag cleanup* :broom: demos: 
+
+First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
+
+Then see if your API usage is similar to the ones shown in the demo ([java-demo](/polyglot/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/polyglot/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/polyglot/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/polyglot/piranha/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/polyglot/piranha/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
+
+If not :|, try to adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work. It is recommended to read the section- [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
+
+Then adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/polyglot/piranha/src/cleanup_rules/java/edges.toml) is not required, unless your feature flag system API rules are inter-dependent. 
+
 
 More details for configuring Piranha - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
-and [Adding Support for a new language](#adding-support-for-a-new-language).
+and [Adding Cleanup Rules](#adding-cleanup-rules).
 
-## Adding support for a new feature flag system
 
+## :toolbox: *Stale Feature Flag Cleanup* Under the hood 
+
+### Adding support for a new feature flag system
 To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files (look [here](/polyglot/piranha/src/cleanup_rules/java)). The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent. 
 For instance, you want to delete a method declaration with specific annotations and then update its usages with some boolean value. 
 Please refer to the `test-resources/java` for detailed examples. 
 
 
-### Adding a new API usage
+#### Adding a new API usage
 The example below shows a usage of a feature flag API (`experiment.isTreated(STALE_FLAG)`), in a `if_statement`. 
 ```
 class PiranhaDemo {
@@ -194,7 +199,7 @@ Each rule also contains the `groups` property, that specifies the kind of change
 cleanup will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups to eliminate dead code (like eliminating `consequent` of a `if statement`) caused by replacing an expression with a boolean literal. 
 Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. 
 
-### Defining behavior of the API
+#### Defining behavior of the API
 The `rule` contains `holes` or template variables that need to be instantiated.
 For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`.  To specify such a behavior,
 user should create a `piranha_arguments.toml` file as shown below (assuming that the behavior of STALE_FLAG is **treated**): 
@@ -209,9 +214,8 @@ This file specifies that, the user wants to perform this refactoring for `java` 
 The `substitutions` field captures mapping between the tags and their corresponding concrete values. In this example, we specify that the tag named `stale_flag_name` should be replaced with `STALE_FLAG` and `treated` with `true`.
 
 
-## Adding Support for a new language
-This section describes how to configure Piranha to support a new language. 
-Users who do not intend to onboard a new language can skip this section.
+### Adding Cleanup Rules
+
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
 These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or in-lining variables.
 For instance, the below example shows a rule that simplifies a `or` operation where its `RHS` is true. 
