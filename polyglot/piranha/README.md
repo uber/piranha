@@ -4,6 +4,40 @@ Polyglot Piranha is a flexible multilingual structural search/replace engine tha
 
 __This repository contains the Polyglot Piranha framework and pre-built cleanup rules that can be leveraged for deleting code related to stale feature flags__.
 
+- [Polyglot Piranha](#polyglot-piranha)
+  - [Overview](#overview)
+  - [When is Polyglot Piranha useful?](#when-is-polyglot-piranha-useful)
+      - [Example 1 (Stale Feature Flag Cleanup)](#example-1-stale-feature-flag-cleanup)
+      - [Example 2 (Structural Find/Replace with built-in cleanup)](#example-2-structural-findreplace-with-built-in-cleanup)
+      - [Example 3 (Structural Find/Replace with custom cleanup)](#example-3-structural-findreplace-with-custom-cleanup)
+  - [Using Polyglot Piranha](#using-polyglot-piranha)
+    - [:snake: Python API](#snake-python-api)
+    - [Installing the Python API](#installing-the-python-api)
+      - [`run_piranha_cli`](#run_piranha_cli)
+        - [Arguments](#arguments)
+        - [Returns](#returns)
+    - [:computer: Command-line Interface](#computer-command-line-interface)
+        - [Get platform-specific binary from releases or build it from source following the below steps:](#get-platform-specific-binary-from-releases-or-build-it-from-source-following-the-below-steps)
+    - [Languages supported](#languages-supported)
+  - [Getting Started](#getting-started)
+    - [Demos](#demos)
+      - [Running the Demos](#running-the-demos)
+        - [Stale Feature Flag Cleanup:](#stale-feature-flag-cleanup)
+        - [Match-only rules:](#match-only-rules)
+        - [Structural Find/Replace](#structural-findreplace)
+        - [Structural Find/Replace with Custom Cleanup](#structural-findreplace-with-custom-cleanup)
+      - [Building upon the *stale feature flag cleanup* demo](#building-upon-the-stale-feature-flag-cleanup-demo)
+  - [*Stale Feature Flag Cleanup* in depth](#stale-feature-flag-cleanup-in-depth)
+    - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
+      - [Adding a new API usage](#adding-a-new-api-usage)
+      - [Parameterizing the behavior of the feature flag API:](#parameterizing-the-behavior-of-the-feature-flag-api)
+    - [Adding Cleanup Rules](#adding-cleanup-rules)
+      - [Example](#example)
+  - [Piranha Arguments :](#piranha-arguments-)
+  - [Contributing](#contributing)
+    - [Naming conventions for the rules](#naming-conventions-for-the-rules)
+    - [Writing tests](#writing-tests)
+
 
 ## Overview
 <p style="text-align:center;">
