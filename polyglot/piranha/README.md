@@ -1,15 +1,15 @@
-# Polyglot Piranha
+# Polyglot Piranha 
 
 Polyglot Piranha is a flexible multilingual structural search/replace engine that allows users to apply chains (actually, a graph) of interdependent structural search/replace rules. Polyglot Piranha builds upon tree-sitter queries for expressing the structural search/replace rules.
 
 __This repository contains the Polyglot Piranha framework and its instantiation for deleting code related to stale feature flags__.
 
 
-## Getting started 
+## Using Polyglot Piranha
 
+Polyglot Piranha can be used as a python library or as a command line tool.
 
-
-### Python API
+### :snake: Python API 
 
 ### Installing the Python API
 
@@ -32,39 +32,32 @@ piranha_summary = run_piranha_cli(path_to_codebase,
 - `path_to_codebase` : Path to source code folder
 - `path_to_configuration` : A directory containing files named `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
   * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules
-  * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place)
+  * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place).
   * `edges.toml` (_optional_): expresses the flow between the rules 
 - `should_rewrite_files` : Enables in-place rewriting of code 
 
 ##### Returns:
 
-`[Piranha_Output]` : a [`PiranhaOutput`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `should_rewrite_files` is passed as `false`. 
+`[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `should_rewrite_files` is passed as `false`. 
 
-### Command-line Interface
-
-#### Getting the Binaries :
-
-Build the binary:
+### :computer: Command-line Interface
 
 
-or 
+##### Get platform-specific binary from [releases](https://github.com/uber/piranha/releases) or build it from source following the below steps:
 
-Get the platform specific binaries are available as part of our [releases](https://github.com/uber/piranha/releases).
+* Install [Rust](https://www.rust-lang.org/tools/install)
+* `git checkout https://github.com/uber/piranha.git` 
+* `cd piranha/polyglot/piranha`
+* `cargo build --release` (`cargo build --release --no-default-features` for macOS)
+* Binary will be generated under `target/release`
 
-
-
-
-
-
-
-Piranha can be configured to recognize different flag APIs by specifying a `rules.toml` file (and optionally a `edges.toml`). Piranha will then perform the refactoring based on the flag behavior, which can be specified by providing `piranha_arguments.toml`. Moreover, Piranha can be configured to operate upon a new language by specifying a `/configuration/<lang-name>/rules.toml`, `/configuration/<lang-name>/edges.toml` and `/configuration/<lang-name>/scope_generators.toml`.
 
 ```
-Piranha
+Polyglot Piranha
 A refactoring tool that eliminates dead code related to stale feature flags.
 
 USAGE:
-    piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
+    polyglot_piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
 
 OPTIONS:
     -c, --path-to-codebase <PATH_TO_CODEBASE>
@@ -81,49 +74,53 @@ OPTIONS:
             Path to output summary json
 ```
 
-The output JSON format is - `models.PiranhaOutputSummary`.
+The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.
+
+*It can be seen that the Python API is basically a wrapper around this command line interface.*
+
+### Languages supported :
+
+| Language   | Structural <br>Find-Replace  | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  |
+|------------|------------------------------|------------------------------------------|---------------------------------|
+| Java       | :heavy_check_mark:           | :heavy_check_mark:                       | :heavy_check_mark:              |
+| Kotlin     | :heavy_check_mark:           | :heavy_check_mark:                       | :heavy_check_mark:              |
+| Java + Kotlin      | :x:           | :calendar:        | :calendar:  |
+| Swift      | :heavy_check_mark:           | :heavy_check_mark:       | :calendar:  |
+| Go         | :calendar:                    | :calendar:                                | :calendar:                       |
+| Python     | :calendar:                    | :calendar:                                | :calendar: |
+| TypeScript | :calendar:                    | :calendar:                                | :calendar:                       |
+| C#         | :calendar:                 | :calendar:                          | :calendar:                    |
+| JavaScript | :calendar:                 | :calendar:                          | :calendar:                    |
+| Strings Resource | :heavy_check_mark:  | :x: | :x:                    |
+
+Contributions for the :calendar: (`planned`) languages or any other languages are welcome :) 
 
 
-In context of __Stale Feature Flag Cleanup__ : 
-* `rules.toml` : expresses how to capture different feature flag APIs
-* `piranha_arguments.toml` : expresses the flag behavior, for instance, the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
-* For this workflow usually `edges.toml` will not be required. But incase 
+## Getting Started
 
-
-## Usage 
-
-
-Languages supported :
-* Java
-* Kotlin
-* Java + Kotlin (planned)
-* Swift (planned)
-* JavaScript (planned)
-* Go (requested)
-* C# (requested)
-* TypeScript (requested)
-* Python (requested)
-* PHP (requested)
-* Contributions for the `requested` languages or any other languages are welcome :) 
-
-## Building Piranha from Source
-* Install [Rust](https://www.rust-lang.org/tools/install), Git and [tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/blob/master/cli/README.md)
-* Checkout this repository - `git checkout https://github.com/uber/piranha.git` 
-* `cd piranha/polyglot/piranha`
-* `cargo build --release` (you should add the flag `--no-default-features` on macOS)
-* You will see the binary under `target/release`
-
-## Getting started with Piranha
-
-*Please refer to our [demo](/polyglot/piranha/demo/run_piranha_demo.sh) - to quickly get started with Piranha.*
+### Demos
+Check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
+*Please refer to our [demo](/polyglot/piranha/demo/run_piranha_demo.sh) - to quickly get started with using Piranha stale feature flag cleanup.* 
 To run the demo : 
 * `cd polyglot/piranha`
 * `./demo/run_piranha_demo.sh`
 
+
+Currently, we have 4 demos : 
+- [demo/java](/polyglot/piranha/demo/java/configurations/rules.toml) and [demo/kt](/polyglot/piranha/demo/kt/configurations/rules.toml) showcase *stale feature flag cleanups* for a simple feature flag API using Piranha. 
+  * In these demos the `/demo/java/configurations` and `/demo/kt/configurations` contain :
+    * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
+    * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
+- [demo/strings](/polyglot/piranha/demo/strings/configurations/rules.toml) and [demo/swift](/polyglot/piranha/demo/swift/configurations/rules.toml) showcase simple *structural find/replace* using Piranha.
+
+Building upon the demos for *stale feature flag cleanup* :broom: : 
+
+
+
+
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
 To get started with Piranha, please follow the below steps:
-* Check if the current version of Piranha supports the required language.
 * If so, then check if the API usage is similar to the ones shown in the demo ([java-demo](/polyglot/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/polyglot/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/polyglot/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml)).
 *  If not, adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work.
 * Now adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/polyglot/piranha/src/cleanup_rules/java/edges.toml) is not required, unless your feature flag system API rules are inter-dependent. 
