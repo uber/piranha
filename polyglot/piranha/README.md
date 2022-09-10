@@ -36,7 +36,7 @@ When Piranha applies the set (or graph) of user defined rules, it trigger the __
 ## When is Polyglot Piranha useful?
 
 <h5> Example 1 (Stale Feature Flag Cleanup) </h5>
-Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU")` always returns `true` (i.e. the feature *Show Menu* is treated)
+Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU") always returns `true` (i.e. the feature *Show Menu* is treated)
 ```
 public String fooBar(boolean x) {
     if(exp.isTreated("SHOW_MENU")|| x){
@@ -202,19 +202,27 @@ To setup the demo please follow the below steps:
 
 
 Currently, we have demos for the following : 
-<h4> Stale Feature Flag Cleanup: </h4> 
+
+<h4>Stale Feature Flag Cleanup:</h4>
+
   * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/polyglot/piranha/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/polyglot/piranha/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API. 
   * In these demos the `configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
     * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
+
 <h4>  Match-only rules: </h4> 
+
   * run `python3 demo/match_only_demos.py`
   * This demo also shows how the piranha summary output can be used. 
     * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in static methods)
+
 <h4>  Structural Find/Replace </h4> 
+
   * run `python3 demo/find_replace_demos.py`
   * This demo shows how to use Piranha as a simple structural find/replace tool (that optionally hooks up to built-in cleanup rules)
+
 <h4>  Structural Find/Replace with Custom Cleanup </h4> 
+
    * run `python3 demo/find_replace_custom_cleanup_demos.py`
    * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()`. Note it also adds the required import statement. 
 
@@ -222,7 +230,7 @@ Currently, we have demos for the following :
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
 
 
-<h3>  Building upon the *stale feature flag cleanup* demo </h3> 
+<h3>Building upon the stale feature flag cleanup demo </h3> 
 
 First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
 
@@ -248,6 +256,7 @@ Please refer to the `test-resources/java` for detailed examples.
 
 
 <h3> Adding a new API usage </h3>
+
 The example below shows a usage of a feature flag API (`experiment.isTreated(STALE_FLAG)`), in a `if_statement`. 
 ```
 class PiranhaDemo {
@@ -313,6 +322,7 @@ A user can also define exclusion filters for a rule (`rules.constraints`). These
 At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.constraints.queries` (within `rules.constraints.matcher`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
 
 <h3> Parameterizing the behavior of the feature flag API </h3>
+
 The `rule` contains `holes` or template variables that need to be instantiated.
 For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`.  To specify such a behavior,
 user should create a `piranha_arguments.toml` file as shown below (assuming that the behavior of STALE_FLAG is **treated**): 
@@ -328,6 +338,7 @@ The `substitutions` field captures mapping between the tags and their correspond
 
 
 <h3> Adding Cleanup Rules </h3>
+
 This section describes how to configure Piranha to support a new language. Users who do not intend to onboard a new language can skip this section.
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
 These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or in-lining variables.
@@ -351,6 +362,7 @@ Currently, Piranha picks up the language specific configurations from `src/clean
 
 
 <h5> Example </h5>
+
 Let's consider an example where we want to define a cleanup for the scenario where 
 <table>
 <tr>
@@ -418,11 +430,13 @@ The purpose of Piranha Arguments is determining the behavior of Piranha.
 
 ## Contributing
 
-<h3> Naming conventions for the rules </h3>
+<h4> Naming conventions for the rules </h4>
+
 * We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`
 * We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml): `boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
 
-<h3> Writing tests </h3>
+<h4> Writing tests </h4>
+
 Currently we maintain 
 * Unit tests for the internal functionality can be found under `<models|utilities>/unit_test`.
 * End-to-end tests for the configurations execute  Piranha on the test scenarios in `test-resources/<language>/input` and check if the output is as expected (`test-resources/<language>/expected_treated` and `test-resources/<language>/expected_control`).
