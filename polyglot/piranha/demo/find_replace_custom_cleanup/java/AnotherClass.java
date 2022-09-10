@@ -13,6 +13,10 @@
  */
 package com.uber.piranha;
 
-enum TestEnum {
-    SAMPLE_STALE_FLAG
+class TestSubClass extends TestClass {
+  
+  @Override
+  void testMethod(){
+      System.out.println("Hi World!");
+    }
 }

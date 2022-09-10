@@ -1,7 +1,7 @@
 [package]
 authors = ["Ameya Ketkar <ketkara@uber.com>", "Lazaro Clapp <lazaro@uber.com>", "Murali Krishna Ramanathan", "Uber Technologies Inc."]
-name = "polyglot_piranha"
-description = "Piranha is a structural find and replace library based on tree-sitter."
+name = "piranha"
+description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
 version = "0.1.2"
 edition = "2021"
 include = [

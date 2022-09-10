@@ -50,7 +50,7 @@ query = """
 """
 holes = [ "enum_declaration_name"]
 
-# Deletes factory calss that uses the GLOBAL_TAG.enum_entry_name and inherits the relevant type alias.
+# Deletes factory class that uses the GLOBAL_TAG.enum_entry_name and inherits the relevant type alias.
 [[rules]]
 name = "delete_factory_class_inherits_relevant_type_alias"
 query = """

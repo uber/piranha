@@ -11,20 +11,33 @@
 
 # This file contains rules to the specific feature flag API.
 
-#
-# For @stale_flag_name = test_second_experiment and @treated = true
-# Before 
-# case test_second_experiment
-# After 
-#  
-#
 [[rules]]
-name = "delete_case_enum_entry"
-query = """
-(
-(enum_entry name: (_) @flag_name)  @ee
-  (#eq? @flag_name "@stale_flag_name")
-)"""
-replace_node = "ee"
-replace = ""
-holes = ["stale_flag_name"]
+name = "find_fooBar_anywhere"
+query = """((
+    (method_invocation 
+        name : (_) @name
+        arguments: ((argument_list 
+                        (string_literal) )
+    ) @method_invocation
+)
+(#eq? @name "fooBar")
+))"""
+
+[[rules]]
+name = "find_barFoo_in_static_method"
+query = """((
+    (method_invocation 
+        name : (_) @name
+        arguments: ((argument_list 
+                        (string_literal) )
+    ) @method_invocation
+)
+(#eq? @name "barFoo")
+))"""
+[[rules.constraints]]
+matcher = "(method_declaration) @md"
+queries = ["""(
+  (modifiers) @modifiers
+  (#match? @modifiers ".*static.*")
+  )"""
+]

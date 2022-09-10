@@ -9,9 +9,26 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-language = ["java"]
-substitutions = [
-    ["stale_flag_name", "SAMPLE_STALE_FLAG"],
-    ["treated", "true"],
-    ["treated_complement", "false"],
-]
+#
+# For @stale_flag_name = STALE_FLAG 
+# Before :
+#  enum Flags {
+#   ABC, STALE_FLAG, OTHER_FLAG    
+#  }
+# After :
+#  enum Flags {
+#   ABC, OTHER_FLAG    
+#  }
+#
+[[rules]]
+name = "delete_enum_constant"
+query = """
+    (
+    ((enum_constant name : (_) @n) @ec)       
+    (#eq? @n  "@stale_flag_name")
+    )
+    """
+replace_node = "ec"
+replace = ""
+holes = ["stale_flag_name"]
+groups = [ "delete_enum_entry"]
