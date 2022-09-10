@@ -30,7 +30,7 @@ At its heart, Polyglot Piranha is a structural find/replacement (rewrite) engine
 A user provides :
 - A set (or, a graph) of structural find/replace rules 
 - Path to the code base
-- Arguments to modify Piranha's behavior (like deleting associated comments)
+- [Arguments](#piranha-arguments) to modify Piranha's behavior (like deleting associated comments)
 When Piranha applies the set (or graph) of user defined rules, it triggers the __pre-built__ language specific cleanup rules to do a deep cleanup. 
 
 ## When is Polyglot Piranha useful?
@@ -119,7 +119,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
 <h5> Arguments </h5>
 - `path_to_codebase` : Path to source code folder
 - `path_to_configuration` : A directory containing files named `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
-  * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules
+  * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules [reference](#piranha-arguments) 
   * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place). These rules can also specify the pre-built language specific cleanups to trigger.
   * `edges.toml` (_optional_): expresses the flow between the rules 
 - `should_rewrite_files` : Enables in-place rewriting of code 
@@ -208,7 +208,7 @@ Currently, we have demos for the following :
   * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/polyglot/piranha/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/polyglot/piranha/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API. 
   * In these demos the `configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
-    * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules.
+    * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules [reference](#piranha-arguments).
 
 <h4>  Match-only rules: </h4> 
 
