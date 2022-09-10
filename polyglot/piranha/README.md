@@ -31,7 +31,7 @@ A user provides :
 - A set (or, a graph) of structural find/replace rules 
 - Path to the code base
 - Arguments to modify Piranha's behavior (like deleting associated comments)
-When Piranha applies the set (or graph) of user defined rules, it trigger the __pre-built__ language specific cleanup rules to do a deep cleanup. 
+When Piranha applies the set (or graph) of user defined rules, it triggers the __pre-built__ language specific cleanup rules to do a deep cleanup. 
 
 ## When is Polyglot Piranha useful?
 
@@ -46,7 +46,7 @@ public String fooBar(boolean x) {
     return "";
 }
 ```
-To cleanup this code with Piranha, a user would have to *one* rule to update the expressions like `exp.isTreated("SHOW_MENU")` to `true` and hook it to the pre-built boolean simplification rules. It would result in : 
+To cleanup this code with Piranha, a user would have to write *one* rule to update the expressions like `exp.isTreated("SHOW_MENU")` to `true` and hook it to the pre-built boolean simplification rules. It would result in : 
 ```
 public String fooBar(boolean x) {
     String menu = getMenu();
