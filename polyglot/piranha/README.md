@@ -36,6 +36,7 @@ When Piranha applies the set (or graph) of user defined rules, it triggers the _
 ## When is Polyglot Piranha useful?
 
 <h5> Example 1 (Stale Feature Flag Cleanup) </h5>
+
 Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU") always returns `true` (i.e. the feature *Show Menu* is treated)
 ```
 public String fooBar(boolean x) {
@@ -56,6 +57,7 @@ public String fooBar(boolean x) {
 Note how, user only specified the seed rule to update the expression to true, and Piranha simplified the disjunction (`exp.isTreated("SHOW_MENU")|| x` => `true`), then removed the stale if condition and finally deleted the unreachable return statement (`return "";`).
 
 <h5> Example 2 (Structural Find/Replace with built-in cleanup) </h5>
+
 Let's say a user writes a piranha rule to delete an unused enum case (let's say `LOW`). However, this enum case "co-incidentally" is the only enum case in this enum declaration.  
 ```
 enum Level {
@@ -101,11 +103,11 @@ Polyglot Piranha can be used as a python library or as a command line tool.
 
 <h3> Installing the Python API </h3>
 
-`pip install polyglot_piranha`
+`pip install polyglot-piranha`
 
 Currently, we support one simple API (`run_piranha_cli`) that wraps the command line usage of Polyglot Piranha. We believe this makes it easy to incorporate Piranha in *"pipelining"*. 
 
-<h4> `run_piranha_cli` </h4>
+<h4> <code>run_piranha_cli</code></h4>
 
 ```
 from polyglot_piranha import run_piranha_cli
@@ -117,6 +119,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
                                   should_rewrite_files=True)
 ```
 <h5> Arguments </h5>
+
 - `path_to_codebase` : Path to source code folder
 - `path_to_configuration` : A directory containing files named `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
   * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules [reference](#piranha-arguments) 
@@ -198,7 +201,7 @@ To setup the demo please follow the below steps:
   - `source .env/bin/activate`
 * Install Polyglot Piranha 
   - `pip install .` to run demo against current source code (please install [Rust](https://www.rust-lang.org/tools/install), it takes less than a minute)
-  - Or, `pip install polyglot_piranha` to run demos against the latest release.
+  - Or, `pip install polyglot-piranha` to run demos against the latest release.
 
 
 Currently, we have demos for the following : 
@@ -250,6 +253,7 @@ and [Adding Cleanup Rules](#adding-cleanup-rules).
 ## *Stale Feature Flag Cleanup* in depth
 
 <h3> Adding support for a new feature flag system </h3>
+
 To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files (look [here](/polyglot/piranha/src/cleanup_rules/java)). The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent. 
 For instance, you want to delete a method declaration with specific annotations and then update its usages with some boolean value. 
 Please refer to the `test-resources/java` for detailed examples. 
