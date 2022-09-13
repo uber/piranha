@@ -14,5 +14,14 @@ def java_demo():
     print("Running the Find/Replace Custom Cleanup demo for Java")
     _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
 
+def go_demo():
+    """
+    Replace `fmt.Print("String\n")` with `fmt.Println("String")`.
+    We define a rule to replace `fmt.Print` with `fmt.Println` which then triggers the cleanup of the trailing `\n` on a matching `call_expression`.
+    """
+    print("Running the Find/Replace Custom Cleanup demo for Go")
+    _ = run_piranha_cli(join(find_Replace_dir, "go"), join(find_Replace_dir, "go/configurations"), True)
+
 java_demo()
+go_demo()
 print("Completed running the Find/Replace Custom Cleanup demos")

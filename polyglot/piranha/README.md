@@ -177,7 +177,7 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/pira
 | Kotlin           | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
 | Java + Kotlin    | :x:                         | :calendar:                               | :calendar:                           |
 | Swift            | :heavy_check_mark:          | :construction:                           | :construction:                       |
-| Go               | :construction:              | :construction:                           | :construction:                       |
+| Go               | :heavy_check_mark:          | :construction:                           | :construction:                       |
 | Python           | :calendar:                  | :calendar:                               | :calendar:                           |
 | TypeScript       | :calendar:                  | :calendar:                               | :calendar:                           |
 | C#               | :calendar:                  | :calendar:                               | :calendar:                           |
@@ -227,7 +227,8 @@ Currently, we have demos for the following :
 <h4>  Structural Find/Replace with Custom Cleanup </h4> 
 
    * run `python3 demo/find_replace_custom_cleanup_demos.py`
-   * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()`. Note it also adds the required import statement. 
+   * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()` in Java. Note it also adds the required import statement.
+   * This demo also shows how to replace `fmt.Print()` with `fmt.Println()` in Go, which leads to a cleanup of a trailing `\n` in the `string` argument.
 
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
@@ -449,3 +450,14 @@ To add new scenarios to the existing tests for a given language, you can add the
 Update the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml` files too.
 
 To add tests for a new language, please add a new `<language>` folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
+
+<h4> Support for a new language</h4>
+
+Below we list an overview of the basic changes to support a new language.
+[PR#244](https://github.com/uber/piranha/pull/244) can be used as an example.
+
+- `Cargo.toml`: Add the dependency for the tree-sitter grammar.
+- Add the language in `tree_sitter_utilities.rs`.
+- Add tests.
+- Add a demo.
+- Update the README.

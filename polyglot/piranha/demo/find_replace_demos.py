@@ -29,9 +29,15 @@ def java_demo():
     print("Running the Find/Replace demo for Java")
     _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
 
-
+def go_demo():
+    """
+    This shows how we can use Piranha to execute structural find/replace without hooking up to any existent pre-built rules.
+    """
+    print("Running the Find/Replace demo for Go")
+    _ = run_piranha_cli(join(find_Replace_dir, "go"), join(find_Replace_dir, "go/configurations"), True)
 
 swift_demo()
 strings_demo()
 java_demo()
+go_demo()
 print("Completed running the Find/Replace demos")

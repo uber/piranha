@@ -51,6 +51,7 @@ impl TreeSitterHelpers for String {
       "kt" => tree_sitter_kotlin::language(),
       "swift" => tree_sitter_swift::language(),
       "strings" => tree_sitter_strings::language(),
+      "go" => tree_sitter_go::language(),
       _ => panic!("Language not supported"),
     }
   }
@@ -60,6 +61,7 @@ impl TreeSitterHelpers for String {
       "java" => kind.eq("line_comment") || kind.eq("block_comment"),
       "kt" => kind.eq("comment"),
       "swift" => kind.eq("comment") || kind.eq("multiline_comment"),
+      "go" => kind.eq("comment"),
       _ => false,
     }
   }
