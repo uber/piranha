@@ -9,6 +9,13 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+#
+# For @receiver_name = fmt and @fn_name = Print and @fn_replacement = Println
+# Before
+#  fmt.Print("found", n, "cases\n")
+# After
+#  fmt.Println("found", n, "cases\n")
+#
 [[rules]]
 name = "replace_fmt_Print_with_fmt_Println"
 query = """
@@ -27,6 +34,14 @@ replace_node = "func_field"
 replace = "@fn_replacement"
 holes = ["receiver_name", "fn_name", "fn_replacement"]
 
+#
+# For @receiver_name = fmt and @fn_replacement = Println
+# Before
+#  fmt.Println("found", n, "cases\n")
+# After
+#  fmt.Println("found", n, "cases")
+#
+# the `.` anchor matches the last interpreted_string_literal
 [[rules]]
 groups = ["newline_cleanup"]
 name = "remove_last_new_line_escape_in_intepreted_string_literal"
@@ -47,6 +62,8 @@ query = """
 replace_node = "escape_seq"
 replace = ""
 holes = ["receiver_name", "fn_replacement"]
+# The constraint rejects any call_expression that does not match @receiver_name.@fn_replacement
+# ("fmt.Println")
 [[rules.constraints]]
 matcher = "(call_expression) @cd"
 queries = [
