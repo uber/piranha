@@ -20,8 +20,15 @@ def run_kt_ff_demo():
     for summary in output_summary_kt:
         assert len(summary.rewrites) > 0
 
+def run_go_ff_demo():
+    print("Running the stale feature flag cleanup demo for Go")
+    output_summary_go = run_piranha_cli(join(feature_flag_dir, "go"), join(feature_flag_dir, 'go/configurations'), True)
+    assert len(output_summary_go) == 1
 
+    for summary in output_summary_go:
+        assert len(summary.rewrites) > 0
 
 run_java_ff_demo()
 run_kt_ff_demo()
+run_go_ff_demo()
 print("Completed running the stale feature flag cleanup demos")
