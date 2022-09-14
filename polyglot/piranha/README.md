@@ -451,13 +451,13 @@ Update the `piranha_arguments_treated.toml` and `piranha_arguments_control.toml`
 
 To add tests for a new language, please add a new `<language>` folder inside `test-resources/` and populate the `input`, `expected_treated` and `expected_control` directories appropriately.
 
-<h4> Support for a new language</h4>
+<h4> Support for a new language </h4>
 
 Below we list an overview of the basic changes to support a new language.
-[PR#244](https://github.com/uber/piranha/pull/244) can be used as an example.
+Please refer to [PR#244](https://github.com/uber/piranha/pull/244) as an example.
 
-- `Cargo.toml`: Add the dependency for the tree-sitter grammar.
-- Add the language in `tree_sitter_utilities.rs`.
-- Add tests.
-- Add a demo.
+- `Cargo.toml`: add the tree-sitter grammar dependency.
+- `tree_sitter_utilities.rs`: add the language string pointing to the grammar.
+- `src/tests/mod.rs`: add end-to-end tests.
+- Add demo examples.
 - Update the README.
