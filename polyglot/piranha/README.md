@@ -219,7 +219,7 @@ Currently, we have demos for the following :
   * This demo also shows how the piranha summary output can be used. 
     * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in static methods)
 
-<h4>  Structural Find/Replace </h4> 
+<h4>  Structural Find/Replace </h4>
 
   * run `python3 demo/find_replace_demos.py`
   * This demo shows how to use Piranha as a simple structural find/replace tool (that optionally hooks up to built-in cleanup rules)
@@ -228,7 +228,7 @@ Currently, we have demos for the following :
 
    * run `python3 demo/find_replace_custom_cleanup_demos.py`
    * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()` in Java. Note it also adds the required import statement.
-   * This demo also shows how to replace `fmt.Print()` with `fmt.Println()` in Go, which leads to a cleanup of a trailing `\n` in the `string` argument.
+   * This demo also shows how to find a trailing `\n` in a `argument` of `fmt.Print()` in Go, and then replace `fmt.Print()` with `fmt.Println()`.
 
 
 *Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*

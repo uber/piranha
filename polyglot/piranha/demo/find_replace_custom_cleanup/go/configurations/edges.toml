@@ -12,5 +12,5 @@
 # The edges in this file specify the flow between the rules
 [[edges]]
 scope = "Parent"
-from = "replace_fmt_Print_with_fmt_Println"
-to = ["newline_cleanup"]
+from = "remove_last_new_line_escape_in_intepreted_string_literal_in_fmt_Print"
+to = ["replace_fmt_Print_with_fmt_Println"]

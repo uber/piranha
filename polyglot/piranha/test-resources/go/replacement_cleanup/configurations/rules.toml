@@ -9,27 +9,16 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+#
+# For @receiver_name = fmt and @fn_name = Print
+# Before
+#  fmt.Print("found", n, "cases\n")
+# After
+#  fmt.Print("found", n, "cases")
+#
+# the `.` anchor matches the last interpreted_string_literal
 [[rules]]
-name = "replace_fmt_Print_with_fmt_Println"
-query = """
-(
-    (call_expression
-        function: (selector_expression
-            operand: (identifier) @func_id
-            field: (field_identifier) @func_field
-        )
-    )
-    (#eq? @func_id "@receiver_name")
-    (#eq? @func_field "@fn_name")
-)
-"""
-replace_node = "func_field"
-replace = "@fn_replacement"
-holes = ["receiver_name", "fn_name", "fn_replacement"]
-
-[[rules]]
-groups = ["newline_cleanup"]
-name = "remove_last_new_line_escape_in_intepreted_string_literal"
+name = "remove_last_new_line_escape_in_intepreted_string_literal_in_fmt_Print"
 query = """
 (
     (call_expression
@@ -46,7 +35,9 @@ query = """
 """
 replace_node = "escape_seq"
 replace = ""
-holes = ["receiver_name", "fn_replacement"]
+holes = ["receiver_name", "fn_name"]
+# The constraint rejects any call_expression that does not match @receiver_name.@fn_name
+# ("fmt.Println")
 [[rules.constraints]]
 matcher = "(call_expression) @cd"
 queries = [
@@ -58,6 +49,33 @@ queries = [
         )
     )
     (#not-eq? @func_id "@receiver_name")
-    (#not-eq? @func_field "@fn_replacement")
+    (#not-eq? @func_field "@fn_name")
 )"""
 ]
+
+#
+# For @receiver_name = fmt and @fn_name = Print and @fn_replacement = Println
+# Before
+#  fmt.Print("found", n, "cases")
+# After
+#  fmt.Println("found", n, "cases")
+#
+[[rules]]
+# Linking this rule to a group so it's not treated as a seed rule.
+groups = ["Cleanup Rule"]
+name = "replace_fmt_Print_with_fmt_Println"
+query = """
+(
+    (call_expression
+        function: (selector_expression
+            operand: (identifier) @func_id
+            field: (field_identifier) @func_field
+        )
+    ) @call_exp
+    (#eq? @func_id "@receiver_name")
+    (#eq? @func_field "@fn_name")
+)
+"""
+replace_node = "func_field"
+replace = "@fn_replacement"
+holes = ["receiver_name", "fn_name", "fn_replacement"]
