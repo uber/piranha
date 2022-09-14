@@ -1,0 +1,90 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+#
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+#
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The language specific rules in this file are applied after the API specific change has been performed.
+
+# Before
+#  if (true) { doSomething() }
+# After
+#  { doSomething() }
+# Before
+#  if true { doSomething() } else { doSomethingElse() }
+# After
+#  { doSomething() }
+# Before
+#  if :flag := "a"; true { doSomething() }
+# After
+#  :flag := "a"
+#  doSomething()
+#
+# Adds an unnecessary blank line when there is no initializer
+# If the blank line is unwanted, we could split the rule into two queries.
+# `!initializer` would match `if_statement`s w/o initializer
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_true"
+query = """
+(
+    (if_statement
+        initializer: (_)? @initializer
+        condition: ([
+                (parenthesized_expression [
+                    (parenthesized_expression (true))
+                    (true)
+                ])
+                (true)
+                ]
+        )
+        consequence: (block (_)) @consequence_block
+    ) @if_statement
+)
+"""
+replace = "@initializer\n@consequence_block"
+replace_node = "if_statement"
+
+# Before
+#  func { 
+#    a := "a" 
+#    {
+#        doSomething() 
+#    } 
+#    b := "b" 
+#  }
+# After
+#  func { 
+#    a := "a" 
+#    doSomething() 
+#    b := "b" 
+#  }
+#
+# Currently, @pre, @post, @nested.block match only the 1st node
+# problem with tree-sitter-go queries and quantifiers
+[[rules]]
+name = "remove_unnecessary_nested_block"
+query = """
+((block
+    (
+        (_)* @pre
+        (block (_) @nested.stmts) @nested.block
+        (_)* @post
+    )
+)@block)
+"""
+replace = "@nested.stmts"
+replace_node = "nested.block"
+
+# Dummy rule that acts as a junction for all boolean based cleanups
+[[rules]]
+name = "boolean_literal_cleanup"
+
+# Dummy rule that acts as a junction for all statement based cleanups
+[[rules]]
+name = "statement_cleanup"

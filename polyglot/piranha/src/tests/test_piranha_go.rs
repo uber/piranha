@@ -32,3 +32,12 @@ fn test_go_replacement_cleanup() {
     1,
   );
 }
+
+#[test]
+fn test_go_if_replacement_cleanup() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "if_replacement_cleanup"),
+    1,
+  );
+}
