@@ -18,3 +18,9 @@ build-backend = "maturin"
 
 [tool.maturin]
 bindings = "pyo3"
+
+[tool.setuptools.packages.find]
+where = ["src/cleanup_rules/java", "src/cleanup_rules/kt", "src/cleanup_rules/swift" ]
+
+[tool.setuptools.package-data]
+mypkg = ["*.toml"]
