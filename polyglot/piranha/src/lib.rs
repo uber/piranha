@@ -28,7 +28,7 @@ use std::{collections::HashMap, path::PathBuf};
 use colored::Colorize;
 use itertools::Itertools;
 use jwalk::WalkDir;
-use log::info;
+use log::{info, debug};
 use regex::Regex;
 use tree_sitter::{Parser, Range};
 
@@ -74,6 +74,7 @@ pub fn run_piranha_cli(
 
 #[pymodule]
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+  pyo3_log::init();
   m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
   Ok(())
 }
@@ -205,11 +206,14 @@ impl SourceCodeUnit {
     let mut current_rule = rule.name();
     let mut next_rules_stack: VecDeque<(String, Rule)> = VecDeque::new();
     // Perform the parent edits, while queueing the Method and Class level edits.
-    // let file_level_scope_names = [METHOD, CLASS];
     loop {
       // Get all the (next) rules that could be after applying the current rule (`rule`).
       let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
-
+      
+      for (k, v) in &next_rules_by_scope {
+        let rules = v.iter().map(|f|f.name()).join(", ");
+        debug!("{}",  format!("Next Rules:\nScope {k} \nRules {rules}").blue());
+      }
       // Adds "Method" and "Class" rules to the stack
       self.add_rules_to_stack(
         &next_rules_by_scope,
@@ -217,7 +221,6 @@ impl SourceCodeUnit {
         rules_store,
         &mut next_rules_stack,
       );
-
       // Add Global rules as seed rules
       for r in &next_rules_by_scope[GLOBAL] {
         rules_store.add_to_global_rules(r, self.substitutions());

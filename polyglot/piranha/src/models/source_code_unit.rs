@@ -79,17 +79,17 @@ impl SourceCodeUnit {
     if self.code.as_str().is_empty() {
       if *piranha_arguments.delete_file_if_empty() {
         _ = fs::remove_file(&self.path).expect("Unable to Delete file");
+        return;
       }
-    } else {
-      let content = if *piranha_arguments.delete_consecutive_new_lines() {
-        let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
-        regex.replace_all(&self.code(), "\n${2}").to_string()
-      } else {
-        self.code()
-      };
-      fs::write(&self.path, content).expect("Unable to Write file");
     }
-  }
+    let mut content = self.code();
+    if *piranha_arguments.delete_consecutive_new_lines() {
+      let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
+      content = regex.replace_all(&self.code(), "\n${2}").to_string()  
+    }
+    fs::write(&self.path, content).expect("Unable to Write file");
+    }
+  
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation

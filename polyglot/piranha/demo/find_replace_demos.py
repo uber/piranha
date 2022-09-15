@@ -1,6 +1,11 @@
 from collections import Counter
 from os.path import join, dirname
 from polyglot_piranha import run_piranha_cli
+import logging
+
+FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(logging.DEBUG)
 
 find_Replace_dir = join(dirname(__file__), 'find_replace')
 
@@ -28,8 +33,6 @@ def java_demo():
     """    
     print("Running the Find/Replace demo for Java")
     _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
-
-
 
 swift_demo()
 strings_demo()
