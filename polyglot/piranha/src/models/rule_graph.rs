@@ -60,6 +60,10 @@ impl RuleGraph {
   pub(crate) fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
     self.0.get(rule_name).cloned().unwrap_or_default()
   }
+
+  pub(crate) fn get_size(&self) -> usize {
+    self.0.len()
+  }
 }
 
 #[cfg(test)]

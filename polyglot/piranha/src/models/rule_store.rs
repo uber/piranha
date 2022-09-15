@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use colored::Colorize;
-use log::info;
+use log::{info, debug};
 use tree_sitter::{Language, Query};
 
 use crate::{
@@ -124,6 +124,7 @@ impl RuleStore {
   ) -> HashMap<String, Vec<Rule>> {
     // let rule_name = rule.name();
     let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
+    debug!("{}", format!("Rule graph size {}", self.rule_graph.get_size()));
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
     for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
       let to_rule_name = &self.rules_by_name[&to_rule];
