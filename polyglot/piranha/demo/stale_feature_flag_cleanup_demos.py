@@ -24,7 +24,7 @@ def run_kt_ff_demo():
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 
 run_java_ff_demo()
 run_kt_ff_demo()

@@ -28,7 +28,7 @@ use std::{collections::HashMap, path::PathBuf};
 use colored::Colorize;
 use itertools::Itertools;
 use jwalk::WalkDir;
-use log::{debug};
+use log::{debug, info};
 use regex::Regex;
 use tree_sitter::{Parser, Range};
 
@@ -82,6 +82,8 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 pub fn execute_piranha(
   configuration: &PiranhaArguments, should_rewrite_files: bool,
 ) -> Vec<PiranhaOutputSummary> {
+  info!("Executing Polyglot Piranha !!!");
+
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
 
@@ -94,11 +96,29 @@ pub fn execute_piranha(
   }
 
   // flag_cleaner.relevant_files
-  flag_cleaner
+  let summaries = flag_cleaner
     .get_updated_files()
     .iter()
     .map(PiranhaOutputSummary::new)
-    .collect_vec()
+    .collect_vec();
+  
+  let mut total_number_of_matches : usize = summaries.iter().map(|x|x.matches().len()).sum();
+  let mut total_number_of_rewrites : usize = summaries.iter().map(|x|x.rewrites().len()).sum();
+  for summary in &summaries {
+    let number_of_rewrites =&summary.rewrites().len();
+    let number_of_matches = &summary.matches().len();
+    info!("File : {:?}", &summary.path());
+    info!("{}", format!("# Rewrites : {number_of_rewrites}"));
+    info!("{}", format!("# Rewrites : {number_of_matches}"));
+    info!("# Rewrites : {}", &summary.rewrites().len() );
+    info!("# Matches : {}", &summary.matches().len() );
+    total_number_of_rewrites += number_of_rewrites;
+    total_number_of_matches += number_of_matches;
+  }
+  info!("{}", format!("Total files affected/matched {}", &summaries.len()));
+  info!("{}", format!("Total number of matches {total_number_of_matches}"));
+  info!("{}", format!("Total number of rewrites {total_number_of_rewrites}"));
+  return summaries;
 }
 
 impl SourceCodeUnit {

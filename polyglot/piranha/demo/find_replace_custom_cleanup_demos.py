@@ -19,7 +19,7 @@ def java_demo():
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger().setLevel(logging.INFO)
 
 java_demo()
 info("Completed running the Find/Replace Custom Cleanup demos")
