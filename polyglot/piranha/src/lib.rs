@@ -74,6 +74,7 @@ pub fn run_piranha_cli(
 
 #[pymodule]
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+  pyo3_log::init();
   m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
   Ok(())
 }

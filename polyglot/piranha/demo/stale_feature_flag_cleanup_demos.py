@@ -1,5 +1,6 @@
 from os.path import join, dirname
 from polyglot_piranha import run_piranha_cli
+import logging 
 
 feature_flag_dir = join(dirname(__file__), 'feature_flag_cleanup')
 
@@ -20,7 +21,9 @@ def run_kt_ff_demo():
     for summary in output_summary_kt:
         assert len(summary.rewrites) > 0
 
-
+FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(logging.DEBUG)
 
 run_java_ff_demo()
 run_kt_ff_demo()

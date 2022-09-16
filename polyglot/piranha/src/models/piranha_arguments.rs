@@ -25,7 +25,7 @@ use crate::{
   utilities::{read_toml, tree_sitter_utilities::TreeSitterHelpers},
 };
 
-#[derive(Clone, Builder, Getters, CopyGetters)]
+#[derive(Clone, Builder, Getters, CopyGetters, Debug)]
 #[builder(default)]
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
 pub struct PiranhaArguments {
