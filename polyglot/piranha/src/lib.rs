@@ -109,9 +109,7 @@ pub fn execute_piranha(
     let number_of_matches = &summary.matches().len();
     info!("File : {:?}", &summary.path());
     info!("{}", format!("# Rewrites : {number_of_rewrites}"));
-    info!("{}", format!("# Rewrites : {number_of_matches}"));
-    info!("# Rewrites : {}", &summary.rewrites().len() );
-    info!("# Matches : {}", &summary.matches().len() );
+    info!("{}", format!("# Matches : {number_of_matches}"));
     total_number_of_rewrites += number_of_rewrites;
     total_number_of_matches += number_of_matches;
   }
