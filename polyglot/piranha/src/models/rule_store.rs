@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use colored::Colorize;
-use log::info;
+use log::{info, debug, trace};
 use tree_sitter::{Language, Query};
 
 use crate::{
@@ -31,6 +31,7 @@ use crate::{
 pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";
 /// This maintains the state for Piranha.
+#[derive(Debug)]
 pub(crate) struct RuleStore {
   // A graph that captures the flow amongst the rules
   rule_graph: RuleGraph,
@@ -67,6 +68,8 @@ impl RuleStore {
         rule_store.add_to_global_rules(&rule, args.input_substitutions());
       }
     }
+    info!("Number of rules and edges loaded : {:?}", rule_store.rule_graph.get_number_of_rules_and_edges());
+    trace!("{}", format!("{:#?}", rule_store));
     rule_store
   }
 
@@ -102,7 +105,7 @@ impl RuleStore {
       }) {
         r.add_grep_heuristics_for_global_rules(tag_captures);
         #[rustfmt::skip]
-        info!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
+        debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
         self.global_rules.push(r);
       }
     }

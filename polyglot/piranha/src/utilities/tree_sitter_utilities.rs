@@ -19,7 +19,7 @@ use crate::{
 };
 use colored::Colorize;
 use itertools::Itertools;
-use log::info;
+use log::{debug};
 use std::collections::HashMap;
 #[cfg(test)]
 use tree_sitter::Parser;
@@ -277,7 +277,7 @@ pub(crate) fn get_tree_sitter_edit(
     replacement_snippet_fmt.push_str(&format!("\n to \n{}", replacement.italic()))
   }
   #[rustfmt::skip]
-  info!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
+  debug!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
   // Create the new source code content by appropriately
   // replacing the range with the replacement string.
   let new_source_code = [

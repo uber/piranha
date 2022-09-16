@@ -2,11 +2,12 @@ from collections import Counter
 from os.path import join, dirname
 from polyglot_piranha import run_piranha_cli
 import logging
+from logging import info
 
 match_only_dir = join(dirname(__file__), 'match_only')
 
 def demo():
-    print("Running the Match-only demo for Java")
+    info("Running the Match-only demo for Java")
     output_summary_java = run_piranha_cli(join(match_only_dir, "java"), join(match_only_dir, "java/configurations"), True)
 
     rule_match_counter = Counter([m[0] for m in output_summary_java[0].matches])
@@ -21,4 +22,4 @@ logging.basicConfig(format=FORMAT)
 logging.getLogger().setLevel(logging.DEBUG)
 
 demo()
-print("Completed running the Match-only demo")
+info("Completed running the Match-only demo")

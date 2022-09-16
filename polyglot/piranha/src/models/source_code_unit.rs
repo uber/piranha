@@ -17,7 +17,7 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use log::info;
+use log::{debug};
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
@@ -107,7 +107,7 @@ impl SourceCodeUnit {
         self.piranha_arguments.cleanup_comments_buffer().clone(),
         edit.replacement_range().start_byte,
       ) {
-        info!("Deleting an associated comment");
+        debug!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser, false);
       }
     }

@@ -28,12 +28,12 @@ use std::{collections::HashMap, path::PathBuf};
 use colored::Colorize;
 use itertools::Itertools;
 use jwalk::WalkDir;
-use log::info;
+use log::{debug};
 use regex::Regex;
 use tree_sitter::{Parser, Range};
 
 use crate::{
-  models::rule_store::{RuleStore},
+  models::rule_store::RuleStore,
   utilities::{read_file, tree_sitter_utilities::get_replace_range},
 };
 
@@ -211,7 +211,18 @@ impl SourceCodeUnit {
       // Get all the (next) rules that could be after applying the current rule (`rule`).
       let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
 
-      // Adds "Method" and "Class" rules to the stack
+      debug!(
+        "\n{}",
+        &next_rules_by_scope
+          .iter()
+          .map(|(k, v)| {
+            let rules = v.iter().map(|f| f.name()).join(", ");
+            format!("Next Rules:\nScope {k} \nRules {rules}").blue()
+          })
+          .join("\n")
+      );
+
+      // Adds rules of scope != ["Parent", "Global"] to the stack
       self.add_rules_to_stack(
         &next_rules_by_scope,
         current_replace_range,
@@ -234,8 +245,8 @@ impl SourceCodeUnit {
         &next_rules_by_scope[PARENT],
       ) {
         self.rewrites_mut().push(edit.clone());
-        info!(
-          "{}",
+        debug!(
+          "\n{}",
           format!(
             "Cleaning up the context, by applying the rule - {}",
             edit.matched_rule()
@@ -347,7 +358,7 @@ impl FlagCleaner {
     loop {
       let current_rules = self.rule_store.global_rules();
 
-      info!("{}", format!("# Global rules {}", current_rules.len()));
+      debug!("\n{}", format!("# Global rules {}", current_rules.len()));
       // Iterate over each file containing the usage of the feature flag API
       for (path, content) in self.get_files_containing_feature_flag_api_usage() {
         self
@@ -370,7 +381,7 @@ impl FlagCleaner {
 
         // Break when a new `global` rule is added
         if self.rule_store.global_rules().len() > current_rules.len() {
-          info!("Found a new global rule. Will start scanning all the files again.");
+          debug!("Found a new global rule. Will start scanning all the files again.");
           break;
         }
       }
@@ -412,7 +423,7 @@ impl FlagCleaner {
       .filter(|x| no_global_rules_with_holes || pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    debug!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 
