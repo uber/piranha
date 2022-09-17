@@ -101,22 +101,25 @@ pub fn execute_piranha(
     .iter()
     .map(PiranhaOutputSummary::new)
     .collect_vec();
-  
-  let mut total_number_of_matches : usize = summaries.iter().map(|x|x.matches().len()).sum();
-  let mut total_number_of_rewrites : usize = summaries.iter().map(|x|x.rewrites().len()).sum();
-  for summary in &summaries {
-    let number_of_rewrites =&summary.rewrites().len();
-    let number_of_matches = &summary.matches().len();
-    info!("File : {:?}", &summary.path());
-    info!("{}", format!("# Rewrites : {number_of_rewrites}"));
-    info!("{}", format!("# Matches : {number_of_matches}"));
-    total_number_of_rewrites += number_of_rewrites;
-    total_number_of_matches += number_of_matches;
-  }
-  info!("{}", format!("Total files affected/matched {}", &summaries.len()));
-  info!("{}", format!("Total number of matches {total_number_of_matches}"));
-  info!("{}", format!("Total number of rewrites {total_number_of_rewrites}"));
+  log_the_summary(&summaries);
   return summaries;
+}
+
+fn log_the_summary(summaries: &Vec<PiranhaOutputSummary>) {
+    let mut total_number_of_matches : usize = summaries.iter().map(|x|x.matches().len()).sum();
+    let mut total_number_of_rewrites : usize = summaries.iter().map(|x|x.rewrites().len()).sum();
+    for summary in summaries {
+      let number_of_rewrites =&summary.rewrites().len();
+      let number_of_matches = &summary.matches().len();
+      info!("File : {:?}", &summary.path());
+      info!("{}", format!("# Rewrites : {number_of_rewrites}"));
+      info!("{}", format!("# Matches : {number_of_matches}"));
+      total_number_of_rewrites += number_of_rewrites;
+      total_number_of_matches += number_of_matches;
+    }
+    info!("{}", format!("Total files affected/matched {}", &summaries.len()));
+    info!("{}", format!("Total number of matches {total_number_of_matches}"));
+    info!("{}", format!("Total number of rewrites {total_number_of_rewrites}"));
 }
 
 impl SourceCodeUnit {
