@@ -47,10 +47,10 @@ groups = ["delete_str_literal_in_list"]
 query = """
 (
     (list
-        (string) @s
+        (string) @string_literal
         (_)*
     ) @ls
-    (#eq? @s "\\"@str_literal\\"")
+    (#eq? @string_literal "\\"@str_literal\\"")
 )
 """
 replace_node = "s"
