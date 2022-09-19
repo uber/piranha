@@ -28,6 +28,8 @@ mod test_piranha_strings;
 
 mod test_piranha_swift;
 
+mod test_piranha_python;
+
 use std::sync::Once;
 
 static INIT: Once = Once::new();

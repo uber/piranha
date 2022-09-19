@@ -49,6 +49,7 @@ impl TreeSitterHelpers for String {
     match self.as_str() {
       "java" => tree_sitter_java::language(),
       "kt" => tree_sitter_kotlin::language(),
+      "py" => tree_sitter_python::language(),
       "swift" => tree_sitter_swift::language(),
       "strings" => tree_sitter_strings::language(),
       _ => panic!("Language not supported"),

@@ -178,7 +178,7 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/pira
 | Java + Kotlin    | :x:                         | :calendar:                               | :calendar:                           |
 | Swift            | :heavy_check_mark:          | :construction:                           | :construction:                       |
 | Go               | :construction:              | :construction:                           | :construction:                       |
-| Python           | :calendar:                  | :calendar:                               | :calendar:                           |
+| Python           | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
 | TypeScript       | :calendar:                  | :calendar:                               | :calendar:                           |
 | C#               | :calendar:                  | :calendar:                               | :calendar:                           |
 | JavaScript       | :calendar:                  | :calendar:                               | :calendar:                           |
