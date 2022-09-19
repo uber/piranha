@@ -12,8 +12,8 @@
 # This file contains rules to the specific feature flag API.
 
 # For the two lists below, the query will match 1 result (the `a` list).
-# a = ['a', 'b']
-# b = [1, 2]
+#  a = ['a', 'b']
+#  b = [1, 2]
 # `@ls` will match lists that contain string literals as elements
 #
 [[rules]]

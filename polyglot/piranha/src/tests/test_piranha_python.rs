@@ -16,7 +16,7 @@ use super::{initialize, run_match_test, run_rewrite_test};
 static LANGUAGE: &str = "python";
 
 #[test]
-fn test_python_delete_str_literal_from_list() {
+fn test_python_delete_modify_str_literal_from_list() {
   initialize();
   run_rewrite_test(
     &format!("{}/{}", LANGUAGE, "delete_cleanup_str_in_list"),

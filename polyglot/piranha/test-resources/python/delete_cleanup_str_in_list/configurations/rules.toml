@@ -9,7 +9,49 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file contains rules to the specific feature flag API.
+# Replaces the single quote string literal inside a list
+# For @str_replacement = "a" and @str_replace = "z"
+# Before
+#  a = [ 'a', 'b', 'c']
+# After
+#  a = [ 'z', 'b', 'c']
+#
+[[rules]]
+name = "replace_str_literal_single_quote_in_list"
+query = """
+(
+    (list
+        (string) @string_literal
+        (_)*
+    ) @ls
+    (#eq? @string_literal "'@str_to_replace'")
+)
+"""
+replace_node = "string_literal"
+replace = "'@str_replacement'"
+holes = ["str_to_replace", "str_replacement"]
+
+# Replaces the double quote string literal inside a list
+# For @str_replacement = "a" and @double_quote_str_replacement = "z"
+# Before
+#  a = [ "a", "b", "c"]
+# After
+#  a = [ "z", "b", "c"]
+#
+[[rules]]
+name = "replace_str_literal_double_quote_in_list"
+query = """
+(
+    (list
+        (string) @string_literal
+        (_)*
+    ) @ls
+    (#eq? @string_literal "\\"@str_to_replace\\"")
+)
+"""
+replace_node = "string_literal"
+replace = "\"@str_replacement\""
+holes = ["str_to_replace", "str_replacement"]
 
 # Deletes the single quote string literal inside a list
 # For @str_literal = dep
@@ -24,13 +66,13 @@ groups = ["delete_str_literal_in_list"]
 query = """
 (
     (list
-        (string) @s
+        (string) @string_literal
         (_)*
     ) @ls
-    (#eq? @s "'@str_literal'")
+    (#eq? @string_literal "'@str_literal'")
 )
 """
-replace_node = "s"
+replace_node = "string_literal"
 replace = ""
 holes = ["str_literal"]
 
@@ -47,13 +89,13 @@ groups = ["delete_str_literal_in_list"]
 query = """
 (
     (list
-        (string) @s
+        (string) @string_literal
         (_)*
     ) @ls
-    (#eq? @s "\\"@str_literal\\"")
+    (#eq? @string_literal "\\"@str_literal\\"")
 )
 """
-replace_node = "s"
+replace_node = "string_literal"
 replace = ""
 holes = ["str_literal"]
 
