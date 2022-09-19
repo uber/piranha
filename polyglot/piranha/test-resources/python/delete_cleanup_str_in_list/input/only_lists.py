@@ -1,0 +1,5 @@
+deps = ['dependency1', 'dependency2', 'dependency3']
+nums = [1, 2, 3]
+deps2 = ["dependency2", "dependency1"]
+deps3 = ['dependency2']
+empty_list = []

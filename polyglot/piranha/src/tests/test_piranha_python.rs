@@ -11,9 +11,18 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::{initialize, run_match_test};
+use super::{initialize, run_match_test, run_rewrite_test};
 
 static LANGUAGE: &str = "python";
+
+#[test]
+fn test_python_delete_str_literal_from_list() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "delete_cleanup_str_in_list"),
+    1,
+  );
+}
 
 #[test]
 fn test_python_match_only() {
