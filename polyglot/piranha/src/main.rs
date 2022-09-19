@@ -28,7 +28,7 @@ fn main() {
 
   let args = PiranhaArguments::from_command_line();
 
-  debug!("{}", format!("{:#?}", args));
+  debug!("Piranha Arguments are \n{:#?}", args);
   let piranha_output_summaries = execute_piranha(&args, true);
 
   if let Some(path) = args.path_to_output_summaries() {
