@@ -169,7 +169,7 @@ impl SourceCodeUnit {
   pub(crate) fn _apply_edit(
     &mut self, range: Range, replacement_string: &str, parser: &mut Parser,
   ) -> InputEdit {
-
+    // Check if the edit is a `Delete` operation then delete trailing comma
     let replace_range = if replacement_string.trim().is_empty() {
       self.delete_trailing_comma(range)
     } else {
@@ -202,7 +202,6 @@ impl SourceCodeUnit {
   /// IF this closest node is a comma, extend the {new_delete_range} to include the comma.
   fn delete_trailing_comma(&mut self, deleted_range: Range) -> Range {
     let mut new_deleted_range = deleted_range;
-    // Check if the edit is a `Delete` operation
 
     // Get the node immediately after the to-be-deleted code
     if let Some(node_after_to_be_deleted_node) = self
