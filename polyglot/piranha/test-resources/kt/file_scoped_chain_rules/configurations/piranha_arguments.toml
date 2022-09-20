@@ -10,7 +10,4 @@
 # limitations under the License.
 
 language = ["kt"]
-substitutions = [
-    ["target_annotation_name", "ParameterDefinitions"],
-]
-cleanup_comments=true
+substitutions = []
