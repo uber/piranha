@@ -16,7 +16,7 @@ package com.uber.piranha;
 public enum Something implements ExperimentName {
 
   /** Show menu */
-  SHOW_MENU
+  SHOW_MENU,
 
   /** Foobar */
   STALE_FLAG,
