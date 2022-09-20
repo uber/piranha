@@ -195,6 +195,9 @@ impl SourceCodeUnit {
   /// Deletes the trailing comma after the {deleted_range}
   /// # Arguments
   /// * `deleted_range` - the range of the deleted code
+  /// 
+  /// # Returns
+  /// code range of the closest node
   ///
   /// Algorithm: 
   /// Get the node after the {deleted_range}'s end byte (heuristic 5 characters) 
