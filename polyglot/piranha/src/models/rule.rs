@@ -222,14 +222,17 @@ impl Rule {
     source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
     rules_store: &mut RuleStore, rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope = *rules_store
-      .get_number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope =
+      *rules_store.get_number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(
       source_code_unit.root_node(),
       previous_edit_start,
       previous_edit_end,
     );
-    debug!("\n{}", format!("Changed node kind {}", changed_node.kind()).blue());
+    debug!(
+      "\n{}",
+      format!("Changed node kind {}", changed_node.kind()).blue()
+    );
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
@@ -304,7 +307,7 @@ impl Rule {
       .map(|p_match| {
         let replacement = substitute_tags(self.replace(), p_match.matches(), false);
         let edit = Edit::new(p_match.clone(), replacement, self.name());
-        trace!("Rewrite found : {:#?}", edit );
+        trace!("Rewrite found : {:#?}", edit);
         edit
       });
   }

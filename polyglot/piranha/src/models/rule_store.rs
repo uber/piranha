@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use colored::Colorize;
-use log::{info, debug, trace};
+use log::{debug, info, trace};
 use tree_sitter::{Language, Query};
 
 use crate::{
@@ -68,7 +68,10 @@ impl RuleStore {
         rule_store.add_to_global_rules(&rule, args.input_substitutions());
       }
     }
-    info!("Number of rules and edges loaded : {:?}", rule_store.rule_graph.get_number_of_rules_and_edges());
+    info!(
+      "Number of rules and edges loaded : {:?}",
+      rule_store.rule_graph.get_number_of_rules_and_edges()
+    );
     trace!("Rule Store {}", format!("{:#?}", rule_store));
     rule_store
   }
@@ -180,7 +183,7 @@ impl RuleStore {
   }
 
   pub(crate) fn piranha_args(&self) -> &PiranhaArguments {
-      &self.piranha_args
+    &self.piranha_args
   }
 }
 

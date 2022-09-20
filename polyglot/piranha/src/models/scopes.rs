@@ -64,7 +64,11 @@ impl ScopeGenerator {
 
     // Match the `scope_matcher.matcher` to the parent
     loop {
-      trace!("Getting scope {} for node kind {}", scope_level, changed_node.kind());
+      trace!(
+        "Getting scope {} for node kind {}",
+        scope_level,
+        changed_node.kind()
+      );
       for m in &scope_matchers {
         if let Some(p_match) = changed_node.get_match_for_query(
           &source_code_unit.code(),

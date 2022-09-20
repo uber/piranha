@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entry-point for Piranha.
 use std::{fs, time::Instant};
 
-use log::{info, debug};
+use log::{debug, info};
 use polyglot_piranha::{
   execute_piranha, models::piranha_arguments::PiranhaArguments,
   models::piranha_output::PiranhaOutputSummary,
