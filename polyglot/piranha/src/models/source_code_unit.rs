@@ -1,4 +1,3 @@
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -17,7 +16,7 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use log::info;
+use log::debug;
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
@@ -107,7 +106,7 @@ impl SourceCodeUnit {
         self.piranha_arguments.cleanup_comments_buffer().clone(),
         edit.replacement_range().start_byte,
       ) {
-        info!("Deleting an associated comment");
+        debug!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser, false);
       }
     }
@@ -132,7 +131,9 @@ impl SourceCodeUnit {
     let mut relevant_nodes_are_comments = true;
     let mut comment_range = None;
     // Since the previous edit was a delete, the start and end of the replacement range is [start_byte].
-    let node = self.ast.root_node()
+    let node = self
+      .ast
+      .root_node()
       .descendant_for_byte_range(start_byte, start_byte)
       .unwrap_or(self.ast.root_node());
 

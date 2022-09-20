@@ -17,6 +17,7 @@ use crate::{
 };
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub(crate) struct RuleGraph(HashMap<String, Vec<(String, String)>>);
 
 impl RuleGraph {
@@ -59,6 +60,15 @@ impl RuleGraph {
   /// Get all the outgoing edges for `rule_name`
   pub(crate) fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
     self.0.get(rule_name).cloned().unwrap_or_default()
+  }
+
+  /// Get the number of nodes and edges in the rule graph
+  pub(crate) fn get_number_of_rules_and_edges(&self) -> (usize, usize) {
+    let mut edges = 0;
+    for (_, destinations) in &self.0 {
+      edges += destinations.len();
+    }
+    (self.0.len(), edges)
   }
 }
 

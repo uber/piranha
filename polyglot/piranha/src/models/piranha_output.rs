@@ -1,4 +1,3 @@
-
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -42,12 +41,10 @@ impl PiranhaOutputSummary {
     };
   }
 
-  #[cfg(test)]
   pub(crate) fn matches(&self) -> &[(String, Match)] {
     self.matches.as_ref()
   }
 
-  #[cfg(test)]
   pub(crate) fn rewrites(&self) -> &[Edit] {
     self.rewrites.as_ref()
   }

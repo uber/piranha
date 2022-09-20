@@ -12,6 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use itertools::Itertools;
+use log::trace;
 use serde_derive::Deserialize;
 
 use crate::utilities::tree_sitter_utilities::{
@@ -58,12 +59,16 @@ impl ScopeGenerator {
   ) -> String {
     let root_node = source_code_unit.root_node();
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
-
     // Get the scope matchers for `scope_level` from the `scope_config.toml`.
     let scope_matchers = rules_store.get_scope_query_generators(scope_level);
 
     // Match the `scope_matcher.matcher` to the parent
     loop {
+      trace!(
+        "Getting scope {} for node kind {}",
+        scope_level,
+        changed_node.kind()
+      );
       for m in &scope_matchers {
         if let Some(p_match) = changed_node.get_match_for_query(
           &source_code_unit.code(),

@@ -51,6 +51,13 @@ where
   }
 }
 
+pub(crate) fn parse_toml<T>(content: &str) -> T
+where
+  T: serde::de::DeserializeOwned + Default,
+{
+  return toml::from_str::<T>(content).unwrap();
+}
+
 pub(crate) trait MapOfVec<T, V> {
   fn collect(&mut self, key: T, value: V);
 }

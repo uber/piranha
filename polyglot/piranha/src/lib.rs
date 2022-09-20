@@ -28,12 +28,12 @@ use std::{collections::HashMap, path::PathBuf};
 use colored::Colorize;
 use itertools::Itertools;
 use jwalk::WalkDir;
-use log::info;
+use log::{debug, info};
 use regex::Regex;
 use tree_sitter::{Parser, Range};
 
 use crate::{
-  models::rule_store::{RuleStore},
+  models::rule_store::RuleStore,
   utilities::{read_file, tree_sitter_utilities::get_replace_range},
 };
 
@@ -74,6 +74,7 @@ pub fn run_piranha_cli(
 
 #[pymodule]
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+  pyo3_log::init();
   m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
   Ok(())
 }
@@ -81,6 +82,8 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 pub fn execute_piranha(
   configuration: &PiranhaArguments, should_rewrite_files: bool,
 ) -> Vec<PiranhaOutputSummary> {
+  info!("Executing Polyglot Piranha !!!");
+
   let mut flag_cleaner = FlagCleaner::new(configuration);
   flag_cleaner.perform_cleanup();
 
@@ -93,11 +96,30 @@ pub fn execute_piranha(
   }
 
   // flag_cleaner.relevant_files
-  flag_cleaner
+  let summaries = flag_cleaner
     .get_updated_files()
     .iter()
     .map(PiranhaOutputSummary::new)
-    .collect_vec()
+    .collect_vec();
+  log_piranha_output_summaries(&summaries);
+  return summaries;
+}
+
+fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
+    let mut total_number_of_matches : usize = 0;
+    let mut total_number_of_rewrites : usize = 0;
+    for summary in summaries {
+      let number_of_rewrites =&summary.rewrites().len();
+      let number_of_matches = &summary.matches().len();
+      info!("File : {:?}", &summary.path());
+      info!("  # Rewrites : {}", number_of_rewrites);
+      info!("  # Matches : {}", number_of_matches);
+      total_number_of_rewrites += number_of_rewrites;
+      total_number_of_matches += number_of_matches;
+    }
+    info!("Total files affected/matched {}", &summaries.len());
+    info!("Total number of matches {}", total_number_of_matches);
+    info!("Total number of rewrites {}", total_number_of_rewrites);
 }
 
 impl SourceCodeUnit {
@@ -210,7 +232,18 @@ impl SourceCodeUnit {
       // Get all the (next) rules that could be after applying the current rule (`rule`).
       let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
 
-      // Adds "Method" and "Class" rules to the stack
+      debug!(
+        "\n{}",
+        &next_rules_by_scope
+          .iter()
+          .map(|(k, v)| {
+            let rules = v.iter().map(|f| f.name()).join(", ");
+            format!("Next Rules:\nScope {k} \nRules {rules}").blue()
+          })
+          .join("\n")
+      );
+
+      // Adds rules of scope != ["Parent", "Global"] to the stack
       self.add_rules_to_stack(
         &next_rules_by_scope,
         current_replace_range,
@@ -233,8 +266,8 @@ impl SourceCodeUnit {
         &next_rules_by_scope[PARENT],
       ) {
         self.rewrites_mut().push(edit.clone());
-        info!(
-          "{}",
+        debug!(
+          "\n{}",
           format!(
             "Cleaning up the context, by applying the rule - {}",
             edit.matched_rule()
@@ -346,7 +379,7 @@ impl FlagCleaner {
     loop {
       let current_rules = self.rule_store.global_rules();
 
-      info!("{}", format!("# Global rules {}", current_rules.len()));
+      debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
       for (path, content) in self.get_files_containing_feature_flag_api_usage() {
         self
@@ -369,7 +402,7 @@ impl FlagCleaner {
 
         // Break when a new `global` rule is added
         if self.rule_store.global_rules().len() > current_rules.len() {
-          info!("Found a new global rule. Will start scanning all the files again.");
+          debug!("Found a new global rule. Will start scanning all the files again.");
           break;
         }
       }
@@ -411,7 +444,7 @@ impl FlagCleaner {
       .filter(|x| no_global_rules_with_holes || pattern.is_match(x.1.as_str()))
       .collect();
     #[rustfmt::skip]
-    info!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+    debug!("{}", format!("Will parse and analyze {} files.", files.len()).green());
     files
   }
 
