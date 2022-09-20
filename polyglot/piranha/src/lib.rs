@@ -101,34 +101,25 @@ pub fn execute_piranha(
     .iter()
     .map(PiranhaOutputSummary::new)
     .collect_vec();
-  log_the_summary(&summaries);
+  log_piranha_output_summaries(&summaries);
   return summaries;
 }
 
-fn log_the_summary(summaries: &Vec<PiranhaOutputSummary>) {
-  let mut total_number_of_matches: usize = summaries.iter().map(|x| x.matches().len()).sum();
-  let mut total_number_of_rewrites: usize = summaries.iter().map(|x| x.rewrites().len()).sum();
-  for summary in summaries {
-    let number_of_rewrites = &summary.rewrites().len();
-    let number_of_matches = &summary.matches().len();
-    info!("File : {:?}", &summary.path());
-    info!("{}", format!("# Rewrites : {number_of_rewrites}"));
-    info!("{}", format!("# Matches : {number_of_matches}"));
-    total_number_of_rewrites += number_of_rewrites;
-    total_number_of_matches += number_of_matches;
-  }
-  info!(
-    "{}",
-    format!("Total files affected/matched {}", &summaries.len())
-  );
-  info!(
-    "{}",
-    format!("Total number of matches {total_number_of_matches}")
-  );
-  info!(
-    "{}",
-    format!("Total number of rewrites {total_number_of_rewrites}")
-  );
+fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
+    let mut total_number_of_matches : usize = 0;
+    let mut total_number_of_rewrites : usize = 0;
+    for summary in summaries {
+      let number_of_rewrites =&summary.rewrites().len();
+      let number_of_matches = &summary.matches().len();
+      info!("File : {:?}", &summary.path());
+      info!("  # Rewrites : {}", number_of_rewrites);
+      info!("  # Matches : {}", number_of_matches);
+      total_number_of_rewrites += number_of_rewrites;
+      total_number_of_matches += number_of_matches;
+    }
+    info!("Total files affected/matched {}", &summaries.len());
+    info!("Total number of matches {}", total_number_of_matches);
+    info!("Total number of rewrites {}", total_number_of_rewrites);
 }
 
 impl SourceCodeUnit {
@@ -388,7 +379,7 @@ impl FlagCleaner {
     loop {
       let current_rules = self.rule_store.global_rules();
 
-      debug!("\n{}", format!("# Global rules {}", current_rules.len()));
+      debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
       for (path, content) in self.get_files_containing_feature_flag_api_usage() {
         self
