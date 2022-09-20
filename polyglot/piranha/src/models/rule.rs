@@ -14,6 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
+use log::{debug, trace};
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
@@ -221,12 +222,16 @@ impl Rule {
     source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
     rules_store: &mut RuleStore, rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope = *rules_store
-      .get_number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope =
+      *rules_store.get_number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(
       source_code_unit.root_node(),
       previous_edit_start,
       previous_edit_end,
+    );
+    debug!(
+      "\n{}",
+      format!("Changed node kind {}", changed_node.kind()).blue()
     );
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
@@ -281,9 +286,11 @@ impl Rule {
         p_match.matches(),
         rule_store,
       ) {
+        trace!("Found match {:#?}", p_match);
         output.push(p_match);
       }
     }
+    debug!("Matches found {}", output.len());
     output
   }
 
@@ -299,7 +306,9 @@ impl Rule {
       .first()
       .map(|p_match| {
         let replacement = substitute_tags(self.replace(), p_match.matches(), false);
-        Edit::new(p_match.clone(), replacement, self.name())
+        let edit = Edit::new(p_match.clone(), replacement, self.name());
+        trace!("Rewrite found : {:#?}", edit);
+        edit
       });
   }
 

@@ -38,7 +38,10 @@ impl SourceCodeUnit {
       content.to_string(),
       &HashMap::new(),
       PathBuf::new().as_path(),
-      &PiranhaArgumentsBuilder::default().language_name(language_name).build().unwrap()
+      &PiranhaArgumentsBuilder::default()
+        .language_name(language_name)
+        .build()
+        .unwrap(),
     )
   }
 }
@@ -73,7 +76,7 @@ fn test_apply_edit_positive() {
         }
       }
     }";
-  
+
   let language_name = String::from("java");
   let mut parser = get_parser(language_name.to_string());
 
@@ -81,7 +84,7 @@ fn test_apply_edit_positive() {
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(49, 78, 3, 9, 3, 38), String::new()),
-    &mut parser
+    &mut parser,
   );
   assert!(eq_without_whitespace(
     &source_code.replace("boolean isFlagTreated = true;", ""),
@@ -102,14 +105,14 @@ fn test_apply_edit_negative() {
         }
       }
     }";
-  
+
   let language_name = String::from("java");
   let mut parser = get_parser(language_name.to_string());
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(1000, 2000, 0, 0, 0, 0), String::new()),
-    &mut parser
+    &mut parser,
   );
 }
 
@@ -131,7 +134,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(37, 47, 2, 26, 2, 36), String::new()),
-    &mut parser
+    &mut parser,
   );
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
@@ -151,7 +154,6 @@ fn test_apply_edit_comma_handling_via_regex() {
   }
 }";
 
-
   let language_name = String::from("swift");
 
   let mut parser = get_parser(language_name.to_string());
@@ -160,7 +162,7 @@ fn test_apply_edit_comma_handling_via_regex() {
 
   let _ = source_code_unit.apply_edit(
     &Edit::dummy_edit(range(59, 75, 3, 23, 3, 41), String::new()),
-    &mut parser
+    &mut parser,
   );
   assert!(eq_without_whitespace(
     &source_code.replace("name: \"BMX Bike\",", ""),
@@ -176,13 +178,16 @@ fn execute_persist_in_temp_folder(
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(&file_path.as_path(), source_code);
-  let piranha_args = PiranhaArgumentsBuilder::default().language_name(language_name).build().unwrap();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .language_name(language_name)
+    .build()
+    .unwrap();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     file_path.as_path(),
-    &piranha_args
+    &piranha_args,
   );
   source_code_unit.persist(args);
   check_predicate(&tmp_dir)
