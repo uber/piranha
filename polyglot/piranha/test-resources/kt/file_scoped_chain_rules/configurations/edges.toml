@@ -1,0 +1,4 @@
+[[edges]]
+scope = "File"
+from = "transform_api1"
+to = ["delete_import_statement"]
