@@ -112,14 +112,14 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
       let number_of_rewrites =&summary.rewrites().len();
       let number_of_matches = &summary.matches().len();
       info!("File : {:?}", &summary.path());
-      info!("  {}", format!("# Rewrites : {number_of_rewrites}"));
-      info!("  {}", format!("# Matches : {number_of_matches}"));
+      info!("  # Rewrites : {}", number_of_rewrites);
+      info!("  # Matches : {}", number_of_matches);
       total_number_of_rewrites += number_of_rewrites;
       total_number_of_matches += number_of_matches;
     }
     info!("Total files affected/matched {}", &summaries.len());
-    info!("{}", format!("Total number of matches {total_number_of_matches}"));
-    info!("{}", format!("Total number of rewrites {total_number_of_rewrites}"));
+    info!("Total number of matches {}", total_number_of_matches);
+    info!("Total number of rewrites {}", total_number_of_rewrites);
 }
 
 impl SourceCodeUnit {
