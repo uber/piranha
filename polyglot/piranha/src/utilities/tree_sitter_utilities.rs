@@ -19,7 +19,7 @@ use crate::{
 };
 use colored::Colorize;
 use itertools::Itertools;
-use log::{debug};
+use log::debug;
 use std::collections::HashMap;
 #[cfg(test)]
 use tree_sitter::Parser;
@@ -33,7 +33,7 @@ pub(crate) trait TreeSitterHelpers {
   /// Compiles query string to `tree_sitter::Query`
   fn create_query(&self, language: Language) -> Query;
   /// Determines if the given node kind is a comment for the respective language (`self`)
-  fn is_comment(&self, kind: &str) -> bool ;
+  fn is_comment(&self, kind: &str) -> bool;
 }
 
 impl TreeSitterHelpers for String {

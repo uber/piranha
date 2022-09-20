@@ -22,10 +22,10 @@ use crate::{
     rule::{Rule, Rules},
     scopes::{ScopeConfig, ScopeGenerator},
   },
-  utilities::{read_toml, parse_toml},
+  utilities::{parse_toml, read_toml},
 };
 
-use std::path::{Path};
+use std::path::Path;
 
 use clap::Parser;
 
@@ -44,41 +44,44 @@ pub(crate) struct CommandLineArguments {
   pub(crate) path_to_output_summary: Option<String>,
 }
 
-
-fn read_language_specific_rules(language_name: &str) -> Rules{
+fn read_language_specific_rules(language_name: &str) -> Rules {
   match language_name {
-      "java" => parse_toml(include_str!("cleanup_rules/java/rules.toml")), 
-      "kt" => parse_toml(include_str!("cleanup_rules/kt/rules.toml")), 
-      "swift" => parse_toml(include_str!("cleanup_rules/kt/rules.toml")), 
-      _ => Rules::default()
+    "java" => parse_toml(include_str!("cleanup_rules/java/rules.toml")),
+    "kt" => parse_toml(include_str!("cleanup_rules/kt/rules.toml")),
+    "swift" => parse_toml(include_str!("cleanup_rules/kt/rules.toml")),
+    _ => Rules::default(),
   }
 }
 
-fn read_language_specific_edges(language_name: &str) -> Edges{
+fn read_language_specific_edges(language_name: &str) -> Edges {
   match language_name {
-      "java" => parse_toml(include_str!("cleanup_rules/java/edges.toml")), 
-      "kt" => parse_toml(include_str!("cleanup_rules/kt/edges.toml")), 
-      _ => Edges::default()
+    "java" => parse_toml(include_str!("cleanup_rules/java/edges.toml")),
+    "kt" => parse_toml(include_str!("cleanup_rules/kt/edges.toml")),
+    _ => Edges::default(),
   }
 }
 
-fn read_scope_config(language_name: &str) -> Vec<ScopeGenerator>{
+fn read_scope_config(language_name: &str) -> Vec<ScopeGenerator> {
   match language_name {
-      "java" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/java/scope_config.toml")).scopes(), 
-      "kt" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/kt/scope_config.toml")).scopes(),
-      "swift" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/swift/scope_config.toml")).scopes(), 
-      _ => Vec::new()
+    "java" => {
+      parse_toml::<ScopeConfig>(include_str!("cleanup_rules/java/scope_config.toml")).scopes()
+    }
+    "kt" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/kt/scope_config.toml")).scopes(),
+    "swift" => {
+      parse_toml::<ScopeConfig>(include_str!("cleanup_rules/swift/scope_config.toml")).scopes()
+    }
+    _ => Vec::new(),
   }
 }
 
 pub(crate) fn read_config_files(
-    args: &PiranhaArguments,
-  ) -> (Vec<Rule>, Vec<OutgoingEdges>, Vec<ScopeGenerator>) {
-    let path_to_config = Path::new(args.path_to_configurations());
-    // Read the language specific cleanup rules and edges
-    let language_rules: Rules = read_language_specific_rules(args.language_name());
-    let language_edges: Edges = read_language_specific_edges(args.language_name());
-    let scopes = read_scope_config(args.language_name());
+  args: &PiranhaArguments,
+) -> (Vec<Rule>, Vec<OutgoingEdges>, Vec<ScopeGenerator>) {
+  let path_to_config = Path::new(args.path_to_configurations());
+  // Read the language specific cleanup rules and edges
+  let language_rules: Rules = read_language_specific_rules(args.language_name());
+  let language_edges: Edges = read_language_specific_edges(args.language_name());
+  let scopes = read_scope_config(args.language_name());
 
   // Read the API specific cleanup rules and edges
   let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
