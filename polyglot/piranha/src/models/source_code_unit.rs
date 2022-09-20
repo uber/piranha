@@ -16,14 +16,12 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use log::debug;
+use log::{debug, error};
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
-use crate::utilities::{
-  tree_sitter_utilities::{get_tree_sitter_edit, TreeSitterHelpers},
-};
+use crate::utilities::tree_sitter_utilities::{get_tree_sitter_edit, TreeSitterHelpers};
 
 use super::{
   edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
@@ -91,12 +89,8 @@ impl SourceCodeUnit {
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    let mut applied_edit = self._apply_edit(
-      edit.replacement_range(),
-      edit.replacement_string(),
-      parser,
-      
-    );
+    let mut applied_edit =
+      self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser);
     // Check if the edit kind is "DELETE something"
     if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty() {
       let deleted_at = edit.replacement_range().start_point.row;
@@ -175,29 +169,69 @@ impl SourceCodeUnit {
   pub(crate) fn _apply_edit(
     &mut self, range: Range, replacement_string: &str, parser: &mut Parser,
   ) -> InputEdit {
+    
+    let replace_range = if replacement_string.trim().is_empty() {
+      self.delete_trailing_comma(range)
+    } else {
+      range
+    };
     // Get the tree_sitter's input edit representation
-    let mut replace_range = range;
-    if replacement_string.is_empty() {
-      if let Some(z) = traverse(self.ast.walk(), Order::Post)
-        .filter(|n| n.start_byte() >= range.end_byte)
-        .min_by(|a, b| (a.start_byte() - range.end_byte).cmp(&(b.start_byte() - range.end_byte))){
-          if z.utf8_text(self.code().as_bytes()).unwrap().trim().eq(","){
-            replace_range.end_byte = z.end_byte();
-            replace_range.end_point = z.end_position();
-          }
-        }
-    }
-
     let (new_source_code, ts_edit) =
       get_tree_sitter_edit(self.code.clone(), replace_range, replacement_string);
     // Apply edit to the tree
     self.ast.edit(&ts_edit);
     self._replace_file_contents_and_re_parse(&new_source_code, parser, true);
-    // Handle errors, like removing extra comma.
-    // if self.ast.root_node().has_error() && handle_error {
-    //   self.fix_syntax_for_comma_separated_expressions(parser);
-    // }
+    if self.ast.root_node().has_error() {
+      let msg = format!(
+        "Produced syntactically incorrect source code {}",
+        self.code()
+      );
+      error!("{}", msg);
+      panic!("{}", msg);
+    }
     ts_edit
+  }
+
+  /// Applies an edit to the source code unit
+  /// # Arguments
+  /// * `deleted_range` - the range of the deleted code
+  /// * `parser`
+  ///
+  /// # Returns
+  /// The `edit:InputEdit` performed.
+  ///
+  /// Note - Causes side effect. - Updates `self.ast` and `self.code`
+  fn delete_trailing_comma(&mut self, deleted_range: Range) -> Range {
+    let mut new_deleted_range = deleted_range;
+    // Check if the edit is a `Delete` operation
+
+    // Get the node immediately after the to-be-deleted code
+    if let Some(node_after_to_be_deleted_node) = self
+      .ast
+      .root_node()
+      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 5)
+    {
+      // Traverse this `node_after_to_be_deleted_node` to find the closest next node after the `replace_range`
+      if let Some(node) = traverse(node_after_to_be_deleted_node.walk(), Order::Post)
+        .filter(|n| n.start_byte() >= deleted_range.end_byte)
+        .min_by(|a, b| {
+          (a.start_byte() - deleted_range.end_byte).cmp(&(b.start_byte() - deleted_range.end_byte))
+        })
+      {
+        // If the next closest node to the "to be deleted node" is a comma , extend the
+        // the deletion range to include the comma
+        if node
+          .utf8_text(self.code().as_bytes())
+          .unwrap()
+          .trim()
+          .eq(",")
+        {
+          new_deleted_range.end_byte = node.end_byte();
+          new_deleted_range.end_point = node.end_position();
+        }
+      }
+    }
+    new_deleted_range
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
