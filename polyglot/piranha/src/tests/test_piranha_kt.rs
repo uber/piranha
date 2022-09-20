@@ -50,3 +50,13 @@ fn test_kotlin_scenarios_control_ff2() {
     4,
   );
 }
+
+
+#[test]
+fn test_kt_scenarios_file_scoped_chain_rule() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "file_scoped_chain_rules"),
+    1,
+  );
+}
