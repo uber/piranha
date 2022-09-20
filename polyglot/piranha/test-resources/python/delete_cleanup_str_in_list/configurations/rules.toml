@@ -1,0 +1,120 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+#
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+#
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Replaces the single quote string literal inside a list
+# For @str_replacement = "a" and @str_replace = "z"
+# Before
+#  a = [ 'a', 'b', 'c']
+# After
+#  a = [ 'z', 'b', 'c']
+#
+[[rules]]
+name = "replace_str_literal_single_quote_in_list"
+query = """
+(
+    (list
+        (string) @string_literal
+        (_)*
+    ) @ls
+    (#eq? @string_literal "'@str_to_replace'")
+)
+"""
+replace_node = "string_literal"
+replace = "'@str_replacement'"
+holes = ["str_to_replace", "str_replacement"]
+
+# Replaces the double quote string literal inside a list
+# For @str_replacement = "a" and @double_quote_str_replacement = "z"
+# Before
+#  a = [ "a", "b", "c"]
+# After
+#  a = [ "z", "b", "c"]
+#
+[[rules]]
+name = "replace_str_literal_double_quote_in_list"
+query = """
+(
+    (list
+        (string) @string_literal
+        (_)*
+    ) @ls
+    (#eq? @string_literal "\\"@str_to_replace\\"")
+)
+"""
+replace_node = "string_literal"
+replace = "\"@str_replacement\""
+holes = ["str_to_replace", "str_replacement"]
+
+# Deletes the single quote string literal inside a list
+# For @str_literal = dep
+# Before
+#  a = [ 'a', 'dep', 'c']
+# After
+#  a = [ 'a', 'c']
+#
+[[rules]]
+name = "delete_str_literal_single_quote_in_list"
+groups = ["delete_str_literal_in_list"]
+query = """
+(
+    (list
+        (string) @string_literal
+        (_)*
+    ) @ls
+    (#eq? @string_literal "'@str_literal'")
+)
+"""
+replace_node = "string_literal"
+replace = ""
+holes = ["str_literal"]
+
+# Deletes the double quote string literal inside a list
+# For @str_literal = dep
+# Before
+#  a = [ "a", "dep", "c"]
+# After
+#  a = [ "a", "c"]
+#
+[[rules]]
+name = "delete_str_literal_double_quote_in_list"
+groups = ["delete_str_literal_in_list"]
+query = """
+(
+    (list
+        (string) @string_literal
+        (_)*
+    ) @ls
+    (#eq? @string_literal "\\"@str_literal\\"")
+)
+"""
+replace_node = "string_literal"
+replace = ""
+holes = ["str_literal"]
+
+# Deletes an assignment to an empty list. Example: `a = []`
+#
+# Note the multiple escapes (`\`) for the regex below
+# `\[` (match the `[` character) -> `\\\\[`
+# `\s*` (match zero or more empty spaces) -> `\\\\s*`
+[[rules]]
+name = "delete_empty_list_assignment"
+groups = ["Cleanup Rule"]
+query = """
+(
+(assignment
+    	left: (_) @i
+        right: (list) @list
+) @assignment
+(#match? @list "\\\\[\\\\s*,?\\\\]")
+)
+"""
+replace_node = "@assignment"
+replace = ""
