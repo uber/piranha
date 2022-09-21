@@ -19,7 +19,7 @@ jobs:
       with:
         password: ${{ secrets.PYPI_TOKEN }}
         packages_dir: polyglot/piranha/dist
-        repository_url: https://test.pypi.org/legacy
+        repository_url: https://test.pypi.org/legacy/
   
   build_mac_os:
     needs: build_ubuntu
@@ -49,4 +49,4 @@ jobs:
       with:
         password: ${{ secrets.PYPI_TOKEN }}
         packages_dir: polyglot/piranha/dist
-        repository_url: https://test.pypi.org/legacy
+        repository_url: https://test.pypi.org/legacy/
