@@ -14,11 +14,11 @@ jobs:
         pip install --upgrade maturin
         maturin build --release -o dist
       working-directory: polyglot/piranha
-    - name: TestPypi Release for ubuntu-latest
-      run: |
-        pip install twine
-        twine upload --skip-existing --repository testpypi -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-      working-directory: polyglot/piranha
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages_dir: polyglot/piranha/dist
   
   build_mac_os:
     needs: build_ubuntu
@@ -43,8 +43,8 @@ jobs:
         pip install --upgrade maturin
         maturin build --release -o dist --universal2
       working-directory: polyglot/piranha
-    - name: TestPypi Release for macos-latest
-      run: |
-        pip install twine
-        twine upload --skip-existing --repository testpypi -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-      working-directory: polyglot/piranha
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
+        packages_dir: polyglot/piranha/dist
