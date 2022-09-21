@@ -13,6 +13,7 @@ jobs:
       run: |
         pip install --upgrade maturin
         maturin build --release -o dist
+        maturin build --sdist -o dist
       working-directory: polyglot/piranha
     - name: TestPypi Release for ubuntu-latest
       run: |

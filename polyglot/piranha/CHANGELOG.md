@@ -6,3 +6,4 @@ Version 0.2.0
 * Improve logging and expose logs via pyo3 [#246]
 * Fix *delete trailing comma* bug [#251]
 * Add `File` Scope for Kotlin [#249]
+* Added GitHub workflow to make release 
