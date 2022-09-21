@@ -39,7 +39,8 @@ class XPFlagCleanerPositiveCases {
     SHOW_MENU,
   
     /** Foobar */
-  
+    STALE_FLAG, 
+    
     /** barfoo. */
     BAR_FOO,
   }

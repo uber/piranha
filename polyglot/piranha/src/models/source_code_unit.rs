@@ -207,13 +207,14 @@ impl SourceCodeUnit {
     let mut new_deleted_range = deleted_range;
 
     // Get the node immediately after the to-be-deleted code
-    if let Some(node_after_to_be_deleted_node) = self
+    if let Some(parent_node) = self
       .ast
       .root_node()
-      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 5)
+      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 1)
+      .and_then(|n|n.parent())
     {
-      // Traverse this `node_after_to_be_deleted_node` to find the closest next node after the `replace_range`
-      if let Some(node) = traverse(node_after_to_be_deleted_node.walk(), Order::Post)
+      // Traverse this `parent_node` to find the closest next node after the `replace_range`
+      if let Some(node_after_to_be_deleted_node) = traverse(parent_node.walk(), Order::Post)
         .filter(|n| n.start_byte() >= deleted_range.end_byte)
         .min_by(|a, b| {
           (a.start_byte() - deleted_range.end_byte).cmp(&(b.start_byte() - deleted_range.end_byte))
@@ -221,14 +222,14 @@ impl SourceCodeUnit {
       {
         // If the next closest node to the "to be deleted node" is a comma , extend the
         // the deletion range to include the comma
-        if node
+        if node_after_to_be_deleted_node
           .utf8_text(self.code().as_bytes())
           .unwrap()
           .trim()
           .eq(",")
         {
-          new_deleted_range.end_byte = node.end_byte();
-          new_deleted_range.end_point = node.end_position();
+          new_deleted_range.end_byte = node_after_to_be_deleted_node.end_byte();
+          new_deleted_range.end_point = node_after_to_be_deleted_node.end_position();
         }
       }
     }
