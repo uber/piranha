@@ -13,6 +13,14 @@
  */
 package com.uber.piranha;
 
-enum TestEnum {
-    STALE_FLAG
+public enum Something implements ExperimentName {
+
+  /** Show menu */
+  SHOW_MENU,
+
+  /** Foobar */
+  STALE_FLAG,
+
+  /** barfoo. */
+  BAR_FOO,
 }

@@ -16,15 +16,12 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use log::debug;
+use log::{debug, error};
 use regex::Regex;
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
-use crate::utilities::{
-  eq_without_whitespace,
-  tree_sitter_utilities::{get_tree_sitter_edit, TreeSitterHelpers},
-};
+use crate::utilities::tree_sitter_utilities::{get_tree_sitter_edit, TreeSitterHelpers};
 
 use super::{
   edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule_store::RuleStore,
@@ -92,12 +89,8 @@ impl SourceCodeUnit {
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    let mut applied_edit = self._apply_edit(
-      edit.replacement_range(),
-      edit.replacement_string(),
-      parser,
-      true,
-    );
+    let mut applied_edit =
+      self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser);
     // Check if the edit kind is "DELETE something"
     if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty() {
       let deleted_at = edit.replacement_range().start_point.row;
@@ -107,7 +100,7 @@ impl SourceCodeUnit {
         edit.replacement_range().start_byte,
       ) {
         debug!("Deleting an associated comment");
-        applied_edit = self._apply_edit(comment_range, "", parser, false);
+        applied_edit = self._apply_edit(comment_range, "", parser);
       }
     }
     return applied_edit;
@@ -174,19 +167,73 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn _apply_edit(
-    &mut self, range: Range, replacement_string: &str, parser: &mut Parser, handle_error: bool,
+    &mut self, range: Range, replacement_string: &str, parser: &mut Parser,
   ) -> InputEdit {
+    // Check if the edit is a `Delete` operation then delete trailing comma
+    let replace_range = if replacement_string.trim().is_empty() {
+      self.delete_trailing_comma(range)
+    } else {
+      range
+    };
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) =
-      get_tree_sitter_edit(self.code.clone(), range, replacement_string);
+      get_tree_sitter_edit(self.code.clone(), replace_range, replacement_string);
     // Apply edit to the tree
     self.ast.edit(&ts_edit);
     self._replace_file_contents_and_re_parse(&new_source_code, parser, true);
-    // Handle errors, like removing extra comma.
-    if self.ast.root_node().has_error() && handle_error {
-      self.fix_syntax_for_comma_separated_expressions(parser);
+    if self.ast.root_node().has_error() {
+      let msg = format!(
+        "Produced syntactically incorrect source code {}",
+        self.code()
+      );
+      error!("{}", msg);
+      panic!("{}", msg);
     }
     ts_edit
+  }
+
+  /// Deletes the trailing comma after the {deleted_range}
+  /// # Arguments
+  /// * `deleted_range` - the range of the deleted code
+  /// 
+  /// # Returns
+  /// code range of the closest node
+  ///
+  /// Algorithm: 
+  /// Get the node after the {deleted_range}'s end byte (heuristic 5 characters) 
+  /// Traverse this node and get the node closest to the range {deleted_range}'s end byte
+  /// IF this closest node is a comma, extend the {new_delete_range} to include the comma.
+  fn delete_trailing_comma(&mut self, deleted_range: Range) -> Range {
+    let mut new_deleted_range = deleted_range;
+
+    // Get the node immediately after the to-be-deleted code
+    if let Some(parent_node) = self
+      .ast
+      .root_node()
+      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 1)
+      .and_then(|n|n.parent())
+    {
+      // Traverse this `parent_node` to find the closest next node after the `replace_range`
+      if let Some(node_after_to_be_deleted_node) = traverse(parent_node.walk(), Order::Post)
+        .filter(|n| n.start_byte() >= deleted_range.end_byte)
+        .min_by(|a, b| {
+          (a.start_byte() - deleted_range.end_byte).cmp(&(b.start_byte() - deleted_range.end_byte))
+        })
+      {
+        // If the next closest node to the "to be deleted node" is a comma , extend the
+        // the deletion range to include the comma
+        if node_after_to_be_deleted_node
+          .utf8_text(self.code().as_bytes())
+          .unwrap()
+          .trim()
+          .eq(",")
+        {
+          new_deleted_range.end_byte = node_after_to_be_deleted_node.end_byte();
+          new_deleted_range.end_point = node_after_to_be_deleted_node.end_position();
+        }
+      }
+    }
+    new_deleted_range
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
@@ -211,70 +258,6 @@ impl SourceCodeUnit {
     self.code = replacement_content.to_string();
   }
 
-  // Tries to remove the extra comma -
-  // -->  Remove comma if extra
-  //    --> Check if AST has no errors, to decide if the replacement was successful.
-  //      --->  if No: Undo the change
-  //      --->  if Yes: Return
-  // Returns true if the comma was successfully removed.
-  fn try_to_remove_extra_comma(&mut self, parser: &mut Parser) -> bool {
-    let c_ast = self.ast.clone();
-    for n in traverse(c_ast.walk(), Order::Post) {
-      // Remove the extra comma
-      if n.is_extra() && eq_without_whitespace(n.utf8_text(self.code().as_bytes()).unwrap(), ",") {
-        let current_version_code = self.code().clone();
-        self._apply_edit(n.range(), "", parser, false);
-        if self.ast.root_node().has_error() {
-          // Undo the edit applied above
-          self._replace_file_contents_and_re_parse(&current_version_code, parser, false);
-        } else {
-          return true;
-        }
-      }
-    }
-    false
-  }
-
-  // Tries to remove the extra comma -
-  // Applies three Regex-Replacements strategies to the source file to remove the extra comma.
-  // *  replace consecutive commas with comma
-  // *  replace ( `(,` or `[,` ) with just `(` or `[`)
-  // Check if AST has no errors, to decide if the replacement was successful.
-  // Returns true if the comma was successfully removed.
-  fn try_to_fix_code_with_regex_replace(&mut self, parser: &mut Parser) -> bool {
-    let consecutive_comma_pattern = Regex::new(r",\s*\n*,").unwrap();
-    let square_bracket_comma_pattern = Regex::new(r"\[\s*\n*,").unwrap();
-    let round_bracket_comma_pattern = Regex::new(r"\(\s*\n*,").unwrap();
-    let strategies = [
-      (consecutive_comma_pattern, ","),
-      (square_bracket_comma_pattern, "["),
-      (round_bracket_comma_pattern, "("),
-    ];
-
-    let mut content = self.code();
-    for (regex_pattern, replacement) in strategies {
-      if regex_pattern.is_match(&content) {
-        content = regex_pattern.replace_all(&content, replacement).to_string();
-        self._replace_file_contents_and_re_parse(&content, parser, false);
-      }
-    }
-    return !self.ast.root_node().has_error();
-  }
-
-  /// Sometimes our rewrite rules may produce errors (recoverable errors), like failing to remove an extra comma.
-  /// This function, applies the recovery strategies.
-  /// Currently, we only support recovering from extra comma.
-  fn fix_syntax_for_comma_separated_expressions(&mut self, parser: &mut Parser) {
-    let is_fixed =
-      self.try_to_remove_extra_comma(parser) || self.try_to_fix_code_with_regex_replace(parser);
-
-    if !is_fixed && traverse(self.ast.walk(), Order::Post).any(|n| n.is_error()) {
-      panic!(
-        "Produced syntactically incorrect source code {}",
-        self.code()
-      );
-    }
-  }
   // #[cfg(test)] // Rust analyzer FP
   pub(crate) fn code(&self) -> String {
     String::from(&self.code)

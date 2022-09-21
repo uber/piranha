@@ -13,3 +13,4 @@ language = ["java"]
 substitutions = [
      ["stale_flag_name", "STALE_FLAG"],
 ]
+cleanup_comments=true

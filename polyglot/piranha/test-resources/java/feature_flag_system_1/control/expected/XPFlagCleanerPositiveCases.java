@@ -32,6 +32,14 @@ class XPFlagCleanerPositiveCases {
     SOME_OTHER_FLAG
   }
 
+  public enum Something implements ExperimentName {
+    /** Show menu */
+    SHOW_MENU,
+  
+    /** barfoo. */
+    BAR_FOO,
+  }
+
   enum TestEmptyEnum {
   }
 
