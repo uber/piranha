@@ -5,7 +5,7 @@ description = "Polyglot Piranha is a library for performing structural find and 
 version = "0.1.2"
 edition = "2021"
 include = [
-    "build.rs",
+    "pyproject.toml",
     "src/"
 ]
 license-file = "LICENSE"

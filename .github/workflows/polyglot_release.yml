@@ -1,29 +1,51 @@
 name: Release Polyglot Piranha
 on:
-  release:
-    types: [created]
-
+  workflow_dispatch:
 jobs:
-  release:
-    name: release ${{ matrix.target }}
+  build_ubuntu:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-pc-windows-gnu
-            archive: zip
-          - target: x86_64-unknown-linux-musl
-            archive: tar.gz tar.xz
-          - target: x86_64-apple-darwin
-            archive: zip
     steps:
-      - uses: actions/checkout@master
-      - name: Compile and release
-        uses: rust-build/rust-build.action@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          RUSTTARGET: ${{ matrix.target }}
-          ARCHIVE_TYPES: ${{ matrix.archive }}
-          SRC_DIR: polyglot/piranha
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+        maturin build --sdist -o dist
+      working-directory: polyglot/piranha
+    - name: Pypi Release for ubuntu-latest
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+      working-directory: polyglot/piranha
+  
+  build_mac_os:
+    needs: build_ubuntu
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+      working-directory: polyglot/piranha
+    - name: Build wheel with Maturin - universal2
+      env:
+        DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+        SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+        MACOSX_DEPLOYMENT_TARGET: 10.9
+      run: |
+        rustup target add aarch64-apple-darwin
+        pip install --upgrade maturin
+        maturin build --release -o dist --universal2
+      working-directory: polyglot/piranha
+    - name: Pypi Release for ubuntu-latest
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+      working-directory: polyglot/piranha
