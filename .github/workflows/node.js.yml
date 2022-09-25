@@ -14,20 +14,36 @@ defaults:
     working-directory: javascript
 
 jobs:
-  build:
-
+  # runs change detection
+  # this job allows build to have a single if
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      js: ${{ steps.filter.outputs.js }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: '.github/filters.yaml'
+
+  build:
+    runs-on: ubuntu-latest
+    needs: changes
+    # always running when it's a push
+    # otherwise, only when modifications in js's dir
+    if: ${{ github.event_name == 'push' || needs.changes.outputs.js == 'true' }}
 
     strategy:
       matrix:
         node-version: [10.x, 12.x, 14.x]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: npm ci
-    - run: npm test
-    - run: npm test
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      -  run: npm ci
+      -  run: npm test
+      -  run: npm test

@@ -7,9 +7,26 @@ on:
 env:
   CARGO_TERM_COLOR: always
 jobs:
-  build_and_test:
-    name: Piranha
+  # runs change detection
+  # this job allows build_and_test to have a single if
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      polyglot: ${{ steps.filter.outputs.polyglot }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: '.github/filters.yaml'
+
+  build_and_test:
+    name: Polyglot Piranha Build
+    runs-on: ubuntu-latest
+    needs: changes
+    # always running when it's a push
+    # otherwise, only when modifications in polyglot's dir
+    if: ${{ github.event_name == 'push' || needs.changes.outputs.polyglot == 'true' }}
     steps:
       - name: Checkout Piranha sources
         uses: actions/checkout@v2

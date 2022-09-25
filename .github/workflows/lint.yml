@@ -1,4 +1,4 @@
-name: Lint
+name: JS Lint
 
 on:
   push:
@@ -13,12 +13,16 @@ jobs:
         HUSKY_SKIP_INSTALL: 1
     steps:
       - uses: actions/checkout@v2
-      - uses: hallee/eslint-action@1.0.3
-        # GITHUB_TOKEN in forked repositories is read-only
-        # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
-        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }} 
+      - uses: dorny/paths-filter@v2
+        id: filter
         with:
+          filters: '.github/filters.yaml'
+      - uses: hallee/eslint-action@1.0.3
+        # always running when it's a push
+        # otherwise, only when modifications in js's dir
+        if: ${{ github.event_name == 'push' || steps.filter.outputs.js == 'true' }}
+        with:
+          # GITHUB_TOKEN in forked repositories is read-only
+          # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
           repo-token: ${{secrets.GITHUB_TOKEN}}
           source-root: javascript
-          
-
