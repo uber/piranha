@@ -1,6 +1,6 @@
 # GitHub CI workflow for PiranhaJava
 
-name: Java CI
+name: Java
 on:
   pull_request:
   push:
@@ -8,18 +8,8 @@ on:
       - master
 
 jobs:
-  # runs change detection
-  # this job allows build to have a single if
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      java: ${{ steps.filter.outputs.java }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: '.github/filters.yaml'
+  detect:
+    uses: ./.github/workflows/detect_changes.yml
 
   build:
     name: "JDK ${{ matrix.java }} on ${{ matrix.os }}"
@@ -39,10 +29,8 @@ jobs:
           #   java: 8
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    needs: changes
-    # always running when it's a push
-    # otherwise, only when modifications in java's dir
-    if: ${{ github.event_name == 'push' || needs.changes.outputs.java == 'true' }}
+    needs: detect
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.java == 'true' }}
     steps:
       - name: Check out Piranha sources
         uses: actions/checkout@v2
