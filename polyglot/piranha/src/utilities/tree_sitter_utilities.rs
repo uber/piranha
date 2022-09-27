@@ -48,6 +48,7 @@ impl TreeSitterHelpers for String {
   fn get_language(&self) -> Language {
     match self.as_str() {
       "java" => tree_sitter_java::language(),
+      "go" => tree_sitter_go::language(),
       "kt" => tree_sitter_kotlin::language(),
       "py" => tree_sitter_python::language(),
       "swift" => tree_sitter_swift::language(),
