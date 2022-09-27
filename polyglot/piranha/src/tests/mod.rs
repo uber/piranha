@@ -30,6 +30,8 @@ mod test_piranha_swift;
 
 mod test_piranha_python;
 
+mod test_piranha_go;
+
 use std::sync::Once;
 
 static INIT: Once = Once::new();
