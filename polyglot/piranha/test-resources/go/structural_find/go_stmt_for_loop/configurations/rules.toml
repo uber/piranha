@@ -13,12 +13,9 @@
 name = "find_go_stmt_for_loop"
 query = """
 (
-    (for_statement
-        (block
-            (_)*
-            (go_statement) @go_stmt
-            (_)*
-        ) @block
-    ) @for_stmt
+    (go_statement) @go_stmt
 )
 """
+[[rules.constraints]]
+matcher = "(for_statement) @fs"
+queries=[]
