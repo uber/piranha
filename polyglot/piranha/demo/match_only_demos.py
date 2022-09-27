@@ -15,7 +15,7 @@ def demo():
     assert rule_match_counter['find_fooBar_anywhere'] == 2
 
 
-    assert rule_match_counter['find_barFoo_in_static_method'] == 1
+    assert rule_match_counter['find_barFoo_in_non_static_method'] == 1
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)

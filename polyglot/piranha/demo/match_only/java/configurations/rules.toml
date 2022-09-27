@@ -24,7 +24,7 @@ query = """((
 ))"""
 
 [[rules]]
-name = "find_barFoo_in_static_method"
+name = "find_barFoo_in_non_static_method"
 query = """((
     (method_invocation 
         name : (_) @name
