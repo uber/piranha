@@ -217,7 +217,7 @@ Currently, we have demos for the following :
 
   * run `python3 demo/match_only_demos.py`
   * This demo also shows how the piranha summary output can be used. 
-    * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in static methods)
+    * `rules.toml` : express how to capture two patterns - (i) invocation of the method `fooBar("...")`  and invocation of the method `barFoo("...")` (but only in non-static methods)
 
 <h4>  Structural Find/Replace </h4> 
 
@@ -321,7 +321,7 @@ Currently, Piranha provides deep clean-ups for edits that belong the groups - `r
 
 Adding `"Cleanup Rule"` to the `groups` which ensures that the user defined rule is treated as a cleanup rule not as a seed rule (For more details refer to `demo/find_replace_custom_cleanup`). 
 
-A user can also define exclusion filters for a rule (`rules.constraints`). These constraints allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that do not occur inside static methods (For more details, refer to the `demo/match_only`). 
+A user can also define exclusion filters for a rule (`rules.constraints`). These constraints allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that occur inside static methods (For more details, refer to the `demo/match_only`). 
 
 At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.constraints.queries` (within `rules.constraints.matcher`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
 
