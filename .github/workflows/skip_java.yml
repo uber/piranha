@@ -1,0 +1,28 @@
+name: Java
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  detect:
+    uses: ./.github/workflows/detect_changes.yml
+
+  build:
+    name: "JDK ${{ matrix.java }} on ${{ matrix.os }}"
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            java: 8
+          - os: macos-latest
+            java: 11
+          - os: ubuntu-latest
+            java: 8
+          - os: ubuntu-latest
+            java: 11
+    runs-on: ${{ matrix.os }}
+    needs: detect
+    if: ${{ needs.detect.outputs.java == 'false' }}
+    steps:
+      - run: 'echo "No Java changes; build is not required." '

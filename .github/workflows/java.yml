@@ -1,6 +1,6 @@
 # GitHub CI workflow for PiranhaJava
 
-name: Java CI
+name: Java
 on:
   pull_request:
   push:
@@ -8,6 +8,9 @@ on:
       - master
 
 jobs:
+  detect:
+    uses: ./.github/workflows/detect_changes.yml
+
   build:
     name: "JDK ${{ matrix.java }} on ${{ matrix.os }}"
     strategy:
@@ -26,6 +29,8 @@ jobs:
           #   java: 8
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    needs: detect
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.java == 'true' }}
     steps:
       - name: Check out Piranha sources
         uses: actions/checkout@v2

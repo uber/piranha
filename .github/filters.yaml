@@ -1,0 +1,6 @@
+js:
+  - javascript/**
+java:
+  - java/**
+polyglot:
+  - polyglot/**
