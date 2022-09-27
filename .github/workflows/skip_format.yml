@@ -1,0 +1,15 @@
+name: JS Format
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  detect:
+    uses: ./.github/workflows/detect_changes.yml
+
+  check_format:
+    runs-on: ubuntu-latest
+    needs: detect
+    if: ${{ needs.detect.outputs.js == 'false' }}
+    steps:
+      - run: 'echo "No JS changes; build is not required." '
