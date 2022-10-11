@@ -30,14 +30,15 @@ At its heart, Polyglot Piranha is a structural find/replacement (rewrite) engine
 A user provides :
 - A set (or, a graph) of structural find/replace rules 
 - Path to the code base
-- [Arguments](#piranha-arguments) to modify Piranha's behavior (like deleting associated comments)
+- [Arguments](#piranha-arguments) to modify Piranha's behavior (like deleting associated comments).
+
 When Piranha applies the set (or graph) of user defined rules, it triggers the __pre-built__ language specific cleanup rules to do a deep cleanup. 
 
 ## When is Polyglot Piranha useful?
 
 <h5> Example 1 (Stale Feature Flag Cleanup) </h5>
 
-Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU") always returns `true` (i.e. the feature *Show Menu* is treated)
+Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU")` always returns `true` (i.e. the feature *Show Menu* is treated)
 ```
 public String fooBar(boolean x) {
     if(exp.isTreated("SHOW_MENU")|| x){
@@ -70,7 +71,7 @@ If the user hooks up this *enum case deletion* rule to the pre-built rules, it w
 <h5> Example 3 (Structural Find/Replace with custom cleanup) </h5>
 
 Let's take a canonical example of replacing `Arrays.asList` with `Collections.singletonList`, when possible. 
-This task involves two steps (i) Replacing the expression (ii) Adding the import statement for `Collections` if absent (Assuming *google java format* takes care of the unused imports :))
+This task involves two steps (i) Replacing the expression (ii) Adding the import statement for `Collections` if absent (Assuming *google java format* takes care of the unused imports :smile:).
 However, Piranha does not contain pre-built rules to add such a custom import statements.  
 ```
 import java.util.ArrayList;
@@ -350,15 +351,13 @@ For instance, the below example shows a rule that simplifies a `or` operation wh
 ```
 [[rules]]
 name = "Or - right operand is True"
-query = """
-(
-    (binary_expression
-        left : (_)* @other
-        operator:"||"
-        right: (true)
-    )
-@b)"""
-replace_node = "b"    
+query = """(
+(binary_expression
+    left : (_)*
+    operator:"||"
+    right: (true)
+) @binary_expression)"""
+replace_node = "binary_expression"
 replace = "true"
 ```
 
