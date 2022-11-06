@@ -28,3 +28,12 @@ fn test_go_match_only_for_loop() {
   initialize();
   run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"), 4);
 }
+
+#[test]
+fn test_go_builtin_boolean_expression_simplify() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}/{}", LANGUAGE, "builtin_rules", "boolean_expression_simplify"),
+    1,
+  );
+}
