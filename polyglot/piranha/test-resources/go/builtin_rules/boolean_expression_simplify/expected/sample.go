@@ -53,8 +53,8 @@ func simplify_true_and_something(something bool) {
 }
 
 // simplify `!true` and `!false` and also:
-// true && something -> true
-// something && true -> true
+// false && something -> false
+// something && false -> true
 func simplify_false_and_something(something bool) {
 	if false {
 		fmt.Println("only false")
@@ -68,5 +68,43 @@ func simplify_false_and_something(something bool) {
 	}
 	if false {
 		fmt.Println("only false")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// true || something -> true
+// something || true -> true
+func simplify_true_or_something(something bool) {
+	if true {
+		fmt.Println("only true")
+	}
+	if true {
+		fmt.Println("only true")
+	}
+
+	if true {
+		fmt.Println("only true")
+	}
+	if true {
+		fmt.Println("only true")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// false || something -> something
+// something || false -> something
+func simplify_false_or_something(something bool) {
+	if something {
+		fmt.Println("only something")
+	}
+	if something {
+		fmt.Println("only something")
+	}
+
+	if something {
+		fmt.Println("only something")
+	}
+	if something {
+		fmt.Println("only something")
 	}
 }
