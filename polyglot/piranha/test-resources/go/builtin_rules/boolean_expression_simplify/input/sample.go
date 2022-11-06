@@ -15,6 +15,8 @@ package main
 
 import "fmt"
 
+// Simplifying `!true` and `!false`.
+// It will eventually be a part of larger cleanup in upcoming tests.
 func simplify_not() {
 	if !exp.BoolValue("false") {
 		fmt.Println("not false")
@@ -28,5 +30,43 @@ func simplify_not() {
 	}
 	if !(exp.BoolValue("true")) {
 		fmt.Println("not true")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// true && something -> true
+// something && true -> true
+func simplify_true_and_something(something bool) {
+	if exp.BoolValue("true") && something {
+		fmt.Println("only something")
+	}
+	if !exp.BoolValue("false") && something {
+		fmt.Println("only something")
+	}
+
+	if something && exp.BoolValue("true") {
+		fmt.Println("only something")
+	}
+	if something && !exp.BoolValue("false") {
+		fmt.Println("only something")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// true && something -> false
+// something && true -> true
+func simplify_false_and_something(something bool) {
+	if exp.BoolValue("false") && something {
+		fmt.Println("only false")
+	}
+	if !exp.BoolValue("true") && something {
+		fmt.Println("only false")
+	}
+
+	if something && exp.BoolValue("false") {
+		fmt.Println("only false")
+	}
+	if something && !exp.BoolValue("true") {
+		fmt.Println("only false")
 	}
 }

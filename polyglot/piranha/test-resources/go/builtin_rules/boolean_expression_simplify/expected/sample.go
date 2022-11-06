@@ -15,6 +15,8 @@ package main
 
 import "fmt"
 
+// Simplifying `!true` and `!false`.
+// It will eventually be a part of larger cleanup in upcoming tests.
 func simplify_not() {
 	if true {
 		fmt.Println("not false")
@@ -28,5 +30,43 @@ func simplify_not() {
 	}
 	if false {
 		fmt.Println("not true")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// true && something -> true
+// something && true -> true
+func simplify_true_and_something(something bool) {
+	if something {
+		fmt.Println("only something")
+	}
+	if something {
+		fmt.Println("only something")
+	}
+
+	if something {
+		fmt.Println("only something")
+	}
+	if something {
+		fmt.Println("only something")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// true && something -> true
+// something && true -> true
+func simplify_false_and_something(something bool) {
+	if false {
+		fmt.Println("only false")
+	}
+	if false {
+		fmt.Println("only false")
+	}
+
+	if false {
+		fmt.Println("only false")
+	}
+	if false {
+		fmt.Println("only false")
 	}
 }
