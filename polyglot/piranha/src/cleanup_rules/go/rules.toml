@@ -11,6 +11,10 @@
 
 # The language specific rules in this file are applied after the API specific change has been performed.
 
+# Dummy rule that acts as a junction for all boolean based cleanups
+[[rules]]
+name = "boolean_literal_cleanup"
+
 # Before :
 #  !false
 # After :
@@ -24,10 +28,10 @@ query = """
     (unary_expression
         operand: [
             (false)
+            operator: "!"
             (parenthesized_expression (false))
         ]
     ) @unary_expression
-    (#match? @unary_expression "!.+")
 )
 """
 replace = "true"
@@ -46,16 +50,11 @@ query = """
     (unary_expression
         operand: [
             (true)
+            operator: "!"
             (parenthesized_expression (true))
         ]
     ) @unary_expression
-    (#match? @unary_expression "!.+")
 )
 """
 replace = "false"
 replace_node = "unary_expression"
-
-
-# Dummy rule that acts as a junction for all boolean based cleanups
-[[rules]]
-name = "boolean_literal_cleanup"
