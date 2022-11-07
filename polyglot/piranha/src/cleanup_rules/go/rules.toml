@@ -309,3 +309,8 @@ query = """
 """
 replace = "@nested.statements"
 replace_node = "nested.block"
+
+# TODO: rules and edges for "if with short statement"
+# collect examples and write tests for it
+# https://go.dev/tour/flowcontrol/6
+# https://go.dev/doc/effective_go#if
