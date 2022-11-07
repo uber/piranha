@@ -67,8 +67,9 @@ query = """
     (binary_expression
         left: [(true) (parenthesized_expression (true))]
         operator:"&&"
-        right : (_)* @rhs)
-) @binary_expression
+        right : (_)* @rhs
+    ) @binary_expression
+)
 """
 replace = "@rhs"
 replace_node = "binary_expression"
@@ -87,8 +88,9 @@ query = """
         left : (_)* @lhs
         operator:"&&"
         right: [(true) (parenthesized_expression (true))]
-    )
-@binary_expression)"""
+    ) @binary_expression
+)
+"""
 replace = "@lhs"
 replace_node = "binary_expression"
 
@@ -106,8 +108,9 @@ query = """
         left: [(false) (parenthesized_expression (false))]
         operator : "&&"
         right : (_)* @rhs
-    )
-@binary_expression)"""
+    ) @binary_expression
+)
+"""
 replace = "false"
 replace_node = "binary_expression"
 
@@ -125,8 +128,8 @@ query = """
         left : (_)* @lhs
         operator : "&&"
         right: [(false) (parenthesized_expression (false))]
-    )
-@binary_expression)
+    ) @binary_expression
+)
 """
 replace = "false"
 replace_node = "binary_expression"
@@ -145,8 +148,9 @@ query = """
         left : (_)* @lhs
         operator:"||"
         right: [(true) (parenthesized_expression (true))]
-    )
-@binary_expression)"""
+    ) @binary_expression
+)
+"""
 replace = "true"
 replace_node = "binary_expression"
 
@@ -164,8 +168,8 @@ query = """
         left : [(true) (parenthesized_expression (true))]
         operator:"||"
         right: (_)* @rhs
-    )
-@binary_expression)
+    ) @binary_expression
+)
 """
 replace = "true"
 replace_node = "binary_expression"
@@ -178,14 +182,15 @@ replace_node = "binary_expression"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_false"
-query = """(
+query = """
 (
-    binary_expression
+    (binary_expression
         left : (_)* @lhs
         operator:"||"
         right: [(false) (parenthesized_expression (false))]
-    )
-@binary_expression)"""
+    ) @binary_expression
+)
+"""
 replace = "@lhs"
 replace_node = "binary_expression"
 
