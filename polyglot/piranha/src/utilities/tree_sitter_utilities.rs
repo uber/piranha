@@ -53,6 +53,8 @@ impl TreeSitterHelpers for String {
       "py" => tree_sitter_python::language(),
       "swift" => tree_sitter_swift::language(),
       "strings" => tree_sitter_strings::language(),
+      "ts" => tree_sitter_typescript::language_typescript(),
+      "tsx" => tree_sitter_typescript::language_tsx(),
       _ => panic!("Language not supported"),
     }
   }

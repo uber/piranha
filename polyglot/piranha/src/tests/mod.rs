@@ -31,6 +31,8 @@ mod test_piranha_swift;
 mod test_piranha_python;
 
 mod test_piranha_go;
+mod test_piranha_ts;
+mod test_piranha_tsx;
 
 use std::sync::Once;
 
