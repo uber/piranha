@@ -314,3 +314,36 @@ replace_node = "nested.block"
 # collect examples and write tests for it
 # https://go.dev/tour/flowcontrol/6
 # https://go.dev/doc/effective_go#if
+
+
+# Replaces a short_var_declaration with 2 identifier on the LHS and only one
+# bool value on the RHS.
+# That's code that does not compile and an intermediate state from previous rules.
+#
+# Before:
+#   a, e := false
+# After:
+#  a := false
+#
+
+[[rules]]
+name = "replace_double_short_var_declaration"
+query = """
+(
+    (short_var_declaration
+        left: (expression_list
+            (identifier) @bool_id
+            (identifier) @err_id
+        )
+        right:
+        (expression_list
+            ([
+                (true)
+                (false)
+            ]) @bool_value
+        )
+    ) @short_v_decl
+)
+"""
+replace = "@bool_id := @bool_value"
+replace_node = "short_v_decl"

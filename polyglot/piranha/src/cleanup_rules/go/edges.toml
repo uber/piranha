@@ -33,6 +33,7 @@ scope = "Parent"
 from = "statement_cleanup"
 to = [
     "if_cleanup",
+    "replace_double_short_var_declaration",
 ]
 
 [[edges]]

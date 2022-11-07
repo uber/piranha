@@ -37,3 +37,12 @@ fn test_go_builtin_boolean_expression_simplify() {
     1,
   );
 }
+
+#[test]
+fn test_go_builtin_statement_cleanup() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}/{}", LANGUAGE, "builtin_rules", "statement_cleanup"),
+    1,
+  );
+}
