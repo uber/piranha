@@ -201,6 +201,7 @@ To setup the demo please follow the below steps:
   - `python3 -m venv .env`
   - `source .env/bin/activate`
 * Install Polyglot Piranha 
+  - `pip install --upgrade pip`
   - `pip install .` to run demo against current source code (please install [Rust](https://www.rust-lang.org/tools/install), it takes less than a minute)
   - Or, `pip install polyglot-piranha` to run demos against the latest release.
 
