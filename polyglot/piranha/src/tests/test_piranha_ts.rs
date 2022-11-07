@@ -28,7 +28,7 @@ fn test_ts_match_only_find_fors_within_functions() {
 }
 
 #[test]
-fn test_ts_match_only_find_fors_within_functions_without_whiles() {
+fn test_ts_match_only_find_fors_within_functions_not_within_whiles() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors_within_functions_without_whiles"), 1);
+  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors_within_functions_not_within_whiles"), 1);
 }

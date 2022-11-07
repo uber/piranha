@@ -10,7 +10,7 @@
 # limitations under the License.
 
 [[rules]]
-name = "find_fors_within_functions_without_whiles"
+name = "find_fors_within_functions_not_within_whiles"
 query = """
 (
     (for_statement) @for_stmt

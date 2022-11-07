@@ -10,7 +10,7 @@
 # limitations under the License.
 
 [[rules]]
-name = "find_props_identifiers_within_variable_declarators_without_divs"
+name = "find_props_identifiers_within_variable_declarators_not_within_divs"
 query = """
 (
     ((identifier) @identifier)
