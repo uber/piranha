@@ -18,19 +18,10 @@ import "fmt"
 // Simplifying `!true` and `!false`.
 // It will eventually be a part of larger cleanup in upcoming tests.
 func simplify_not() {
-	if true {
-		fmt.Println("not false")
-	}
-	if true {
-		fmt.Println("not false")
-	}
-
-	if false {
-		fmt.Println("not true")
-	}
-	if false {
-		fmt.Println("not true")
-	}
+	fmt.Println("not false 1")
+	fmt.Println("not false 2")
+	fmt.Println("else staying 1")
+	fmt.Println("else staying 2")
 }
 
 // simplify `!true` and `!false` and also:
@@ -56,38 +47,20 @@ func simplify_true_and_something(something bool) {
 // false && something -> false
 // something && false -> true
 func simplify_false_and_something(something bool) {
-	if false {
-		fmt.Println("only false")
-	}
-	if false {
-		fmt.Println("only false")
-	}
-
-	if false {
-		fmt.Println("only false")
-	}
-	if false {
-		fmt.Println("only false")
-	}
+	fmt.Println("else 1")
+	fmt.Println("else 2")
+	fmt.Println("else 3")
+	fmt.Println("else 4")
 }
 
 // simplify `!true` and `!false` and also:
 // true || something -> true
 // something || true -> true
 func simplify_true_or_something(something bool) {
-	if true {
-		fmt.Println("only true")
-	}
-	if true {
-		fmt.Println("only true")
-	}
-
-	if true {
-		fmt.Println("only true")
-	}
-	if true {
-		fmt.Println("only true")
-	}
+	fmt.Println("only true 1")
+	fmt.Println("only true 2")
+	fmt.Println("only true 3")
+	fmt.Println("only true 4")
 }
 
 // simplify `!true` and `!false` and also:
@@ -107,4 +80,12 @@ func simplify_false_or_something(something bool) {
 	if something {
 		fmt.Println("only something")
 	}
+}
+
+// simplify `!true` and `!false` and also:
+// if true { something } else { somethingElse } -> something
+func simplify_if_statement_true() {
+	fmt.Println("true 1")
+	fmt.Println("true 2")
+	fmt.Println("true 3")
 }

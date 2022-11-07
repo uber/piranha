@@ -212,3 +212,100 @@ query = """
 @binary_expression)"""
 replace = "@rhs"
 replace_node = "binary_expression"
+
+# Dummy rule that acts as a junction for all statement based cleanups
+[[rules]]
+name = "statement_cleanup"
+
+# Before :
+#  if (true) { doSomething(); }
+# After :
+#  { doSomething(); }
+#
+# Before :
+#  if (true) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomething(); }
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_true"
+query = """
+(
+    (if_statement
+        condition : (
+            [
+                (true)
+                (parenthesized_expression (true))
+            ]
+        )
+        consequence : ((block) @consequence)
+    ) @if_statement
+)
+"""
+replace = "@consequence"
+replace_node = "if_statement"
+
+# Before :
+#  if (true) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomethingElse(); }
+#
+# Before :
+#  if (true) { doSomething(); }
+# After :
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_false"
+query = """
+(
+    (if_statement
+        condition : (
+            [
+                (false)
+                (parenthesized_expression (false))
+            ]
+        )
+        consequence : (_)
+        alternative: ((_) @alternative) ?
+    ) @if_statement
+)
+"""
+replace = "@alternative"
+replace_node = "if_statement"
+
+# Before :
+#  {
+#     someStepsBefore();
+#     {
+#        someSteps();
+#     }
+#     someStepsAfter();
+#  }
+# After :
+#  {
+#     someStepsBefore();
+#        someSteps();
+#     someStepsAfter();
+#  }
+#
+# Note that we need to tag basically all nodes here.
+# Including not so obvious ones: @outer.stmt_list and @outer.block
+[[rules]]
+name = "remove_unnecessary_nested_block"
+query = """
+(
+    (block
+        (statement_list
+            (_)* @pre
+            (block
+                (statement_list) @nested.statements
+            ) @nested.block
+            (_)* @post
+        ) @outer.stmt_list
+    ) @outer.block
+)
+"""
+replace = "@nested.statements"
+replace_node = "nested.block"

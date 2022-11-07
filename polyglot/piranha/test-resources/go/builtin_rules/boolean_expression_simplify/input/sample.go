@@ -19,17 +19,25 @@ import "fmt"
 // It will eventually be a part of larger cleanup in upcoming tests.
 func simplify_not() {
 	if !exp.BoolValue("false") {
-		fmt.Println("not false")
+		fmt.Println("not false 1")
+	} else {
+		fmt.Println("cleaned up else")
 	}
 	if !(exp.BoolValue("false")) {
-		fmt.Println("not false")
+		fmt.Println("not false 2")
+	} else {
+		fmt.Println("cleaned up else")
 	}
 
 	if !exp.BoolValue("true") {
 		fmt.Println("not true")
+	} else {
+		fmt.Println("else staying 1")
 	}
 	if !(exp.BoolValue("true")) {
 		fmt.Println("not true")
+	} else {
+		fmt.Println("else staying 2")
 	}
 }
 
@@ -58,16 +66,24 @@ func simplify_true_and_something(something bool) {
 func simplify_false_and_something(something bool) {
 	if exp.BoolValue("false") && something {
 		fmt.Println("only false")
+	} else {
+		fmt.Println("else 1")
 	}
 	if !exp.BoolValue("true") && something {
 		fmt.Println("only false")
+	} else {
+		fmt.Println("else 2")
 	}
 
 	if something && exp.BoolValue("false") {
 		fmt.Println("only false")
+	} else {
+		fmt.Println("else 3")
 	}
 	if something && !exp.BoolValue("true") {
 		fmt.Println("only false")
+	} else {
+		fmt.Println("else 4")
 	}
 }
 
@@ -76,17 +92,17 @@ func simplify_false_and_something(something bool) {
 // something || true -> true
 func simplify_true_or_something(something bool) {
 	if exp.BoolValue("true") || something {
-		fmt.Println("only true")
+		fmt.Println("only true 1")
 	}
 	if !exp.BoolValue("false") || something {
-		fmt.Println("only true")
+		fmt.Println("only true 2")
 	}
 
 	if something || exp.BoolValue("true") {
-		fmt.Println("only true")
+		fmt.Println("only true 3")
 	}
 	if something || !exp.BoolValue("false") {
-		fmt.Println("only true")
+		fmt.Println("only true 4")
 	}
 }
 
@@ -106,5 +122,25 @@ func simplify_false_or_something(something bool) {
 	}
 	if something || !exp.BoolValue("true") {
 		fmt.Println("only something")
+	}
+}
+
+// simplify `!true` and `!false` and also:
+// if true { something } else { somethingElse } -> something
+func simplify_if_statement_true() {
+	if exp.BoolValue("true") {
+		fmt.Println("true 1")
+	}
+
+	if exp.BoolValue("true") {
+		fmt.Println("true 2")
+	} else {
+		fmt.Println("false")
+	}
+
+	if !exp.BoolValue("false") {
+		fmt.Println("true 3")
+	} else {
+		fmt.Println("false 2")
 	}
 }
