@@ -42,6 +42,9 @@ pub(crate) struct CommandLineArguments {
   /// Path to output summary json
   #[clap(short = 'j', long)]
   pub(crate) path_to_output_summary: Option<String>,
+
+  #[clap(short = 'r', long)]
+  pub(crate) should_rewrite_files: Option<bool>,
 }
 
 fn read_language_specific_rules(language_name: &str) -> Rules {

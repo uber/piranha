@@ -68,8 +68,9 @@ pub fn run_piranha_cli(
     path_to_codebase,
     path_to_configurations,
     path_to_output_summary: None,
+    should_rewrite_files: Some(should_rewrite_files),
   });
-  execute_piranha(&configuration, should_rewrite_files)
+  execute_piranha(&configuration)
 }
 
 #[pymodule]
@@ -80,7 +81,7 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 }
 
 pub fn execute_piranha(
-  configuration: &PiranhaArguments, should_rewrite_files: bool,
+  configuration: &PiranhaArguments,
 ) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
 
@@ -89,7 +90,7 @@ pub fn execute_piranha(
 
   let source_code_units = flag_cleaner.get_updated_files();
 
-  if should_rewrite_files {
+  if *configuration.should_rewrite_files() {
     for scu in source_code_units {
       scu.persist(configuration);
     }
