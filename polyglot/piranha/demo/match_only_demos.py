@@ -27,6 +27,26 @@ def go_demo():
 
     assert rule_match_counter['find_for'] == 4
 
+def ts_demo():
+    info("Running the Match-only demo for TypeScript")
+    output_summary_typescript = run_piranha_cli(join(match_only_dir, "ts"), join(match_only_dir, "ts/configurations"), True)
+
+    rule_match_counter = Counter([m[0] for m in output_summary_typescript[0].matches])
+
+    assert rule_match_counter['find_fors'] == 3
+    assert rule_match_counter['find_fors_within_functions'] == 2
+    assert rule_match_counter['find_fors_within_functions_not_within_whiles'] == 1
+
+def tsx_demo():
+    info("Running the Match-only demo for TypeScript with React")
+    output_summary_typescript = run_piranha_cli(join(match_only_dir, "tsx"), join(match_only_dir, "tsx/configurations"), True)
+
+    rule_match_counter = Counter([m[0] for m in output_summary_typescript[0].matches])
+
+    assert rule_match_counter['find_jsx_elements'] == 4
+    assert rule_match_counter['find_props_identifiers_within_b_jsx_elements'] == 2
+    assert rule_match_counter['find_props_identifiers_within_variable_declarators_not_within_divs'] == 2
+
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
@@ -34,4 +54,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 java_demo()
 go_demo()
+ts_demo()
+tsx_demo()
+
 info("Completed running the Match-only demo")
