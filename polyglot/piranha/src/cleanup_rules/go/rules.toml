@@ -366,18 +366,20 @@ replace_node = "if_stmt"
 # bool value on the RHS.
 # That's code that does not compile and an intermediate state from previous rules.
 #
-# Before:
+# Will remove:
 #   a, e := false
-# After:
-#  a := false
+# Receives from previous rule (holes):
+#   @bool_id: a, @err_id: e, @bool_value: false
+# Will propagate:
+#   @variable_name: a, @value: false
 #
 [[rules]]
-name = "replace_double_short_var_declaration"
+name = "delete_bool_err_short_var_declaration"
 query = """
 (
     (short_var_declaration
         left: (expression_list
-            (identifier) @lhs_id
+            (identifier) @variable_name
             (identifier) @rhs_id
         )
         right:
@@ -385,40 +387,18 @@ query = """
             ([
                 (true)
                 (false)
-            ]) @bool_value
+            ]) @value
             .
         )
     ) @short_v_decl
-    (#eq? @lhs_id "@bool_id")
-    (#eq? @rhs_id "@err_id")
-)
-"""
-replace = "@lhs_id := @bool_value"
-replace_node = "short_v_decl"
-holes = ["bool_id", "err_id"]
-
-[[rules]]
-name = "delete_variable_declaration"
-query = """
-(
-    (short_var_declaration
-        left: (expression_list
-            (identifier) @variable_name
-        )
-        right: (expression_list
-            ([
-                (true)
-                (false)
-            ]) @value
-        )
-    ) @short_v_decl
     (#eq? @variable_name "@bool_id")
+    (#eq? @rhs_id "@err_id")
     (#eq? @value "@bool_value")
 )
 """
 replace = ""
 replace_node = "short_v_decl"
-holes = ["bool_id", "bool_value"]
+holes = ["bool_id", "err_id", "bool_value"]
 
 # Check if there is no assignment where the variable @variable_name is
 # assigned to a value other than @init, within the method/function body
@@ -456,4 +436,4 @@ query = """
 """
 replace = "@bool_value"
 replace_node = "identifier"
-holes = ["variable_name", "bool_value"]
+holes = ["variable_name", "value"]
