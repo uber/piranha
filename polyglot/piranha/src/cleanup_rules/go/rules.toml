@@ -449,5 +449,11 @@ queries = [
 [[rules]]
 name = "replace_identifier_with_value"
 query = """
-
+(
+    (identifier) @identifier
+    (#eq? @identifier "@variable_name")
+)
 """
+replace = "@bool_value"
+replace_node = "identifier"
+holes = ["variable_name", "bool_value"]

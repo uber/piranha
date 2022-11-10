@@ -64,5 +64,10 @@ to = ["replace_identifier_with_value"]
 
 [[edges]]
 scope = "Parent"
+from = "replace_identifier_with_value"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
 from = "if_cleanup"
 to = ["remove_unnecessary_nested_block"]
