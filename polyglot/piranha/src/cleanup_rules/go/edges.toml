@@ -48,7 +48,7 @@ to = [
 ]
 
 [[edges]]
-scope = "Parent"
+scope = "Function"
 from = "delete_immediate_if_err"
 to = ["replace_double_short_var_declaration"]
 
