@@ -18,3 +18,22 @@ import "fmt"
 func a() bool {
 	return true
 }
+
+func b() string {
+	s, err := exp.StrValue("str")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return s
+}
+
+func c() string {
+	s, err := exp.StrValue("str")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("not enabled")
+	return "prefix_" + s
+}

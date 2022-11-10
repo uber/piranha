@@ -23,3 +23,40 @@ func a() bool {
 
 	return enabled
 }
+
+func b() string {
+	enabled, err := exp.BoolValue("true")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	s, err := exp.StrValue("str")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if enabled {
+		return s
+	} else {
+		return "prefix_" + s
+	}
+}
+
+func c() string {
+	enabled, err := exp.BoolValue("false")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	s, err := exp.StrValue("str")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if enabled {
+		return s
+	} else {
+		fmt.Println("not enabled")
+		return "prefix_" + s
+	}
+}
