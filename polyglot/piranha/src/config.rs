@@ -42,7 +42,7 @@ pub(crate) struct CommandLineArguments {
   /// Path to output summary json
   #[clap(short = 'j', long)]
   pub(crate) path_to_output_summary: Option<String>,
-
+  /// Should Piranha apply the replacements to the source files or not
   #[clap(short = 'r', long)]
   pub(crate) should_rewrite_files: Option<bool>,
 }

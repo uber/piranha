@@ -71,7 +71,7 @@ pub struct PiranhaArguments {
   /// The AST Kinds for which comments should be deleted
   #[getset(get = "pub")]
   cleanup_comments: bool,
-
+  /// Should Piranha apply the replacements to the source files or not
   #[getset(get = "pub")]
   should_rewrite_files: bool,
 }
@@ -144,7 +144,7 @@ impl Default for PiranhaArguments {
       number_of_ancestors_in_parent_scope: 4,
       cleanup_comments_buffer: 2,
       cleanup_comments: false,
-      should_rewrite_files: false,
+      should_rewrite_files: true,
     }
   }
 }
