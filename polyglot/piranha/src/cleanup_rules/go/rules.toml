@@ -315,19 +315,23 @@ replace_node = "nested.block"
 # https://go.dev/tour/flowcontrol/6
 # https://go.dev/doc/effective_go#if
 
+# TODO: we need a different rule for `nil != err`
+# left: [
+#     (identifier) @id
+#     (nil)
+# ]
+# making `left` and `right` options could lead to `(identifier) != (identifier)`
 
-# Replaces a short_var_declaration with 2 identifier on the LHS and only one
-# bool value on the RHS.
-# That's code that does not compile and an intermediate state from previous rules.
-#
+# Removes an `if err != nil` immediately after a short_var_declaration that got replaced
 # Before:
-#   a, e := false
+#   enabled, err := true // does not compile
+#   if err != nil { // something }
 # After:
-#  a := false
+#   enabled, err := true // does not compile
 #
-
 [[rules]]
-name = "replace_double_short_var_declaration"
+groups = ["Cleanup Rule"]
+name = "delete_immediate_if_err"
 query = """
 (
     (short_var_declaration
@@ -341,9 +345,56 @@ query = """
                 (true)
                 (false)
             ]) @bool_value
+            .
         )
     ) @short_v_decl
+    .
+    (if_statement
+        condition: (binary_expression
+            left: (identifier) @lhs.id
+            operator: "!="
+            right: (nil)
+        ) @condition
+    ) @if_stmt
+    (#eq? @lhs.id @err_id)
 )
 """
-replace = "@bool_id := @bool_value"
+replace = ""
+replace_node = "if_stmt"
+
+
+# Replaces a short_var_declaration with 2 identifier on the LHS and only one
+# bool value on the RHS.
+# That's code that does not compile and an intermediate state from previous rules.
+#
+# Before:
+#   a, e := false
+# After:
+#  a := false
+#
+[[rules]]
+groups = ["Cleanup Rule"]
+name = "replace_double_short_var_declaration"
+query = """
+(
+    (short_var_declaration
+        left: (expression_list
+            (identifier) @lhs_id
+            (identifier) @rhs_id
+        )
+        right:
+        (expression_list
+            ([
+                (true)
+                (false)
+            ]) @bool_value
+            .
+        )
+    ) @short_v_decl
+    (#eq? @lhs_id "@bool_id")
+    (#eq? @rhs_id "@err_id")
+)
+"""
+replace = "@lhs_id := @bool_value"
 replace_node = "short_v_decl"
+holes = ["bool_id", "err_id"]

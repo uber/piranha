@@ -29,12 +29,28 @@ from = "boolean_expression_simplify"
 to = ["boolean_literal_cleanup"]
 
 [[edges]]
+scope = "Function"
+from = "replace_expression_with_boolean_literal"
+to = ["statement_cleanup"]
+
+[[edges]]
 scope = "Parent"
 from = "statement_cleanup"
 to = [
     "if_cleanup",
-    "replace_double_short_var_declaration",
 ]
+
+[[edges]]
+scope = "Function"
+from = "statement_cleanup"
+to = [
+    "delete_immediate_if_err"
+]
+
+[[edges]]
+scope = "Parent"
+from = "delete_immediate_if_err"
+to = ["replace_double_short_var_declaration"]
 
 [[edges]]
 scope = "Parent"
