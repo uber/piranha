@@ -62,13 +62,13 @@ use tree_sitter::Node;
 /// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
 pub fn run_piranha_cli(
-  path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool,
+  path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
   let configuration = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase,
     path_to_configurations,
     path_to_output_summary: None,
-    should_rewrite_files: Some(should_rewrite_files),
+    dry_run: Some(dry_run),
   });
   execute_piranha(&configuration)
 }
@@ -90,7 +90,7 @@ pub fn execute_piranha(
 
   let source_code_units = flag_cleaner.get_updated_files();
 
-  if *configuration.should_rewrite_files() {
+  if *configuration.dry_run() {
     for scu in source_code_units {
       scu.persist(configuration);
     }

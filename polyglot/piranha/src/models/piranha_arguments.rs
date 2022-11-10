@@ -73,7 +73,7 @@ pub struct PiranhaArguments {
   cleanup_comments: bool,
   /// Should Piranha apply the replacements to the source files or not
   #[getset(get = "pub")]
-  should_rewrite_files: bool,
+  dry_run: bool,
 }
 
 impl PiranhaArguments {
@@ -102,7 +102,7 @@ impl PiranhaArguments {
       .path_to_output_summaries(args.path_to_output_summary)
       .language_name(piranha_args_from_config.language())
       .language(piranha_args_from_config.language().get_language())
-      .should_rewrite_files(args.should_rewrite_files.unwrap_or(true));
+      .dry_run(args.dry_run.unwrap_or(true));
 
     if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
       args_builder.delete_file_if_empty(v);
@@ -145,7 +145,7 @@ impl Default for PiranhaArguments {
       number_of_ancestors_in_parent_scope: 4,
       cleanup_comments_buffer: 2,
       cleanup_comments: false,
-      should_rewrite_files: true,
+      dry_run: true,
     }
   }
 }
