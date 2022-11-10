@@ -17,23 +17,38 @@ matcher =  """
 """
 generator = """(source_file) @sf"""
 
-# TODO: make it generic enough for Function and Method declaration
 [[scopes]]
-name = "Function"
+name = "Function-Method"
 [[scopes.rules]]
 matcher = """
 (
-    (function_declaration
-        name: (_) @n
-        parameters: (parameter_list) @pl
+    (
+        [
+            (function_declaration
+                name: (_) @n
+                parameters: (parameter_list) @pl
+            )
+            (method_declaration
+                name: (_) @n
+                parameters: (parameter_list) @pl
+            )
+        ]
     ) @f_decl1
 )
 """
 generator = """
 (
-    (function_declaration
-        name: (_) @fn
-        parameters: (parameter_list) @paramlist
+    (
+        [
+            (function_declaration
+                name: (_) @fn
+                parameters: (parameter_list) @paramlist
+            )
+            (method_declaration
+                name: (_) @fn
+                parameters: (parameter_list) @paramlist
+            )
+        ]
     ) @f_decl2
     (#eq? @fn "@n")
     (#eq? @paramlist "@pl")

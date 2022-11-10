@@ -434,6 +434,6 @@ query = """
     (#eq? @identifier "@variable_name")
 )
 """
-replace = "@bool_value"
+replace = "@value"
 replace_node = "identifier"
 holes = ["variable_name", "value"]

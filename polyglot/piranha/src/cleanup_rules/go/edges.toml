@@ -29,7 +29,7 @@ from = "boolean_expression_simplify"
 to = ["boolean_literal_cleanup"]
 
 [[edges]]
-scope = "Function"
+scope = "Function-Method"
 from = "replace_expression_with_boolean_literal"
 to = ["statement_cleanup"]
 
@@ -41,19 +41,19 @@ to = [
 ]
 
 [[edges]]
-scope = "Function"
+scope = "Function-Method"
 from = "statement_cleanup"
 to = [
     "delete_immediate_if_err"
 ]
 
 [[edges]]
-scope = "Function"
+scope = "Function-Method"
 from = "delete_immediate_if_err"
 to = ["delete_bool_err_short_var_declaration"]
 
 [[edges]]
-scope = "Function"
+scope = "Function-Method"
 from = "delete_bool_err_short_var_declaration"
 to = ["replace_identifier_with_value"]
 
