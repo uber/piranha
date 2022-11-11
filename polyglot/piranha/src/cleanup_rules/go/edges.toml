@@ -44,7 +44,8 @@ to = [
 scope = "Function-Method"
 from = "statement_cleanup"
 to = [
-    "delete_immediate_if_err"
+    "delete_immediate_if_err",
+    "delete_bool_blank_identifier_short_var_declaration",
 ]
 
 [[edges]]
@@ -55,6 +56,11 @@ to = ["delete_bool_err_short_var_declaration"]
 [[edges]]
 scope = "Function-Method"
 from = "delete_bool_err_short_var_declaration"
+to = ["replace_identifier_with_value"]
+
+[[edges]]
+scope = "Function-Method"
+from = "delete_bool_blank_identifier_short_var_declaration"
 to = ["replace_identifier_with_value"]
 
 [[edges]]

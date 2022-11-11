@@ -32,3 +32,11 @@ func (c *Client) b() {
 		fmt.Println(staleFlagConst)
 	}
 }
+
+func (c *Client) c(enabled2 bool, enabled3 bool) {
+	enabled, _ := exp.BoolValue(staleFlagConst)
+
+	if enabled || enabled2 || enabled3 {
+		fmt.Println("enabled")
+	}
+}

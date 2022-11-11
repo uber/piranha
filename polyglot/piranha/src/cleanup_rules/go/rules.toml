@@ -426,6 +426,37 @@ queries = [
     """
 ]
 
+
+# Similar to `delete_bool_err_short_var_declaration`, but here we have no error identifier (`_`).
+# Will match and remove:
+#   a, _ := false
+# Will propagate:
+#   @variable_name: a, @value: false
+#
+[[rules]]
+name = "delete_bool_blank_identifier_short_var_declaration"
+query = """
+(
+    (short_var_declaration
+        left: (expression_list
+            (identifier) @variable_name
+            (identifier) @rhs_id
+        )
+        right:
+        (expression_list
+            ([
+                (true)
+                (false)
+            ]) @value
+            .
+        )
+    ) @short_v_decl
+    (#eq? @rhs_id "_")
+)
+"""
+replace = ""
+replace_node = "short_v_decl"
+
 [[rules]]
 name = "replace_identifier_with_value"
 query = """

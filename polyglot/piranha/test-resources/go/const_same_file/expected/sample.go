@@ -18,3 +18,9 @@ func (c *Client) b() {
 
 	fmt.Println("staleFlag")
 }
+
+func (c *Client) c(enabled2 bool, enabled3 bool) {
+	if enabled2 || enabled3 {
+		fmt.Println("enabled")
+	}
+}
