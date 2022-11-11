@@ -46,3 +46,12 @@ fn test_go_builtin_statement_cleanup() {
     1,
   );
 }
+
+#[test]
+fn test_go_const_same_file() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}", LANGUAGE, "const_same_file"),
+    1,
+  );
+}
