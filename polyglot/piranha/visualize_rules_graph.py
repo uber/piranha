@@ -2,24 +2,11 @@ import argparse
 import os
 import re
 import toml
+import graphviz
 from dataclasses import dataclass
 
 # REQUIRED: pip install toml
-
-# the graph can be very wide if there are several disconnected rules
-# Here are a few options:
-# https://stackoverflow.com/questions/11134946/distribute-nodes-on-the-same-rank-of-a-wide-graph-to-different-lines
-# unflatten is probably the best option but requires a graphviz installation
-# as suggested by the SO answer, one can add invisible edges (in the generated .dot) between disconnected nodes
-# Example:
-# python rules_dot_graph.py src/cleanup_rules/kt test-resources/kt/feature_flag_system_1/control/configurations  --title="Kotlin Test Feature Flag System 1" > temp.dot
-# Then in the .dot file:
-# edge[style=invis];
-# delete_all_statements_after_return -> delete_putToggleEnabled
-# delete_putToggleEnabled -> delete_putToggleDisabled
-# delete_putToggleDisabled -> delete_includeEvent
-# edge[style=solid];
-# // all the generated edges
+# REQUIRED: pip install graphviz
 
 
 @dataclass(frozen=True, eq=True)
@@ -30,19 +17,30 @@ class Edge:
 
 example_text = '''For a complete output, the script needs the directory with the built-in rules for a given language. Example:
 
-    python visualize_rules_graph.py ./ff_cleanup.dot src/cleanup_rules/java demo/feature_flag_cleanup/java/configurations --title "Feature Flag Cleanup"'''
+        python visualize_rules_graph.py ./ff_cleanup.dot src/cleanup_rules/java demo/feature_flag_cleanup/java/configurations --title "Feature Flag Cleanup"
 
-description_text = '''Script to output a .dot graph for visualizing how rules/groups are connected.
+    Experimental:
+        The generated graph may end very wide if you have several rules with no outgoing edges.
+        You can experiment passing the `--unflatten` option and changing the values of `--stagger` (https://graphviz.readthedocs.io/en/stable/manual.html#unflatten).
+        Another option is to manually edit the generated .dot file to include invisible edges (https://stackoverflow.com/a/11136488/1008952).
+    '''
+
+description_text = '''Script to output a .dot graph and svg image for visualizing how rules/groups are connected.
 Please install the `toml` PyPi package: `python install toml`.
-The script assumes that rules will have at [0,2] groups. If a rule has two, one will be `Cleanup Rule`. The visualization will likely break if any rule has > 2 groups.'''
+Please install the `graphviz` PyPi package: `python install graphviz`.
+
+The script assumes that rules will have at most [0,2] groups. If a rule has two groups, one will be `Cleanup Rule`. The visualization will likely break if any rule has > 2 groups.'''
 
 arg_parser = argparse.ArgumentParser(
     description=description_text, epilog=example_text, formatter_class=argparse.RawDescriptionHelpFormatter)
-arg_parser.add_argument('output_file_path', type=str, help="Path and file name/extension for the output file.")
+arg_parser.add_argument('output_file_path', type=str,
+                        help="Path and file name/extension for the output file.")
 arg_parser.add_argument('configurations_path', type=str, nargs='+',
                         help="One or more root directory that contains 'rules.toml' and 'edges.toml'")
 arg_parser.add_argument('--title', nargs='?',
                         help='Optional title for the graph')
+arg_parser.add_argument('--unflatten', action='store_true', default=False)
+arg_parser.add_argument('--stagger', nargs='?', default=2, const=2, type=int)
 args = arg_parser.parse_args()
 
 
@@ -51,13 +49,16 @@ def sanitize_name(s: str) -> str:
     s = re.sub(r"\s+", '_', s)
     return s
 
+
 output_file_path = os.path.abspath(args.output_file_path)
 
 if os.path.isdir(output_file_path):
-    raise ValueError('output_file_path (first arg) should be a file, not a directory')
+    raise ValueError(
+        'output_file_path (first arg) should be a file, not a directory')
 
-if not os.path.exists(os.path.dirname(output_file_path)):
-    os.makedirs(os.path.dirname(output_file_path))
+output_dir_path = os.path.dirname(output_file_path)
+if not os.path.exists(output_dir_path):
+    os.makedirs(output_dir_path)
 
 # dict's are ordered
 rules_by_group_dict: 'dict[str, list[str]]' = {}
@@ -106,17 +107,6 @@ for config_path in args.configurations_path:
                     outgoing_edges_by_node[from_node] = [edge]
 
 
-dot_lines: 'list[str]' = []
-dot_lines.append('digraph {\n')
-
-if args.title:
-    dot_lines.append(f'  label    = "{args.title}"')
-    dot_lines.append('  labelloc = t')
-    dot_lines.append('  fontsize = 30\n')
-
-added_nodes: 'set[str]' = set()
-
-
 def group_rule_names_label(rule_names: 'list[str]') -> 'list[str]':
     return [inline_name(rule_name) for rule_name in rule_names]
 
@@ -137,6 +127,16 @@ def rule_dot_node(rule_name: str) -> str:
         return rule_name
 
 
+graph_attr = {
+    'label': str(args.title),
+    'labelloc': 't',
+    'fontsize': '30'
+}
+dot = graphviz.Digraph(filename=output_file_path, graph_attr=graph_attr)
+dot.format = 'svg'
+
+added_nodes: 'set[str]' = set()
+
 node_names_with_only_outgoing_edges = [
     node_name for node_name in rules_by_group_dict.keys() if node_name not in outgoing_edges_by_node.keys()]
 
@@ -153,13 +153,13 @@ for rule_name in non_orphan_rule_names:
 
         rule_names_label: 'list[str]' = group_rule_names_label(
             rule_names_in_group)
-        node_label = '[shape=record label="' + rule_name + \
-            '\\n\\n' + '\\n'.join(rule_names_label) + '"]'
-        dot_lines.append(f'  {rule_name} {node_label}')
+        node_label = rule_name + '\\n\\n' + '\\n'.join(rule_names_label)
+
+        dot.node(rule_name, node_label, shape='record')
 
     else:  # a rule not in a group
         if rule_name not in added_nodes:
-            dot_lines.append('  ' + rule_dot_node(rule_name))
+            dot.node(rule_dot_node(rule_name))
 
     added_nodes.add(rule_name)
 
@@ -167,20 +167,17 @@ for rule_name in non_orphan_rule_names:
 for node in orphan_nodes:
     # avoid adding a node that had a label before
     if node not in added_nodes:
-        dot_lines.append('  ' + node)
         added_nodes.add(node)
+        dot.node(node)
 
-dot_lines.append('\n')
 
 # generating edges
 for node, edges in outgoing_edges_by_node.items():
     for edge in edges:
-        dot_lines.append('  ' + f'{node} -> {edge.to} [label="{edge.scope}"]')
-
-dot_lines.append('\n}')
-
-dot_source = '\n'.join(dot_lines)
+        dot.edge(node, edge.to, edge.scope)
 
 
-with open(output_file_path, 'w') as f:
-    f.write(dot_source)
+if args.unflatten:
+    dot.unflatten(stagger=args.stagger).render()
+else:
+    dot.render()
