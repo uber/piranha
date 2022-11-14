@@ -110,13 +110,22 @@ replace_node = "unary_expression"
 [[rules]]
 name = "remove_unnecessary_nested_block"
 query = """
-((block
+([
+    (block
         (
             (_)* @pre
             (block (_)* @nested.statements) @nested.block
             (_)* @post
         )
-    )@block)"""
+    )
+    (constructor_body
+        (
+            (_)* @pre
+            (block (_)* @nested.statements) @nested.block
+            (_)* @post
+        )
+    )
+    ]@block)"""
 replace = "@nested.statements"
 replace_node = "nested.block"
 
@@ -406,7 +415,7 @@ replace_node = "variable_declaration"
 # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.constraints]]
-matcher = "(method_declaration) @md"
+matcher = "[(method_declaration) (constructor_declaration)] @md"
 queries = [
   """
 (
@@ -469,7 +478,7 @@ holes = ["variable_name", "init"]
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.constraints]]
-matcher = "(method_declaration) @md"
+matcher = "[(method_declaration) (constructor_declaration)] @md"
 queries = [
   """(
 ((local_variable_declaration 
@@ -546,7 +555,7 @@ replace_node = "identifier"
 holes = ["variable_name", "init"]
 [[rules.constraints]]
 # There should exist no local variable declaration named `@identifer`
-matcher = "(method_declaration) @md"
+matcher = "[(method_declaration) (constructor_declaration)] @md"
 queries = [
   """(
 ((local_variable_declaration 
