@@ -20,6 +20,17 @@ class XPFlagCleanerPositiveCases {
 
   private boolean ftBool = experimentation.isStaleFeature().getCachedValue();
 
+
+  public XPFlagCleanerPositiveCases(SomeExperiment exp){
+
+    boolean tBool = exp.isStaleFeature().getCachedValue();
+    if (tBool && true) {
+      System.out.println("Hello World");
+    } else {
+      System.out.println("Hi world");
+    }
+  }
+
   public void conditional_contains_stale_flag() {
 
     if (experimentation.isStaleFeature().getCachedValue()) {

@@ -46,16 +46,32 @@ name = "Method"
 # )
 #
 matcher =  """
-((method_declaration 
-			name : (_) @n
-            parameters : (formal_parameters)@fp) @xdn)"""
+(
+  [(method_declaration 
+            name : (_) @n
+            parameters : (formal_parameters)@fp)
+   (constructor_declaration 
+            name: (_) @n
+            parameters : (formal_parameters)@fp)
+            
+  ]          
+            @xdn)"""
 generator = """
-(((method_declaration 
-			name : (_) @z
-            parameters : (formal_parameters)@tp) @qdn)
-(#eq? @z "@n")
-(#eq? @tp "@fp")                  
-)"""
+(
+  [(((method_declaration 
+            name : (_) @z
+            parameters : (formal_parameters)@tp))
+    (#eq? @z "@n")
+    (#eq? @tp "@fp")                  
+    )
+   (((constructor_declaration 
+            name: (_) @z
+            parameters : (formal_parameters)@tp))
+    (#eq? @tp "@fp")
+    (#eq? @z "@n")
+    )
+  ]
+)@qdn"""
 
 # Scope generators for Java Class.
 [[scopes]]
