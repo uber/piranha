@@ -53,7 +53,7 @@ fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
     path_to_output_summary: None,
-    dry_run: Some(false),
+    dry_run: String::from("true"),
   });
   let output_summaries = execute_piranha(&args);
 
@@ -76,7 +76,7 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
     path_to_codebase: format!("{path_to_test_ff}/input/"),
     path_to_configurations: format!("{path_to_test_ff}/configurations/"),
     path_to_output_summary: None,
-    dry_run: Some(false),
+    dry_run: String::from("true"),
   });
   let output_summaries = execute_piranha(&args);
   // Checks if there are any rewrites performed for the file

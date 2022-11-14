@@ -68,7 +68,7 @@ pub fn run_piranha_cli(
     path_to_codebase,
     path_to_configurations,
     path_to_output_summary: None,
-    dry_run: Some(dry_run),
+    dry_run: dry_run.to_string(),
   });
   execute_piranha(&configuration)
 }
@@ -90,7 +90,7 @@ pub fn execute_piranha(
 
   let source_code_units = flag_cleaner.get_updated_files();
 
-  if *configuration.dry_run() {
+  if !*configuration.dry_run() {
     for scu in source_code_units {
       scu.persist(configuration);
     }

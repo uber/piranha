@@ -102,7 +102,7 @@ impl PiranhaArguments {
       .path_to_output_summaries(args.path_to_output_summary)
       .language_name(piranha_args_from_config.language())
       .language(piranha_args_from_config.language().get_language())
-      .dry_run(args.dry_run.unwrap_or(true));
+      .dry_run(args.dry_run == String::from("true"));
 
     if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
       args_builder.delete_file_if_empty(v);
@@ -145,7 +145,7 @@ impl Default for PiranhaArguments {
       number_of_ancestors_in_parent_scope: 4,
       cleanup_comments_buffer: 2,
       cleanup_comments: false,
-      dry_run: true,
+      dry_run: false,
     }
   }
 }
