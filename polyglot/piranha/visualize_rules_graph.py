@@ -37,7 +37,7 @@ arg_parser.add_argument('output_file_path', type=str,
                         help="Path and file name/extension for the output file.")
 arg_parser.add_argument('configurations_path', type=str, nargs='+',
                         help="One or more root directory that contains 'rules.toml' and 'edges.toml'")
-arg_parser.add_argument('--title', nargs='?',
+arg_parser.add_argument('--title', nargs='?', default='',
                         help='Optional title for the graph')
 arg_parser.add_argument('--unflatten', action='store_true', default=False)
 arg_parser.add_argument('--stagger', nargs='?', default=2, const=2, type=int)
@@ -119,14 +119,6 @@ def inline_name(rule_name: str) -> str:
         return rule_name
 
 
-def rule_dot_node(rule_name: str) -> str:
-    """Should be called for rules as a standalone node."""
-    if rule_name in cleanup_rules:
-        return f'{rule_name} [label="{rule_name}\\n(Cleanup Rule)"]'
-    else:
-        return rule_name
-
-
 graph_attr = {
     'label': str(args.title),
     'labelloc': 't',
@@ -159,7 +151,11 @@ for rule_name in non_orphan_rule_names:
 
     else:  # a rule not in a group
         if rule_name not in added_nodes:
-            dot.node(rule_dot_node(rule_name))
+            if rule_name in cleanup_rules:
+                node_label = f'{rule_name}\\n(Cleanup Rule)'
+                dot.node(rule_name, node_label)
+            else:
+                dot.node(rule_name)
 
     added_nodes.add(rule_name)
 
