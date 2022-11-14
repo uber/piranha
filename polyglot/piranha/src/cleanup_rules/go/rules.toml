@@ -322,6 +322,95 @@ replace_node = "nested.block"
 # ]
 # making `left` and `right` options could lead to `(identifier) != (identifier)`
 
+# Parent matches the current node and up to FOUR nodes above.
+# This rule is a best attempt to remove an assignment that is not reused later.
+[[rules]]
+name = "delete_parent_assignment"
+query = """
+(
+    [
+        (short_var_declaration
+            left: (expression_list
+                .
+                (identifier) @identifier
+                .
+            )
+        ) @assignment
+        (var_declaration
+            (var_spec
+                name: (identifier) @identifier
+            )
+        ) @assignment
+    ]
+)
+"""
+replace = ""
+replace_node = "assignment"
+
+
+# This constraint could be much easier if it was checked *AFTER* replacing
+# The enclosing function/method-declaration should not contain a reference to the variable identifier
+[[rules.constraints]]
+matcher = """
+(
+    (
+        [
+            (function_declaration
+                name: (_) @_n
+                parameters: (parameter_list) @_pl
+            )
+            (method_declaration
+                name: (_) @_n
+                parameters: (parameter_list) @_pl
+            )
+        ]
+    ) @_f_decl1
+)
+"""
+queries = [
+# checking the RHS of an assignment
+"""
+(
+    (
+        [
+            (short_var_declaration
+                right: (expression_list
+                    (identifier) @_identifier
+                )
+            ) @_assignment
+            (var_declaration
+                (var_spec
+                    value: (expression_list
+                        (identifier) @_identifier
+                    )
+                )
+            ) @_assignment
+        ]
+    )
+    (#eq? @_identifier "@identifier")
+)
+""",
+# checking function arguments
+"""
+(
+    (argument_list
+        (identifier) @_2identifier
+    )
+    (#eq? @_2identifier "@identifier")
+)
+""",
+# checking if condition, switch? loops? what else?
+# selector expression?
+"""
+(
+    (selector_expression
+        operand: (identifier) @_4identifier
+    )
+    (#eq? @_4identifier "@identifier")
+)
+""",
+]
+
 # Removes an `if err != nil` immediately after a short_var_declaration that got replaced
 # Before:
 #   enabled, err := true // does not compile
@@ -401,7 +490,7 @@ replace_node = "short_v_decl"
 holes = ["bool_id", "err_id", "bool_value"]
 
 # Check if there is no assignment where the variable @variable_name is
-# assigned to a value other than @init, within the method/function body
+# assigned to a value other than @value, within the method/function body
 [[rules.constraints]]
 matcher = """
 (
