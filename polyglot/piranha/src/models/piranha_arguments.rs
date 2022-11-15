@@ -102,7 +102,7 @@ impl PiranhaArguments {
       .path_to_output_summaries(args.path_to_output_summary)
       .language_name(piranha_args_from_config.language())
       .language(piranha_args_from_config.language().get_language())
-      .dry_run(args.dry_run == String::from("true"));
+      .dry_run(args.dry_run);
 
     if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
       args_builder.delete_file_if_empty(v);

@@ -68,7 +68,7 @@ pub fn run_piranha_cli(
     path_to_codebase,
     path_to_configurations,
     path_to_output_summary: None,
-    dry_run: dry_run.to_string(),
+    dry_run,
   });
   execute_piranha(&configuration)
 }
