@@ -42,6 +42,9 @@ pub(crate) struct CommandLineArguments {
   /// Path to output summary json
   #[clap(short = 'j', long)]
   pub(crate) path_to_output_summary: Option<String>,
+  /// Disables in-place rewriting of code
+  #[clap(short = 'd', long, parse(try_from_str), default_value_t = false)]
+  pub(crate) dry_run: bool,
 }
 
 fn read_language_specific_rules(language_name: &str) -> Rules {

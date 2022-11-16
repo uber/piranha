@@ -29,7 +29,7 @@ fn main() {
   let args = PiranhaArguments::from_command_line();
 
   debug!("Piranha Arguments are \n{:#?}", args);
-  let piranha_output_summaries = execute_piranha(&args, true);
+  let piranha_output_summaries = execute_piranha(&args);
 
   if let Some(path) = args.path_to_output_summaries() {
     write_output_summary(piranha_output_summaries, path);
