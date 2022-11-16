@@ -39,7 +39,9 @@ internal class XPMethodChainCases {
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
             }
-            println("!!!")
+            if (sp.isOtherFlag().cachedValue) {
+                println("!!!")
+            }
             val spr = SomeParamRev.create(cp)
             // Does not match API- is reverse order
             if (spr.cachedValue.isStaleFeature()) {

@@ -72,8 +72,12 @@ class XPFlagCleanerPositiveCases {
 
   public void complex_conditional_contains_stale_flag(boolean tBool) {
 
-    System.out.println("Hello World");
-  }
+    if (tBool) {
+        System.out.println("Hello World");
+    } else {
+        System.out.println("Hi world");
+    }
+    }
 
   public void other_api_stale_flag() {
 
@@ -191,8 +195,12 @@ class XPFlagCleanerPositiveCases {
 
   public int or_compounded_with_not(int x, boolean extra_toggle) {
 
-    return 0;
-  }
+    if (extra_toggle) {
+        return 0;
+    } else {
+        return 1;
+    }
+    }
 
   public int remove_else_if(boolean extra_toggle) {
 

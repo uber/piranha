@@ -36,7 +36,9 @@ class XPMethodChainCases {
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    System.out.println("!!!");
+    if (sp.otherFlag().getCachedValue()) {
+        System.out.println("!!!");
+    }
     SomeParamRev spr = SomeParamRev.create(cp);
     // Does not match API- is reverse order
     if (spr.getCachedValue().isStaleFeature()) {

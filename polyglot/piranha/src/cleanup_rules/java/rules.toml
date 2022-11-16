@@ -223,7 +223,7 @@ query = """
         right: [(true) (parenthesized_expression (true))]
     )
 @binary_expression)"""
-replace = "true"
+replace = "@lhs"
 replace_node = "binary_expression"
 
 # Before :
