@@ -28,7 +28,6 @@ class XPMethodChainCases {
     // Matches API
     System.out.println("!");
 
-
     // Does not match API
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
@@ -36,7 +35,9 @@ class XPMethodChainCases {
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    System.out.println("!!!");
+    if (sp.otherFlag().getCachedValue()) {
+      System.out.println("!!!");
+    }
     SomeParamRev spr = SomeParamRev.create(cp);
     // Does not match API- is reverse order
     if (spr.getCachedValue().isStaleFeature()) {
@@ -57,7 +58,6 @@ class XPMethodChainCases {
     }
 
     System.out.println("done!");
-    
 
     // Do not match API
     cp.put(sp.otherFlag(), true);
@@ -65,12 +65,10 @@ class XPMethodChainCases {
   }
 
   class TestMethodChainTest {
-    
+
     public void testSomethingTreated() {
       System.out.println();
     }
-
-    
 
     // Does not match annotation
     @ParameterValue(ns = "some_long_name", key = "other_flag", val = "false")

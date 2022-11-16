@@ -12,8 +12,9 @@
  * limitations under the License.
  */
 package com.uber.piranha;
-import java.util.ArrayList;
-class FooBar{
+
+
+class FooBar {
 
   private String address;
 
@@ -29,7 +30,7 @@ class FooBar{
 
   public String getAddress() {
     return address;
-  } 
+  }
 
   public String getPhoneNumber() {
     return phoneNumber;
@@ -46,5 +47,4 @@ class FooBar{
   public FooBar(String address) {
     this.address = address;
   }
-  
 }

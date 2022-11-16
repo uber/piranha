@@ -13,15 +13,13 @@
  */
 package com.uber.piranha;
 
-
 class XPFlagCleanerPositiveCases {
 
   private ExperimentInterface experimentation;
 
   private boolean ftBool = experimentation.isStaleFeature().getCachedValue();
 
-
-  public XPFlagCleanerPositiveCases(SomeExperiment exp){
+  public XPFlagCleanerPositiveCases(SomeExperiment exp) {
 
     boolean tBool = exp.isStaleFeature().getCachedValue();
     if (tBool && true) {

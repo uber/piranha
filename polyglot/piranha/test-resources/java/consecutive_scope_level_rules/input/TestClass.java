@@ -15,12 +15,9 @@ package com.uber.piranha;
 
 class FooBar {
 
-  int Id; 
+  int Id;
 
-  FooBar(int id){
+  FooBar(int id) {
     this.Id = id;
   }
-  
-
 }
-

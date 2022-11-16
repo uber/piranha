@@ -37,16 +37,15 @@ class XPFlagCleanerPositiveCases {
   public enum Something implements ExperimentName {
     /** Show menu */
     SHOW_MENU,
-  
+
     /** Foobar */
-    STALE_FLAG, 
-    
+    STALE_FLAG,
+
     /** barfoo. */
     BAR_FOO,
   }
 
-  enum TestEmptyEnum {
-  }
+  enum TestEmptyEnum {}
 
   enum TestExperimentName {
     STALE_FLAG,

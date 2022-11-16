@@ -13,7 +13,6 @@
  */
 package com.uber.piranha;
 
-
 class XPFlagCleanerPositiveCases {
 
   private ExperimentInterface experimentation;

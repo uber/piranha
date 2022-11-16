@@ -26,7 +26,6 @@ class XPMethodChainCases {
   public static void foobar(Parameter cp) {
     SomeParam sp = SomeParam.create(cp);
 
-
     // Matches API
     System.out.println("!!!");
     // Does not match API
@@ -58,16 +57,12 @@ class XPMethodChainCases {
 
     System.out.println("done!");
 
-
     // Do not match API
     cp.put(sp.otherFlag(), true);
     cp.put(sp.otherFlag(), false);
   }
 
   class TestMethodChainTest {
-
-
-
 
     public void testSomethingControl() {
       System.out.println();

@@ -13,7 +13,6 @@
  */
 package com.uber.piranha;
 
-
 class XPFlagCleanerPositiveCases {
 
   private ExperimentInterface experimentation;
@@ -21,7 +20,7 @@ class XPFlagCleanerPositiveCases {
   public void conditional_contains_stale_flag() {}
 
   public void conditional_with_else_contains_stale_flag() {
-    
+
     System.out.println("Hi world");
   }
 

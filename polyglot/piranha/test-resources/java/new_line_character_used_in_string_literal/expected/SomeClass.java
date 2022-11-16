@@ -14,8 +14,8 @@
 package com.uber.piranha;
 
 class SomeClass {
-  
-  void someMethod(String s){      
-      assert("Hello \n World".equals(s));
-    }
+
+  void someMethod(String s) {
+    assert ("Hello \n World".equals(s));
+  }
 }

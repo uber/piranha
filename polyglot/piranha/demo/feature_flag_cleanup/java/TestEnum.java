@@ -14,5 +14,5 @@
 package com.uber.piranha;
 
 enum TestEnum {
-    SAMPLE_STALE_FLAG
+  SAMPLE_STALE_FLAG
 }

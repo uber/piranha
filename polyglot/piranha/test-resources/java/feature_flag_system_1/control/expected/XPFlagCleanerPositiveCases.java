@@ -24,24 +24,21 @@ class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
     SOME_FLAG,
-
   }
 
   enum AnotherTestExperimentName {
-    
     SOME_OTHER_FLAG
   }
 
   public enum Something implements ExperimentName {
     /** Show menu */
     SHOW_MENU,
-  
+
     /** barfoo. */
     BAR_FOO,
   }
 
-  enum TestEmptyEnum {
-  }
+  enum TestEmptyEnum {}
 
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Autorollout {
@@ -70,7 +67,11 @@ class XPFlagCleanerPositiveCases {
 
   public void complex_conditional_contains_stale_flag(boolean tBool) {
 
-    System.out.println("Hello World");
+    if (tBool) {
+      System.out.println("Hello World");
+    } else {
+      System.out.println("Hi world");
+    }
   }
 
   public void other_api_stale_flag() {
@@ -84,7 +85,7 @@ class XPFlagCleanerPositiveCases {
 
     tBool = false;
 
-    tBool = true;
+    tBool = false;
 
     tBool = tBool;
 

@@ -287,7 +287,7 @@ query = """
                         [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
 (#eq? @rhs "true")  
 )"""
-replace = "true"
+replace = "@lhs"
 replace_node = "disjunction_expression"
 
 # Before :

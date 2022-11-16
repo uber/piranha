@@ -12,10 +12,10 @@
  * limitations under the License.
  */
 package com.uber.piranha;
-import java.util.List;
-import java.util.ArrayList;
 
-class FooBar{
+import java.util.List;
+
+class FooBar {
 
   private List<String> names;
 
@@ -33,7 +33,7 @@ class FooBar{
 
   public String getAddress() {
     return address;
-  } 
+  }
 
   public String getPhoneNumber() {
     return phoneNumber;
@@ -50,5 +50,4 @@ class FooBar{
   public FooBar(String address) {
     this.address = address;
   }
-  
 }

@@ -16,18 +16,18 @@ package com.uber.piranha;
 import java.util.ArrayList;
 
 class SomeClass {
-    ArrayList<String> someMethod(){
-      System.out.println("Hello World!");
-      return new ArrayList<>();
-    }
+  ArrayList<String> someMethod() {
+    System.out.println("Hello World!");
+    return new ArrayList<>();
+  }
 
-    ArrayList<String> someOtherMethod(){
-      System.out.println("Hello World!");
-      return new ArrayList<>();
-    }
+  ArrayList<String> someOtherMethod() {
+    System.out.println("Hello World!");
+    return new ArrayList<>();
+  }
 
-    ArrayList<String> AnotherMethod(){
-      System.out.println("Hello World!");
-      return new ArrayList<>("Hello World!");
-    }
+  ArrayList<String> AnotherMethod() {
+    System.out.println("Hello World!");
+    return new ArrayList<>("Hello World!");
+  }
 }

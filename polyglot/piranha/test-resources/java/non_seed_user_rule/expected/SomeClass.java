@@ -13,23 +13,22 @@
  */
 package com.uber.piranha;
 import java.util.Collections;
-
 import java.util.ArrayList;
 
 
 class SomeClass {
-    ArrayList<String> someMethod(){
-      System.out.println("Hello World!");
-      return Collections.emptyList();
-    }
+  ArrayList<String> someMethod() {
+    System.out.println("Hello World!");
+    return Collections.emptyList();
+  }
 
-    ArrayList<String> someOtherMethod(){
-      System.out.println("Hello World!");
-      return Collections.emptyList();
-    }
+  ArrayList<String> someOtherMethod() {
+    System.out.println("Hello World!");
+    return Collections.emptyList();
+  }
 
-    ArrayList<String> AnotherMethod(){
-      System.out.println("Hello World!");
-      return new ArrayList<>("Hello World!");
-    }
+  ArrayList<String> AnotherMethod() {
+    System.out.println("Hello World!");
+    return new ArrayList<>("Hello World!");
+  }
 }

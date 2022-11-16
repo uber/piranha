@@ -56,7 +56,9 @@ internal class XPFlagCleanerPositiveCases {
     fun assignments_containing_stale_flag() {
         tBool = false
         tBool = false
-        tBool = true
+
+        tBool = false
+
         tBool = tBool
         tBool = false
     }
