@@ -130,7 +130,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
 
 <h5> Returns </h5>
 
-`[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `should_rewrite_files` is passed as `false`. 
+`[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `dry_run` is passed as `true`. 
 
 ### :computer: Command-line Interface
 
