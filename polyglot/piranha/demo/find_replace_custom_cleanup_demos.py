@@ -1,5 +1,5 @@
 from collections import Counter
-from os.path import join, dirname
+from os.path import join, dirname, getmtime
 from polyglot_piranha import run_piranha_cli
 import logging 
 from logging import info 
@@ -14,7 +14,18 @@ def java_demo():
     as a consequence of the seed expression update.
     """    
     info("Running the Find/Replace Custom Cleanup demo for Java")
-    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
+
+    directory_path = join(find_Replace_dir, "java")
+    file_path = join(find_Replace_dir, "java", "SomeClass.java")
+    configuration_path = join(find_Replace_dir, "java/configurations")
+
+    old_mtime = getmtime(file_path)
+
+    _ = run_piranha_cli(directory_path, configuration_path, False)
+
+    new_mtime = getmtime(file_path)
+
+    assert old_mtime < new_mtime
 
 def python_demo():
     """
@@ -25,7 +36,18 @@ def python_demo():
     Finally, replaces the string literal `@str_to_replace` with `@str_replacement` (from `substitutions` in `piranha_arguments.toml`) if it appears as a list element.
     """
     print("Running the Find/Replace Custom Cleanup demo for Python")
-    _ = run_piranha_cli(join(find_Replace_dir, "python"), join(find_Replace_dir, "python/configurations"), True)
+
+    directory_path = join(find_Replace_dir, "python")
+    file_path = join(find_Replace_dir, "python", "only_lists.py")
+    configuration_path = join(find_Replace_dir, "python/configurations")
+
+    old_mtime = getmtime(file_path)
+
+    _ = run_piranha_cli(directory_path, configuration_path, False)
+
+    new_mtime = getmtime(file_path)
+
+    assert old_mtime < new_mtime
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)

@@ -56,20 +56,21 @@ use tree_sitter::Node;
 /// # Arguments:
 /// * path_to_codebase: Path to the root of the code base that Piranha will update
 /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
-/// * should_rewrite: determines if Piranha should actually update the code.
+/// * dry_run: determines if Piranha should actually update the code.
 ///
 /// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
 /// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
 pub fn run_piranha_cli(
-  path_to_codebase: String, path_to_configurations: String, should_rewrite_files: bool,
+  path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
   let configuration = PiranhaArguments::new(CommandLineArguments {
     path_to_codebase,
     path_to_configurations,
     path_to_output_summary: None,
+    dry_run,
   });
-  execute_piranha(&configuration, should_rewrite_files)
+  execute_piranha(&configuration)
 }
 
 #[pymodule]
@@ -80,7 +81,7 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 }
 
 pub fn execute_piranha(
-  configuration: &PiranhaArguments, should_rewrite_files: bool,
+  configuration: &PiranhaArguments,
 ) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
 
@@ -89,7 +90,7 @@ pub fn execute_piranha(
 
   let source_code_units = flag_cleaner.get_updated_files();
 
-  if should_rewrite_files {
+  if !*configuration.dry_run() {
     for scu in source_code_units {
       scu.persist(configuration);
     }

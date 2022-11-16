@@ -71,6 +71,9 @@ pub struct PiranhaArguments {
   /// The AST Kinds for which comments should be deleted
   #[getset(get = "pub")]
   cleanup_comments: bool,
+  /// Disables in-place rewriting of code
+  #[getset(get = "pub")]
+  dry_run: bool,
 }
 
 impl PiranhaArguments {
@@ -98,7 +101,8 @@ impl PiranhaArguments {
       .path_to_configurations(args.path_to_configurations)
       .path_to_output_summaries(args.path_to_output_summary)
       .language_name(piranha_args_from_config.language())
-      .language(piranha_args_from_config.language().get_language());
+      .language(piranha_args_from_config.language().get_language())
+      .dry_run(args.dry_run);
 
     if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
       args_builder.delete_file_if_empty(v);
@@ -141,6 +145,7 @@ impl Default for PiranhaArguments {
       number_of_ancestors_in_parent_scope: 4,
       cleanup_comments_buffer: 2,
       cleanup_comments: false,
+      dry_run: false,
     }
   }
 }

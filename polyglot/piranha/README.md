@@ -117,7 +117,7 @@ path_to_codebase = "..."
 path_to_configurations = "..." 
 piranha_summary = run_piranha_cli(path_to_codebase,
                                   path_to_configurations,
-                                  should_rewrite_files=True)
+                                  dry_run=False)
 ```
 <h5> Arguments </h5>
 
@@ -126,11 +126,11 @@ piranha_summary = run_piranha_cli(path_to_codebase,
   * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules [reference](#piranha-arguments) 
   * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place). These rules can also specify the pre-built language specific cleanups to trigger.
   * `edges.toml` (_optional_): expresses the flow between the rules 
-- `should_rewrite_files` : Enables in-place rewriting of code 
+- `dry_run` : Disables in-place rewriting of code 
 
 <h5> Returns </h5>
 
-`[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `should_rewrite_files` is passed as `false`. 
+`[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `dry_run` is passed as `true`. 
 
 ### :computer: Command-line Interface
 
@@ -154,6 +154,9 @@ USAGE:
 OPTIONS:
     -c, --path-to-codebase <PATH_TO_CODEBASE>
             Path to source code folder
+
+    -d, --dry-run <DRY_RUN>
+            Disables in-place rewriting of code [default: false]
 
     -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
             Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
