@@ -52,3 +52,25 @@ query = """
 replace = "false"
 replace_node = "call_exp"
 holes = ["false_flag_name"]
+
+[[rules]]
+name = "nil_flag"
+groups = ["replace_expression_with_boolean_literal"]
+query = """
+(
+    (call_expression
+        function: (selector_expression
+            operand: (_)
+            field: (field_identifier) @func_id
+        )
+        arguments: (argument_list
+            (interpreted_string_literal) @arg_str_literal
+        )
+    )
+    (#eq? @func_id "Value")
+    (#eq? @arg_str_literal "\\\"@nil_flag_name\\\"")
+) @call_exp
+"""
+replace = "nil"
+replace_node = "call_exp"
+holes = ["nil_flag_name"]

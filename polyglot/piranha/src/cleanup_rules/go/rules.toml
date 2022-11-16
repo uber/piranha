@@ -213,6 +213,86 @@ query = """
 replace = "@rhs"
 replace_node = "binary_expression"
 
+# Simplifies equal identity comparison
+# Note that `nil == nil` is not compilable in Go, but compiles in tree-sitter
+#   true == true   -> true
+#   false == false -> true
+#   nil == nil     -> true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_identity_eq"
+query = """
+(
+    (binary_expression
+        left: (
+            [
+                (false)
+                (parenthesized_expression (false))
+                (true)
+                (parenthesized_expression (true))
+                (nil)
+                (parenthesized_expression (nil))
+            ]
+        ) @lhs
+        operator: "=="
+        right: (
+            [
+                (false)
+                (parenthesized_expression (false))
+                (true)
+                (parenthesized_expression (true))
+                (nil)
+                (parenthesized_expression (nil))
+            ]
+        ) @rhs
+    ) @binary_expression
+    (#eq? @lhs @rhs)
+)
+"""
+replace = "true"
+replace_node = "binary_expression"
+
+# Simplifies not equal identity comparison
+# Note that `nil != nil` is not compilable in Go, but compiles in tree-sitter
+#   true != true   -> false
+#   false != false -> false
+#   nil != nil     -> false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_identity_neq"
+query = """
+(
+    (binary_expression
+        left: (
+            [
+                (false)
+                (parenthesized_expression (false))
+                (true)
+                (parenthesized_expression (true))
+                (nil)
+                (parenthesized_expression (nil))
+            ]
+        ) @lhs
+        operator: "!="
+        right: (
+            [
+                (false)
+                (parenthesized_expression (false))
+                (true)
+                (parenthesized_expression (true))
+                (nil)
+                (parenthesized_expression (nil))
+            ]
+        ) @rhs
+    ) @binary_expression
+    (#eq? @lhs @rhs)
+)
+"""
+replace = "false"
+replace_node = "binary_expression"
+
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"

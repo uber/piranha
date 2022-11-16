@@ -89,3 +89,23 @@ func simplify_if_statement_true() {
 	fmt.Println("true 2")
 	fmt.Println("true 3")
 }
+
+func simplify_identity_eq() {
+	fmt.Println("keep 1")
+	fmt.Println("keep 2")
+}
+
+func simplify_identity_neq() {
+	fmt.Println("keep 1")
+	fmt.Println("keep 2")
+}
+
+// `nil == nil` not compilable in go
+func simplify_identity_eq_nil() {
+	fmt.Println("keep")
+}
+
+// `nil != nil` not compilable in go
+func simplify_identity_neq_nil() {
+	fmt.Println("keep")
+}

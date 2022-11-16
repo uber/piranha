@@ -12,5 +12,6 @@
 language = ["go"]
 substitutions = [
     ["true_flag_name", "true"],
-    ["false_flag_name", "false"]
+    ["false_flag_name", "false"],
+    ["nil_flag_name", "nil"],
 ]

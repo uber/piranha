@@ -144,3 +144,47 @@ func simplify_if_statement_true() {
 		fmt.Println("false 2")
 	}
 }
+
+func simplify_identity_eq() {
+	if exp.BoolValue("true") == exp.BoolValue("true") {
+		fmt.Println("keep 1")
+	} else {
+		fmt.Println("remove 1")
+	}
+	if exp.BoolValue("false") == exp.BoolValue("false") {
+		fmt.Println("keep 2")
+	} else {
+		fmt.Println("remove 2")
+	}
+}
+
+func simplify_identity_neq() {
+	if exp.BoolValue("true") != exp.BoolValue("true") {
+		fmt.Println("remove 1")
+	} else {
+		fmt.Println("keep 1")
+	}
+	if exp.BoolValue("false") != exp.BoolValue("false") {
+		fmt.Println("remove 2")
+	} else {
+		fmt.Println("keep 2")
+	}
+}
+
+// `nil == nil` not compilable in go
+func simplify_identity_eq_nil() {
+	if exp.Value("nil")  == nil {
+		fmt.Println("keep")
+	} else {
+		fmt.Println("remove")
+	}
+}
+
+// `nil != nil` not compilable in go
+func simplify_identity_neq_nil() {
+	if exp.Value("nil") != nil {
+		fmt.Println("remove")
+	} else {
+		fmt.Println("keep")
+	}
+}
