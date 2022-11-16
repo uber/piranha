@@ -12,9 +12,9 @@
  * limitations under the License.
  */
 package com.uber.piranha;
-
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.ArrayList;
+
 
 class SomeClass {
   ArrayList<String> someMethod() {

@@ -15,8 +15,7 @@ package com.uber.piranha;
 
 class XPMethodChainCases {
 
-  // should not match instance method where nested invocation is not a member
-  // select tree.
+  // should not match instance method where nested invocation is not a member select tree.
   public void testDontMatchNonInstanceNested() {
     // Does not Match
     if (isStaleFeature().getCachedValue()) {
