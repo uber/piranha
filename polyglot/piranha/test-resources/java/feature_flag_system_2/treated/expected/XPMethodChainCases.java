@@ -15,7 +15,8 @@ package com.uber.piranha;
 
 class XPMethodChainCases {
 
-  // should not match instance method where nested invocation is not a member select tree.
+  // should not match instance method where nested invocation is not a member
+  // select tree.
   public void testDontMatchNonInstanceNested() {
     // Does not Match
     if (isStaleFeature().getCachedValue()) {
@@ -28,7 +29,6 @@ class XPMethodChainCases {
     // Matches API
     System.out.println("!");
 
-
     // Does not match API
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
@@ -37,7 +37,7 @@ class XPMethodChainCases {
       System.out.println("!!!");
     }
     if (sp.otherFlag().getCachedValue()) {
-        System.out.println("!!!");
+      System.out.println("!!!");
     }
     SomeParamRev spr = SomeParamRev.create(cp);
     // Does not match API- is reverse order
@@ -59,7 +59,6 @@ class XPMethodChainCases {
     }
 
     System.out.println("done!");
-    
 
     // Do not match API
     cp.put(sp.otherFlag(), true);
@@ -67,12 +66,10 @@ class XPMethodChainCases {
   }
 
   class TestMethodChainTest {
-    
+
     public void testSomethingTreated() {
       System.out.println();
     }
-
-    
 
     // Does not match annotation
     @ParameterValue(ns = "some_long_name", key = "other_flag", val = "false")

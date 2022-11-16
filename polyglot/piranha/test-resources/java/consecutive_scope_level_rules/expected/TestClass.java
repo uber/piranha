@@ -15,15 +15,14 @@ package com.uber.piranha;
 
 class FooBar {
 
-  int Id; 
+  int Id;
 
-  FooBar(int id){
+  FooBar(int id) {
     this.Id = id;
   }
 
-  public class InnerFooBar {  
+  public class InnerFooBar {
     private String address;
     private String name;
   }
-
 }

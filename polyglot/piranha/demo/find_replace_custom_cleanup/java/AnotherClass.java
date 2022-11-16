@@ -14,9 +14,9 @@
 package com.uber.piranha;
 
 class TestSubClass extends TestClass {
-  
+
   @Override
-  void testMethod(){
-      System.out.println("Hi World!");
-    }
+  void testMethod() {
+    System.out.println("Hi World!");
+  }
 }

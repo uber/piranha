@@ -14,7 +14,7 @@
 package com.uber.piranha;
 
 class TestClass implements SomeInterface {
-    void testMethod(){
-      System.out.println("Hello World!");
-    }
+  void testMethod() {
+    System.out.println("Hello World!");
+  }
 }
