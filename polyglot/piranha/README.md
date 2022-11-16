@@ -156,7 +156,7 @@ OPTIONS:
             Path to source code folder
 
     -d, --dry-run <DRY_RUN>
-            Should Piranha apply the replacements to the source files or not [default: false]
+            Disables in-place rewriting of code [default: false]
 
     -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
             Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,

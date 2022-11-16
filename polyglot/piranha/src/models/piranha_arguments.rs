@@ -71,7 +71,7 @@ pub struct PiranhaArguments {
   /// The AST Kinds for which comments should be deleted
   #[getset(get = "pub")]
   cleanup_comments: bool,
-  /// Should Piranha apply the replacements to the source files or not
+  /// Disables in-place rewriting of code
   #[getset(get = "pub")]
   dry_run: bool,
 }
