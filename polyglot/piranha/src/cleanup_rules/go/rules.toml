@@ -462,136 +462,23 @@ queries = [
 """,
 ]
 
-# Removes an `if err != nil` immediately after a short_var_declaration that got replaced
-# Before:
-#   enabled, err := true // does not compile
-#   if err != nil { // something }
-# After:
-#   enabled, err := true // does not compile
-#
 [[rules]]
-name = "delete_immediate_if_err"
+name = "delete_variable_declaration"
 query = """
 (
-    (short_var_declaration
-        left: (expression_list
-            (identifier) @bool_id
-            (identifier) @err_id
-        )
-        right:
-        (expression_list
-            ([
-                (true)
-                (false)
-            ]) @bool_value
-            .
-        )
-    ) @short_v_decl
-    .
-    (if_statement
-        condition: (binary_expression
-            left: (identifier) @lhs.id
-            operator: "!="
-            right: (nil)
-        ) @condition
-    ) @if_stmt
-    (#eq? @lhs.id @err_id)
-)
-"""
-replace = ""
-replace_node = "if_stmt"
-
-
-# Replaces a short_var_declaration with 2 identifier on the LHS and only one
-# bool value on the RHS.
-# That's code that does not compile and an intermediate state from previous rules.
-#
-# Will remove:
-#   a, e := false
-# Receives from previous rule (holes):
-#   @bool_id: a, @err_id: e, @bool_value: false
-# Will propagate:
-#   @variable_name: a, @value: false
-#
-[[rules]]
-name = "delete_bool_err_short_var_declaration"
-query = """
-(
-    (short_var_declaration
-        left: (expression_list
-            (identifier) @variable_name
-            (identifier) @rhs_id
-        )
-        right:
-        (expression_list
-            ([
-                (true)
-                (false)
-            ]) @value
-            .
+    (
+        (short_var_declaration
+            left: (expression_list
+                (identifier) @variable_name
+            )
+            right: (expression_list
+                ([
+                    (true)
+                    (false)
+                ]) @value
+            )
         )
     ) @short_v_decl
-    (#eq? @variable_name "@bool_id")
-    (#eq? @rhs_id "@err_id")
-    (#eq? @value "@bool_value")
-)
-"""
-replace = ""
-replace_node = "short_v_decl"
-holes = ["bool_id", "err_id", "bool_value"]
-
-# Check if there is no assignment where the variable @variable_name is
-# assigned to a value other than @value, within the method/function body
-[[rules.constraints]]
-matcher = """
-(
-    ([
-        (function_declaration)
-        (method_declaration)
-    ]) @fm_declaration
-)
-"""
-queries = [
-"""
-(
-    (assignment_statement
-        left: (expression_list
-            (identifier) @a.lhs
-        )
-        right: (expression_list) @a.rhs
-    ) @assignment
-    (#eq? @a.lhs "@variable_name")
-    (#not-eq? @a.rhs "@value")
-)
-"""
-]
-
-
-# Similar to `delete_bool_err_short_var_declaration`, but here we have no error identifier (`_`).
-# Will match and remove:
-#   a, _ := false
-# Will propagate:
-#   @variable_name: a, @value: false
-#
-[[rules]]
-name = "delete_bool_blank_identifier_short_var_declaration"
-query = """
-(
-    (short_var_declaration
-        left: (expression_list
-            (identifier) @variable_name
-            (identifier) @rhs_id
-        )
-        right:
-        (expression_list
-            ([
-                (true)
-                (false)
-            ]) @value
-            .
-        )
-    ) @short_v_decl
-    (#eq? @rhs_id "_")
 )
 """
 replace = ""

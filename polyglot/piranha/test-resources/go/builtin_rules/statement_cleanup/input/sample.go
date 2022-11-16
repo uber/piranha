@@ -16,19 +16,13 @@ package main
 import "fmt"
 
 func a() bool {
-	enabled, err := exp.BoolValue("true")
-	if err != nil {
-		fmt.Println(err)
-	}
+	enabled := exp.BoolValue("true")
 
 	return enabled
 }
 
 func b() string {
-	enabled, err := exp.BoolValue("true")
-	if err != nil {
-		fmt.Println(err)
-	}
+	enabled := exp.BoolValue("true")
 
 	s, err := exp.StrValue("str")
 	if err != nil {
@@ -43,10 +37,7 @@ func b() string {
 }
 
 func c() string {
-	enabled, err := exp.BoolValue("false")
-	if err != nil {
-		fmt.Println(err)
-	}
+	enabled := exp.BoolValue("false")
 
 	s, err := exp.StrValue("str")
 	if err != nil {
@@ -62,10 +53,7 @@ func c() string {
 }
 
 func after_return1() string {
-	enabled, err := exp.BoolValue("false")
-	if err != nil {
-		fmt.Println(err)
-	}
+	enabled := exp.BoolValue("false")
 	if !enabled {
 		return "not enabled"
 	}
@@ -75,10 +63,7 @@ func after_return1() string {
 
 func after_return2(a bool) string {
 	if a {
-		enabled, err := exp.BoolValue("false")
-		if err != nil {
-			fmt.Println(err)
-		}
+		enabled := exp.BoolValue("false")
 		if !enabled {
 			fmt.Println("not enabled")
 			return "not enabled"

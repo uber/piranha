@@ -21,6 +21,7 @@ to = [
     "statement_cleanup"
 ]
 
+### boolean_literal_cleanup
 [[edges]]
 scope = "Parent"
 from = "boolean_literal_cleanup"
@@ -38,43 +39,36 @@ to = [
     "if_cleanup",
 ]
 
+### statement_cleanup
 [[edges]]
 scope = "Function-Method"
 from = "statement_cleanup"
 to = [
     "delete_parent_assignment",
-    "delete_immediate_if_err",
-    "delete_bool_blank_identifier_short_var_declaration",
+    "delete_variable_declaration",
 ]
 
 [[edges]]
 scope = "Function-Method"
 from = "delete_parent_assignment"
 to = [
-    "delete_immediate_if_err",
-    "delete_bool_blank_identifier_short_var_declaration",
+    "delete_variable_declaration",
 ]
 
 [[edges]]
 scope = "Function-Method"
-from = "delete_immediate_if_err"
-to = ["delete_bool_err_short_var_declaration"]
-
-[[edges]]
-scope = "Function-Method"
-from = "delete_bool_err_short_var_declaration"
-to = ["replace_identifier_with_value"]
-
-[[edges]]
-scope = "Function-Method"
-from = "delete_bool_blank_identifier_short_var_declaration"
-to = ["replace_identifier_with_value"]
+from = "delete_variable_declaration"
+to = [
+    "replace_identifier_with_value",
+]
 
 [[edges]]
 scope = "Parent"
 from = "replace_identifier_with_value"
 to = ["boolean_literal_cleanup"]
 
+
+### if_cleanup
 [[edges]]
 scope = "Parent"
 from = "if_cleanup"

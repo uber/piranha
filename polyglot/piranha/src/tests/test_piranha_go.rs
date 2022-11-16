@@ -55,12 +55,3 @@ fn test_go_const_same_file() {
     1,
   );
 }
-
-#[test]
-fn test_const_and_call_with_unused_param() {
-  initialize();
-  run_rewrite_test(
-    &format!("{}/{}", LANGUAGE, "const_and_unused_param"),
-    1,
-  );
-}

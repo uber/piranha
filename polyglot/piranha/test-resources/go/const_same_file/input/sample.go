@@ -16,10 +16,7 @@ func a() {
 }
 
 func (c *Client) b() {
-	enabled, err := exp.BoolValue(staleFlagConst)
-	if err != nil {
-		fmt.Println(err)
-	}
+	enabled := exp.BoolValue(staleFlagConst)
 
 	s, err := exp.StrValue("str")
 	if err != nil {
@@ -34,7 +31,7 @@ func (c *Client) b() {
 }
 
 func (c *Client) c(enabled2 bool, enabled3 bool) {
-	enabled, _ := exp.BoolValue(staleFlagConst)
+	enabled := exp.BoolValue(staleFlagConst)
 
 	if enabled || enabled2 || enabled3 {
 		fmt.Println("enabled")
