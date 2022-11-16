@@ -60,3 +60,32 @@ func c() string {
 		return "prefix_" + s
 	}
 }
+
+func after_return1() string {
+	enabled, err := exp.BoolValue("false")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if !enabled {
+		return "not enabled"
+	}
+
+	return "enabled"
+}
+
+func after_return2(a bool) string {
+	if a {
+		enabled, err := exp.BoolValue("false")
+		if err != nil {
+			fmt.Println(err)
+		}
+		if !enabled {
+			fmt.Println("not enabled")
+			return "not enabled"
+		}
+		fmt.Println("should be removed")
+	}
+	// delete after return needs to consider blocks
+	fmt.Println("should not be removed")
+	return "keep"
+}

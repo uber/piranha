@@ -37,3 +37,17 @@ func c() string {
 	fmt.Println("not enabled")
 	return "prefix_" + s
 }
+
+func after_return1() string {
+	return "not enabled"
+}
+
+func after_return2(a bool) string {
+	if a {
+		fmt.Println("not enabled")
+		return "not enabled"
+	}
+	// delete after return needs to consider blocks
+	fmt.Println("should not be removed")
+	return "keep"
+}

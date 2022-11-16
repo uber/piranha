@@ -310,6 +310,22 @@ query = """
 replace = "@nested.statements"
 replace_node = "nested.block"
 
+[[rules]]
+name = "delete_all_statements_after_return"
+query = """
+(
+    (block
+        (statement_list
+            ((statement)* @pre)
+            ((return_statement) @r)
+            ((statement)+ @post)
+        ) @stmt_list
+    ) @b
+)
+"""
+replace = ""
+replace_node = "post"
+
 # TODO: rules and edges for "if with short statement"
 # collect examples and write tests for it
 # https://go.dev/tour/flowcontrol/6
@@ -347,66 +363,21 @@ query = """
 replace = ""
 replace_node = "assignment"
 
-
-# This constraint could be much easier if it was checked *AFTER* replacing
-# The enclosing function/method-declaration should not contain a reference to the variable identifier
+# The enclosing function/method-declaration should not contain another reference to the variable identifier
 [[rules.constraints]]
 matcher = """
 (
-    (
-        [
-            (function_declaration
-                name: (_) @_n
-                parameters: (parameter_list) @_pl
-            )
-            (method_declaration
-                name: (_) @_n
-                parameters: (parameter_list) @_pl
-            )
-        ]
-    ) @_f_decl1
+    ([
+        (function_declaration)
+        (method_declaration)
+    ]) @fm_declaration
 )
 """
 queries = [
-# checking the RHS of an assignment
 """
 (
-    (
-        [
-            (short_var_declaration
-                right: (expression_list
-                    (identifier) @_identifier
-                )
-            ) @_assignment
-            (var_declaration
-                (var_spec
-                    value: (expression_list
-                        (identifier) @_identifier
-                    )
-                )
-            ) @_assignment
-        ]
-    )
-    (#eq? @_identifier "@identifier")
-)
-""",
-# checking function arguments
-"""
-(
-    (argument_list
-        (identifier) @_2identifier
-    )
-    (#eq? @_2identifier "@identifier")
-)
-""",
-# checking if condition, switch? loops? what else?
-# selector expression?
-"""
-(
-    (selector_expression
-        operand: (identifier) @_4identifier
-    )
-    (#eq? @_4identifier "@identifier")
+    (identifier) @_id1
+    (#eq? @_id1 "@identifier")
 )
 """,
 ]
@@ -501,18 +472,18 @@ matcher = """
 )
 """
 queries = [
-    """
-        (
-            (assignment_statement
-                left: (expression_list
-                    (identifier) @a.lhs
-                )
-                right: (expression_list) @a.rhs
-            ) @assignment
-            (#eq? @a.lhs "@variable_name")
-            (#not-eq? @a.rhs "@value")
+"""
+(
+    (assignment_statement
+        left: (expression_list
+            (identifier) @a.lhs
         )
-    """
+        right: (expression_list) @a.rhs
+    ) @assignment
+    (#eq? @a.lhs "@variable_name")
+    (#not-eq? @a.rhs "@value")
+)
+"""
 ]
 
 

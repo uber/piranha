@@ -79,3 +79,8 @@ to = ["boolean_literal_cleanup"]
 scope = "Parent"
 from = "if_cleanup"
 to = ["remove_unnecessary_nested_block"]
+
+[[edges]]
+scope = "Parent"
+from = "remove_unnecessary_nested_block"
+to = ["delete_all_statements_after_return"]
