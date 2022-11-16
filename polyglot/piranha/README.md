@@ -117,7 +117,7 @@ path_to_codebase = "..."
 path_to_configurations = "..." 
 piranha_summary = run_piranha_cli(path_to_codebase,
                                   path_to_configurations,
-                                  should_rewrite_files=True)
+                                  dry_run=False)
 ```
 <h5> Arguments </h5>
 
@@ -126,7 +126,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
   * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules [reference](#piranha-arguments) 
   * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place). These rules can also specify the pre-built language specific cleanups to trigger.
   * `edges.toml` (_optional_): expresses the flow between the rules 
-- `should_rewrite_files` : Enables in-place rewriting of code 
+- `dry_run` : Disables in-place rewriting of code 
 
 <h5> Returns </h5>
 
@@ -154,6 +154,9 @@ USAGE:
 OPTIONS:
     -c, --path-to-codebase <PATH_TO_CODEBASE>
             Path to source code folder
+
+    -d, --dry-run <DRY_RUN>
+            Should Piranha apply the replacements to the source files or not [default: false]
 
     -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
             Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,

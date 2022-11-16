@@ -14,7 +14,7 @@ def java_demo():
     as a consequence of the seed expression update.
     """    
     info("Running the Find/Replace Custom Cleanup demo for Java")
-    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
+    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), False)
 
 def python_demo():
     """
@@ -25,7 +25,7 @@ def python_demo():
     Finally, replaces the string literal `@str_to_replace` with `@str_replacement` (from `substitutions` in `piranha_arguments.toml`) if it appears as a list element.
     """
     print("Running the Find/Replace Custom Cleanup demo for Python")
-    _ = run_piranha_cli(join(find_Replace_dir, "python"), join(find_Replace_dir, "python/configurations"), True)
+    _ = run_piranha_cli(join(find_Replace_dir, "python"), join(find_Replace_dir, "python/configurations"), False)
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)

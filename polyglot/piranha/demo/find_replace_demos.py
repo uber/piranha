@@ -12,14 +12,14 @@ def swift_demo():
     pre-built rules.
     """    
     info("Running the Find/Replace demo for Swift")
-    _ = run_piranha_cli(join(find_Replace_dir, "swift"), join(find_Replace_dir, "swift/configurations"), True)
+    _ = run_piranha_cli(join(find_Replace_dir, "swift"), join(find_Replace_dir, "swift/configurations"), False)
 
 def strings_demo():
     """
     This shows how we can use Piranha to execute structural find/replace without hooking up anything.
     """    
     info("Running the Find/Replace demo for Strings")
-    _ = run_piranha_cli(join(find_Replace_dir, "strings"), join(find_Replace_dir, "strings/configurations"), True)
+    _ = run_piranha_cli(join(find_Replace_dir, "strings"), join(find_Replace_dir, "strings/configurations"), False)
 
 def java_demo():
     """
@@ -29,7 +29,7 @@ def java_demo():
     Deletion of the file can be disabled by setting the `delete_file_if_empty` flag to False.
     """    
     info("Running the Find/Replace demo for Java")
-    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), True)
+    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), False)
 
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'

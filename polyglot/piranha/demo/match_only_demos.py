@@ -8,7 +8,7 @@ match_only_dir = join(dirname(__file__), 'match_only')
 
 def java_demo():
     info("Running the Match-only demo for Java")
-    output_summary_java = run_piranha_cli(join(match_only_dir, "java"), join(match_only_dir, "java/configurations"), True)
+    output_summary_java = run_piranha_cli(join(match_only_dir, "java"), join(match_only_dir, "java/configurations"), False)
 
     rule_match_counter = Counter([m[0] for m in output_summary_java[0].matches])
 
@@ -19,7 +19,7 @@ def java_demo():
 
 def go_demo():
     info("Running the Match-only demo for go")
-    output_summary_go = run_piranha_cli(join(match_only_dir, "go"), join(match_only_dir, "go/configurations"), True)
+    output_summary_go = run_piranha_cli(join(match_only_dir, "go"), join(match_only_dir, "go/configurations"), False)
 
     rule_match_counter = Counter([m[0] for m in output_summary_go[0].matches])
 
@@ -29,7 +29,7 @@ def go_demo():
 
 def ts_demo():
     info("Running the Match-only demo for TypeScript")
-    output_summary_typescript = run_piranha_cli(join(match_only_dir, "ts"), join(match_only_dir, "ts/configurations"), True)
+    output_summary_typescript = run_piranha_cli(join(match_only_dir, "ts"), join(match_only_dir, "ts/configurations"), False)
 
     rule_match_counter = Counter([m[0] for m in output_summary_typescript[0].matches])
 
@@ -39,7 +39,7 @@ def ts_demo():
 
 def tsx_demo():
     info("Running the Match-only demo for TypeScript with React")
-    output_summary_typescript = run_piranha_cli(join(match_only_dir, "tsx"), join(match_only_dir, "tsx/configurations"), True)
+    output_summary_typescript = run_piranha_cli(join(match_only_dir, "tsx"), join(match_only_dir, "tsx/configurations"), False)
 
     rule_match_counter = Counter([m[0] for m in output_summary_typescript[0].matches])
 
