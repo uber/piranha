@@ -14,10 +14,11 @@ def swift_demo():
     info("Running the Find/Replace demo for Swift")
 
     file_path = join(find_Replace_dir, "swift", "Sample.swift")
+    configuration_path = join(find_Replace_dir, "swift/configurations")
 
     old_mtime = getmtime(file_path)
 
-    _ = run_piranha_cli(file_path, join(find_Replace_dir, "swift/configurations"), False)
+    _ = run_piranha_cli(file_path, configuration_path, False)
 
     new_mtime = getmtime(file_path)
 
@@ -30,10 +31,11 @@ def strings_demo():
     info("Running the Find/Replace demo for Strings")
 
     file_path = join(find_Replace_dir, "strings", "Sample.strings")
+    configuration_path = join(find_Replace_dir, "strings/configurations")
 
     old_mtime = getmtime(file_path)
 
-    _ = run_piranha_cli(join(find_Replace_dir, "strings"), join(find_Replace_dir, "strings/configurations"), False)
+    _ = run_piranha_cli(file_path, configuration_path, False)
 
     new_mtime = getmtime(file_path)
 
@@ -49,10 +51,11 @@ def java_demo():
     info("Running the Find/Replace demo for Java")
 
     file_path = join(find_Replace_dir, "java", "TestEnum.java")
+    configuration_path = join(find_Replace_dir, "java/configurations")
 
     old_mtime = getmtime(file_path)
 
-    _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), False)
+    _ = run_piranha_cli(file_path, configuration_path, False)
 
     new_mtime = getmtime(file_path)
 
