@@ -1,5 +1,5 @@
 from collections import Counter
-from os.path import join, dirname
+from os.path import join, dirname, getmtime
 from polyglot_piranha import run_piranha_cli
 import logging
 from logging import info
@@ -12,14 +12,32 @@ def swift_demo():
     pre-built rules.
     """    
     info("Running the Find/Replace demo for Swift")
-    _ = run_piranha_cli(join(find_Replace_dir, "swift"), join(find_Replace_dir, "swift/configurations"), False)
+
+    file_path = join(find_Replace_dir, "swift", "Sample.swift")
+
+    old_mtime = getmtime(file_path)
+
+    _ = run_piranha_cli(file_path, join(find_Replace_dir, "swift/configurations"), False)
+
+    new_mtime = getmtime(file_path)
+
+    assert old_mtime < new_mtime
 
 def strings_demo():
     """
     This shows how we can use Piranha to execute structural find/replace without hooking up anything.
     """    
     info("Running the Find/Replace demo for Strings")
+
+    file_path = join(find_Replace_dir, "strings", "Sample.strings")
+
+    old_mtime = getmtime(file_path)
+
     _ = run_piranha_cli(join(find_Replace_dir, "strings"), join(find_Replace_dir, "strings/configurations"), False)
+
+    new_mtime = getmtime(file_path)
+
+    assert old_mtime < new_mtime
 
 def java_demo():
     """
@@ -29,7 +47,16 @@ def java_demo():
     Deletion of the file can be disabled by setting the `delete_file_if_empty` flag to False.
     """    
     info("Running the Find/Replace demo for Java")
+
+    file_path = join(find_Replace_dir, "java", "TestEnum.java")
+
+    old_mtime = getmtime(file_path)
+
     _ = run_piranha_cli(join(find_Replace_dir, "java"), join(find_Replace_dir, "java/configurations"), False)
+
+    new_mtime = getmtime(file_path)
+
+    assert old_mtime < new_mtime
 
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
