@@ -484,6 +484,28 @@ query = """
 replace = ""
 replace_node = "short_v_decl"
 
+# Check if there is an assignment to @variable_name with a value other than @value
+# Note that the query is against a short_var_declaration while
+# the constraint is against an assigment_statement
+[[rules.constraints]]
+matcher = "(block) @block"
+queries = [
+"""
+(
+    (assignment_statement
+        left: (expression_list
+            (identifier) @a.lhs
+        )
+        right: (expression_list
+            (_) @a.rhs
+        )
+    ) @assignment
+    (#eq? @a.lhs "@variable_name")
+    (#not-eq? @a.rhs "@value")
+)
+"""
+]
+
 [[rules]]
 name = "replace_identifier_with_value"
 query = """
