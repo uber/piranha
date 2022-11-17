@@ -24,3 +24,38 @@ func (c *Client) c(enabled2 bool, enabled3 bool) {
 		fmt.Println("enabled")
 	}
 }
+
+// should not replace the function name
+func (c *Client) isEnabled() {
+	return false
+}
+
+func (c *Client) callerMethod() {
+	// should not replace isFlagEnabledMethod here
+	if c.isFlagEnabledMethod() {
+		fmt.Println("enabled")
+	} else {
+		fmt.Println("disabled")
+	}
+}
+
+// should not replace the method name
+func (c *Client) isFlagEnabledMethod() bool {
+	fmt.Println("not enabled")
+	return false
+}
+
+func callerFunc() {
+	// should not replace isFlagEnabledFunc here
+	if isFlagEnabledFunc() {
+		fmt.Println("enabled")
+	} else {
+		fmt.Println("disabled")
+	}
+}
+
+// should not replace the function name
+func isFlagEnabledFunc() bool {
+	fmt.Println("not enabled")
+	return false
+}

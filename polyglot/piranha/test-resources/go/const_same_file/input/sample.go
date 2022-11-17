@@ -37,3 +37,51 @@ func (c *Client) c(enabled2 bool, enabled3 bool) {
 		fmt.Println("enabled")
 	}
 }
+
+// should not replace the function name
+func (c *Client) isEnabled() {
+	isEnabled := exp.BoolValue(staleFlagConst)
+	return isEnabled
+}
+
+func (c *Client) callerMethod() {
+	// should not replace isFlagEnabledMethod here
+	if c.isFlagEnabledMethod() {
+		fmt.Println("enabled")
+	} else {
+		fmt.Println("disabled")
+	}
+}
+
+// should not replace the method name
+func (c *Client) isFlagEnabledMethod() bool {
+	isFlagEnabledMethod := exp.BoolValue(staleFlagConst)
+
+	if !isFlagEnabledMethod {
+		fmt.Println("not enabled")
+		return false
+	}
+
+	return isFlagEnabledMethod
+}
+
+func callerFunc() {
+	// should not replace isFlagEnabledFunc here
+	if isFlagEnabledFunc() {
+		fmt.Println("enabled")
+	} else {
+		fmt.Println("disabled")
+	}
+}
+
+// should not replace the function name
+func isFlagEnabledFunc() bool {
+	isFlagEnabledFunc := exp.BoolValue(staleFlagConst)
+
+	if !isFlagEnabledFunc {
+		fmt.Println("not enabled")
+		return false
+	}
+
+	return isFlagEnabledFunc
+}

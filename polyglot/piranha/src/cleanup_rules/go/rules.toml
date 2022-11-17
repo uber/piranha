@@ -517,3 +517,27 @@ query = """
 replace = "@value"
 replace_node = "identifier"
 holes = ["variable_name", "value"]
+
+[[rules.constraints]]
+matcher = "(block) @block"
+queries = [
+"""
+(
+    [
+        (short_var_declaration
+            left: (expression_list
+                .
+                (identifier) @vn
+                .
+            )
+        ) @assignment
+        (var_declaration
+            (var_spec
+                name: (identifier) @vn
+            )
+        ) @assignment
+    ]
+    (#eq? @vn "@variable_name")
+)
+"""
+]
