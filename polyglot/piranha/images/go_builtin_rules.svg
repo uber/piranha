@@ -57,8 +57,8 @@
 <text text-anchor="middle" x="115.5" y="-363.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_true_or_something</text>
 <text text-anchor="middle" x="115.5" y="-348.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_something_or_false</text>
 <text text-anchor="middle" x="115.5" y="-333.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_false_or_something</text>
-<text text-anchor="middle" x="115.5" y="-318.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_identity_eq</text>
-<text text-anchor="middle" x="115.5" y="-303.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_identity_neq</text>
+<text text-anchor="middle" x="115.5" y="-318.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_identity_equal</text>
+<text text-anchor="middle" x="115.5" y="-303.3" font-family="Times,serif" font-size="14.00" fill="#000000">simplify_identity_not_equal</text>
 </g>
 <!-- boolean_literal_cleanup&#45;&gt;boolean_expression_simplify -->
 <g id="edge3" class="edge">

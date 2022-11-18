@@ -221,7 +221,7 @@ replace_node = "binary_expression"
 #
 [[rules]]
 groups = ["boolean_expression_simplify"]
-name = "simplify_identity_eq"
+name = "simplify_identity_equal"
 query = """
 (
     (binary_expression
@@ -261,7 +261,7 @@ replace_node = "binary_expression"
 #
 [[rules]]
 groups = ["boolean_expression_simplify"]
-name = "simplify_identity_neq"
+name = "simplify_identity_not_equal"
 query = """
 (
     (binary_expression
