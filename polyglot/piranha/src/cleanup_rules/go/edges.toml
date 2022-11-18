@@ -77,4 +77,10 @@ to = ["remove_unnecessary_nested_block"]
 [[edges]]
 scope = "Parent"
 from = "remove_unnecessary_nested_block"
-to = ["delete_all_statements_after_return"]
+to = ["delete_statement_after_return"]
+
+# Self-edge to circumvent `(statement)+` only matching one statement
+[[edges]]
+scope = "Parent"
+from = "delete_statement_after_return"
+to = ["delete_statement_after_return"]

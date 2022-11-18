@@ -74,3 +74,18 @@ func after_return2(a bool) string {
 	fmt.Println("should not be removed")
 	return "keep"
 }
+
+// should remove multiple statements after return
+func after_return3() string {
+	enabled := exp.BoolValue("false")
+	if !enabled {
+		return "not enabled"
+	}
+
+	fmt.Println("1")
+	fmt.Println("2")
+	fmt.Println("3")
+	fmt.Println("4")
+	fmt.Println("5")
+	return "enabled"
+}

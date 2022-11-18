@@ -390,8 +390,12 @@ query = """
 replace = "@nested.statements"
 replace_node = "nested.block"
 
+# This rule is not deleting multiple statements after return.
+# `(statement)+ @post` is only matching the first statement
+# Thus, we are using a self-edge to keep removing statements.
+#
 [[rules]]
-name = "delete_all_statements_after_return"
+name = "delete_statement_after_return"
 query = """
 (
     (block
