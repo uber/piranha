@@ -17,11 +17,11 @@ from os import listdir
 
 
 def test_piranha_rewrite():
-    output_summary = run_piranha_cli('test-resources/java/feature_flag_system_1/treated/input', 'test-resources/java/feature_flag_system_1/treated/configurations', False)
+    output_summary = run_piranha_cli('test-resources/java/feature_flag_system_1/treated/input', 'test-resources/java/feature_flag_system_1/treated/configurations', False, False)
     assert is_as_expected('test-resources/java/feature_flag_system_1/treated', output_summary)
 
 def test_piranha_match_only():
-    output_summary = run_piranha_cli('test-resources/java/structural_find/input', 'test-resources/java/structural_find/configurations', False)
+    output_summary = run_piranha_cli('test-resources/java/structural_find/input', 'test-resources/java/structural_find/configurations', False, False)
     assert len(output_summary[0].matches) == 20
 
 def is_as_expected(path_to_scenario, output_summary):

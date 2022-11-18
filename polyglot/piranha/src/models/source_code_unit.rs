@@ -425,12 +425,16 @@ impl SourceCodeUnit {
     self.ast.edit(&ts_edit);
     self._replace_file_contents_and_re_parse(&new_source_code, parser, true);
     if self.ast.root_node().has_error() {
-      let msg = format!(
-        "Produced syntactically incorrect source code {}",
-        self.code()
-      );
-      error!("{}", msg);
-      panic!("{}", msg);
+      if self.piranha_arguments.ignore_parse_error().clone() {
+        debug!("Parse error ocurred, but ignore_parse_error == true");
+      } else {
+        let msg = format!(
+          "Produced syntactically incorrect source code {}",
+          self.code()
+        );
+        error!("{}", msg);
+        panic!("{}", msg);
+      }
     }
     ts_edit
   }

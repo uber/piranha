@@ -127,6 +127,9 @@ pub struct PiranhaArguments {
   #[clap(short = 'd', long, parse(try_from_str), default_value_t = false)]
   #[serde(default = "default_dry_run")]
   dry_run: bool,
+  /// Won't panic if a rewrite raises a tree-sitter parse error
+  #[getset(get = "pub")]
+  ignore_parse_error: bool,
 }
 
 impl PiranhaArguments {
