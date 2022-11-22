@@ -46,12 +46,12 @@ def collect_rules_and_groups(rules_toml_dict):
         rule_name: str = sanitize_name(rule_toml['name'])
         if 'groups' in rule_toml:
             rule_groups = rule_toml['groups']
-            collect_node_for_group_rule(rule_name, rule_groups)
-        else:  # rule without group
-            orphan_nodes.add(rule_name)
+            collect_node_for_rule_with_group(rule_name, rule_groups)
+        else:
+            nodes_without_groups.add(rule_name)
 
 
-def collect_node_for_group_rule(rule_name: str, rule_groups: 'list[str]'):
+def collect_node_for_rule_with_group(rule_name: str, rule_groups: 'list[str]'):
     for group_name in rule_groups:
         group_name = sanitize_name(group_name)
         if group_name != 'Cleanup_Rule':
@@ -59,7 +59,7 @@ def collect_node_for_group_rule(rule_name: str, rule_groups: 'list[str]'):
                 rules_by_group_dict[group_name].append(rule_name)
             else:
                 rules_by_group_dict[group_name] = [rule_name]
-        else:  # we don't want to group 'Cleanup Rule's under the same shape
+        else:  # we don't want to group 'Cleanup Rule's under the same graphviz shape
             cleanup_rules.add(rule_name)
 
 
@@ -88,18 +88,6 @@ def collect_edges(edges_toml_dict):
                 outgoing_edges_by_node[from_node] = [edge]
 
 
-def group_rule_names_label(rule_names: 'list[str]') -> 'list[str]':
-    return [inline_name(rule_name) for rule_name in rule_names]
-
-
-def inline_name(rule_name: str) -> str:
-    """Should be called for rules under a group."""
-    if rule_name in cleanup_rules:
-        return f'{rule_name} (Cleanup Rule)'
-    else:
-        return rule_name
-
-
 def initialize_graph() -> graphviz.Digraph:
     graph_attr = {
         'label': str(args.title),
@@ -112,44 +100,77 @@ def initialize_graph() -> graphviz.Digraph:
 
 
 def generate_graph_nodes():
-    generate_non_orphan_nodes()
-    generate_orphan_nodes()
+    generate_nodes_with_groups_and_outgoing_edges()
+    # rules *without* outgoing edges and no groups have not been added yet
+    # this is because we focus on outgoing edges when traversing `edges.toml`
+    generate_nodes_without_groups_and_no_outgoing_edges()
 
 
-def generate_non_orphan_nodes():
-    for rule_name in all_non_orphan_rule_names():
+def generate_nodes_with_groups_and_outgoing_edges():
+    for rule_name in all_rule_names_with_groups_and_outgoing_edges():
         if rule_name in rules_by_group_dict:
-            generate_node_for_group_rule(rule_name)
-        else:  # a rule not in a group
-            generate_node_for_non_group_rule(rule_name)
+            # several (n >= 1) rules under the same graphviz `record` shape.
+            generate_node_for_group(rule_name)
+        else:
+            # not a graphviz `record` node. single rule in the shape.
+            generate_node_for_rule_not_under_a_group(rule_name)
 
         added_nodes.add(rule_name)
 
 
-def all_non_orphan_rule_names() -> 'list[str]':
-    node_names_with_only_outgoing_edges = [
-        node_name for node_name in rules_by_group_dict.keys() if node_name not in outgoing_edges_by_node.keys()
-    ]
+def all_rule_names_with_groups_and_outgoing_edges() -> 'list[str]':
+    # set difference
+    # map.keys() is a set view, it doesn't have set's methods but supports operators
+    node_names_with_only_outgoing_edges = rules_by_group_dict.keys() - \
+        outgoing_edges_by_node.keys()
 
-    non_orphan_rule_names = list(outgoing_edges_by_node.keys())
-    non_orphan_rule_names.extend(node_names_with_only_outgoing_edges)
-    non_orphan_rule_names.extend(cleanup_rules)
-    return non_orphan_rule_names
+    rule_names_with_groups = list(outgoing_edges_by_node.keys())
+    rule_names_with_groups.extend(node_names_with_only_outgoing_edges)
+    rule_names_with_groups.extend(cleanup_rules)
+    return rule_names_with_groups
 
 
-def generate_node_for_group_rule(rule_name: str):
+def generate_node_for_group(rule_name: str):
     rule_names_in_group = rules_by_group_dict[rule_name]
     for group_rule_name in rule_names_in_group:
         added_nodes.add(group_rule_name)
 
-    rule_names_label: 'list[str]' = group_rule_names_label(
-        rule_names_in_group)
+    rule_names_label: 'list[str]' = [
+        append_cleanup_rule_if_needed(rule_name) for rule_name in rule_names_in_group
+    ]
+
+    #############################
+    # boolean_expression_simplify
+    #
+    # simplify_not_false
+    # simplify_not_true
+    # ...
+    #############################
     node_label = rule_name + '\\n\\n' + '\\n'.join(rule_names_label)
 
     graph.node(rule_name, node_label, shape='record')
 
 
-def generate_node_for_non_group_rule(rule_name: str):
+def append_cleanup_rule_if_needed(rule_name: str) -> str:
+    """
+    Should be called for rules under a group.
+
+    If a rule is a cleanup rule, we append the label to the node's name *on the same line*.
+    Cleanup Rules are treated differently because:
+      1) Currently, there are no edges to `Cleanup Rule` (as opposed to other groups)
+      2) nodes may have another group with incoming/outgoing edges.
+
+    We want to display rules under a group which indicates flow (i.e., has edges).
+    At the same time, we still want to indicate in the graph that a rule is a cleanup rule.
+    """
+    if rule_name in cleanup_rules:
+        return f'{rule_name} (Cleanup Rule)'
+    else:
+        return rule_name
+
+
+def generate_node_for_rule_not_under_a_group(rule_name: str):
+    """The rule will be a standalone node; we can add (Cleanup Rule) *on a new line* if needed."""
     if rule_name not in added_nodes:
         if rule_name in cleanup_rules:
             node_label = f'{rule_name}\\n(Cleanup Rule)'
@@ -158,10 +179,12 @@ def generate_node_for_non_group_rule(rule_name: str):
             graph.node(rule_name)
 
 
-def generate_orphan_nodes():
-    # orphan_nodes don't have any group, not even 'Cleanup_Rule'
-    for node in orphan_nodes:
-        # avoid adding a node that had a label before
+def generate_nodes_without_groups_and_no_outgoing_edges():
+    # nodes that don't have any group, not even 'Cleanup_Rule'
+    # and also no outgoing edge
+    # i.e., leaf nodes with no groups -> standalone shape
+    for node in nodes_without_groups:
+        # avoid adding a node already added through an edge
         if node not in added_nodes:
             added_nodes.add(node)
             graph.node(node)
@@ -209,7 +232,7 @@ rules_by_group_dict: 'dict[str, list[str]]' = {}
 outgoing_edges_by_node: 'dict[str, list[Edge]]' = {}
 
 cleanup_rules: 'set[str]' = set()
-orphan_nodes: 'set[str]' = set()
+nodes_without_groups: 'set[str]' = set()
 
 output_file_path = os.path.abspath(args.output_file_path)
 
