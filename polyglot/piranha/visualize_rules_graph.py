@@ -59,7 +59,7 @@ def collect_node_for_rule_with_group(rule_name: str, rule_groups: 'list[str]'):
                 rules_by_group_dict[group_name].append(rule_name)
             else:
                 rules_by_group_dict[group_name] = [rule_name]
-        else:  # we don't want to group 'Cleanup Rule's under the same graphviz shape
+        else:  # we don't want to group `Cleanup Rule`s under the same graphviz shape
             cleanup_rules.add(rule_name)
 
 
