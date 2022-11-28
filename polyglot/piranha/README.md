@@ -34,7 +34,7 @@ A user provides :
 - [Arguments](#piranha-arguments) to modify Piranha's behavior (like deleting associated comments).
 
 When Piranha applies the set (or graph) of user defined rules, it triggers the __pre-built__ language specific cleanup rules to do a deep cleanup. 
-Below we can see an [automatically generated graph]((#visualizing-graphs-for-rules-and-groups)) for the Java pre-built cleanup rules.
+Below we can see an [automatically generated graph](#visualizing-graphs-for-rules-and-groups) for the Java pre-built cleanup rules.
 
 <p style="text-align:center;">
     <img src="images/java_prebuilt_rules.svg" width="800" height="500" alt="Java pre-built cleanup rules"/>
