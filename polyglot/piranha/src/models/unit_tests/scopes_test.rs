@@ -20,29 +20,40 @@ use {
   std::{collections::HashMap, path::PathBuf},
 };
 
-struct TestScopesGenerators {
-  class: ScopeGenerator,
-  method: ScopeGenerator,
+fn _get_class_scope() -> ScopeGenerator {
+  let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
+    .matcher("(class_declaration name:(_) @n) @c".to_string())
+    .generator(
+      "(
+    ((class_declaration name:(_) @z) @qc)
+    (#eq? @z \"@n\")
+    )"
+      .to_string(),
+    )
+    .build()
+    .unwrap();
+  ScopeGeneratorBuilder::default()
+    .name("Class".to_string())
+    .rules(vec![scope_query_generator_class])
+    .build()
+    .unwrap()
 }
 
-impl Default for TestScopesGenerators {
-  fn default() -> Self {
-    let scope_query_generator_method: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
-      .matcher(
-        "(
+fn _get_method_scope() -> ScopeGenerator {
+  let scope_query_generator_method: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
+    .matcher(
+      "(
     [(method_declaration 
               name : (_) @n
               parameters : (formal_parameters)@fp)
      (constructor_declaration 
               name: (_) @n
               parameters : (formal_parameters)@fp)
-              
-    ]          
-              @xdn)"
-          .to_string(),
-      )
-      .generator(
-        "(
+    ]@xdn)"
+        .to_string(),
+    )
+    .generator(
+      "(
       [(((method_declaration 
                 name : (_) @z
                 parameters : (formal_parameters)@tp))
@@ -55,41 +66,17 @@ impl Default for TestScopesGenerators {
         (#eq? @tp \"@fp\")
         (#eq? @z \"@n\")
         )
-      ]
-    )@qdn"
-          .to_string(),
-      )
-      .build()
-      .unwrap();
-
-    let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
-      .matcher("(class_declaration name:(_) @n) @c".to_string())
-      .generator(
-        "(
-    ((class_declaration name:(_) @z) @qc)
-    (#eq? @z \"@n\")
-    )"
+      ])@qdn"
         .to_string(),
-      )
-      .build()
-      .unwrap();
-    let scope_generator_class: ScopeGenerator = ScopeGeneratorBuilder::default()
-      .name("Class".to_string())
-      .rules(vec![scope_query_generator_class])
-      .build()
-      .unwrap();
+    )
+    .build()
+    .unwrap();
 
-    let scope_generator_method: ScopeGenerator = ScopeGeneratorBuilder::default()
-      .name("Method".to_string())
-      .rules(vec![scope_query_generator_method])
-      .build()
-      .unwrap();
-
-    Self {
-      class: scope_generator_class,
-      method: scope_generator_method,
-    }
-  }
+  return ScopeGeneratorBuilder::default()
+    .name("Method".to_string())
+    .rules(vec![scope_query_generator_method])
+    .build()
+    .unwrap();
 }
 
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.
@@ -105,12 +92,7 @@ fn test_get_scope_query_positive() {
       }
     }";
 
-  let test_scope_generators = TestScopesGenerators::default();
-
-  let mut rule_store = RuleStore::dummy_with_scope(vec![
-    test_scope_generators.method,
-    test_scope_generators.class,
-  ]);
+  let mut rule_store = RuleStore::dummy_with_scope(vec![_get_method_scope(), _get_class_scope()]);
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
@@ -173,13 +155,7 @@ fn test_get_scope_query_negative() {
         }
       }
     }";
-
-  let test_scope_generators = TestScopesGenerators::default();
-
-  let mut rule_store = RuleStore::dummy_with_scope(vec![
-    test_scope_generators.method,
-    test_scope_generators.class,
-  ]);
+  let mut rule_store = RuleStore::dummy_with_scope(vec![_get_method_scope(), _get_class_scope()]);
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
