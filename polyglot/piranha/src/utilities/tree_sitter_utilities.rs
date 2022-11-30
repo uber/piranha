@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
 use crate::{
-  models::{matches::Match, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
+  models::{matches::Match},
   utilities::MapOfVec,
 };
 use colored::Colorize;
