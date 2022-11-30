@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 use {
-  super::{ScopeGenerator, ScopeQueryGenerator},
+  super::{ScopeGenerator, ScopeGeneratorBuilder, ScopeQueryGenerator, ScopeQueryGeneratorBuilder},
   crate::{
     models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit},
     utilities::eq_without_whitespace,
@@ -20,43 +20,72 @@ use {
   std::{collections::HashMap, path::PathBuf},
 };
 
+fn _get_class_scope() -> ScopeGenerator {
+  let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
+    .matcher("(class_declaration name:(_) @n) @c".to_string())
+    .generator("(
+      ((class_declaration name:(_) @z) @qc)
+      (#eq? @z \"@n\")
+    )"
+      .to_string(),
+    )
+    .build()
+    .unwrap();
+  ScopeGeneratorBuilder::default()
+    .name("Class".to_string())
+    .rules(vec![scope_query_generator_class])
+    .build()
+    .unwrap()
+}
+
+fn _get_method_scope() -> ScopeGenerator {
+  let scope_query_generator_method: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
+    .matcher(
+      "(
+    [(method_declaration 
+              name : (_) @n
+              parameters : (formal_parameters)@fp)
+     (constructor_declaration 
+              name: (_) @n
+              parameters : (formal_parameters)@fp)
+    ]@xdn)"
+        .to_string(),
+    )
+    .generator(
+      "(
+      [(((method_declaration 
+                name : (_) @z
+                parameters : (formal_parameters)@tp))
+        (#eq? @z \"@n\")
+        (#eq? @tp \"@fp\")                  
+        )
+       (((constructor_declaration 
+                name: (_) @z
+                parameters : (formal_parameters)@tp))
+        (#eq? @z \"@n\")
+        (#eq? @tp \"@fp\")
+        )
+      ])@qdn"
+        .to_string(),
+    )
+    .build()
+    .unwrap();
+
+  return ScopeGeneratorBuilder::default()
+    .name("Method".to_string())
+    .rules(vec![scope_query_generator_method])
+    .build()
+    .unwrap();
+}
+
+
+fn _get_rule_store() -> RuleStore {
+  return RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()])
+}
+
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.
 #[test]
 fn test_get_scope_query_positive() {
-  let scope_generator_method = ScopeGenerator::new(
-    "Method",
-    vec![ScopeQueryGenerator::new(
-      "((method_declaration 
-          name : (_) @n
-                parameters : (formal_parameters
-                    (formal_parameter type:(_) @t0)
-                        (formal_parameter type:(_) @t1)
-                        (formal_parameter type:(_) @t2))) @xd2)",
-      "(((method_declaration 
-                        name : (_) @z
-                              parameters : (formal_parameters
-                                  (formal_parameter type:(_) @r0)
-                                      (formal_parameter type:(_) @r1)
-                                      (formal_parameter type:(_) @r2))) @qd)
-                  (#eq? @z \"@n\")
-                  (#eq? @r0 \"@t0\")
-                  (#eq? @r1 \"@t1\")
-                  (#eq? @r2 \"@t2\")
-                  )",
-    )],
-  );
-
-  let scope_generator_class = ScopeGenerator::new(
-    "Class",
-    vec![ScopeQueryGenerator::new(
-      "(class_declaration name:(_) @n) @c",
-      "(
-          ((class_declaration name:(_) @z) @qc)
-          (#eq? @z \"@n\")
-          )",
-    )],
-  );
-
   let source_code = "class Test {
       pub void foobar(int a, int b, int c){
         boolean isFlagTreated = true;
@@ -66,9 +95,8 @@ fn test_get_scope_query_positive() {
         }
       }
     }";
-
-  let mut rule_store =
-    RuleStore::dummy_with_scope(vec![scope_generator_method, scope_generator_class]);
+  
+  let mut rule_store =  _get_rule_store();
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
@@ -87,19 +115,24 @@ fn test_get_scope_query_positive() {
     &mut rule_store,
   );
 
+  println!("{}", scope_query_method.as_str());
   assert!(eq_without_whitespace(
     scope_query_method.as_str(),
-    "(((method_declaration 
-      name : (_) @z
-            parameters : (formal_parameters
-                (formal_parameter type:(_) @r0)
-                    (formal_parameter type:(_) @r1)
-                    (formal_parameter type:(_) @r2))) @qd)
-            (#eq? @z \"foobar\")
-            (#eq? @r0 \"int\")
-            (#eq? @r1 \"int\")
-            (#eq? @r2 \"int\")
-            )"
+    "(
+      [(((method_declaration 
+                name : (_) @z
+                parameters : (formal_parameters)@tp))
+        (#eq? @z \"foobar\")
+        (#eq? @tp \"(int a, int b, int c)\")                  
+        )
+       (((constructor_declaration 
+                name: (_) @z
+                parameters : (formal_parameters)@tp))
+        (#eq? @z \"foobar\")
+        (#eq? @tp \"(int a, int b, int c)\")
+        )
+      ]
+    )@qdn"
   ));
 
   let scope_query_class =
@@ -117,40 +150,6 @@ fn test_get_scope_query_positive() {
 #[test]
 #[should_panic]
 fn test_get_scope_query_negative() {
-  let scope_generator_method = ScopeGenerator::new(
-    "Method",
-    vec![ScopeQueryGenerator::new(
-      "((method_declaration 
-          name : (_) @n
-                parameters : (formal_parameters
-                    (formal_parameter type:(_) @t0)
-                        (formal_parameter type:(_) @t1)
-                        (formal_parameter type:(_) @t2))) @xd2)",
-      "(((method_declaration 
-                        name : (_) @z
-                              parameters : (formal_parameters
-                                  (formal_parameter type:(_) @r0)
-                                      (formal_parameter type:(_) @r1)
-                                      (formal_parameter type:(_) @r2))) @qd)
-                  (#eq? @z \"@n\")
-                  (#eq? @r0 \"@t0\")
-                  (#eq? @r1 \"@t1\")
-                  (#eq? @r2 \"@t2\")
-                  )",
-    )],
-  );
-
-  let scope_generator_class = ScopeGenerator::new(
-    "Class",
-    vec![ScopeQueryGenerator::new(
-      "(class_declaration name:(_) @n) @c",
-      "(
-          ((class_declaration name:(_) @z) @qc)
-          (#eq? @z \"@n\")
-          )",
-    )],
-  );
-
   let source_code = "class Test {
       pub void foobar(int a, int b, int c, int d){
         boolean isFlagTreated = true;
@@ -160,9 +159,7 @@ fn test_get_scope_query_negative() {
         }
       }
     }";
-
-  let mut rule_store =
-    RuleStore::dummy_with_scope(vec![scope_generator_method, scope_generator_class]);
+  let mut rule_store = _get_rule_store();
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
@@ -173,5 +170,5 @@ fn test_get_scope_query_negative() {
     rule_store.piranha_args(),
   );
 
-  let _ = ScopeGenerator::get_scope_query(source_code_unit, "Method", 133, 134, &mut rule_store);
+  let _ = ScopeGenerator::get_scope_query(source_code_unit, "Method", 9, 10, &mut rule_store);
 }

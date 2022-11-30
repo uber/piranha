@@ -81,7 +81,7 @@ fn test_get_edit_positive_recursive() {
           }
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
 
   let mut parser = get_parser(String::from("java"));
 
@@ -93,10 +93,10 @@ fn test_get_edit_positive_recursive() {
     rule_store.piranha_args(),
   );
   let node = source_code_unit.root_node();
-  let matches = rule.get_matches(&source_code_unit, &mut rule_store, node, true);
+  let matches = source_code_unit.get_matches(rule.clone(), &mut rule_store, node, true);
   assert!(!matches.is_empty());
 
-  let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(rule.clone(), &mut rule_store, node, true);
   assert!(edit.is_some());
 }
 
@@ -129,7 +129,7 @@ fn test_get_edit_negative_recursive() {
           }
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
@@ -140,9 +140,9 @@ fn test_get_edit_negative_recursive() {
     rule_store.piranha_args(),
   );
   let node = source_code_unit.root_node();
-  let matches = rule.get_matches(&source_code_unit, &mut rule_store, node, true);
+  let matches = source_code_unit.get_matches(rule.clone(), &mut rule_store, node, true);
   assert!(matches.is_empty());
-  let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(rule.clone(), &mut rule_store, node, true);
   assert!(edit.is_none());
 }
 
@@ -168,7 +168,7 @@ fn test_get_edit_for_context_positive() {
           boolean f = something && true;
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
 
   let mut parser = get_parser(String::from("java"));
 
@@ -179,13 +179,8 @@ fn test_get_edit_for_context_positive() {
     PathBuf::new().as_path(),
     rule_store.piranha_args(),
   );
-  let edit = Rule::get_edit_for_context(
-    &source_code_unit,
-    41_usize,
-    44_usize,
-    &mut rule_store,
-    &vec![rule],
-  );
+  let edit =
+    source_code_unit.get_edit_for_context(41_usize, 44_usize, &mut rule_store, &vec![rule]);
   // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
   assert!(edit.is_some());
 }
@@ -213,7 +208,7 @@ fn test_get_edit_for_context_negative() {
           boolean x = something && true;
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
 
   let mut parser = get_parser(String::from("java"));
 
@@ -224,13 +219,8 @@ fn test_get_edit_for_context_negative() {
     PathBuf::new().as_path(),
     rule_store.piranha_args(),
   );
-  let edit = Rule::get_edit_for_context(
-    &source_code_unit,
-    29_usize,
-    33_usize,
-    &mut rule_store,
-    &vec![rule],
-  );
+  let edit =
+    source_code_unit.get_edit_for_context(29_usize, 33_usize, &mut rule_store, &vec![rule]);
   // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
   assert!(edit.is_none());
 }

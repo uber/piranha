@@ -14,19 +14,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
-use log::{debug, trace};
 use serde_derive::Deserialize;
-use tree_sitter::Node;
 
-use crate::utilities::{
-  tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags, PiranhaHelpers},
-  MapOfVec,
-};
+use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
 
-use super::{
-  constraint::Constraint, edit::Edit, matches::Match, rule_store::RuleStore,
-  source_code_unit::SourceCodeUnit,
-};
+use super::{constraint::Constraint};
 
 static SEED: &str = "Seed Rule";
 static CLEAN_UP: &str = "Cleanup Rule";
@@ -214,102 +206,6 @@ impl Rule {
 
   pub(crate) fn name(&self) -> String {
     String::from(&self.name)
-  }
-
-  // Apply all the `rules` to the node, parent, grand parent and great grand parent.
-  // Short-circuit on the first match.
-  pub(crate) fn get_edit_for_context(
-    source_code_unit: &SourceCodeUnit, previous_edit_start: usize, previous_edit_end: usize,
-    rules_store: &mut RuleStore, rules: &Vec<Rule>,
-  ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope =
-      *rules_store.get_number_of_ancestors_in_parent_scope();
-    let changed_node = get_node_for_range(
-      source_code_unit.root_node(),
-      previous_edit_start,
-      previous_edit_end,
-    );
-    debug!(
-      "\n{}",
-      format!("Changed node kind {}", changed_node.kind()).blue()
-    );
-    // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
-    let context = || {
-      get_context(
-        source_code_unit.root_node(),
-        changed_node,
-        source_code_unit.code(),
-        number_of_ancestors_in_parent_scope,
-      )
-    };
-    for rule in rules {
-      for ancestor in &context() {
-        if let Some(edit) = rule.get_edit(&source_code_unit.clone(), rules_store, *ancestor, false)
-        {
-          return Some(edit);
-        }
-      }
-    }
-    None
-  }
-
-  /// Gets the first match for the rule in `self`
-  pub(crate) fn get_matches(
-    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
-    recursive: bool,
-  ) -> Vec<Match> {
-    let mut output: Vec<Match> = vec![];
-    // Get all matches for the query in the given scope `node`.
-    let replace_node_tag = if self.is_match_only_rule() || self.is_dummy_rule() {
-      None
-    } else {
-      Some(self.replace_node())
-    };
-    let all_query_matches = node.get_all_matches_for_query(
-      source_code_unit.code(),
-      rule_store.query(&self.query()),
-      recursive,
-      replace_node_tag,
-    );
-
-    // Return the first match that satisfies constraint of the rule
-    for p_match in all_query_matches {
-      let matched_node = get_node_for_range(
-        source_code_unit.root_node(),
-        p_match.range().start_byte,
-        p_match.range().end_byte,
-      );
-
-      if matched_node.satisfies_constraint(
-        source_code_unit.clone(),
-        self,
-        p_match.matches(),
-        rule_store,
-      ) {
-        trace!("Found match {:#?}", p_match);
-        output.push(p_match);
-      }
-    }
-    debug!("Matches found {}", output.len());
-    output
-  }
-
-  /// Gets the first match for the rule in `self`
-  pub(crate) fn get_edit(
-    &self, source_code_unit: &SourceCodeUnit, rule_store: &mut RuleStore, node: Node,
-    recursive: bool,
-  ) -> Option<Edit> {
-    // Get all matches for the query in the given scope `node`.
-
-    return self
-      .get_matches(source_code_unit, rule_store, node, recursive)
-      .first()
-      .map(|p_match| {
-        let replacement = substitute_tags(self.replace(), p_match.matches(), false);
-        let edit = Edit::new(p_match.clone(), replacement, self.name());
-        trace!("Rewrite found : {:#?}", edit);
-        edit
-      });
   }
 
   pub(crate) fn set_replace(&mut self, replace: String) {

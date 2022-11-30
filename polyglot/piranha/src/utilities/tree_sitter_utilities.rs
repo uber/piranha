@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
 use crate::{
-  models::{matches::Match, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
+  models::{matches::Match},
   utilities::MapOfVec,
 };
 use colored::Colorize;
@@ -81,8 +81,6 @@ pub(crate) trait PiranhaHelpers {
     /// List of matches (list of captures), grouped by the outermost tag of the query
     fn get_query_capture_groups(&self, source_code: &str, query: &Query) -> HashMap<Range, Vec<Vec<QueryCapture>>> ;
 
-    /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-    fn satisfies_constraint(&self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,rule_store: &mut RuleStore,) -> bool ;
     /// Applies the query upon `self`, and gets the first match
     /// # Arguments
     /// * `source_code` - the corresponding source code string for the node.
@@ -107,25 +105,6 @@ pub(crate) trait PiranhaHelpers {
 }
 
 impl PiranhaHelpers for Node<'_> {
-  /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-  fn satisfies_constraint(
-    &self, source_code_unit: SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-    rule_store: &mut RuleStore,
-  ) -> bool {
-    let updated_substitutions = &substitutions
-      .clone()
-      .into_iter()
-      .chain(rule_store.default_substitutions())
-      .collect();
-    rule.constraints().iter().all(|constraint| {
-      constraint.is_satisfied(
-        *self,
-        source_code_unit.clone(),
-        rule_store,
-        updated_substitutions,
-      )
-    })
-  }
 
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,

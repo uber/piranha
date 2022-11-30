@@ -72,9 +72,8 @@ impl RuleGraph {
   }
 }
 
-#[cfg(test)]
-impl RuleGraph {
-  pub(crate) fn dummy() -> Self {
+impl Default for RuleGraph {
+  fn default() -> Self {
     RuleGraph(HashMap::new())
   }
 }

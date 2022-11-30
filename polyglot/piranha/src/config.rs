@@ -66,13 +66,15 @@ fn read_language_specific_edges(language_name: &str) -> Edges {
 
 fn read_scope_config(language_name: &str) -> Vec<ScopeGenerator> {
   match language_name {
-    "java" => {
-      parse_toml::<ScopeConfig>(include_str!("cleanup_rules/java/scope_config.toml")).scopes()
-    }
-    "kt" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/kt/scope_config.toml")).scopes(),
-    "swift" => {
-      parse_toml::<ScopeConfig>(include_str!("cleanup_rules/swift/scope_config.toml")).scopes()
-    }
+    "java" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/java/scope_config.toml"))
+      .scopes()
+      .to_vec(),
+    "kt" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/kt/scope_config.toml"))
+      .scopes()
+      .to_vec(),
+    "swift" => parse_toml::<ScopeConfig>(include_str!("cleanup_rules/swift/scope_config.toml"))
+      .scopes()
+      .to_vec(),
     _ => Vec::new(),
   }
 }
