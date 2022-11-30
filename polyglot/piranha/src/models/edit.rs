@@ -43,7 +43,7 @@ impl Edit {
   }
 
   #[cfg(test)]
-  pub(crate) fn dummy_edit(replacement_range: Range, replacement_string: String) -> Self {
+  pub(crate) fn from(replacement_range: Range, replacement_string: String) -> Self {
     Self::new(
       Match::new(replacement_range, HashMap::new()),
       replacement_string,

@@ -81,7 +81,7 @@ fn test_get_edit_positive_recursive() {
           }
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
 
   let mut parser = get_parser(String::from("java"));
 
@@ -129,7 +129,7 @@ fn test_get_edit_negative_recursive() {
           }
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
@@ -168,7 +168,7 @@ fn test_get_edit_for_context_positive() {
           boolean f = something && true;
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
 
   let mut parser = get_parser(String::from("java"));
 
@@ -208,7 +208,7 @@ fn test_get_edit_for_context_negative() {
           boolean x = something && true;
         }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
 
   let mut parser = get_parser(String::from("java"));
 

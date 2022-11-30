@@ -76,6 +76,15 @@ impl RuleStore {
     rule_store
   }
 
+  #[cfg(test)]
+  pub(crate) fn default_with_scopes(scopes: Vec<ScopeGenerator>) -> RuleStore {
+    RuleStore{
+      scopes,
+      ..Default::default()
+    }
+  }
+
+
   pub(crate) fn global_rules(&self) -> Vec<Rule> {
     self.global_rules.clone()
   }
@@ -187,28 +196,16 @@ impl RuleStore {
   }
 }
 
-#[cfg(test)]
-impl RuleStore {
-  pub(crate) fn dummy() -> RuleStore {
+
+impl Default for RuleStore{
+  fn default() -> Self {
     RuleStore {
-      rule_graph: RuleGraph::dummy(),
+      rule_graph: RuleGraph::default(),
       rule_query_cache: HashMap::new(),
       rules_by_name: HashMap::new(),
       global_rules: vec![],
       piranha_args: PiranhaArguments::default(),
       scopes: vec![],
-      global_tags: HashMap::new(),
-    }
-  }
-
-  pub(crate) fn dummy_with_scope(scopes: Vec<ScopeGenerator>) -> RuleStore {
-    RuleStore {
-      rule_graph: RuleGraph::dummy(),
-      rule_query_cache: HashMap::new(),
-      rules_by_name: HashMap::new(),
-      global_rules: vec![],
-      piranha_args: PiranhaArguments::default(),
-      scopes,
       global_tags: HashMap::new(),
     }
   }

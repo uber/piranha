@@ -78,6 +78,11 @@ fn _get_method_scope() -> ScopeGenerator {
     .unwrap();
 }
 
+
+fn _get_rule_store() -> RuleStore {
+  return RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()])
+}
+
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.
 #[test]
 fn test_get_scope_query_positive() {
@@ -90,8 +95,8 @@ fn test_get_scope_query_positive() {
         }
       }
     }";
-
-  let mut rule_store = RuleStore::dummy_with_scope(vec![_get_method_scope(), _get_class_scope()]);
+  
+  let mut rule_store =  _get_rule_store();
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(
@@ -123,8 +128,8 @@ fn test_get_scope_query_positive() {
        (((constructor_declaration 
                 name: (_) @z
                 parameters : (formal_parameters)@tp))
-        (#eq? @tp \"(int a, int b, int c)\")
         (#eq? @z \"foobar\")
+        (#eq? @tp \"(int a, int b, int c)\")
         )
       ]
     )@qdn"
@@ -154,7 +159,7 @@ fn test_get_scope_query_negative() {
         }
       }
     }";
-  let mut rule_store = RuleStore::dummy_with_scope(vec![_get_method_scope(), _get_class_scope()]);
+  let mut rule_store = _get_rule_store();
   let mut parser = get_parser(String::from("java"));
 
   let source_code_unit = SourceCodeUnit::new(

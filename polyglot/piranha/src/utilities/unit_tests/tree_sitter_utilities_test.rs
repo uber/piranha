@@ -164,7 +164,7 @@ fn test_satisfies_constraints_positive() {
        }
       }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
   let language_name = String::from("java");
   let mut parser = get_parser(language_name.to_string());
   let piranha_args = PiranhaArgumentsBuilder::default()
@@ -231,7 +231,7 @@ fn test_satisfies_constraints_negative() {
        }
       }";
 
-  let mut rule_store = RuleStore::dummy();
+  let mut rule_store = RuleStore::default();
   let language_name = String::from("java");
   let mut parser = get_parser(language_name.to_string());
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
