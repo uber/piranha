@@ -17,7 +17,7 @@ use std::{
 
 use tree_sitter::Query;
 
-use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, rule::SatisfiesConstraint};
+use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, source_code_unit::SatisfiesConstraint};
 
 use {
   super::{get_parser, substitute_tags, PiranhaHelpers, TreeSitterHelpers},

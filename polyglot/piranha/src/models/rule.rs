@@ -15,11 +15,10 @@ use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
 use serde_derive::Deserialize;
-use tree_sitter::Node;
 
 use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
 
-use super::{constraint::Constraint, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
+use super::{constraint::Constraint};
 
 static SEED: &str = "Seed Rule";
 static CLEAN_UP: &str = "Cleanup Rule";
@@ -215,34 +214,6 @@ impl Rule {
 
   pub(crate) fn set_query(&mut self, query: String) {
     self.query = Some(query);
-  }
-}
-
-#[rustfmt::skip]
-pub(crate) trait SatisfiesConstraint {
-    // / Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-    fn is_satisfied(&self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,rule_store: &mut RuleStore,) -> bool ;
-}
-
-/// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-impl SatisfiesConstraint for Node<'_> {
-  fn is_satisfied(
-    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-    rule_store: &mut RuleStore,
-  ) -> bool {
-    let updated_substitutions = &substitutions
-      .clone()
-      .into_iter()
-      .chain(rule_store.default_substitutions())
-      .collect();
-    rule.constraints().iter().all(|constraint| {
-      constraint.is_satisfied(
-        *self,
-        source_code_unit.clone(),
-        rule_store,
-        updated_substitutions,
-      )
-    })
   }
 }
 
