@@ -24,7 +24,7 @@ use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
-  models::{rule_store::{GLOBAL, PARENT}},
+  models::rule_store::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
     get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
     PiranhaHelpers, TreeSitterHelpers,
@@ -594,34 +594,35 @@ impl SourceCodeUnit {
   }
 }
 
-
 pub(crate) trait SatisfiesConstraint {
   // / Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-  fn is_satisfied(&self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,rule_store: &mut RuleStore,) -> bool ;
+  fn is_satisfied(
+    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+    rule_store: &mut RuleStore,
+  ) -> bool;
 }
 
 /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
 impl SatisfiesConstraint for Node<'_> {
-fn is_satisfied(
-  &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-  rule_store: &mut RuleStore,
-) -> bool {
-  let updated_substitutions = &substitutions
-    .clone()
-    .into_iter()
-    .chain(rule_store.default_substitutions())
-    .collect();
-  rule.constraints().iter().all(|constraint| {
-    constraint.is_satisfied(
-      *self,
-      source_code_unit.clone(),
-      rule_store,
-      updated_substitutions,
-    )
-  })
+  fn is_satisfied(
+    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+    rule_store: &mut RuleStore,
+  ) -> bool {
+    let updated_substitutions = &substitutions
+      .clone()
+      .into_iter()
+      .chain(rule_store.default_substitutions())
+      .collect();
+    rule.constraints().iter().all(|constraint| {
+      constraint.is_satisfied(
+        *self,
+        source_code_unit.clone(),
+        rule_store,
+        updated_substitutions,
+      )
+    })
+  }
 }
-}
-
 
 #[cfg(test)]
 #[path = "unit_tests/source_code_unit_test.rs"]

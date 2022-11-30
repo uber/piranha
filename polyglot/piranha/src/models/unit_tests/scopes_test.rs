@@ -23,10 +23,9 @@ use {
 fn _get_class_scope() -> ScopeGenerator {
   let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
     .matcher("(class_declaration name:(_) @n) @c".to_string())
-    .generator(
-      "(
-    ((class_declaration name:(_) @z) @qc)
-    (#eq? @z \"@n\")
+    .generator("(
+      ((class_declaration name:(_) @z) @qc)
+      (#eq? @z \"@n\")
     )"
       .to_string(),
     )
@@ -63,8 +62,8 @@ fn _get_method_scope() -> ScopeGenerator {
        (((constructor_declaration 
                 name: (_) @z
                 parameters : (formal_parameters)@tp))
-        (#eq? @tp \"@fp\")
         (#eq? @z \"@n\")
+        (#eq? @tp \"@fp\")
         )
       ])@qdn"
         .to_string(),
