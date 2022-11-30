@@ -165,7 +165,7 @@ impl RuleStore {
       .scopes
       .iter()
       .find(|level| level.name().eq(scope_level))
-      .map(|scope| scope.rules())
+      .map(|scope| scope.rules().to_vec())
       .unwrap_or_else(Vec::new)
   }
 

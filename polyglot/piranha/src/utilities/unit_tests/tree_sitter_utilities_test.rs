@@ -17,7 +17,7 @@ use std::{
 
 use tree_sitter::Query;
 
-use crate::models::piranha_arguments::PiranhaArgumentsBuilder;
+use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, rule::SatisfiesConstraint};
 
 use {
   super::{get_parser, substitute_tags, PiranhaHelpers, TreeSitterHelpers},
@@ -184,8 +184,8 @@ fn test_satisfies_constraints_positive() {
     .descendant_for_byte_range(50, 72)
     .unwrap();
 
-  assert!(node.satisfies_constraint(
-    source_code_unit.clone(),
+  assert!(node.is_satisfied(
+    &source_code_unit,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),
@@ -251,8 +251,8 @@ fn test_satisfies_constraints_negative() {
     .descendant_for_byte_range(50, 72)
     .unwrap();
 
-  assert!(!node.satisfies_constraint(
-    source_code_unit.clone(),
+  assert!(!node.is_satisfied(
+    &source_code_unit,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),

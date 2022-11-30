@@ -11,7 +11,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use itertools::Itertools;
+use derive_builder::Builder;
+use getset::Getters;
 use log::trace;
 use serde_derive::Deserialize;
 
@@ -22,35 +23,22 @@ use crate::utilities::tree_sitter_utilities::{
 use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
 // Represents the content in the `scope_config.toml` file
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct ScopeConfig {
+  #[get = "pub"]
   scopes: Vec<ScopeGenerator>,
 }
 
-impl ScopeConfig {
-  /// Get a reference to the scope `config's` scopes.
-  #[must_use]
-  pub(crate) fn scopes(&self) -> Vec<ScopeGenerator> {
-    self.scopes.iter().cloned().collect_vec()
-  }
-}
-
 // Represents an entry in the `scope_config.toml` file
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Builder, Getters)]
 pub(crate) struct ScopeGenerator {
+  #[get = "pub"]
   name: String,
+  #[get = "pub"]
   rules: Vec<ScopeQueryGenerator>,
 }
 
 impl ScopeGenerator {
-  pub(crate) fn name(&self) -> &str {
-    self.name.as_ref()
-  }
-
-  pub(crate) fn rules(&self) -> Vec<ScopeQueryGenerator> {
-    self.rules.iter().cloned().collect_vec()
-  }
-
   /// Generate a tree-sitter based query representing the scope of the previous edit.
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
   pub(crate) fn get_scope_query(
@@ -77,7 +65,7 @@ impl ScopeGenerator {
         ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return substitute_tags(m.generator(), p_match.matches(), true);
+          return substitute_tags(m.generator().to_string(), p_match.matches(), true);
         }
       }
       if let Some(parent) = changed_node.parent() {
@@ -90,39 +78,12 @@ impl ScopeGenerator {
   }
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
 pub(crate) struct ScopeQueryGenerator {
+  #[get = "pub"]
   matcher: String, // a tree-sitter query matching some enclosing AST pattern (like method or class)
+  #[get = "pub"]
   generator: String, // a tree-sitter query matching the exact AST node
-}
-
-impl ScopeQueryGenerator {
-  pub(crate) fn matcher(&self) -> String {
-    String::from(&self.matcher)
-  }
-
-  pub(crate) fn generator(&self) -> String {
-    String::from(&self.generator)
-  }
-}
-
-#[cfg(test)]
-impl ScopeQueryGenerator {
-  fn new(matcher: &str, generator: &str) -> ScopeQueryGenerator {
-    ScopeQueryGenerator {
-      matcher: matcher.to_string(),
-      generator: generator.to_string(),
-    }
-  }
-}
-#[cfg(test)]
-impl ScopeGenerator {
-  fn new(name: &str, rules: Vec<ScopeQueryGenerator>) -> ScopeGenerator {
-    ScopeGenerator {
-      name: name.to_string(),
-      rules,
-    }
-  }
 }
 
 #[cfg(test)]
