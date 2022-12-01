@@ -39,7 +39,7 @@ func (c *Client) c(enabled2 bool, enabled3 bool) {
 }
 
 // should not replace the function name
-func (c *Client) isEnabled() {
+func (c *Client) isEnabled() bool {
 	isEnabled := exp.BoolValue(staleFlagConst)
 	return isEnabled
 }

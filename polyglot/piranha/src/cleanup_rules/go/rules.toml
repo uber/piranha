@@ -395,9 +395,7 @@ query = """
     [
         (short_var_declaration
             left: (expression_list
-                .
                 (identifier) @identifier
-                .
             )
         ) @assignment
         (var_declaration
