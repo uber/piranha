@@ -46,19 +46,17 @@ use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, P
 /// * path_to_codebase: Path to the root of the code base that Piranha will update
 /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
 /// * dry_run: determines if Piranha should actually update the code.
-/// * ignore_parse_error: Piranha won't panic if a rewrite raises a parse error from tree-sitter.
 ///
 /// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
 /// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
 pub fn run_piranha_cli(
-  path_to_codebase: String, path_to_configurations: String, dry_run: bool, ignore_parse_error: bool,
+  path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
   let args = PiranhaArguments::from(PiranhaInput::API {
     path_to_codebase,
     path_to_configurations,
     dry_run,
-    ignore_parse_error,
   });
   debug!("{:?}", args);
   execute_piranha(&args)

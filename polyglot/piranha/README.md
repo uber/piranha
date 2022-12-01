@@ -133,7 +133,6 @@ piranha_summary = run_piranha_cli(path_to_codebase,
   * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place). These rules can also specify the pre-built language specific cleanups to trigger.
   * `edges.toml` (_optional_): expresses the flow between the rules 
 - `dry_run` : Disables in-place rewriting of code 
-- `ignore_parse_error` : Does not throw an error on syntactically incorrect source code produced by a rewrite.
 
 <h5> Returns </h5>
 
