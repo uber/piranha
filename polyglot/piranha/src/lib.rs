@@ -49,12 +49,16 @@ pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
 
-  let configuration = PiranhaArgumentsBuilder::default()
+  let path_to_piranha_argument_file =
+      PathBuf::from(path_to_configurations.to_string()).join("piranha_arguments.toml");
+
+  let configuration = PiranhaArgumentsBuilder::from(path_to_piranha_argument_file)
           .path_to_code_base(path_to_codebase)
           .path_to_configurations(path_to_configurations)
           .path_to_output_summaries(None)
           .dry_run(dry_run)
           .build().unwrap();
+  
 
   execute_piranha(&configuration)
 }
