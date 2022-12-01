@@ -90,6 +90,11 @@ func simplify_if_statement_true() {
 	fmt.Println("true 3")
 }
 
+func simplify_if_statement_false() {
+	fmt.Println("remain")
+	// no alternative, should remove the whole `if_statement`
+}
+
 func simplify_identity_eq() {
 	fmt.Println("keep 1")
 	fmt.Println("keep 2")

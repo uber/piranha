@@ -145,6 +145,18 @@ func simplify_if_statement_true() {
 	}
 }
 
+func simplify_if_statement_false() {
+	if exp.BoolValue("false") {
+		fmt.Println("to be removed")
+	} else {
+		fmt.Println("remain")
+	}
+	// no alternative, should remove the whole `if_statement`
+	if exp.BoolValue("false") {
+		fmt.Println("to be removed 2")
+	}
+}
+
 func simplify_identity_eq() {
 	if exp.BoolValue("true") == exp.BoolValue("true") {
 		fmt.Println("keep 1")
@@ -173,7 +185,7 @@ func simplify_identity_neq() {
 
 // `nil == nil` not compilable in go
 func simplify_identity_eq_nil() {
-	if exp.Value("nil")  == nil {
+	if exp.Value("nil") == nil {
 		fmt.Println("keep")
 	} else {
 		fmt.Println("remove")
