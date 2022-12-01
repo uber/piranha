@@ -14,9 +14,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::path::{Path, PathBuf};
 use log::error;
 use crate::execute_piranha;
-use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
+use crate::models::piranha_arguments::PiranhaArgumentsBuilder;
 use crate::models::piranha_output::PiranhaOutputSummary;
-use crate::utilities::{eq_without_whitespace, find_file, read_file, read_toml};
+use crate::utilities::{eq_without_whitespace, find_file, read_file};
 
 mod test_piranha_java;
 mod test_piranha_kt;

@@ -136,7 +136,6 @@ impl RuleStore {
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
   pub(crate) fn query(&mut self, query_str: &String) -> &Query {
-    let language = self.language();
     self
       .rule_query_cache
       .entry(query_str.to_string())

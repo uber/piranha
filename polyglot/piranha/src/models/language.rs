@@ -1,6 +1,6 @@
 use getset::Getters;
 use serde_derive::Deserialize;
-use tree_sitter::{Parser, Query};
+use tree_sitter::{Query};
 
 use crate::utilities::parse_toml;
 
@@ -29,7 +29,15 @@ pub struct PiranhaLanguage {
 }
 impl Default for PiranhaLanguage {
   fn default() -> Self {
-    get_language("java".to_string())
+    Self {
+      name: "java".to_string(),
+      supported_language: SupportedLanguage::Java,
+      language: tree_sitter_java::language(),
+      rules: None,
+      edges: None,
+      scopes: vec![],
+      comment_nodes: vec![],
+    }
   }
 }
 
@@ -55,7 +63,11 @@ impl PiranhaLanguage {
     if let Ok(q) = query {
       return q;
     }
-    panic!("Could not parse the query : {:?} {:?}", query_str, query.err());
+    panic!(
+      "Could not parse the query : {:?} {:?}",
+      query_str,
+      query.err()
+    );
   }
 }
 
@@ -80,10 +92,7 @@ pub fn get_language(language: String) -> PiranhaLanguage {
       name: language.to_string(),
       supported_language: SupportedLanguage::Go,
       language: tree_sitter_go::language(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
+      ..Default::default()
     },
     "kt" => {
       let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
@@ -104,48 +113,35 @@ pub fn get_language(language: String) -> PiranhaLanguage {
       name: language.to_string(),
       supported_language: SupportedLanguage::Python,
       language: tree_sitter_python::language(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
+      ..Default::default()
     },
     "swift" => PiranhaLanguage {
       name: language.to_string(),
       supported_language: SupportedLanguage::Swift,
       language: tree_sitter_swift::language(),
-      rules: None,
-      edges: None,
       scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/swift/scope_config.toml"))
         .scopes()
         .to_vec(),
       comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
+      ..Default::default()
     },
     "strings" => PiranhaLanguage {
       name: language.to_string(),
       supported_language: SupportedLanguage::Strings,
       language: tree_sitter_strings::language(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
+      ..Default::default()
     },
     "ts" => PiranhaLanguage {
       name: language.to_string(),
       supported_language: SupportedLanguage::Ts,
       language: tree_sitter_typescript::language_typescript(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
+      ..Default::default()
     },
     "tsx" => PiranhaLanguage {
       name: language.to_string(),
       supported_language: SupportedLanguage::Tsx,
       language: tree_sitter_typescript::language_tsx(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
+      ..Default::default()
     },
     _ => panic!("Language not supported"),
   }

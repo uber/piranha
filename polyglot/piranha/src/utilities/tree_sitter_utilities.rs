@@ -23,7 +23,7 @@ use log::debug;
 use std::collections::HashMap;
 #[cfg(test)]
 use tree_sitter::Parser;
-use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCursor, Range};
+use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 use super::eq_without_whitespace;
 
