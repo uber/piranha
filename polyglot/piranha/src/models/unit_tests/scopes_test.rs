@@ -1,3 +1,5 @@
+use crate::models::language::get_language;
+
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -97,7 +99,7 @@ fn test_get_scope_query_positive() {
     }";
   
   let mut rule_store =  _get_rule_store();
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -159,7 +161,7 @@ fn test_get_scope_query_negative() {
       }
     }";
   let mut rule_store = _get_rule_store();
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,

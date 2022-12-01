@@ -16,9 +16,12 @@ use std::{
 
 use tree_sitter::Query;
 
+use crate::models::language::get_language;
+
 use {
-  super::{get_parser, substitute_tags, PiranhaHelpers, TreeSitterHelpers},
+  super::{get_parser, substitute_tags, PiranhaHelpers},
 };
+
 
 #[test]
 fn test_get_all_matches_for_query_positive() {
@@ -36,9 +39,9 @@ fn test_get_all_matches_for_query_positive() {
         }
       }
     "#;
-  let language_name = String::from("java");
+  let language = get_language("java".to_string());
   let query = Query::new(
-    language_name.get_language(),
+    *language.language(),
     r#"((
         (method_invocation 
           name : (_) @name
@@ -56,7 +59,7 @@ fn test_get_all_matches_for_query_positive() {
   )
   .unwrap();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
   let ast = parser
     .parse(&source_code, None)
     .expect("Could not parse code");
@@ -87,9 +90,9 @@ fn test_get_all_matches_for_query_negative() {
         }
       }
     "#;
-  let language_name = String::from("java");
+  let language = get_language("java".to_string());
   let query = Query::new(
-    language_name.get_language(),
+    *language.language(),
     r#"((
         (method_invocation 
           name : (_) @name
@@ -107,7 +110,7 @@ fn test_get_all_matches_for_query_negative() {
   )
   .unwrap();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
   let ast = parser
     .parse(&source_code, None)
     .expect("Could not parse code");

@@ -378,8 +378,8 @@ impl SourceCodeUnit {
         relevant_nodes_found = true;
         let is_comment: bool = self
           .piranha_arguments
-          .language_name()
-          .is_comment(node.kind());
+          .piranha_language()
+          .is_comment(node.kind().to_string());
         relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
         if is_comment {
           comment_range = Some(node.range());

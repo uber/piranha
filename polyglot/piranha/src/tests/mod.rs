@@ -12,14 +12,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use std::path::{Path, PathBuf};
-
 use log::error;
-
-use crate::config::CommandLineArguments;
 use crate::execute_piranha;
-use crate::models::piranha_arguments::PiranhaArguments;
+use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
 use crate::models::piranha_output::PiranhaOutputSummary;
-use crate::utilities::{eq_without_whitespace, find_file, read_file};
+use crate::utilities::{eq_without_whitespace, find_file, read_file, read_toml};
 
 mod test_piranha_java;
 mod test_piranha_kt;
@@ -47,14 +44,22 @@ fn initialize() {
 // Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
 // and checks if the number of matches == `number_of_matches`.
 fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
-  let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
 
-  let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
-    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-    path_to_output_summary: None,
-    dry_run: true,
-  });
+  let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
+  let path_to_configurations = format!("{path_to_test_ff}/configurations/");
+  let path_to_piranha_argument_file =
+      PathBuf::from(&path_to_configurations).join("piranha_arguments.toml");
+  
+  // let config: PiranhaArguments = read_toml(&path_to_piranha_argument_file, false);
+ 
+  let args = PiranhaArgumentsBuilder::from(path_to_piranha_argument_file)
+            .path_to_code_base(format!("{path_to_test_ff}/input/"))
+            .path_to_configurations(path_to_configurations)
+            .path_to_output_summaries(None)
+            .dry_run(true)
+            .build()
+            .unwrap();
+  
   let output_summaries = execute_piranha(&args);
 
   assert_eq!(
@@ -71,13 +76,22 @@ fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
 // It also asserts the number of changed files in the expected output.
 fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   let path_to_test_ff = format!("test-resources/{relative_path_to_tests}");
+  let path_to_configurations = format!("{path_to_test_ff}/configurations/");
+  let path_to_piranha_argument_file =
+      PathBuf::from(&path_to_configurations).join("piranha_arguments.toml");
+  
+  // let config: PiranhaArguments = read_toml(&path_to_piranha_argument_file, false);
 
-  let args = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase: format!("{path_to_test_ff}/input/"),
-    path_to_configurations: format!("{path_to_test_ff}/configurations/"),
-    path_to_output_summary: None,
-    dry_run: true,
-  });
+  let args = PiranhaArgumentsBuilder::from(path_to_piranha_argument_file)
+    .path_to_code_base(format!("{path_to_test_ff}/input/"))
+    .path_to_configurations(path_to_configurations)
+    .path_to_output_summaries(None)
+    .dry_run(true)
+    .build()
+    .unwrap();
+
+  print!("{:?}", args);
+  
   let output_summaries = execute_piranha(&args);
   // Checks if there are any rewrites performed for the file
   assert!(

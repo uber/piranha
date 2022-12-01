@@ -12,6 +12,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use std::collections::HashSet;
 
+use crate::models::language::get_language;
+
 use {
   super::Rule,
   crate::{
@@ -83,7 +85,7 @@ fn test_get_edit_positive_recursive() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -130,7 +132,7 @@ fn test_get_edit_negative_recursive() {
         }";
 
   let mut rule_store = RuleStore::default();
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -170,7 +172,7 @@ fn test_get_edit_for_context_positive() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -210,7 +212,7 @@ fn test_get_edit_for_context_negative() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = get_parser(get_language(String::from("java")));
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,

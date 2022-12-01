@@ -27,48 +27,6 @@ use tree_sitter::{InputEdit, Language, Node, Point, Query, QueryCapture, QueryCu
 
 use super::eq_without_whitespace;
 
-pub(crate) trait TreeSitterHelpers {
-  /// Gets the tree-sitter language model.
-  fn get_language(&self) -> Language;
-  /// Compiles query string to `tree_sitter::Query`
-  fn create_query(&self, language: Language) -> Query;
-  /// Determines if the given node kind is a comment for the respective language (`self`)
-  fn is_comment(&self, kind: &str) -> bool;
-}
-
-impl TreeSitterHelpers for String {
-  fn create_query(&self, language: Language) -> Query {
-    let query = Query::new(language, self.as_str());
-    if let Ok(q) = query {
-      return q;
-    }
-    panic!("Could not parse the query : {} {:?}", self, query.err());
-  }
-
-  fn get_language(&self) -> Language {
-    match self.as_str() {
-      "java" => tree_sitter_java::language(),
-      "go" => tree_sitter_go::language(),
-      "kt" => tree_sitter_kotlin::language(),
-      "py" => tree_sitter_python::language(),
-      "swift" => tree_sitter_swift::language(),
-      "strings" => tree_sitter_strings::language(),
-      "ts" => tree_sitter_typescript::language_typescript(),
-      "tsx" => tree_sitter_typescript::language_tsx(),
-      _ => panic!("Language not supported"),
-    }
-  }
-
-  fn is_comment(&self, kind: &str) -> bool {
-    match self.as_str() {
-      "java" => kind.eq("line_comment") || kind.eq("block_comment"),
-      "kt" => kind.eq("comment"),
-      "swift" => kind.eq("comment") || kind.eq("multiline_comment"),
-      _ => false,
-    }
-  }
-}
-
 #[rustfmt::skip]
 pub(crate) trait PiranhaHelpers {
 
@@ -386,10 +344,16 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
 }
 
 #[cfg(test)]
-pub(crate) fn get_parser(language: String) -> Parser {
+use crate::models::language::PiranhaLanguage;
+#[cfg(test)]
+pub(crate) fn get_parser(language: PiranhaLanguage) -> Parser {
+ 
+
+  
+
   let mut parser = Parser::new();
   parser
-    .set_language(language.get_language())
+    .set_language(*language.language())
     .expect("Could not set the language for the parser.");
   parser
 }

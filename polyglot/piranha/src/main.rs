@@ -16,8 +16,9 @@ use std::{fs, time::Instant};
 
 use log::{debug, info};
 use polyglot_piranha::{
-  execute_piranha, models::piranha_arguments::PiranhaArguments,
+  execute_piranha,
   models::piranha_output::PiranhaOutputSummary,
+  models::piranha_arguments::{PiranhaArgumentsBuilder, CommandLineInput},
 };
 
 fn main() {
@@ -26,7 +27,8 @@ fn main() {
 
   info!("Executing Polyglot Piranha");
 
-  let args = PiranhaArguments::from_command_line();
+  
+  let args = PiranhaArgumentsBuilder::from(CommandLineInput{}).build().unwrap() ;
 
   debug!("Piranha Arguments are \n{:#?}", args);
   let piranha_output_summaries = execute_piranha(&args);

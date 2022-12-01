@@ -55,6 +55,7 @@ pub(crate) fn parse_toml<T>(content: &str) -> T
 where
   T: serde::de::DeserializeOwned + Default,
 {
+  println!("{}", content);
   return toml::from_str::<T>(content).unwrap();
 }
 

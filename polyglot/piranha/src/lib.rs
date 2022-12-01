@@ -11,13 +11,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use config::CommandLineArguments;
 use models::{
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
-  source_code_unit::SourceCodeUnit,
+  source_code_unit::SourceCodeUnit, piranha_arguments::PiranhaArgumentsBuilder
 };
 
-mod config;
+
 pub mod models;
 #[cfg(test)]
 mod tests;
@@ -49,12 +48,14 @@ use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, P
 pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
-  let configuration = PiranhaArguments::new(CommandLineArguments {
-    path_to_codebase,
-    path_to_configurations,
-    path_to_output_summary: None,
-    dry_run,
-  });
+
+  let configuration = PiranhaArgumentsBuilder::default()
+          .path_to_code_base(path_to_codebase)
+          .path_to_configurations(path_to_configurations)
+          .path_to_output_summaries(None)
+          .dry_run(dry_run)
+          .build().unwrap();
+
   execute_piranha(&configuration)
 }
 

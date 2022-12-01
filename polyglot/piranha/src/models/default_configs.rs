@@ -22,6 +22,10 @@ pub fn default_cleanup_comments_buffer() -> usize {
   2
 }
 
+pub fn default_cleanup_comments() -> bool {
+  false
+}
+
 pub fn default_global_tag_prefix() -> String {
   "GLOBAL_TAG.".to_string()
 }
