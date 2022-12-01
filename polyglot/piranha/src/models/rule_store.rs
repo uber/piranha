@@ -52,10 +52,6 @@ pub(crate) struct RuleStore {
   // Command line arguments passed to piranha
   global_tags: HashMap<String, String>,
   /// Tree-sitter language model
-  // #[getset(get_copy = "pub")]
-  // #[builder(default = "default_language_model()")]
-  // #[derivative(Default(value = "default_language_model()"))]
-  // // #[clap(skip)]
   language: Language,
 }
 
