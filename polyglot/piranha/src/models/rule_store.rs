@@ -24,7 +24,7 @@ use crate::{
     rule_graph::RuleGraph,
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
-  utilities::{read_toml, tree_sitter_utilities::TreeSitterHelpers, MapOfVec},
+  utilities::{read_toml,  MapOfVec},
 };
 
 use super::{
@@ -140,7 +140,7 @@ impl RuleStore {
     self
       .rule_query_cache
       .entry(query_str.to_string())
-      .or_insert_with(|| query_str.create_query(language))
+      .or_insert_with(|| self.piranha_args.piranha_language().create_query(query_str.to_string()))
   }
 
   /// Get the next rules to be applied grouped by the scope in which they should be performed.
