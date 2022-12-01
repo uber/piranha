@@ -19,7 +19,7 @@ use tree_sitter::{Language, Query};
 
 use crate::{
   config::read_config_files,
-  models::piranha_arguments::PiranhaArguments,
+  models::piranha_arguments::{PiranhaArguments,PiranhaArgumentsBuilder}, 
   models::{
     rule::Rule,
     rule_graph::RuleGraph,
@@ -204,7 +204,7 @@ impl Default for RuleStore{
       rule_query_cache: HashMap::new(),
       rules_by_name: HashMap::new(),
       global_rules: vec![],
-      piranha_args: PiranhaArguments::default(),
+      piranha_args: PiranhaArgumentsBuilder::default().build().unwrap(),
       scopes: vec![],
       global_tags: HashMap::new(),
     }

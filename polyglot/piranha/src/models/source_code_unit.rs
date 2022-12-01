@@ -33,7 +33,7 @@ use crate::{
 
 use super::{
   edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule::Rule,
-  rule_store::RuleStore, scopes::ScopeGenerator,
+  rule_store::RuleStore, constraint::Constraint,
 };
 use getset::{CopyGetters, Getters, MutGetters};
 // Maintains the updated source code content and AST of the file
@@ -267,8 +267,7 @@ impl SourceCodeUnit {
       // Scope level is not "PArent" or "Global"
       if ![PARENT, GLOBAL].contains(&scope_level.as_str()) {
         for rule in rules {
-          let scope_query = ScopeGenerator::get_scope_query(
-            self.clone(),
+          let scope_query = self.get_scope_query(
             scope_level,
             current_match_range.start_byte,
             current_match_range.end_byte,
@@ -567,7 +566,7 @@ impl SourceCodeUnit {
         p_match.range().end_byte,
       );
 
-      if matched_node.is_satisfied(&self, &rule, p_match.matches(), rule_store) {
+      if self.is_satisfied(matched_node, &rule, p_match.matches(), rule_store) {
         trace!("Found match {:#?}", p_match);
         output.push(p_match);
       }
@@ -592,20 +591,48 @@ impl SourceCodeUnit {
         edit
       });
   }
-}
+  
+  /// Generate a tree-sitter based query representing the scope of the previous edit.
+  /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
+  pub(crate) fn get_scope_query(
+    &self, scope_level: &str, start_byte: usize, end_byte: usize,
+    rules_store: &mut RuleStore,
+  ) -> String {
+    let root_node = self.root_node();
+    let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
+    // Get the scope matchers for `scope_level` from the `scope_config.toml`.
+    let scope_matchers = rules_store.get_scope_query_generators(scope_level);
 
-pub(crate) trait SatisfiesConstraint {
-  // / Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-  fn is_satisfied(
-    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-    rule_store: &mut RuleStore,
-  ) -> bool;
-}
+    // Match the `scope_matcher.matcher` to the parent
+    loop {
+      trace!(
+        "Getting scope {} for node kind {}",
+        scope_level,
+        changed_node.kind()
+      );
+      for m in &scope_matchers {
+        if let Some(p_match) = changed_node.get_match_for_query(
+          &self.code(),
+          rules_store.query(&m.matcher()),
+          false,
+        ) {
+          // Generate the scope query for the specific context by substituting the
+          // the tags with code snippets appropriately in the `generator` query.
+          return substitute_tags(m.generator().to_string(), p_match.matches(), true);
+        }
+      }
+      if let Some(parent) = changed_node.parent() {
+        changed_node = parent;
+      } else {
+        break;
+      }
+    }
+    panic!("Could not create scope query for {:?}", scope_level);
+  }
 
-/// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-impl SatisfiesConstraint for Node<'_> {
+
   fn is_satisfied(
-    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+    &self, node: Node, rule: &Rule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
     let updated_substitutions = &substitutions
@@ -614,15 +641,96 @@ impl SatisfiesConstraint for Node<'_> {
       .chain(rule_store.default_substitutions())
       .collect();
     rule.constraints().iter().all(|constraint| {
-      constraint.is_satisfied(
-        *self,
-        source_code_unit.clone(),
+    self._is_satisfied(
+        constraint.clone(),
+        node.clone(),
         rule_store,
         updated_substitutions,
       )
     })
   }
+
+  /// Checks if the node satisfies the constraints.
+  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
+  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
+  /// i.e. finds scope for constraint.
+  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
+  fn _is_satisfied(
+    &self, constraint: Constraint, node: Node, rule_store: &mut RuleStore,
+    substitutions: &HashMap<String, String>,
+  ) -> bool {
+    let mut current_node = node;
+    // This ensures that the below while loop considers the current node too when checking for constraints.
+    // It does not make sense to check for constraint if current node is a "leaf" node.
+    if node.child_count() > 0 {
+      current_node = node.child(0).unwrap();
+    }
+    // Get the scope_node of the constraint (`scope.matcher`)
+    let mut matched_matcher = false;
+    while let Some(parent) = current_node.parent() {
+      let query_str = &constraint.matcher(substitutions);
+      if let Some(p_match) =
+        parent.get_match_for_query(&self.code(), rule_store.query(query_str), false)
+      {
+        matched_matcher = true;
+        let scope_node = get_node_for_range(
+          self.root_node(),
+          p_match.range().start_byte,
+          p_match.range().end_byte,
+        );
+        for query_with_holes in constraint.queries() {
+          let query_str = substitute_tags(query_with_holes.to_string(), substitutions, true);
+          let query = &rule_store.query(&query_str);
+          // If this query matches anywhere within the scope, return false.
+          if scope_node
+            .get_match_for_query(&self.code(), query, true)
+            .is_some()
+          {
+            return false;
+          }
+        }
+        break;
+      }
+      current_node = parent;
+    }
+    matched_matcher
+  }
+
 }
+
+// pub(crate) trait SatisfiesConstraint {
+//   // / Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
+//   fn is_satisfied(
+//     &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+//     rule_store: &mut RuleStore,
+//   ) -> bool;
+// }
+// /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
+// impl SatisfiesConstraint for Node<'_> {
+//   fn is_satisfied(
+//     &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+//     rule_store: &mut RuleStore,
+//   ) -> bool {
+//     let updated_substitutions = &substitutions
+//       .clone()
+//       .into_iter()
+//       .chain(rule_store.default_substitutions())
+//       .collect();
+//     rule.constraints().iter().all(|constraint| {
+//     _is_satisfied(
+//         constraint.clone(),
+//         self.clone(),
+//         source_code_unit.clone(),
+//         rule_store,
+//         updated_substitutions,
+//       )
+//     })
+//   }
+// }
+
+
+  
+
 
 #[cfg(test)]
 #[path = "unit_tests/source_code_unit_test.rs"]

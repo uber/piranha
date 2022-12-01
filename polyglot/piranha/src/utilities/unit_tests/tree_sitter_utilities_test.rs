@@ -11,19 +11,13 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 use std::{
-  collections::{HashMap, HashSet},
-  path::PathBuf,
+  collections::{HashMap},
 };
 
 use tree_sitter::Query;
 
-use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, source_code_unit::SatisfiesConstraint};
-
 use {
   super::{get_parser, substitute_tags, PiranhaHelpers, TreeSitterHelpers},
-  crate::models::{
-    constraint::Constraint, rule::Rule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
-  },
 };
 
 #[test]
@@ -126,140 +120,6 @@ fn test_get_all_matches_for_query_negative() {
     Some("method_invocation".to_string()),
   );
   assert!(matches.is_empty());
-}
-
-#[test]
-fn test_satisfies_constraints_positive() {
-  let rule = Rule::new(
-    "test",
-    "(
-      ((local_variable_declaration
-                      declarator: (variable_declarator
-                                          name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
-      )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
-      String::from("(method_declaration) @md"),
-      vec![String::from(
-        "(
-         ((assignment_expression
-                         left: (_) @a.lhs
-                         right: (_) @a.rhs) @assignment)
-         (#eq? @a.lhs \"@variable_name\")
-         (#not-eq? @a.rhs \"@init\")
-       )",
-      )],
-    )]),
-  );
-  let source_code = "class Test {
-      pub void foobar(){
-        boolean isFlagTreated = true;
-        isFlagTreated = true;
-        if (isFlagTreated) {
-        // Do something;
-        }
-       }
-      }";
-
-  let mut rule_store = RuleStore::default();
-  let language_name = String::from("java");
-  let mut parser = get_parser(language_name.to_string());
-  let piranha_args = PiranhaArgumentsBuilder::default()
-    .language_name(language_name)
-    .build()
-    .unwrap();
-  let source_code_unit = SourceCodeUnit::new(
-    &mut parser,
-    source_code.to_string(),
-    &HashMap::new(),
-    PathBuf::new().as_path(),
-    &piranha_args,
-  );
-
-  let node = &source_code_unit
-    .root_node()
-    .descendant_for_byte_range(50, 72)
-    .unwrap();
-
-  assert!(node.is_satisfied(
-    &source_code_unit,
-    &rule,
-    &HashMap::from([
-      ("variable_name".to_string(), "isFlagTreated".to_string()),
-      ("init".to_string(), "true".to_string())
-    ]),
-    &mut rule_store,
-  ));
-}
-
-#[test]
-fn test_satisfies_constraints_negative() {
-  let rule = Rule::new(
-    "test",
-    "(
-      ((local_variable_declaration
-                      declarator: (variable_declarator
-                                          name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
-      )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
-      String::from("(method_declaration) @md"),
-      vec![String::from(
-        "(
-         ((assignment_expression
-                         left: (_) @a.lhs
-                         right: (_) @a.rhs) @assignment)
-         (#eq? @a.lhs \"@variable_name\")
-         (#not-eq? @a.rhs \"@init\")
-       )",
-      )],
-    )]),
-  );
-  let source_code = "class Test {
-      pub void foobar(){
-        boolean isFlagTreated = true;
-        isFlagTreated = false;
-        if (isFlagTreated) {
-        // Do something;
-        }
-       }
-      }";
-
-  let mut rule_store = RuleStore::default();
-  let language_name = String::from("java");
-  let mut parser = get_parser(language_name.to_string());
-  let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .language_name(language_name)
-    .build()
-    .unwrap();
-  let source_code_unit = SourceCodeUnit::new(
-    &mut parser,
-    source_code.to_string(),
-    &HashMap::new(),
-    PathBuf::new().as_path(),
-    piranha_arguments,
-  );
-
-  let node = &source_code_unit
-    .root_node()
-    .descendant_for_byte_range(50, 72)
-    .unwrap();
-
-  assert!(!node.is_satisfied(
-    &source_code_unit,
-    &rule,
-    &HashMap::from([
-      ("variable_name".to_string(), "isFlagTreated".to_string()),
-      ("init".to_string(), "true".to_string())
-    ]),
-    &mut rule_store,
-  ));
 }
 
 #[test]

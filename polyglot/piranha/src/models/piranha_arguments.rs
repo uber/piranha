@@ -25,55 +25,78 @@ use crate::{
   utilities::{read_toml, tree_sitter_utilities::TreeSitterHelpers},
 };
 
+use super::default_configs::{default_delete_file_if_empty, default_global_tag_prefix, default_number_of_ancestors_in_parent_scope, default_cleanup_comments_buffer, default_language, default_dry_run};
+
+
+
 #[derive(Clone, Builder, Getters, CopyGetters, Debug)]
-#[builder(default)]
+// #[derivative(Default)]
 /// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
 pub struct PiranhaArguments {
   /// Path to source code folder.
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "String::new()")]
   path_to_code_base: String,
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
   // These substitutions instantiate the initial set of feature flag rules.
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "HashMap::new()")]
   input_substitutions: HashMap<String, String>,
   /// Folder containing the API specific rules
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "String::new()")]
   path_to_configurations: String,
   /// File to which the output summary should be written
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default)]
   path_to_output_summaries: Option<String>,
+  // The language name is file the extension used for files in particular language.
+  #[builder(default = "default_language()")]
+  #[get = "pub"]
+  language_name: String,
   /// Tree-sitter language model
   #[getset(get_copy = "pub")]
+  #[builder(default = "default_language_model()")]
+  // #[derivative(Default(value = "default_language_model()"))]
   language: Language,
-  // The language name is file the extension used for files in particular language.
-  #[getset(get = "pub")]
-  language_name: String,
   // User option that determines whether an empty file will be deleted
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "default_delete_file_if_empty()")]
   delete_file_if_empty: bool,
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default)]
   delete_consecutive_new_lines: bool,
   // User option that determines the prefix used for tag names that should be considered
   /// global i.e. if a global tag is found when rewriting a source code unit
   /// All source code units from this point will have access to this global tag.
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "default_global_tag_prefix()")]
   global_tag_prefix: String,
   /// Add a user option to configure the number of ancestors considered when applying
   /// parent scoped rules
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "default_number_of_ancestors_in_parent_scope()")]
   number_of_ancestors_in_parent_scope: u8,
   /// The number of lines to consider for cleaning up the comments
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "default_cleanup_comments_buffer()")]
   cleanup_comments_buffer: usize,
   /// The AST Kinds for which comments should be deleted
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "false")]
   cleanup_comments: bool,
   /// Disables in-place rewriting of code
-  #[getset(get = "pub")]
+  #[get = "pub"]
+  #[builder(default = "default_dry_run()")]
   dry_run: bool,
+}
+
+
+fn default_language_model()-> tree_sitter::Language {
+  "java".to_string().get_language()
 }
 
 impl PiranhaArguments {
@@ -85,67 +108,32 @@ impl PiranhaArguments {
     let path_to_piranha_argument_file =
       PathBuf::from(args.path_to_configurations.as_str()).join("piranha_arguments.toml");
 
-    let piranha_args_from_config: PiranhaConfiguration =
+    let config: PiranhaConfiguration =
       read_toml(&path_to_piranha_argument_file, false);
 
-    let input_substitutions = piranha_args_from_config.substitutions();
+    let input_substitutions = config.substitutions();
 
     #[rustfmt::skip]
     info!("{}",  format!("Piranha arguments are :\n {:?}", input_substitutions).purple());
 
-    let mut args_builder = PiranhaArgumentsBuilder::default();
-
-    args_builder
+    PiranhaArgumentsBuilder::default()
       .path_to_code_base(args.path_to_codebase.to_string())
       .input_substitutions(input_substitutions)
       .path_to_configurations(args.path_to_configurations)
       .path_to_output_summaries(args.path_to_output_summary)
-      .language_name(piranha_args_from_config.language())
-      .language(piranha_args_from_config.language().get_language())
-      .dry_run(args.dry_run);
+      .language_name(config.language())
+      .language(config.language().get_language())
+      .delete_file_if_empty(*config.delete_file_if_empty())
+      .delete_consecutive_new_lines(*config.delete_consecutive_new_lines())
+      .global_tag_prefix(config.global_tag_prefix().to_string())
+      .cleanup_comments_buffer(*config.cleanup_comments_buffer())
+      .cleanup_comments(*config.cleanup_comments())
+      .number_of_ancestors_in_parent_scope(*config.number_of_ancestors_in_parent_scope())
+      .dry_run(args.dry_run)
+      .build()
+      .unwrap()
 
-    if let Some(v) = piranha_args_from_config.delete_file_if_empty() {
-      args_builder.delete_file_if_empty(v);
-    }
-    if let Some(v) = piranha_args_from_config.delete_consecutive_new_lines() {
-      args_builder.delete_consecutive_new_lines(v);
-    }
-    if let Some(v) = piranha_args_from_config.global_tag_prefix() {
-      args_builder.global_tag_prefix(v);
-    }
-
-    if let Some(buffer_size) = piranha_args_from_config.cleanup_comments_buffer() {
-      args_builder.cleanup_comments_buffer(buffer_size);
-    }
-
-    if let Some(ast_kinds) = piranha_args_from_config.cleanup_comments() {
-      args_builder.cleanup_comments(ast_kinds);
-    }
-
-    args_builder.build().unwrap()
+    // args_builder.build().unwrap()
   }
 }
 
-impl Default for PiranhaArguments {
-  fn default() -> Self {
-    let language_name = String::from("java");
-    PiranhaArguments {
-      path_to_code_base: String::new(),
-      input_substitutions: HashMap::new(),
-      path_to_configurations: String::new(),
-      path_to_output_summaries: None,
-      language: language_name.get_language(),
-      language_name,
-      delete_consecutive_new_lines: false,
-      delete_file_if_empty: true,
-      /// default Global prefix tag us "GLOBAL_TAG."
-      /// i.e. it expects global tag names to look like
-      /// @GLOBAL_TAG.class_name
-      global_tag_prefix: "GLOBAL_TAG.".to_string(),
-      number_of_ancestors_in_parent_scope: 4,
-      cleanup_comments_buffer: 2,
-      cleanup_comments: false,
-      dry_run: false,
-    }
-  }
-}

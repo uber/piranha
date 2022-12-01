@@ -12,49 +12,55 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use serde_derive::Deserialize;
 use std::collections::HashMap;
+use getset::Getters;
 
+use super::default_configs::{default_languages, default_substitutions, default_global_tag_prefix, default_cleanup_comments_buffer, default_number_of_ancestors_in_parent_scope, default_delete_file_if_empty};
 /// Captures the Piranha arguments by from the file at `path_to_feature_flag_rules`.
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Getters, Default)]
 pub(crate) struct PiranhaConfiguration {
+  #[serde(default = "default_languages")]
   language: Vec<String>,
+
+  #[serde(default = "default_substitutions")]
   substitutions: Vec<Vec<String>>,
-  delete_file_if_empty: Option<bool>,
-  delete_consecutive_new_lines: Option<bool>,
-  global_tag_prefix: Option<String>,
-  cleanup_comments_buffer: Option<usize>,
-  cleanup_comments: Option<bool>,
+
+  #[serde(default = "default_delete_file_if_empty")]
+  #[get = "pub"]
+  delete_file_if_empty: bool,
+  
+  #[serde(default)]
+  #[get = "pub"]
+  delete_consecutive_new_lines: bool,
+  
+  #[serde(default = "default_global_tag_prefix")]
+  #[get = "pub"]
+  global_tag_prefix: String,
+
+  #[serde(default = "default_cleanup_comments_buffer")]
+  #[get = "pub"]
+  cleanup_comments_buffer: usize,
+
+  #[serde(default)]
+  #[get = "pub"]
+  cleanup_comments: bool,
+  
+  #[serde(default = "default_number_of_ancestors_in_parent_scope")]
+  #[get = "pub"]
+  number_of_ancestors_in_parent_scope: u8,
 }
+
 
 impl PiranhaConfiguration {
   pub(crate) fn substitutions(&self) -> HashMap<String, String> {
     self
       .substitutions
       .iter()
-      .map(|x| (String::from(&x[0]), String::from(&x[1])))
+      .map(|x| (x[0].clone(), x[1].clone()))
       .collect()
   }
 
-  pub(crate) fn language(&self) -> String {
+  pub fn language(&self) -> String {
     self.language[0].clone()
   }
 
-  pub(crate) fn delete_file_if_empty(&self) -> Option<bool> {
-    self.delete_file_if_empty
-  }
-
-  pub(crate) fn delete_consecutive_new_lines(&self) -> Option<bool> {
-    self.delete_consecutive_new_lines
-  }
-
-  pub(crate) fn global_tag_prefix(&self) -> Option<String> {
-    self.global_tag_prefix.clone()
-  }
-
-  pub(crate) fn cleanup_comments_buffer(&self) -> Option<usize> {
-    self.cleanup_comments_buffer
-  }
-
-  pub(crate) fn cleanup_comments(&self) -> Option<bool> {
-    self.cleanup_comments
-  }
 }

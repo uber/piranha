@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use std::{
   fs::{self},
-  io,
+  io, collections::HashSet,
 };
 
 use itertools::Itertools;
@@ -20,7 +20,7 @@ use tempdir::TempDir;
 
 use tree_sitter::Parser;
 
-use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
+use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore};
 use {
   super::SourceCodeUnit,
   crate::{
@@ -305,3 +305,138 @@ fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
   assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
   Ok(())
 }
+
+#[test]
+fn test_satisfies_constraints_positive() {
+  let rule = Rule::new(
+    "test",
+    "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    "variable_declaration",
+    "",
+    HashSet::new(),
+    HashSet::from([Constraint::new(
+      String::from("(method_declaration) @md"),
+      vec![String::from(
+        "(
+         ((assignment_expression
+                         left: (_) @a.lhs
+                         right: (_) @a.rhs) @assignment)
+         (#eq? @a.lhs \"@variable_name\")
+         (#not-eq? @a.rhs \"@init\")
+       )",
+      )],
+    )]),
+  );
+  let source_code = "class Test {
+      pub void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = true;
+        if (isFlagTreated) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .language_name(language_name)
+    .build()
+    .unwrap();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(source_code_unit.is_satisfied(
+    node.clone(),
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+
+#[test]
+fn test_satisfies_constraints_negative() {
+  let rule = Rule::new(
+    "test",
+    "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    "variable_declaration",
+    "",
+    HashSet::new(),
+    HashSet::from([Constraint::new(
+      String::from("(method_declaration) @md"),
+      vec![String::from(
+        "(
+         ((assignment_expression
+                         left: (_) @a.lhs
+                         right: (_) @a.rhs) @assignment)
+         (#eq? @a.lhs \"@variable_name\")
+         (#not-eq? @a.rhs \"@init\")
+       )",
+      )],
+    )]),
+  );
+  let source_code = "class Test {
+      pub void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = false;
+        if (isFlagTreated) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let language_name = String::from("java");
+  let mut parser = get_parser(language_name.to_string());
+  let piranha_arguments = &PiranhaArgumentsBuilder::default()
+    .language_name(language_name)
+    .build()
+    .unwrap();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    piranha_arguments,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(!source_code_unit.is_satisfied(
+    node.clone(),
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+
