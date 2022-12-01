@@ -225,27 +225,9 @@ name = "simplify_identity_equal"
 query = """
 (
     (binary_expression
-        left: (
-            [
-                (false)
-                (parenthesized_expression (false))
-                (true)
-                (parenthesized_expression (true))
-                (nil)
-                (parenthesized_expression (nil))
-            ]
-        ) @lhs
+        left: (_) @lhs
         operator: "=="
-        right: (
-            [
-                (false)
-                (parenthesized_expression (false))
-                (true)
-                (parenthesized_expression (true))
-                (nil)
-                (parenthesized_expression (nil))
-            ]
-        ) @rhs
+        right: (_) @rhs
     ) @binary_expression
     (#eq? @lhs @rhs)
 )
@@ -265,27 +247,9 @@ name = "simplify_identity_not_equal"
 query = """
 (
     (binary_expression
-        left: (
-            [
-                (false)
-                (parenthesized_expression (false))
-                (true)
-                (parenthesized_expression (true))
-                (nil)
-                (parenthesized_expression (nil))
-            ]
-        ) @lhs
+        left: (_) @lhs
         operator: "!="
-        right: (
-            [
-                (false)
-                (parenthesized_expression (false))
-                (true)
-                (parenthesized_expression (true))
-                (nil)
-                (parenthesized_expression (nil))
-            ]
-        ) @rhs
+        right: (_) @rhs
     ) @binary_expression
     (#eq? @lhs @rhs)
 )
