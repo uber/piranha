@@ -12,7 +12,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use crate::execute_piranha;
-use crate::models::piranha_arguments::{PiranhaArguments, PiranhaInput};
+use crate::models::piranha_arguments::PiranhaArguments;
+use crate::models::piranha_input::PiranhaInput;
 use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::utilities::{eq_without_whitespace, find_file, read_file};
 use log::error;

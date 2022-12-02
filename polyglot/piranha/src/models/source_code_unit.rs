@@ -514,8 +514,8 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope =
-      *rules_store.get_number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope  =
+      *rules_store.piranha_args().number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
       "\n{}",

@@ -31,7 +31,7 @@ use regex::Regex;
 use tree_sitter::Parser;
 
 use crate::{
-  models::{piranha_arguments::PiranhaInput::API, rule_store::RuleStore},
+  models::{rule_store::RuleStore, piranha_input::PiranhaInput},
   utilities::read_file,
 };
 
@@ -50,7 +50,7 @@ use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, P
 pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
-  let args = PiranhaArguments::from(API {
+  let args = PiranhaArguments::from(PiranhaInput::API {
     path_to_codebase,
     path_to_configurations,
     dry_run,
@@ -132,12 +132,12 @@ impl FlagCleaner {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
-      .set_language(self.rule_store.language())
+      .set_language(*self.rule_store.language())
       .expect("Could not set the language for the parser.");
 
     // Keep looping until new `global` rules are added.
     loop {
-      let current_rules = self.rule_store.global_rules();
+      let current_rules = self.rule_store.global_rules().clone();
 
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
@@ -194,7 +194,7 @@ impl FlagCleaner {
           .extension()
           .and_then(|e| {
             e.to_str()
-              .filter(|x| x.eq(&self.rule_store.language_name()))
+              .filter(|x| x.eq(&self.rule_store.piranha_args().get_language()))
           })
           .is_some()
       })

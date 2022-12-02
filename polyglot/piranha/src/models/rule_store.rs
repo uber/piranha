@@ -14,6 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::{collections::HashMap, path::Path};
 
 use colored::Colorize;
+use getset::Getters;
 use log::{debug, info, trace};
 use tree_sitter::{Language, Query};
 
@@ -36,7 +37,7 @@ use super::{
 pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";
 /// This maintains the state for Piranha.
-#[derive(Debug)]
+#[derive(Debug, Getters)]
 pub(crate) struct RuleStore {
   // A graph that captures the flow amongst the rules
   rule_graph: RuleGraph,
@@ -45,14 +46,18 @@ pub(crate) struct RuleStore {
   // All the input rules stored by name
   rules_by_name: HashMap<String, Rule>,
   // Current global rules to be applied.
+  #[get = "pub"]
   global_rules: Vec<Rule>,
   // Scope generators.
   scopes: Vec<ScopeGenerator>,
   // Command line arguments passed to piranha
+  #[get = "pub"]
   piranha_args: PiranhaArguments,
   // Command line arguments passed to piranha
+  #[get = "pub"]
   global_tags: HashMap<String, String>,
   /// Tree-sitter language model
+  #[get = "pub"]
   language: Language,
 }
 
@@ -90,22 +95,6 @@ impl RuleStore {
       scopes,
       ..Default::default()
     }
-  }
-
-  pub(crate) fn global_rules(&self) -> Vec<Rule> {
-    self.global_rules.clone()
-  }
-
-  pub(crate) fn language(&self) -> Language {
-    self.language
-  }
-
-  pub(crate) fn language_name(&self) -> String {
-    self.piranha_args.get_language()
-  }
-
-  pub(crate) fn get_number_of_ancestors_in_parent_scope(&self) -> &u8 {
-    self.piranha_args.number_of_ancestors_in_parent_scope()
   }
 
   pub(crate) fn default_substitutions(&self) -> HashMap<String, String> {
@@ -189,10 +178,6 @@ impl RuleStore {
       .unwrap_or_else(Vec::new)
   }
 
-  pub(crate) fn global_tags(&self) -> &HashMap<String, String> {
-    &self.global_tags
-  }
-
   pub(crate) fn add_global_tags(&mut self, new_entries: &HashMap<String, String>) {
     let global_substitutions: HashMap<String, String> = new_entries
       .iter()
@@ -201,22 +186,18 @@ impl RuleStore {
       .collect();
     let _ = &self.global_tags.extend(global_substitutions);
   }
-
-  pub(crate) fn piranha_args(&self) -> &PiranhaArguments {
-    &self.piranha_args
-  }
 }
 
 impl Default for RuleStore {
   fn default() -> Self {
     RuleStore {
       rule_graph: RuleGraph::default(),
-      rule_query_cache: HashMap::new(),
-      rules_by_name: HashMap::new(),
-      global_rules: vec![],
+      rule_query_cache: HashMap::default(),
+      rules_by_name: HashMap::default(),
+      global_rules: Vec::default(),
       piranha_args: PiranhaArgumentsBuilder::default().build().unwrap(),
-      scopes: vec![],
-      global_tags: HashMap::new(),
+      scopes:Vec::default(),
+      global_tags: HashMap::default(),
       language: *PiranhaLanguage::default().language(),
     }
   }

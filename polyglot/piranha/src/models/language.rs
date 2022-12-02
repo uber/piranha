@@ -7,7 +7,7 @@ use crate::utilities::parse_toml;
 use super::{
   outgoing_edges::Edges,
   rule::Rules,
-  scopes::{ScopeConfig, ScopeGenerator},
+  scopes::{ScopeConfig, ScopeGenerator}, default_configs::default_language,
 };
 
 #[derive(Debug, Clone, Getters, PartialEq)]
@@ -69,7 +69,7 @@ impl PiranhaLanguage {
 impl Default for PiranhaLanguage {
   fn default() -> Self {
     Self {
-      name: "java".to_string(),
+      name: default_language(),
       supported_language: SupportedLanguage::Java,
       language: tree_sitter_java::language(),
       rules: None,

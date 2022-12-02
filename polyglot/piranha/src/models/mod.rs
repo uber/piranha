@@ -16,6 +16,7 @@ pub(crate) mod edit;
 pub(crate) mod matches;
 pub(crate) mod outgoing_edges;
 pub mod piranha_arguments;
+pub mod piranha_input;
 pub mod piranha_output;
 pub(crate) mod rule;
 pub(crate) mod rule_graph;
