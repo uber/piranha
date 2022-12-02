@@ -10,18 +10,13 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use std::{
-  collections::{HashMap},
-};
+use std::collections::HashMap;
 
 use tree_sitter::Query;
 
-use crate::models::language::get_language;
+use crate::models::language::PiranhaLanguage;
 
-use {
-  super::{get_parser, substitute_tags, PiranhaHelpers},
-};
-
+use super::{substitute_tags, PiranhaHelpers};
 
 #[test]
 fn test_get_all_matches_for_query_positive() {
@@ -39,7 +34,7 @@ fn test_get_all_matches_for_query_positive() {
         }
       }
     "#;
-  let language = get_language("java".to_string());
+  let language = PiranhaLanguage::from("java");
   let query = Query::new(
     *language.language(),
     r#"((
@@ -59,7 +54,7 @@ fn test_get_all_matches_for_query_positive() {
   )
   .unwrap();
 
-  let mut parser = get_parser(get_language(String::from("java")));
+  let mut parser = PiranhaLanguage::from("java").parser();
   let ast = parser
     .parse(&source_code, None)
     .expect("Could not parse code");
@@ -90,7 +85,7 @@ fn test_get_all_matches_for_query_negative() {
         }
       }
     "#;
-  let language = get_language("java".to_string());
+  let language = PiranhaLanguage::from("java");
   let query = Query::new(
     *language.language(),
     r#"((
@@ -110,7 +105,7 @@ fn test_get_all_matches_for_query_negative() {
   )
   .unwrap();
 
-  let mut parser = get_parser(get_language(String::from("java")));
+  let mut parser = PiranhaLanguage::from("java").parser();
   let ast = parser
     .parse(&source_code, None)
     .expect("Could not parse code");
