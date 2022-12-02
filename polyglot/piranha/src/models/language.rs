@@ -1,6 +1,6 @@
 use getset::Getters;
 use serde_derive::Deserialize;
-use tree_sitter::{Query};
+use tree_sitter::Query;
 
 use crate::utilities::parse_toml;
 
@@ -10,7 +10,7 @@ use super::{
   scopes::{ScopeConfig, ScopeGenerator},
 };
 
-#[derive(Debug, Clone, Getters)]
+#[derive(Debug, Clone, Getters, PartialEq)]
 pub struct PiranhaLanguage {
   #[get = "pub"]
   name: String,
@@ -41,7 +41,7 @@ impl Default for PiranhaLanguage {
   }
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 pub enum SupportedLanguage {
   Java,
   Kotlin,

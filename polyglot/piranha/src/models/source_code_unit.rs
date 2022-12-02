@@ -27,13 +27,13 @@ use crate::{
   models::rule_store::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
     get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
-    PiranhaHelpers
+    PiranhaHelpers,
   },
 };
 
 use super::{
-  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule::Rule,
-  rule_store::RuleStore, constraint::Constraint,
+  constraint::Constraint, edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
+  rule::Rule, rule_store::RuleStore,
 };
 use getset::{CopyGetters, Getters, MutGetters};
 // Maintains the updated source code content and AST of the file
@@ -591,12 +591,11 @@ impl SourceCodeUnit {
         edit
       });
   }
-  
+
   /// Generate a tree-sitter based query representing the scope of the previous edit.
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
   pub(crate) fn get_scope_query(
-    &self, scope_level: &str, start_byte: usize, end_byte: usize,
-    rules_store: &mut RuleStore,
+    &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
   ) -> String {
     let root_node = self.root_node();
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
@@ -611,11 +610,9 @@ impl SourceCodeUnit {
         changed_node.kind()
       );
       for m in &scope_matchers {
-        if let Some(p_match) = changed_node.get_match_for_query(
-          &self.code(),
-          rules_store.query(&m.matcher()),
-          false,
-        ) {
+        if let Some(p_match) =
+          changed_node.get_match_for_query(&self.code(), rules_store.query(&m.matcher()), false)
+        {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
           return substitute_tags(m.generator().to_string(), p_match.matches(), true);
@@ -630,7 +627,6 @@ impl SourceCodeUnit {
     panic!("Could not create scope query for {:?}", scope_level);
   }
 
-
   fn is_satisfied(
     &self, node: Node, rule: &Rule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
@@ -641,7 +637,7 @@ impl SourceCodeUnit {
       .chain(rule_store.default_substitutions())
       .collect();
     rule.constraints().iter().all(|constraint| {
-    self._is_satisfied(
+      self._is_satisfied(
         constraint.clone(),
         node.clone(),
         rule_store,
@@ -695,42 +691,7 @@ impl SourceCodeUnit {
     }
     matched_matcher
   }
-
 }
-
-// pub(crate) trait SatisfiesConstraint {
-//   // / Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-//   fn is_satisfied(
-//     &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-//     rule_store: &mut RuleStore,
-//   ) -> bool;
-// }
-// /// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-// impl SatisfiesConstraint for Node<'_> {
-//   fn is_satisfied(
-//     &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-//     rule_store: &mut RuleStore,
-//   ) -> bool {
-//     let updated_substitutions = &substitutions
-//       .clone()
-//       .into_iter()
-//       .chain(rule_store.default_substitutions())
-//       .collect();
-//     rule.constraints().iter().all(|constraint| {
-//     _is_satisfied(
-//         constraint.clone(),
-//         self.clone(),
-//         source_code_unit.clone(),
-//         rule_store,
-//         updated_substitutions,
-//       )
-//     })
-//   }
-// }
-
-
-  
-
 
 #[cfg(test)]
 #[path = "unit_tests/source_code_unit_test.rs"]

@@ -13,9 +13,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use models::{
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
-  source_code_unit::SourceCodeUnit, piranha_arguments::PiranhaArgumentsBuilder
+  source_code_unit::SourceCodeUnit,
 };
-
 
 pub mod models;
 #[cfg(test)]
@@ -31,7 +30,10 @@ use log::{debug, info};
 use regex::Regex;
 use tree_sitter::Parser;
 
-use crate::{models::rule_store::RuleStore, utilities::read_file};
+use crate::{
+  models::{piranha_arguments::PiranhaInput::API, rule_store::RuleStore},
+  utilities::read_file,
+};
 
 use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
@@ -48,19 +50,13 @@ use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, P
 pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
-
-  let path_to_piranha_argument_file =
-      PathBuf::from(path_to_configurations.to_string()).join("piranha_arguments.toml");
-
-  let configuration = PiranhaArgumentsBuilder::from(path_to_piranha_argument_file)
-          .path_to_code_base(path_to_codebase)
-          .path_to_configurations(path_to_configurations)
-          .path_to_output_summaries(None)
-          .dry_run(dry_run)
-          .build().unwrap();
-  
-
-  execute_piranha(&configuration)
+  let args = PiranhaArguments::from(API {
+    path_to_codebase,
+    path_to_configurations,
+    dry_run,
+  });
+  debug!("{:?}", args);
+  execute_piranha(&args)
 }
 
 #[pymodule]

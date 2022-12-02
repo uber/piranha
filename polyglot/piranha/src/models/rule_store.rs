@@ -24,12 +24,13 @@ use crate::{
     rule_graph::RuleGraph,
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
-  utilities::{read_toml,  MapOfVec},
+  utilities::{read_toml, MapOfVec},
 };
 
 use super::{
+  language::PiranhaLanguage,
   outgoing_edges::{Edges, OutgoingEdges},
-  rule::Rules, language::PiranhaLanguage,
+  rule::Rules,
 };
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -135,7 +136,12 @@ impl RuleStore {
     self
       .rule_query_cache
       .entry(query_str.to_string())
-      .or_insert_with(|| self.piranha_args.piranha_language().create_query(query_str.to_string()))
+      .or_insert_with(|| {
+        self
+          .piranha_args
+          .piranha_language()
+          .create_query(query_str.to_string())
+      })
   }
 
   /// Get the next rules to be applied grouped by the scope in which they should be performed.
@@ -216,7 +222,7 @@ impl Default for RuleStore {
   }
 }
 
-pub(crate) fn read_config_files(
+fn read_config_files(
   args: &PiranhaArguments,
 ) -> (Vec<Rule>, Vec<OutgoingEdges>, Vec<ScopeGenerator>) {
   let path_to_config = Path::new(args.path_to_configurations());

@@ -13,27 +13,40 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use clap::Parser;
 
-use crate::{utilities::read_toml};
+use crate::utilities::read_toml;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
-use std::{collections::HashMap, path::PathBuf};
 use serde_derive::Deserialize;
+use std::{collections::HashMap, path::PathBuf};
 
-use super::{default_configs::{
-  default_cleanup_comments_buffer, default_delete_file_if_empty, default_dry_run,
-  default_global_tag_prefix, default_number_of_ancestors_in_parent_scope, default_substitutions, default_languages, default_cleanup_comments,
-}, language::{PiranhaLanguage, get_language}};
+use super::{
+  default_configs::{
+    default_cleanup_comments, default_cleanup_comments_buffer,
+    default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
+    default_global_tag_prefix, default_input_substitutions, default_languages,
+    default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
+    default_path_to_code_base, default_path_to_configurations, default_path_to_output_summaries,
+    default_piranha_language, default_substitutions,
+  },
+  language::{get_language, PiranhaLanguage},
+};
 
+pub enum PiranhaInput {
+  CommandLineInput,
+  API {
+    path_to_codebase: String,
+    path_to_configurations: String,
+    dry_run: bool,
+  },
+}
 
-pub struct CommandLineInput {}
-
+/// A refactoring tool that eliminates dead code related to stale feature flags.
 #[derive(Deserialize, Clone, Builder, Getters, CopyGetters, Debug, Parser, Default)]
-#[clap(name = "Piranha1")]
-/// Captures the processed Piranha arguments (Piranha-Configuration) parsed from `path_to_feature_flag_rules`.
+#[clap(name = "Piranha")]
 pub struct PiranhaArguments {
   /// Path to source code folder.
   #[get = "pub"]
-  #[builder(default = "String::new()")]
+  #[builder(default = "default_path_to_code_base()")]
   #[clap(short = 'c', long = "path_to_code_base")]
   #[serde(skip)]
   path_to_code_base: String,
@@ -41,11 +54,11 @@ pub struct PiranhaArguments {
   // @stale_flag_name, @namespace, @treated, @treated_complement
   // These substitutions instantiate the initial set of feature flag rules.
   #[get = "pub"]
-  #[builder(default = "HashMap::new()")]
+  #[builder(default = "default_input_substitutions()")]
   #[clap(skip)]
   #[serde(skip)]
   input_substitutions: HashMap<String, String>,
-  
+
   #[builder(setter(skip))]
   #[clap(skip)]
   #[serde(default = "default_substitutions")]
@@ -53,17 +66,17 @@ pub struct PiranhaArguments {
 
   /// Folder containing the API specific rules
   #[get = "pub"]
-  #[builder(default = "String::new()")]
+  #[builder(default = "default_path_to_configurations()")]
   #[clap(short = 'f', long = "path_to_configurations")]
   #[serde(skip)]
   path_to_configurations: String,
-  /// File to which the output summary should be written
+  /// Path to output summary json file
   #[get = "pub"]
-  #[builder(default)]
+  #[builder(default = "default_path_to_output_summaries()")]
   #[clap(short = 'j', long = "path_to_output_summaries")]
   #[serde(skip)]
   path_to_output_summaries: Option<String>,
-  
+
   // a list of file extensions
   // #[get = "pub"]
   #[builder(default = "default_languages()")]
@@ -72,7 +85,7 @@ pub struct PiranhaArguments {
   language: Vec<String>,
 
   #[get = "pub"]
-  #[builder(default = "PiranhaLanguage::default()")]
+  #[builder(default = "default_piranha_language()")]
   #[clap(skip)]
   #[serde(skip)]
   piranha_language: PiranhaLanguage,
@@ -86,9 +99,9 @@ pub struct PiranhaArguments {
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
   #[get = "pub"]
-  #[builder(default)]
+  #[builder(default = "default_delete_consecutive_new_lines()")]
   #[clap(skip)]
-  #[serde(default)]
+  #[serde(default = "default_delete_consecutive_new_lines")]
   delete_consecutive_new_lines: bool,
   // User option that determines the prefix used for tag names that should be considered
   /// global i.e. if a global tag is found when rewriting a source code unit
@@ -125,53 +138,7 @@ pub struct PiranhaArguments {
   dry_run: bool,
 }
 
-impl From<PathBuf> for PiranhaArgumentsBuilder {
-
-  fn from(path_to_arguments_toml: PathBuf) -> Self {
-    let other: PiranhaArguments = read_toml(&path_to_arguments_toml, false);
-    let subs = other.substitutions();
-    let lang = get_language(other.get_language());
-    PiranhaArgumentsBuilder::default()
-      .path_to_code_base(other.path_to_code_base)
-      .path_to_configurations(other.path_to_configurations)
-      .path_to_output_summaries(other.path_to_output_summaries)
-      .input_substitutions(subs)
-      .dry_run(other.dry_run)
-      .language(other.language)
-      .delete_file_if_empty(other.delete_file_if_empty)
-      .delete_consecutive_new_lines(other.delete_consecutive_new_lines)
-      .global_tag_prefix(other.global_tag_prefix)
-      .cleanup_comments_buffer(other.cleanup_comments_buffer)
-      .cleanup_comments(other.cleanup_comments)
-      .number_of_ancestors_in_parent_scope(other.number_of_ancestors_in_parent_scope)
-      .piranha_language(lang)
-      .clone()
-  }
-}
-
-
-
-impl From<CommandLineInput> for PiranhaArgumentsBuilder {
-
-  fn from(_:CommandLineInput) -> Self {
-    let command_line_options: PiranhaArguments = PiranhaArguments::parse();
-
-    let path_to_piranha_argument_file =
-      PathBuf::from(command_line_options.path_to_configurations()).join("piranha_arguments.toml");
-
-    PiranhaArgumentsBuilder::from(path_to_piranha_argument_file)
-      .path_to_code_base(command_line_options.path_to_code_base)
-      .path_to_configurations(command_line_options.path_to_configurations)
-      .path_to_output_summaries(command_line_options.path_to_output_summaries)
-      .dry_run(command_line_options.dry_run)
-      .clone()
-      
-  }
-}
-
 impl PiranhaArguments {
-
-
   pub(crate) fn substitutions(&self) -> HashMap<String, String> {
     self
       .substitutions
@@ -183,4 +150,139 @@ impl PiranhaArguments {
   pub fn get_language(&self) -> String {
     self.language[0].clone()
   }
+
+  fn get_path_to_piranha_arguments_toml(&self) -> PathBuf {
+    PathBuf::from(self.path_to_configurations.to_string())
+      .join(default_name_of_piranha_argument_toml())
+  }
+
+  fn new(path_to_piranha_arguments_toml: PathBuf) -> Self {
+    let args: PiranhaArguments = read_toml(&path_to_piranha_arguments_toml, false);
+    let input_substitutions = args.substitutions();
+    let piranha_language = get_language(args.get_language());
+    let derived_args = PiranhaArgumentsBuilder::default()
+      .input_substitutions(input_substitutions)
+      .piranha_language(piranha_language)
+      .build()
+      .unwrap();
+    args.merge(derived_args)
+  }
+
+  fn _merge<T: Clone + std::cmp::PartialEq>(x: T, y: T, default: T) -> T {
+    if x != default {
+      x.clone()
+    } else {
+      y.clone()
+    }
+  }
+
+  fn merge(&self, other: PiranhaArguments) -> Self {
+    Self {
+      path_to_code_base: Self::_merge(
+        self.path_to_code_base.clone(),
+        other.path_to_code_base,
+        default_path_to_code_base(),
+      ),
+      input_substitutions: Self::_merge(
+        self.input_substitutions.clone(),
+        other.input_substitutions,
+        default_input_substitutions(),
+      ),
+      substitutions: Self::_merge(
+        self.substitutions.clone(),
+        other.substitutions,
+        default_substitutions(),
+      ),
+      path_to_configurations: Self::_merge(
+        self.path_to_configurations.clone(),
+        other.path_to_configurations,
+        default_path_to_configurations(),
+      ),
+      path_to_output_summaries: Self::_merge(
+        self.path_to_output_summaries.clone(),
+        other.path_to_output_summaries,
+        default_path_to_output_summaries(),
+      ),
+      language: Self::_merge(self.language.clone(), other.language, default_languages()),
+      piranha_language: Self::_merge(
+        self.piranha_language.clone(),
+        other.piranha_language,
+        default_piranha_language(),
+      ),
+      delete_file_if_empty: Self::_merge(
+        self.delete_file_if_empty,
+        other.delete_file_if_empty,
+        default_delete_file_if_empty(),
+      ),
+      delete_consecutive_new_lines: Self::_merge(
+        self.delete_consecutive_new_lines,
+        other.delete_consecutive_new_lines,
+        default_delete_consecutive_new_lines(),
+      ),
+      global_tag_prefix: Self::_merge(
+        self.global_tag_prefix.clone(),
+        other.global_tag_prefix,
+        default_global_tag_prefix(),
+      ),
+      number_of_ancestors_in_parent_scope: Self::_merge(
+        self.number_of_ancestors_in_parent_scope,
+        other.number_of_ancestors_in_parent_scope,
+        default_number_of_ancestors_in_parent_scope(),
+      ),
+      cleanup_comments_buffer: Self::_merge(
+        self.cleanup_comments_buffer,
+        other.cleanup_comments_buffer,
+        default_cleanup_comments_buffer(),
+      ),
+      cleanup_comments: Self::_merge(
+        self.cleanup_comments,
+        other.cleanup_comments,
+        default_cleanup_comments(),
+      ),
+      dry_run: Self::_merge(self.dry_run, other.dry_run, default_dry_run()),
+    }
+  }
 }
+
+impl From<PiranhaInput> for PiranhaArguments {
+  fn from(input: PiranhaInput) -> Self {
+    let input_opts = match input {
+      PiranhaInput::CommandLineInput => PiranhaArguments::parse(),
+      PiranhaInput::API {
+        path_to_codebase,
+        path_to_configurations,
+        dry_run,
+      } => PiranhaArgumentsBuilder::default()
+        .path_to_code_base(path_to_codebase)
+        .path_to_configurations(path_to_configurations)
+        .path_to_output_summaries(None)
+        .dry_run(dry_run)
+        .build()
+        .unwrap(),
+    };
+    let piranha_argument = PiranhaArguments::new(input_opts.get_path_to_piranha_arguments_toml());
+    return input_opts.merge(piranha_argument);
+  }
+}
+
+// impl From<PiranhaArguments> for PiranhaArgumentsBuilder {
+//   fn from(piranha_argument: PiranhaArguments) -> Self {
+//     let subs = piranha_argument.substitutions();
+//     let lang = get_language(piranha_argument.get_language());
+//     PiranhaArgumentsBuilder::default()
+//       .path_to_code_base(piranha_argument.path_to_code_base)
+//       .path_to_configurations(piranha_argument.path_to_configurations)
+//       .path_to_output_summaries(piranha_argument.path_to_output_summaries)
+//       .input_substitutions(subs)
+//       .dry_run(piranha_argument.dry_run)
+//       .language(piranha_argument.language)
+//       .delete_file_if_empty(piranha_argument.delete_file_if_empty)
+//       .delete_consecutive_new_lines(piranha_argument.delete_consecutive_new_lines)
+//       .global_tag_prefix(piranha_argument.global_tag_prefix)
+//       .cleanup_comments_buffer(piranha_argument.cleanup_comments_buffer)
+//       .cleanup_comments(piranha_argument.cleanup_comments)
+//       .number_of_ancestors_in_parent_scope(piranha_argument.number_of_ancestors_in_parent_scope)
+//       .piranha_language(lang)
+//       .clone()
+//   }
+// }

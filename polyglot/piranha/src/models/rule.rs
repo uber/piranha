@@ -18,18 +18,18 @@ use serde_derive::Deserialize;
 
 use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
 
-use super::{constraint::Constraint};
+use super::constraint::Constraint;
 
 static SEED: &str = "Seed Rule";
 static CLEAN_UP: &str = "Cleanup Rule";
 
-#[derive(Deserialize, Debug, Clone, Default)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 // Represents the `rules.toml` file
 pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Default)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
   name: String,
