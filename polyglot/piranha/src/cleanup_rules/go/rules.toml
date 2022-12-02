@@ -342,11 +342,11 @@ query = """
 (
     (block
         (statement_list
-            (_)* @pre
-            (block
+            (((_) "\\n"?)* @pre)
+            ((block
                 (statement_list) @nested.statements
-            ) @nested.block
-            (_)* @post
+            ) @nested.block)
+            (((_) "\\n"?)* @post)
         ) @outer.stmt_list
     ) @outer.block
 )
@@ -355,7 +355,7 @@ replace = "@nested.statements"
 replace_node = "nested.block"
 
 # This rule is not deleting multiple statements after return.
-# `(statement)+ @post` is only matching the first statement
+# Although `(((statement) "\\n"?)+ @post)` matches all post statements, replacing is only happening for the first one.
 # Thus, we are using a self-edge to keep removing statements.
 #
 [[rules]]
@@ -364,9 +364,9 @@ query = """
 (
     (block
         (statement_list
-            ((statement)* @pre)
+            (((statement) "\\n"?)* @pre)
             ((return_statement) @r)
-            ((statement)+ @post)
+            (((statement) "\\n"?)+ @post)
         ) @stmt_list
     ) @b
 )
