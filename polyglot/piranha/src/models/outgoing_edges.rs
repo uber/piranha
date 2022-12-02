@@ -11,6 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use getset::Getters;
 use serde_derive::Deserialize;
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
@@ -20,23 +21,12 @@ pub(crate) struct Edges {
 }
 
 // Captures an entry from the `edges.toml` file.
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct OutgoingEdges {
+  #[get = "pub with_prefix"]
   from: String,
+  #[get = "pub with_prefix"]
   to: Vec<String>,
+  #[get = "pub with_prefix"]
   scope: String,
-}
-
-impl OutgoingEdges {
-  pub(crate) fn source(&self) -> String {
-    String::from(&self.from)
-  }
-
-  pub(crate) fn sinks(&self) -> Vec<String> {
-    self.to.clone()
-  }
-
-  pub(crate) fn scope(&self) -> &str {
-    self.scope.as_ref()
-  }
 }
