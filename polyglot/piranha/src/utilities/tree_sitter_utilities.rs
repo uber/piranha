@@ -337,17 +337,6 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
-// #[cfg(test)]
-// use crate::models::language::PiranhaLanguage;
-// #[cfg(test)]
-// pub(crate) fn get_parser(language: PiranhaLanguage) -> Parser {
-//   let mut parser = Parser::new();
-//   parser
-//     .set_language(*language.language())
-//     .expect("Could not set the language for the parser.");
-//   parser
-// }
-
 #[cfg(test)]
 #[path = "unit_tests/tree_sitter_utilities_test.rs"]
 mod tree_sitter_utilities_test;
