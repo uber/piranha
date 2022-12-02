@@ -264,25 +264,3 @@ impl From<PiranhaInput> for PiranhaArguments {
     return input_opts.merge(piranha_argument);
   }
 }
-
-// impl From<PiranhaArguments> for PiranhaArgumentsBuilder {
-//   fn from(piranha_argument: PiranhaArguments) -> Self {
-//     let subs = piranha_argument.substitutions();
-//     let lang = get_language(piranha_argument.get_language());
-//     PiranhaArgumentsBuilder::default()
-//       .path_to_code_base(piranha_argument.path_to_code_base)
-//       .path_to_configurations(piranha_argument.path_to_configurations)
-//       .path_to_output_summaries(piranha_argument.path_to_output_summaries)
-//       .input_substitutions(subs)
-//       .dry_run(piranha_argument.dry_run)
-//       .language(piranha_argument.language)
-//       .delete_file_if_empty(piranha_argument.delete_file_if_empty)
-//       .delete_consecutive_new_lines(piranha_argument.delete_consecutive_new_lines)
-//       .global_tag_prefix(piranha_argument.global_tag_prefix)
-//       .cleanup_comments_buffer(piranha_argument.cleanup_comments_buffer)
-//       .cleanup_comments(piranha_argument.cleanup_comments)
-//       .number_of_ancestors_in_parent_scope(piranha_argument.number_of_ancestors_in_parent_scope)
-//       .piranha_language(lang)
-//       .clone()
-//   }
-// }
