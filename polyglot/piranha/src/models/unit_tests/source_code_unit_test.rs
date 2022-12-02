@@ -18,14 +18,13 @@ use std::{
 use itertools::Itertools;
 use tempdir::TempDir;
 
-use tree_sitter::{Parser};
+use tree_sitter::Parser;
 
-use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore, language::{get_language, PiranhaLanguage}};
+use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore, language::PiranhaLanguage};
 use {
   super::SourceCodeUnit,
   crate::{
     models::edit::Edit, utilities::eq_without_whitespace,
-    utilities::tree_sitter_utilities::get_parser,
   },
   std::{collections::HashMap, path::PathBuf},
   tree_sitter::Range,
@@ -65,7 +64,7 @@ fn range(
 }
 
 fn get_java_tree_sitter_language() -> PiranhaLanguage {
-   get_language("java".to_string())
+   PiranhaLanguage::from("java")
 }
 
 /// Positive test of an edit being applied  given replacement range  and replacement string.
@@ -82,7 +81,7 @@ fn test_apply_edit_positive() {
     }";
 
   let java = get_java_tree_sitter_language();
-  let mut parser = get_parser(java.clone());
+  let mut parser = java.parser();
 
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
@@ -111,7 +110,7 @@ fn test_apply_edit_negative() {
     }";
 
   let java = get_java_tree_sitter_language();
-  let mut parser = get_parser(java.clone());
+  let mut parser = java.parser();
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
@@ -132,7 +131,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
     }";
 
     let java = get_java_tree_sitter_language();
-  let mut parser = get_parser(java.clone());
+  let mut parser = java.parser();
 
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
@@ -158,9 +157,9 @@ fn test_apply_edit_comma_handling_via_regex() {
   }
 }";
 
-  let swift = get_language("swift".to_string());
+  let swift = PiranhaLanguage::from("swift");
 
-  let mut parser = get_parser(swift.clone());
+  let mut parser = swift.parser();
 
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
 
@@ -178,7 +177,7 @@ fn execute_persist_in_temp_folder(
   check_predicate: &dyn Fn(&TempDir) -> Result<bool, io::Error>,
 ) -> Result<bool, io::Error> {
   let java = get_java_tree_sitter_language();
-  let mut parser = get_parser(java.clone());
+  let mut parser = java.parser();
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(&file_path.as_path(), source_code);
@@ -348,7 +347,7 @@ fn test_satisfies_constraints_positive() {
 
   let mut rule_store = RuleStore::default();
   let java = get_java_tree_sitter_language();
-  let mut parser = get_parser(java.clone());
+  let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
     .language(vec![java.name().to_string()])
     .build()
@@ -415,7 +414,7 @@ fn test_satisfies_constraints_negative() {
 
   let mut rule_store = RuleStore::default();
   let java = get_java_tree_sitter_language();
-  let mut parser = get_parser(java.clone());
+  let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
     .language(vec![java.name().to_string()])
     .build()

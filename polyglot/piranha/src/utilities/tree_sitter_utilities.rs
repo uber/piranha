@@ -13,16 +13,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
-use crate::{
-  models::{matches::Match},
-  utilities::MapOfVec,
-};
+use crate::{models::matches::Match, utilities::MapOfVec};
 use colored::Colorize;
 use itertools::Itertools;
 use log::debug;
 use std::collections::HashMap;
-#[cfg(test)]
-use tree_sitter::Parser;
 use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 use super::eq_without_whitespace;
@@ -63,7 +58,6 @@ pub(crate) trait PiranhaHelpers {
 }
 
 impl PiranhaHelpers for Node<'_> {
-
   fn get_match_for_query(
     &self, source_code: &str, query: &Query, recursive: bool,
   ) -> Option<Match> {
@@ -343,20 +337,16 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
-#[cfg(test)]
-use crate::models::language::PiranhaLanguage;
-#[cfg(test)]
-pub(crate) fn get_parser(language: PiranhaLanguage) -> Parser {
- 
-
-  
-
-  let mut parser = Parser::new();
-  parser
-    .set_language(*language.language())
-    .expect("Could not set the language for the parser.");
-  parser
-}
+// #[cfg(test)]
+// use crate::models::language::PiranhaLanguage;
+// #[cfg(test)]
+// pub(crate) fn get_parser(language: PiranhaLanguage) -> Parser {
+//   let mut parser = Parser::new();
+//   parser
+//     .set_language(*language.language())
+//     .expect("Could not set the language for the parser.");
+//   parser
+// }
 
 #[cfg(test)]
 #[path = "unit_tests/tree_sitter_utilities_test.rs"]

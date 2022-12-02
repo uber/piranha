@@ -28,7 +28,7 @@ use super::{
     default_path_to_code_base, default_path_to_configurations, default_path_to_output_summaries,
     default_piranha_language, default_substitutions,
   },
-  language::{get_language, PiranhaLanguage},
+  language::PiranhaLanguage,
 };
 
 pub enum PiranhaInput {
@@ -159,7 +159,7 @@ impl PiranhaArguments {
   fn new(path_to_piranha_arguments_toml: PathBuf) -> Self {
     let args: PiranhaArguments = read_toml(&path_to_piranha_arguments_toml, false);
     let input_substitutions = args.substitutions();
-    let piranha_language = get_language(args.get_language());
+    let piranha_language = PiranhaLanguage::from(args.get_language().as_str());
     let derived_args = PiranhaArgumentsBuilder::default()
       .input_substitutions(input_substitutions)
       .piranha_language(piranha_language)

@@ -1,6 +1,6 @@
 use getset::Getters;
 use serde_derive::Deserialize;
-use tree_sitter::Query;
+use tree_sitter::{Parser, Query};
 
 use crate::utilities::parse_toml;
 
@@ -26,19 +26,6 @@ pub struct PiranhaLanguage {
   scopes: Vec<ScopeGenerator>,
   #[get = "pub"]
   comment_nodes: Vec<String>,
-}
-impl Default for PiranhaLanguage {
-  fn default() -> Self {
-    Self {
-      name: "java".to_string(),
-      supported_language: SupportedLanguage::Java,
-      language: tree_sitter_java::language(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
-    }
-  }
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]
@@ -69,80 +56,106 @@ impl PiranhaLanguage {
       query.err()
     );
   }
+
+  pub fn parser(&self) -> Parser {
+    let mut parser = Parser::new();
+    parser
+      .set_language(self.language)
+      .expect("Could not set the language for the parser.");
+    parser
+  }
 }
 
-pub fn get_language(language: String) -> PiranhaLanguage {
-  match language.as_str() {
-    "java" => {
-      let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
-      let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
-      PiranhaLanguage {
-        name: language.to_string(),
-        supported_language: SupportedLanguage::Java,
-        language: tree_sitter_java::language(),
-        rules: Some(rules),
-        edges: Some(edges),
-        scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/java/scope_config.toml"))
+impl Default for PiranhaLanguage {
+  fn default() -> Self {
+    Self {
+      name: "java".to_string(),
+      supported_language: SupportedLanguage::Java,
+      language: tree_sitter_java::language(),
+      rules: None,
+      edges: None,
+      scopes: vec![],
+      comment_nodes: vec![],
+    }
+  }
+}
+
+impl From<&str> for PiranhaLanguage {
+  fn from(language: &str) -> Self {
+    match language {
+      "java" => {
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
+        PiranhaLanguage {
+          name: language.to_string(),
+          supported_language: SupportedLanguage::Java,
+          language: tree_sitter_java::language(),
+          rules: Some(rules),
+          edges: Some(edges),
+          scopes: parse_toml::<ScopeConfig>(include_str!(
+            "../cleanup_rules/java/scope_config.toml"
+          ))
           .scopes()
           .to_vec(),
-        comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
+          comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
+        }
       }
-    }
-    "go" => PiranhaLanguage {
-      name: language.to_string(),
-      supported_language: SupportedLanguage::Go,
-      language: tree_sitter_go::language(),
-      ..Default::default()
-    },
-    "kt" => {
-      let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
-      let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));
-      PiranhaLanguage {
+      "go" => PiranhaLanguage {
         name: language.to_string(),
-        supported_language: SupportedLanguage::Kotlin,
-        language: tree_sitter_kotlin::language(),
-        rules: Some(rules),
-        edges: Some(edges),
-        scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/kt/scope_config.toml"))
+        supported_language: SupportedLanguage::Go,
+        language: tree_sitter_go::language(),
+        ..Default::default()
+      },
+      "kt" => {
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));
+        PiranhaLanguage {
+          name: language.to_string(),
+          supported_language: SupportedLanguage::Kotlin,
+          language: tree_sitter_kotlin::language(),
+          rules: Some(rules),
+          edges: Some(edges),
+          scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/kt/scope_config.toml"))
+            .scopes()
+            .to_vec(),
+          comment_nodes: vec!["comment".to_string()],
+        }
+      }
+      "py" => PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Python,
+        language: tree_sitter_python::language(),
+        ..Default::default()
+      },
+      "swift" => PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Swift,
+        language: tree_sitter_swift::language(),
+        scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/swift/scope_config.toml"))
           .scopes()
           .to_vec(),
-        comment_nodes: vec!["comment".to_string()],
-      }
+        comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
+        ..Default::default()
+      },
+      "strings" => PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Strings,
+        language: tree_sitter_strings::language(),
+        ..Default::default()
+      },
+      "ts" => PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Ts,
+        language: tree_sitter_typescript::language_typescript(),
+        ..Default::default()
+      },
+      "tsx" => PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Tsx,
+        language: tree_sitter_typescript::language_tsx(),
+        ..Default::default()
+      },
+      _ => panic!("Language not supported"),
     }
-    "py" => PiranhaLanguage {
-      name: language.to_string(),
-      supported_language: SupportedLanguage::Python,
-      language: tree_sitter_python::language(),
-      ..Default::default()
-    },
-    "swift" => PiranhaLanguage {
-      name: language.to_string(),
-      supported_language: SupportedLanguage::Swift,
-      language: tree_sitter_swift::language(),
-      scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/swift/scope_config.toml"))
-        .scopes()
-        .to_vec(),
-      comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
-      ..Default::default()
-    },
-    "strings" => PiranhaLanguage {
-      name: language.to_string(),
-      supported_language: SupportedLanguage::Strings,
-      language: tree_sitter_strings::language(),
-      ..Default::default()
-    },
-    "ts" => PiranhaLanguage {
-      name: language.to_string(),
-      supported_language: SupportedLanguage::Ts,
-      language: tree_sitter_typescript::language_typescript(),
-      ..Default::default()
-    },
-    "tsx" => PiranhaLanguage {
-      name: language.to_string(),
-      supported_language: SupportedLanguage::Tsx,
-      language: tree_sitter_typescript::language_tsx(),
-      ..Default::default()
-    },
-    _ => panic!("Language not supported"),
   }
 }

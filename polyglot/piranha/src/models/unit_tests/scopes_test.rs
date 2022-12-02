@@ -1,4 +1,4 @@
-use crate::models::language::get_language;
+use crate::models::language::PiranhaLanguage;
 
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
@@ -17,7 +17,6 @@ use {
   crate::{
     models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit},
     utilities::eq_without_whitespace,
-    utilities::tree_sitter_utilities::get_parser,
   },
   std::{collections::HashMap, path::PathBuf},
 };
@@ -99,7 +98,7 @@ fn test_get_scope_query_positive() {
     }";
   
   let mut rule_store =  _get_rule_store();
-  let mut parser = get_parser(get_language(String::from("java")));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -161,7 +160,7 @@ fn test_get_scope_query_negative() {
       }
     }";
   let mut rule_store = _get_rule_store();
-  let mut parser = get_parser(get_language(String::from("java")));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
