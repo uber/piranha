@@ -134,7 +134,7 @@ impl SourceCodeUnit {
         query_again = true;
 
         // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit.matches(), rule_store);
+        self.add_to_substitutions(edit.p_match().matches(), rule_store);
 
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
@@ -243,9 +243,9 @@ impl SourceCodeUnit {
         // Apply the matched rule to the parent
         let applied_edit = self.apply_edit(&edit, parser);
         current_replace_range = get_replace_range(applied_edit);
-        current_rule = edit.matched_rule();
+        current_rule = edit.matched_rule().to_string();
         // Add the (tag, code_snippet) mapping to substitution table.
-        self.add_to_substitutions(edit.matches(), rules_store);
+        self.add_to_substitutions(edit.p_match().matches(), rules_store);
       } else {
         // No more parents found for cleanup
         break;
@@ -333,14 +333,14 @@ impl SourceCodeUnit {
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let mut applied_edit =
-      self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser);
+      self._apply_edit(edit.p_match().range(), edit.replacement_string(), parser);
     // Check if the edit kind is "DELETE something"
     if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty() {
-      let deleted_at = edit.replacement_range().start_point.row;
+      let deleted_at = edit.p_match().range().start_point.row;
       if let Some(comment_range) = self.get_comment_at_line(
         deleted_at,
         self.piranha_arguments.cleanup_comments_buffer().clone(),
-        edit.replacement_range().start_byte,
+        edit.p_match().range().start_byte,
       ) {
         debug!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser);
@@ -585,8 +585,8 @@ impl SourceCodeUnit {
       .get_matches(rule.clone(), rule_store, node, recursive)
       .first()
       .map(|p_match| {
-        let replacement = substitute_tags(rule.replace(), p_match.matches(), false);
-        let edit = Edit::new(p_match.clone(), replacement, rule.name());
+        let replacement_string = substitute_tags(rule.replace(), p_match.matches(), false);
+        let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
         trace!("Rewrite found : {:#?}", edit);
         edit
       });
@@ -664,9 +664,10 @@ impl SourceCodeUnit {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-      let query_str = &constraint.matcher(substitutions);
+
+      let matcher_query_str = substitute_tags(constraint.matcher().to_string(), substitutions, true);
       if let Some(p_match) =
-        parent.get_match_for_query(&self.code(), rule_store.query(query_str), false)
+        parent.get_match_for_query(&self.code(), rule_store.query(&matcher_query_str), false)
       {
         matched_matcher = true;
         let scope_node = get_node_for_range(

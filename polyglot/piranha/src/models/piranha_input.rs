@@ -1,6 +1,11 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 
-use super::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
+use super::{
+  default_configs::default_name_of_piranha_argument_toml,
+  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+};
 
 pub enum PiranhaInput {
   CommandLineInput,
@@ -27,7 +32,9 @@ impl From<PiranhaInput> for PiranhaArguments {
         .build()
         .unwrap(),
     };
-    let piranha_argument = PiranhaArguments::new(input_opts.get_path_to_piranha_arguments_toml());
+    let path_to_toml = PathBuf::from(input_opts.path_to_configurations())
+      .join(default_name_of_piranha_argument_toml());
+    let piranha_argument = PiranhaArguments::new(path_to_toml);
     return input_opts.merge(piranha_argument);
   }
 }

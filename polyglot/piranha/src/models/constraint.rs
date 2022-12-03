@@ -11,33 +11,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::HashMap;
-
+use getset::Getters;
 use serde_derive::Deserialize;
 
-use crate::utilities::tree_sitter_utilities::{
-  substitute_tags
-};
-
-
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters)]
 pub(crate) struct Constraint {
   /// Scope in which the constraint query has to be applied
+  #[get = "pub"]
   matcher: String,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
+  #[get = "pub"]
   queries: Vec<String>,
-}
-
-impl Constraint {
-  pub(crate) fn queries(&self) -> &[String] {
-    &self.queries
-  }
-
-  pub(crate) fn matcher(&self, substitutions: &HashMap<String, String>) -> String {
-    substitute_tags(String::from(&self.matcher), substitutions, true)
-  }
-
-  
 }
 
 impl Constraint {

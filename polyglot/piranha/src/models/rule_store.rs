@@ -67,13 +67,11 @@ impl RuleStore {
     let rule_graph = RuleGraph::new(&edges, &rules);
     let mut rule_store = RuleStore {
       rule_graph,
-      rule_query_cache: HashMap::new(),
       rules_by_name: rules.iter().map(|r| (r.name(), r.clone())).collect(),
-      global_rules: vec![],
       scopes,
       piranha_args: args.clone(),
-      global_tags: HashMap::new(),
       language: *args.piranha_language().language(),
+      ..Default::default()
     };
 
     for (_, rule) in rule_store.rules_by_name.clone() {
@@ -196,7 +194,7 @@ impl Default for RuleStore {
       rules_by_name: HashMap::default(),
       global_rules: Vec::default(),
       piranha_args: PiranhaArgumentsBuilder::default().build().unwrap(),
-      scopes:Vec::default(),
+      scopes: Vec::default(),
       global_tags: HashMap::default(),
       language: *PiranhaLanguage::default().language(),
     }

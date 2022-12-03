@@ -13,24 +13,22 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use clap::Parser;
 
-use crate::utilities::read_toml;
-use derive_builder::Builder;
-use getset::{CopyGetters, Getters};
-use serde_derive::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
-
 use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_input_substitutions, default_languages,
-    default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
-    default_path_to_code_base, default_path_to_configurations, default_path_to_output_summaries,
-    default_piranha_language, default_substitutions,
+    default_number_of_ancestors_in_parent_scope, default_path_to_code_base,
+    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
+    default_substitutions,
   },
   language::PiranhaLanguage,
 };
-
+use crate::utilities::read_toml;
+use derive_builder::Builder;
+use getset::{CopyGetters, Getters};
+use serde_derive::Deserialize;
+use std::{collections::HashMap, path::PathBuf};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags.
 #[derive(Deserialize, Clone, Builder, Getters, CopyGetters, Debug, Parser, Default)]
@@ -143,11 +141,6 @@ impl PiranhaArguments {
     self.language[0].clone()
   }
 
-  pub(crate) fn get_path_to_piranha_arguments_toml(&self) -> PathBuf {
-    PathBuf::from(self.path_to_configurations.to_string())
-      .join(default_name_of_piranha_argument_toml())
-  }
-
   pub(crate) fn new(path_to_piranha_arguments_toml: PathBuf) -> Self {
     let args: PiranhaArguments = read_toml(&path_to_piranha_arguments_toml, false);
     let input_substitutions = args.substitutions();
@@ -160,6 +153,7 @@ impl PiranhaArguments {
     args.merge(derived_args)
   }
 
+  // Returns non-default valued item when possible
   fn _merge<T: Clone + std::cmp::PartialEq>(x: T, y: T, default: T) -> T {
     if x != default {
       x.clone()
@@ -196,7 +190,6 @@ impl PiranhaArguments {
         default_path_to_output_summaries(),
       ),
       language: Self::_merge(self.language.clone(), other.language, default_languages()),
-
       piranha_language: Self::_merge(
         self.piranha_language.clone(),
         other.piranha_language,
@@ -235,10 +228,4 @@ impl PiranhaArguments {
       dry_run: Self::_merge(self.dry_run, other.dry_run, default_dry_run()),
     }
   }
-}
-
-
-pub trait Merge {
-  /// Merge another object into this object.
-  fn merge(&mut self, other: Self, default: Self);
 }

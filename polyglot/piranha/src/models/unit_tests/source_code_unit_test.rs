@@ -86,7 +86,7 @@ fn test_apply_edit_positive() {
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(49, 78, 3, 9, 3, 38), String::new()),
+    &Edit::from(range(49, 78, 3, 9, 3, 38)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -114,7 +114,7 @@ fn test_apply_edit_negative() {
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(1000, 2000, 0, 0, 0, 0), String::new()),
+    &Edit::from(range(1000, 2000, 0, 0, 0, 0)),
     &mut parser,
   );
 }
@@ -136,7 +136,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(37, 47, 2, 26, 2, 36), String::new()),
+    &Edit::from(range(37, 47, 2, 26, 2, 36)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -164,7 +164,7 @@ fn test_apply_edit_comma_handling_via_regex() {
   let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(59, 75, 3, 23, 3, 41), String::new()),
+    &Edit::from(range(59, 75, 3, 23, 3, 41)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
