@@ -1,3 +1,5 @@
+use crate::models::language::PiranhaLanguage;
+
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
 
@@ -15,7 +17,6 @@ use {
   crate::{
     models::{rule_store::RuleStore, source_code_unit::SourceCodeUnit},
     utilities::eq_without_whitespace,
-    utilities::tree_sitter_utilities::get_parser,
   },
   std::{collections::HashMap, path::PathBuf},
 };
@@ -97,7 +98,7 @@ fn test_get_scope_query_positive() {
     }";
   
   let mut rule_store =  _get_rule_store();
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -107,8 +108,7 @@ fn test_get_scope_query_positive() {
     rule_store.piranha_args(),
   );
 
-  let scope_query_method = ScopeGenerator::get_scope_query(
-    source_code_unit.clone(),
+  let scope_query_method = source_code_unit.get_scope_query(
     "Method",
     133,
     134,
@@ -136,7 +136,7 @@ fn test_get_scope_query_positive() {
   ));
 
   let scope_query_class =
-    ScopeGenerator::get_scope_query(source_code_unit, "Class", 133, 134, &mut rule_store);
+  source_code_unit.get_scope_query("Class", 133, 134, &mut rule_store);
   assert!(eq_without_whitespace(
     scope_query_class.as_str(),
     "(
@@ -160,7 +160,7 @@ fn test_get_scope_query_negative() {
       }
     }";
   let mut rule_store = _get_rule_store();
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -170,5 +170,5 @@ fn test_get_scope_query_negative() {
     rule_store.piranha_args(),
   );
 
-  let _ = ScopeGenerator::get_scope_query(source_code_unit, "Method", 9, 10, &mut rule_store);
+  let _ = source_code_unit.get_scope_query("Method", 9, 10, &mut rule_store);
 }

@@ -27,13 +27,13 @@ use crate::{
   models::rule_store::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
     get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
-    PiranhaHelpers, TreeSitterHelpers,
+    PiranhaHelpers,
   },
 };
 
 use super::{
-  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule::Rule,
-  rule_store::RuleStore, scopes::ScopeGenerator,
+  constraint::Constraint, edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
+  rule::Rule, rule_store::RuleStore,
 };
 use getset::{CopyGetters, Getters, MutGetters};
 // Maintains the updated source code content and AST of the file
@@ -134,7 +134,7 @@ impl SourceCodeUnit {
         query_again = true;
 
         // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit.matches(), rule_store);
+        self.add_to_substitutions(edit.p_match().matches(), rule_store);
 
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
@@ -243,9 +243,9 @@ impl SourceCodeUnit {
         // Apply the matched rule to the parent
         let applied_edit = self.apply_edit(&edit, parser);
         current_replace_range = get_replace_range(applied_edit);
-        current_rule = edit.matched_rule();
+        current_rule = edit.matched_rule().to_string();
         // Add the (tag, code_snippet) mapping to substitution table.
-        self.add_to_substitutions(edit.matches(), rules_store);
+        self.add_to_substitutions(edit.p_match().matches(), rules_store);
       } else {
         // No more parents found for cleanup
         break;
@@ -267,8 +267,7 @@ impl SourceCodeUnit {
       // Scope level is not "PArent" or "Global"
       if ![PARENT, GLOBAL].contains(&scope_level.as_str()) {
         for rule in rules {
-          let scope_query = ScopeGenerator::get_scope_query(
-            self.clone(),
+          let scope_query = self.get_scope_query(
             scope_level,
             current_match_range.start_byte,
             current_match_range.end_byte,
@@ -334,14 +333,14 @@ impl SourceCodeUnit {
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let mut applied_edit =
-      self._apply_edit(edit.replacement_range(), edit.replacement_string(), parser);
+      self._apply_edit(edit.p_match().range(), edit.replacement_string(), parser);
     // Check if the edit kind is "DELETE something"
     if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty() {
-      let deleted_at = edit.replacement_range().start_point.row;
+      let deleted_at = edit.p_match().range().start_point.row;
       if let Some(comment_range) = self.get_comment_at_line(
         deleted_at,
         self.piranha_arguments.cleanup_comments_buffer().clone(),
-        edit.replacement_range().start_byte,
+        edit.p_match().range().start_byte,
       ) {
         debug!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser);
@@ -379,8 +378,8 @@ impl SourceCodeUnit {
         relevant_nodes_found = true;
         let is_comment: bool = self
           .piranha_arguments
-          .language_name()
-          .is_comment(node.kind());
+          .piranha_language()
+          .is_comment(node.kind().to_string());
         relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
         if is_comment {
           comment_range = Some(node.range());
@@ -515,8 +514,8 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope =
-      *rules_store.get_number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope  =
+      *rules_store.piranha_args().number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
       "\n{}",
@@ -567,7 +566,7 @@ impl SourceCodeUnit {
         p_match.range().end_byte,
       );
 
-      if matched_node.is_satisfied(&self, &rule, p_match.matches(), rule_store) {
+      if self.is_satisfied(matched_node, &rule, p_match.matches(), rule_store) {
         trace!("Found match {:#?}", p_match);
         output.push(p_match);
       }
@@ -586,26 +585,50 @@ impl SourceCodeUnit {
       .get_matches(rule.clone(), rule_store, node, recursive)
       .first()
       .map(|p_match| {
-        let replacement = substitute_tags(rule.replace(), p_match.matches(), false);
-        let edit = Edit::new(p_match.clone(), replacement, rule.name());
+        let replacement_string = substitute_tags(rule.replace(), p_match.matches(), false);
+        let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
         trace!("Rewrite found : {:#?}", edit);
         edit
       });
   }
-}
 
-pub(crate) trait SatisfiesConstraint {
-  // / Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-  fn is_satisfied(
-    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
-    rule_store: &mut RuleStore,
-  ) -> bool;
-}
+  /// Generate a tree-sitter based query representing the scope of the previous edit.
+  /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
+  pub(crate) fn get_scope_query(
+    &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
+  ) -> String {
+    let root_node = self.root_node();
+    let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
+    // Get the scope matchers for `scope_level` from the `scope_config.toml`.
+    let scope_matchers = rules_store.get_scope_query_generators(scope_level);
 
-/// Checks if the given rule satisfies the constraint of the rule, under the substitutions obtained upon matching `rule.query`
-impl SatisfiesConstraint for Node<'_> {
+    // Match the `scope_matcher.matcher` to the parent
+    loop {
+      trace!(
+        "Getting scope {} for node kind {}",
+        scope_level,
+        changed_node.kind()
+      );
+      for m in &scope_matchers {
+        if let Some(p_match) =
+          changed_node.get_match_for_query(&self.code(), rules_store.query(&m.matcher()), false)
+        {
+          // Generate the scope query for the specific context by substituting the
+          // the tags with code snippets appropriately in the `generator` query.
+          return substitute_tags(m.generator().to_string(), p_match.matches(), true);
+        }
+      }
+      if let Some(parent) = changed_node.parent() {
+        changed_node = parent;
+      } else {
+        break;
+      }
+    }
+    panic!("Could not create scope query for {:?}", scope_level);
+  }
+
   fn is_satisfied(
-    &self, source_code_unit: &SourceCodeUnit, rule: &Rule, substitutions: &HashMap<String, String>,
+    &self, node: Node, rule: &Rule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
     let updated_substitutions = &substitutions
@@ -614,13 +637,60 @@ impl SatisfiesConstraint for Node<'_> {
       .chain(rule_store.default_substitutions())
       .collect();
     rule.constraints().iter().all(|constraint| {
-      constraint.is_satisfied(
-        *self,
-        source_code_unit.clone(),
+      self._is_satisfied(
+        constraint.clone(),
+        node.clone(),
         rule_store,
         updated_substitutions,
       )
     })
+  }
+
+  /// Checks if the node satisfies the constraints.
+  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
+  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
+  /// i.e. finds scope for constraint.
+  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
+  fn _is_satisfied(
+    &self, constraint: Constraint, node: Node, rule_store: &mut RuleStore,
+    substitutions: &HashMap<String, String>,
+  ) -> bool {
+    let mut current_node = node;
+    // This ensures that the below while loop considers the current node too when checking for constraints.
+    // It does not make sense to check for constraint if current node is a "leaf" node.
+    if node.child_count() > 0 {
+      current_node = node.child(0).unwrap();
+    }
+    // Get the scope_node of the constraint (`scope.matcher`)
+    let mut matched_matcher = false;
+    while let Some(parent) = current_node.parent() {
+
+      let matcher_query_str = substitute_tags(constraint.matcher().to_string(), substitutions, true);
+      if let Some(p_match) =
+        parent.get_match_for_query(&self.code(), rule_store.query(&matcher_query_str), false)
+      {
+        matched_matcher = true;
+        let scope_node = get_node_for_range(
+          self.root_node(),
+          p_match.range().start_byte,
+          p_match.range().end_byte,
+        );
+        for query_with_holes in constraint.queries() {
+          let query_str = substitute_tags(query_with_holes.to_string(), substitutions, true);
+          let query = &rule_store.query(&query_str);
+          // If this query matches anywhere within the scope, return false.
+          if scope_node
+            .get_match_for_query(&self.code(), query, true)
+            .is_some()
+          {
+            return false;
+          }
+        }
+        break;
+      }
+      current_node = parent;
+    }
+    matched_matcher
   }
 }
 

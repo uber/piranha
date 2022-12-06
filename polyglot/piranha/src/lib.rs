@@ -11,13 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use config::CommandLineArguments;
 use models::{
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
   source_code_unit::SourceCodeUnit,
 };
 
-mod config;
 pub mod models;
 #[cfg(test)]
 mod tests;
@@ -32,7 +30,10 @@ use log::{debug, info};
 use regex::Regex;
 use tree_sitter::Parser;
 
-use crate::{models::rule_store::RuleStore, utilities::read_file};
+use crate::{
+  models::{rule_store::RuleStore, piranha_input::PiranhaInput},
+  utilities::read_file,
+};
 
 use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
@@ -49,13 +50,13 @@ use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, P
 pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
-  let configuration = PiranhaArguments::new(CommandLineArguments {
+  let args = PiranhaArguments::from(PiranhaInput::API {
     path_to_codebase,
     path_to_configurations,
-    path_to_output_summary: None,
     dry_run,
   });
-  execute_piranha(&configuration)
+  debug!("{:?}", args);
+  execute_piranha(&args)
 }
 
 #[pymodule]
@@ -131,12 +132,12 @@ impl FlagCleaner {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
-      .set_language(self.rule_store.language())
+      .set_language(*self.rule_store.language())
       .expect("Could not set the language for the parser.");
 
     // Keep looping until new `global` rules are added.
     loop {
-      let current_rules = self.rule_store.global_rules();
+      let current_rules = self.rule_store.global_rules().clone();
 
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
@@ -193,7 +194,7 @@ impl FlagCleaner {
           .extension()
           .and_then(|e| {
             e.to_str()
-              .filter(|x| x.eq(&self.rule_store.language_name()))
+              .filter(|x| x.eq(&self.rule_store.piranha_args().get_language()))
           })
           .is_some()
       })

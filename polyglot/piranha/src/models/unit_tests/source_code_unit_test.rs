@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use std::{
   fs::{self},
-  io,
+  io, collections::HashSet,
 };
 
 use itertools::Itertools;
@@ -20,12 +20,11 @@ use tempdir::TempDir;
 
 use tree_sitter::Parser;
 
-use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
+use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore, language::PiranhaLanguage};
 use {
   super::SourceCodeUnit,
   crate::{
     models::edit::Edit, utilities::eq_without_whitespace,
-    utilities::tree_sitter_utilities::get_parser,
   },
   std::{collections::HashMap, path::PathBuf},
   tree_sitter::Range,
@@ -39,7 +38,7 @@ impl SourceCodeUnit {
       &HashMap::new(),
       PathBuf::new().as_path(),
       &PiranhaArgumentsBuilder::default()
-        .language_name(language_name)
+        .language(vec![language_name])
         .build()
         .unwrap(),
     )
@@ -64,6 +63,10 @@ fn range(
   }
 }
 
+fn get_java_tree_sitter_language() -> PiranhaLanguage {
+   PiranhaLanguage::from("java")
+}
+
 /// Positive test of an edit being applied  given replacement range  and replacement string.
 #[test]
 fn test_apply_edit_positive() {
@@ -77,13 +80,13 @@ fn test_apply_edit_positive() {
       }
     }";
 
-  let language_name = String::from("java");
-  let mut parser = get_parser(language_name.to_string());
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
 
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(49, 78, 3, 9, 3, 38), String::new()),
+    &Edit::from(range(49, 78, 3, 9, 3, 38)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -106,12 +109,12 @@ fn test_apply_edit_negative() {
       }
     }";
 
-  let language_name = String::from("java");
-  let mut parser = get_parser(language_name.to_string());
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(1000, 2000, 0, 0, 0, 0), String::new()),
+    &Edit::from(range(1000, 2000, 0, 0, 0, 0)),
     &mut parser,
   );
 }
@@ -127,13 +130,13 @@ fn test_apply_edit_comma_handling_via_grammar() {
       }
     }";
 
-  let language_name = String::from("java");
-  let mut parser = get_parser(language_name.to_string());
+    let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
 
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(37, 47, 2, 26, 2, 36), String::new()),
+    &Edit::from(range(37, 47, 2, 26, 2, 36)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -154,14 +157,14 @@ fn test_apply_edit_comma_handling_via_regex() {
   }
 }";
 
-  let language_name = String::from("swift");
+  let swift = PiranhaLanguage::from("swift");
 
-  let mut parser = get_parser(language_name.to_string());
+  let mut parser = swift.parser();
 
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, language_name);
+  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::from(range(59, 75, 3, 23, 3, 41), String::new()),
+    &Edit::from(range(59, 75, 3, 23, 3, 41)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -173,13 +176,13 @@ fn execute_persist_in_temp_folder(
   source_code: &str, args: &PiranhaArguments,
   check_predicate: &dyn Fn(&TempDir) -> Result<bool, io::Error>,
 ) -> Result<bool, io::Error> {
-  let language_name = String::from("java");
-  let mut parser = get_parser(language_name.to_string());
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(&file_path.as_path(), source_code);
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language_name(language_name)
+    .language(vec![java.name().to_string()])
     .build()
     .unwrap();
   let source_code_unit = SourceCodeUnit::new(
@@ -305,3 +308,138 @@ fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
   assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
   Ok(())
 }
+
+#[test]
+fn test_satisfies_constraints_positive() {
+  let rule = Rule::new(
+    "test",
+    "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    "variable_declaration",
+    "",
+    HashSet::new(),
+    HashSet::from([Constraint::new(
+      String::from("(method_declaration) @md"),
+      vec![String::from(
+        "(
+         ((assignment_expression
+                         left: (_) @a.lhs
+                         right: (_) @a.rhs) @assignment)
+         (#eq? @a.lhs \"@variable_name\")
+         (#not-eq? @a.rhs \"@init\")
+       )",
+      )],
+    )]),
+  );
+  let source_code = "class Test {
+      pub void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = true;
+        if (isFlagTreated) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .language(vec![java.name().to_string()])
+    .build()
+    .unwrap();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(source_code_unit.is_satisfied(
+    node.clone(),
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+
+#[test]
+fn test_satisfies_constraints_negative() {
+  let rule = Rule::new(
+    "test",
+    "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    "variable_declaration",
+    "",
+    HashSet::new(),
+    HashSet::from([Constraint::new(
+      String::from("(method_declaration) @md"),
+      vec![String::from(
+        "(
+         ((assignment_expression
+                         left: (_) @a.lhs
+                         right: (_) @a.rhs) @assignment)
+         (#eq? @a.lhs \"@variable_name\")
+         (#not-eq? @a.rhs \"@init\")
+       )",
+      )],
+    )]),
+  );
+  let source_code = "class Test {
+      pub void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = false;
+        if (isFlagTreated) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_arguments = &PiranhaArgumentsBuilder::default()
+    .language(vec![java.name().to_string()])
+    .build()
+    .unwrap();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    piranha_arguments,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(!source_code_unit.is_satisfied(
+    node.clone(),
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+

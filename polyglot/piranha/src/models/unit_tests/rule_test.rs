@@ -10,13 +10,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
+use crate::models::language::PiranhaLanguage;
 use std::collections::HashSet;
-
 use {
   super::Rule,
-  crate::{
-    models::{constraint::Constraint, rule_store::RuleStore, source_code_unit::SourceCodeUnit},
-    utilities::tree_sitter_utilities::get_parser,
+  crate::models::{
+    constraint::Constraint, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
   },
   std::collections::HashMap,
   std::path::PathBuf,
@@ -83,7 +82,7 @@ fn test_get_edit_positive_recursive() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -130,7 +129,7 @@ fn test_get_edit_negative_recursive() {
         }";
 
   let mut rule_store = RuleStore::default();
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -170,7 +169,7 @@ fn test_get_edit_for_context_positive() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -210,7 +209,7 @@ fn test_get_edit_for_context_negative() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = get_parser(String::from("java"));
+  let mut parser = PiranhaLanguage::from("java").parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
