@@ -5,9 +5,10 @@ use tree_sitter::{Parser, Query};
 use crate::utilities::parse_toml;
 
 use super::{
+  default_configs::default_language,
   outgoing_edges::Edges,
   rule::Rules,
-  scopes::{ScopeConfig, ScopeGenerator}, default_configs::default_language,
+  scopes::{ScopeConfig, ScopeGenerator},
 };
 
 #[derive(Debug, Clone, Getters, PartialEq)]
@@ -40,6 +41,12 @@ pub enum SupportedLanguage {
   Python,
 }
 
+impl Default for SupportedLanguage {
+  fn default() -> Self {
+    SupportedLanguage::Java
+  }
+}
+
 impl PiranhaLanguage {
   pub fn is_comment(&self, kind: String) -> bool {
     self.comment_nodes().contains(&kind)
@@ -68,14 +75,18 @@ impl PiranhaLanguage {
 
 impl Default for PiranhaLanguage {
   fn default() -> Self {
-    Self {
+    let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
+    let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
+    PiranhaLanguage {
       name: default_language(),
-      supported_language: SupportedLanguage::Java,
+      supported_language: SupportedLanguage::default(),
       language: tree_sitter_java::language(),
-      rules: None,
-      edges: None,
-      scopes: vec![],
-      comment_nodes: vec![],
+      rules: Some(rules),
+      edges: Some(edges),
+      scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/java/scope_config.toml"))
+        .scopes()
+        .to_vec(),
+      comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
     }
   }
 }
@@ -83,28 +94,15 @@ impl Default for PiranhaLanguage {
 impl From<&str> for PiranhaLanguage {
   fn from(language: &str) -> Self {
     match language {
-      "java" => {
-        let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
-        let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
-        PiranhaLanguage {
-          name: language.to_string(),
-          supported_language: SupportedLanguage::Java,
-          language: tree_sitter_java::language(),
-          rules: Some(rules),
-          edges: Some(edges),
-          scopes: parse_toml::<ScopeConfig>(include_str!(
-            "../cleanup_rules/java/scope_config.toml"
-          ))
-          .scopes()
-          .to_vec(),
-          comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
-        }
-      }
+      "java" => PiranhaLanguage::default(),
       "go" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Go,
         language: tree_sitter_go::language(),
-        ..Default::default()
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
       },
       "kt" => {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
@@ -125,7 +123,10 @@ impl From<&str> for PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Python,
         language: tree_sitter_python::language(),
-        ..Default::default()
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
       },
       "swift" => PiranhaLanguage {
         name: language.to_string(),
@@ -135,25 +136,35 @@ impl From<&str> for PiranhaLanguage {
           .scopes()
           .to_vec(),
         comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
-        ..Default::default()
+        rules: None,
+        edges: None,
       },
       "strings" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Strings,
         language: tree_sitter_strings::language(),
-        ..Default::default()
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
       },
       "ts" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Ts,
         language: tree_sitter_typescript::language_typescript(),
-        ..Default::default()
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
       },
       "tsx" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Tsx,
         language: tree_sitter_typescript::language_tsx(),
-        ..Default::default()
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
       },
       _ => panic!("Language not supported"),
     }
