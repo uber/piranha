@@ -402,47 +402,6 @@ replace_node = "post"
 # ]
 # making `left` and `right` options could lead to `(identifier) != (identifier)`
 
-# Parent matches the current node and up to FOUR nodes above.
-# This rule is a best attempt to remove an assignment that is not reused later.
-[[rules]]
-name = "delete_parent_assignment"
-query = """
-(
-    [
-        (short_var_declaration
-            left: (expression_list
-                (identifier) @identifier
-            )
-        ) @assignment
-        (var_declaration
-            (var_spec
-                name: (identifier) @identifier
-            )
-        ) @assignment
-    ]
-)
-"""
-replace = ""
-replace_node = "assignment"
-
-# The enclosing function/method-declaration should not contain another reference to the variable identifier
-[[rules.constraints]]
-matcher = """
-(
-    ([
-        (function_declaration)
-        (method_declaration)
-    ]) @fm_declaration
-)
-"""
-queries = [
-"""
-(
-    (identifier) @_id1
-    (#eq? @_id1 "@identifier")
-)
-""",
-]
 
 [[rules]]
 name = "delete_variable_declaration"
