@@ -107,7 +107,7 @@ query = """
     (binary_expression
         left: [(false) (parenthesized_expression (false))]
         operator : "&&"
-        right : (_)* @rhs
+        right : (_) @rhs
     ) @binary_expression
 )
 """
@@ -125,7 +125,7 @@ groups = ["boolean_expression_simplify"]
 query = """
 (
     (binary_expression
-        left : (_)* @lhs
+        left : (_) @lhs
         operator : "&&"
         right: [(false) (parenthesized_expression (false))]
     ) @binary_expression
@@ -145,7 +145,7 @@ name = "simplify_something_or_true"
 query = """
 (
     (binary_expression
-        left : (_)* @lhs
+        left : (_) @lhs
         operator:"||"
         right: [(true) (parenthesized_expression (true))]
     ) @binary_expression
@@ -167,7 +167,7 @@ query = """
     (binary_expression
         left : [(true) (parenthesized_expression (true))]
         operator:"||"
-        right: (_)* @rhs
+        right: (_) @rhs
     ) @binary_expression
 )
 """
@@ -185,7 +185,7 @@ name = "simplify_something_or_false"
 query = """
 (
     (binary_expression
-        left : (_)* @lhs
+        left : (_) @lhs
         operator:"||"
         right: [(false) (parenthesized_expression (false))]
     ) @binary_expression
@@ -207,7 +207,7 @@ query = """
     (binary_expression
         left : [(false) (parenthesized_expression (false))]
         operator:"||"
-        right: (_)* @rhs
+        right: (_) @rhs
     )
 @binary_expression)"""
 replace = "@rhs"
