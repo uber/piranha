@@ -99,14 +99,20 @@ impl From<&str> for PiranhaLanguage {
           comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
         }
       }
-      GO => PiranhaLanguage {
-        name: language.to_string(),
-        supported_language: SupportedLanguage::Go,
-        language: tree_sitter_go::language(),
-        rules: None,
-        edges: None,
-        scopes: vec![],
-        comment_nodes: vec![],
+      GO => {
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/go/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/go/edges.toml"));
+        PiranhaLanguage {
+          name: language.to_string(),
+          supported_language: SupportedLanguage::Go,
+          language: tree_sitter_go::language(),
+          rules: Some(rules),
+          edges: Some(edges),
+          scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/go/scope_config.toml"))
+            .scopes()
+            .to_vec(),
+          comment_nodes: vec!["comment".to_string()],
+        }
       },
       KOTLIN => {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
