@@ -23,7 +23,7 @@ pub(crate) struct RuleGraph(HashMap<String, Vec<(String, String)>>);
 impl RuleGraph {
   // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
   pub(crate) fn new(edges: &Vec<OutgoingEdges>, all_rules: &Vec<Rule>) -> Self {
-    let (rules_by_name, rules_by_group) = Rule::group_rules(all_rules);
+    let (rules_by_name, rules_by_group) = Self::group_rules(all_rules);
 
     // A closure that gets the rules corresponding to the given rule name or group name.
     let get_rules_for_tag_or_name = |val: &String| {
@@ -69,6 +69,22 @@ impl RuleGraph {
       edges += destinations.len();
     }
     (self.0.len(), edges)
+  }
+
+  /// Groups the rules based on the field `rule.groups`
+  /// Note: a rule can belong to more than one group.
+  pub(crate) fn group_rules(
+    rules: &Vec<Rule>,
+  ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
+    let mut rules_by_name = HashMap::new();
+    let mut rules_by_group = HashMap::new();
+    for rule in rules {
+      rules_by_name.insert(rule.name(), rule.clone());
+      for tag in rule.groups() {
+        rules_by_group.collect(tag.to_string(), rule.name());
+      }
+    }
+    (rules_by_name, rules_by_group)
   }
 }
 

@@ -17,7 +17,6 @@ use std::{
 };
 
 use colored::Colorize;
-use itertools::Itertools;
 use serde_derive::Deserialize;
 
 use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
@@ -35,43 +34,29 @@ pub(crate) struct Rules {
 
 #[derive(Deserialize, Debug, Clone)]
 #[serde(untagged)]
+#[doc = ""]
 pub(crate) enum Rule {
   Rewrite {
-    /// Name of the rule. (It is unique)
-    name: String,
-    /// Tree-sitter query as string
-    query: String,
-    /// The tag corresponding to the node to be replaced
-    replace_node: String,
-    /// Replacement pattern
-    replace: String,
-    /// Group(s) to which the rule belongs
-    groups: Option<HashSet<String>>,
-    /// Holes that need to be filled, in order to instantiate a rule
-    holes: Option<HashSet<String>>,
-    /// Additional constraints for matching the rule
-    constraints: Option<HashSet<Constraint>>,
-    /// Heuristics for identifying potential files containing occurrence of the rule.
-    grep_heuristics: Option<HashSet<String>>,
+    name: String,                             // Name of the rule. (It is unique)
+    query: String,                            // Tree-sitter query as string
+    replace_node: String,                     // The tag corresponding to the node to be replaced
+    replace: String,                          // Replacement pattern
+    groups: Option<HashSet<String>>,          // Group(s) to which the rule belongs
+    holes: Option<HashSet<String>>, // Holes that need to be filled, in order to instantiate a rule
+    constraints: Option<HashSet<Constraint>>, // Additional constraints for matching the rule
+    grep_heuristics: Option<HashSet<String>>, // Heuristics for identifying potential files containing occurrence of the rule.
   },
 
   MatchOnly {
-    /// Name of the rule. (It is unique)
     name: String,
-    /// Tree-sitter query as string
     query: String,
-    /// Group(s) to which the rule belongs
     groups: Option<HashSet<String>>,
-    /// Holes that need to be filled, in order to instantiate a rule
     holes: Option<HashSet<String>>,
-    /// Additional constraints for matching the rule
     constraints: Option<HashSet<Constraint>>,
-    /// Heuristics for identifying potential files containing occurrence of the rule.
     grep_heuristics: Option<HashSet<String>>,
   },
 
   Dummy {
-    /// Name of the rule. (It is unique)
     name: String,
   },
 }
@@ -87,8 +72,17 @@ impl Default for Rule {
 impl fmt::Display for Rule {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Rule::Rewrite { name, query, replace, .. } => {
-        write!(f, "Rewrite Rule: {}\n Query: {}\n Replace: {}", name, query, replace)
+      Rule::Rewrite {
+        name,
+        query,
+        replace,
+        ..
+      } => {
+        write!(
+          f,
+          "Rewrite Rule: {}\n Query: {}\n Replace: {}",
+          name, query, replace
+        )
       }
       Rule::MatchOnly { name, query, .. } => {
         write!(f, "Match Only Rule: {}\n Query: {}", name, query)
@@ -100,44 +94,28 @@ impl fmt::Display for Rule {
 
 impl PartialEq for Rule {
   fn eq(&self, other: &Self) -> bool {
-    match (self, other) {
-      (
-        Self::Rewrite {
-          name: l_name,
-          query: l_query,
-          replace_node: l_replace_node,
-          replace: l_replace,
-          ..
-        },
-        Self::Rewrite {
-          name: r_name,
-          query: r_query,
-          replace_node: r_replace_node,
-          replace: r_replace,
-          ..
-        },
-      ) => {
-        l_name == r_name
-          && l_query == r_query
-          && l_replace_node == r_replace_node
-          && l_replace == r_replace
-      }
+    self.name() == other.name()
+      && match (self, other) {
+        (
+          Self::Rewrite {
+            query: l_query,
+            replace_node: l_replace_node,
+            replace: l_replace,
+            ..
+          },
+          Self::Rewrite {
+            query: r_query,
+            replace_node: r_replace_node,
+            replace: r_replace,
+            ..
+          },
+        ) => l_query == r_query && l_replace_node == r_replace_node && l_replace == r_replace,
 
-      (
-        Self::MatchOnly {
-          name: l_name,
-          query: l_query,
-          ..
-        },
-        Self::MatchOnly {
-          name: r_name,
-          query: r_query,
-          ..
-        },
-      ) => l_name == r_name && l_query == r_query,
-      (Self::Dummy { name: l_name }, Self::Dummy { name: r_name }) => l_name == r_name,
-      _ => false,
-    }
+        (Self::MatchOnly { query: l_query, .. }, Self::MatchOnly { query: r_query, .. }) => {
+          l_query == r_query
+        }
+        _ => true,
+      }
   }
 }
 
@@ -226,22 +204,6 @@ impl Rule {
     }
   }
 
-  /// Groups the rules based on the field `rule.groups`
-  /// Note: a rule can belong to more than one group.
-  pub(crate) fn group_rules(
-    rules: &Vec<Rule>,
-  ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
-    let mut rules_by_name = HashMap::new();
-    let mut rules_by_group = HashMap::new();
-    for rule in rules {
-      rules_by_name.insert(rule.name(), rule.clone());
-      for tag in rule.groups() {
-        rules_by_group.collect(tag.to_string(), rule.name());
-      }
-    }
-    (rules_by_name, rules_by_group)
-  }
-
   /// Adds the rule to a new group - "SEED" if applicable.
   pub(crate) fn add_to_seed_rules_group(&mut self) {
     let mut grps = self.groups();
@@ -253,13 +215,6 @@ impl Rule {
       *groups = Some(grps);
     }
   }
-
-  // pub(crate) fn query(&self) -> String {
-  //   match &self {
-  //     Rule::Rewrite { query, .. } | Rule::MatchOnly { query, .. } => query.to_string(),
-  //     _ => panic!("No query pattern!"),
-  //   }
-  // }
 
   pub(crate) fn constraints(&self) -> HashSet<Constraint> {
     match &self {
@@ -301,17 +256,15 @@ impl Rule {
     }
   }
 
-  fn groups(&self) -> HashSet<String> {
-    if let Rule::MatchOnly {
-      groups: Some(cs), ..
-    }
-    | Rule::Rewrite {
-      groups: Some(cs), ..
-    } = &self
-    {
-      cs.clone()
-    } else {
-      HashSet::new()
+  pub(crate) fn groups(&self) -> HashSet<String> {
+    match &self {
+      Rule::MatchOnly {
+        groups: Some(cs), ..
+      }
+      | Rule::Rewrite {
+        groups: Some(cs), ..
+      } => cs.clone(),
+      _ => HashSet::new(),
     }
   }
 
@@ -337,12 +290,8 @@ impl Rule {
       replace_node: replace_node.to_string(),
       replace: replace.to_string(),
       groups: None,
-      holes: if holes.is_empty() { None } else { Some(holes) },
-      constraints: if constraints.is_empty() {
-        None
-      } else {
-        Some(constraints)
-      },
+      holes: Some(holes),
+      constraints: Some(constraints),
       grep_heuristics: None,
     }
   }
