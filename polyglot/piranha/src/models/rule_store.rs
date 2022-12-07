@@ -105,13 +105,10 @@ impl RuleStore {
   pub(crate) fn add_to_global_rules(
     &mut self, rule: &Rule, tag_captures: &HashMap<String, String>,
   ) {
-    if let Ok(mut r) = rule.try_instantiate(tag_captures) {
-      if !self.global_rules.iter().any(|r| {
-        r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
-      }) {
-        r.add_grep_heuristics_for_global_rules(tag_captures);
+    if let Ok(r) = rule.try_instantiate(tag_captures) {
+      if !self.global_rules.contains(&r){
         #[rustfmt::skip]
-        debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
+        debug!("{}", format!("Added Global Rule - \n {}", r).bright_blue());
         self.global_rules.push(r);
       }
     }
@@ -141,7 +138,7 @@ impl RuleStore {
     for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
       let to_rule_name = &self.rules_by_name[&to_rule];
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
-      if to_rule_name.is_dummy_rule() {
+      if let Rule::Dummy { .. } = to_rule_name {
         // Call this method recursively on the dummy node
         for (next_next_rules_scope, next_next_rules) in
           self.get_next(&to_rule_name.name(), tag_matches)

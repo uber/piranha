@@ -5,7 +5,7 @@ use tree_sitter::{Parser, Query};
 use crate::utilities::parse_toml;
 
 use super::{
-  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, STRINGS, SWIFT, TSX, TYPESCRIPT},
+  default_configs::{GO, JAVA, KOTLIN, PYTHON, STRINGS, SWIFT, TSX, TYPESCRIPT},
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
@@ -75,7 +75,7 @@ impl PiranhaLanguage {
 
 impl Default for PiranhaLanguage {
   fn default() -> Self {
-    PiranhaLanguage::from(default_language().as_str())
+    PiranhaLanguage::from(JAVA)
   }
 }
 

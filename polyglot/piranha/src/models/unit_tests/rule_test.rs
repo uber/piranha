@@ -33,10 +33,14 @@ fn test_rule_try_instantiate_positive() {
   ]);
   let instantiated_rule = rule.try_instantiate(&substitutions);
   assert!(instantiated_rule.is_ok());
-  assert_eq!(
-    instantiated_rule.ok().unwrap().query(),
-    "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
-  )
+  if let Rule::Rewrite { query, .. } = instantiated_rule.unwrap() {
+    assert_eq!(
+      query,
+      "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
+    );  
+  } else {
+    assert!(false);
+  }
 }
 
 /// Tests whether a valid rule can be is *not* instantiated given invalid substitutions.

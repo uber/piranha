@@ -128,7 +128,7 @@ impl SourceCodeUnit {
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
-    if !rule.is_match_only_rule() {
+    if let Rule::Rewrite { .. } = rule {
       if let Some(edit) = self.get_edit(rule.clone(), rule_store, scope_node, true) {
         self.rewrites_mut().push(edit.clone());
         query_again = true;
@@ -514,8 +514,9 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope  =
-      *rules_store.piranha_args().number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope = *rules_store
+      .piranha_args()
+      .number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
       "\n{}",
@@ -546,19 +547,22 @@ impl SourceCodeUnit {
   ) -> Vec<Match> {
     let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
-    let replace_node_tag = if rule.is_match_only_rule() || rule.is_dummy_rule() {
-      None
-    } else {
-      Some(rule.replace_node())
+    let replace_node_tag = match &rule {
+      Rule::Rewrite { replace_node, .. } => Some(replace_node.to_string()),
+      _ => None,
     };
-    let all_query_matches = node.get_all_matches_for_query(
-      self.code().to_string(),
-      rule_store.query(&rule.query()),
-      recursive,
-      replace_node_tag,
-    );
 
-    // Return the first match that satisfies constraint of the rule
+    let all_query_matches = match &rule {
+      Rule::Rewrite { query, .. } | Rule::MatchOnly { query, .. } => node
+        .get_all_matches_for_query(
+          self.code().to_string(),
+          rule_store.query(query),
+          recursive,
+          replace_node_tag,
+        ),
+      Rule::Dummy { .. } => vec![],
+    };
+
     for p_match in all_query_matches {
       let matched_node = get_node_for_range(
         self.root_node(),
@@ -580,15 +584,17 @@ impl SourceCodeUnit {
     &self, rule: Rule, rule_store: &mut RuleStore, node: Node, recursive: bool,
   ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
-
     return self
       .get_matches(rule.clone(), rule_store, node, recursive)
       .first()
-      .map(|p_match| {
-        let replacement_string = substitute_tags(rule.replace(), p_match.matches(), false);
-        let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
-        trace!("Rewrite found : {:#?}", edit);
-        edit
+      .and_then(|p_match| match rule {
+        Rule::Rewrite { name, replace, .. } => {
+          let replacement_string = substitute_tags(replace, p_match.matches(), false);
+          let edit = Edit::new(p_match.clone(), replacement_string, name);
+          trace!("Rewrite found : {:#?}", edit);
+          Some(edit)
+        }
+        _ => None,
       });
   }
 
@@ -664,8 +670,8 @@ impl SourceCodeUnit {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-
-      let matcher_query_str = substitute_tags(constraint.matcher().to_string(), substitutions, true);
+      let matcher_query_str =
+        substitute_tags(constraint.matcher().to_string(), substitutions, true);
       if let Some(p_match) =
         parent.get_match_for_query(&self.code(), rule_store.query(&matcher_query_str), false)
       {
