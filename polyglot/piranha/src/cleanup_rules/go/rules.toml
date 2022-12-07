@@ -354,9 +354,14 @@ query = """
 replace = "@nested.statements"
 replace_node = "nested.block"
 
+#####
+# Dummy rule to introduce a cycle for `delete_statement_after_return`
+[[rules]]
+name = "return_cleanup"
+
 # This rule is not deleting multiple statements after return.
-# Although `(((statement) "\\n"?)+ @post)` matches all post statements, replacing is only happening for the first one.
-# Thus, we are using a self-edge to keep removing statements.
+# Although `(((_) "\\n"?)+ @post)` matches all post statements, replacing is only happening for the first one.
+# Thus, we have a cycle between dummy rule `return_cleanup` and `delete_statement_after_return`
 #
 [[rules]]
 name = "delete_statement_after_return"
@@ -364,9 +369,9 @@ query = """
 (
     (block
         (statement_list
-            (((statement) "\\n"?)* @pre)
+            (((_) "\\n"?)* @pre)
             ((return_statement) @r)
-            (((statement) "\\n"?)+ @post)
+            (((_) "\\n"?)+ @post)
         ) @stmt_list
     ) @b
 )
