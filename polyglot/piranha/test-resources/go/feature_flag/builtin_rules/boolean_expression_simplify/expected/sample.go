@@ -61,6 +61,12 @@ func simplify_true_or_something(something bool) {
 	fmt.Println("only true 2")
 	fmt.Println("only true 3")
 	fmt.Println("only true 4")
+	// selector_expression: simplify
+	fmt.Println("only true 5")
+	// does not simplify binary_expression; left call may contain side-effects
+	if exp.BoolValue("random") || true {
+		fmt.Println("keep")
+	}
 }
 
 // simplify `!true` and `!false` and also:
