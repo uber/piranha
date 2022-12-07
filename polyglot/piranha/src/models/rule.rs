@@ -19,7 +19,7 @@ use std::{
 use colored::Colorize;
 use serde_derive::Deserialize;
 
-use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
+use crate::utilities::tree_sitter_utilities::substitute_tags;
 
 use super::constraint::Constraint;
 
@@ -36,12 +36,12 @@ pub(crate) struct Rules {
 #[serde(untagged, deny_unknown_fields)]
 pub(crate) enum Rule {
   Rewrite {
-    name: String,                             // Name of the rule. (It is unique)
-    query: String,                            // Tree-sitter query as string
-    replace_node: String,                     // The tag corresponding to the node to be replaced
-    replace: String,                          // Replacement pattern
+    name: String,         // Name of the rule. (It is unique)
+    query: String,        // Tree-sitter query as string
+    replace_node: String, // The tag corresponding to the node to be replaced
+    replace: String,      // Replacement pattern
     #[serde(default)]
-    groups: HashSet<String>,          // Group(s) to which the rule belongs
+    groups: HashSet<String>, // Group(s) to which the rule belongs
     #[serde(default)]
     holes: HashSet<String>, // Holes that need to be filled, in order to instantiate a rule
     #[serde(default)]
@@ -140,6 +140,16 @@ impl Rule {
       panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
   }
 
+  fn _get_grep_heuristics(&self, substitutions: &HashMap<String, String>) -> HashSet<String> {
+    HashSet::from_iter(
+      self
+        ._get_substitution_for_holes(substitutions)
+        .unwrap()
+        .values()
+        .map(|x| x.to_string()),
+    )
+  }
+
   fn _get_substitution_for_holes(
     &self, substitutions: &HashMap<String, String>,
   ) -> Result<HashMap<String, String>, String> {
@@ -175,13 +185,7 @@ impl Rule {
       substitute_tags(value.to_string(), substitutions, is_tree_sitter_query)
     };
 
-    let gh = HashSet::from_iter(
-      self
-        ._get_substitution_for_holes(substitutions)
-        .unwrap()
-        .values()
-        .map(|x| x.to_string()),
-    );
+    let gh = self._get_grep_heuristics(substitutions);
 
     match &self {
       r @ Rule::Rewrite {
@@ -225,14 +229,9 @@ impl Rule {
 
   pub(crate) fn constraints(&self) -> HashSet<Constraint> {
     match &self {
-      Rule::MatchOnly {
-        constraints,
-        ..
+      Rule::MatchOnly { constraints, .. } | Rule::Rewrite { constraints, .. } => {
+        constraints.clone()
       }
-      | Rule::Rewrite {
-        constraints,
-        ..
-      } => constraints.clone(),
       _ => HashSet::new(),
     }
   }
@@ -240,12 +239,10 @@ impl Rule {
   pub(crate) fn grep_heuristics(&self) -> HashSet<String> {
     match &self {
       Rule::MatchOnly {
-        grep_heuristics,
-        ..
+        grep_heuristics, ..
       }
       | Rule::Rewrite {
-        grep_heuristics,
-        ..
+        grep_heuristics, ..
       } => grep_heuristics.clone(),
       _ => HashSet::new(),
     }
@@ -253,24 +250,14 @@ impl Rule {
 
   pub(crate) fn holes(&self) -> HashSet<String> {
     match &self.clone() {
-      Rule::MatchOnly {
-        holes, ..
-      }
-      | Rule::Rewrite {
-        holes, ..
-      } => holes.clone(),
+      Rule::MatchOnly { holes, .. } | Rule::Rewrite { holes, .. } => holes.clone(),
       _ => HashSet::new(),
     }
   }
 
   pub(crate) fn groups(&self) -> HashSet<String> {
     match &self {
-      Rule::MatchOnly {
-        groups,  ..
-      }
-      | Rule::Rewrite {
-        groups, ..
-      } => groups.clone(),
+      Rule::MatchOnly { groups, .. } | Rule::Rewrite { groups, .. } => groups.clone(),
       _ => HashSet::new(),
     }
   }
@@ -282,6 +269,14 @@ impl Rule {
       Rule::Rewrite { name, .. } => name,
     }
     .to_string()
+  }
+
+  pub(crate) fn is_rewrite(&self) -> bool {
+    matches!(self, Self::Rewrite { .. })
+  }
+
+  pub(crate) fn is_dummy(&self) -> bool {
+    matches!(self, Self::Dummy { .. })
   }
 }
 

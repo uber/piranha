@@ -128,7 +128,7 @@ impl SourceCodeUnit {
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
-    if let Rule::Rewrite { .. } = rule {
+    if rule.is_rewrite() {
       if let Some(edit) = self.get_edit(rule.clone(), rule_store, scope_node, true) {
         self.rewrites_mut().push(edit.clone());
         query_again = true;
@@ -560,7 +560,7 @@ impl SourceCodeUnit {
           recursive,
           replace_node_tag,
         ),
-      Rule::Dummy { .. } => vec![],
+      _ => vec![],
     };
 
     for p_match in all_query_matches {
