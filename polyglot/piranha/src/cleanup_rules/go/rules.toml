@@ -497,14 +497,17 @@ queries = [
     [
         (short_var_declaration
             left: (expression_list
-                .
                 (identifier) @vn
-                .
             )
         ) @assignment
         (var_declaration
             (var_spec
                 name: (identifier) @vn
+            )
+        ) @assignment
+        (assignment_statement
+            left: (expression_list
+                (identifier) @vn
             )
         ) @assignment
     ]
