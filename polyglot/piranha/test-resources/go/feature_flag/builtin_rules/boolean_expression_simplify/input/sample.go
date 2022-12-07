@@ -85,6 +85,18 @@ func simplify_false_and_something(something bool) {
 	} else {
 		fmt.Println("else 4")
 	}
+	// selector_expression: simplify
+	if exp.BoolConst && exp.BoolValue("false") {
+		fmt.Println("nope")
+	} else {
+		fmt.Println("else 5")
+	}
+	// does not simplify binary_expression; left call may contain side-effects
+	if exp.BoolValue("random") && exp.BoolValue("false") {
+		fmt.Println("keep 1")
+	} else {
+		fmt.Println("keep 2")
+	}
 }
 
 // simplify `!true` and `!false` and also:

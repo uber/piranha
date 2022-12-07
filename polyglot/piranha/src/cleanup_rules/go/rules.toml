@@ -125,7 +125,12 @@ groups = ["boolean_expression_simplify"]
 query = """
 (
     (binary_expression
-        left : (_) @lhs
+        left : ([
+                (identifier)
+                (true)
+                (false)
+                (selector_expression)
+            ]) @lhs
         operator : "&&"
         right: [(false) (parenthesized_expression (false))]
     ) @binary_expression
@@ -146,8 +151,7 @@ name = "simplify_something_or_true"
 query = """
 (
     (binary_expression
-        left :
-            ([
+        left : ([
                 (identifier)
                 (true)
                 (false)
