@@ -128,43 +128,45 @@ impl SourceCodeUnit {
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
-    if rule.is_rewrite() {
-      if let Some(edit) = self.get_edit(rule.clone(), rule_store, scope_node, true) {
-        self.rewrites_mut().push(edit.clone());
-        query_again = true;
 
-        // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit.p_match().matches(), rule_store);
+    match rule {
+      r @ Rule::Rewrite { .. } => {
+        if let Some(edit) = self.get_edit(r.clone(), rule_store, scope_node, true) {
+          self.rewrites_mut().push(edit.clone());
+          query_again = true;
+          // Add all the (code_snippet, tag) mapping to the substitution table.
+          self.add_to_substitutions(edit.p_match().matches(), rule_store);
 
-        // Apply edit_1
-        let applied_ts_edit = self.apply_edit(&edit, parser);
+          // Apply edit_1
+          let applied_ts_edit = self.apply_edit(&edit, parser);
 
-        self.propagate(
-          get_replace_range(applied_ts_edit),
-          rule.clone(),
-          rule_store,
-          parser,
-        );
+          self.propagate(
+            get_replace_range(applied_ts_edit),
+            r.clone(),
+            rule_store,
+            parser,
+          );
+        }
       }
-    }
-    // When rule is a "match-only" rule :
-    // Get all the matches
-    // Add mappings to the substitution
-    // Propagate each match. Note that,  we pass a identity edit (where old range == new range) in to the propagate logic.
-    // The next edit will be applied relative to the identity edit.
-    else {
-      for m in self.get_matches(rule.clone(), rule_store, scope_node, true) {
-        self.matches_mut().push((rule.name(), m.clone()));
+      // When rule is a "match-only" rule :
+      // Get all the matches
+      // Add mappings to the substitution
+      // Propagate each match. Note that,  we pass a identity edit (where old range == new range) in to the propagate logic.
+      // The next edit will be applied relative to the identity edit.
+      r @ _ => {
+        for m in self.get_matches(r.clone(), rule_store, scope_node, true) {
+          self.matches_mut().push((r.name(), m.clone()));
 
-        // In this scenario we pass the match and replace range as the range of the match `m`
-        // This is equivalent to propagating an identity rule
-        //  i.e. a rule that replaces the matched code with itself
-        // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
-        // By NOT invoking this we simulate the application of an identity rule
-        //
-        self.add_to_substitutions(m.matches(), rule_store);
+          // In this scenario we pass the match and replace range as the range of the match `m`
+          // This is equivalent to propagating an identity rule
+          //  i.e. a rule that replaces the matched code with itself
+          // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
+          // By NOT invoking this we simulate the application of an identity rule
+          //
+          self.add_to_substitutions(m.matches(), rule_store);
 
-        self.propagate(m.range(), rule.clone(), rule_store, parser);
+          self.propagate(m.range(), r.clone(), rule_store, parser);
+        }
       }
     }
     query_again

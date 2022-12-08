@@ -106,7 +106,7 @@ impl RuleStore {
     &mut self, rule: &Rule, tag_captures: &HashMap<String, String>,
   ) {
     if let Ok(r) = rule.try_instantiate(tag_captures) {
-      if !self.global_rules.contains(&r){
+      if !self.global_rules.contains(&r) {
         #[rustfmt::skip]
         debug!("{}", format!("Added Global Rule - \n {}", r).bright_blue());
         self.global_rules.push(r);
@@ -138,22 +138,25 @@ impl RuleStore {
     for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
       let to_rule_name = &self.rules_by_name[&to_rule];
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
-      if to_rule_name.is_dummy() {
-        // Call this method recursively on the dummy node
-        for (next_next_rules_scope, next_next_rules) in
-          self.get_next(&to_rule_name.name(), tag_matches)
-        {
-          for next_next_rule in next_next_rules {
-            // Group the next rules based on the scope
-            next_rules.collect(
-              String::from(&next_next_rules_scope),
-              next_next_rule.instantiate(tag_matches),
-            )
+      match to_rule_name {
+        Rule::Dummy { name } => {
+          // Call this method recursively on the dummy node
+          for (next_next_rules_scope, next_next_rules) in
+            self.get_next(&name, tag_matches)
+          {
+            for next_next_rule in next_next_rules {
+              // Group the next rules based on the scope
+              next_rules.collect(
+                String::from(&next_next_rules_scope),
+                next_next_rule.instantiate(tag_matches),
+              )
+            }
           }
         }
-      } else {
-        // Group the next rules based on the scope
-        next_rules.collect(String::from(&scope), to_rule_name.instantiate(tag_matches));
+        _ => {
+          // Group the next rules based on the scope
+          next_rules.collect(String::from(&scope), to_rule_name.instantiate(tag_matches));
+        }
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope

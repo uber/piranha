@@ -270,14 +270,6 @@ impl Rule {
     }
     .to_string()
   }
-
-  pub(crate) fn is_rewrite(&self) -> bool {
-    matches!(self, Self::Rewrite { .. })
-  }
-
-  pub(crate) fn is_dummy(&self) -> bool {
-    matches!(self, Self::Dummy { .. })
-  }
 }
 
 #[cfg(test)]
