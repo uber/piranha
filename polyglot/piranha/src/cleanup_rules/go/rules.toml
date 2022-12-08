@@ -368,11 +368,11 @@ replace_node = "nested.block"
 #####
 # Dummy rule to introduce a cycle for `delete_statement_after_return`
 [[rules]]
-name = "return_cleanup"
+name = "return_statement_cleanup"
 
 # This rule is not deleting multiple statements after return.
 # Although `(((_) "\\n"?)+ @post)` matches all post statements, replacing is only happening for the first one.
-# Thus, we have a cycle between dummy rule `return_cleanup` and `delete_statement_after_return`
+# Thus, we have a cycle between dummy rule `return_statement_cleanup` and `delete_statement_after_return`
 #
 [[rules]]
 name = "delete_statement_after_return"
