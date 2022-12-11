@@ -20,19 +20,19 @@ query = """
             field: (field_identifier) @func_id
         )
         arguments: (argument_list
-            (interpreted_string_literal) @arg_str_literal
+            (identifier) @arg_id
         )
     )
     (#eq? @func_id "BoolValue")
-    (#eq? @arg_str_literal "\\\"@stale_flag_name\\\"")
+    (#eq? @arg_id "@const_id")
 ) @call_exp
 """
 replace = "false"
 replace_node = "call_exp"
-holes = ["stale_flag_name"]
+holes = ["const_id"]
 
 [[rules]]
-name = "delete_const_str_literal"
+name = "find_const_str_literal"
 query = """
 (
 	(const_spec
@@ -44,18 +44,4 @@ query = """
    (#eq? @const_str_literal "\\"@stale_flag_name\\\"")
 )
 """
-replace = ""
-replace_node = "const_spec"
 holes = ["stale_flag_name"]
-
-[[rules]]
-name = "replace_identifier_with_str_literal"
-query = """
-(
-    (identifier) @id
-    (#eq? @id "@const_id")
-)
-"""
-replace = "\"@stale_flag_name\""
-replace_node = "id"
-holes = ["const_id", "stale_flag_name"]

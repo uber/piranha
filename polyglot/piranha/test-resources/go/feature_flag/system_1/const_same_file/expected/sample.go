@@ -3,7 +3,8 @@ package flag
 import "fmt"
 
 const (
-	normalFlag = "normalFlag"
+	staleFlagConst = "staleFlag"
+	normalFlag     = "normalFlag"
 )
 
 func a() {
@@ -16,7 +17,7 @@ func (c *Client) b() {
 		fmt.Println(err)
 	}
 
-	fmt.Println("staleFlag")
+	fmt.Println(staleFlagConst)
 }
 
 func (c *Client) c(enabled2 bool, enabled3 bool) {
