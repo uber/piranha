@@ -10,8 +10,23 @@
 # limitations under the License.
 
 [[rules]]
-name = "false_flag"
-groups = ["replace_expression_with_boolean_literal"]
+name = "find_const_str_literal"
+query = """
+(
+	(const_spec
+        name: (identifier) @const_id
+        value: (expression_list
+            (interpreted_string_literal) @const_str_literal
+        )
+    ) @const_spec
+   (#eq? @const_str_literal "\\"@stale_flag_name\\\"")
+)
+"""
+holes = ["stale_flag_name"]
+
+
+[[rules]]
+name = "update_feature_flag_api"
 query = """
 (
     (call_expression
@@ -27,21 +42,7 @@ query = """
     (#eq? @arg_id "@const_id")
 ) @call_exp
 """
-replace = "false"
+replace = "@treated"
 replace_node = "call_exp"
-holes = ["const_id"]
-
-[[rules]]
-name = "find_const_str_literal"
-query = """
-(
-	(const_spec
-        name: (identifier) @const_id
-        value: (expression_list
-            (interpreted_string_literal) @const_str_literal
-        )
-    ) @const_spec
-   (#eq? @const_str_literal "\\"@stale_flag_name\\\"")
-)
-"""
-holes = ["stale_flag_name"]
+groups = ["replace_expression_with_boolean_literal"]
+holes = ["const_id", "treated"]

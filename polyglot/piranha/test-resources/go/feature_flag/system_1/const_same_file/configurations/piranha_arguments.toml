@@ -12,4 +12,5 @@
 language = ["go"]
 substitutions = [
     ["stale_flag_name", "staleFlag"],
+    ["treated", "false"]
 ]
