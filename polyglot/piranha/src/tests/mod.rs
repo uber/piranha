@@ -42,29 +42,36 @@ fn initialize() {
   });
 }
 
+fn run_match_test_for_file(relative_path_to_tests:&str, file_name: &str, number_of_matches: usize) {
+  let path_to_configurations = format!("test-resources/{relative_path_to_tests}/configurations/");
+  let path_to_codebase = format!("test-resources/{relative_path_to_tests}/input/{file_name}");
+  _run_match_test(path_to_codebase, path_to_configurations, number_of_matches);
+}
+
 // Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
 // and checks if the number of matches == `number_of_matches`.
 fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
   let path_to_configurations = format!("test-resources/{relative_path_to_tests}/configurations/");
   let path_to_codebase = format!("test-resources/{relative_path_to_tests}/input/");
+  _run_match_test(path_to_codebase, path_to_configurations, number_of_matches);
+}
 
-  let piranha_input = PiranhaInput::API {
+fn _run_match_test(path_to_codebase: String, path_to_configurations: String, number_of_matches: usize) {
+    let piranha_input = PiranhaInput::API {
     path_to_codebase,
     path_to_configurations,
     dry_run: true,
-  };
-  let args = PiranhaArguments::from(piranha_input);
-  print!("{:?}", args);
-
-  let output_summaries = execute_piranha(&args);
-
-  assert_eq!(
+      };
+    let args = PiranhaArguments::from(piranha_input);
+    print!("{:?}", args);
+    let output_summaries = execute_piranha(&args);
+    assert_eq!(
     output_summaries
       .iter()
       .flat_map(|os| os.matches().iter())
       .count(),
     number_of_matches
-  );
+      );
 }
 
 // Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)

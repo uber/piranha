@@ -34,7 +34,7 @@ use std::{collections::HashMap, path::PathBuf};
 #[derive(Deserialize, Clone, Builder, Getters, CopyGetters, Debug, Parser, Default)]
 #[clap(name = "Piranha")]
 pub struct PiranhaArguments {
-  /// Path to source code folder.
+  /// Path to source code folder/file.
   #[get = "pub"]
   #[builder(default = "default_path_to_code_base()")]
   #[clap(short = 'c', long = "path_to_code_base")]
