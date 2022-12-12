@@ -87,7 +87,7 @@ impl From<&str> for PiranhaLanguage {
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
         Self {
           name: language.to_string(),
-          supported_language: SupportedLanguage::default(),
+          supported_language: SupportedLanguage::Java,
           language: tree_sitter_java::language(),
           rules: Some(rules),
           edges: Some(edges),
