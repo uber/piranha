@@ -183,6 +183,7 @@ impl FlagCleaner {
       .iter()
       .any(|x| x.holes().is_empty());
     let pattern = self.get_grep_heuristics();
+    
     let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
       // Walk over the entire code base
       .into_iter()
