@@ -5,7 +5,7 @@ use tree_sitter::{Parser, Query};
 use crate::utilities::parse_toml;
 
 use super::{
-  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, STRINGS, SWIFT, TSX, TYPESCRIPT},
+  default_configs::default_language,
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
@@ -75,31 +75,27 @@ impl PiranhaLanguage {
 
 impl Default for PiranhaLanguage {
   fn default() -> Self {
-    PiranhaLanguage::from(default_language().as_str())
+    let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
+    let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
+    PiranhaLanguage {
+      name: default_language(),
+      supported_language: SupportedLanguage::default(),
+      language: tree_sitter_java::language(),
+      rules: Some(rules),
+      edges: Some(edges),
+      scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/java/scope_config.toml"))
+        .scopes()
+        .to_vec(),
+      comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
+    }
   }
 }
 
 impl From<&str> for PiranhaLanguage {
   fn from(language: &str) -> Self {
     match language {
-      JAVA => {
-        let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
-        let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
-        Self {
-          name: language.to_string(),
-          supported_language: SupportedLanguage::default(),
-          language: tree_sitter_java::language(),
-          rules: Some(rules),
-          edges: Some(edges),
-          scopes: parse_toml::<ScopeConfig>(include_str!(
-            "../cleanup_rules/java/scope_config.toml"
-          ))
-          .scopes()
-          .to_vec(),
-          comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
-        }
-      }
-      GO => PiranhaLanguage {
+      "java" => PiranhaLanguage::default(),
+      "go" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Go,
         language: tree_sitter_go::language(),
@@ -108,7 +104,7 @@ impl From<&str> for PiranhaLanguage {
         scopes: vec![],
         comment_nodes: vec![],
       },
-      KOTLIN => {
+      "kt" => {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));
         PiranhaLanguage {
@@ -123,7 +119,7 @@ impl From<&str> for PiranhaLanguage {
           comment_nodes: vec!["comment".to_string()],
         }
       }
-      PYTHON => PiranhaLanguage {
+      "py" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Python,
         language: tree_sitter_python::language(),
@@ -132,7 +128,7 @@ impl From<&str> for PiranhaLanguage {
         scopes: vec![],
         comment_nodes: vec![],
       },
-      SWIFT => PiranhaLanguage {
+      "swift" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Swift,
         language: tree_sitter_swift::language(),
@@ -143,7 +139,7 @@ impl From<&str> for PiranhaLanguage {
         rules: None,
         edges: None,
       },
-      STRINGS => PiranhaLanguage {
+      "strings" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Strings,
         language: tree_sitter_strings::language(),
@@ -152,7 +148,7 @@ impl From<&str> for PiranhaLanguage {
         scopes: vec![],
         comment_nodes: vec![],
       },
-      TYPESCRIPT => PiranhaLanguage {
+      "ts" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Ts,
         language: tree_sitter_typescript::language_typescript(),
@@ -161,7 +157,7 @@ impl From<&str> for PiranhaLanguage {
         scopes: vec![],
         comment_nodes: vec![],
       },
-      TSX => PiranhaLanguage {
+      "tsx" => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Tsx,
         language: tree_sitter_typescript::language_tsx(),
