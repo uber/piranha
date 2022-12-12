@@ -11,9 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::default_configs::GO;
+
 use super::{initialize, run_match_test};
 
-static LANGUAGE: &str = "go";
+static LANGUAGE: &str = GO;
 
 #[test]
 fn test_go_match_only_go_expr_for_loop() {

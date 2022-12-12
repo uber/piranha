@@ -11,9 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::default_configs::SWIFT;
+
 use super::{initialize, run_rewrite_test};
 
-static LANGUAGE: &str = "swift";
+static LANGUAGE: &str = SWIFT;
 
 // Tests cascading file delete based on enum and type alias.
 // This scenario is "derived" from plugin cleanup.
