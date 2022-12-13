@@ -11,9 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::default_configs::TSX;
+
 use super::{initialize, run_match_test};
 
-static LANGUAGE: &str = "tsx";
+static LANGUAGE: &str = TSX;
 
 #[test]
 fn test_ts_match_only_find_fors() {

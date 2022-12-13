@@ -11,9 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::default_configs::TYPESCRIPT;
+
 use super::{initialize, run_match_test};
 
-static LANGUAGE: &str = "ts";
+static LANGUAGE: &str = TYPESCRIPT;
 
 #[test]
 fn test_ts_match_only_find_fors() {
