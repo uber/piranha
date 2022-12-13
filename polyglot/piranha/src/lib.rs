@@ -176,6 +176,8 @@ impl FlagCleaner {
     }
   }
 
+
+  /// Checks if any global rule has a hole
   fn any_global_rules_has_holes(&self) -> bool {
     self
       .rule_store
@@ -183,8 +185,6 @@ impl FlagCleaner {
       .iter()
       .any(|x| !x.holes().is_empty())
   }
-
-  // fn does_file_extension_match(dir_en)
 
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
@@ -212,6 +212,7 @@ impl FlagCleaner {
       let pattern = self.get_grep_heuristics();
       files = files
         .iter()
+        // Filter the files containing the desired regex pattern
         .filter(|x| pattern.is_match(x.1.as_str()))
         .map(|(x, y)| (x.clone(), y.clone()))
         .collect();
