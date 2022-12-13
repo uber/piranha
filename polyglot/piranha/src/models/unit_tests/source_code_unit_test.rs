@@ -20,7 +20,7 @@ use tempdir::TempDir;
 
 use tree_sitter::Parser;
 
-use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore, language::PiranhaLanguage};
+use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore, language::PiranhaLanguage, default_configs::{JAVA, SWIFT}};
 use {
   super::SourceCodeUnit,
   crate::{
@@ -64,7 +64,7 @@ fn range(
 }
 
 fn get_java_tree_sitter_language() -> PiranhaLanguage {
-   PiranhaLanguage::from("java")
+   PiranhaLanguage::from(JAVA)
 }
 
 /// Positive test of an edit being applied  given replacement range  and replacement string.
@@ -157,7 +157,7 @@ fn test_apply_edit_comma_handling_via_regex() {
   }
 }";
 
-  let swift = PiranhaLanguage::from("swift");
+  let swift = PiranhaLanguage::from(SWIFT);
 
   let mut parser = swift.parser();
 

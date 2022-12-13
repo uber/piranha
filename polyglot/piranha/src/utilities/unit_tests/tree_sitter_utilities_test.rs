@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 use tree_sitter::Query;
 
-use crate::models::language::PiranhaLanguage;
+use crate::models::{language::PiranhaLanguage, default_configs::JAVA};
 
 use super::{substitute_tags, PiranhaHelpers};
 
@@ -34,7 +34,7 @@ fn test_get_all_matches_for_query_positive() {
         }
       }
     "#;
-  let language = PiranhaLanguage::from("java");
+  let language = PiranhaLanguage::from(JAVA);
   let query = Query::new(
     *language.language(),
     r#"((
@@ -54,7 +54,7 @@ fn test_get_all_matches_for_query_positive() {
   )
   .unwrap();
 
-  let mut parser = PiranhaLanguage::from("java").parser();
+  let mut parser = PiranhaLanguage::from(JAVA).parser();
   let ast = parser
     .parse(&source_code, None)
     .expect("Could not parse code");
@@ -85,7 +85,7 @@ fn test_get_all_matches_for_query_negative() {
         }
       }
     "#;
-  let language = PiranhaLanguage::from("java");
+  let language = PiranhaLanguage::from(JAVA);
   let query = Query::new(
     *language.language(),
     r#"((
@@ -105,7 +105,7 @@ fn test_get_all_matches_for_query_negative() {
   )
   .unwrap();
 
-  let mut parser = PiranhaLanguage::from("java").parser();
+  let mut parser = PiranhaLanguage::from(JAVA).parser();
   let ast = parser
     .parse(&source_code, None)
     .expect("Could not parse code");

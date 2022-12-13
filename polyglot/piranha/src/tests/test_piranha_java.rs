@@ -11,9 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::default_configs::JAVA;
+
 use super::{initialize, run_match_test, run_rewrite_test};
 
-static LANGUAGE: &str = "java";
+static LANGUAGE: &str = JAVA;
 
 #[test]
 fn test_java_scenarios_treated_ff1() {

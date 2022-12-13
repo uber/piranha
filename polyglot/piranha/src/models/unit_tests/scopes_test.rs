@@ -1,4 +1,4 @@
-use crate::models::language::PiranhaLanguage;
+use crate::models::{language::PiranhaLanguage, default_configs::JAVA};
 
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
@@ -98,7 +98,7 @@ fn test_get_scope_query_positive() {
     }";
   
   let mut rule_store =  _get_rule_store();
-  let mut parser = PiranhaLanguage::from("java").parser();
+  let mut parser = PiranhaLanguage::from(JAVA).parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -160,7 +160,7 @@ fn test_get_scope_query_negative() {
       }
     }";
   let mut rule_store = _get_rule_store();
-  let mut parser = PiranhaLanguage::from("java").parser();
+  let mut parser = PiranhaLanguage::from(JAVA).parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
