@@ -11,8 +11,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-
-use super::{initialize, run_match_test, run_rewrite_test, run_match_test_for_file};
 use crate::models::default_configs::JAVA;
 
 use super::{initialize, run_match_test, run_rewrite_test, run_match_test_for_file};
