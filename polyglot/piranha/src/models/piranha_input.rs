@@ -25,9 +25,9 @@ impl From<PiranhaInput> for PiranhaArguments {
         path_to_configurations,
         dry_run,
       } => PiranhaArgumentsBuilder::default()
-        .path_to_code_base(path_to_codebase)
+        .path_to_codebase(path_to_codebase)
         .path_to_configurations(path_to_configurations)
-        .path_to_output_summaries(None)
+        .path_to_output_summary(None)
         .dry_run(dry_run)
         .build()
         .unwrap(),

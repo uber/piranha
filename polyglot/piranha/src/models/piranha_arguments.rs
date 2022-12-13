@@ -18,7 +18,7 @@ use super::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_input_substitutions, default_languages,
-    default_number_of_ancestors_in_parent_scope, default_path_to_code_base,
+    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
     default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
     default_substitutions,
   },
@@ -30,19 +30,19 @@ use getset::{CopyGetters, Getters};
 use serde_derive::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
 
-/// A refactoring tool that eliminates dead code related to stale feature flags.
+/// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Builder, Getters, CopyGetters, Debug, Parser, Default)]
-#[clap(name = "Piranha")]
+#[clap(name = "Polyglot Piranha")]
 pub struct PiranhaArguments {
-  /// Path to source code folder.
+  /// Path to source code folder or file
   #[get = "pub"]
-  #[builder(default = "default_path_to_code_base()")]
-  #[clap(short = 'c', long = "path_to_code_base")]
+  #[builder(default = "default_path_to_codebase()")]
+  #[clap(short = 'c', long)]
   #[serde(skip)]
-  path_to_code_base: String,
+  path_to_codebase: String,
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
-  // These substitutions instantiate the initial set of feature flag rules.
+  // These substitutions instantiate the initial set of feature flag rules
   #[get = "pub"]
   #[builder(default = "default_input_substitutions()")]
   #[clap(skip)]
@@ -54,18 +54,19 @@ pub struct PiranhaArguments {
   #[serde(default = "default_substitutions")]
   substitutions: Vec<Vec<String>>,
 
-  /// Folder containing the API specific rules
+  /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
+  /// and  `edges.toml` (optional)
   #[get = "pub"]
   #[builder(default = "default_path_to_configurations()")]
-  #[clap(short = 'f', long = "path_to_configurations")]
+  #[clap(short = 'f', long)]
   #[serde(skip)]
   path_to_configurations: String,
   /// Path to output summary json file
   #[get = "pub"]
   #[builder(default = "default_path_to_output_summaries()")]
-  #[clap(short = 'j', long = "path_to_output_summaries")]
+  #[clap(short = 'j', long)]
   #[serde(skip)]
-  path_to_output_summaries: Option<String>,
+  path_to_output_summary: Option<String>,
 
   // a list of file extensions
   // #[get = "pub"]
@@ -164,10 +165,10 @@ impl PiranhaArguments {
 
   pub(crate) fn merge(&self, other: PiranhaArguments) -> Self {
     Self {
-      path_to_code_base: Self::_merge(
-        self.path_to_code_base.clone(),
-        other.path_to_code_base,
-        default_path_to_code_base(),
+      path_to_codebase: Self::_merge(
+        self.path_to_codebase.clone(),
+        other.path_to_codebase,
+        default_path_to_codebase(),
       ),
       input_substitutions: Self::_merge(
         self.input_substitutions.clone(),
@@ -184,9 +185,9 @@ impl PiranhaArguments {
         other.path_to_configurations,
         default_path_to_configurations(),
       ),
-      path_to_output_summaries: Self::_merge(
-        self.path_to_output_summaries.clone(),
-        other.path_to_output_summaries,
+      path_to_output_summary: Self::_merge(
+        self.path_to_output_summary.clone(),
+        other.path_to_output_summary,
         default_path_to_output_summaries(),
       ),
       language: Self::_merge(self.language.clone(), other.language, default_languages()),

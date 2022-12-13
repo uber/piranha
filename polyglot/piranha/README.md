@@ -155,11 +155,11 @@ Polyglot Piranha
 A refactoring tool that eliminates dead code related to stale feature flags.
 
 USAGE:
-    polyglot_piranha --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
+    polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
 
 OPTIONS:
     -c, --path-to-codebase <PATH_TO_CODEBASE>
-            Path to source code folder
+            Path to source code folder or file
 
     -d, --dry-run <DRY_RUN>
             Disables in-place rewriting of code [default: false]
@@ -172,7 +172,7 @@ OPTIONS:
             Print help information
 
     -j, --path-to-output-summary <PATH_TO_OUTPUT_SUMMARY>
-            Path to output summary json
+            Path to output summary json file
 ```
 
 The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.

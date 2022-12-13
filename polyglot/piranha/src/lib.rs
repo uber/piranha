@@ -21,7 +21,10 @@ pub mod models;
 mod tests;
 pub mod utilities;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+  collections::HashMap,
+  path::{Path, PathBuf},
+};
 
 use colored::Colorize;
 use itertools::Itertools;
@@ -31,7 +34,7 @@ use regex::Regex;
 use tree_sitter::Parser;
 
 use crate::{
-  models::{rule_store::RuleStore, piranha_input::PiranhaInput},
+  models::{piranha_input::PiranhaInput, rule_store::RuleStore},
   utilities::read_file,
 };
 
@@ -173,39 +176,62 @@ impl FlagCleaner {
     }
   }
 
+
+  /// Checks if any global rule has a hole
+  fn any_global_rules_has_holes(&self) -> bool {
+    self
+      .rule_store
+      .global_rules()
+      .iter()
+      .any(|x| !x.holes().is_empty())
+  }
+
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
   /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target.
   fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
-    let no_global_rules_with_holes = self
-      .rule_store
-      .global_rules()
-      .iter()
-      .any(|x| x.holes().is_empty());
-    let pattern = self.get_grep_heuristics();
-    let files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
+    let _path_to_codebase = Path::new(self.path_to_codebase.as_str()).to_path_buf();
+    if _path_to_codebase.is_file() {
+      return HashMap::from_iter([(
+        _path_to_codebase.to_path_buf(),
+        read_file(&_path_to_codebase).unwrap()
+      )]);
+    }
+    let mut files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
       // Walk over the entire code base
       .into_iter()
       // Ignore errors
       .filter_map(|e| e.ok())
       // Filter files with the desired extension
-      .filter(|de| {
-        de.path()
-          .extension()
-          .and_then(|e| {
-            e.to_str()
-              .filter(|x| x.eq(&self.rule_store.piranha_args().get_language()))
-          })
-          .is_some()
-      })
+      .filter(|de| self.does_file_extension_match(de))
       // Read the file
       .map(|f| (f.path(), read_file(&f.path()).unwrap()))
-      // Filter the files containing the desired regex pattern
-      .filter(|x| no_global_rules_with_holes || pattern.is_match(x.1.as_str()))
       .collect();
-    #[rustfmt::skip]
-    debug!("{}", format!("Will parse and analyze {} files.", files.len()).green());
+
+    if self.any_global_rules_has_holes() {
+      let pattern = self.get_grep_heuristics();
+      files = files
+        .iter()
+        // Filter the files containing the desired regex pattern
+        .filter(|x| pattern.is_match(x.1.as_str()))
+        .map(|(x, y)| (x.clone(), y.clone()))
+        .collect();
+    }
+    debug!(
+      "{}",
+      format!("{} files will be analyzed.", files.len()).green()
+    );
     files
+  }
+
+  fn does_file_extension_match(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
+    de.path()
+      .extension()
+      .and_then(|e| {
+        e.to_str()
+          .filter(|x| x.eq(&self.rule_store.piranha_args().get_language()))
+      })
+      .is_some()
   }
 
   /// Instantiate Flag-cleaner
@@ -213,7 +239,7 @@ impl FlagCleaner {
     let graph_rule_store = RuleStore::new(args);
     Self {
       rule_store: graph_rule_store,
-      path_to_codebase: String::from(args.path_to_code_base()),
+      path_to_codebase: String::from(args.path_to_codebase()),
       relevant_files: HashMap::new(),
     }
   }
