@@ -190,11 +190,11 @@ impl FlagCleaner {
   /// Note that `WalkDir` traverses the directory with parallelism.
   /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target.
   fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
-    let _path_to_code_base = Path::new(self.path_to_codebase.as_str()).to_path_buf();
-    if _path_to_code_base.is_file() {
+    let _path_to_codebase = Path::new(self.path_to_codebase.as_str()).to_path_buf();
+    if _path_to_codebase.is_file() {
       return HashMap::from_iter([(
-        _path_to_code_base.to_path_buf(),
-        read_file(&_path_to_code_base).unwrap()
+        _path_to_codebase.to_path_buf(),
+        read_file(&_path_to_codebase).unwrap()
       )]);
     }
     let mut files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
@@ -238,7 +238,7 @@ impl FlagCleaner {
     let graph_rule_store = RuleStore::new(args);
     Self {
       rule_store: graph_rule_store,
-      path_to_codebase: String::from(args.path_to_code_base()),
+      path_to_codebase: String::from(args.path_to_codebase()),
       relevant_files: HashMap::new(),
     }
   }
