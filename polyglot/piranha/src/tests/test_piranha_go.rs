@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::default_configs::GO;
 
-use super::{initialize, run_match_test};
+use super::{initialize, run_match_test, run_rewrite_test};
 
 static LANGUAGE: &str = GO;
 
