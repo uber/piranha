@@ -18,4 +18,4 @@ query = """
 """
 [[rules.constraints]]
 matcher = "(function_declaration) @fs"
-queries=[]
+

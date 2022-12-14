@@ -18,4 +18,4 @@ query = """
 """
 [[rules.constraints]]
 matcher = "(for_statement) @fs"
-queries=[]
+

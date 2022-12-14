@@ -26,7 +26,7 @@ query = """
 """
 [[rules.constraints]]
 matcher = "(function_declaration) @fs"
-queries=[]
+
 
 [[rules]]
 name = "find_fors_within_functions_not_within_whiles"

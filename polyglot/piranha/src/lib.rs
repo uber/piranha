@@ -144,7 +144,7 @@ impl FlagCleaner {
 
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
-      for (path, content) in self.get_files_containing_feature_flag_api_usage() {
+      for (path, content) in self.get_relevant_files_containing_hole_substitutions() {
         self
           .relevant_files
           // Get the content of the file for `path` from the cache `relevant_files`
@@ -189,11 +189,13 @@ impl FlagCleaner {
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
   /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target.
-  fn get_files_containing_feature_flag_api_usage(&self) -> HashMap<PathBuf, String> {
+  fn get_relevant_files_containing_hole_substitutions(&self) -> HashMap<PathBuf, String> {
     let _path_to_codebase = Path::new(self.path_to_codebase.as_str()).to_path_buf();
+
+    //If the path_to_codebase is a file, then execute piranha on it 
     if _path_to_codebase.is_file() {
       return HashMap::from_iter([(
-        _path_to_codebase.to_path_buf(),
+        _path_to_codebase.clone(),
         read_file(&_path_to_codebase).unwrap()
       )]);
     }
