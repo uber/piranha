@@ -24,12 +24,12 @@ query = """
         )
     )
     (#eq? @func_id "BoolValue")
-    (#eq? @arg_str_literal "\\"@true_flag_name\\"")
+    (#eq? @arg_str_literal "\\"@treated\\"")
 ) @call_exp
 """
 replace = "true"
 replace_node = "call_exp"
-holes = ["true_flag_name"]
+holes = ["treated"]
 
 [[rules]]
 name = "false_flag"
@@ -46,9 +46,9 @@ query = """
         )
     )
     (#eq? @func_id "BoolValue")
-    (#eq? @arg_str_literal "\\\"@false_flag_name\\\"")
+    (#eq? @arg_str_literal "\\\"@treated_complement\\\"")
 ) @call_exp
 """
 replace = "false"
 replace_node = "call_exp"
-holes = ["false_flag_name"]
+holes = ["treated_complement"]
