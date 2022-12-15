@@ -40,13 +40,17 @@ pub(crate) struct Rule {
   /// Replacement pattern
   replace: Option<String>,
   /// Group(s) to which the rule belongs
-  groups: Option<HashSet<String>>,
+  #[serde(default)]
+  groups: HashSet<String>,
   /// Holes that need to be filled, in order to instantiate a rule
-  holes: Option<HashSet<String>>,
+  #[serde(default)]
+  holes: HashSet<String>,
   /// Additional constraints for matching the rule
-  constraints: Option<HashSet<Constraint>>,
+  #[serde(default)]
+  constraints: HashSet<Constraint>,
   /// Heuristics for identifying potential files containing occurrence of the rule.
-  grep_heuristics: Option<HashSet<String>>,
+  #[serde(default)]
+  grep_heuristics: HashSet<String>,
 }
 
 impl Rule {
@@ -131,7 +135,7 @@ impl Rule {
         gh.insert(x.clone());
       }
     }
-    self.grep_heuristics = Some(gh.clone());
+    self.grep_heuristics = gh.clone();
   }
 
   /// Adds the rule to a new group - "SEED" if applicable.
@@ -139,12 +143,7 @@ impl Rule {
     if self.groups().contains(&CLEAN_UP.to_string()) {
       return;
     }
-    match self.groups.as_mut() {
-      None => self.groups = Some(HashSet::from([SEED.to_string()])),
-      Some(_groups) => {
-        _groups.insert(SEED.to_string());
-      }
-    }
+    self.groups.insert(SEED.to_string());
   }
 
   pub(crate) fn replace_node(&self) -> String {
@@ -169,31 +168,19 @@ impl Rule {
   }
 
   pub(crate) fn constraints(&self) -> HashSet<Constraint> {
-    match &self.constraints {
-      Some(cs) => cs.clone(),
-      None => HashSet::new(),
-    }
+    self.constraints.clone()
   }
 
   pub(crate) fn grep_heuristics(&self) -> HashSet<String> {
-    match &self.grep_heuristics {
-      Some(cs) => cs.clone(),
-      None => HashSet::new(),
-    }
+    self.grep_heuristics.clone()
   }
 
   pub(crate) fn holes(&self) -> HashSet<String> {
-    match &self.holes {
-      Some(cs) => cs.clone(),
-      None => HashSet::new(),
-    }
+    self.holes.clone()
   }
 
   fn groups(&self) -> HashSet<String> {
-    match &self.groups {
-      Some(cs) => cs.clone(),
-      None => HashSet::new(),
-    }
+    self.groups.clone()
   }
 
   pub(crate) fn update_replace(&mut self, substitutions: &HashMap<String, String>) {
@@ -228,14 +215,10 @@ impl Rule {
       query: Some(query.to_string()),
       replace_node: Some(replace_node.to_string()),
       replace: Some(replace.to_string()),
-      groups: None,
-      holes: if holes.is_empty() { None } else { Some(holes) },
-      constraints: if constraints.is_empty() {
-        None
-      } else {
-        Some(constraints)
-      },
-      grep_heuristics: None,
+      groups: HashSet::default(),
+      holes,
+      constraints,
+      grep_heuristics: HashSet::default(),
     }
   }
 }

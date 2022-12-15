@@ -36,7 +36,7 @@ matcher = """
     ) @j
 )
 """
-queries = []
+
 
 [[rules]]
 name = "find_props_identifiers_within_variable_declarators_not_within_divs"

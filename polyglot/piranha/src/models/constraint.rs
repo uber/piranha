@@ -21,6 +21,7 @@ pub(crate) struct Constraint {
   matcher: String,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
   #[get = "pub"]
+  #[serde(default)]
   queries: Vec<String>,
 }
 

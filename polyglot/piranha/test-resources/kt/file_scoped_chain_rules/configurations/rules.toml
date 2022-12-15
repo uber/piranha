@@ -32,7 +32,7 @@ matcher = """(
 (function_declaration (simple_identifier) @name) @md
 (#eq? @name "create")
 )"""
-queries = []
+
 
 
 [[rules]]
