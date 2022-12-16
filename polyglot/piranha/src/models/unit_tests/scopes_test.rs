@@ -81,7 +81,7 @@ fn _get_method_scope() -> ScopeGenerator {
 }
 
 fn _get_rule_store() -> RuleStore {
-  return RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()]);
+  RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()])
 }
 
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.

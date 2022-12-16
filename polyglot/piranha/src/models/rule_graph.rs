@@ -34,7 +34,7 @@ impl RuleGraph {
           if rules_by_group.contains_key(val) {
             return rules_by_group[val].clone();
           }
-          return vec![];
+          vec![]
         })
     };
 
@@ -42,9 +42,9 @@ impl RuleGraph {
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
     for edge in edges {
-      for from_rule in get_rules_for_tag_or_name(&edge.get_from()) {
+      for from_rule in get_rules_for_tag_or_name(edge.get_from()) {
         for outgoing_edge in edge.get_to() {
-          for to_rule in get_rules_for_tag_or_name(&outgoing_edge) {
+          for to_rule in get_rules_for_tag_or_name(outgoing_edge) {
             // Add edge to the adjacency list
             graph.collect(
               from_rule.clone(),

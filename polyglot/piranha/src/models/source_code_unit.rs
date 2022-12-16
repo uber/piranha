@@ -141,7 +141,7 @@ impl SourceCodeUnit {
 
         self.propagate(
           get_replace_range(applied_ts_edit),
-          rule.clone(),
+          rule,
           rule_store,
           parser,
         );
@@ -289,7 +289,7 @@ impl SourceCodeUnit {
       if let Some(p_match) =
         &self
           .root_node()
-          .get_match_for_query(&self.code(), tree_sitter_scope_query, true)
+          .get_match_for_query(self.code(), tree_sitter_scope_query, true)
       {
         return get_node_for_range(
           self.root_node(),
@@ -317,12 +317,12 @@ impl SourceCodeUnit {
   pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
     if self.code.as_str().is_empty() {
       if *piranha_arguments.delete_file_if_empty() {
-        _ = fs::remove_file(&self.path).expect("Unable to Delete file");
+        fs::remove_file(&self.path).expect("Unable to Delete file");;
       }
     } else {
       let content = if *piranha_arguments.delete_consecutive_new_lines() {
         let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
-        regex.replace_all(&self.code(), "\n${2}").to_string()
+        regex.replace_all(self.code(), "\n${2}").to_string()
       } else {
         self.code().to_string()
       };
@@ -335,18 +335,18 @@ impl SourceCodeUnit {
     let mut applied_edit =
       self._apply_edit(edit.p_match().range(), edit.replacement_string(), parser);
     // Check if the edit kind is "DELETE something"
-    if self.piranha_arguments.cleanup_comments().clone() && edit.replacement_string().is_empty() {
+    if *self.piranha_arguments.cleanup_comments() && edit.replacement_string().is_empty() {
       let deleted_at = edit.p_match().range().start_point.row;
       if let Some(comment_range) = self.get_comment_at_line(
         deleted_at,
-        self.piranha_arguments.cleanup_comments_buffer().clone(),
+        *self.piranha_arguments.cleanup_comments_buffer(),
         edit.p_match().range().start_byte,
       ) {
         debug!("Deleting an associated comment");
         applied_edit = self._apply_edit(comment_range, "", parser);
       }
     }
-    return applied_edit;
+    applied_edit
   }
 
   /// This function reports the range of the comment associated to the deleted element.
@@ -396,7 +396,7 @@ impl SourceCodeUnit {
       // If that's not the case, its okay, because we will not find any comments in these scenarios.
       return self.get_comment_at_line(row - 1, buffer - 1, start_byte);
     }
-    return None;
+    None
   }
 
   /// Applies an edit to the source code unit
@@ -495,7 +495,7 @@ impl SourceCodeUnit {
     };
     // Create a new updated tree from the previous tree
     let new_tree = parser
-      .parse(&replacement_content, prev_tree)
+      .parse(replacement_content, prev_tree)
       .expect("Could not generate new tree!");
     self.ast = new_tree;
     self.code = replacement_content.to_string();
@@ -612,7 +612,7 @@ impl SourceCodeUnit {
       );
       for m in &scope_matchers {
         if let Some(p_match) =
-          changed_node.get_match_for_query(&self.code(), rules_store.query(&m.matcher()), false)
+          changed_node.get_match_for_query(self.code(), rules_store.query(m.matcher()), false)
         {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
@@ -640,7 +640,7 @@ impl SourceCodeUnit {
     rule.constraints().iter().all(|constraint| {
       self._is_satisfied(
         constraint.clone(),
-        node.clone(),
+        node,
         rule_store,
         updated_substitutions,
       )
@@ -668,7 +668,7 @@ impl SourceCodeUnit {
       let matcher_query_str =
         substitute_tags(constraint.matcher().to_string(), substitutions, true);
       if let Some(p_match) =
-        parent.get_match_for_query(&self.code(), rule_store.query(&matcher_query_str), false)
+        parent.get_match_for_query(self.code(), rule_store.query(&matcher_query_str), false)
       {
         matched_matcher = true;
         let scope_node = get_node_for_range(
@@ -681,7 +681,7 @@ impl SourceCodeUnit {
           let query = &rule_store.query(&query_str);
           // If this query matches anywhere within the scope, return false.
           if scope_node
-            .get_match_for_query(&self.code(), query, true)
+            .get_match_for_query(self.code(), query, true)
             .is_some()
           {
             return false;

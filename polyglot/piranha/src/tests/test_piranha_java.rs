@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::default_configs::JAVA;
 
-use super::{initialize, run_match_test, run_match_test_for_file, run_rewrite_test};
+use super::{initialize, run_match_test_for_file, run_rewrite_test};
 
 static LANGUAGE: &str = JAVA;
 

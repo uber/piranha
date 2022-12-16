@@ -164,7 +164,7 @@ fn accumulate_repeated_tags(
     // If tag name did not match a code snippet, add an empty string.
     code_snippet_by_tag
       .entry(tag_name.clone())
-      .or_insert(String::new());
+      .or_default();
   }
   code_snippet_by_tag
 }

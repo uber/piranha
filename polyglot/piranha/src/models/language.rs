@@ -29,7 +29,7 @@ pub struct PiranhaLanguage {
   comment_nodes: Vec<String>,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum SupportedLanguage {
   Java,
   Kotlin,

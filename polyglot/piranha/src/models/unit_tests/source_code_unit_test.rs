@@ -95,7 +95,7 @@ fn test_apply_edit_positive() {
   let _ = source_code_unit.apply_edit(&Edit::from(range(49, 78, 3, 9, 3, 38)), &mut parser);
   assert!(eq_without_whitespace(
     &source_code.replace("boolean isFlagTreated = true;", ""),
-    &source_code_unit.code()
+    source_code_unit.code()
   ));
 }
 
@@ -141,7 +141,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
   let _ = source_code_unit.apply_edit(&Edit::from(range(37, 47, 2, 26, 2, 36)), &mut parser);
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
-    &source_code_unit.code()
+    source_code_unit.code()
   ));
 }
 
@@ -167,7 +167,7 @@ fn test_apply_edit_comma_handling_via_regex() {
   let _ = source_code_unit.apply_edit(&Edit::from(range(59, 75, 3, 23, 3, 41)), &mut parser);
   assert!(eq_without_whitespace(
     &source_code.replace("name: \"BMX Bike\",", ""),
-    &source_code_unit.code()
+    source_code_unit.code()
   ));
 }
 fn execute_persist_in_temp_folder(
@@ -178,7 +178,7 @@ fn execute_persist_in_temp_folder(
   let mut parser = java.parser();
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
-  _ = fs::write(&file_path.as_path(), source_code);
+  _ = fs::write(file_path.as_path(), source_code);
   let piranha_args = PiranhaArgumentsBuilder::default()
     .language(vec![java.name().to_string()])
     .build()
@@ -364,7 +364,7 @@ fn test_satisfies_constraints_positive() {
     .unwrap();
 
   assert!(source_code_unit.is_satisfied(
-    node.clone(),
+    *node,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),
@@ -431,7 +431,7 @@ fn test_satisfies_constraints_negative() {
     .unwrap();
 
   assert!(!source_code_unit.is_satisfied(
-    node.clone(),
+    *node,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),
