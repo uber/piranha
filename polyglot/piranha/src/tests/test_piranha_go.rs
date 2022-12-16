@@ -20,13 +20,19 @@ static LANGUAGE: &str = GO;
 #[test]
 fn test_go_match_only_go_expr_for_loop() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "go_stmt_for_loop"), 1);
+  run_match_test(
+    &format!("{}/{}/{}", LANGUAGE, "structural_find", "go_stmt_for_loop"),
+    1,
+  );
 }
 
 #[test]
 fn test_go_match_only_for_loop() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"), 4);
+  run_match_test(
+    &format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"),
+    4,
+  );
 }
 
 #[test]

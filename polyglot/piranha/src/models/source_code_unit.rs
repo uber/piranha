@@ -514,8 +514,9 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<Rule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope  =
-      *rules_store.piranha_args().number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope = *rules_store
+      .piranha_args()
+      .number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
       "\n{}",
@@ -664,8 +665,8 @@ impl SourceCodeUnit {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-
-      let matcher_query_str = substitute_tags(constraint.matcher().to_string(), substitutions, true);
+      let matcher_query_str =
+        substitute_tags(constraint.matcher().to_string(), substitutions, true);
       if let Some(p_match) =
         parent.get_match_for_query(&self.code(), rule_store.query(&matcher_query_str), false)
       {
