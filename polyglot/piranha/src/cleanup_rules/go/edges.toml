@@ -38,9 +38,7 @@ to = ["boolean_literal_cleanup"]
 [[edges]]
 scope = "Parent"
 from = "statement_cleanup"
-to = [
-    "if_cleanup",
-]
+to = ["if_cleanup"]
 
 ### statement_cleanup
 [[edges]]

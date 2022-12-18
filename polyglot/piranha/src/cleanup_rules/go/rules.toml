@@ -21,7 +21,6 @@ name = "boolean_literal_cleanup"
 #  true
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_not_false"
 query = """
 (
@@ -36,6 +35,7 @@ query = """
 """
 replace = "true"
 replace_node = "unary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  !true
@@ -43,7 +43,6 @@ replace_node = "unary_expression"
 #  false
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_not_true"
 query = """
 (
@@ -58,9 +57,9 @@ query = """
 """
 replace = "false"
 replace_node = "unary_expression"
+groups = ["boolean_expression_simplify"]
 
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_true_and_something"
 query = """
 (
@@ -73,6 +72,7 @@ query = """
 """
 replace = "@rhs"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  abc() && true
@@ -80,7 +80,6 @@ replace_node = "binary_expression"
 #  abc()
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_something_and_true"
 query = """
 (
@@ -93,6 +92,7 @@ query = """
 """
 replace = "@lhs"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  false && abc()
@@ -100,7 +100,6 @@ replace_node = "binary_expression"
 #  false
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_false_and_something"
 query = """
 (
@@ -113,6 +112,7 @@ query = """
 """
 replace = "false"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  abc() && false
@@ -121,7 +121,6 @@ replace_node = "binary_expression"
 #
 [[rules]]
 name = "simplify_something_and_false"
-groups = ["boolean_expression_simplify"]
 query = """
 (
     (binary_expression
@@ -138,6 +137,7 @@ query = """
 """
 replace = "false"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  something || true
@@ -146,7 +146,6 @@ replace_node = "binary_expression"
 #
 # Note that this rule *won't* rewrite when @lhs is a call.
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_true"
 query = """
 (
@@ -164,6 +163,7 @@ query = """
 """
 replace = "true"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before :
 #  true || abc()
@@ -171,7 +171,6 @@ replace_node = "binary_expression"
 #  true
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_true_or_something"
 query = """
 (
@@ -184,6 +183,7 @@ query = """
 """
 replace = "true"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before:
 #  abc() || false
@@ -191,7 +191,6 @@ replace_node = "binary_expression"
 #  abc()
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_false"
 query = """
 (
@@ -204,6 +203,7 @@ query = """
 """
 replace = "@lhs"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Before:
 #  false || abc()
@@ -211,7 +211,6 @@ replace_node = "binary_expression"
 #  abc()
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_false_or_something"
 query = """
 (
@@ -223,6 +222,7 @@ query = """
 @binary_expression)"""
 replace = "@rhs"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Simplifies equal identity comparison
 # Note that `nil == nil` is not compilable in Go, but compiles in tree-sitter
@@ -231,7 +231,6 @@ replace_node = "binary_expression"
 #   nil == nil     -> true
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_identity_equal"
 query = """
 (
@@ -245,6 +244,7 @@ query = """
 """
 replace = "true"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Simplifies not equal identity comparison
 # Note that `nil != nil` is not compilable in Go, but compiles in tree-sitter
@@ -253,7 +253,6 @@ replace_node = "binary_expression"
 #   nil != nil     -> false
 #
 [[rules]]
-groups = ["boolean_expression_simplify"]
 name = "simplify_identity_not_equal"
 query = """
 (
@@ -267,6 +266,7 @@ query = """
 """
 replace = "false"
 replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
@@ -283,7 +283,6 @@ name = "statement_cleanup"
 #  { doSomething(); }
 #
 [[rules]]
-groups = ["if_cleanup"]
 name = "simplify_if_statement_true"
 query = """
 (
@@ -300,6 +299,7 @@ query = """
 """
 replace = "@consequence"
 replace_node = "if_statement"
+groups = ["if_cleanup"]
 
 # Before :
 #  if (true) { doSomething(); } else { doSomethingElse();}
@@ -311,7 +311,6 @@ replace_node = "if_statement"
 # After :
 #
 [[rules]]
-groups = ["if_cleanup"]
 name = "simplify_if_statement_false"
 query = """
 (
@@ -329,6 +328,7 @@ query = """
 """
 replace = "@alternative"
 replace_node = "if_statement"
+groups = ["if_cleanup"]
 
 # Before :
 #  {
