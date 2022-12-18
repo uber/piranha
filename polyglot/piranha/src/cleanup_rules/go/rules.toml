@@ -371,7 +371,6 @@ replace_node = "nested.block"
 name = "return_statement_cleanup"
 
 # This rule is not deleting multiple statements after return.
-# Although `(((_) "\\n"?)+ @post)` matches all post statements, replacing is only happening for the first one.
 # Thus, we have a cycle between dummy rule `return_statement_cleanup` and `delete_statement_after_return`
 #
 [[rules]]
@@ -380,9 +379,9 @@ query = """
 (
     (block
         (statement_list
-            (((_) "\\n"?)* @pre)
+            (_)* @pre
             ((return_statement) @r)
-            (((_) "\\n"?)+ @post)
+            (_)+ @post
         ) @stmt_list
     ) @b
 )
