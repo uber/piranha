@@ -353,11 +353,11 @@ query = """
 (
     (block
         (statement_list
-            (((_) "\\n"?)* @pre)
+            (_)* @pre
             ((block
                 (statement_list) @nested.statements
             ) @nested.block)
-            (((_) "\\n"?)* @post)
+            (_)* @post
         ) @outer.stmt_list
     ) @outer.block
 )

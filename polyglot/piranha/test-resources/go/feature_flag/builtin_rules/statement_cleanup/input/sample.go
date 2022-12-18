@@ -89,3 +89,20 @@ func after_return3() string {
 	fmt.Println("5")
 	return "enabled"
 }
+
+func after_return4() string {
+	fmt.Println("before 1")
+	fmt.Println("before 2")
+
+	enabled := exp.BoolValue("false")
+	if !enabled {
+		return "not enabled"
+	}
+
+	fmt.Println("1")
+	fmt.Println("2")
+	fmt.Println("3")
+	fmt.Println("4")
+	fmt.Println("5")
+	return "enabled"
+}

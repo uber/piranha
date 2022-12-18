@@ -56,3 +56,10 @@ func after_return2(a bool) string {
 func after_return3() string {
 	return "not enabled"
 }
+
+func after_return4() string {
+	fmt.Println("before 1")
+	fmt.Println("before 2")
+
+	return "not enabled"
+}
