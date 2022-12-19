@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::default_configs::GO;
 
-use super::{initialize, run_match_test};
+use super::{initialize, run_match_test, run_rewrite_test};
 
 static LANGUAGE: &str = GO;
 
@@ -27,4 +27,31 @@ fn test_go_match_only_go_expr_for_loop() {
 fn test_go_match_only_for_loop() {
   initialize();
   run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"), 4);
+}
+
+#[test]
+fn test_go_builtin_boolean_expression_simplify() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}/{}/{}", LANGUAGE, "feature_flag", "builtin_rules", "boolean_expression_simplify"),
+    1,
+  );
+}
+
+#[test]
+fn test_go_builtin_statement_cleanup() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}/{}/{}", LANGUAGE, "feature_flag", "builtin_rules", "statement_cleanup"),
+    1,
+  );
+}
+
+#[test]
+fn test_go_const_same_file() {
+  initialize();
+  run_rewrite_test(
+    &format!("{}/{}/{}/{}", LANGUAGE, "feature_flag", "system_1", "const_same_file"),
+    1,
+  );
 }

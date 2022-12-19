@@ -1,0 +1,486 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+#
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+#
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The language specific rules in this file are applied after the API specific change has been performed.
+
+# Dummy rule that acts as a junction for all boolean based cleanups
+[[rules]]
+name = "boolean_literal_cleanup"
+
+# Before :
+#  !false
+# After :
+#  true
+#
+[[rules]]
+name = "simplify_not_false"
+query = """
+(
+    (unary_expression
+        operator: "!"
+        operand: [
+            (false)
+            (parenthesized_expression (false))
+        ]
+    ) @unary_expression
+)
+"""
+replace = "true"
+replace_node = "unary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  !true
+# After :
+#  false
+#
+[[rules]]
+name = "simplify_not_true"
+query = """
+(
+    (unary_expression
+        operator: "!"
+        operand: [
+            (true)
+            (parenthesized_expression (true))
+        ]
+    ) @unary_expression
+)
+"""
+replace = "false"
+replace_node = "unary_expression"
+groups = ["boolean_expression_simplify"]
+
+[[rules]]
+name = "simplify_true_and_something"
+query = """
+(
+    (binary_expression
+        left: [(true) (parenthesized_expression (true))]
+        operator:"&&"
+        right : (_) @rhs
+    ) @binary_expression
+)
+"""
+replace = "@rhs"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  abc() && true
+# After :
+#  abc()
+#
+[[rules]]
+name = "simplify_something_and_true"
+query = """
+(
+    (binary_expression
+        left : (_) @lhs
+        operator:"&&"
+        right: [(true) (parenthesized_expression (true))]
+    ) @binary_expression
+)
+"""
+replace = "@lhs"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  false && abc()
+# After :
+#  false
+#
+[[rules]]
+name = "simplify_false_and_something"
+query = """
+(
+    (binary_expression
+        left: [(false) (parenthesized_expression (false))]
+        operator : "&&"
+        right : (_) @rhs
+    ) @binary_expression
+)
+"""
+replace = "false"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  abc() && false
+# After :
+#  false
+#
+[[rules]]
+name = "simplify_something_and_false"
+query = """
+(
+    (binary_expression
+        left : ([
+                (identifier)
+                (true)
+                (false)
+                (selector_expression)
+            ]) @lhs
+        operator : "&&"
+        right: [(false) (parenthesized_expression (false))]
+    ) @binary_expression
+)
+"""
+replace = "false"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  something || true
+# After :
+#  true
+#
+# Note that this rule *won't* rewrite when @lhs is a call.
+[[rules]]
+name = "simplify_something_or_true"
+query = """
+(
+    (binary_expression
+        left : ([
+                (identifier)
+                (true)
+                (false)
+                (selector_expression)
+            ]) @lhs
+        operator:"||"
+        right: [(true) (parenthesized_expression (true))]
+    ) @binary_expression
+)
+"""
+replace = "true"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  true || abc()
+# After :
+#  true
+#
+[[rules]]
+name = "simplify_true_or_something"
+query = """
+(
+    (binary_expression
+        left : [(true) (parenthesized_expression (true))]
+        operator:"||"
+        right: (_) @rhs
+    ) @binary_expression
+)
+"""
+replace = "true"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before:
+#  abc() || false
+# After :
+#  abc()
+#
+[[rules]]
+name = "simplify_something_or_false"
+query = """
+(
+    (binary_expression
+        left : (_) @lhs
+        operator:"||"
+        right: [(false) (parenthesized_expression (false))]
+    ) @binary_expression
+)
+"""
+replace = "@lhs"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Before:
+#  false || abc()
+# After :
+#  abc()
+#
+[[rules]]
+name = "simplify_false_or_something"
+query = """
+(
+    (binary_expression
+        left : [(false) (parenthesized_expression (false))]
+        operator:"||"
+        right: (_) @rhs
+    )
+@binary_expression)"""
+replace = "@rhs"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Simplifies equal identity comparison
+# Note that `nil == nil` is not compilable in Go, but compiles in tree-sitter
+#   true == true   -> true
+#   false == false -> true
+#   nil == nil     -> true
+#
+[[rules]]
+name = "simplify_identity_equal"
+query = """
+(
+    (binary_expression
+        left: (_) @lhs
+        operator: "=="
+        right: (_) @rhs
+    ) @binary_expression
+    (#eq? @lhs @rhs)
+)
+"""
+replace = "true"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Simplifies not equal identity comparison
+# Note that `nil != nil` is not compilable in Go, but compiles in tree-sitter
+#   true != true   -> false
+#   false != false -> false
+#   nil != nil     -> false
+#
+[[rules]]
+name = "simplify_identity_not_equal"
+query = """
+(
+    (binary_expression
+        left: (_) @lhs
+        operator: "!="
+        right: (_) @rhs
+    ) @binary_expression
+    (#eq? @lhs @rhs)
+)
+"""
+replace = "false"
+replace_node = "binary_expression"
+groups = ["boolean_expression_simplify"]
+
+# Dummy rule that acts as a junction for all statement based cleanups
+[[rules]]
+name = "statement_cleanup"
+
+# Before :
+#  if (true) { doSomething(); }
+# After :
+#  { doSomething(); }
+#
+# Before :
+#  if (true) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomething(); }
+#
+[[rules]]
+name = "simplify_if_statement_true"
+query = """
+(
+    (if_statement
+        condition : (
+            [
+                (true)
+                (parenthesized_expression (true))
+            ]
+        )
+        consequence : ((block) @consequence)
+    ) @if_statement
+)
+"""
+replace = "@consequence"
+replace_node = "if_statement"
+groups = ["if_cleanup"]
+
+# Before :
+#  if (true) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomethingElse(); }
+#
+# Before :
+#  if (true) { doSomething(); }
+# After :
+#
+[[rules]]
+name = "simplify_if_statement_false"
+query = """
+(
+    (if_statement
+        condition : (
+            [
+                (false)
+                (parenthesized_expression (false))
+            ]
+        )
+        consequence : (_)
+        alternative: ((_) @alternative) ?
+    ) @if_statement
+)
+"""
+replace = "@alternative"
+replace_node = "if_statement"
+groups = ["if_cleanup"]
+
+# Before :
+#  {
+#     someStepsBefore();
+#     {
+#        someSteps();
+#     }
+#     someStepsAfter();
+#  }
+# After :
+#  {
+#     someStepsBefore();
+#        someSteps();
+#     someStepsAfter();
+#  }
+#
+# Note that we need to tag basically all nodes here.
+# Including not so obvious ones: @outer.stmt_list and @outer.block
+[[rules]]
+name = "remove_unnecessary_nested_block"
+query = """
+(
+    (block
+        (statement_list
+            (_)* @pre
+            ((block
+                (statement_list) @nested.statements
+            ) @nested.block)
+            (_)* @post
+        ) @outer.stmt_list
+    ) @outer.block
+)
+"""
+replace = "@nested.statements"
+replace_node = "nested.block"
+
+#####
+# Dummy rule to introduce a cycle for `delete_statement_after_return`
+[[rules]]
+name = "return_statement_cleanup"
+
+# This rule is not deleting multiple statements after return.
+# Thus, we have a cycle between dummy rule `return_statement_cleanup` and `delete_statement_after_return`
+#
+[[rules]]
+name = "delete_statement_after_return"
+query = """
+(
+    (block
+        (statement_list
+            (_)* @pre
+            ((return_statement) @r)
+            (_)+ @post
+        ) @stmt_list
+    ) @b
+)
+"""
+replace = ""
+replace_node = "post"
+
+# TODO: rules and edges for "if with short statement"
+# collect examples and write tests for it
+# https://go.dev/tour/flowcontrol/6
+# https://go.dev/doc/effective_go#if
+
+# TODO: we need a different rule for `nil != err`
+# left: [
+#     (identifier) @id
+#     (nil)
+# ]
+# making `left` and `right` options could lead to `(identifier) != (identifier)`
+
+
+[[rules]]
+name = "delete_variable_declaration"
+query = """
+(
+    (
+        (short_var_declaration
+            left: (expression_list
+                (identifier) @variable_name
+            )
+            right: (expression_list
+                ([
+                    (true)
+                    (false)
+                ]) @value
+            )
+        )
+    ) @short_v_decl
+)
+"""
+replace = ""
+replace_node = "short_v_decl"
+
+# Check if there is an assignment to @variable_name with a value other than @value
+# Note that the query is against a short_var_declaration while
+# the constraint is against an assigment_statement
+[[rules.constraints]]
+matcher = "(block) @block"
+queries = [
+"""
+(
+    (assignment_statement
+        left: (expression_list
+            (identifier) @a.lhs
+        )
+        right: (expression_list
+            (_) @a.rhs
+        )
+    ) @assignment
+    (#eq? @a.lhs "@variable_name")
+    (#not-eq? @a.rhs "@value")
+)
+"""
+]
+
+[[rules]]
+name = "replace_identifier_with_value"
+query = """
+(
+    (identifier) @identifier
+    (#eq? @identifier "@variable_name")
+)
+"""
+replace = "@value"
+replace_node = "identifier"
+holes = ["variable_name", "value"]
+
+[[rules.constraints]]
+matcher = "(block) @block"
+queries = [
+"""
+(
+    [
+        (short_var_declaration
+            left: (expression_list
+                (identifier) @vn
+            )
+        ) @assignment
+        (var_declaration
+            (var_spec
+                name: (identifier) @vn
+            )
+        ) @assignment
+        (assignment_statement
+            left: (expression_list
+                (identifier) @vn
+            )
+        ) @assignment
+    ]
+    (#eq? @vn "@variable_name")
+)
+"""
+]
