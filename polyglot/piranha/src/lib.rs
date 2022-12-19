@@ -21,22 +21,13 @@ pub mod models;
 mod tests;
 pub mod utilities;
 
-use std::{
-  collections::HashMap,
-  path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::PathBuf};
 
-use colored::Colorize;
 use itertools::Itertools;
-use jwalk::WalkDir;
 use log::{debug, info};
-use regex::Regex;
 use tree_sitter::Parser;
 
-use crate::{
-  models::{piranha_input::PiranhaInput, rule_store::RuleStore},
-  utilities::read_file,
-};
+use crate::models::{piranha_input::PiranhaInput, rule_store::RuleStore};
 
 use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
@@ -69,22 +60,22 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   Ok(())
 }
 
-pub fn execute_piranha(configuration: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
+pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
 
-  let mut flag_cleaner = FlagCleaner::new(configuration);
-  flag_cleaner.perform_cleanup();
+  let mut piranha = Piranha::new(piranha_arguments);
+  piranha.perform_cleanup();
 
-  let source_code_units = flag_cleaner.get_updated_files();
+  let source_code_units = piranha.get_updated_files();
 
-  if !*configuration.dry_run() {
+  if !*piranha_arguments.dry_run() {
     for scu in source_code_units {
-      scu.persist(configuration);
+      scu.persist(piranha_arguments);
     }
   }
 
   // flag_cleaner.relevant_files
-  let summaries = flag_cleaner
+  let summaries = piranha
     .get_updated_files()
     .iter()
     .map(PiranhaOutputSummary::new)
@@ -111,7 +102,7 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
 }
 
 // Maintains the state of Piranha and the updated content of files in the source code.
-struct FlagCleaner {
+struct Piranha {
   // Maintains Piranha's state
   rule_store: RuleStore,
   // Path to source code folder
@@ -120,7 +111,7 @@ struct FlagCleaner {
   relevant_files: HashMap<PathBuf, SourceCodeUnit>,
 }
 
-impl FlagCleaner {
+impl Piranha {
   fn get_updated_files(&self) -> Vec<SourceCodeUnit> {
     self
       .relevant_files
@@ -144,7 +135,8 @@ impl FlagCleaner {
 
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
-      for (path, content) in self.get_relevant_files_containing_hole_substitutions() {
+
+      for (path, content) in self.rule_store.get_relevant_files(&self.path_to_codebase) {
         self
           .relevant_files
           // Get the content of the file for `path` from the cache `relevant_files`
@@ -175,100 +167,13 @@ impl FlagCleaner {
       }
     }
   }
-
-
-  /// Checks if any global rule has a hole
-  fn any_global_rules_has_holes(&self) -> bool {
-    self
-      .rule_store
-      .global_rules()
-      .iter()
-      .any(|x| !x.holes().is_empty())
-  }
-
-  /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
-  /// Note that `WalkDir` traverses the directory with parallelism.
-  /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target.
-  fn get_relevant_files_containing_hole_substitutions(&self) -> HashMap<PathBuf, String> {
-    let _path_to_codebase = Path::new(self.path_to_codebase.as_str()).to_path_buf();
-
-    //If the path_to_codebase is a file, then execute piranha on it 
-    if _path_to_codebase.is_file() {
-      return HashMap::from_iter([(
-        _path_to_codebase.clone(),
-        read_file(&_path_to_codebase).unwrap()
-      )]);
-    }
-    let mut files: HashMap<PathBuf, String> = WalkDir::new(&self.path_to_codebase)
-      // Walk over the entire code base
-      .into_iter()
-      // Ignore errors
-      .filter_map(|e| e.ok())
-      // Filter files with the desired extension
-      .filter(|de| self.does_file_extension_match(de))
-      // Read the file
-      .map(|f| (f.path(), read_file(&f.path()).unwrap()))
-      .collect();
-
-    if self.any_global_rules_has_holes() {
-      let pattern = self.get_grep_heuristics();
-      files = files
-        .iter()
-        // Filter the files containing the desired regex pattern
-        .filter(|x| pattern.is_match(x.1.as_str()))
-        .map(|(x, y)| (x.clone(), y.clone()))
-        .collect();
-    }
-    debug!(
-      "{}",
-      format!("{} files will be analyzed.", files.len()).green()
-    );
-    files
-  }
-
-  fn does_file_extension_match(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
-    de.path()
-      .extension()
-      .and_then(|e| {
-        e.to_str()
-          .filter(|x| x.eq(&self.rule_store.piranha_args().get_language()))
-      })
-      .is_some()
-  }
-
   /// Instantiate Flag-cleaner
-  fn new(args: &PiranhaArguments) -> Self {
-    let graph_rule_store = RuleStore::new(args);
+  fn new(piranha_arguments: &PiranhaArguments) -> Self {
+    let graph_rule_store = RuleStore::new(piranha_arguments);
     Self {
       rule_store: graph_rule_store,
-      path_to_codebase: String::from(args.path_to_codebase()),
+      path_to_codebase: String::from(piranha_arguments.path_to_codebase()),
       relevant_files: HashMap::new(),
     }
-  }
-
-  /// To create the current set of global rules, certain substitutions were applied.
-  /// This method creates a regex pattern matching these substituted values.
-  ///
-  /// At the directory level, we would always look to perform global rules. However this is expensive because
-  /// it requires parsing each file. To overcome this, we apply this simple
-  /// heuristic to find the (upper bound) files that would match one of our current global rules.
-  /// This heuristic reduces the number of files to parse.
-  ///
-  fn get_grep_heuristics(&self) -> Regex {
-    let reg_x = self
-      .rule_store
-      .global_rules()
-      .iter()
-      .flat_map(|r| r.grep_heuristics())
-      .sorted()
-      //Remove duplicates
-      .dedup()
-      //FIXME: Dirty trick to remove true and false. Ideally, grep heuristic could be a field in itself for a rule.
-      // Since not all "holes" could be used as grep heuristic.
-      .filter(|x| {
-        !x.is_empty() && !x.to_lowercase().eq("true") && !x.to_lowercase().as_str().eq("false")
-      })
-      .join("|");
-    Regex::new(reg_x.as_str()).unwrap()
   }
 }
