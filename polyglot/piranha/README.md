@@ -469,6 +469,10 @@ The purpose of Piranha Arguments is determining the behavior of Piranha.
 
 ## Contributing
 
+Prerequisites: 
+* Install [pre-commit](https://pre-commit.com/)
+* Install [taplo](https://taplo.tamasfe.dev/cli/introduction.html)
+
 <h4> Naming conventions for the rules </h4>
 
 * We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`
