@@ -10,7 +10,5 @@
 # limitations under the License.
 
 language = ["java"]
-substitutions = [
-     ["stale_flag_name", "STALE_FLAG"],
-]
-cleanup_comments=true
+substitutions = [["stale_flag_name", "STALE_FLAG"]]
+cleanup_comments = true

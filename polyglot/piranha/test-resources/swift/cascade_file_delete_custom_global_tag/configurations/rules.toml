@@ -40,7 +40,7 @@ holes = ["stale_flag_name"]
 
 
 # Looks for type aliases using `enum_declaration_name`
-[[rules]] 
+[[rules]]
 name = "read_only_detect_type_alias"
 query = """
 ((typealias_declaration name: (type_identifier)@inherits_plugin_switch 
@@ -48,7 +48,7 @@ query = """
 (#eq? @type_arg "@enum_declaration_name")
 )
 """
-holes = [ "enum_declaration_name"]
+holes = ["enum_declaration_name"]
 
 # Deletes factory calss that uses the universal_tag.enum_entry_name and inherits the relevant type alias.
 [[rules]]

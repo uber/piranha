@@ -139,12 +139,7 @@ impl SourceCodeUnit {
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
-        self.propagate(
-          get_replace_range(applied_ts_edit),
-          rule,
-          rule_store,
-          parser,
-        );
+        self.propagate(get_replace_range(applied_ts_edit), rule, rule_store, parser);
       }
     }
     // When rule is a "match-only" rule :
@@ -317,7 +312,7 @@ impl SourceCodeUnit {
   pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
     if self.code.as_str().is_empty() {
       if *piranha_arguments.delete_file_if_empty() {
-        fs::remove_file(&self.path).expect("Unable to Delete file");;
+        fs::remove_file(&self.path).expect("Unable to Delete file");
       }
     } else {
       let content = if *piranha_arguments.delete_consecutive_new_lines() {
@@ -638,12 +633,7 @@ impl SourceCodeUnit {
       .chain(rule_store.default_substitutions())
       .collect();
     rule.constraints().iter().all(|constraint| {
-      self._is_satisfied(
-        constraint.clone(),
-        node,
-        rule_store,
-        updated_substitutions,
-      )
+      self._is_satisfied(constraint.clone(), node, rule_store, updated_substitutions)
     })
   }
 

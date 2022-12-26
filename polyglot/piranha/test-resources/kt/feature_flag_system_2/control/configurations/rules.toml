@@ -79,7 +79,7 @@ replace = ""
 groups = ["delete_property_declaration"]
 holes = ["stale_flag_name", "namespace"]
 [[rules.constraints]]
-matcher =   """(
+matcher = """(
 (class_declaration 
  	(modifiers (annotation (constructor_invocation (_)@interface_annotation_name (value_arguments
                                                          (value_argument (_)@clhs (_)@crhs)))))) @cd
@@ -87,7 +87,7 @@ matcher =   """(
 (#eq? @crhs "\\\"@namespace\\\"")
 (#eq? @interface_annotation_name "ParameterDefinition")
 )"""
- 
+
 
 # For @m_name = `isStaleFeature`, @treated = `true`
 # Before :

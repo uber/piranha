@@ -52,8 +52,7 @@ matcher = """
     (variable_declarator) @vd
 )
 """
-queries = [
-"""
+queries = ["""
 (
     (jsx_element
         open_tag: (jsx_opening_element
@@ -62,5 +61,4 @@ queries = [
         )
     ) @j
 )
-"""
-]
+"""]

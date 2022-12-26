@@ -13,15 +13,9 @@
 [[edges]]
 scope = "Global"
 from = "delete_flag_method_declaration_fully_annotated"
-to = [
-  "replace_flag_method_with_boolean_literal",
-  "delete_put",
-]
+to = ["replace_flag_method_with_boolean_literal", "delete_put"]
 
 [[edges]]
 scope = "Global"
 from = "delete_flag_method_declaration_inside_annotated_interface"
-to = [
-  "replace_flag_method_with_boolean_literal",
-  "delete_put",
-]
+to = ["replace_flag_method_with_boolean_literal", "delete_put"]

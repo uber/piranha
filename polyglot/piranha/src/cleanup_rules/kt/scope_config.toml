@@ -32,7 +32,7 @@
 [[scopes]]
 name = "Function"
 [[scopes.rules]]
-matcher =  """
+matcher = """
 ((function_declaration (simple_identifier) @n  (function_value_parameters) @sign (function_body) @fb) @qd5)
 """
 generator = """(
@@ -58,7 +58,7 @@ generator = """
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher =  """
+matcher = """
 (source_file) @s_f
 """
 generator = "(source_file) @source_file"

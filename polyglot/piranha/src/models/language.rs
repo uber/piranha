@@ -113,7 +113,7 @@ impl From<&str> for PiranhaLanguage {
             .to_vec(),
           comment_nodes: vec!["comment".to_string()],
         }
-      },
+      }
       KOTLIN => {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));

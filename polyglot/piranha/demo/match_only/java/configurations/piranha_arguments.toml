@@ -11,7 +11,16 @@
 
 language = ["java"]
 substitutions = [
-    ["stale_flag_name", "SAMPLE_STALE_FLAG"],
-    ["treated", "true"],
-    ["treated_complement", "false"],
+  [
+    "stale_flag_name",
+    "SAMPLE_STALE_FLAG",
+  ],
+  [
+    "treated",
+    "true",
+  ],
+  [
+    "treated_complement",
+    "false",
+  ],
 ]

@@ -11,7 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{collections::HashMap, path::{Path, PathBuf}};
+use std::{
+  collections::HashMap,
+  path::{Path, PathBuf},
+};
 
 use colored::Colorize;
 use getset::Getters;
@@ -28,7 +31,7 @@ use crate::{
     rule_graph::RuleGraph,
     scopes::{ScopeGenerator, ScopeQueryGenerator},
   },
-  utilities::{read_toml, MapOfVec, read_file},
+  utilities::{read_file, read_toml, MapOfVec},
 };
 
 use super::{
@@ -234,11 +237,11 @@ impl RuleStore {
   pub(crate) fn get_relevant_files(&self, path_to_codebase: &str) -> HashMap<PathBuf, String> {
     let _path_to_codebase = Path::new(path_to_codebase).to_path_buf();
 
-    //If the path_to_codebase is a file, then execute piranha on it 
+    //If the path_to_codebase is a file, then execute piranha on it
     if _path_to_codebase.is_file() {
       return HashMap::from_iter([(
         _path_to_codebase.clone(),
-        read_file(&_path_to_codebase).unwrap()
+        read_file(&_path_to_codebase).unwrap(),
       )]);
     }
     let mut files: HashMap<PathBuf, String> = WalkDir::new(path_to_codebase)

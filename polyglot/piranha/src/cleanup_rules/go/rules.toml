@@ -429,8 +429,7 @@ replace_node = "short_v_decl"
 # the constraint is against an assigment_statement
 [[rules.constraints]]
 matcher = "(block) @block"
-queries = [
-"""
+queries = ["""
 (
     (assignment_statement
         left: (expression_list
@@ -443,8 +442,7 @@ queries = [
     (#eq? @a.lhs "@variable_name")
     (#not-eq? @a.rhs "@value")
 )
-"""
-]
+"""]
 
 [[rules]]
 name = "replace_identifier_with_value"
@@ -460,8 +458,7 @@ holes = ["variable_name", "value"]
 
 [[rules.constraints]]
 matcher = "(block) @block"
-queries = [
-"""
+queries = ["""
 (
     [
         (short_var_declaration
@@ -482,5 +479,4 @@ queries = [
     ]
     (#eq? @vn "@variable_name")
 )
-"""
-]
+"""]

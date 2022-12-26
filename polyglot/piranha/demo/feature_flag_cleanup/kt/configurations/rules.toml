@@ -32,9 +32,8 @@ query = """(
 )"""
 replace_node = "call_expression"
 replace = "@treated"
-groups = [ "replace_expression_with_boolean_literal"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
-
 
 
 [[rules]]
@@ -51,9 +50,8 @@ query = """(
 )"""
 replace_node = "call_expression"
 replace = "@treated_complement"
-groups = [ "replace_expression_with_boolean_literal"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["treated_complement", "stale_flag_name"]
-
 
 
 #
@@ -79,4 +77,4 @@ query = """
 replace_node = "enum_entry"
 replace = ""
 holes = ["stale_flag_name"]
-groups = [ "delete_enum_entry"]
+groups = ["delete_enum_entry"]
