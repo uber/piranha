@@ -2,14 +2,13 @@ use std::collections::HashMap;
 
 use super::language::PiranhaLanguage;
 
-
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
 pub const GO: &str = "go";
 pub const PYTHON: &str = "py";
 pub const SWIFT: &str = "swift";
 pub const STRINGS: &str = "strings";
-pub const TYPESCRIPT: &str = "ts"; 
+pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 
 pub fn default_number_of_ancestors_in_parent_scope() -> u8 {

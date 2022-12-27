@@ -12,8 +12,8 @@
 # This file contains rules to the specific feature flag API.
 
 [[rules]]
-name= "transform_api1"
-query="""
+name = "transform_api1"
+query = """
 (
 ((call_expression 
 			(navigation_expression (simple_identifier) @parameter_utils)
@@ -26,7 +26,7 @@ query="""
 )
 """
 replace_node = "call_expr"
-replace= "@parameter_interfaceProvider.create(@cache_parameters)"
+replace = "@parameter_interfaceProvider.create(@cache_parameters)"
 [[rules.constraints]]
 matcher = """(
 (function_declaration (simple_identifier) @name) @md
@@ -34,15 +34,14 @@ matcher = """(
 )"""
 
 
-
 [[rules]]
-name="delete_import_statement"
-query="""
+name = "delete_import_statement"
+query = """
 (
 (import_header (identifier) @imported_type ) @import_header
 (#eq? @imported_type "com.uber.something.piranha.ParameterUtils")
 )
 """
-replace_node= "import_header"
-replace=""
-groups=["Cleanup Rule"]
+replace_node = "import_header"
+replace = ""
+groups = ["Cleanup Rule"]

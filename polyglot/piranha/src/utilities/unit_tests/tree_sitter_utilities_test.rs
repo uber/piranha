@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 use tree_sitter::Query;
 
-use crate::models::{language::PiranhaLanguage, default_configs::JAVA};
+use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
 
 use super::{substitute_tags, PiranhaHelpers};
 

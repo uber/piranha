@@ -10,9 +10,7 @@
 # limitations under the License.
 
 language = ["swift"]
-substitutions = [
-    ["stale_flag_name", "Premium-Icon"],
-]
+substitutions = [["stale_flag_name", "Premium-Icon"]]
 global_tag_prefix = "universal_tag."
-cleanup_comments=true
-cleanup_comments_buffer=3
+cleanup_comments = true
+cleanup_comments_buffer = 3

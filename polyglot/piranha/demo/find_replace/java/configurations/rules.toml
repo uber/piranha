@@ -31,4 +31,4 @@ query = """
 replace_node = "ec"
 replace = ""
 holes = ["stale_flag_name"]
-groups = [ "delete_enum_entry"]
+groups = ["delete_enum_entry"]

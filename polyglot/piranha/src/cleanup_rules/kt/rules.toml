@@ -390,8 +390,12 @@ replace = ""
 replace_node = "program"
 [[rules.constraints]]
 matcher = "(source_file) @sf"
-queries = ["(class_declaration) @cd", "(object_declaration) @od", "(function_declaration) @fd", "(property_declaration) @pd"]
-
+queries = [
+  "(class_declaration) @cd",
+  "(object_declaration) @od",
+  "(function_declaration) @fd",
+  "(property_declaration) @pd",
+]
 
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
@@ -546,19 +550,17 @@ replace_node = "assignment"
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
 [[rules.constraints]]
 matcher = "(function_declaration) @md"
-queries = [
-"""(
+queries = ["""(
 (property_declaration (variable_declaration (simple_identifier)@f_vdcl.lhs ) 
  								(_)@f_vdcl.init) @property_declaration
   (#eq? @f_vdcl.lhs "@variable_name")
   (#not-eq? @f_vdcl.init "@init")
-)""",
-]
+)"""]
 
 [[rules.constraints]]
 matcher = "(function_declaration) @md"
 queries = [
-"""(
+  """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@f_assignment
   (#eq? @a.lhs "@variable_name")
   (#not-eq? @a.rhs "@init")
@@ -567,19 +569,17 @@ queries = [
 
 [[rules.constraints]]
 matcher = "(class_declaration) @md"
-queries = [
-  """(
+queries = ["""(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
  								(_)@vdcl.init ) @property_declaration
 (#eq? @vdcl.lhs "@variable_name")
 (#not-eq? @vdcl.init "@init")
-)""",
-]
+)"""]
 
 [[rules.constraints]]
 matcher = "(class_declaration) @md"
 queries = [
-"""(
+  """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@c_assignment
   (#eq? @a.lhs "@variable_name")
   (#not-eq? @a.rhs "@init")
@@ -624,4 +624,3 @@ name = "boolean_literal_cleanup"
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
-

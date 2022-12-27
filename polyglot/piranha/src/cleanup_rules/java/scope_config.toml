@@ -45,7 +45,7 @@ name = "Method"
 # (#eq? @tp "int a, int b, int c, int d, int e")
 # )
 #
-matcher =  """
+matcher = """
 (
   [(method_declaration 
             name : (_) @n
@@ -89,7 +89,7 @@ generator = """
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher =  """
+matcher = """
 (program) @c_u
 """
 generator = "(program) @compilation_unit"

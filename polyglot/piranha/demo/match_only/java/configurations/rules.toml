@@ -39,5 +39,4 @@ matcher = "(method_declaration) @md"
 queries = ["""(
   (modifiers) @modifiers
   (#match? @modifiers ".*static.*")
-  )"""
-]
+  )"""]

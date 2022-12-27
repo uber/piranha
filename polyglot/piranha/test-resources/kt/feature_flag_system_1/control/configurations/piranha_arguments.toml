@@ -11,7 +11,16 @@
 
 language = ["kt"]
 substitutions = [
-    ["stale_flag_name", "STALE_FLAG"],
-    ["treated", "false"],
-    ["treated_complement", "true"]
+  [
+    "stale_flag_name",
+    "STALE_FLAG",
+  ],
+  [
+    "treated",
+    "false",
+  ],
+  [
+    "treated_complement",
+    "true",
+  ],
 ]

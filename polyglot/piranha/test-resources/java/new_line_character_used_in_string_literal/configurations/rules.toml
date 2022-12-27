@@ -22,4 +22,3 @@ query = """
 """
 replace_node = "mi"
 replace = "@literal.equals(@object)"
-

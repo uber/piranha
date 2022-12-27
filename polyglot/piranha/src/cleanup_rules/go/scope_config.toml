@@ -12,7 +12,7 @@
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher =  """
+matcher = """
 (source_file) @source_file
 """
 generator = """(source_file) @sf"""
