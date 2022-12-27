@@ -7,8 +7,11 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-toml
+        files: polyglot/*
       - id: end-of-file-fixer
+        files: polyglot/* 
       - id: mixed-line-ending
+        files: polyglot/*
   - repo: local
     hooks:
       - id: toml-fmt
