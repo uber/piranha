@@ -16,4 +16,3 @@ Version 0.2.1
 * Support for structural match/replace (with chaining) for Go [#256]
 * Support for structural match/replace (with chaining) for TS / TSX [#260]
 * Improve documentation [#261, #259, #258, #257]
-

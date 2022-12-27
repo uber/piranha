@@ -22,8 +22,8 @@
 name = "replace_isToggleEnabled_with_boolean_literal"
 query = """(
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -40,8 +40,8 @@ holes = ["treated", "stale_flag_name"]
 name = "replace_isToggleDisabled_with_boolean_literal"
 query = """(
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -70,7 +70,7 @@ name = "delete_enum_constant"
 query = """
    (
 (class_declaration (_) @name 
-	(enum_class_body (enum_entry (simple_identifier) @enum_name) @enum_entry))
+    (enum_class_body (enum_entry (simple_identifier) @enum_name) @enum_entry))
   (#eq? @enum_name "@stale_flag_name")
 )
     """

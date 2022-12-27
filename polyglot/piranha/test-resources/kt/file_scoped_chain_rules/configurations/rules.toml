@@ -16,10 +16,10 @@ name = "transform_api1"
 query = """
 (
 ((call_expression 
-			(navigation_expression (simple_identifier) @parameter_utils)
+            (navigation_expression (simple_identifier) @parameter_utils)
             (call_suffix (value_arguments
-            	((value_argument (navigation_expression (callable_reference
-                					(type_identifier)@parameter_interface))))
+                ((value_argument (navigation_expression (callable_reference
+                                    (type_identifier)@parameter_interface))))
                 (_) @cache_parameters
             ) )) @call_expr)
 (#eq? @parameter_utils "ParameterUtils")

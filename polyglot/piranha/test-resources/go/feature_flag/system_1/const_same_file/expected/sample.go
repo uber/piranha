@@ -14,60 +14,60 @@ package flag
 import "fmt"
 
 const (
-	staleFlagConst = "staleFlag"
-	normalFlag     = "normalFlag"
+    staleFlagConst = "staleFlag"
+    normalFlag     = "normalFlag"
 )
 
 func a() {
-	fmt.Println("false")
+    fmt.Println("false")
 }
 
 func (c *Client) b() {
-	s, err := exp.StrValue("str")
-	if err != nil {
-		fmt.Println(err)
-	}
+    s, err := exp.StrValue("str")
+    if err != nil {
+        fmt.Println(err)
+    }
 
-	fmt.Println(staleFlagConst)
+    fmt.Println(staleFlagConst)
 }
 
 func (c *Client) c(enabled2 bool, enabled3 bool) {
-	if enabled2 || enabled3 {
-		fmt.Println("enabled")
-	}
+    if enabled2 || enabled3 {
+        fmt.Println("enabled")
+    }
 }
 
 // should not replace the function name
 func (c *Client) isEnabled() bool {
-	return false
+    return false
 }
 
 func (c *Client) callerMethod() {
-	// should not replace isFlagEnabledMethod here
-	if c.isFlagEnabledMethod() {
-		fmt.Println("enabled")
-	} else {
-		fmt.Println("disabled")
-	}
+    // should not replace isFlagEnabledMethod here
+    if c.isFlagEnabledMethod() {
+        fmt.Println("enabled")
+    } else {
+        fmt.Println("disabled")
+    }
 }
 
 // should not replace the method name
 func (c *Client) isFlagEnabledMethod() bool {
-	fmt.Println("not enabled")
-	return false
+    fmt.Println("not enabled")
+    return false
 }
 
 func callerFunc() {
-	// should not replace isFlagEnabledFunc here
-	if isFlagEnabledFunc() {
-		fmt.Println("enabled")
-	} else {
-		fmt.Println("disabled")
-	}
+    // should not replace isFlagEnabledFunc here
+    if isFlagEnabledFunc() {
+        fmt.Println("enabled")
+    } else {
+        fmt.Println("disabled")
+    }
 }
 
 // should not replace the function name
 func isFlagEnabledFunc() bool {
-	fmt.Println("not enabled")
-	return false
+    fmt.Println("not enabled")
+    return false
 }

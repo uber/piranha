@@ -13,7 +13,7 @@
 name = "find_const_str_literal"
 query = """
 (
-	(const_spec
+    (const_spec
         name: (identifier) @const_id
         value: (expression_list
             (interpreted_string_literal) @const_str_literal

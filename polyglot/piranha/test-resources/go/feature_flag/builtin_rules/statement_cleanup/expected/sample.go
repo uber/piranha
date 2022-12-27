@@ -16,50 +16,50 @@ package main
 import "fmt"
 
 func a() bool {
-	return true
+    return true
 }
 
 func b() string {
-	s, err := exp.StrValue("str")
-	if err != nil {
-		fmt.Println(err)
-	}
+    s, err := exp.StrValue("str")
+    if err != nil {
+        fmt.Println(err)
+    }
 
-	return s
+    return s
 }
 
 func c() string {
-	s, err := exp.StrValue("str")
-	if err != nil {
-		fmt.Println(err)
-	}
+    s, err := exp.StrValue("str")
+    if err != nil {
+        fmt.Println(err)
+    }
 
-	fmt.Println("not enabled")
-	return "prefix_" + s
+    fmt.Println("not enabled")
+    return "prefix_" + s
 }
 
 func after_return1() string {
-	return "not enabled"
+    return "not enabled"
 }
 
 func after_return2(a bool) string {
-	if a {
-		fmt.Println("not enabled")
-		return "not enabled"
-	}
-	// delete after return needs to consider blocks
-	fmt.Println("should not be removed")
-	return "keep"
+    if a {
+        fmt.Println("not enabled")
+        return "not enabled"
+    }
+    // delete after return needs to consider blocks
+    fmt.Println("should not be removed")
+    return "keep"
 }
 
 // should remove multiple statements after return
 func after_return3() string {
-	return "not enabled"
+    return "not enabled"
 }
 
 func after_return4() string {
-	fmt.Println("before 1")
-	fmt.Println("before 2")
+    fmt.Println("before 1")
+    fmt.Println("before 2")
 
-	return "not enabled"
+    return "not enabled"
 }
