@@ -9,7 +9,6 @@ repos:
       - id: check-toml
       - id: end-of-file-fixer
       - id: mixed-line-ending
-      - id: trailing-whitespace
   - repo: local
     hooks:
       - id: toml-fmt
