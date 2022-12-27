@@ -1,6 +1,7 @@
 use std::process::Command;
-// Set up the development environment
-// Creates a `venv` with pre-commit / maturin
+
+/// Set up the development environment
+/// Creates a `venv` with pre-commit / maturin
 fn main() {
   // Create python virtual environment
   _ = Command::new("python3")
@@ -9,7 +10,6 @@ fn main() {
     .spawn()
     .expect("Could not create virtual environment");
 
-  // Install pre-commit / maturin binary
   _ = Command::new("pip3")
     .args(["install", "pre-commit", "maturin"])
     .spawn()
