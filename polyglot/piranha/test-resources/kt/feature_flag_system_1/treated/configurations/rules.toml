@@ -22,8 +22,8 @@
 name = "replace_isToggleEnabled_with_boolean_literal"
 query = """(
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -32,7 +32,7 @@ query = """(
 )"""
 replace_node = "call_expression"
 replace = "@treated"
-groups = [ "replace_expression_with_boolean_literal"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 
 #
@@ -46,8 +46,8 @@ holes = ["treated", "stale_flag_name"]
 name = "replace_isFlagEnabled_with_boolean_literal"
 query = """(
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -56,7 +56,7 @@ query = """(
 )"""
 replace_node = "call_expression"
 replace = "@treated"
-groups = [ "replace_expression_with_boolean_literal"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 
 #
@@ -70,8 +70,8 @@ holes = ["treated", "stale_flag_name"]
 name = "replace_isToggleDisabled_with_boolean_literal"
 query = """(
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -80,7 +80,7 @@ query = """(
 )"""
 replace_node = "call_expression"
 replace = "@treated_complement"
-groups = [ "replace_expression_with_boolean_literal"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["treated_complement", "stale_flag_name"]
 
 #
@@ -99,14 +99,14 @@ name = "delete_enum_constant"
 query = """
    (
 (class_declaration (_) @name 
-	(enum_class_body (enum_entry (simple_identifier) @enum_name) @enum_entry))
+    (enum_class_body (enum_entry (simple_identifier) @enum_name) @enum_entry))
   (#eq? @enum_name "STALE_FLAG")
 )
     """
 replace_node = "enum_entry"
 replace = ""
 holes = ["stale_flag_name"]
-groups = [ "delete_enum_entry"]
+groups = ["delete_enum_entry"]
 
 #
 # For @stale_flag_name = STALE_FLAG and @treated = true
@@ -120,8 +120,8 @@ name = "delete_putToggleEnabled"
 query = """
 (
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -146,8 +146,8 @@ name = "delete_putToggleDisabled"
 query = """
 (
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression
@@ -172,8 +172,8 @@ name = "delete_includeEvent"
 query = """
 (
 (call_expression 
-		(navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
-		(call_suffix (value_arguments 
+        (navigation_expression (_) (navigation_suffix (simple_identifier) @m_name) )
+        (call_suffix (value_arguments 
                       (value_argument [(navigation_expression (_) (navigation_suffix (simple_identifier) @flag_name)) 
                                        (simple_identifier) @flag_name
                                       ])))) @call_expression

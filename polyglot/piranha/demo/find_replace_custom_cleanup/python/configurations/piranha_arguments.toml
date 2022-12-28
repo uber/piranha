@@ -11,7 +11,16 @@
 
 language = ["py"]
 substitutions = [
-    ["str_literal", "dependency2"],
-    ["str_to_replace", "dependency1"],
-    ["str_replacement", "dependency1_1"]
+  [
+    "str_literal",
+    "dependency2",
+  ],
+  [
+    "str_to_replace",
+    "dependency1",
+  ],
+  [
+    "str_replacement",
+    "dependency1_1",
+  ],
 ]

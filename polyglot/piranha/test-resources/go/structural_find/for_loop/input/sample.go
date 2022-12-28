@@ -16,36 +16,36 @@ package main
 import "fmt"
 
 func f(n int) {
-	for i := 0; i < 10; i++ {
-		fmt.Println(n, ":", i)
-	}
+    for i := 0; i < 10; i++ {
+        fmt.Println(n, ":", i)
+    }
 }
 
 func main() {
-	go f(0)
-	var input string
-	fmt.Scanln(&input)
+    go f(0)
+    var input string
+    fmt.Scanln(&input)
 }
 
 func f2() {
-	sum := 1
-	for sum < 100 {
-		sum += sum
-	}
-	fmt.Println(sum)
+    sum := 1
+    for sum < 100 {
+        sum += sum
+    }
+    fmt.Println(sum)
 }
 
 func f3() {
-	var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}
-	for i, v := range pow {
-		fmt.Printf("2**%d = %d\n", i, v)
-	}
+    var pow = []int{1, 2, 4, 8, 16, 32, 64, 128}
+    for i, v := range pow {
+        fmt.Printf("2**%d = %d\n", i, v)
+    }
 }
 
 func go_stmt() {
-	for i := 0; i < 10; i++ {
-		go f(i)
-	}
-	var input string
-	fmt.Scanln(&input)
+    for i := 0; i < 10; i++ {
+        go f(i)
+    }
+    var input string
+    fmt.Scanln(&input)
 }

@@ -30,7 +30,7 @@ fn test_read_file() {
   assert!(result.is_ok());
   let content = result.ok().unwrap();
   assert!(!content.is_empty());
-  assert!(content.eq(r#"name = 'Piranha'"#));
+  assert!(content.trim_end().eq(r#"name = 'Piranha'"#));
 }
 
 #[test]

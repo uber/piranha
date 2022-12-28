@@ -157,9 +157,9 @@ impl PiranhaArguments {
   // Returns non-default valued item when possible
   fn _merge<T: Clone + std::cmp::PartialEq>(x: T, y: T, default: T) -> T {
     if x != default {
-      x.clone()
+      x
     } else {
-      y.clone()
+      y
     }
   }
 

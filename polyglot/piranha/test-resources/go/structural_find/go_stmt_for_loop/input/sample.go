@@ -16,20 +16,20 @@ package main
 import "fmt"
 
 func f(n int) {
-	for i := 0; i < 10; i++ {
-		fmt.Println(n, ":", i)
-	}
+    for i := 0; i < 10; i++ {
+        fmt.Println(n, ":", i)
+    }
 }
 
 func main() {
-	go f(0) // go_statement does not get matched
-	go f(1) // go_statement does not get matched
+    go f(0) // go_statement does not get matched
+    go f(1) // go_statement does not get matched
 }
 
 func go_stmt() {
-	for i := 0; i < 10; i++ {
-		go f(i) // go_statement gets matched
-	}
-	var input string
-	fmt.Scanln(&input)
+    for i := 0; i < 10; i++ {
+        go f(i) // go_statement gets matched
+    }
+    var input string
+    fmt.Scanln(&input)
 }

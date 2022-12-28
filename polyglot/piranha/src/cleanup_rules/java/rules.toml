@@ -365,12 +365,14 @@ replace = ""
 replace_node = "program"
 [[rules.constraints]]
 matcher = "(program) @c_program"
-queries = ["(enum_declaration) @c_enum_declaration", 
-            "(class_declaration) @c_class_declaration",
-            "(interface_declaration) @c_interface_declaration",
-            "(annotation_type_declaration) @c_annotation_type_declaration",
-            "(module_declaration) @c_module_declaration",
-            "(record_declaration) @c_arecord_declaration"]
+queries = [
+  "(enum_declaration) @c_enum_declaration",
+  "(class_declaration) @c_class_declaration",
+  "(interface_declaration) @c_interface_declaration",
+  "(annotation_type_declaration) @c_annotation_type_declaration",
+  "(module_declaration) @c_module_declaration",
+  "(record_declaration) @c_arecord_declaration",
+]
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
 # 
@@ -416,16 +418,14 @@ replace_node = "variable_declaration"
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.constraints]]
 matcher = "[(method_declaration) (constructor_declaration)] @md"
-queries = [
-  """
+queries = ["""
 (
 ((assignment_expression
                     left: (_) @a.lhs
                     right: (_) @a.rhs) @assignment)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)"""
-]
+)"""]
 
 # This rule is part (and entry point) of the inline field declaration cleanup.
 # Same as the rule `delete_variable_declaration`, but applicable to fields.
@@ -446,15 +446,13 @@ replace_node = "field_declaration"
 # assigned to a value other than @init, within the method body
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
-queries = [
-  """(
+queries = ["""(
 ((assignment_expression
                     left: (_) @a.lhs
                     right: (_) @a.rhs) @assignment)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)"""
-]
+)"""]
 
 # This rule is part of inline variable declaration and field declaration cleanup. 
 # Delete assignment for a particular (@variable_name, @init) if: 
@@ -479,15 +477,13 @@ holes = ["variable_name", "init"]
 # which is initialized to "@init".
 [[rules.constraints]]
 matcher = "[(method_declaration) (constructor_declaration)] @md"
-queries = [
-  """(
+queries = ["""(
 ((local_variable_declaration 
                 declarator: (variable_declarator 
                                     name: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@l")
-)"""
-]
+)"""]
 
 # This rule is part (and entry point) of the inline variable / field declaration. 
 # delete assignment if 
@@ -515,29 +511,26 @@ queries = [
                                     name: (_) @vdcl.lhs
                                     value: (_)? @vdcl.init)) @variable_declaration)
 (#eq? @vdcl.lhs "@variable_name")
-)"""
+)""",
 ]
 [[rules.constraints]]
 # There should exist no field declaration named `@variable_name` and
 # there should be no assignments to @variable_name that are not same as `@init`.
 matcher = "(class_declaration) @cd"
-queries = [
-  """(
+queries = ["""(
 ((assignment_expression
                     left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
-)""",
-  """(
+)""", """(
 ((field_declaration 
                 declarator: (variable_declarator 
                                     name: (_) @fdcl.lhs
                                     value: (_) @fdcl.init)) @field_declaration)
 (#eq? @fdcl.lhs "@variable_name")
 (#not-eq? @fdcl.init "@init")
-)"""
-]
+)"""]
 
 # Replace identifier with value if :
 # (i) There is no local variable declaration in the enclosing method with the name as the identifier 
@@ -556,15 +549,13 @@ holes = ["variable_name", "init"]
 [[rules.constraints]]
 # There should exist no local variable declaration named `@identifer`
 matcher = "[(method_declaration) (constructor_declaration)] @md"
-queries = [
-  """(
+queries = ["""(
 ((local_variable_declaration 
                 declarator: (variable_declarator 
                                     name: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@identifier")
-)"""
-]
+)"""]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 

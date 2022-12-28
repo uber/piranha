@@ -42,7 +42,7 @@ query = """
 """
 replace_node = "pkg_dcl"
 replace = "@pkg_dcl \n import java.util.List;"
-groups=["Cleanup Rule"]
+groups = ["Cleanup Rule"]
 [[rules.constraints]]
 matcher = "(program ) @prgrm"
 queries = ["""(

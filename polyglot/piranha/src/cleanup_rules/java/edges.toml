@@ -69,7 +69,7 @@ scope = "Method"
 from = "delete_variable_declaration"
 to = [
   "replace_identifier_with_value",
-  "delete_boolean_assignments_for_variable"
+  "delete_boolean_assignments_for_variable",
 ]
 
 # Another workflow for inline variable

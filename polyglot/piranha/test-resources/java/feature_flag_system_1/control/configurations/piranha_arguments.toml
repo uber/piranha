@@ -11,9 +11,21 @@
 
 language = ["java"]
 substitutions = [
-    ["stale_flag_name", "STALE_FLAG"],
-    ["treated", "false"],
-    ["treated_complement", "true"],
-    ["namespace", "some_long_name"]
+  [
+    "stale_flag_name",
+    "STALE_FLAG",
+  ],
+  [
+    "treated",
+    "false",
+  ],
+  [
+    "treated_complement",
+    "true",
+  ],
+  [
+    "namespace",
+    "some_long_name",
+  ],
 ]
-cleanup_comments=true
+cleanup_comments = true

@@ -16,19 +16,13 @@
 [[edges]]
 scope = "Parent"
 from = "replace_expression_with_boolean_literal"
-to = [
-    "boolean_literal_cleanup",
-    "statement_cleanup",
-]
+to = ["boolean_literal_cleanup", "statement_cleanup"]
 
 ### boolean_literal_cleanup
 [[edges]]
 scope = "Parent"
 from = "boolean_literal_cleanup"
-to = [
-    "boolean_expression_simplify",
-    "statement_cleanup",
-]
+to = ["boolean_expression_simplify", "statement_cleanup"]
 
 [[edges]]
 scope = "Parent"

@@ -48,11 +48,11 @@ impl Edit {
 }
 
 impl From<Range> for Edit {
-    fn from(replacement_range: Range) -> Self {
-        Self {
-            p_match: Match::new(replacement_range, HashMap::new()),
-            replacement_string: String::new(),
-            matched_rule: String::new(),
-        }
+  fn from(replacement_range: Range) -> Self {
+    Self {
+      p_match: Match::new(replacement_range, HashMap::new()),
+      replacement_string: String::new(),
+      matched_rule: String::new(),
     }
+  }
 }

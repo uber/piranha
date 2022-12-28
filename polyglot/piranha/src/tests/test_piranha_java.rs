@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::default_configs::JAVA;
 
-use super::{initialize, run_match_test, run_rewrite_test, run_match_test_for_file};
+use super::{initialize, run_match_test_for_file, run_rewrite_test};
 
 static LANGUAGE: &str = JAVA;
 
@@ -99,5 +99,9 @@ fn test_java_scenarios_consecutive_scope_level_rules() {
 #[test]
 fn test_java_match_only() {
   initialize();
-  run_match_test_for_file(&format!("{}/{}", LANGUAGE, "structural_find"),"XPFlagCleanerPositiveCases.java",  20);
+  run_match_test_for_file(
+    &format!("{}/{}", LANGUAGE, "structural_find"),
+    "XPFlagCleanerPositiveCases.java",
+    20,
+  );
 }
