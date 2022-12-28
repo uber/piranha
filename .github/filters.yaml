@@ -2,6 +2,7 @@ js:
   - legacy/**
 java:
   - legacy/**
+
 polyglot:
   - src/**
   - tests/**
