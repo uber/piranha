@@ -44,6 +44,9 @@ def collect_rules_and_groups(rules_toml_dict):
     """
     for rule_toml in rules_toml_dict['rules']:
         rule_name: str = sanitize_name(rule_toml['name'])
+        if 'query' not in rule_toml:
+            dummy_nodes.add(rule_name)
+
         if 'groups' in rule_toml:
             rule_groups = rule_toml['groups']
             collect_node_for_rule_with_group(rule_name, rule_groups)
@@ -172,7 +175,9 @@ def append_cleanup_rule_if_needed(rule_name: str) -> str:
 def generate_node_for_rule_not_under_a_group(rule_name: str):
     """The rule will be a standalone node; we can add (Cleanup Rule) *on a new line* if needed."""
     if rule_name not in added_nodes:
-        if rule_name in cleanup_rules:
+        if rule_name in dummy_nodes:
+            graph.node(rule_name, shape='doubleoctagon')
+        elif rule_name in cleanup_rules:
             node_label = f'{rule_name}\\n(Cleanup Rule)'
             graph.node(rule_name, node_label)
         else:
@@ -233,6 +238,8 @@ outgoing_edges_by_node: 'dict[str, list[Edge]]' = {}
 
 cleanup_rules: 'set[str]' = set()
 nodes_without_groups: 'set[str]' = set()
+# nodes without `query`
+dummy_nodes: 'set[str]' = set()
 
 output_file_path = os.path.abspath(args.output_file_path)
 
