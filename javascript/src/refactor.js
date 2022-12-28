@@ -107,7 +107,7 @@ class RefactorEngine {
     // Verify this is a literal introduced by Piranha.
     // We only refactor code associated with literals having this property and leave original code untouched
     isPiranhaLiteral(node) {
-        return node.type === 'Literal' && node.createdByPiranha !== undefined;
+        return node != null && node.type === 'Literal' && node.createdByPiranha !== undefined;
     }
 
     reduceLogicalExpression(literal, expression, operator) {
@@ -136,7 +136,6 @@ class RefactorEngine {
         if (func.body === null || func.body.body == null) {
             return false;
         }
-
         const returnIndex = func.body.body.length - 1;
 
         if (returnIndex < 0)
@@ -144,7 +143,6 @@ class RefactorEngine {
             return false;
         else {
             var returnNode = func.body.body[returnIndex];
-
             if (
                 returnNode.type === 'ReturnStatement' &&
                 returnNode.argument !== null &&
@@ -324,7 +322,6 @@ class RefactorEngine {
                     if (methodHashMap.has(node.callee.name)) {
                         const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
                         const nodeArgument = node.arguments[argumentIndex];
-
                         let nodeArgumentIsFlag = false;
                         switch (nodeArgument.type) {
                             case 'Identifier':
@@ -352,6 +349,8 @@ class RefactorEngine {
             },
 
             fallback: 'iteration', // Ignore nodes in the AST that estraverse does not recognize
+            // By passing visitor.fallback option, we can control the behavior when encountering unknown nodes.
+            // Iterating the child **nodes** of unknown nodes.
         });
     }
 
@@ -361,7 +360,6 @@ class RefactorEngine {
     //  NOT true -> false, NOT false -> true
     evalBoolExpressions() {
         var engine = this;
-
         estraverse.replace(this.ast, {
             leave: function (node) {
                 if (node.type === 'LogicalExpression') {
@@ -409,10 +407,10 @@ class RefactorEngine {
                     engine.isPiranhaLiteral(node.test)
                 ) {
                     if (node.test.value === true) {
+                        // If statement is true
                         // node.consequent is always non-null so no check required
                         engine.changed = true;
                         engine.moveCommentsToConsequent(node);
-
                         return node.consequent;
                     } else if (node.test.value === false) {
                         if (node.alternate == null) {
@@ -448,9 +446,9 @@ class RefactorEngine {
     // var foo = cond -> _
     // where cond evaluates to a Boolean literal in a previous step
     getRedundantVarnames() {
+        // Makes the assignment between literal and value
         var assignments = {};
         var engine = this;
-
         // Get a list of variable names which are assigned to a boolean literal
         estraverse.traverse(this.ast, {
             enter: function (node) {
@@ -478,11 +476,56 @@ class RefactorEngine {
         return assignments;
     }
 
+    // This function helps in passing the refactored value of a parameter in the function call to the corresponding argument in the function declaration
+    adjustFunctionParams(parameterList) {
+        var engine = this;
+        var assignments = {};
+        estraverse.replace(this.ast, {
+            enter: function (node, parent) {
+                if (node.type === 'Identifier' && parent.type === 'FunctionDeclaration') {
+                    // this is the part where the function arguments are substituted values if they are a part of the assignments
+                    for (let i = 0; i < parent.params.length; i++) {
+                        if (node.name === parent.params[i].name) {
+                            for (let j = 0; j < parameterList.length; j++) {
+                                if (
+                                    parameterList[j].functionName === parent.id.name &&
+                                    parent.params.length === parameterList[j].totalParameters &&
+                                    parameterList[j].parameterIdx === i
+                                ) {
+                                    assignments[parent.params[i].name] = parameterList[j].value;
+                                    engine.pruneVarReferencesinFunc(parent, assignments);
+                                    if (parameterList[j].value === true) return engine.trueLiteral();
+                                    return engine.falseLiteral();
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+
+            fallback: 'iteration',
+        });
+    }
+
+    // this function removes the literals after the refactoring is terminated.
+    // f1(true) -> a function call becomes f1()
+    removeLiteralParameters() {
+        // var engine = this;
+        estraverse.replace(this.ast, {
+            enter: function (node, parent) {
+                if (node.type === 'Literal' && node.createdByPiranha === true) {
+                    return this.remove();
+                }
+            },
+
+            fallback: 'iteration',
+        });
+    }
+
     // Remove all variable declarations corresponding variables in `assignments`
     // Replace all references of variables in `assignments` with the corresponding literal
-    pruneVarReferences(assignments) {
+    pruneVarReferences(assignments, parameterList) {
         var engine = this;
-
         // Remove redundant variables by deleting declarations and replacing variable references
         estraverse.replace(this.ast, {
             enter: function (node, parent) {
@@ -498,6 +541,63 @@ class RefactorEngine {
                         return this.remove();
                     }
                 } else if (node.type === 'Identifier') {
+                    // this is the part where the function arguments are substituted values if they are a part of the assignments
+                    if (node.name in assignments) {
+                        if (assignments[node.name] === true || assignments[node.name] === false) {
+                            engine.changed = true;
+                            return assignments[node.name] === true ? engine.trueLiteral() : engine.falseLiteral();
+                        }
+                    }
+                } else if (node.type === 'CallExpression') {
+                    for (let i = 0; i < node.arguments.length; i++) {
+                        let argValue;
+                        if (node.arguments[i].createdByPiranha) {
+                            argValue = node.arguments[i].value;
+                            parameterList.push({
+                                functionName: node.callee.name,
+                                parameterIdx: i,
+                                value: argValue,
+                                totalParameters: node.arguments.length,
+                            });
+                        }
+                    }
+                }
+            },
+
+            // After previous step, some declaration may have no declarators, delete them.
+            leave: function (node, parent) {
+                if (node.type === 'VariableDeclaration') {
+                    if (node.declarations.length === 0) {
+                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
+                        engine.changed = true;
+                        return this.remove();
+                    }
+                }
+            },
+
+            fallback: 'iteration',
+        });
+        return parameterList;
+    }
+
+    // The references of the refactored function parameters, within the function are pruned with their new refactored value in this function
+    pruneVarReferencesinFunc(nn, assignments) {
+        var engine = this;
+        estraverse.replace(nn, {
+            enter: function (node, parent) {
+                if (node.type === 'VariableDeclarator') {
+                    if (node.id.name in assignments) {
+                        engine.changed = true;
+                        return this.remove();
+                    }
+                } else if (node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression') {
+                    if (node.expression.left.name in assignments) {
+                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
+                        engine.changed = true;
+                        return this.remove();
+                    }
+                } else if (node.type === 'Identifier') {
+                    // this is the part where the function arguments are substituted values if they are a part of the assignments
                     if (node.name in assignments) {
                         if (assignments[node.name] === true) {
                             engine.changed = true;
@@ -567,7 +667,6 @@ class RefactorEngine {
                 singleReturn[fun] = 1;
             }
         }
-
         return singleReturn;
     }
 
@@ -679,15 +778,15 @@ class RefactorEngine {
             this.reduceIfStatements();
 
             var redundantVarnames = this.getRedundantVarnames();
-            this.pruneVarReferences(redundantVarnames);
-
+            let parameterList = [];
+            this.pruneVarReferences(redundantVarnames, parameterList);
+            this.adjustFunctionParams(parameterList);
             var functionsWithSingleReturn = this.getFunctionsWithSingleReturn();
             var redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
             this.pruneFuncReferences(redundantFunctions);
-
             iterations++;
         }
-
+        this.removeLiteralParameters();
         this.finalizeLiterals();
 
         if (this.print_to_console) {
