@@ -48,6 +48,6 @@ impl From<PiranhaInput> for PiranhaArguments {
     let path_to_toml = PathBuf::from(input_opts.path_to_configurations())
       .join(default_name_of_piranha_argument_toml());
     let piranha_argument = PiranhaArguments::new(path_to_toml);
-    return input_opts.merge(piranha_argument);
+    input_opts.merge(piranha_argument)
   }
 }

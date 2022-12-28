@@ -22,7 +22,7 @@ use std::path::PathBuf;
 
 // Reads a file.
 pub(crate) fn read_file(file_path: &PathBuf) -> Result<String, String> {
-  File::open(&file_path)
+  File::open(file_path)
     .map(|file| {
       let mut content = String::new();
       let _ = BufReader::new(file).read_to_string(&mut content);
@@ -55,7 +55,7 @@ pub(crate) fn parse_toml<T>(content: &str) -> T
 where
   T: serde::de::DeserializeOwned + Default,
 {
-  return toml::from_str::<T>(content).unwrap();
+  toml::from_str::<T>(content).unwrap()
 }
 
 pub(crate) trait MapOfVec<T, V> {
