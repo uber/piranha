@@ -37,10 +37,8 @@ query = """
 """
 [[rules.constraints]]
 matcher = "(function_declaration) @fs"
-queries=[
-    """
+queries = ["""
 (
     (while_statement) @while_stmt
 )
-"""
-]
+"""]

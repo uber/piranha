@@ -1,4 +1,4 @@
-use crate::models::{language::PiranhaLanguage, default_configs::JAVA};
+use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
 
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
@@ -24,7 +24,8 @@ use {
 fn _get_class_scope() -> ScopeGenerator {
   let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
     .matcher("(class_declaration name:(_) @n) @c".to_string())
-    .generator("(
+    .generator(
+      "(
       ((class_declaration name:(_) @z) @qc)
       (#eq? @z \"@n\")
     )"
@@ -79,9 +80,8 @@ fn _get_method_scope() -> ScopeGenerator {
     .unwrap();
 }
 
-
 fn _get_rule_store() -> RuleStore {
-  return RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()])
+  RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()])
 }
 
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.
@@ -96,8 +96,8 @@ fn test_get_scope_query_positive() {
         }
       }
     }";
-  
-  let mut rule_store =  _get_rule_store();
+
+  let mut rule_store = _get_rule_store();
   let mut parser = PiranhaLanguage::from(JAVA).parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -108,12 +108,7 @@ fn test_get_scope_query_positive() {
     rule_store.piranha_args(),
   );
 
-  let scope_query_method = source_code_unit.get_scope_query(
-    "Method",
-    133,
-    134,
-    &mut rule_store,
-  );
+  let scope_query_method = source_code_unit.get_scope_query("Method", 133, 134, &mut rule_store);
 
   println!("{}", scope_query_method.as_str());
   assert!(eq_without_whitespace(
@@ -135,8 +130,7 @@ fn test_get_scope_query_positive() {
     )@qdn"
   ));
 
-  let scope_query_class =
-  source_code_unit.get_scope_query("Class", 133, 134, &mut rule_store);
+  let scope_query_class = source_code_unit.get_scope_query("Class", 133, 134, &mut rule_store);
   assert!(eq_without_whitespace(
     scope_query_class.as_str(),
     "(

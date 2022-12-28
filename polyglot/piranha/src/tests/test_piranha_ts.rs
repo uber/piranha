@@ -20,17 +20,32 @@ static LANGUAGE: &str = TYPESCRIPT;
 #[test]
 fn test_ts_match_only_find_fors() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors"), 3);
+  run_match_test(
+    &format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors"),
+    3,
+  );
 }
 
 #[test]
 fn test_ts_match_only_find_fors_within_functions() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors_within_functions"), 2);
+  run_match_test(
+    &format!(
+      "{}/{}/{}",
+      LANGUAGE, "structural_find", "find_fors_within_functions"
+    ),
+    2,
+  );
 }
 
 #[test]
 fn test_ts_match_only_find_fors_within_functions_not_within_whiles() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors_within_functions_not_within_whiles"), 1);
+  run_match_test(
+    &format!(
+      "{}/{}/{}",
+      LANGUAGE, "structural_find", "find_fors_within_functions_not_within_whiles"
+    ),
+    1,
+  );
 }

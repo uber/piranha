@@ -22,7 +22,7 @@
 name = "find_interface_extension"
 query = """(
 (class_declaration name: (_)@class_name 
-	interfaces: (super_interfaces (_) @t) 
+    interfaces: (super_interfaces (_) @t) 
  ) @cd
 (#eq? @t "SomeInterface")
 )"""

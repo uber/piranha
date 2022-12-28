@@ -304,10 +304,10 @@ This can be achieved by adding a rule in the `input_rules.toml` file (as shown b
 [[rules]]
 name = "Enum Based, toggle enabled"
 query = """((
-	(method_invocation
-    	name : (_) @n1
+    (method_invocation
+        name : (_) @n1
         arguments: ((argument_list
-        				([
+                        ([
                           (field_access field: (_)@f)
                           (_) @f
                          ])) )
@@ -468,6 +468,10 @@ The purpose of Piranha Arguments is determining the behavior of Piranha.
 
 
 ## Contributing
+
+Prerequisites: 
+* Install [pre-commit](https://pre-commit.com/)
+* Install [taplo](https://taplo.tamasfe.dev/cli/introduction.html)
 
 <h4> Naming conventions for the rules </h4>
 

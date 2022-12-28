@@ -81,7 +81,7 @@ pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutpu
     .map(PiranhaOutputSummary::new)
     .collect_vec();
   log_piranha_output_summaries(&summaries);
-  return summaries;
+  summaries
 }
 
 fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {

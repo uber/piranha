@@ -10,7 +10,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use crate::models::{language::PiranhaLanguage, default_configs::JAVA};
+use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
 use std::collections::HashSet;
 use {
   super::Rule,
@@ -95,7 +95,7 @@ fn test_get_edit_positive_recursive() {
   let matches = source_code_unit.get_matches(rule.clone(), &mut rule_store, node, true);
   assert!(!matches.is_empty());
 
-  let edit = source_code_unit.get_edit(rule.clone(), &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(rule, &mut rule_store, node, true);
   assert!(edit.is_some());
 }
 
@@ -141,7 +141,7 @@ fn test_get_edit_negative_recursive() {
   let node = source_code_unit.root_node();
   let matches = source_code_unit.get_matches(rule.clone(), &mut rule_store, node, true);
   assert!(matches.is_empty());
-  let edit = source_code_unit.get_edit(rule.clone(), &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(rule, &mut rule_store, node, true);
   assert!(edit.is_none());
 }
 

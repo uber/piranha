@@ -74,7 +74,7 @@ holes = ["stale_flag_name", "namespace"]
 #
 [[rules]]
 name = "delete_flag_method_declaration_inside_annotated_interface"
-query= """
+query = """
 (
 (interface_declaration
     (modifiers (annotation

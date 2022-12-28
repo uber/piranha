@@ -15,7 +15,7 @@ name = "delete_enum_entry"
 query = """
 (
 class_declaration name: (type_identifier) @enum_declaration_name
-	(enum_class_body (enum_entry name: (simple_identifier) @name)  @ee)
+    (enum_class_body (enum_entry name: (simple_identifier) @name)  @ee)
 (#eq? @name "@GLOBAL_TAG.enum_entry_name")
 )"""
 replace_node = "ee"
@@ -40,15 +40,15 @@ holes = ["stale_flag_name"]
 
 
 # Looks for type aliases using `enum_declaration_name`
-[[rules]] 
+[[rules]]
 name = "read_only_detect_type_alias"
 query = """
 ((typealias_declaration name: (type_identifier)@inherits_plugin_switch 
-	(user_type (type_arguments name : (user_type (type_identifier)@type_arg))))@tdn
+    (user_type (type_arguments name : (user_type (type_identifier)@type_arg))))@tdn
 (#eq? @type_arg "@enum_declaration_name")
 )
 """
-holes = [ "enum_declaration_name"]
+holes = ["enum_declaration_name"]
 
 # Deletes factory class that uses the GLOBAL_TAG.enum_entry_name and inherits the relevant type alias.
 [[rules]]

@@ -110,7 +110,7 @@ groups = ["Cleanup Rule"]
 query = """
 (
 (assignment
-    	left: (_) @i
+        left: (_) @i
         right: (list) @list
 ) @assignment
 (#match? @list "\\\\[\\\\s*,?\\\\]")

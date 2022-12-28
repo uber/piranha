@@ -10,7 +10,5 @@
 # limitations under the License.
 
 language = ["swift"]
-substitutions = [
-    ["stale_flag_name", "test_second_experiment"],
-]
-cleanup_comments=true
+substitutions = [["stale_flag_name", "test_second_experiment"]]
+cleanup_comments = true

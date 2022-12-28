@@ -19,3 +19,5 @@ polyglot/piranha/.idea
 polyglot/piranha/demo/piranha
 **/.env/**
 **.pyc
+target
+Cargo.lock

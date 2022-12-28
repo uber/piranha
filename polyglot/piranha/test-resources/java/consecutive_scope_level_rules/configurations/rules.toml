@@ -52,4 +52,3 @@ queries = ["""(
 (field_declaration (variable_declarator name:(_) @name )) @field
 (#eq? @name "address")
 )"""]
-
