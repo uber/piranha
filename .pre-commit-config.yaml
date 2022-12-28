@@ -9,7 +9,7 @@ repos:
       - id: check-toml
         files: polyglot/
       - id: end-of-file-fixer
-        files: polyglot/*
+        files: polyglot/
       - id: mixed-line-ending
         files: polyglot/
   - repo: local
