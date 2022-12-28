@@ -7,11 +7,11 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-toml
-        files: polyglot/
+        files: src/
       - id: end-of-file-fixer
-        files: polyglot/
+        files: src/
       - id: mixed-line-ending
-        files: polyglot/
+        files: src/
   - repo: local
     hooks:
       - id: toml-fmt
@@ -21,25 +21,25 @@ repos:
       - id: cargo-fmt
         name: cargo fmt
         language: system
-        entry: bash -c 'cargo fmt --manifest-path polyglot/piranha/Cargo.toml'
+        entry: bash -c 'cargo fmt'
         types: [rust]
       - id: cargo-clippy
         name: cargo clippy
         language: system
-        entry: bash -c 'cd polyglot/piranha && cargo clippy --fix --allow-staged'
+        entry: bash -c 'cargo clippy --fix --allow-staged'
         types: [rust]
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.3.1
     hooks:
       - id: forbid-tabs
-        files: polyglot/
+        files: src/
       - id: remove-tabs
-        files: polyglot/
+        files: src/
       - id: insert-license
         files: \.rs$
         args:
           - --license-filepath
-          - polyglot/piranha/license_header.txt
+          - license_header.txt
           - --comment-style
           - /*| | */

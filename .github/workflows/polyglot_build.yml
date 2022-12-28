@@ -34,7 +34,6 @@ jobs:
           pre-commit run --all-files
       - name: Run unit and integration tests
         run: cargo test
-        working-directory: polyglot/piranha
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
@@ -44,10 +43,8 @@ jobs:
           python -m venv .env
           source .env/bin/activate
           pip install maturin pytest
-        working-directory: polyglot/piranha
       - name: Run Python tests
         run: |
           source .env/bin/activate
           maturin develop
           pytest tests/tests.py
-        working-directory: polyglot/piranha
