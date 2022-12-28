@@ -14,4 +14,4 @@ jobs:
     needs: detect
     if: ${{ needs.detect.outputs.polyglot == 'false' }}
     steps:
-      - run: 'echo "No Polyglot changes; build is not required." '
+      - run: 'echo "No Polyglot changes; build is not required."'

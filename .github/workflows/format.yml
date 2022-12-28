@@ -7,7 +7,7 @@ on:
 
 defaults:
   run:
-    working-directory: javascript
+    working-directory: legacy/javascript
 
 jobs:
   detect:

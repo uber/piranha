@@ -1,6 +1,6 @@
 js:
-  - javascript/**
+  - legacy/javascript/**
 java:
-  - java/**
+  - legacy/java/**
 polyglot:
   - polyglot/**

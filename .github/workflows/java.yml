@@ -24,9 +24,6 @@ jobs:
             java: 8
           - os: ubuntu-latest
             java: 11
-          # Windows is unsupported for now
-          # - os: windows-latest
-          #   java: 8
       fail-fast: false
     runs-on: ${{ matrix.os }}
     needs: detect
@@ -41,16 +38,6 @@ jobs:
       - name: Build and test using Gradle and Java
         uses: eskatos/gradle-command-action@v1
         with:
-          build-root-directory: ./java
-          wrapper-directory: ./java
+          build-root-directory: ./legacy/java
+          wrapper-directory: ./legacy/java
           arguments: verGJF build
-      - name: Report jacoco coverage
-        uses: eskatos/gradle-command-action@v1
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        with:
-          build-root-directory: ./java
-          wrapper-directory: ./java
-          arguments: jacocoTestReport coverallsJacoco
-        continue-on-error: true
-        if: runner.os == 'Linux' && matrix.java == '8' && github.repository == 'uber/piranha'
