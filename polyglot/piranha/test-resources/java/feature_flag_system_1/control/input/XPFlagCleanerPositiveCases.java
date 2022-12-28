@@ -267,6 +267,19 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
+  public String multiple_stmt_after_return() {
+    if (!experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+      return "not enabled";
+    }
+
+    System.out.println("remove 1");
+    System.out.println("remove 2");
+    System.out.println("remove 3");
+    System.out.println("remove 4");
+    System.out.println("remove 5");
+    return "enabled";
+  }
+
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) {
       return true;

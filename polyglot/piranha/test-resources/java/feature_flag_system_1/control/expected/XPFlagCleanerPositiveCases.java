@@ -205,6 +205,10 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
+  public String multiple_stmt_after_return() {
+    return "not enabled";
+  }
+
   class XPTest {
     public boolean isToggleEnabled(TestExperimentName x) {
       return true;
