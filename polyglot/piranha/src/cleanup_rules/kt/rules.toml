@@ -24,7 +24,7 @@ query = """
 (
 (if_expression (_) (_) 
                (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_) ) @consequence) @if_expression) )) @outer_if
+               (control_structure_body (_) ) @consequence) @if_expression) )) @outer_if
 (#eq? @condition "true")
 )
 """
@@ -44,7 +44,7 @@ query = """
 (
 (if_expression (_) @x (_) @y
                (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_))  @consequence 
+               (control_structure_body (_))  @consequence 
                (control_structure_body (_) ) @alternative) @if_expression ) )) @outer_if
 (#eq? @condition "true")
 )
@@ -64,8 +64,8 @@ query = """
 (
 (if_expression (_) (_) 
                (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_) ) @consquent
-			   (_) @alternative) @if_expression) )) @outer_if
+               (control_structure_body (_) ) @consquent
+               (_) @alternative) @if_expression) )) @outer_if
 (#eq? @condition "false")
 )
 """
@@ -83,7 +83,7 @@ query = """
 (
 (if_expression (_) (_) 
                (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_) ) @consquent)) ) @alternative) @if_expression
+               (control_structure_body (_) ) @consquent)) ) @alternative) @if_expression
 (#eq? @condition "false")
 )
 """
@@ -101,7 +101,7 @@ name = "simplify_if_true"
 query = """
 (
 (if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_) @consequence ) ) @if_expression
+               (control_structure_body (_) @consequence ) ) @if_expression
 (#eq? @condition "true")
 )
 """
@@ -120,7 +120,7 @@ name = "simplify_if_true_with_alternative"
 query = """
 (
 (if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_) @consequence ) 
+               (control_structure_body (_) @consequence ) 
                (control_structure_body (_) ) @alternative) @if_expression
 (#eq? @condition "true")
 )
@@ -143,8 +143,8 @@ name = "simplify_if_false_with_alternative"
 query = """
 (
 (if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_)? ) @consquent
-			   (control_structure_body (_)? @alternative) ) @if_expression
+               (control_structure_body (_)? ) @consquent
+               (control_structure_body (_)? @alternative) ) @if_expression
 (#eq? @condition "false")
 )"""
 replace = "@alternative"
@@ -160,7 +160,7 @@ name = "simplify_if_false"
 query = """
 (
 (if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
-			   (control_structure_body (_)? ) @consquent) @if_expression
+               (control_structure_body (_)? ) @consquent) @if_expression
 (#eq? @condition "false")
 )"""
 replace = ""
@@ -360,9 +360,9 @@ name = "delete_all_statements_after_return"
 query = """
 (
 (statements 
- 	(_)* @pre
-	(jump_expression) @jump_expression	
-	(_)+ @post
+     (_)* @pre
+    (jump_expression) @jump_expression    
+    (_)+ @post
 ) @statements
 (#match? @jump_expression "return")
 )"""
@@ -373,12 +373,12 @@ replace_node = "post"
 name = "delete_empty_enum_declaration"
 query = """
 (class_declaration (_) @name 
-	(enum_class_body)) @enum_declaration"""
+    (enum_class_body)) @enum_declaration"""
 replace = ""
 replace_node = "enum_declaration"
 [[rules.constraints]]
 matcher = """(class_declaration (_) @nm
-	(enum_class_body)) @ed"""
+    (enum_class_body)) @ed"""
 queries = ["(enum_entry) @ee"]
 
 # Delete all file contents if 
@@ -390,8 +390,12 @@ replace = ""
 replace_node = "program"
 [[rules.constraints]]
 matcher = "(source_file) @sf"
-queries = ["(class_declaration) @cd", "(object_declaration) @od", "(function_declaration) @fd", "(property_declaration) @pd"]
-
+queries = [
+  "(class_declaration) @cd",
+  "(object_declaration) @od",
+  "(function_declaration) @fd",
+  "(property_declaration) @pd",
+]
 
 
 # This rule is part (and entry point) for the inline local variable cleanup. Example: 
@@ -434,7 +438,7 @@ holes = ["variable_name"]
 name = "delete_local_var_property_declaration"
 query = """
 (property_declaration (variable_declaration (simple_identifier)@variable_name ) 
- 								[(boolean_literal) @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+                                 [(boolean_literal) @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
 """
 replace = ""
 replace_node = "property_declaration"
@@ -450,7 +454,7 @@ replace_node = "property_declaration"
 matcher = "(function_declaration) @md"
 queries = [
   """(
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@assignment
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @assignment
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )""",
@@ -462,7 +466,7 @@ queries = [
 name = "delete_field_property_declaration"
 query = """
 (property_declaration (variable_declaration (simple_identifier)@variable_name ) 
- 								[(boolean_literal)  @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+                                 [(boolean_literal)  @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
 """
 replace = ""
 replace_node = "property_declaration"
@@ -473,7 +477,7 @@ replace_node = "property_declaration"
 matcher = "(class_declaration) @cd"
 queries = [
   """(
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@assignment
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @assignment
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )""",
@@ -487,7 +491,7 @@ queries = [
 name = "delete_boolean_assignments_for_local_variable"
 query = """
 (
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)    @assignment
 (#eq? @a.lhs "@variable_name")
 (#eq? @a.rhs "@init")
 ) 
@@ -502,7 +506,7 @@ matcher = "(function_declaration) @md"
 queries = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
- 								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+                                 [(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
 (#eq? @vdcl.lhs "@l")
 )""",
 ]
@@ -511,7 +515,7 @@ queries = [
 name = "delete_boolean_assignments_for_field"
 query = """
 (
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)	@assignment
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (boolean_literal)@a.rhs)    @assignment
 (#eq? @a.lhs "@variable_name")
 (#eq? @a.rhs "@init")
 ) 
@@ -526,7 +530,7 @@ matcher = "(class_declaration) @md"
 queries = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
- 								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+                                 [(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
 (#eq? @vdcl.lhs "@l")
 )""",
 ]
@@ -539,27 +543,25 @@ queries = [
 [[rules]]
 name = "delete_parent_assignment"
 query = """
-(assignment (directly_assignable_expression (simple_identifier)@variable_name) (boolean_literal) @init)	@assignment
+(assignment (directly_assignable_expression (simple_identifier)@variable_name) (boolean_literal) @init)    @assignment
 """
 replace = ""
 replace_node = "assignment"
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
 [[rules.constraints]]
 matcher = "(function_declaration) @md"
-queries = [
-"""(
+queries = ["""(
 (property_declaration (variable_declaration (simple_identifier)@f_vdcl.lhs ) 
- 								(_)@f_vdcl.init) @property_declaration
+                                 (_)@f_vdcl.init) @property_declaration
   (#eq? @f_vdcl.lhs "@variable_name")
   (#not-eq? @f_vdcl.init "@init")
-)""",
-]
+)"""]
 
 [[rules.constraints]]
 matcher = "(function_declaration) @md"
 queries = [
-"""(
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@f_assignment
+  """(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @f_assignment
   (#eq? @a.lhs "@variable_name")
   (#not-eq? @a.rhs "@init")
 )""",
@@ -567,20 +569,18 @@ queries = [
 
 [[rules.constraints]]
 matcher = "(class_declaration) @md"
-queries = [
-  """(
+queries = ["""(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
- 								(_)@vdcl.init ) @property_declaration
+                                 (_)@vdcl.init ) @property_declaration
 (#eq? @vdcl.lhs "@variable_name")
 (#not-eq? @vdcl.init "@init")
-)""",
-]
+)"""]
 
 [[rules.constraints]]
 matcher = "(class_declaration) @md"
 queries = [
-"""(
-(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)	@c_assignment
+  """(
+(assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @c_assignment
   (#eq? @a.lhs "@variable_name")
   (#not-eq? @a.rhs "@init")
 )""",
@@ -607,7 +607,7 @@ replace_node = "identifier"
 # queries = [
 #   """(
 # (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
-#  								[(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+#                                  [(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
 # (#eq? @vdcl.lhs "@identifier")
 # )""",
 # ]
@@ -624,4 +624,3 @@ name = "boolean_literal_cleanup"
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
-

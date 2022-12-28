@@ -11,8 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 use std::{
+  collections::HashSet,
   fs::{self},
-  io, collections::HashSet,
+  io,
 };
 
 use itertools::Itertools;
@@ -20,12 +21,17 @@ use tempdir::TempDir;
 
 use tree_sitter::Parser;
 
-use crate::models::{piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder}, rule::Rule, constraint::Constraint, rule_store::RuleStore, language::PiranhaLanguage, default_configs::{JAVA, SWIFT}};
+use crate::models::{
+  constraint::Constraint,
+  default_configs::{JAVA, SWIFT},
+  language::PiranhaLanguage,
+  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+  rule::Rule,
+  rule_store::RuleStore,
+};
 use {
   super::SourceCodeUnit,
-  crate::{
-    models::edit::Edit, utilities::eq_without_whitespace,
-  },
+  crate::{models::edit::Edit, utilities::eq_without_whitespace},
   std::{collections::HashMap, path::PathBuf},
   tree_sitter::Range,
 };
@@ -64,7 +70,7 @@ fn range(
 }
 
 fn get_java_tree_sitter_language() -> PiranhaLanguage {
-   PiranhaLanguage::from(JAVA)
+  PiranhaLanguage::from(JAVA)
 }
 
 /// Positive test of an edit being applied  given replacement range  and replacement string.
@@ -83,15 +89,13 @@ fn test_apply_edit_positive() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
 
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
+  let mut source_code_unit =
+    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
-  let _ = source_code_unit.apply_edit(
-    &Edit::from(range(49, 78, 3, 9, 3, 38)),
-    &mut parser,
-  );
+  let _ = source_code_unit.apply_edit(&Edit::from(range(49, 78, 3, 9, 3, 38)), &mut parser);
   assert!(eq_without_whitespace(
     &source_code.replace("boolean isFlagTreated = true;", ""),
-    &source_code_unit.code()
+    source_code_unit.code()
   ));
 }
 
@@ -111,12 +115,10 @@ fn test_apply_edit_negative() {
 
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
+  let mut source_code_unit =
+    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
-  let _ = source_code_unit.apply_edit(
-    &Edit::from(range(1000, 2000, 0, 0, 0, 0)),
-    &mut parser,
-  );
+  let _ = source_code_unit.apply_edit(&Edit::from(range(1000, 2000, 0, 0, 0, 0)), &mut parser);
 }
 
 /// Positive test of an edit being applied  given replacement range  and replacement string.
@@ -130,18 +132,16 @@ fn test_apply_edit_comma_handling_via_grammar() {
       }
     }";
 
-    let java = get_java_tree_sitter_language();
+  let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
 
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
+  let mut source_code_unit =
+    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
-  let _ = source_code_unit.apply_edit(
-    &Edit::from(range(37, 47, 2, 26, 2, 36)),
-    &mut parser,
-  );
+  let _ = source_code_unit.apply_edit(&Edit::from(range(37, 47, 2, 26, 2, 36)), &mut parser);
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
-    &source_code_unit.code()
+    source_code_unit.code()
   ));
 }
 
@@ -161,15 +161,13 @@ fn test_apply_edit_comma_handling_via_regex() {
 
   let mut parser = swift.parser();
 
-  let mut source_code_unit = SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
+  let mut source_code_unit =
+    SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
 
-  let _ = source_code_unit.apply_edit(
-    &Edit::from(range(59, 75, 3, 23, 3, 41)),
-    &mut parser,
-  );
+  let _ = source_code_unit.apply_edit(&Edit::from(range(59, 75, 3, 23, 3, 41)), &mut parser);
   assert!(eq_without_whitespace(
     &source_code.replace("name: \"BMX Bike\",", ""),
-    &source_code_unit.code()
+    source_code_unit.code()
   ));
 }
 fn execute_persist_in_temp_folder(
@@ -180,7 +178,7 @@ fn execute_persist_in_temp_folder(
   let mut parser = java.parser();
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
-  _ = fs::write(&file_path.as_path(), source_code);
+  _ = fs::write(file_path.as_path(), source_code);
   let piranha_args = PiranhaArgumentsBuilder::default()
     .language(vec![java.name().to_string()])
     .build()
@@ -366,7 +364,7 @@ fn test_satisfies_constraints_positive() {
     .unwrap();
 
   assert!(source_code_unit.is_satisfied(
-    node.clone(),
+    *node,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),
@@ -433,7 +431,7 @@ fn test_satisfies_constraints_negative() {
     .unwrap();
 
   assert!(!source_code_unit.is_satisfied(
-    node.clone(),
+    *node,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),
@@ -442,4 +440,3 @@ fn test_satisfies_constraints_negative() {
     &mut rule_store,
   ));
 }
-

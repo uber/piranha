@@ -10,7 +10,4 @@
 # limitations under the License.
 
 language = ["go"]
-substitutions = [
-    ["treated", "true"],
-    ["treated_complement", "false"]
-]
+substitutions = [["treated", "true"], ["treated_complement", "false"]]

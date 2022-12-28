@@ -79,15 +79,15 @@ replace = ""
 groups = ["delete_property_declaration"]
 holes = ["stale_flag_name", "namespace"]
 [[rules.constraints]]
-matcher =   """(
+matcher = """(
 (class_declaration 
- 	(modifiers (annotation (constructor_invocation (_)@interface_annotation_name (value_arguments
+     (modifiers (annotation (constructor_invocation (_)@interface_annotation_name (value_arguments
                                                          (value_argument (_)@clhs (_)@crhs)))))) @cd
 (#eq? @clhs "namespace")
 (#eq? @crhs "\\\"@namespace\\\"")
 (#eq? @interface_annotation_name "ParameterDefinition")
 )"""
- 
+
 
 # For @m_name = `isStaleFeature`, @treated = `true`
 # Before :
@@ -100,7 +100,7 @@ name = "replace_flag_method_with_boolean_literal"
 query = """
 (
 (navigation_expression (call_expression
-                       	(navigation_expression (simple_identifier)@receiver (navigation_suffix (_)@inner_nav_suffix_name))
+                           (navigation_expression (simple_identifier)@receiver (navigation_suffix (_)@inner_nav_suffix_name))
                        ) (navigation_suffix (_) @nav_suffix_name)) @navigation_expression
 (#eq? @nav_suffix_name "cachedValue")
 (#eq? @inner_nav_suffix_name "@m_name")
@@ -122,11 +122,11 @@ name = "delete_put"
 query = """
 (
 (call_expression (navigation_expression (simple_identifier)@name (navigation_suffix (simple_identifier) @outer_call_name))
-				(call_suffix (value_arguments (value_argument (call_expression 
-	                                                              (navigation_expression
-                                                                   	(simple_identifier) @arg_method_receiver
+                (call_suffix (value_arguments (value_argument (call_expression 
+                                                                  (navigation_expression
+                                                                       (simple_identifier) @arg_method_receiver
                                                                     (navigation_suffix (_)@arg_method_name)
-    	                                                          	)
+                                                                      )
                                                               )))))@ce
 (#eq? @arg_method_name "@m_name")
 (#eq? @outer_call_name "put")

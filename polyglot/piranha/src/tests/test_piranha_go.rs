@@ -20,20 +20,29 @@ static LANGUAGE: &str = GO;
 #[test]
 fn test_go_match_only_go_expr_for_loop() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "go_stmt_for_loop"), 1);
+  run_match_test(
+    &format!("{}/{}/{}", LANGUAGE, "structural_find", "go_stmt_for_loop"),
+    1,
+  );
 }
 
 #[test]
 fn test_go_match_only_for_loop() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"), 4);
+  run_match_test(
+    &format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"),
+    4,
+  );
 }
 
 #[test]
 fn test_go_builtin_boolean_expression_simplify() {
   initialize();
   run_rewrite_test(
-    &format!("{}/{}/{}/{}", LANGUAGE, "feature_flag", "builtin_rules", "boolean_expression_simplify"),
+    &format!(
+      "{}/{}/{}/{}",
+      LANGUAGE, "feature_flag", "builtin_rules", "boolean_expression_simplify"
+    ),
     1,
   );
 }
@@ -42,7 +51,10 @@ fn test_go_builtin_boolean_expression_simplify() {
 fn test_go_builtin_statement_cleanup() {
   initialize();
   run_rewrite_test(
-    &format!("{}/{}/{}/{}", LANGUAGE, "feature_flag", "builtin_rules", "statement_cleanup"),
+    &format!(
+      "{}/{}/{}/{}",
+      LANGUAGE, "feature_flag", "builtin_rules", "statement_cleanup"
+    ),
     1,
   );
 }
@@ -51,7 +63,10 @@ fn test_go_builtin_statement_cleanup() {
 fn test_go_const_same_file() {
   initialize();
   run_rewrite_test(
-    &format!("{}/{}/{}/{}", LANGUAGE, "feature_flag", "system_1", "const_same_file"),
+    &format!(
+      "{}/{}/{}/{}",
+      LANGUAGE, "feature_flag", "system_1", "const_same_file"
+    ),
     1,
   );
 }

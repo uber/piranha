@@ -20,17 +20,34 @@ static LANGUAGE: &str = TSX;
 #[test]
 fn test_ts_match_only_find_fors() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_jsx_elements"), 4);
+  run_match_test(
+    &format!("{}/{}/{}", LANGUAGE, "structural_find", "find_jsx_elements"),
+    4,
+  );
 }
 
 #[test]
 fn test_ts_match_only_find_fors_within_functions() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_props_identifiers_within_b_jsx_elements"), 2);
+  run_match_test(
+    &format!(
+      "{}/{}/{}",
+      LANGUAGE, "structural_find", "find_props_identifiers_within_b_jsx_elements"
+    ),
+    2,
+  );
 }
 
 #[test]
 fn test_ts_match_only_find_fors_within_functions_not_within_whiles() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", LANGUAGE, "structural_find", "find_props_identifiers_within_variable_declarators_not_within_divs"), 2);
+  run_match_test(
+    &format!(
+      "{}/{}/{}",
+      LANGUAGE,
+      "structural_find",
+      "find_props_identifiers_within_variable_declarators_not_within_divs"
+    ),
+    2,
+  );
 }

@@ -1,15 +1,23 @@
 [package]
-authors = ["Ameya Ketkar <ketkara@uber.com>", "Lazaro Clapp <lazaro@uber.com>", "Murali Krishna Ramanathan", "Uber Technologies Inc."]
+authors = [
+  "Ameya Ketkar <ketkara@uber.com>",
+  "Lazaro Clapp <lazaro@uber.com>",
+  "Murali Krishna Ramanathan",
+  "Uber Technologies Inc.",
+]
 name = "piranha"
 description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
 version = "0.2.1"
 edition = "2021"
-include = [
-    "pyproject.toml",
-    "src/"
-]
+include = ["pyproject.toml", "src/"]
 license-file = "LICENSE"
-categories = ["structural find-replace", "find-replace", "structural seearch", "structural search and replace", "tree-sitter"]
+categories = [
+  "structural find-replace",
+  "find-replace",
+  "structural seearch",
+  "structural search and replace",
+  "tree-sitter",
+]
 
 [[bin]]
 name = "polyglot_piranha"
@@ -31,9 +39,9 @@ toml = "0.5.9"
 serde = "1.0.136"
 serde_derive = "1.0.136"
 colored = "2.0.0"
-itertools= "0.10.3"
+itertools = "0.10.3"
 regex = "1.5.5"
-jwalk= "0.6.0"
+jwalk = "0.6.0"
 clap = { version = "3.1.12", features = ["derive"] }
 log = "0.4.16"
 env_logger = "0.9.0"
@@ -49,7 +57,7 @@ tree-sitter-typescript = { git = "https://github.com/tree-sitter/tree-sitter-typ
 tree-sitter-go = { git = "https://github.com/uber/tree-sitter-go.git", branch = "expose_statement_list" }
 derive_builder = "0.11.2"
 getset = "0.1.2"
-pyo3 =  "0.17.1"
+pyo3 = "0.17.1"
 pyo3-log = "0.7.0"
 
 [features]

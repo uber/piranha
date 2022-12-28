@@ -24,14 +24,16 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-          components: rustfmt, clippy
-      - name: Build Piranha
-        run: cargo build
-        working-directory: polyglot/piranha
-      - name: Clippy check
-        run: cargo clippy
-        working-directory: polyglot/piranha
-      - run: cargo test
+          components: rustfmt
+      - name: Run pre-commit 
+        run : |
+          python -m venv .env
+          source .env/bin/activate
+          pip install pre-commit
+          cargo install taplo-cli --locked
+          pre-commit run --all-files
+      - name: Run unit and integration tests
+        run: cargo test
         working-directory: polyglot/piranha
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
@@ -43,7 +45,7 @@ jobs:
           source .env/bin/activate
           pip install maturin pytest
         working-directory: polyglot/piranha
-      - name: Run tests
+      - name: Run Python tests
         run: |
           source .env/bin/activate
           maturin develop

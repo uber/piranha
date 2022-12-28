@@ -83,7 +83,4 @@ to = ["delete_property_declaration_named"]
 [[edges]]
 scope = "Class"
 from = "delete_field_property_declaration"
-to = [
-  "replace_identifier_with_value",
-  "delete_boolean_assignments_for_field",
-]
+to = ["replace_identifier_with_value", "delete_boolean_assignments_for_field"]
