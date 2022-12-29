@@ -16,14 +16,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            java: 8
-          - os: macos-latest
-            java: 11
+          # - os: macos-latest
+          #   java: 8
+          # - os: macos-latest
+          #   java: 11
           - os: ubuntu-latest
             java: 8
-          - os: ubuntu-latest
-            java: 11
+          # - os: ubuntu-latest
+            # java: 11
       fail-fast: false
     runs-on: ${{ matrix.os }}
     needs: detect

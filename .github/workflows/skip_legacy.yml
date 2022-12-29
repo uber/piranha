@@ -13,9 +13,5 @@ jobs:
     needs: detect
     if: ${{ needs.detect.outputs.legacy == 'false' }}
 
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 14.x]
-
     steps:
-      - run: 'echo "No JS changes; build is not required." '
+      - run: 'echo "No changes to legacy implementations" '

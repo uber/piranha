@@ -14,4 +14,4 @@ jobs:
     needs: detect
     if: ${{ needs.detect.outputs.legacy == 'true' }}
     steps:
-      - run: 'echo "No Polyglot changes; build is not required."'
+      - run: 'echo "No changes to polyglot piranha implementation"'
