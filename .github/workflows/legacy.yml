@@ -16,14 +16,8 @@ jobs:
     strategy:
       matrix:
         include:
-          # - os: macos-latest
-          #   java: 8
-          # - os: macos-latest
-          #   java: 11
           - os: ubuntu-latest
             java: 8
-          # - os: ubuntu-latest
-            # java: 11
       fail-fast: false
     runs-on: ${{ matrix.os }}
     needs: detect
@@ -41,3 +35,43 @@ jobs:
           build-root-directory: ./legacy/java
           wrapper-directory: ./legacy/java
           arguments: verGJF build
+
+  build_JS:
+    runs-on: ubuntu-latest
+    needs: detect
+    if: ${{ github.event_name == 'push' || needs.detect.outputs.legacy == 'true' }}
+    env:
+      HUSKY_SKIP_INSTALL: 1
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+        working-directory: "legacy/javascript"
+      - run: npm test
+        working-directory: "legacy/javascript"
+      - run: npm test
+        working-directory: "legacy/javascript"
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "14.x"
+      - name: Format
+        run: |
+          npm ci
+          npm run check_format
+        working-directory: "legacy/javascript"
+      - uses: actions/checkout@v2
+      - uses: hallee/eslint-action@1.0.3
+        with:
+          # GITHUB_TOKEN in forked repositories is read-only
+          # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
+          repo-token: ${{secrets.GITHUB_TOKEN}}
+          source-root: legacy/javascript
