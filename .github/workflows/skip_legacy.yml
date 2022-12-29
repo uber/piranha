@@ -1,4 +1,4 @@
-name: Node.js
+name: Legacy
 
 on:
   pull_request:
