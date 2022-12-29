@@ -136,7 +136,7 @@ piranha_summary = run_piranha_cli(path_to_codebase,
 
 <h5> Returns </h5>
 
-`[Piranha_Output]` : a [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `dry_run` is passed as `true`.
+`[Piranha_Output]` : a [`PiranhaOutputSummary`](/src/models/piranha_output.rs) for each file touched or analyzed by Piranha. It contains useful information like, matches found (for *match-only* rules), rewrites performed, and content of the file after the rewrite. The content is particularly useful when `dry_run` is passed as `true`.
 
 ### :computer: Command-line Interface
 
@@ -145,7 +145,7 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 
 * Install [Rust](https://www.rust-lang.org/tools/install)
 * `git clone https://github.com/uber/piranha.git`
-* `cd piranha/polyglot/piranha`
+* `cd piranha`
 * `cargo build --release` (`cargo build --release --no-default-features` for macOS)
 * Binary will be generated under `target/release`
 
@@ -175,7 +175,7 @@ OPTIONS:
             Path to output summary json file
 ```
 
-The output JSON is the serialization of- [`PiranhaOutputSummary`](/polyglot/piranha/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.
+The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.
 
 *It can be seen that the Python API is basically a wrapper around this command line interface.*
 
@@ -220,7 +220,7 @@ Currently, we have demos for the following :
 
 <h4>Stale Feature Flag Cleanup:</h4>
 
-  * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/polyglot/piranha/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/polyglot/piranha/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API.
+  * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API.
   * In these demos the `configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
     * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules [reference](#piranha-arguments).
@@ -242,18 +242,18 @@ Currently, we have demos for the following :
    * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()`. Note it also adds the required import statement.
 
 
-*Please refer to our test cases at [`/polyglot/piranha/test-resources/<language>/`](/polyglot/piranha/test-resources/) as a reference for handling complicated scenarios*
+*Please refer to our test cases at [`/test-resources/<language>/`](/test-resources/) as a reference for handling complicated scenarios*
 
 
 <h3>Building upon the stale feature flag cleanup demo </h3>
 
 First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
 
-Then see if your API usage is similar to the ones shown in the demo ([java-demo](/polyglot/piranha/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/polyglot/piranha/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/polyglot/piranha/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/polyglot/piranha/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/polyglot/piranha/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
+Then see if your API usage is similar to the ones shown in the demo ([java-demo](/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
 
 If not :|, try to adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work. It is recommended to read the section- [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
 
-Then adapt the [argument file](/polyglot/piranha/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/polyglot/piranha/src/cleanup_rules/java/edges.toml) is not required, unless your feature flag system API rules are inter-dependent.
+Then adapt the [argument file](/demo/java/configurations/piranha_arguments.toml) as per your requirements. For instance, you may want to update the value corresponding to the `@stale_flag_name` and `@treated`. If your rules do not contain require other tags feel free to remove them from your arguments file. In most cases [edges file](/src/cleanup_rules/java/edges.toml) is not required, unless your feature flag system API rules are inter-dependent.
 
 
 More details for configuring Piranha - [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
@@ -266,7 +266,7 @@ and [Adding Cleanup Rules](#adding-cleanup-rules).
 
 <h3> Adding support for a new feature flag system </h3>
 
-To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files (look [here](/polyglot/piranha/src/cleanup_rules/java)). The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent.
+To onboard a new feature flag system users will have to specify the `<path-to-configurations>/rules.toml` and `<path-to-configurations>/edges.toml` files (look [here](/src/cleanup_rules/java)). The `rules.toml` will contain rules that identify the usage of a feature flag system API. Defining `edges.toml` is required if your feature flag system API rules are inter-dependent.
 For instance, you want to delete a method declaration with specific annotations and then update its usages with some boolean value.
 Please refer to the `test-resources/java` for detailed examples.
 
@@ -410,15 +410,15 @@ int foobar(){
 
 We would first define flag API rules as discussed in the section [Adding Support for a new language](#adding-support-for-a-new-language). Assuming this rule replaces the occurrence of the flag API corresponding to `SOME_STALE_FLAG` with `true`; we would have to define more cleanup rules as follows:
 
-* `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml):`delete_variable_declarations`)
-* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml):`replace_expression_with_boolean_literal`)
-* `R2`: simplify the boolean expressions, for example replace `true || someCondition()` with `true`, that encloses the node where `R1` was applied. (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml): `true_or_something`)
-* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied (`if (true) { return 100;}` → `return 100;`). E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml): `simplify_if_statement_true, remove_unnecessary_nested_block`
-* `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied. (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml): `delete_all_statements_after_return`)
+* `R0`: Deletes the enclosing variable declaration (i.e. `x`) (E.g. [java-rules](/src/cleanup_rules/java/rules.toml):`delete_variable_declarations`)
+* `R1`: replace the identifier with the RHS of the deleted variable declaration, within the body of the enclosing method where `R0` was applied i.e. replace `x` with `true` within the method body of `foobar`. (E.g. [java-rules](/src/cleanup_rules/java/rules.toml):`replace_expression_with_boolean_literal`)
+* `R2`: simplify the boolean expressions, for example replace `true || someCondition()` with `true`, that encloses the node where `R1` was applied. (E.g. [java-rules](/src/cleanup_rules/java/rules.toml): `true_or_something`)
+* `R3`: eliminate the enclosing if statement with a constant condition where `R2` was applied (`if (true) { return 100;}` → `return 100;`). E.g. [java-rules](/src/cleanup_rules/java/rules.toml): `simplify_if_statement_true, remove_unnecessary_nested_block`
+* `R4`: eliminate unreachable code (`return 0;` in `return 100; return 0;`) in the enclosing block where `R3` was applied. (E.g. [java-rules](/src/cleanup_rules/java/rules.toml): `delete_all_statements_after_return`)
 
 The fact that `R2` has to be applied to the enclosing node where `R1` was applied, is expressed by specifying the `edges.toml` file.
 
-To define how these cleanup rules should be chained, one needs to specify edges (e.g. the [java-edges](/polyglot/piranha/src/cleanup_rules/java/edges.toml) file) between the groups and (or) individual rules.
+To define how these cleanup rules should be chained, one needs to specify edges (e.g. the [java-edges](/src/cleanup_rules/java/edges.toml) file) between the groups and (or) individual rules.
 The edges can be labelled as `Parent`, `Global` or even much finer scopes like `Method` or `Class` (or let's say `functions` in `go-lang`).
 * A `Parent` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules on any ancestor of `"n2"` (e.g. `R1` → `R2`, `R2` → `R3`, `R3` → `R4`)
 * A `Method` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules within the enclosing method's body. (e.g. `R0` → `R1`)
@@ -426,7 +426,7 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 * A `Global` edge implies that after Piranha applies the `"from"` rule to update the node `n1` in the AST to node `n2`, Piranha tries to apply `"to"` rules in the entire code base. (e.g. in-lining a public field).
 
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
-First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/polyglot/piranha/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
+First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
 
 ## Visualizing Graphs for Rules and Groups
 
@@ -476,7 +476,7 @@ Prerequisites:
 <h4> Naming conventions for the rules </h4>
 
 * We name the rules in the format - <verb>_<ast_kind>. E.g., `delete_method_declaration` or `replace_expression with_boolean_literal`
-* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. [java-rules](/polyglot/piranha/src/cleanup_rules/java/rules.toml): `boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
+* We name the dummy rules in the format - `<ast_kind>_cleanup` E.g. `statement_cleanup` or `boolean_literal_cleanup`. Using dummy rules (E.g. [java-rules](/src/cleanup_rules/java/rules.toml): `boolean_literal_cleanup`) makes it easier and cleaner when specifying the flow between rules.
 
 <h4> Writing tests </h4>
 

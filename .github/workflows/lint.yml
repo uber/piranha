@@ -23,4 +23,4 @@ jobs:
           # GITHUB_TOKEN in forked repositories is read-only
           # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
           repo-token: ${{secrets.GITHUB_TOKEN}}
-          source-root: javascript
+          source-root: legacy/javascript

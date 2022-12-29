@@ -1,6 +1,9 @@
 js:
-  - javascript/**
+  - legacy/**
 java:
-  - java/**
+  - legacy/**
 polyglot:
-  - polyglot/**
+  - src/**
+  - tests/**
+  - test-resources/**
+  - demo/**

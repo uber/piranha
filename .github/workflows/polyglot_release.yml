@@ -14,12 +14,10 @@ jobs:
         pip install --upgrade maturin
         maturin build --release -o dist
         maturin build --sdist -o dist
-      working-directory: polyglot/piranha
     - name: Pypi Release for ubuntu-latest
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-      working-directory: polyglot/piranha
   
   build_mac_os:
     needs: build_ubuntu
@@ -33,7 +31,6 @@ jobs:
       run: |
         pip install --upgrade maturin
         maturin build --release -o dist
-      working-directory: polyglot/piranha
     - name: Build wheel with Maturin - universal2
       env:
         DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
@@ -43,9 +40,7 @@ jobs:
         rustup target add aarch64-apple-darwin
         pip install --upgrade maturin
         maturin build --release -o dist --universal2
-      working-directory: polyglot/piranha
     - name: Pypi Release for ubuntu-latest
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-      working-directory: polyglot/piranha
