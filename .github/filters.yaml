@@ -1,6 +1,4 @@
-js:
-  - legacy/**
-java:
+legacy:
   - legacy/**
   
 polyglot:
