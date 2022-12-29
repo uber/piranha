@@ -17,43 +17,43 @@ jobs:
   detect:
     uses: ./.github/workflows/detect_changes.yml
 
-  build_JS:
-    runs-on: ubuntu-latest
-    needs: detect
-    if: ${{ github.event_name == 'push' || needs.detect.outputs.legacy == 'true' }}
-    env:
-      HUSKY_SKIP_INSTALL: 1
+  # build_JS:
+  #   runs-on: ubuntu-latest
+  #   needs: detect
+  #   if: ${{ github.event_name == 'push' || needs.detect.outputs.legacy == 'true' }}
+  #   env:
+  #     HUSKY_SKIP_INSTALL: 1
 
-    strategy:
-      matrix:
-        node-version: [10.x, 12.x, 14.x]
+  #   strategy:
+  #     matrix:
+  #       node-version: [10.x, 12.x, 14.x]
 
-    steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm test
-      - run: npm test
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: "14.x"
-      - name: Format
-        run: |
-          npm ci
-          npm run check_format
-      - uses: actions/checkout@v2
-      - uses: hallee/eslint-action@1.0.3
-        with:
-          # GITHUB_TOKEN in forked repositories is read-only
-          # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
-          repo-token: ${{secrets.GITHUB_TOKEN}}
-          source-root: legacy/javascript
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Use Node.js ${{ matrix.node-version }}
+  #       uses: actions/setup-node@v1
+  #       with:
+  #         node-version: ${{ matrix.node-version }}
+  #     - run: npm ci
+  #     - run: npm test
+  #     - run: npm test
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v1
+  #       with:
+  #         node-version: "14.x"
+  #     - name: Format
+  #       run: |
+  #         npm ci
+  #         npm run check_format
+  #     - uses: actions/checkout@v2
+  #     - uses: hallee/eslint-action@1.0.3
+  #       with:
+  #         # GITHUB_TOKEN in forked repositories is read-only
+  #         # https://help.github.com/en/actions/reference/events-that-trigger-workflows#pull-request-event-pull_request
+  #         repo-token: ${{secrets.GITHUB_TOKEN}}
+  #         source-root: legacy/javascript
 
-  build_java:
+  build:
     name: "JDK ${{ matrix.java }} on ${{ matrix.os }}"
     strategy:
       matrix:
