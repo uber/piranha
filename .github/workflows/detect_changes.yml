@@ -3,12 +3,9 @@ name: Detect Changes
 on:
   workflow_call:
     outputs:
-      java:
-        value: ${{ jobs.changes.outputs.java }}
-      js:
-        value: ${{ jobs.changes.outputs.js }}
-      polyglot:
-        value: ${{ jobs.changes.outputs.polyglot }}
+      legacy:
+        value: ${{ jobs.changes.outputs.legacy }}
+      
 
 jobs:
   # runs change detection
@@ -16,9 +13,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      java: ${{ steps.filter.outputs.java }}
-      js: ${{ steps.filter.outputs.js }}
-      polyglot: ${{ steps.filter.outputs.polyglot }}
+      legacy: ${{ steps.filter.outputs.legacy }}
     steps:
       - uses: actions/checkout@v2
       - uses: dorny/paths-filter@v2
