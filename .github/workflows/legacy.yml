@@ -11,7 +11,7 @@ on:
 
 defaults:
   run:
-    working-directory: legacy/javascript
+    working-directory: legacy/java
 
 jobs:
   detect:
