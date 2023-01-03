@@ -9,7 +9,7 @@ name = "piranha"
 description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
 version = "0.2.1"
 edition = "2021"
-include = ["pyproject.toml", "src/"]
+include = ["pyproject.toml", "core/"]
 exclude = ["legacy"]
 license-file = "LICENSE"
 categories = [
@@ -22,11 +22,11 @@ categories = [
 
 [[bin]]
 name = "polyglot_piranha"
-path = "src/main.rs"
+path = "core/src/main.rs"
 
 [lib]
 name = "polyglot_piranha"
-path = "src/lib.rs"
+path = "core/src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [build-dependencies]
