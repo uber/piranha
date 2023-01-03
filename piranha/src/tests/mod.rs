@@ -46,8 +46,9 @@ fn run_match_test_for_file(
   relative_path_to_tests: &str, file_name: &str, number_of_matches: usize,
 ) {
   let path_to_configurations =
-    format!("core/test-resources/{relative_path_to_tests}/configurations/");
-  let path_to_codebase = format!("core/test-resources/{relative_path_to_tests}/input/{file_name}");
+    format!("piranha/test-resources/{relative_path_to_tests}/configurations/");
+  let path_to_codebase =
+    format!("piranha/test-resources/{relative_path_to_tests}/input/{file_name}");
   _run_match_test(path_to_codebase, path_to_configurations, number_of_matches);
 }
 
@@ -55,8 +56,8 @@ fn run_match_test_for_file(
 // and checks if the number of matches == `number_of_matches`.
 fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
   let path_to_configurations =
-    format!("core/test-resources/{relative_path_to_tests}/configurations/");
-  let path_to_codebase = format!("core/test-resources/{relative_path_to_tests}/input/");
+    format!("piranha/test-resources/{relative_path_to_tests}/configurations/");
+  let path_to_codebase = format!("piranha/test-resources/{relative_path_to_tests}/input/");
   _run_match_test(path_to_codebase, path_to_configurations, number_of_matches);
 }
 
@@ -85,8 +86,8 @@ fn _run_match_test(
 // It also asserts the number of changed files in the expected output.
 fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   let path_to_configurations =
-    format!("core/test-resources/{relative_path_to_tests}/configurations/");
-  let path_to_codebase = format!("core/test-resources/{relative_path_to_tests}/input/");
+    format!("piranha/test-resources/{relative_path_to_tests}/configurations/");
+  let path_to_codebase = format!("piranha/test-resources/{relative_path_to_tests}/input/");
 
   let piranha_input = PiranhaInput::API {
     path_to_codebase,
@@ -108,7 +109,7 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
 
   assert_eq!(output_summaries.len(), n_files_changed);
   let path_to_expected = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
-    "core/test-resources/{relative_path_to_tests}/expected"
+    "piranha/test-resources/{relative_path_to_tests}/expected"
   ));
   check_result(output_summaries, path_to_expected);
 }

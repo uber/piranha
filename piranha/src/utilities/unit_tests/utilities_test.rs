@@ -25,7 +25,7 @@ struct TestStruct {
 #[test]
 fn test_read_file() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-  let path_to_test_file = project_root.join("core/test-resources/utility_tests/sample.toml");
+  let path_to_test_file = project_root.join("piranha/test-resources/utility_tests/sample.toml");
   let result = read_file(&path_to_test_file);
   assert!(result.is_ok());
   let content = result.ok().unwrap();
@@ -36,7 +36,7 @@ fn test_read_file() {
 #[test]
 fn test_read_toml() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-  let path_to_test_file = project_root.join("core/test-resources/utility_tests/sample.toml");
+  let path_to_test_file = project_root.join("piranha/test-resources/utility_tests/sample.toml");
   let result: TestStruct = read_toml(&path_to_test_file, false);
   assert!(result.name.eq("Piranha"));
 }
@@ -45,7 +45,7 @@ fn test_read_toml() {
 fn test_read_toml_default() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_test_file =
-    project_root.join("core/test-resources/utility_tests/another_sample.toml.toml");
+    project_root.join("piranha/test-resources/utility_tests/another_sample.toml.toml");
   let result: TestStruct = read_toml(&path_to_test_file, true);
   assert!(result.name.eq(""));
 }
@@ -53,7 +53,7 @@ fn test_read_toml_default() {
 #[test]
 fn test_find_file_positive() {
   let project_root =
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("core/test-resources/utility_tests/");
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("piranha/test-resources/utility_tests/");
   let f = find_file(&project_root, "sample.toml");
   assert!(f.is_file());
 }
@@ -62,7 +62,7 @@ fn test_find_file_positive() {
 #[should_panic]
 fn test_find_file_negative() {
   let project_root =
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("core/test-resources/utility_tests/");
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("piranha/test-resources/utility_tests/");
   let f = find_file(&project_root, "another_sample.toml.toml");
   assert!(f.is_file());
 }

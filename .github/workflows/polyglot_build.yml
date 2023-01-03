@@ -46,4 +46,4 @@ jobs:
         run: |
           source .env/bin/activate
           maturin develop
-          pytest core/tests/tests.py
+          pytest piranha/tests/tests.py
