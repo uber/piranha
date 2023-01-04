@@ -193,7 +193,6 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/pi
 | TypeScript+React | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
 | C#               | :calendar:                  | :calendar:                               | :calendar:                           |
 | JavaScript       | :calendar:                  | :calendar:                               | :calendar:                           |
-| Strings Resource | :heavy_check_mark:          | :x:                                      | :x:                                  |
 
 Contributions for the :calendar: (`planned`) languages or any other languages are welcome :)
 

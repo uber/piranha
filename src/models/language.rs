@@ -18,7 +18,7 @@ use tree_sitter::{Parser, Query};
 use crate::utilities::parse_toml;
 
 use super::{
-  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, STRINGS, SWIFT, TSX, TYPESCRIPT},
+  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT},
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
@@ -48,7 +48,6 @@ pub enum SupportedLanguage {
   Kotlin,
   Go,
   Swift,
-  Strings,
   Ts,
   Tsx,
   Python,
@@ -161,15 +160,6 @@ impl From<&str> for PiranhaLanguage {
         comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
         rules: None,
         edges: None,
-      },
-      STRINGS => PiranhaLanguage {
-        name: language.to_string(),
-        supported_language: SupportedLanguage::Strings,
-        language: tree_sitter_strings::language(),
-        rules: None,
-        edges: None,
-        scopes: vec![],
-        comment_nodes: vec![],
       },
       TYPESCRIPT => PiranhaLanguage {
         name: language.to_string(),
