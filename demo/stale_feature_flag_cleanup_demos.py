@@ -1,5 +1,5 @@
 from os.path import join, dirname, getmtime, exists
-from polyglot_piranha import run_piranha_cli
+from polyglot_piranha import execute_piranha, run_piranha_cli, PiranhaArguments
 import logging 
 from logging import info 
 
@@ -14,8 +14,8 @@ def run_java_ff_demo():
     configuration_path = join(directory_path, "configurations")
 
     old_mtime = getmtime(modified_file_path)
-
-    output_summary_java = run_piranha_cli(directory_path, configuration_path, False)
+    args = PiranhaArguments(directory_path, configuration_path, stale_flag_name = "SAMPLE_STALE_FLAG", treated = "true", treated_complement = "false")
+    output_summary_java = execute_piranha(args)
 
     assert len(output_summary_java) == 2
 
@@ -51,7 +51,7 @@ def run_kt_ff_demo():
 
 FORMAT = '%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s'
 logging.basicConfig(format=FORMAT)
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.DEBUG)
 
 run_java_ff_demo()
 run_kt_ff_demo()

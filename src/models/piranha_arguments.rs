@@ -170,9 +170,11 @@ impl PiranhaArguments {
     } else {
       vec![]
     };
+
+    let i_s = subs.iter().map(|x| (x[0].clone(), x[1].clone())).collect();
     Self {
       path_to_codebase,
-      input_substitutions: default_input_substitutions(),
+      input_substitutions: i_s,
       path_to_configurations,
       dry_run,
       language: vec![language.to_string()],
@@ -183,7 +185,8 @@ impl PiranhaArguments {
       global_tag_prefix: global_tag_prefix.to_string(),
       delete_file_if_empty,
       substitutions: subs,
-      ..Default::default()
+      piranha_language: PiranhaLanguage::from(language),
+      path_to_output_summary: None,
     }
   }
 }
