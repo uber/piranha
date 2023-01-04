@@ -20,7 +20,6 @@ pub const KOTLIN: &str = "kt";
 pub const GO: &str = "go";
 pub const PYTHON: &str = "py";
 pub const SWIFT: &str = "swift";
-pub const STRINGS: &str = "strings";
 pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 

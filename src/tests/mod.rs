@@ -22,8 +22,6 @@ use std::path::{Path, PathBuf};
 mod test_piranha_java;
 mod test_piranha_kt;
 
-mod test_piranha_strings;
-
 mod test_piranha_swift;
 
 mod test_piranha_python;
