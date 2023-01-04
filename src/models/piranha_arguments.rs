@@ -124,7 +124,7 @@ pub struct PiranhaArguments {
   /// Disables in-place rewriting of code
   #[get = "pub"]
   #[builder(default = "default_dry_run()")]
-  #[clap(short = 'd', long, parse(try_from_str), default_value_t = false)]
+  #[clap(short = 'd', long, default_value_t = false)]
   #[serde(default = "default_dry_run")]
   dry_run: bool,
 }
