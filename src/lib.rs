@@ -57,9 +57,12 @@ pub fn run_piranha_cli(
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   pyo3_log::init();
   m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
+  m.add_function(wrap_pyfunction!(execute_piranha, m)?)?;
+  m.add_class::<PiranhaArguments>()?;
   Ok(())
 }
 
+#[pyfunction]
 pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
 

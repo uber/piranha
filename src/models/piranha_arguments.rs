@@ -12,6 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use clap::Parser;
+use itertools::Itertools;
 
 use super::{
   default_configs::{
@@ -27,18 +28,20 @@ use super::{
 use crate::utilities::read_toml;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
+use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
-
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Builder, Getters, CopyGetters, Debug, Parser, Default)]
 #[clap(name = "Polyglot Piranha")]
+#[pyclass]
 pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
   #[clap(short = 'c', long)]
   #[serde(skip)]
+  #[pyo3(get)]
   path_to_codebase: String,
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
@@ -52,6 +55,7 @@ pub struct PiranhaArguments {
   #[builder(setter(skip))]
   #[clap(skip)]
   #[serde(default = "default_substitutions")]
+  #[pyo3(get)]
   substitutions: Vec<Vec<String>>,
 
   /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
@@ -60,12 +64,14 @@ pub struct PiranhaArguments {
   #[builder(default = "default_path_to_configurations()")]
   #[clap(short = 'f', long)]
   #[serde(skip)]
+  #[pyo3(get)]
   path_to_configurations: String,
   /// Path to output summary json file
   #[get = "pub"]
   #[builder(default = "default_path_to_output_summaries()")]
   #[clap(short = 'j', long)]
   #[serde(skip)]
+  #[pyo3(get)]
   path_to_output_summary: Option<String>,
 
   // a list of file extensions
@@ -73,6 +79,7 @@ pub struct PiranhaArguments {
   #[builder(default = "default_languages()")]
   #[clap(skip)]
   #[serde(default = "default_languages")]
+  #[pyo3(get)]
   language: Vec<String>,
 
   #[get = "pub"]
@@ -86,6 +93,7 @@ pub struct PiranhaArguments {
   #[builder(default = "default_delete_file_if_empty()")]
   #[clap(skip)]
   #[serde(default = "default_delete_file_if_empty")]
+  #[pyo3(get)]
   delete_file_if_empty: bool,
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
@@ -93,6 +101,7 @@ pub struct PiranhaArguments {
   #[builder(default = "default_delete_consecutive_new_lines()")]
   #[clap(skip)]
   #[serde(default = "default_delete_consecutive_new_lines")]
+  #[pyo3(get)]
   delete_consecutive_new_lines: bool,
   // User option that determines the prefix used for tag names that should be considered
   /// global i.e. if a global tag is found when rewriting a source code unit
@@ -101,6 +110,7 @@ pub struct PiranhaArguments {
   #[builder(default = "default_global_tag_prefix()")]
   #[clap(skip)]
   #[serde(default = "default_global_tag_prefix")]
+  #[pyo3(get)]
   global_tag_prefix: String,
   /// Add a user option to configure the number of ancestors considered when applying
   /// parent scoped rules
@@ -108,25 +118,74 @@ pub struct PiranhaArguments {
   #[builder(default = "default_number_of_ancestors_in_parent_scope()")]
   #[clap(skip)]
   #[serde(default = "default_number_of_ancestors_in_parent_scope")]
+  #[pyo3(get)]
   number_of_ancestors_in_parent_scope: u8,
   /// The number of lines to consider for cleaning up the comments
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments_buffer()")]
   #[clap(skip)]
   #[serde(default = "default_cleanup_comments_buffer")]
+  #[pyo3(get)]
   cleanup_comments_buffer: usize,
   /// The AST Kinds for which comments should be deleted
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments()")]
   #[clap(skip)]
   #[serde(default = "default_cleanup_comments")]
+  #[pyo3(get)]
   cleanup_comments: bool,
   /// Disables in-place rewriting of code
   #[get = "pub"]
   #[builder(default = "default_dry_run()")]
   #[clap(short = 'd', long, default_value_t = false)]
   #[serde(default = "default_dry_run")]
+  #[pyo3(get)]
   dry_run: bool,
+}
+
+#[pymethods]
+impl PiranhaArguments {
+  #[new]
+  #[args(
+    language = "\"java\"",
+    dry_run = false,
+    cleanup_comments = false,
+    cleanup_comments_buffer = 2,
+    number_of_ancestors_in_parent_scope = 4,
+    global_tag_prefix = "\"GLOBAL_TAG.\"",
+    delete_consecutive_new_lines = false,
+    delete_file_if_empty = true,
+    substitutions = "**"
+  )]
+  fn py_new(
+    path_to_codebase: String, path_to_configurations: String, language: &str, dry_run: bool,
+    cleanup_comments: bool, cleanup_comments_buffer: usize,
+    number_of_ancestors_in_parent_scope: u8, global_tag_prefix: &str,
+    delete_consecutive_new_lines: bool, delete_file_if_empty: bool, substitutions: Option<&PyDict>,
+  ) -> Self {
+    let subs = if let Some(s) = substitutions {
+      s.iter()
+        .map(|(k, v)| vec![k.to_string(), v.to_string()])
+        .collect_vec()
+    } else {
+      vec![]
+    };
+    Self {
+      path_to_codebase,
+      input_substitutions: default_input_substitutions(),
+      path_to_configurations,
+      dry_run,
+      language: vec![language.to_string()],
+      cleanup_comments,
+      cleanup_comments_buffer,
+      number_of_ancestors_in_parent_scope,
+      delete_consecutive_new_lines,
+      global_tag_prefix: global_tag_prefix.to_string(),
+      delete_file_if_empty,
+      substitutions: subs,
+      ..Default::default()
+    }
+  }
 }
 
 impl PiranhaArguments {
