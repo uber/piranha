@@ -59,9 +59,9 @@ query = """
 ((class_declaration name: (type_identifier)
     (inheritance_specifier inherits_from: (user_type (type_identifier)@container ))
         body: (class_body (function_declaration 
-            body: (function_body (statements (call_expression (call_expression
+            body: (function_body (statements (call_expression
                 (call_suffix (value_arguments (value_argument 
-                    value: (prefix_expression target: (simple_identifier) @name))))))))))))) @source_file
+                    value: (prefix_expression target: (simple_identifier) @name)))))))))))) @source_file
 (#eq? @name "@universal_tag.enum_entry_name")
 (#eq? @container "@inherits_plugin_switch")
 )
