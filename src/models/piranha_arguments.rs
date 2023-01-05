@@ -56,7 +56,7 @@ pub struct PiranhaArguments {
   #[serde(skip)]
   input_substitutions: HashMap<String, String>,
 
-  #[builder(setter(skip))]
+  #[builder(default = "default_substitutions()")]
   #[clap(skip)]
   #[serde(default = "default_substitutions")]
   #[pyo3(get)]
@@ -250,7 +250,7 @@ impl PiranhaArguments {
     let substitutions = if self.substitutions.is_empty() {
       other.substitutions
     } else {
-      default_substitutions()
+      self.substitutions.clone()
     };
 
     let input_substitutions = substitutions

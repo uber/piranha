@@ -33,6 +33,33 @@ use std::sync::Once;
 
 static INIT: Once = Once::new();
 
+fn get_piranha_arguments_for_test(
+  relative_path_to_tests: &str, language: &str,
+) -> PiranhaArguments {
+  PiranhaArgumentsBuilder::default()
+    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
+    .path_to_configurations(format!(
+      "test-resources/{relative_path_to_tests}/configurations/"
+    ))
+    .language(vec![language.to_string()])
+    .dry_run(true)
+    .build()
+}
+
+fn get_piranha_arguments_for_test_with_substitutions(
+  relative_path_to_tests: &str, language: &str, substitutions: Vec<Vec<String>>,
+) -> PiranhaArguments {
+  PiranhaArgumentsBuilder::default()
+    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
+    .path_to_configurations(format!(
+      "test-resources/{relative_path_to_tests}/configurations/"
+    ))
+    .language(vec![language.to_string()])
+    .dry_run(true)
+    .substitutions(substitutions)
+    .build()
+}
+
 fn initialize() {
   INIT.call_once(|| {
     env_logger::init();
@@ -100,6 +127,30 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   print!("Here {:?}", args);
 
   let output_summaries = execute_piranha(&args);
+  // Checks if there are any rewrites performed for the file
+  assert!(
+    output_summaries
+      .iter()
+      .flat_map(|os| os.rewrites().iter())
+      .count()
+      > 0
+  );
+
+  assert_eq!(output_summaries.len(), n_files_changed);
+  let path_to_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
+    .join(format!("test-resources/{relative_path_to_tests}/expected"));
+  check_result(output_summaries, path_to_expected);
+}
+
+// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
+// and checks if the output of piranha is same as `<relative_path_to_tests>/expected`.
+// It also asserts the number of changed files in the expected output.
+fn run_rewrite_test_for_args(
+  piranha_arguments: PiranhaArguments, n_files_changed: usize, relative_path_to_tests: &str,
+) {
+  print!("Here {:?}", piranha_arguments);
+
+  let output_summaries = execute_piranha(&piranha_arguments);
   // Checks if there are any rewrites performed for the file
   assert!(
     output_summaries

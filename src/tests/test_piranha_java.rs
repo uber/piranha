@@ -13,17 +13,35 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::{default_configs::JAVA, piranha_arguments::PiranhaArgumentsBuilder};
 
-use super::{initialize, run_match_test_for_args, run_rewrite_test};
+use super::{
+  get_piranha_arguments_for_test_with_substitutions, initialize, run_match_test_for_args,
+  run_rewrite_test, run_rewrite_test_for_args,
+};
 
 static LANGUAGE: &str = JAVA;
 
 #[test]
 fn test_java_scenarios_treated_ff1() {
   initialize();
-  run_rewrite_test(
-    &format!("{}/{}/{}", LANGUAGE, "feature_flag_system_1", "treated"),
-    2,
-  );
+
+  let relative_path_to_tests = &format!("{}/{}/{}", JAVA, "feature_flag_system_1", "treated");
+
+  let substitutions = vec![
+    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
+    vec!["treated".to_string(), "true".to_string()],
+    vec!["treated_complement".to_string(), "false".to_string()],
+    vec!["namespace".to_string(), "some_long_name".to_string()],
+  ];
+  let piranha_argument = PiranhaArgumentsBuilder::default()
+    .cleanup_comments(false)
+    .build()
+    .merge(get_piranha_arguments_for_test_with_substitutions(
+      relative_path_to_tests,
+      JAVA,
+      substitutions,
+    ));
+
+  run_rewrite_test_for_args(piranha_argument, 2, relative_path_to_tests);
 }
 
 #[test]

@@ -11,63 +11,85 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::{default_configs::GO, piranha_arguments::PiranhaArgumentsBuilder};
+use crate::models::default_configs::GO;
 
-use super::{initialize, run_match_test, run_match_test_for_args, run_rewrite_test};
+use super::{
+  get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
+  run_match_test_for_args, run_rewrite_test_for_args,
+};
 
 #[test]
 fn test_go_match_only_go_expr_for_loop() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "go_stmt_for_loop");
-  let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
-    .path_to_configurations(format!(
-      "test-resources/{relative_path_to_tests}/configurations/"
-    ))
-    .language(vec![GO.to_string()])
-    .build();
-
-  run_match_test_for_args(args, 1);
+  run_match_test_for_args(
+    get_piranha_arguments_for_test(relative_path_to_tests, GO),
+    1,
+  );
 }
 
 #[test]
 fn test_go_match_only_for_loop() {
   initialize();
-  run_match_test(&format!("{}/{}/{}", GO, "structural_find", "for_loop"), 4);
+  let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "for_loop");
+  run_match_test_for_args(
+    get_piranha_arguments_for_test(relative_path_to_tests, GO),
+    4,
+  );
 }
 
 #[test]
 fn test_go_builtin_boolean_expression_simplify() {
   initialize();
-  run_rewrite_test(
-    &format!(
-      "{}/{}/{}/{}",
-      GO, "feature_flag", "builtin_rules", "boolean_expression_simplify"
-    ),
-    1,
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}/{}",
+    GO, "feature_flag", "builtin_rules", "boolean_expression_simplify"
   );
+  let substitutions = vec![
+    vec!["true_flag_name".to_string(), "true".to_string()],
+    vec!["false_flag_name".to_string(), "false".to_string()],
+    vec!["nil_flag_name".to_string(), "nil".to_string()],
+  ];
+
+  let piranha_argument =
+    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
+
+  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
 }
 
 #[test]
 fn test_go_builtin_statement_cleanup() {
   initialize();
-  run_rewrite_test(
-    &format!(
-      "{}/{}/{}/{}",
-      GO, "feature_flag", "builtin_rules", "statement_cleanup"
-    ),
-    1,
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}/{}",
+    GO, "feature_flag", "builtin_rules", "statement_cleanup"
   );
+  let substitutions = vec![
+    vec!["treated_complement".to_string(), "false".to_string()],
+    vec!["treated".to_string(), "true".to_string()],
+  ];
+
+  let piranha_argument =
+    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
+
+  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
 }
 
 #[test]
 fn test_go_const_same_file() {
   initialize();
-  run_rewrite_test(
-    &format!(
-      "{}/{}/{}/{}",
-      GO, "feature_flag", "system_1", "const_same_file"
-    ),
-    1,
+
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}/{}",
+    GO, "feature_flag", "system_1", "const_same_file"
   );
+
+  let substitutions = vec![
+    vec!["stale_flag_name".to_string(), "staleFlag".to_string()],
+    vec!["treated".to_string(), "false".to_string()],
+  ];
+  let piranha_argument =
+    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
+
+  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
 }
