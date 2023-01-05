@@ -50,14 +50,12 @@ fn get_piranha_arguments_for_test_with_substitutions(
   relative_path_to_tests: &str, language: &str, substitutions: Vec<Vec<String>>,
 ) -> PiranhaArguments {
   PiranhaArgumentsBuilder::default()
-    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
-    .path_to_configurations(format!(
-      "test-resources/{relative_path_to_tests}/configurations/"
-    ))
-    .language(vec![language.to_string()])
-    .dry_run(true)
     .substitutions(substitutions)
     .build()
+    .merge(get_piranha_arguments_for_test(
+      relative_path_to_tests,
+      language,
+    ))
 }
 
 fn initialize() {
