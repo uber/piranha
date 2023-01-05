@@ -12,8 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use crate::execute_piranha;
-use crate::models::piranha_arguments::PiranhaArguments;
-use crate::models::piranha_input::PiranhaInput;
+use crate::models::piranha_arguments::PiranhaArgumentsBuilder;
 use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::utilities::{eq_without_whitespace, find_file, read_file};
 use log::error;
@@ -59,12 +58,11 @@ fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
 fn _run_match_test(
   path_to_codebase: String, path_to_configurations: String, number_of_matches: usize,
 ) {
-  let piranha_input = PiranhaInput::API {
-    path_to_codebase,
-    path_to_configurations,
-    dry_run: true,
-  };
-  let args = PiranhaArguments::from(piranha_input);
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .dry_run(true)
+    .build_and_load();
   print!("{:?}", args);
   let output_summaries = execute_piranha(&args);
   assert_eq!(
@@ -83,12 +81,12 @@ fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
   let path_to_configurations = format!("test-resources/{relative_path_to_tests}/configurations/");
   let path_to_codebase = format!("test-resources/{relative_path_to_tests}/input/");
 
-  let piranha_input = PiranhaInput::API {
-    path_to_codebase,
-    path_to_configurations,
-    dry_run: true,
-  };
-  let args = PiranhaArguments::from(piranha_input);
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .dry_run(true)
+    .build_and_load();
+
   print!("{:?}", args);
 
   let output_summaries = execute_piranha(&args);

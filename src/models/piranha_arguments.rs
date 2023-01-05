@@ -11,28 +11,31 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use clap::Parser;
-use itertools::Itertools;
-
 use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_input_substitutions, default_languages,
-    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
-    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
-    default_substitutions,
+    default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
+    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
+    default_piranha_language, default_substitutions,
   },
   language::PiranhaLanguage,
 };
 use crate::utilities::read_toml;
+use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
+use itertools::Itertools;
 use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
+
 use std::{collections::HashMap, path::PathBuf};
+
+// #![feature(macro_rules)]
+
 /// A refactoring tool that eliminates dead code related to stale feature flags
-#[derive(Deserialize, Clone, Builder, Getters, CopyGetters, Debug, Parser, Default)]
+#[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Default, Builder)]
 #[clap(name = "Polyglot Piranha")]
 #[pyclass]
 pub struct PiranhaArguments {
@@ -146,47 +149,74 @@ pub struct PiranhaArguments {
 #[pymethods]
 impl PiranhaArguments {
   #[new]
-  #[args(
-    language = "\"java\"",
-    dry_run = false,
-    cleanup_comments = false,
-    cleanup_comments_buffer = 2,
-    number_of_ancestors_in_parent_scope = 4,
-    global_tag_prefix = "\"GLOBAL_TAG.\"",
-    delete_consecutive_new_lines = false,
-    delete_file_if_empty = true,
-    substitutions = "**"
-  )]
+  #[args(kw_args = "**")]
   fn py_new(
-    path_to_codebase: String, path_to_configurations: String, language: &str, dry_run: bool,
-    cleanup_comments: bool, cleanup_comments_buffer: usize,
-    number_of_ancestors_in_parent_scope: u8, global_tag_prefix: &str,
-    delete_consecutive_new_lines: bool, delete_file_if_empty: bool, substitutions: Option<&PyDict>,
+    path_to_codebase: String, path_to_configurations: String, language: &str, subs: &PyDict,
+    kw_args: Option<&PyDict>,
   ) -> Self {
-    let subs = if let Some(s) = substitutions {
-      s.iter()
-        .map(|(k, v)| vec![k.to_string(), v.to_string()])
-        .collect_vec()
-    } else {
-      vec![]
-    };
+    let substitutions = subs
+      .iter()
+      .map(|(k, v)| vec![k.to_string(), v.to_string()])
+      .collect_vec();
 
-    let i_s = subs.iter().map(|x| (x[0].clone(), x[1].clone())).collect();
+    let input_substitutions = subs
+      .iter()
+      .map(|(k, v)| (k.to_string(), v.to_string()))
+      .collect();
+
+    let dry_run = kw_args
+      .and_then(|x| x.get_item("dry_run"))
+      .map_or_else(default_dry_run, |x| x.is_true().unwrap());
+
+    let cleanup_comments = kw_args
+      .and_then(|x| x.get_item("cleanup_comments"))
+      .map_or_else(default_cleanup_comments, |x| x.is_true().unwrap());
+
+    let cleanup_comments_buffer = kw_args
+      .and_then(|x| x.get_item("cleanup_comments_buffer"))
+      .map_or_else(default_cleanup_comments_buffer, |x| {
+        x.to_string().parse().unwrap()
+      });
+
+    let number_of_ancestors_in_parent_scope = kw_args
+      .and_then(|x| x.get_item("number_of_ancestors_in_parent_scope"))
+      .map_or_else(default_number_of_ancestors_in_parent_scope, |x| {
+        x.to_string().parse().unwrap()
+      });
+
+    let delete_consecutive_new_lines = kw_args
+      .and_then(|x| x.get_item("delete_consecutive_new_lines"))
+      .map_or_else(default_delete_consecutive_new_lines, |x| {
+        x.is_true().unwrap()
+      });
+
+    let global_tag_prefix = kw_args
+      .and_then(|x| x.get_item("global_tag_prefix"))
+      .map_or_else(default_global_tag_prefix, |x| x.to_string());
+
+    let delete_file_if_empty = kw_args
+      .and_then(|x| x.get_item("delete_file_if_empty"))
+      .map_or_else(default_delete_file_if_empty, |x| x.is_true().unwrap());
+
+    let path_to_output_summary = kw_args
+      .and_then(|x| x.get_item("path_to_output_summary"))
+      .map_or_else(default_path_to_output_summaries, |x| Some(x.to_string()));
+
     Self {
       path_to_codebase,
-      input_substitutions: i_s,
+      substitutions,
+      input_substitutions,
       path_to_configurations,
-      dry_run,
       language: vec![language.to_string()],
+      piranha_language: PiranhaLanguage::from(language),
+      dry_run,
       cleanup_comments,
       cleanup_comments_buffer,
       number_of_ancestors_in_parent_scope,
       delete_consecutive_new_lines,
-      global_tag_prefix: global_tag_prefix.to_string(),
+      global_tag_prefix,
       delete_file_if_empty,
-      substitutions: subs,
-      piranha_language: PiranhaLanguage::from(language),
-      path_to_output_summary: None,
+      path_to_output_summary,
     }
   }
 }
@@ -214,6 +244,16 @@ impl PiranhaArguments {
       .build()
       .unwrap();
     args.merge(derived_args)
+  }
+
+  pub fn load_from_file(&self) -> PiranhaArguments {
+    let path_to_toml =
+      PathBuf::from(self.path_to_configurations()).join(default_name_of_piranha_argument_toml());
+    if path_to_toml.exists() {
+      let piranha_argument = PiranhaArguments::new(path_to_toml);
+      return self.merge(piranha_argument);
+    }
+    self.clone()
   }
 
   // Returns non-default valued item when possible
@@ -290,5 +330,12 @@ impl PiranhaArguments {
       ),
       dry_run: Self::_merge(self.dry_run, other.dry_run, default_dry_run()),
     }
+  }
+}
+
+impl PiranhaArgumentsBuilder {
+  pub fn build_and_load(&self) -> PiranhaArguments {
+    let args = PiranhaArgumentsBuilder::build(self).unwrap();
+    args.load_from_file()
   }
 }

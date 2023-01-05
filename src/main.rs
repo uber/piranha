@@ -14,11 +14,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entry-point for Piranha.
 use std::{fs, time::Instant};
 
+use clap::Parser;
 use log::{debug, info};
 use polyglot_piranha::{
-  execute_piranha,
+  execute_piranha, models::piranha_arguments::PiranhaArguments,
   models::piranha_output::PiranhaOutputSummary,
-  models::{piranha_arguments::PiranhaArguments, piranha_input::PiranhaInput},
 };
 
 fn main() {
@@ -27,7 +27,7 @@ fn main() {
 
   info!("Executing Polyglot Piranha");
 
-  let args = PiranhaArguments::from(PiranhaInput::CommandLineInput);
+  let args = PiranhaArguments::parse().load_from_file();
 
   debug!("Piranha Arguments are \n{:#?}", args);
   let piranha_output_summaries = execute_piranha(&args);
