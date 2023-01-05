@@ -252,14 +252,14 @@ impl PiranhaArguments {
     } else {
       default_substitutions()
     };
+
     let input_substitutions = substitutions
       .iter()
       .map(|x| (x[0].clone(), x[1].clone()))
       .collect();
-    println!("{:?} {:?}", self.language, other.language);
     let language = Self::_merge(self.language.clone(), other.language, default_languages());
-    println!("{:?}", language);
     let piranha_language = PiranhaLanguage::from(language[0].as_str());
+
     Self {
       path_to_codebase: Self::_merge(
         self.path_to_codebase.clone(),
