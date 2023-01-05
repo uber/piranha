@@ -49,7 +49,7 @@ pub fn run_piranha_cli(
     .path_to_codebase(path_to_codebase)
     .path_to_configurations(path_to_configurations)
     .dry_run(dry_run)
-    .build_and_load();
+    .build();
 
   debug!("{:?}", args);
   execute_piranha(&args)

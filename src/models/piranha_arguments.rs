@@ -38,6 +38,7 @@ use std::{collections::HashMap, path::PathBuf};
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Default, Builder)]
 #[clap(name = "Polyglot Piranha")]
 #[pyclass]
+#[builder(build_fn(name = "create"))]
 pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
@@ -222,38 +223,18 @@ impl PiranhaArguments {
 }
 
 impl PiranhaArguments {
-  pub(crate) fn substitutions(&self) -> HashMap<String, String> {
-    self
-      .substitutions
-      .iter()
-      .map(|x| (x[0].clone(), x[1].clone()))
-      .collect()
-  }
-
   pub fn get_language(&self) -> String {
     self.language[0].clone()
   }
 
-  pub(crate) fn new(path_to_piranha_arguments_toml: PathBuf) -> Self {
-    let args: PiranhaArguments = read_toml(&path_to_piranha_arguments_toml, false);
-    let input_substitutions = args.substitutions();
-    let piranha_language = PiranhaLanguage::from(args.get_language().as_str());
-    let derived_args = PiranhaArgumentsBuilder::default()
-      .input_substitutions(input_substitutions)
-      .piranha_language(piranha_language)
-      .build()
-      .unwrap();
-    args.merge(derived_args)
-  }
-
-  pub fn load_from_file(&self) -> PiranhaArguments {
+  pub fn load(&self) -> PiranhaArguments {
     let path_to_toml =
-      PathBuf::from(self.path_to_configurations()).join(default_name_of_piranha_argument_toml());
+      &PathBuf::from(self.path_to_configurations()).join(default_name_of_piranha_argument_toml());
     if path_to_toml.exists() {
-      let piranha_argument = PiranhaArguments::new(path_to_toml);
+      let piranha_argument: PiranhaArguments = read_toml(path_to_toml, false);
       return self.merge(piranha_argument);
     }
-    self.clone()
+    self.merge(PiranhaArgumentsBuilder::default().create().unwrap())
   }
 
   // Returns non-default valued item when possible
@@ -266,22 +247,27 @@ impl PiranhaArguments {
   }
 
   pub(crate) fn merge(&self, other: PiranhaArguments) -> Self {
+    let substitutions = if self.substitutions.is_empty() {
+      other.substitutions
+    } else {
+      default_substitutions()
+    };
+    let input_substitutions = substitutions
+      .iter()
+      .map(|x| (x[0].clone(), x[1].clone()))
+      .collect();
+    println!("{:?} {:?}", self.language, other.language);
+    let language = Self::_merge(self.language.clone(), other.language, default_languages());
+    println!("{:?}", language);
+    let piranha_language = PiranhaLanguage::from(language[0].as_str());
     Self {
       path_to_codebase: Self::_merge(
         self.path_to_codebase.clone(),
         other.path_to_codebase,
         default_path_to_codebase(),
       ),
-      input_substitutions: Self::_merge(
-        self.input_substitutions.clone(),
-        other.input_substitutions,
-        default_input_substitutions(),
-      ),
-      substitutions: Self::_merge(
-        self.substitutions.clone(),
-        other.substitutions,
-        default_substitutions(),
-      ),
+      substitutions,
+      input_substitutions,
       path_to_configurations: Self::_merge(
         self.path_to_configurations.clone(),
         other.path_to_configurations,
@@ -292,12 +278,8 @@ impl PiranhaArguments {
         other.path_to_output_summary,
         default_path_to_output_summaries(),
       ),
-      language: Self::_merge(self.language.clone(), other.language, default_languages()),
-      piranha_language: Self::_merge(
-        self.piranha_language.clone(),
-        other.piranha_language,
-        default_piranha_language(),
-      ),
+      language,
+      piranha_language,
       delete_file_if_empty: Self::_merge(
         self.delete_file_if_empty,
         other.delete_file_if_empty,
@@ -334,8 +316,7 @@ impl PiranhaArguments {
 }
 
 impl PiranhaArgumentsBuilder {
-  pub fn build_and_load(&self) -> PiranhaArguments {
-    let args = PiranhaArgumentsBuilder::build(self).unwrap();
-    args.load_from_file()
+  pub fn build(&self) -> PiranhaArguments {
+    self.create().unwrap().load()
   }
 }

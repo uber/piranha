@@ -27,7 +27,7 @@ fn main() {
 
   info!("Executing Polyglot Piranha");
 
-  let args = PiranhaArguments::parse().load_from_file();
+  let args = PiranhaArguments::parse().load();
 
   debug!("Piranha Arguments are \n{:#?}", args);
   let piranha_output_summaries = execute_piranha(&args);

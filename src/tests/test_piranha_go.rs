@@ -11,28 +11,29 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::GO;
+use crate::models::{default_configs::GO, piranha_arguments::PiranhaArgumentsBuilder};
 
-use super::{initialize, run_match_test, run_rewrite_test};
-
-static LANGUAGE: &str = GO;
+use super::{initialize, run_match_test, run_match_test_for_args, run_rewrite_test};
 
 #[test]
 fn test_go_match_only_go_expr_for_loop() {
   initialize();
-  run_match_test(
-    &format!("{}/{}/{}", LANGUAGE, "structural_find", "go_stmt_for_loop"),
-    1,
-  );
+  let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "go_stmt_for_loop");
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
+    .path_to_configurations(format!(
+      "test-resources/{relative_path_to_tests}/configurations/"
+    ))
+    .language(vec![GO.to_string()])
+    .build();
+
+  run_match_test_for_args(args, 1);
 }
 
 #[test]
 fn test_go_match_only_for_loop() {
   initialize();
-  run_match_test(
-    &format!("{}/{}/{}", LANGUAGE, "structural_find", "for_loop"),
-    4,
-  );
+  run_match_test(&format!("{}/{}/{}", GO, "structural_find", "for_loop"), 4);
 }
 
 #[test]
@@ -41,7 +42,7 @@ fn test_go_builtin_boolean_expression_simplify() {
   run_rewrite_test(
     &format!(
       "{}/{}/{}/{}",
-      LANGUAGE, "feature_flag", "builtin_rules", "boolean_expression_simplify"
+      GO, "feature_flag", "builtin_rules", "boolean_expression_simplify"
     ),
     1,
   );
@@ -53,7 +54,7 @@ fn test_go_builtin_statement_cleanup() {
   run_rewrite_test(
     &format!(
       "{}/{}/{}/{}",
-      LANGUAGE, "feature_flag", "builtin_rules", "statement_cleanup"
+      GO, "feature_flag", "builtin_rules", "statement_cleanup"
     ),
     1,
   );
@@ -65,7 +66,7 @@ fn test_go_const_same_file() {
   run_rewrite_test(
     &format!(
       "{}/{}/{}/{}",
-      LANGUAGE, "feature_flag", "system_1", "const_same_file"
+      GO, "feature_flag", "system_1", "const_same_file"
     ),
     1,
   );

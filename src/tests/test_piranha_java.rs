@@ -11,9 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::JAVA;
+use crate::models::{default_configs::JAVA, piranha_arguments::PiranhaArgumentsBuilder};
 
-use super::{initialize, run_match_test_for_file, run_rewrite_test};
+use super::{initialize, run_match_test_for_args, run_rewrite_test};
 
 static LANGUAGE: &str = JAVA;
 
@@ -99,9 +99,16 @@ fn test_java_scenarios_consecutive_scope_level_rules() {
 #[test]
 fn test_java_match_only() {
   initialize();
-  run_match_test_for_file(
-    &format!("{}/{}", LANGUAGE, "structural_find"),
-    "XPFlagCleanerPositiveCases.java",
-    20,
-  );
+  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "structural_find");
+  let file_name = "XPFlagCleanerPositiveCases.java";
+  let arg = PiranhaArgumentsBuilder::default()
+    .path_to_configurations(format!(
+      "test-resources/{relative_path_to_tests}/configurations/"
+    ))
+    .path_to_codebase(format!(
+      "test-resources/{relative_path_to_tests}/input/{file_name}"
+    ))
+    .language(vec![JAVA.to_string()])
+    .build();
+  run_match_test_for_args(arg, 20);
 }
