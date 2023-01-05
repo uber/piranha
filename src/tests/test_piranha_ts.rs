@@ -15,8 +15,6 @@ use crate::models::default_configs::TYPESCRIPT;
 
 use super::{get_piranha_arguments_for_test, initialize, run_match_test_for_args};
 
-static LANGUAGE: &str = TYPESCRIPT;
-
 #[test]
 fn test_ts_match_only_find_fors() {
   initialize();
