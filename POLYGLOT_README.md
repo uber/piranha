@@ -129,7 +129,7 @@ piranha_arguments = PiranhaArguments(
 )
 piranha_summary = execute_piranha(piranha_arguments)
 ```
-The API `execute_piranha` accepts a `PiranhaArgument`
+The API `execute_piranha` accepts a `PiranhaArguments`
 An object of PiranhaArguments can be instantiated with the following arguments:
 
 - (*required*) `path_to_codebase` (`str`): Path to source code folder
