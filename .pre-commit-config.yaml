@@ -43,3 +43,10 @@ repos:
           - license_header.txt
           - --comment-style
           - /*| | */
+
+  - repo: https://github.com/psf/black
+    rev: 22.12.0
+    hooks:
+      - id: black
+        files: demo/
+        exclude: only_lists.py
