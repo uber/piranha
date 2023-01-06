@@ -15,7 +15,7 @@ use crate::models::{default_configs::JAVA, piranha_arguments::PiranhaArgumentsBu
 
 use super::{
   get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test_for_args, run_rewrite_test_for_args,
+  run_match_test, run_rewrite_test,
 };
 
 static LANGUAGE: &str = JAVA;
@@ -36,7 +36,7 @@ fn test_java_scenarios_treated_ff1() {
   let piranha_argument =
     get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, JAVA, substitutions);
 
-  run_rewrite_test_for_args(piranha_argument, 2, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn test_java_scenarios_treated_ff2() {
       substitutions,
     ));
 
-  run_rewrite_test_for_args(piranha_argument, 4, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn test_java_scenarios_control_ff1() {
       JAVA,
       substitutions,
     ));
-  run_rewrite_test_for_args(piranha_argument, 2, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
 }
 
 #[test]
@@ -105,14 +105,14 @@ fn test_java_scenarios_control_ff2() {
       JAVA,
       substitutions,
     ));
-  run_rewrite_test_for_args(piranha_argument, 4, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
 }
 
 #[test]
 fn test_java_scenarios_find_and_propagate() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}", JAVA, "find_and_propagate");
-  run_rewrite_test_for_args(
+  run_rewrite_test(
     get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
     2,
     relative_path_to_tests,
@@ -129,14 +129,14 @@ fn test_java_scenarios_user_defined_non_seed_rules() {
 
   let piranha_argument =
     get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, JAVA, substitutions);
-  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
 }
 
 #[test]
 fn test_java_scenarios_insert_field_and_initializer() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}", JAVA, "insert_field_and_initializer");
-  run_rewrite_test_for_args(
+  run_rewrite_test(
     get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
     1,
     relative_path_to_tests,
@@ -147,7 +147,7 @@ fn test_java_scenarios_insert_field_and_initializer() {
 fn test_java_scenarios_new_line_character_used_in_string_literal() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}", JAVA, "new_line_character_used_in_string_literal");
-  run_rewrite_test_for_args(
+  run_rewrite_test(
     get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
     1,
     relative_path_to_tests,
@@ -158,7 +158,7 @@ fn test_java_scenarios_new_line_character_used_in_string_literal() {
 fn test_java_scenarios_consecutive_scope_level_rules() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}", JAVA, "consecutive_scope_level_rules");
-  run_rewrite_test_for_args(
+  run_rewrite_test(
     get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
     1,
     relative_path_to_tests,
@@ -180,5 +180,5 @@ fn test_java_match_only() {
     ))
     .language(vec![JAVA.to_string()])
     .build();
-  run_match_test_for_args(arg, 20);
+  run_match_test(arg, 20);
 }

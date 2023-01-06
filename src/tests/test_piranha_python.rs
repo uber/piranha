@@ -15,7 +15,7 @@ use crate::models::default_configs::PYTHON;
 
 use super::{
   get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test_for_args, run_rewrite_test_for_args,
+  run_match_test, run_rewrite_test,
 };
 
 static LANGUAGE: &str = "python";
@@ -36,14 +36,14 @@ fn test_python_delete_modify_str_literal_from_list() {
     substitutions,
   );
 
-  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
 }
 
 #[test]
 fn test_python_match_only() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "structural_find");
-  run_match_test_for_args(
+  run_match_test(
     get_piranha_arguments_for_test(relative_path_to_tests, PYTHON),
     3,
   );

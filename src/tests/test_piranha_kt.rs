@@ -15,7 +15,7 @@ use crate::models::{default_configs::KOTLIN, piranha_arguments::PiranhaArguments
 
 use super::{
   get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_rewrite_test_for_args,
+  run_rewrite_test,
 };
 
 static LANGUAGE: &str = "kt";
@@ -36,7 +36,7 @@ fn test_kotlin_scenarios_treated_ff1() {
     substitutions,
   );
 
-  run_rewrite_test_for_args(piranha_argument, 2, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn test_kotlin_scenarios_treated_ff2() {
       substitutions,
     ));
 
-  run_rewrite_test_for_args(piranha_argument, 4, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
 }
 
 #[test]
@@ -78,7 +78,7 @@ fn test_kotlin_scenarios_control_ff1() {
     substitutions,
   );
 
-  run_rewrite_test_for_args(piranha_argument, 2, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
 }
 
 #[test]
@@ -101,14 +101,14 @@ fn test_kotlin_scenarios_control_ff2() {
       substitutions,
     ));
 
-  run_rewrite_test_for_args(piranha_argument, 4, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
 }
 
 #[test]
 fn test_kt_scenarios_file_scoped_chain_rule() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "file_scoped_chain_rules");
-  run_rewrite_test_for_args(
+  run_rewrite_test(
     get_piranha_arguments_for_test(relative_path_to_tests, KOTLIN),
     1,
     relative_path_to_tests,

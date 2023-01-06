@@ -16,13 +16,12 @@ use super::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_input_substitutions, default_languages,
-    default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
-    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
-    default_piranha_language, default_substitutions,
+    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
+    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
+    default_substitutions,
   },
   language::PiranhaLanguage,
 };
-use crate::utilities::read_toml;
 use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
@@ -30,7 +29,7 @@ use itertools::Itertools;
 use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 // #![feature(macro_rules)]
 
@@ -227,16 +226,6 @@ impl PiranhaArguments {
     self.language[0].clone()
   }
 
-  pub fn load(&self) -> PiranhaArguments {
-    let path_to_toml =
-      &PathBuf::from(self.path_to_configurations()).join(default_name_of_piranha_argument_toml());
-    if path_to_toml.exists() {
-      let piranha_argument: PiranhaArguments = read_toml(path_to_toml, false);
-      return self.merge(piranha_argument);
-    }
-    self.merge(PiranhaArgumentsBuilder::default().create().unwrap())
-  }
-
   // Returns non-default valued item when possible
   fn _merge<T: Clone + std::cmp::PartialEq>(x: T, y: T, default: T) -> T {
     if x != default {
@@ -246,7 +235,7 @@ impl PiranhaArguments {
     }
   }
 
-  pub(crate) fn merge(&self, other: PiranhaArguments) -> Self {
+  pub fn merge(&self, other: PiranhaArguments) -> Self {
     let substitutions = if self.substitutions.is_empty() {
       other.substitutions
     } else {
@@ -317,6 +306,9 @@ impl PiranhaArguments {
 
 impl PiranhaArgumentsBuilder {
   pub fn build(&self) -> PiranhaArguments {
-    self.create().unwrap().load()
+    self
+      .create()
+      .unwrap()
+      .merge(PiranhaArgumentsBuilder::default().create().unwrap())
   }
 }

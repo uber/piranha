@@ -59,10 +59,6 @@ pub fn default_dry_run() -> bool {
   false
 }
 
-pub fn default_name_of_piranha_argument_toml() -> String {
-  "piranha_arguments.toml".to_string()
-}
-
 pub fn default_path_to_codebase() -> String {
   String::new()
 }

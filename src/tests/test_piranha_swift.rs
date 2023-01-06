@@ -13,9 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::{default_configs::SWIFT, piranha_arguments::PiranhaArgumentsBuilder};
 
-use super::{
-  get_piranha_arguments_for_test_with_substitutions, initialize, run_rewrite_test_for_args,
-};
+use super::{get_piranha_arguments_for_test_with_substitutions, initialize, run_rewrite_test};
 
 // Tests cascading file delete based on enum and type alias.
 // This scenario is "derived" from plugin cleanup.
@@ -38,7 +36,7 @@ fn test_cascading_delete_file() {
       substitutions,
     ));
 
-  run_rewrite_test_for_args(piranha_argument, 3, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 3, relative_path_to_tests);
 
   // initialize();
   // run_rewrite_test(, 3);
@@ -67,5 +65,5 @@ fn test_cascading_delete_file_custom_global_tag() {
       substitutions,
     ));
 
-  run_rewrite_test_for_args(piranha_argument, 3, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 3, relative_path_to_tests);
 }

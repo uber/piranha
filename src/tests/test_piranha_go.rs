@@ -15,14 +15,14 @@ use crate::models::default_configs::GO;
 
 use super::{
   get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test_for_args, run_rewrite_test_for_args,
+  run_match_test, run_rewrite_test,
 };
 
 #[test]
 fn test_go_match_only_go_expr_for_loop() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "go_stmt_for_loop");
-  run_match_test_for_args(
+  run_match_test(
     get_piranha_arguments_for_test(relative_path_to_tests, GO),
     1,
   );
@@ -32,7 +32,7 @@ fn test_go_match_only_go_expr_for_loop() {
 fn test_go_match_only_for_loop() {
   initialize();
   let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "for_loop");
-  run_match_test_for_args(
+  run_match_test(
     get_piranha_arguments_for_test(relative_path_to_tests, GO),
     4,
   );
@@ -54,7 +54,7 @@ fn test_go_builtin_boolean_expression_simplify() {
   let piranha_argument =
     get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
 
-  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn test_go_builtin_statement_cleanup() {
   let piranha_argument =
     get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
 
-  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
 }
 
 #[test]
@@ -91,5 +91,5 @@ fn test_go_const_same_file() {
   let piranha_argument =
     get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
 
-  run_rewrite_test_for_args(piranha_argument, 1, relative_path_to_tests);
+  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
 }
