@@ -11,14 +11,16 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::utilities::read_toml;
+
 use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_input_substitutions, default_language,
-    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
-    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
-    default_substitutions,
+    default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
+    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
+    default_piranha_language, default_substitutions,
   },
   language::PiranhaLanguage,
 };
@@ -29,7 +31,7 @@ use itertools::Itertools;
 use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 // #![feature(macro_rules)]
 
@@ -294,9 +296,13 @@ impl PiranhaArguments {
 
 impl PiranhaArgumentsBuilder {
   pub fn build(&self) -> PiranhaArguments {
-    self
-      .create()
-      .unwrap()
-      .merge(PiranhaArgumentsBuilder::default().create().unwrap())
+    let created_args = self.create().unwrap();
+    let path_to_toml = PathBuf::from(created_args.path_to_configurations())
+      .join(default_name_of_piranha_argument_toml());
+    if path_to_toml.exists() {
+      let args_from_file = read_toml::<PiranhaArguments>(&path_to_toml, false);
+      return created_args.merge(args_from_file);
+    }
+    created_args.merge(PiranhaArgumentsBuilder::default().create().unwrap())
   }
 }

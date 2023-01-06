@@ -1,5 +1,5 @@
 from os.path import join, dirname, getmtime, exists
-from polyglot_piranha import execute_piranha, run_piranha_cli, PiranhaArguments
+from polyglot_piranha import execute_piranha, PiranhaArguments
 import logging
 from logging import info
 
