@@ -88,7 +88,7 @@ pub struct PiranhaArguments {
   #[serde(skip)]
   piranha_language: PiranhaLanguage,
 
-  // User option that determines whether an empty file will be deleted
+  /// User option that determines whether an empty file will be deleted
   #[get = "pub"]
   #[builder(default = "default_delete_file_if_empty()")]
   #[clap(long, default_value_t = default_delete_file_if_empty())]

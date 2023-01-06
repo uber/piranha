@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname, getmtime
-from polyglot_piranha import run_piranha_cli
+from polyglot_piranha import run_piranha_cli, execute_piranha, PiranhaArguments
 import logging
 from logging import info
 
@@ -18,28 +18,22 @@ def swift_demo():
 
     old_mtime = getmtime(file_path)
 
-    _ = run_piranha_cli(file_path, configuration_path, False)
+    args = PiranhaArguments(
+        file_path,
+        configuration_path,
+        "swift",
+        {
+            "stale_flag_name": "test_second_experiment",
+        },
+        cleanup_comments = True
+    )
+
+    _ = execute_piranha(args)
 
     new_mtime = getmtime(file_path)
 
     assert old_mtime < new_mtime
 
-def strings_demo():
-    """
-    This shows how we can use Piranha to execute structural find/replace without hooking up anything.
-    """    
-    info("Running the Find/Replace demo for Strings")
-
-    file_path = join(find_Replace_dir, "strings", "Sample.strings")
-    configuration_path = join(find_Replace_dir, "strings/configurations")
-
-    old_mtime = getmtime(file_path)
-
-    _ = run_piranha_cli(file_path, configuration_path, False)
-
-    new_mtime = getmtime(file_path)
-
-    assert old_mtime < new_mtime
 
 def java_demo():
     """
@@ -54,6 +48,16 @@ def java_demo():
     configuration_path = join(find_Replace_dir, "java/configurations")
 
     old_mtime = getmtime(file_path)
+
+    args = PiranhaArguments(
+        file_path,
+        configuration_path,
+        "java",
+        {
+            "stale_flag_name": "STALE_FLAG",
+        },
+        cleanup_comments = True
+    )
 
     _ = run_piranha_cli(file_path, configuration_path, False)
 
