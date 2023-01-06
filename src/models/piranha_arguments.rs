@@ -33,8 +33,6 @@ use serde_derive::Deserialize;
 
 use std::{collections::HashMap, path::PathBuf};
 
-// #![feature(macro_rules)]
-
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Default, Builder)]
 #[clap(name = "Polyglot Piranha")]
@@ -75,7 +73,7 @@ pub struct PiranhaArguments {
   #[serde(skip)]
   path_to_output_summary: Option<String>,
 
-  // a list of file extensions
+  // the target language
   // #[get = "pub"]
   #[builder(default = "default_language()")]
   #[clap(skip)]
@@ -101,16 +99,15 @@ pub struct PiranhaArguments {
   #[clap(long, default_value_t = default_delete_consecutive_new_lines())]
   #[serde(default = "default_delete_consecutive_new_lines")]
   delete_consecutive_new_lines: bool,
-  // User option that determines the prefix used for tag names that should be considered
-  /// global i.e. if a global tag is found when rewriting a source code unit
-  /// All source code units from this point will have access to this global tag.
+
+  /// the prefix used for global tag names
   #[get = "pub"]
   #[builder(default = "default_global_tag_prefix()")]
   #[clap(long, default_value_t = default_global_tag_prefix())]
   #[serde(default = "default_global_tag_prefix")]
   global_tag_prefix: String,
-  /// Add a user option to configure the number of ancestors considered when applying
-  /// parent scoped rules
+
+  /// The number of ancestors considered when `PARENT` rules
   #[get = "pub"]
   #[builder(default = "default_number_of_ancestors_in_parent_scope()")]
   #[clap(long, default_value_t = default_number_of_ancestors_in_parent_scope())]
@@ -122,12 +119,14 @@ pub struct PiranhaArguments {
   #[clap(long, default_value_t = default_cleanup_comments_buffer())]
   #[serde(default = "default_cleanup_comments_buffer")]
   cleanup_comments_buffer: usize,
+
   /// The AST Kinds for which comments should be deleted
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments()")]
   #[clap(long, default_value_t = default_cleanup_comments())]
   #[serde(default = "default_cleanup_comments")]
   cleanup_comments: bool,
+
   /// Disables in-place rewriting of code
   #[get = "pub"]
   #[builder(default = "default_dry_run()")]
@@ -141,18 +140,13 @@ impl PiranhaArguments {
   #[new]
   #[args(kw_args = "**")]
   fn py_new(
-    path_to_codebase: String, path_to_configurations: String, language: &str, subs: &PyDict,
-    kw_args: Option<&PyDict>,
+    path_to_codebase: String, path_to_configurations: String, language: &str,
+    substitutions: &PyDict, kw_args: Option<&PyDict>,
   ) -> Self {
-    let substitutions = subs
+    let subs = substitutions
       .iter()
       .map(|(k, v)| vec![k.to_string(), v.to_string()])
       .collect_vec();
-
-    let input_substitutions = subs
-      .iter()
-      .map(|(k, v)| (k.to_string(), v.to_string()))
-      .collect();
 
     let dry_run = kw_args
       .and_then(|x| x.get_item("dry_run"))
@@ -194,11 +188,9 @@ impl PiranhaArguments {
 
     Self {
       path_to_codebase,
-      substitutions,
-      input_substitutions,
+      substitutions: subs,
       path_to_configurations,
       language: language.to_string(),
-      piranha_language: PiranhaLanguage::from(language),
       dry_run,
       cleanup_comments,
       cleanup_comments_buffer,
@@ -207,7 +199,9 @@ impl PiranhaArguments {
       global_tag_prefix,
       delete_file_if_empty,
       path_to_output_summary,
+      ..Default::default()
     }
+    .merge(PiranhaArgumentsBuilder::default().build())
   }
 }
 
@@ -296,13 +290,16 @@ impl PiranhaArguments {
 
 impl PiranhaArgumentsBuilder {
   pub fn build(&self) -> PiranhaArguments {
-    let created_args = self.create().unwrap();
+    let created_args = self
+      .create()
+      .unwrap()
+      .merge(PiranhaArgumentsBuilder::default().create().unwrap());
     let path_to_toml = PathBuf::from(created_args.path_to_configurations())
       .join(default_name_of_piranha_argument_toml());
     if path_to_toml.exists() {
       let args_from_file = read_toml::<PiranhaArguments>(&path_to_toml, false);
       return created_args.merge(args_from_file);
     }
-    created_args.merge(PiranhaArgumentsBuilder::default().create().unwrap())
+    created_args
   }
 }
