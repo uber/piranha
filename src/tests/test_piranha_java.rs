@@ -178,7 +178,7 @@ fn test_java_match_only() {
     .path_to_codebase(format!(
       "test-resources/{relative_path_to_tests}/input/{file_name}"
     ))
-    .language(vec![JAVA.to_string()])
+    .language(JAVA.to_string())
     .build();
   run_match_test(arg, 20);
 }

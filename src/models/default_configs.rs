@@ -27,10 +27,6 @@ pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
 }
 
-pub fn default_languages() -> Vec<String> {
-  vec![default_language()]
-}
-
 pub fn default_language() -> String {
   JAVA.to_string()
 }

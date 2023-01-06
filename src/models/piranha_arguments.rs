@@ -15,7 +15,7 @@ use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
-    default_global_tag_prefix, default_input_substitutions, default_languages,
+    default_global_tag_prefix, default_input_substitutions, default_language,
     default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
     default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
     default_substitutions,
@@ -44,7 +44,6 @@ pub struct PiranhaArguments {
   #[builder(default = "default_path_to_codebase()")]
   #[clap(short = 'c', long)]
   #[serde(skip)]
-  #[pyo3(get)]
   path_to_codebase: String,
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
@@ -58,7 +57,6 @@ pub struct PiranhaArguments {
   #[builder(default = "default_substitutions()")]
   #[clap(skip)]
   #[serde(default = "default_substitutions")]
-  #[pyo3(get)]
   substitutions: Vec<Vec<String>>,
 
   /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
@@ -67,23 +65,20 @@ pub struct PiranhaArguments {
   #[builder(default = "default_path_to_configurations()")]
   #[clap(short = 'f', long)]
   #[serde(skip)]
-  #[pyo3(get)]
   path_to_configurations: String,
   /// Path to output summary json file
   #[get = "pub"]
   #[builder(default = "default_path_to_output_summaries()")]
   #[clap(short = 'j', long)]
   #[serde(skip)]
-  #[pyo3(get)]
   path_to_output_summary: Option<String>,
 
   // a list of file extensions
   // #[get = "pub"]
-  #[builder(default = "default_languages()")]
+  #[builder(default = "default_language()")]
   #[clap(skip)]
-  #[serde(default = "default_languages")]
-  #[pyo3(get)]
-  language: Vec<String>,
+  #[serde(default = "default_language")]
+  language: String,
 
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
@@ -94,55 +89,48 @@ pub struct PiranhaArguments {
   // User option that determines whether an empty file will be deleted
   #[get = "pub"]
   #[builder(default = "default_delete_file_if_empty()")]
-  #[clap(skip)]
+  #[clap(long, default_value_t = default_delete_file_if_empty())]
   #[serde(default = "default_delete_file_if_empty")]
-  #[pyo3(get)]
   delete_file_if_empty: bool,
   // User option that determines whether consecutive newline characters will be
   // replaced with a newline character
   #[get = "pub"]
   #[builder(default = "default_delete_consecutive_new_lines()")]
-  #[clap(skip)]
+  #[clap(long, default_value_t = default_delete_consecutive_new_lines())]
   #[serde(default = "default_delete_consecutive_new_lines")]
-  #[pyo3(get)]
   delete_consecutive_new_lines: bool,
   // User option that determines the prefix used for tag names that should be considered
   /// global i.e. if a global tag is found when rewriting a source code unit
   /// All source code units from this point will have access to this global tag.
   #[get = "pub"]
   #[builder(default = "default_global_tag_prefix()")]
-  #[clap(skip)]
+  #[clap(long, default_value_t = default_global_tag_prefix())]
   #[serde(default = "default_global_tag_prefix")]
-  #[pyo3(get)]
   global_tag_prefix: String,
   /// Add a user option to configure the number of ancestors considered when applying
   /// parent scoped rules
   #[get = "pub"]
   #[builder(default = "default_number_of_ancestors_in_parent_scope()")]
-  #[clap(skip)]
+  #[clap(long, default_value_t = default_number_of_ancestors_in_parent_scope())]
   #[serde(default = "default_number_of_ancestors_in_parent_scope")]
-  #[pyo3(get)]
   number_of_ancestors_in_parent_scope: u8,
   /// The number of lines to consider for cleaning up the comments
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments_buffer()")]
-  #[clap(skip)]
+  #[clap(long, default_value_t = default_cleanup_comments_buffer())]
   #[serde(default = "default_cleanup_comments_buffer")]
-  #[pyo3(get)]
   cleanup_comments_buffer: usize,
   /// The AST Kinds for which comments should be deleted
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments()")]
-  #[clap(skip)]
+  #[clap(long, default_value_t = default_cleanup_comments())]
   #[serde(default = "default_cleanup_comments")]
-  #[pyo3(get)]
   cleanup_comments: bool,
   /// Disables in-place rewriting of code
   #[get = "pub"]
   #[builder(default = "default_dry_run()")]
-  #[clap(short = 'd', long, default_value_t = false)]
+  #[clap(long, default_value_t = false)]
   #[serde(default = "default_dry_run")]
-  #[pyo3(get)]
   dry_run: bool,
 }
 
@@ -207,7 +195,7 @@ impl PiranhaArguments {
       substitutions,
       input_substitutions,
       path_to_configurations,
-      language: vec![language.to_string()],
+      language: language.to_string(),
       piranha_language: PiranhaLanguage::from(language),
       dry_run,
       cleanup_comments,
@@ -223,7 +211,7 @@ impl PiranhaArguments {
 
 impl PiranhaArguments {
   pub fn get_language(&self) -> String {
-    self.language[0].clone()
+    self.language.clone()
   }
 
   // Returns non-default valued item when possible
@@ -246,8 +234,8 @@ impl PiranhaArguments {
       .iter()
       .map(|x| (x[0].clone(), x[1].clone()))
       .collect();
-    let language = Self::_merge(self.language.clone(), other.language, default_languages());
-    let piranha_language = PiranhaLanguage::from(language[0].as_str());
+    let language = Self::_merge(self.language.clone(), other.language, default_language());
+    let piranha_language = PiranhaLanguage::from(language.as_str());
 
     Self {
       path_to_codebase: Self::_merge(

@@ -44,7 +44,7 @@ impl SourceCodeUnit {
       &HashMap::new(),
       PathBuf::new().as_path(),
       &PiranhaArgumentsBuilder::default()
-        .language(vec![language_name])
+        .language(language_name)
         .build(),
     )
   }
@@ -179,7 +179,7 @@ fn execute_persist_in_temp_folder(
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(file_path.as_path(), source_code);
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(vec![java.name().to_string()])
+    .language(java.name().to_string())
     .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -342,7 +342,7 @@ fn test_satisfies_constraints_positive() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(vec![java.name().to_string()])
+    .language(java.name().to_string())
     .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -408,7 +408,7 @@ fn test_satisfies_constraints_negative() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .language(vec![java.name().to_string()])
+    .language(java.name().to_string())
     .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,

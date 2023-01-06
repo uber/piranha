@@ -41,7 +41,7 @@ fn get_piranha_arguments_for_test(
     .path_to_configurations(format!(
       "test-resources/{relative_path_to_tests}/configurations/"
     ))
-    .language(vec![language.to_string()])
+    .language(language.to_string())
     .dry_run(true)
     .build()
 }
