@@ -235,12 +235,15 @@ impl PiranhaArguments {
   }
 
   pub fn merge(&self, other: PiranhaArguments) -> Self {
+    /// Accepts field name (e.g. `language`) and function name (e.g. `default_language`) which returns default value for that field.
+    /// It checks if the value `self.language` is same as value returned by `default_language()`.
+    /// If the value is same it returns the value from `other (e.g. `other.language`) else it returns it from `self`
     macro_rules! merge {
-      ($x:ident, $y:ident) => {
-        if self.$x != $y() {
-          self.$x.clone()
+      ($field_name:ident, $default_fn:ident) => {
+        if self.$field_name != $default_fn() {
+          self.$field_name.clone()
         } else {
-          other.$x.clone()
+          other.$field_name.clone()
         }
       };
     }
