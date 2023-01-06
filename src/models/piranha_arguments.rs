@@ -35,7 +35,7 @@ use std::{collections::HashMap, path::PathBuf};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Default, Builder)]
-#[clap(name = "Polyglot Piranha")]
+#[clap(name = "Piranha")]
 #[pyclass]
 #[builder(build_fn(name = "create"))]
 pub struct PiranhaArguments {
@@ -155,70 +155,74 @@ impl PiranhaArguments {
   ///   * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
   /// Returns PiranhaArgument.
   #[new]
-  #[args(kw_args = "**")]
+  #[args(keyword_arguments = "**")]
   fn py_new(
-    path_to_codebase: String, path_to_configurations: String, language: &str,
-    substitutions: &PyDict, kw_args: Option<&PyDict>,
+    path_to_codebase: String, path_to_configurations: String, language: String,
+    substitutions: &PyDict, keyword_arguments: Option<&PyDict>,
   ) -> Self {
     let subs = substitutions
       .iter()
       .map(|(k, v)| vec![k.to_string(), v.to_string()])
       .collect_vec();
 
-    macro_rules! parse {
-      ($x:literal, $y:ident, "bool") => {
-        kw_args
-          .and_then(|x| x.get_item($x))
-          .map_or_else($y, |x| x.is_true().unwrap())
+    // gets `$arg_name` from `keyword_arguments` else invokes `$default_fn`
+    // It also converts this string value to the appropriate data type.
+    macro_rules! get_keyword_arg {
+      ($arg_name:literal, $default_fn:ident, "bool") => {
+        keyword_arguments
+          .and_then(|x| x.get_item($arg_name))
+          .map_or_else($default_fn, |x| x.is_true().unwrap())
       };
-      ($x:literal, $y:ident, "num") => {
-        kw_args
-          .and_then(|x| x.get_item($x))
-          .map_or_else($y, |x| x.to_string().parse().unwrap())
+      ($arg_name:literal, $default_fn:ident, "num") => {
+        keyword_arguments
+          .and_then(|x| x.get_item($arg_name))
+          .map_or_else($default_fn, |x| x.to_string().parse().unwrap())
       };
-      ($x:literal, $y:ident, "string") => {
-        kw_args
-          .and_then(|x| x.get_item($x))
-          .map_or_else($y, |x| x.to_string())
+      ($arg_name:literal, $default_fn:ident, "string") => {
+        keyword_arguments
+          .and_then(|x| x.get_item($arg_name))
+          .map_or_else($default_fn, |x| x.to_string())
+      };
+      ($arg_name:literal, $default_fn:ident, "option") => {
+        keyword_arguments
+          .and_then(|x| x.get_item($arg_name))
+          .map_or_else($default_fn, |x| Some(x.to_string()))
       };
     }
 
-    let dry_run = parse!("dry_run", default_dry_run, "bool");
-    let cleanup_comments = parse!("cleanup_comments", default_cleanup_comments, "bool");
-    let cleanup_comments_buffer = parse!(
-      "cleanup_comments_buffer",
-      default_cleanup_comments_buffer,
-      "num"
-    );
-    let number_of_ancestors_in_parent_scope = parse!(
-      "number_of_ancestors_in_parent_scope",
-      default_number_of_ancestors_in_parent_scope,
-      "num"
-    );
-    let delete_consecutive_new_lines = parse!(
-      "delete_consecutive_new_lines",
-      default_delete_consecutive_new_lines,
-      "bool"
-    );
-    let global_tag_prefix = parse!("global_tag_prefix", default_global_tag_prefix, "string");
-    let delete_file_if_empty = parse!("delete_file_if_empty", default_delete_file_if_empty, "bool");
-    let path_to_output_summary = kw_args
-      .and_then(|x| x.get_item("path_to_output_summary"))
-      .map_or_else(default_path_to_output_summaries, |x| Some(x.to_string()));
-
     Self {
       path_to_codebase,
-      substitutions: subs,
       path_to_configurations,
-      language: language.to_string(),
-      dry_run,
-      cleanup_comments,
-      cleanup_comments_buffer,
-      number_of_ancestors_in_parent_scope,
-      delete_consecutive_new_lines,
-      global_tag_prefix,
-      delete_file_if_empty,
-      path_to_output_summary,
+      language,
+      substitutions: subs,
+      dry_run: get_keyword_arg!("dry_run", default_dry_run, "bool"),
+      cleanup_comments: get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
+      cleanup_comments_buffer: get_keyword_arg!(
+        "cleanup_comments_buffer",
+        default_cleanup_comments_buffer,
+        "num"
+      ),
+      number_of_ancestors_in_parent_scope: get_keyword_arg!(
+        "number_of_ancestors_in_parent_scope",
+        default_number_of_ancestors_in_parent_scope,
+        "num"
+      ),
+      delete_consecutive_new_lines: get_keyword_arg!(
+        "delete_consecutive_new_lines",
+        default_delete_consecutive_new_lines,
+        "bool"
+      ),
+      global_tag_prefix: get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
+      delete_file_if_empty: get_keyword_arg!(
+        "delete_file_if_empty",
+        default_delete_file_if_empty,
+        "bool"
+      ),
+      path_to_output_summary: get_keyword_arg!(
+        "path_to_output_summary",
+        default_path_to_output_summaries,
+        "option"
+      ),
       ..Default::default()
     }
     .merge(PiranhaArgumentsBuilder::default().build())
