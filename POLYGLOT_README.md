@@ -143,7 +143,7 @@ An object of PiranhaArguments can be instantiated with the following arguments:
 - (*optional*) `cleanup_comments_buffer` (`usize`): The number of lines to consider for cleaning up the comments
 - (*optional*) `number_of_ancestors_in_parent_scope` (`usize`): The number of ancestors considered when `PARENT` rules
 - (*optional*) `delete_file_if_empty` (`bool`): User option that determines whether an empty file will be deleted
-- (*optional*) `delete_consecutive_new_lines` (`bool`) : Replaces consecutive `\n`s  with a `\n`
+- (*optional*) `delete_consecutive_new_lines` (`bool`) : Replaces consecutive `\n`s  with a single `\n`
 - (*optional*) `dry_run` (`bool`) : Disables in-place rewriting of code
 
 <h5> Returns </h5>
