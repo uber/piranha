@@ -31,6 +31,16 @@ use itertools::Itertools;
 use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
 
+// macro_rules! merge1 {
+//   ($x:ident, $d:expr) => {
+//     if self.$x != d {
+//       return self.$x.clone();
+//     } else {
+//       return other.$x.clone();
+//     }
+//   };
+// }
+
 use std::{collections::HashMap, path::PathBuf};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
@@ -45,6 +55,7 @@ pub struct PiranhaArguments {
   #[clap(short = 'c', long)]
   #[serde(skip)]
   path_to_codebase: String,
+
   // Input arguments provided to Piranha, mapped to tag names -
   // @stale_flag_name, @namespace, @treated, @treated_complement
   // These substitutions instantiate the initial set of feature flag rules
@@ -54,6 +65,7 @@ pub struct PiranhaArguments {
   #[serde(skip)]
   input_substitutions: HashMap<String, String>,
 
+  // Substitutions to instantiate the initial set of feature flag rules
   #[builder(default = "default_substitutions()")]
   #[clap(skip)]
   #[serde(default = "default_substitutions")]
@@ -66,6 +78,7 @@ pub struct PiranhaArguments {
   #[clap(short = 'f', long)]
   #[serde(skip)]
   path_to_configurations: String,
+
   /// Path to output summary json file
   #[get = "pub"]
   #[builder(default = "default_path_to_output_summaries()")]
@@ -74,7 +87,6 @@ pub struct PiranhaArguments {
   path_to_output_summary: Option<String>,
 
   // the target language
-  // #[get = "pub"]
   #[builder(default = "default_language()")]
   #[clap(skip)]
   #[serde(default = "default_language")]
@@ -92,8 +104,8 @@ pub struct PiranhaArguments {
   #[clap(long, default_value_t = default_delete_file_if_empty())]
   #[serde(default = "default_delete_file_if_empty")]
   delete_file_if_empty: bool,
-  // User option that determines whether consecutive newline characters will be
-  // replaced with a newline character
+
+  /// Replaces consecutive `\n`s  with a `\n`
   #[get = "pub"]
   #[builder(default = "default_delete_consecutive_new_lines()")]
   #[clap(long, default_value_t = default_delete_consecutive_new_lines())]
@@ -120,7 +132,7 @@ pub struct PiranhaArguments {
   #[serde(default = "default_cleanup_comments_buffer")]
   cleanup_comments_buffer: usize,
 
-  /// The AST Kinds for which comments should be deleted
+  /// Enables deletion of associated comments
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments()")]
   #[clap(long, default_value_t = default_cleanup_comments())]
@@ -137,6 +149,21 @@ pub struct PiranhaArguments {
 
 #[pymethods]
 impl PiranhaArguments {
+  /// Constructs PiranhaArguments
+  ///
+  /// # Arguments:
+  /// * path_to_codebase: Path to the root of the code base that Piranha will update
+  /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+  /// * language: Target language
+  /// * substitutions : Substitutions to instantiate the initial set of feature flag rules
+  /// * kw_args: Keyword arguments to capture the following piranha argument options
+  ///   * dry_run (bool) : Disables in-place rewriting of code
+  ///   * cleanup_comments (bool) : Enables deletion of associated comments
+  ///   * cleanup_comments_buffer (usize): The number of lines to consider for cleaning up the comments
+  ///   * number_of_ancestors_in_parent_scope (usize): The number of ancestors considered when `PARENT` rules
+  ///   * delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
+  ///   * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
+  /// Returns PiranhaArgument.
   #[new]
   #[args(kw_args = "**")]
   fn py_new(
@@ -210,85 +237,57 @@ impl PiranhaArguments {
     self.language.clone()
   }
 
-  // Returns non-default valued item when possible
-  fn _merge<T: Clone + std::cmp::PartialEq>(x: T, y: T, default: T) -> T {
-    if x != default {
-      x
-    } else {
-      y
-    }
-  }
-
   pub fn merge(&self, other: PiranhaArguments) -> Self {
-    let substitutions = if self.substitutions.is_empty() {
-      other.substitutions
-    } else {
-      self.substitutions.clone()
-    };
+    macro_rules! merge {
+      ($x:ident, $y:ident) => {
+        if self.$x != $y() {
+          self.$x.clone()
+        } else {
+          other.$x.clone()
+        }
+      };
+    }
+
+    let substitutions = merge!(substitutions, default_substitutions);
 
     let input_substitutions = substitutions
       .iter()
       .map(|x| (x[0].clone(), x[1].clone()))
       .collect();
-    let language = Self::_merge(self.language.clone(), other.language, default_language());
+
+    let language = merge!(language, default_language);
     let piranha_language = PiranhaLanguage::from(language.as_str());
 
     Self {
-      path_to_codebase: Self::_merge(
-        self.path_to_codebase.clone(),
-        other.path_to_codebase,
-        default_path_to_codebase(),
-      ),
+      path_to_codebase: merge!(path_to_codebase, default_path_to_codebase),
       substitutions,
       input_substitutions,
-      path_to_configurations: Self::_merge(
-        self.path_to_configurations.clone(),
-        other.path_to_configurations,
-        default_path_to_configurations(),
-      ),
-      path_to_output_summary: Self::_merge(
-        self.path_to_output_summary.clone(),
-        other.path_to_output_summary,
-        default_path_to_output_summaries(),
-      ),
+      path_to_configurations: merge!(path_to_configurations, default_path_to_configurations),
+      path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
       language,
       piranha_language,
-      delete_file_if_empty: Self::_merge(
-        self.delete_file_if_empty,
-        other.delete_file_if_empty,
-        default_delete_file_if_empty(),
+      delete_file_if_empty: merge!(delete_file_if_empty, default_delete_file_if_empty),
+      delete_consecutive_new_lines: merge!(
+        delete_consecutive_new_lines,
+        default_delete_consecutive_new_lines
       ),
-      delete_consecutive_new_lines: Self::_merge(
-        self.delete_consecutive_new_lines,
-        other.delete_consecutive_new_lines,
-        default_delete_consecutive_new_lines(),
+      global_tag_prefix: merge!(global_tag_prefix, default_global_tag_prefix),
+      number_of_ancestors_in_parent_scope: merge!(
+        number_of_ancestors_in_parent_scope,
+        default_number_of_ancestors_in_parent_scope
       ),
-      global_tag_prefix: Self::_merge(
-        self.global_tag_prefix.clone(),
-        other.global_tag_prefix,
-        default_global_tag_prefix(),
-      ),
-      number_of_ancestors_in_parent_scope: Self::_merge(
-        self.number_of_ancestors_in_parent_scope,
-        other.number_of_ancestors_in_parent_scope,
-        default_number_of_ancestors_in_parent_scope(),
-      ),
-      cleanup_comments_buffer: Self::_merge(
-        self.cleanup_comments_buffer,
-        other.cleanup_comments_buffer,
-        default_cleanup_comments_buffer(),
-      ),
-      cleanup_comments: Self::_merge(
-        self.cleanup_comments,
-        other.cleanup_comments,
-        default_cleanup_comments(),
-      ),
-      dry_run: Self::_merge(self.dry_run, other.dry_run, default_dry_run()),
+      cleanup_comments_buffer: merge!(cleanup_comments_buffer, default_cleanup_comments_buffer),
+      cleanup_comments: merge!(cleanup_comments, default_cleanup_comments),
+      dry_run: merge!(dry_run, default_dry_run),
     }
   }
 }
 
 impl PiranhaArgumentsBuilder {
+  /// Builds PiranhaArguments from PiranhaBuilder
+  /// * create PiranhaArgument from the builder
+  /// * parse `piranha_arguments.toml` (if it exists)
+  /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
     let created_args = self
       .create()

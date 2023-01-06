@@ -64,6 +64,13 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   Ok(())
 }
 
+/// Executes piranha for the given `piranha_arguments`.
+///
+/// # Arguments:
+/// * piranha_arguments: Piranha Arguments
+///
+/// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
+/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
 pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
