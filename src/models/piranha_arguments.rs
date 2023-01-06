@@ -31,16 +31,6 @@ use itertools::Itertools;
 use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
 
-// macro_rules! merge1 {
-//   ($x:ident, $d:expr) => {
-//     if self.$x != d {
-//       return self.$x.clone();
-//     } else {
-//       return other.$x.clone();
-//     }
-//   };
-// }
-
 use std::{collections::HashMap, path::PathBuf};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
@@ -175,40 +165,43 @@ impl PiranhaArguments {
       .map(|(k, v)| vec![k.to_string(), v.to_string()])
       .collect_vec();
 
-    let dry_run = kw_args
-      .and_then(|x| x.get_item("dry_run"))
-      .map_or_else(default_dry_run, |x| x.is_true().unwrap());
+    macro_rules! parse {
+      ($x:literal, $y:ident, "bool") => {
+        kw_args
+          .and_then(|x| x.get_item($x))
+          .map_or_else($y, |x| x.is_true().unwrap())
+      };
+      ($x:literal, $y:ident, "num") => {
+        kw_args
+          .and_then(|x| x.get_item($x))
+          .map_or_else($y, |x| x.to_string().parse().unwrap())
+      };
+      ($x:literal, $y:ident, "string") => {
+        kw_args
+          .and_then(|x| x.get_item($x))
+          .map_or_else($y, |x| x.to_string())
+      };
+    }
 
-    let cleanup_comments = kw_args
-      .and_then(|x| x.get_item("cleanup_comments"))
-      .map_or_else(default_cleanup_comments, |x| x.is_true().unwrap());
-
-    let cleanup_comments_buffer = kw_args
-      .and_then(|x| x.get_item("cleanup_comments_buffer"))
-      .map_or_else(default_cleanup_comments_buffer, |x| {
-        x.to_string().parse().unwrap()
-      });
-
-    let number_of_ancestors_in_parent_scope = kw_args
-      .and_then(|x| x.get_item("number_of_ancestors_in_parent_scope"))
-      .map_or_else(default_number_of_ancestors_in_parent_scope, |x| {
-        x.to_string().parse().unwrap()
-      });
-
-    let delete_consecutive_new_lines = kw_args
-      .and_then(|x| x.get_item("delete_consecutive_new_lines"))
-      .map_or_else(default_delete_consecutive_new_lines, |x| {
-        x.is_true().unwrap()
-      });
-
-    let global_tag_prefix = kw_args
-      .and_then(|x| x.get_item("global_tag_prefix"))
-      .map_or_else(default_global_tag_prefix, |x| x.to_string());
-
-    let delete_file_if_empty = kw_args
-      .and_then(|x| x.get_item("delete_file_if_empty"))
-      .map_or_else(default_delete_file_if_empty, |x| x.is_true().unwrap());
-
+    let dry_run = parse!("dry_run", default_dry_run, "bool");
+    let cleanup_comments = parse!("cleanup_comments", default_cleanup_comments, "bool");
+    let cleanup_comments_buffer = parse!(
+      "cleanup_comments_buffer",
+      default_cleanup_comments_buffer,
+      "num"
+    );
+    let number_of_ancestors_in_parent_scope = parse!(
+      "number_of_ancestors_in_parent_scope",
+      default_number_of_ancestors_in_parent_scope,
+      "num"
+    );
+    let delete_consecutive_new_lines = parse!(
+      "delete_consecutive_new_lines",
+      default_delete_consecutive_new_lines,
+      "bool"
+    );
+    let global_tag_prefix = parse!("global_tag_prefix", default_global_tag_prefix, "string");
+    let delete_file_if_empty = parse!("delete_file_if_empty", default_delete_file_if_empty, "bool");
     let path_to_output_summary = kw_args
       .and_then(|x| x.get_item("path_to_output_summary"))
       .map_or_else(default_path_to_output_summaries, |x| Some(x.to_string()));
