@@ -13,15 +13,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::default_configs::TYPESCRIPT;
 
-use super::{initialize, run_match_test};
-
-static LANGUAGE: &str = TYPESCRIPT;
+use super::{get_piranha_arguments_for_test, initialize, run_match_test};
 
 #[test]
 fn test_ts_match_only_find_fors() {
   initialize();
+  let relative_path_to_tests = &format!("{}/{}/{}", TYPESCRIPT, "structural_find", "find_fors");
   run_match_test(
-    &format!("{}/{}/{}", LANGUAGE, "structural_find", "find_fors"),
+    get_piranha_arguments_for_test(relative_path_to_tests, TYPESCRIPT),
     3,
   );
 }
@@ -29,11 +28,12 @@ fn test_ts_match_only_find_fors() {
 #[test]
 fn test_ts_match_only_find_fors_within_functions() {
   initialize();
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}",
+    TYPESCRIPT, "structural_find", "find_fors_within_functions"
+  );
   run_match_test(
-    &format!(
-      "{}/{}/{}",
-      LANGUAGE, "structural_find", "find_fors_within_functions"
-    ),
+    get_piranha_arguments_for_test(relative_path_to_tests, TYPESCRIPT),
     2,
   );
 }
@@ -41,11 +41,12 @@ fn test_ts_match_only_find_fors_within_functions() {
 #[test]
 fn test_ts_match_only_find_fors_within_functions_not_within_whiles() {
   initialize();
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}",
+    TYPESCRIPT, "structural_find", "find_fors_within_functions_not_within_whiles"
+  );
   run_match_test(
-    &format!(
-      "{}/{}/{}",
-      LANGUAGE, "structural_find", "find_fors_within_functions_not_within_whiles"
-    ),
+    get_piranha_arguments_for_test(relative_path_to_tests, TYPESCRIPT),
     1,
   );
 }

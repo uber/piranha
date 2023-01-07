@@ -114,25 +114,37 @@ Polyglot Piranha can be used as a python library or as a command line tool.
 
 Currently, we support one simple API (`run_piranha_cli`) that wraps the command line usage of Polyglot Piranha. We believe this makes it easy to incorporate Piranha in *"pipelining"*.
 
-<h4> <code>run_piranha_cli</code></h4>
+<h4> <code>execute_piranha</code></h4>
 
+```python
+from polyglot_piranha import execute_piranha, PiranhaArguments
+
+piranha_arguments = PiranhaArguments(
+    path_to_codebase = "...",
+    path_to_configurations = "...",
+    language= "java",
+    substitutions = {},
+    dry_run = False, 
+    cleanup_comments = True
+)
+piranha_summary = execute_piranha(piranha_arguments)
 ```
-from polyglot_piranha import run_piranha_cli
+The API `execute_piranha` accepts a `PiranhaArguments`
+An object of PiranhaArguments can be instantiated with the following arguments:
 
-path_to_codebase = "..."
-path_to_configurations = "..."
-piranha_summary = run_piranha_cli(path_to_codebase,
-                                  path_to_configurations,
-                                  dry_run=False)
-```
-<h5> Arguments </h5>
-
-- `path_to_codebase` : Path to source code folder
-- `path_to_configuration` : A directory containing files named `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
-  * `piranha_arguments.toml`: Allows a user to choose language (`java`, `kotlin`, ...), opt-in/out of other features like cleaning up comments, or even provide arguments to the piranha rules [reference](#piranha-arguments)
+- (*required*) `path_to_codebase` (`str`): Path to source code folder
+- (*required*) `path_to_configuration` (`str`) : A directory containing files named `rules.toml` and `edges.toml`
   * `rules.toml`: *piranha rules* expresses the specific AST patterns to match and __replacement patterns__ for these matches (in-place). These rules can also specify the pre-built language specific cleanups to trigger.
-  * `edges.toml` (_optional_): expresses the flow between the rules
-- `dry_run` : Disables in-place rewriting of code
+  * `edges.toml` : expresses the flow between the rules
+- (*required*) `language` (`str`) : Target language (`java`, `py`, `kt`, `swift`, `py`, `ts` and `tsx`)
+- (*required*) `substitutions` (`dict`): Substitutions to instantiate the initial set of feature flag rules
+- (*optional*) `dry_run` (`bool`) : Disables in-place rewriting of code
+- (*optional*) `cleanup_comments` (`bool`) : Enables deletion of associated comments
+- (*optional*) `cleanup_comments_buffer` (`usize`): The number of lines to consider for cleaning up the comments
+- (*optional*) `number_of_ancestors_in_parent_scope` (`usize`): The number of ancestors considered when `PARENT` rules
+- (*optional*) `delete_file_if_empty` (`bool`): User option that determines whether an empty file will be deleted
+- (*optional*) `delete_consecutive_new_lines` (`bool`) : Replaces consecutive `\n`s  with a single `\n`
+- (*optional*) `dry_run` (`bool`) : Disables in-place rewriting of code
 
 <h5> Returns </h5>
 
@@ -154,25 +166,31 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 Polyglot Piranha
 A refactoring tool that eliminates dead code related to stale feature flags.
 
-USAGE:
-    polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
+Usage: polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
 
-OPTIONS:
-    -c, --path-to-codebase <PATH_TO_CODEBASE>
-            Path to source code folder or file
-
-    -d, --dry-run <DRY_RUN>
-            Disables in-place rewriting of code [default: false]
-
-    -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
-            Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
-            and  `edges.toml` (optional)
-
-    -h, --help
-            Print help information
-
-    -j, --path-to-output-summary <PATH_TO_OUTPUT_SUMMARY>
-            Path to output summary json file
+Options:
+  -c, --path-to-codebase <PATH_TO_CODEBASE>
+          Path to source code folder or file
+  -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
+          Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml` (optional)
+  -j, --path-to-output-summary <PATH_TO_OUTPUT_SUMMARY>
+          Path to output summary json file
+      --delete-file-if-empty
+          User option that determines whether an empty file will be deleted
+      --delete-consecutive-new-lines
+          Replaces consecutive `\n`s  with a `\n`
+      --global-tag-prefix <GLOBAL_TAG_PREFIX>
+          the prefix used for global tag names [default: GLOBAL_TAG.]
+      --number-of-ancestors-in-parent-scope <NUMBER_OF_ANCESTORS_IN_PARENT_SCOPE>
+          The number of ancestors considered when `PARENT` rules [default: 4]
+      --cleanup-comments-buffer <CLEANUP_COMMENTS_BUFFER>
+          The number of lines to consider for cleaning up the comments [default: 2]
+      --cleanup-comments
+          Enables deletion of associated comments
+      --dry-run
+          Disables in-place rewriting of code
+  -h, --help
+          Print help information
 ```
 
 The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.

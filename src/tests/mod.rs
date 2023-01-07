@@ -12,8 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use crate::execute_piranha;
-use crate::models::piranha_arguments::PiranhaArguments;
-use crate::models::piranha_input::PiranhaInput;
+use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
 use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::utilities::{eq_without_whitespace, find_file, read_file};
 use log::error;
@@ -34,64 +33,60 @@ use std::sync::Once;
 
 static INIT: Once = Once::new();
 
+fn get_piranha_arguments_for_test(
+  relative_path_to_tests: &str, language: &str,
+) -> PiranhaArguments {
+  PiranhaArgumentsBuilder::default()
+    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
+    .path_to_configurations(format!(
+      "test-resources/{relative_path_to_tests}/configurations/"
+    ))
+    .language(language.to_string())
+    .dry_run(true)
+    .build()
+}
+
+fn get_piranha_arguments_for_test_with_substitutions(
+  relative_path_to_tests: &str, language: &str, substitutions: Vec<Vec<String>>,
+) -> PiranhaArguments {
+  PiranhaArgumentsBuilder::default()
+    .substitutions(substitutions)
+    .build()
+    .merge(get_piranha_arguments_for_test(
+      relative_path_to_tests,
+      language,
+    ))
+}
+
 fn initialize() {
   INIT.call_once(|| {
     env_logger::init();
   });
 }
 
-fn run_match_test_for_file(
-  relative_path_to_tests: &str, file_name: &str, number_of_matches: usize,
-) {
-  let path_to_configurations = format!("test-resources/{relative_path_to_tests}/configurations/");
-  let path_to_codebase = format!("test-resources/{relative_path_to_tests}/input/{file_name}");
-  _run_match_test(path_to_codebase, path_to_configurations, number_of_matches);
-}
-
 // Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
 // and checks if the number of matches == `number_of_matches`.
-fn run_match_test(relative_path_to_tests: &str, number_of_matches: usize) {
-  let path_to_configurations = format!("test-resources/{relative_path_to_tests}/configurations/");
-  let path_to_codebase = format!("test-resources/{relative_path_to_tests}/input/");
-  _run_match_test(path_to_codebase, path_to_configurations, number_of_matches);
-}
-
-fn _run_match_test(
-  path_to_codebase: String, path_to_configurations: String, number_of_matches: usize,
-) {
-  let piranha_input = PiranhaInput::API {
-    path_to_codebase,
-    path_to_configurations,
-    dry_run: true,
-  };
-  let args = PiranhaArguments::from(piranha_input);
-  print!("{:?}", args);
-  let output_summaries = execute_piranha(&args);
+fn run_match_test(piranha_arguments: PiranhaArguments, expected_number_of_matches: usize) {
+  print!("{:?}", piranha_arguments);
+  let output_summaries = execute_piranha(&piranha_arguments);
   assert_eq!(
     output_summaries
       .iter()
       .flat_map(|os| os.matches().iter())
       .count(),
-    number_of_matches
+    expected_number_of_matches
   );
 }
 
 // Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
 // and checks if the output of piranha is same as `<relative_path_to_tests>/expected`.
 // It also asserts the number of changed files in the expected output.
-fn run_rewrite_test(relative_path_to_tests: &str, n_files_changed: usize) {
-  let path_to_configurations = format!("test-resources/{relative_path_to_tests}/configurations/");
-  let path_to_codebase = format!("test-resources/{relative_path_to_tests}/input/");
+fn run_rewrite_test(
+  piranha_arguments: PiranhaArguments, n_files_changed: usize, relative_path_to_tests: &str,
+) {
+  print!("Here {:?}", piranha_arguments);
 
-  let piranha_input = PiranhaInput::API {
-    path_to_codebase,
-    path_to_configurations,
-    dry_run: true,
-  };
-  let args = PiranhaArguments::from(piranha_input);
-  print!("{:?}", args);
-
-  let output_summaries = execute_piranha(&args);
+  let output_summaries = execute_piranha(&piranha_arguments);
   // Checks if there are any rewrites performed for the file
   assert!(
     output_summaries

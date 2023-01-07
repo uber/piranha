@@ -13,15 +13,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::default_configs::TSX;
 
-use super::{initialize, run_match_test};
-
-static LANGUAGE: &str = TSX;
+use super::{get_piranha_arguments_for_test, initialize, run_match_test};
 
 #[test]
 fn test_ts_match_only_find_fors() {
   initialize();
+  let relative_path_to_tests = &format!("{}/{}/{}", TSX, "structural_find", "find_jsx_elements");
   run_match_test(
-    &format!("{}/{}/{}", LANGUAGE, "structural_find", "find_jsx_elements"),
+    get_piranha_arguments_for_test(relative_path_to_tests, TSX),
     4,
   );
 }
@@ -29,11 +28,12 @@ fn test_ts_match_only_find_fors() {
 #[test]
 fn test_ts_match_only_find_fors_within_functions() {
   initialize();
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}",
+    TSX, "structural_find", "find_props_identifiers_within_b_jsx_elements"
+  );
   run_match_test(
-    &format!(
-      "{}/{}/{}",
-      LANGUAGE, "structural_find", "find_props_identifiers_within_b_jsx_elements"
-    ),
+    get_piranha_arguments_for_test(relative_path_to_tests, TSX),
     2,
   );
 }
@@ -41,13 +41,12 @@ fn test_ts_match_only_find_fors_within_functions() {
 #[test]
 fn test_ts_match_only_find_fors_within_functions_not_within_whiles() {
   initialize();
+  let relative_path_to_tests = &format!(
+    "{}/{}/{}",
+    TSX, "structural_find", "find_props_identifiers_within_variable_declarators_not_within_divs"
+  );
   run_match_test(
-    &format!(
-      "{}/{}/{}",
-      LANGUAGE,
-      "structural_find",
-      "find_props_identifiers_within_variable_declarators_not_within_divs"
-    ),
+    get_piranha_arguments_for_test(relative_path_to_tests, TSX),
     2,
   );
 }

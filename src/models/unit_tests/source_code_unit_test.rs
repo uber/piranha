@@ -44,9 +44,8 @@ impl SourceCodeUnit {
       &HashMap::new(),
       PathBuf::new().as_path(),
       &PiranhaArgumentsBuilder::default()
-        .language(vec![language_name])
-        .build()
-        .unwrap(),
+        .language(language_name)
+        .build(),
     )
   }
 }
@@ -180,9 +179,8 @@ fn execute_persist_in_temp_folder(
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(file_path.as_path(), source_code);
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(vec![java.name().to_string()])
-    .build()
-    .unwrap();
+    .language(java.name().to_string())
+    .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
@@ -199,8 +197,8 @@ fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(true)
     .delete_file_if_empty(true)
-    .build()
-    .unwrap();
+    .build();
+  println!("{:?}", args);
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;
@@ -215,8 +213,7 @@ fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(true)
     .delete_file_if_empty(false)
-    .build()
-    .unwrap();
+    .build();
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;
@@ -232,8 +229,7 @@ fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(true)
     .delete_file_if_empty(true)
-    .build()
-    .unwrap();
+    .build();
   let source_code_test_1 = "class Test {
     public void foobar() {
 
@@ -286,8 +282,7 @@ fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(false)
     .delete_file_if_empty(true)
-    .build()
-    .unwrap();
+    .build();
   let source_code = "class Test {
     public void foobar() {
 
@@ -347,9 +342,8 @@ fn test_satisfies_constraints_positive() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(vec![java.name().to_string()])
-    .build()
-    .unwrap();
+    .language(java.name().to_string())
+    .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
@@ -414,9 +408,8 @@ fn test_satisfies_constraints_negative() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .language(vec![java.name().to_string()])
-    .build()
-    .unwrap();
+    .language(java.name().to_string())
+    .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),

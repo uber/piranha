@@ -279,7 +279,7 @@ impl Default for RuleStore {
       rule_query_cache: HashMap::default(),
       rules_by_name: HashMap::default(),
       global_rules: Vec::default(),
-      piranha_args: PiranhaArgumentsBuilder::default().build().unwrap(),
+      piranha_args: PiranhaArgumentsBuilder::default().build(),
       scopes: Vec::default(),
       global_tags: HashMap::default(),
       language: *PiranhaLanguage::default().language(),

@@ -27,7 +27,7 @@ use itertools::Itertools;
 use log::{debug, info};
 use tree_sitter::Parser;
 
-use crate::models::{piranha_input::PiranhaInput, rule_store::RuleStore};
+use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, rule_store::RuleStore};
 
 use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 
@@ -41,14 +41,16 @@ use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, P
 /// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
 /// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
+#[deprecated(since = "0.2.1", note = "please use `execute_piranha` instead")]
 pub fn run_piranha_cli(
   path_to_codebase: String, path_to_configurations: String, dry_run: bool,
 ) -> Vec<PiranhaOutputSummary> {
-  let args = PiranhaArguments::from(PiranhaInput::API {
-    path_to_codebase,
-    path_to_configurations,
-    dry_run,
-  });
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .dry_run(dry_run)
+    .build();
+
   debug!("{:?}", args);
   execute_piranha(&args)
 }
@@ -57,9 +59,19 @@ pub fn run_piranha_cli(
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   pyo3_log::init();
   m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
+  m.add_function(wrap_pyfunction!(execute_piranha, m)?)?;
+  m.add_class::<PiranhaArguments>()?;
   Ok(())
 }
 
+/// Executes piranha for the given `piranha_arguments`.
+///
+/// # Arguments:
+/// * piranha_arguments: Piranha Arguments
+///
+/// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
+/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
+#[pyfunction]
 pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
 

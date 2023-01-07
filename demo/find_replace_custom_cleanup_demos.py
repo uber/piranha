@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname, getmtime
-from polyglot_piranha import run_piranha_cli
+from polyglot_piranha import run_piranha_cli, execute_piranha, PiranhaArguments
 import logging 
 from logging import info 
 
@@ -21,12 +21,22 @@ def java_demo():
 
     old_mtime = getmtime(file_path)
 
-    _ = run_piranha_cli(directory_path, configuration_path, False)
+    args = PiranhaArguments(
+        directory_path,
+        configuration_path,
+        "java",
+        {
+            "input_type_name": "ArrayList",
+        },
+    )
+    _ = execute_piranha(args)
 
     new_mtime = getmtime(file_path)
 
     assert old_mtime < new_mtime
 
+
+# TODO: Migrate this usage to `execute_piranha` after the deprecated `run_piranha_cli` is removed
 def python_demo():
     """
     Deletes the string literal `@str_literal` (from `substitutions` in `piranha_arguments.toml`) if it appears as a list element.

@@ -27,10 +27,6 @@ pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
 }
 
-pub fn default_languages() -> Vec<String> {
-  vec![default_language()]
-}
-
 pub fn default_language() -> String {
   JAVA.to_string()
 }
@@ -59,12 +55,12 @@ pub fn default_dry_run() -> bool {
   false
 }
 
-pub fn default_name_of_piranha_argument_toml() -> String {
-  "piranha_arguments.toml".to_string()
-}
-
 pub fn default_path_to_codebase() -> String {
   String::new()
+}
+
+pub fn default_name_of_piranha_argument_toml() -> String {
+  "piranha_arguments.toml".to_string()
 }
 
 pub fn default_input_substitutions() -> HashMap<String, String> {
