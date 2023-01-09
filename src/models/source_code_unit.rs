@@ -327,8 +327,7 @@ impl SourceCodeUnit {
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
-    let mut applied_edit =
-      self._apply_edit(edit.p_match().range(), edit.replacement_string(), parser);
+    let mut applied_edit = self._apply_edit(edit, parser);
     // Check if the edit kind is "DELETE something"
     if *self.piranha_arguments.cleanup_comments() && edit.replacement_string().is_empty() {
       let deleted_at = edit.p_match().range().start_point.row;
@@ -338,7 +337,7 @@ impl SourceCodeUnit {
         edit.p_match().range().start_byte,
       ) {
         debug!("Deleting an associated comment");
-        applied_edit = self._apply_edit(comment_range, "", parser);
+        applied_edit = self._apply_edit(&Edit::delete_range(comment_range), parser);
       }
     }
     applied_edit
@@ -404,18 +403,14 @@ impl SourceCodeUnit {
   /// The `edit:InputEdit` performed.
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
-  pub(crate) fn _apply_edit(
-    &mut self, range: Range, replacement_string: &str, parser: &mut Parser,
-  ) -> InputEdit {
+  pub(crate) fn _apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
+    let mut edit_to_apply = edit.clone();
     // Check if the edit is a `Delete` operation then delete trailing comma
-    let replace_range = if replacement_string.trim().is_empty() {
-      self.delete_trailing_comma(range)
-    } else {
-      range
-    };
+    if edit.replacement_string().trim().is_empty() {
+      edit_to_apply = self.delete_trailing_comma(edit);
+    }
     // Get the tree_sitter's input edit representation
-    let (new_source_code, ts_edit) =
-      get_tree_sitter_edit(self.code.clone(), replace_range, replacement_string);
+    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), &edit_to_apply);
     // Apply edit to the tree
     self.ast.edit(&ts_edit);
     self._replace_file_contents_and_re_parse(&new_source_code, parser, true);
@@ -441,7 +436,8 @@ impl SourceCodeUnit {
   /// Get the node after the {deleted_range}'s end byte (heuristic 5 characters)
   /// Traverse this node and get the node closest to the range {deleted_range}'s end byte
   /// IF this closest node is a comma, extend the {new_delete_range} to include the comma.
-  fn delete_trailing_comma(&mut self, deleted_range: Range) -> Range {
+  fn delete_trailing_comma(&self, edit: &Edit) -> Edit {
+    let deleted_range: Range = edit.p_match().range();
     let mut new_deleted_range = deleted_range;
 
     // Get the node immediately after the to-be-deleted code
@@ -471,7 +467,11 @@ impl SourceCodeUnit {
         }
       }
     }
-    new_deleted_range
+    return Edit::new(
+      Match::new(new_deleted_range, edit.p_match().matches().clone()),
+      edit.replacement_string().to_string(),
+      edit.matched_rule().to_string(),
+    );
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST

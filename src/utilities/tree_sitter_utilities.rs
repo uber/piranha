@@ -13,7 +13,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
-use crate::{models::matches::Match, utilities::MapOfVec};
+use crate::{
+  models::{edit::Edit, matches::Match},
+  utilities::MapOfVec,
+};
 use colored::Colorize;
 use itertools::Itertools;
 use log::debug;
@@ -198,10 +201,10 @@ fn get_range_for_replace_node(
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
 /// Returns tree-sitter's edit representation along with updated source code.
 /// Note: This method does not update `self`.
-pub(crate) fn get_tree_sitter_edit(
-  code: String, replace_range: Range, replacement: &str,
-) -> (String, InputEdit) {
+pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputEdit) {
   // Log the edit
+  let replace_range: Range = edit.p_match().range();
+  let replacement = edit.replacement_string();
   let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
   let mut edit_kind = "Delete code".red(); //;
   let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
@@ -219,15 +222,24 @@ pub(crate) fn get_tree_sitter_edit(
     &code[replace_range.end_byte..],
   ]
   .concat();
+
+  let len_of_replacement = replacement.as_bytes().len();
+  let old_source_code_bytes = code.as_bytes();
+  let new_source_code_bytes = new_source_code.as_bytes();
+  let start_byte = replace_range.start_byte;
+  let old_end_byte = replace_range.end_byte;
+  let new_end_byte = start_byte + len_of_replacement;
   (
     new_source_code.to_string(),
     // Tree-sitter edit
-    _get_tree_sitter_edit(
-      replace_range,
-      replacement.as_bytes().len(),
-      code.as_bytes(),
-      new_source_code.as_bytes(),
-    ),
+    InputEdit {
+      start_byte,
+      old_end_byte,
+      new_end_byte,
+      start_position: position_for_offset(old_source_code_bytes, start_byte),
+      old_end_position: position_for_offset(old_source_code_bytes, old_end_byte),
+      new_end_position: position_for_offset(new_source_code_bytes, new_end_byte),
+    },
   )
 }
 
