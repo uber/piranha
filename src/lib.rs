@@ -138,7 +138,7 @@ impl Piranha {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
     parser
-      .set_language(*self.rule_store.language())
+      .set_language(*self.rule_store.piranha_args().piranha_language().language())
       .expect("Could not set the language for the parser.");
 
     // Keep looping until new `global` rules are added.

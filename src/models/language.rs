@@ -83,6 +83,11 @@ impl PiranhaLanguage {
       .expect("Could not set the language for the parser.");
     parser
   }
+
+  #[cfg(test)]
+  pub(crate) fn set_scopes(&mut self, scopes: Vec<ScopeGenerator>) {
+    self.scopes = scopes;
+  }
 }
 
 impl Default for PiranhaLanguage {
