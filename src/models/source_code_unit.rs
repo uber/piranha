@@ -438,7 +438,6 @@ impl SourceCodeUnit {
   /// IF this closest node is a comma, extend the {new_delete_range} to include the comma.
   fn delete_trailing_comma(&self, edit: &Edit) -> Edit {
     let deleted_range: Range = edit.p_match().range();
-
     let mut new_deleted_range = deleted_range;
 
     // Get the node immediately after the to-be-deleted code
@@ -473,7 +472,6 @@ impl SourceCodeUnit {
       edit.replacement_string().to_string(),
       edit.matched_rule().to_string(),
     );
-    // new_deleted_range
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
