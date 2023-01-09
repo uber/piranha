@@ -11,14 +11,22 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use getset::Getters;
+
 use crate::{
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::MapOfVec,
 };
 use std::collections::HashMap;
 
-#[derive(Debug, Default)]
-pub(crate) struct RuleGraph(HashMap<String, Vec<(String, String)>>);
+#[derive(Debug, Default, Getters)]
+pub(crate) struct RuleGraph {
+  #[get = "pub(crate)"]
+  graph: HashMap<String, Vec<(String, String)>>,
+  // All the input rules stored by name
+  #[get = "pub(crate)"]
+  rules_by_name: HashMap<String, Rule>,
+}
 
 impl RuleGraph {
   // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
@@ -30,12 +38,7 @@ impl RuleGraph {
       rules_by_name
         .get(val)
         .map(|v| vec![v.name()])
-        .unwrap_or_else(|| {
-          if rules_by_group.contains_key(val) {
-            return rules_by_group[val].clone();
-          }
-          vec![]
-        })
+        .unwrap_or_else(|| rules_by_group.get(val).cloned().unwrap_or_default())
     };
 
     let mut graph = HashMap::new();
@@ -54,20 +57,23 @@ impl RuleGraph {
         }
       }
     }
-    RuleGraph(graph)
+    RuleGraph {
+      graph,
+      rules_by_name,
+    }
   }
 
   /// Get all the outgoing edges for `rule_name`
   pub(crate) fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
-    self.0.get(rule_name).cloned().unwrap_or_default()
+    self.graph.get(rule_name).cloned().unwrap_or_default()
   }
 
   /// Get the number of nodes and edges in the rule graph
   pub(crate) fn get_number_of_rules_and_edges(&self) -> (usize, usize) {
     let mut edges = 0;
-    for (_, destinations) in &self.0 {
+    for (_, destinations) in &self.graph {
       edges += destinations.len();
     }
-    (self.0.len(), edges)
+    (self.graph.len(), edges)
   }
 }
