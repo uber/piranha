@@ -472,6 +472,10 @@ impl SourceCodeUnit {
       edit.replacement_string().to_string(),
       edit.matched_rule().to_string(),
     );
+<<<<<<< HEAD
+=======
+    // new_deleted_range
+>>>>>>> 482ef35 (Use  object instead of passing around range and replacement)
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
