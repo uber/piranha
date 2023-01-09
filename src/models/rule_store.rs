@@ -26,11 +26,7 @@ use tree_sitter::Query;
 
 use crate::{
   models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  models::{
-    rule::Rule,
-    rule_graph::RuleGraph,
-    scopes::{ScopeGenerator, ScopeQueryGenerator},
-  },
+  models::{rule::Rule, rule_graph::RuleGraph, scopes::ScopeQueryGenerator},
   utilities::{read_file, read_toml, MapOfVec},
 };
 
@@ -53,8 +49,6 @@ pub(crate) struct RuleStore {
   // Current global rules to be applied.
   #[get = "pub"]
   global_rules: Vec<Rule>,
-  // Scope generators.
-  scopes: Vec<ScopeGenerator>,
   // Command line arguments passed to piranha
   #[get = "pub"]
   piranha_args: PiranhaArguments,
@@ -63,14 +57,22 @@ pub(crate) struct RuleStore {
   global_tags: HashMap<String, String>,
 }
 
+impl From<PiranhaArguments> for RuleStore {
+  fn from(piranha_args: PiranhaArguments) -> Self {
+    RuleStore {
+      piranha_args,
+      ..Default::default()
+    }
+  }
+}
+
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
-    let (rules, edges, scopes) = read_config_files(args);
+    let (rules, edges) = read_config_files(args);
     let rule_graph = RuleGraph::new(&edges, &rules);
     let mut rule_store = RuleStore {
       rule_graph,
       rules_by_name: rules.iter().map(|r| (r.name(), r.clone())).collect(),
-      scopes,
       piranha_args: args.clone(),
       ..Default::default()
     };
@@ -86,14 +88,6 @@ impl RuleStore {
     );
     trace!("Rule Store {}", format!("{:#?}", rule_store));
     rule_store
-  }
-
-  #[cfg(test)]
-  pub(crate) fn default_with_scopes(scopes: Vec<ScopeGenerator>) -> RuleStore {
-    RuleStore {
-      scopes,
-      ..Default::default()
-    }
   }
 
   pub(crate) fn default_substitutions(&self) -> HashMap<String, String> {
@@ -170,7 +164,9 @@ impl RuleStore {
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
   pub(crate) fn get_scope_query_generators(&self, scope_level: &str) -> Vec<ScopeQueryGenerator> {
     self
-      .scopes
+      .piranha_args()
+      .piranha_language()
+      .scopes()
       .iter()
       .find(|level| level.name().eq(scope_level))
       .map(|scope| scope.rules().to_vec())
@@ -275,20 +271,16 @@ impl Default for RuleStore {
       rules_by_name: HashMap::default(),
       global_rules: Vec::default(),
       piranha_args: PiranhaArgumentsBuilder::default().build(),
-      scopes: Vec::default(),
       global_tags: HashMap::default(),
     }
   }
 }
 
-fn read_config_files(
-  args: &PiranhaArguments,
-) -> (Vec<Rule>, Vec<OutgoingEdges>, Vec<ScopeGenerator>) {
+fn read_config_files(args: &PiranhaArguments) -> (Vec<Rule>, Vec<OutgoingEdges>) {
   let path_to_config = Path::new(args.path_to_configurations());
   // Read the language specific cleanup rules and edges
   let language_rules: Rules = args.piranha_language().rules().clone().unwrap_or_default();
   let language_edges: Edges = args.piranha_language().edges().clone().unwrap_or_default();
-  let scopes = args.piranha_language().scopes().to_vec();
 
   // Read the API specific cleanup rules and edges
   let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
@@ -301,5 +293,5 @@ fn read_config_files(
   let all_rules = [language_rules.rules, input_rules.rules].concat();
   let all_edges = [language_edges.edges, input_edges.edges].concat();
 
-  (all_rules, all_edges, scopes)
+  (all_rules, all_edges)
 }

@@ -1,4 +1,6 @@
-use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
+use crate::models::{
+  default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
+};
 
 /*
 Copyright (c) 2022 Uber Technologies, Inc.
@@ -81,7 +83,14 @@ fn _get_method_scope() -> ScopeGenerator {
 }
 
 fn _get_rule_store() -> RuleStore {
-  RuleStore::default_with_scopes(vec![_get_method_scope(), _get_class_scope()])
+  let mut piranha_language = PiranhaLanguage::from(JAVA);
+  piranha_language.set_scopes(vec![_get_method_scope(), _get_class_scope()]);
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .language(JAVA.to_string())
+    .piranha_language(piranha_language)
+    .create()
+    .unwrap();
+  RuleStore::from(piranha_args)
 }
 
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.
