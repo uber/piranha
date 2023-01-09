@@ -222,15 +222,24 @@ pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputE
     &code[replace_range.end_byte..],
   ]
   .concat();
+
+  let len_of_replacement = replacement.as_bytes().len();
+  let old_source_code_bytes = code.as_bytes();
+  let new_source_code_bytes = new_source_code.as_bytes();
+  let start_byte = replace_range.start_byte;
+  let old_end_byte = replace_range.end_byte;
+  let new_end_byte = start_byte + len_of_replacement;
   (
     new_source_code.to_string(),
     // Tree-sitter edit
-    _get_tree_sitter_edit(
-      replace_range,
-      replacement.as_bytes().len(),
-      code.as_bytes(),
-      new_source_code.as_bytes(),
-    ),
+    InputEdit {
+      start_byte,
+      old_end_byte,
+      new_end_byte,
+      start_position: position_for_offset(old_source_code_bytes, start_byte),
+      old_end_position: position_for_offset(old_source_code_bytes, old_end_byte),
+      new_end_position: position_for_offset(new_source_code_bytes, new_end_byte),
+    },
   )
 }
 
