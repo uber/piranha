@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use getset::Getters;
-use pyo3::prelude::pyclass;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Serialize;
 
 #[derive(Serialize, Debug, Clone, Getters)]
@@ -95,4 +95,19 @@ struct Point {
   row: usize,
   #[pyo3(get)]
   column: usize,
+}
+
+#[pymethods]
+impl Match {
+  fn __repr__(&self) -> String {
+    format!(
+      "Match range: {:?}\nMatches: {:?}",
+      self.range(),
+      self.matches()
+    )
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
 }

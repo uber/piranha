@@ -17,7 +17,7 @@ use itertools::Itertools;
 use serde_derive::Serialize;
 
 use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
-use pyo3::prelude::pyclass;
+use pyo3::{prelude::pyclass, pymethods};
 #[derive(Serialize, Debug, Clone, Default)]
 #[pyclass]
 pub struct PiranhaOutputSummary {
@@ -55,5 +55,21 @@ impl PiranhaOutputSummary {
 
   pub fn content(&self) -> &str {
     self.content.as_ref()
+  }
+}
+
+#[pymethods]
+impl PiranhaOutputSummary {
+  fn __repr__(&self) -> String {
+    format!(
+      "path: {:?}\nMatches: {}\nRewrites: {}\n",
+      self.path(),
+      self.matches().len(),
+      self.rewrites().len()
+    )
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
   }
 }
