@@ -22,7 +22,7 @@ use itertools::Itertools;
 use jwalk::WalkDir;
 use log::{debug, info, trace};
 use regex::Regex;
-use tree_sitter::{Language, Query};
+use tree_sitter::Query;
 
 use crate::{
   models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
@@ -35,7 +35,6 @@ use crate::{
 };
 
 use super::{
-  language::PiranhaLanguage,
   outgoing_edges::{Edges, OutgoingEdges},
   rule::Rules,
 };
@@ -62,9 +61,6 @@ pub(crate) struct RuleStore {
   // Command line arguments passed to piranha
   #[get = "pub"]
   global_tags: HashMap<String, String>,
-  /// Tree-sitter language model
-  #[get = "pub"]
-  language: Language,
 }
 
 impl RuleStore {
@@ -76,7 +72,6 @@ impl RuleStore {
       rules_by_name: rules.iter().map(|r| (r.name(), r.clone())).collect(),
       scopes,
       piranha_args: args.clone(),
-      language: *args.piranha_language().language(),
       ..Default::default()
     };
 
@@ -282,7 +277,6 @@ impl Default for RuleStore {
       piranha_args: PiranhaArgumentsBuilder::default().build(),
       scopes: Vec::default(),
       global_tags: HashMap::default(),
-      language: *PiranhaLanguage::default().language(),
     }
   }
 }
