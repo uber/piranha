@@ -103,7 +103,11 @@ impl PiranhaHelpers for Node<'_> {
           }
         }
         let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
-        output.push(Match::new(replace_node_range, code_snippet_by_tag));
+        output.push(Match::new(
+          source_code[replace_node_range.start_byte..replace_node_range.end_byte].to_string(),
+          replace_node_range,
+          code_snippet_by_tag,
+        ));
       }
     }
     // This sorts the matches from bottom to top
@@ -205,7 +209,7 @@ pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputE
   // Log the edit
   let replace_range: Range = edit.p_match().range();
   let replacement = edit.replacement_string();
-  let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
+  let replaced_code_snippet = edit.p_match().matched_string();
   let mut edit_kind = "Delete code".red(); //;
   let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
   if !replacement.is_empty() {
