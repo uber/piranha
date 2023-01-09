@@ -45,14 +45,12 @@ impl Edit {
       matched_rule,
     }
   }
-}
 
-impl From<Range> for Edit {
-  fn from(replacement_range: Range) -> Self {
+  pub(crate) fn delete_range(replacement_range: Range) -> Self {
     Self {
       p_match: Match::new(replacement_range, HashMap::new()),
       replacement_string: String::new(),
-      matched_rule: String::new(),
+      matched_rule: "Delete Range".to_string(),
     }
   }
 }

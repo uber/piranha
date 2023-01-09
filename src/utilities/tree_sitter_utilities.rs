@@ -13,7 +13,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
-use crate::{models::matches::Match, utilities::MapOfVec};
+use crate::{
+  models::{edit::Edit, matches::Match},
+  utilities::MapOfVec,
+};
 use colored::Colorize;
 use itertools::Itertools;
 use log::debug;
@@ -198,10 +201,10 @@ fn get_range_for_replace_node(
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
 /// Returns tree-sitter's edit representation along with updated source code.
 /// Note: This method does not update `self`.
-pub(crate) fn get_tree_sitter_edit(
-  code: String, replace_range: Range, replacement: &str,
-) -> (String, InputEdit) {
+pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputEdit) {
   // Log the edit
+  let replace_range: Range = edit.p_match().range();
+  let replacement = edit.replacement_string();
   let replaced_code_snippet = &code[replace_range.start_byte..replace_range.end_byte];
   let mut edit_kind = "Delete code".red(); //;
   let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
