@@ -41,11 +41,10 @@ pub(crate) static PARENT: &str = "Parent";
 #[derive(Debug, Getters)]
 pub(crate) struct RuleStore {
   // A graph that captures the flow amongst the rules
+  #[get = "pub"]
   rule_graph: RuleGraph,
   // Caches the compiled tree-sitter queries.
   rule_query_cache: HashMap<String, Query>,
-  // All the input rules stored by name
-  rules_by_name: HashMap<String, Rule>,
   // Current global rules to be applied.
   #[get = "pub"]
   global_rules: Vec<Rule>,
@@ -72,12 +71,11 @@ impl RuleStore {
     let rule_graph = RuleGraph::new(&edges, &rules);
     let mut rule_store = RuleStore {
       rule_graph,
-      rules_by_name: rules.iter().map(|r| (r.name(), r.clone())).collect(),
       piranha_args: args.clone(),
       ..Default::default()
     };
 
-    for (_, rule) in rule_store.rules_by_name.clone() {
+    for (_, rule) in rule_store.rule_graph().rules_by_name().clone() {
       if rule.is_seed_rule() {
         rule_store.add_to_global_rules(&rule, args.input_substitutions());
       }
@@ -134,7 +132,7 @@ impl RuleStore {
     let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
     for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
-      let to_rule_name = &self.rules_by_name[&to_rule];
+      let to_rule_name = &self.rule_graph().rules_by_name()[&to_rule];
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
@@ -268,7 +266,6 @@ impl Default for RuleStore {
     RuleStore {
       rule_graph: RuleGraph::default(),
       rule_query_cache: HashMap::default(),
-      rules_by_name: HashMap::default(),
       global_rules: Vec::default(),
       piranha_args: PiranhaArgumentsBuilder::default().build(),
       global_tags: HashMap::default(),
