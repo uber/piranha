@@ -476,7 +476,6 @@ impl SourceCodeUnit {
       edit.replacement_string().to_string(),
       edit.matched_rule().to_string(),
     );
-    // new_deleted_range
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
