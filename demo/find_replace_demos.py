@@ -57,7 +57,7 @@ def java_demo():
         {
             "stale_flag_name": "STALE_FLAG",
         },
-        cleanup_comments = True
+        cleanup_comments=True,
     )
 
     _ = run_piranha_cli(file_path, configuration_path, False)
