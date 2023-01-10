@@ -44,9 +44,9 @@ repos:
           - --comment-style
           - /*| | */
 
-  - repo: https://github.com/psf/black
-    rev: 22.12.0
+  - repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: 'v2.0.1' 
     hooks:
-      - id: black
+    -   id: autopep8
         files: demo/
         exclude: only_lists.py
