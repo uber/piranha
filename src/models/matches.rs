@@ -20,6 +20,9 @@ use serde_derive::Serialize;
 #[derive(Serialize, Debug, Clone, Getters)]
 #[pyclass]
 pub(crate) struct Match {
+  // Code snippet that matched
+  #[get = "pub"]
+  matched_string: String,
   // Range of the entire AST node captured by the match
   #[pyo3(get)]
   range: Range,
@@ -30,8 +33,11 @@ pub(crate) struct Match {
 }
 
 impl Match {
-  pub(crate) fn new(range: tree_sitter::Range, matches: HashMap<String, String>) -> Self {
+  pub(crate) fn new(
+    matched_string: String, range: tree_sitter::Range, matches: HashMap<String, String>,
+  ) -> Self {
     Self {
+      matched_string,
       range: Range {
         start_byte: range.start_byte,
         end_byte: range.end_byte,

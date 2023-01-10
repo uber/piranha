@@ -91,7 +91,10 @@ fn test_apply_edit_positive() {
   let mut source_code_unit =
     SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
-  let _ = source_code_unit.apply_edit(&Edit::delete_range(range(49, 78, 3, 9, 3, 38)), &mut parser);
+  let _ = source_code_unit.apply_edit(
+    &Edit::delete_range(source_code, range(49, 78, 3, 9, 3, 38)),
+    &mut parser,
+  );
   assert!(eq_without_whitespace(
     &source_code.replace("boolean isFlagTreated = true;", ""),
     source_code_unit.code()
@@ -118,7 +121,7 @@ fn test_apply_edit_negative() {
     SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::delete_range(range(1000, 2000, 0, 0, 0, 0)),
+    &Edit::delete_range(source_code, range(1000, 2000, 0, 0, 0, 0)),
     &mut parser,
   );
 }
@@ -141,7 +144,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
     SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::delete_range(range(37, 47, 2, 26, 2, 36)),
+    &Edit::delete_range(source_code, range(37, 47, 2, 26, 2, 36)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -170,7 +173,7 @@ fn test_apply_edit_comma_handling_via_regex() {
     SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::delete_range(range(59, 75, 3, 23, 3, 41)),
+    &Edit::delete_range(source_code, range(59, 75, 3, 23, 3, 41)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
