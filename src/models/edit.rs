@@ -46,9 +46,13 @@ impl Edit {
     }
   }
 
-  pub(crate) fn delete_range(replacement_range: Range) -> Self {
+  pub(crate) fn delete_range(code: &str, replacement_range: Range) -> Self {
     Self {
-      p_match: Match::new(replacement_range, HashMap::new()),
+      p_match: Match::new(
+        code[replacement_range.start_byte..replacement_range.end_byte].to_string(),
+        replacement_range,
+        HashMap::new(),
+      ),
       replacement_string: String::new(),
       matched_rule: "Delete Range".to_string(),
     }

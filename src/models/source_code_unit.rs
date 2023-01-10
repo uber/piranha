@@ -337,7 +337,7 @@ impl SourceCodeUnit {
         edit.p_match().range().start_byte,
       ) {
         debug!("Deleting an associated comment");
-        applied_edit = self._apply_edit(&Edit::delete_range(comment_range), parser);
+        applied_edit = self._apply_edit(&Edit::delete_range(self.code(), comment_range), parser);
       }
     }
     applied_edit
@@ -468,7 +468,11 @@ impl SourceCodeUnit {
       }
     }
     return Edit::new(
-      Match::new(new_deleted_range, edit.p_match().matches().clone()),
+      Match::new(
+        self.code()[new_deleted_range.start_byte..new_deleted_range.end_byte].to_string(),
+        new_deleted_range,
+        edit.p_match().matches().clone(),
+      ),
       edit.replacement_string().to_string(),
       edit.matched_rule().to_string(),
     );
