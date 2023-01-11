@@ -19,6 +19,7 @@ use serde_derive::Serialize;
 use tree_sitter::Range;
 
 use super::matches::Match;
+use crate::utilities::gen_py_str_methods;
 use pyo3::{prelude::pyclass, pymethods};
 
 #[derive(Serialize, Debug, Clone, Getters)]
@@ -37,6 +38,8 @@ pub(crate) struct Edit {
   #[get = "pub"]
   matched_rule: String,
 }
+
+gen_py_str_methods!(Edit);
 
 impl Edit {
   pub(crate) fn new(p_match: Match, replacement_string: String, matched_rule: String) -> Self {
@@ -76,15 +79,5 @@ impl fmt::Display for Edit {
       "\n {} at ({:?}) -\n {}",
       edit_kind, &replace_range, replacement_snippet_fmt
     )
-  }
-}
-
-#[pymethods]
-impl Edit {
-  fn __repr__(&self) -> String {
-    format!("{:?}", self)
-  }
-  fn __str__(&self) -> String {
-    self.__repr__()
   }
 }

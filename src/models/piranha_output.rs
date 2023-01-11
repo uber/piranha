@@ -11,10 +11,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 use itertools::Itertools;
 use serde_derive::Serialize;
+
+use crate::utilities::gen_py_str_methods;
 
 use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
 use pyo3::{prelude::pyclass, pymethods};
@@ -30,6 +32,8 @@ pub struct PiranhaOutputSummary {
   #[pyo3(get)]
   rewrites: Vec<Edit>,
 }
+
+gen_py_str_methods!(PiranhaOutputSummary);
 
 impl PiranhaOutputSummary {
   pub(crate) fn new(source_code_unit: &SourceCodeUnit) -> PiranhaOutputSummary {
@@ -58,18 +62,14 @@ impl PiranhaOutputSummary {
   }
 }
 
-#[pymethods]
-impl PiranhaOutputSummary {
-  fn __repr__(&self) -> String {
-    format!(
+impl fmt::Display for PiranhaOutputSummary {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(
+      f,
       "path: {:?}\nMatches: {}\nRewrites: {}\n",
       self.path(),
       self.matches().len(),
       self.rewrites().len()
     )
-  }
-
-  fn __str__(&self) -> String {
-    self.__repr__()
   }
 }

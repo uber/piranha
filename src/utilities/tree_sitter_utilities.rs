@@ -17,7 +17,6 @@ use crate::{
   models::{edit::Edit, matches::Match},
   utilities::MapOfVec,
 };
-use colored::Colorize;
 use itertools::Itertools;
 use log::debug;
 use std::collections::HashMap;

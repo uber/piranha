@@ -11,17 +11,20 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Serialize;
+
+use crate::utilities::gen_py_str_methods;
 
 #[derive(Serialize, Debug, Clone, Getters)]
 #[pyclass]
 pub(crate) struct Match {
   // Code snippet that matched
   #[get = "pub"]
+  #[pyo3(get)]
   matched_string: String,
   // Range of the entire AST node captured by the match
   #[pyo3(get)]
@@ -32,6 +35,7 @@ pub(crate) struct Match {
   matches: HashMap<String, String>,
 }
 
+gen_py_str_methods!(Match);
 impl Match {
   pub(crate) fn new(
     matched_string: String, range: tree_sitter::Range, matches: HashMap<String, String>,
@@ -97,17 +101,14 @@ struct Point {
   column: usize,
 }
 
-#[pymethods]
-impl Match {
-  fn __repr__(&self) -> String {
-    format!(
-      "Match range: {:?}\nMatches: {:?}",
+impl fmt::Display for Match {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(
+      f,
+      "Match matched_string: {:?}\nrange: {:?}\nMatches: {:?}",
+      self.matched_string(),
       self.range(),
       self.matches()
     )
-  }
-
-  fn __str__(&self) -> String {
-    self.__repr__()
   }
 }
