@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{collections::HashMap, fmt};
+use std::collections::HashMap;
 
 use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
@@ -34,8 +34,8 @@ pub(crate) struct Match {
   #[get = "pub"]
   matches: HashMap<String, String>,
 }
-
 gen_py_str_methods!(Match);
+
 impl Match {
   pub(crate) fn new(
     matched_string: String, range: tree_sitter::Range, matches: HashMap<String, String>,
@@ -89,6 +89,7 @@ struct Range {
   #[pyo3(get)]
   end_point: Point,
 }
+gen_py_str_methods!(Range);
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
@@ -100,15 +101,4 @@ struct Point {
   #[pyo3(get)]
   column: usize,
 }
-
-impl fmt::Display for Match {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(
-      f,
-      "Match matched_string: {:?}\nrange: {:?}\nMatches: {:?}",
-      self.matched_string(),
-      self.range(),
-      self.matches()
-    )
-  }
-}
+gen_py_str_methods!(Point);

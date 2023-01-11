@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{fmt, path::PathBuf};
+use std::path::PathBuf;
 
 use itertools::Itertools;
 use serde_derive::Serialize;
@@ -59,17 +59,5 @@ impl PiranhaOutputSummary {
 
   pub fn content(&self) -> &str {
     self.content.as_ref()
-  }
-}
-
-impl fmt::Display for PiranhaOutputSummary {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(
-      f,
-      "path: {:?}\nMatches: {}\nRewrites: {}\n",
-      self.path(),
-      self.matches().len(),
-      self.rewrites().len()
-    )
   }
 }
