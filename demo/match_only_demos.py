@@ -17,7 +17,8 @@ def java_demo():
     )
     output_summary_java = execute_piranha(args)
 
-    rule_match_counter = Counter([m[0] for m in output_summary_java[0].matches])
+    rule_match_counter = Counter(
+        [m[0] for m in output_summary_java[0].matches])
 
     assert rule_match_counter["find_fooBar_anywhere"] == 2
 
@@ -28,7 +29,8 @@ def go_demo():
     info("Running the Match-only demo for go")
 
     args = PiranhaArguments(
-        join(match_only_dir, "go"), join(match_only_dir, "go/configurations"), "go", {}
+        join(match_only_dir, "go"), join(
+            match_only_dir, "go/configurations"), "go", {}
     )
     output_summary_go = execute_piranha(args)
 
@@ -43,11 +45,13 @@ def ts_demo():
     info("Running the Match-only demo for TypeScript")
 
     args = PiranhaArguments(
-        join(match_only_dir, "ts"), join(match_only_dir, "ts/configurations"), "ts", {}
+        join(match_only_dir, "ts"), join(
+            match_only_dir, "ts/configurations"), "ts", {}
     )
     output_summary_typescript = execute_piranha(args)
 
-    rule_match_counter = Counter([m[0] for m in output_summary_typescript[0].matches])
+    rule_match_counter = Counter(
+        [m[0] for m in output_summary_typescript[0].matches])
 
     assert rule_match_counter["find_fors"] == 3
     assert rule_match_counter["find_fors_within_functions"] == 2
@@ -64,7 +68,8 @@ def tsx_demo():
     )
     output_summary_typescript = execute_piranha(args)
 
-    rule_match_counter = Counter([m[0] for m in output_summary_typescript[0].matches])
+    rule_match_counter = Counter(
+        [m[0] for m in output_summary_typescript[0].matches])
 
     assert rule_match_counter["find_jsx_elements"] == 4
     assert rule_match_counter["find_props_identifiers_within_b_jsx_elements"] == 2
