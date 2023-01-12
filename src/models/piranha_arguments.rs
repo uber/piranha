@@ -230,6 +230,31 @@ impl PiranhaArguments {
 }
 
 impl PiranhaArguments {
+  pub fn new(
+    path_to_codebase: &str, path_to_configurations: &str, language: &str,
+  ) -> PiranhaArguments {
+    PiranhaArgumentsBuilder::default()
+      .path_to_codebase(path_to_codebase.to_string())
+      .path_to_configurations(path_to_configurations.to_string())
+      .language(language.to_string())
+      .dry_run(true)
+      .build()
+  }
+
+  pub fn new_substitutions(
+    path_to_codebase: &str, path_to_configurations: &str, language: &str,
+    substitutions: Vec<Vec<String>>,
+  ) -> PiranhaArguments {
+    PiranhaArgumentsBuilder::default()
+      .path_to_codebase(path_to_codebase.to_string())
+      .path_to_configurations(path_to_configurations.to_string())
+      .language(language.to_string())
+      .substitutions(substitutions)
+      .dry_run(true)
+      .cleanup_comments(true)
+      .build()
+  }
+
   pub fn get_language(&self) -> String {
     self.language.clone()
   }

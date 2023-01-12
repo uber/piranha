@@ -11,161 +11,201 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::{default_configs::JAVA, piranha_arguments::PiranhaArgumentsBuilder};
+use crate::{
+  execute_piranha,
+  models::{
+    default_configs::JAVA,
+    piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+  },
+};
+use std::path::Path;
+use tempdir::TempDir;
 
 use super::{
-  get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test, run_rewrite_test,
+  check_result, copy_folder, create_rewrite_test, initialize, run_match_test, substitutions,
 };
 
 static LANGUAGE: &str = JAVA;
 
-#[test]
-fn test_java_scenarios_treated_ff1() {
-  initialize();
-
-  let relative_path_to_tests = &format!("{}/{}/{}", JAVA, "feature_flag_system_1", "treated");
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "true".to_string()],
-    vec!["treated_complement".to_string(), "false".to_string()],
-    vec!["namespace".to_string(), "some_long_name".to_string()],
-  ];
-
-  let piranha_argument =
-    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, JAVA, substitutions);
-
-  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
+fn feature_flag_system_1_treated() -> PiranhaArguments {
+  PiranhaArguments::new_substitutions(
+    JAVA,
+    "test-resources/java/feature_flag_system_1/treated/input",
+    "test-resources/java/feature_flag_system_1/treated/configurations",
+    substitutions! {
+      "stale_flag_name" => "STALE_FLAG",
+      "treated"=>  "true",
+      "treated_complement" => "false",
+      "namespace" => "some_long_name"
+    },
+  )
 }
 
-#[test]
-fn test_java_scenarios_treated_ff2() {
-  initialize();
-
-  let relative_path_to_tests = &format!("{}/{}/{}", JAVA, "feature_flag_system_2", "treated");
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "true".to_string()],
-    vec!["treated_complement".to_string(), "false".to_string()],
-    vec!["namespace".to_string(), "some_long_name".to_string()],
-  ];
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      JAVA,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
+fn feature_flag_system_2_treated() -> PiranhaArguments {
+  PiranhaArguments::new_substitutions(
+    JAVA,
+    "test-resources/java/feature_flag_system_2/treated/input",
+    "test-resources/java/feature_flag_system_2/treated/configurations",
+    substitutions! {
+      "stale_flag_name" => "STALE_FLAG",
+      "treated"=>  "true",
+      "treated_complement" => "false",
+      "namespace" => "some_long_name"
+    },
+  )
+  .merge(
+    PiranhaArgumentsBuilder::default()
+      .cleanup_comments(true)
+      .build(),
+  )
 }
 
-#[test]
-fn test_java_scenarios_control_ff1() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}/{}", JAVA, "feature_flag_system_1", "control");
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "false".to_string()],
-    vec!["treated_complement".to_string(), "true".to_string()],
-    vec!["namespace".to_string(), "some_long_name".to_string()],
-  ];
-
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      JAVA,
-      substitutions,
-    ));
-  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
+fn feature_flag_system_1_control() -> PiranhaArguments {
+  PiranhaArguments::new_substitutions(
+    JAVA,
+    "test-resources/java/feature_flag_system_1/control/input",
+    "test-resources/java/feature_flag_system_1/control/configurations",
+    substitutions! {
+      "stale_flag_name"=> "STALE_FLAG",
+      "treated"=> "false",
+      "treated_complement" => "true",
+      "namespace" => "some_long_name"
+    },
+  )
+  .merge(
+    PiranhaArgumentsBuilder::default()
+      .cleanup_comments(true)
+      .build(),
+  )
 }
 
-#[test]
-fn test_java_scenarios_control_ff2() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}/{}", JAVA, "feature_flag_system_2", "control");
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "false".to_string()],
-    vec!["treated_complement".to_string(), "true".to_string()],
-    vec!["namespace".to_string(), "some_long_name".to_string()],
-  ];
-
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      JAVA,
-      substitutions,
-    ));
-  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
+fn feature_flag_system_2_control() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/feature_flag_system_2/control/input",
+    "test-resources/java/feature_flag_system_2/control/configurations",
+  )
+  .merge(
+    PiranhaArgumentsBuilder::default()
+      .cleanup_comments(true)
+      .substitutions(substitutions! {
+        "stale_flag_name"=> "STALE_FLAG",
+        "treated"=> "false",
+        "treated_complement" => "true",
+        "namespace" => "some_long_name"
+      })
+      .build(),
+  )
 }
 
-#[test]
-fn test_java_scenarios_find_and_propagate() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", JAVA, "find_and_propagate");
-  run_rewrite_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
-    2,
-    relative_path_to_tests,
-  );
+fn find_and_propagate() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/find_and_propagate/input",
+    "test-resources/java/find_and_propagate/configurations",
+  )
 }
 
-#[test]
-fn test_java_scenarios_user_defined_non_seed_rules() {
-  initialize();
-
-  let relative_path_to_tests = &format!("{}/{}", JAVA, "non_seed_user_rule");
-
-  let substitutions = vec![vec!["input_type_name".to_string(), "ArrayList".to_string()]];
-
-  let piranha_argument =
-    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, JAVA, substitutions);
-  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
+fn non_seed_user_rule() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/non_seed_user_rule/input",
+    "test-resources/java/non_seed_user_rule/configurations",
+  )
+  .merge(
+    PiranhaArgumentsBuilder::default()
+      .substitutions(substitutions! {"input_type_name" => "ArrayList"})
+      .build(),
+  )
 }
 
-#[test]
-fn test_java_scenarios_insert_field_and_initializer() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", JAVA, "insert_field_and_initializer");
-  run_rewrite_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
-    1,
-    relative_path_to_tests,
-  );
+fn insert_field_and_initializer() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/insert_field_and_initializer/input",
+    "test-resources/java/insert_field_and_initializer/configurations",
+  )
 }
 
-#[test]
-fn test_java_scenarios_new_line_character_used_in_string_literal() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", JAVA, "new_line_character_used_in_string_literal");
-  run_rewrite_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
-    1,
-    relative_path_to_tests,
-  );
+fn new_line_character_used_in_string_literal() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/new_line_character_used_in_string_literal/input",
+    "test-resources/java/new_line_character_used_in_string_literal/configurations",
+  )
 }
 
-#[test]
-fn test_java_scenarios_consecutive_scope_level_rules() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", JAVA, "consecutive_scope_level_rules");
-  run_rewrite_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, JAVA),
-    1,
-    relative_path_to_tests,
-  );
+fn consecutive_scope_level_rules() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/consecutive_scope_level_rules/input",
+    "test-resources/java/consecutive_scope_level_rules/configurations",
+  )
 }
 
-// run_match_test
+create_rewrite_test!(
+  test_feature_flag_system_2_treated,
+  feature_flag_system_2_treated(),
+  "test-resources/java/feature_flag_system_2/treated/expected",
+  4
+);
+
+create_rewrite_test!(
+  test_feature_flag_system_1_control,
+  feature_flag_system_1_control(),
+  "test-resources/java/feature_flag_system_1/control/expected",
+  2
+);
+
+create_rewrite_test!(
+  test_feature_flag_system_1_treated,
+  feature_flag_system_1_treated(),
+  "test-resources/java/feature_flag_system_1/treated/expected",
+  2
+);
+
+create_rewrite_test!(
+  test_feature_flag_system_2_control,
+  feature_flag_system_2_control(),
+  "test-resources/java/feature_flag_system_2/control/expected",
+  4
+);
+
+create_rewrite_test!(
+  test_scenarios_find_and_propagate,
+  find_and_propagate(),
+  "test-resources/java/find_and_propagate/expected",
+  2
+);
+
+create_rewrite_test!(
+  test_non_seed_user_rule,
+  non_seed_user_rule(),
+  "test-resources/java/non_seed_user_rule/expected",
+  1
+);
+
+create_rewrite_test!(
+  test_insert_field_and_initializer,
+  insert_field_and_initializer(),
+  "test-resources/java/insert_field_and_initializer/expected",
+  1
+);
+
+create_rewrite_test!(
+  test_new_line_character_used_in_string_literal,
+  new_line_character_used_in_string_literal(),
+  "test-resources/java/new_line_character_used_in_string_literal/expected",
+  1
+);
+
+create_rewrite_test!(
+  test_consecutive_scope_level_rules,
+  consecutive_scope_level_rules(),
+  "test-resources/java/consecutive_scope_level_rules/expected",
+  1
+);
+
 #[test]
 fn test_java_match_only() {
   initialize();

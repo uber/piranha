@@ -16,6 +16,7 @@ use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder
 use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::utilities::{eq_without_whitespace, find_file, read_file};
 use log::error;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 mod test_piranha_java;
@@ -102,12 +103,24 @@ fn run_rewrite_test(
   check_result(output_summaries, path_to_expected);
 }
 
+fn copy_folder(src: &Path, dst: &Path) {
+  for entry in fs::read_dir(src).unwrap() {
+    let entry = entry.unwrap();
+    let path = entry.path();
+    if path.is_file() {
+      let file_path = dst.join(path.file_name().unwrap());
+      let source_code = read_file(&path).unwrap();
+      _ = fs::write(file_path.as_path(), source_code);
+    }
+  }
+}
+
 /// Checks if the file updates returned by piranha are as expected.
-fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: PathBuf) {
+fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: PathBuf) {
   let mut all_files_match = true;
 
-  for source_code_unit in &updated_files {
-    let updated_file_name = &source_code_unit
+  for summary in &output_summaries {
+    let updated_file_name = &summary
       .path()
       .file_name()
       .and_then(|f| f.to_str().map(|x| x.to_string()))
@@ -115,10 +128,61 @@ fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: Path
     let expected_file_path = find_file(&path_to_expected, updated_file_name);
     let expected_content = read_file(&expected_file_path).unwrap();
 
-    if !eq_without_whitespace(source_code_unit.content(), &expected_content) {
+    if !eq_without_whitespace(summary.content(), &expected_content) {
       all_files_match = false;
-      error!("{}", &source_code_unit.content());
+      error!("{}", &summary.content());
     }
   }
   assert!(all_files_match);
 }
+
+macro_rules! create_rewrite_test {
+  ($test_name: ident, $piranha_arg: expr, $expected_path: expr, $files_changed: expr ) => {
+    #[test]
+    fn $test_name() {
+      initialize();
+
+      // Copy the test scenario to temporary directory
+      let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
+      let temp_dir_path = &temp_dir.path();
+      copy_folder(
+        Path::new(&$piranha_arg.path_to_codebase()),
+        temp_dir_path,
+      );
+
+      // Default piranha argument with `path_to_codebase` pointing
+      // to `temp_dir`
+      let arg_for_codebase_path = PiranhaArgumentsBuilder::default()
+          .path_to_codebase(temp_dir_path.to_str().unwrap().to_string())
+          .build()
+
+      //Overrides the $piranha_arg parameter's `path_to_code_base` field
+      let piranha_arguments = arg_for_codebase_path.merge($piranha_arg);
+
+      let output_summaries = execute_piranha(&piranha_arguments);
+      // Checks if there are any rewrites performed for the file
+      assert!(output_summaries.iter().any(|x|!x.rewrites().is_empty()));
+
+      assert_eq!(output_summaries.len(), $files_changed);
+      let path_to_expected = Path::new(env!("CARGO_MANIFEST_DIR")).join($expected_path);
+      check_result(output_summaries, path_to_expected);
+      // Delete temp_dir
+      _ = temp_dir.close().unwrap();
+    }
+  };
+}
+
+macro_rules! substitutions(
+  { $($key:literal => $value:literal),+ } => {
+      {
+          let mut substitutions: Vec<Vec<String>> = vec![];
+          $(
+            substitutions.push(vec![$key.to_string(), $value.to_string()]);
+          )+
+          substitutions
+      }
+   };
+);
+
+pub(crate) use create_rewrite_test;
+pub(crate) use substitutions;
