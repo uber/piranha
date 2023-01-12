@@ -230,9 +230,7 @@ impl PiranhaArguments {
 }
 
 impl PiranhaArguments {
-  pub fn new(
-    path_to_codebase: &str, path_to_configurations: &str, language: &str,
-  ) -> PiranhaArguments {
+  pub fn new(language: &str, path_to_codebase: &str, path_to_configurations: &str) -> Self {
     PiranhaArgumentsBuilder::default()
       .path_to_codebase(path_to_codebase.to_string())
       .path_to_configurations(path_to_configurations.to_string())
@@ -242,17 +240,14 @@ impl PiranhaArguments {
   }
 
   pub fn new_substitutions(
-    path_to_codebase: &str, path_to_configurations: &str, language: &str,
+    language: &str, path_to_codebase: &str, path_to_configurations: &str,
     substitutions: Vec<Vec<String>>,
-  ) -> PiranhaArguments {
-    PiranhaArgumentsBuilder::default()
-      .path_to_codebase(path_to_codebase.to_string())
-      .path_to_configurations(path_to_configurations.to_string())
-      .language(language.to_string())
-      .substitutions(substitutions)
-      .dry_run(true)
-      .cleanup_comments(true)
-      .build()
+  ) -> Self {
+    Self::new(language, path_to_codebase, path_to_configurations).merge(
+      PiranhaArgumentsBuilder::default()
+        .substitutions(substitutions)
+        .build(),
+    )
   }
 
   pub fn get_language(&self) -> String {

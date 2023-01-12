@@ -11,59 +11,53 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::{default_configs::SWIFT, piranha_arguments::PiranhaArgumentsBuilder};
+use super::{check_result, copy_folder, create_rewrite_test, initialize, substitutions};
+use crate::execute_piranha;
+use crate::models::{
+  default_configs::SWIFT,
+  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+};
+use std::path::Path;
+use tempdir::TempDir;
 
-use super::{get_piranha_arguments_for_test_with_substitutions, initialize, run_rewrite_test};
-
-// Tests cascading file delete based on enum and type alias.
-// This scenario is "derived" from plugin cleanup.
-// This cleanup requires the concept of global tags
-#[test]
-fn test_cascading_delete_file() {
-  initialize();
-
-  let relative_path_to_tests = &format!("{}/{}", SWIFT, "cascade_file_delete");
-  let substitutions = vec![vec![
-    "stale_flag_name".to_string(),
-    "Premium-Icon".to_string(),
-  ]];
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      SWIFT,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 3, relative_path_to_tests);
-
-  // initialize();
-  // run_rewrite_test(, 3);
+fn cascading_delete_file() -> PiranhaArguments {
+  PiranhaArguments::new_substitutions(
+    SWIFT,
+    "test-resources/swift/cascade_file_delete/input",
+    "test-resources/swift/cascade_file_delete/configurations",
+    substitutions! {
+      "stale_flag_name" => "Premium-Icon"
+    },
+  )
+  .merge(
+    PiranhaArgumentsBuilder::default()
+      .cleanup_comments(true)
+      .build(),
+  )
 }
 
-// Tests cascading file delete based on enum and type alias.
-// This scenario is "derived" from plugin cleanup.
-// Checks custom global_tags
-#[test]
-fn test_cascading_delete_file_custom_global_tag() {
-  initialize();
+fn cascading_delete_file_custom_global_tag() -> PiranhaArguments {
+  PiranhaArguments::new_substitutions(
+    SWIFT,
+    "test-resources/swift/cascade_file_delete_custom_global_tag/input",
+    "test-resources/swift/cascade_file_delete_custom_global_tag/configurations",
+    substitutions! {
+      "stale_flag_name" => "Premium-Icon"
+    },
+  )
+  .merge(
+    PiranhaArgumentsBuilder::default()
+      .cleanup_comments(true)
+      .global_tag_prefix("universal_tag.".to_string())
+      .cleanup_comments_buffer(3)
+      .build(),
+  )
+}
 
-  let relative_path_to_tests = &format!("{}/{}", SWIFT, "cascade_file_delete_custom_global_tag");
-  let substitutions = vec![vec![
-    "stale_flag_name".to_string(),
-    "Premium-Icon".to_string(),
-  ]];
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .global_tag_prefix("universal_tag.".to_string())
-    .cleanup_comments_buffer(3)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      SWIFT,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 3, relative_path_to_tests);
+create_rewrite_test! {
+  // Tests cascading file delete based on enum and type alias.
+  // This scenario is "derived" from plugin cleanup.
+  // This cleanup requires the concept of global tags
+  test_cascading_delete_file: cascading_delete_file(), "test-resources/swift/cascade_file_delete/expected", 3,
+  test_cascading_delete_file_custom_global_tag: cascading_delete_file_custom_global_tag(), "test-resources/swift/cascade_file_delete_custom_global_tag/expected", 3,
 }

@@ -11,6 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use super::{
+  check_result, copy_folder, create_match_test, create_rewrite_test, initialize, substitutions,
+};
 use crate::{
   execute_piranha,
   models::{
@@ -20,12 +23,6 @@ use crate::{
 };
 use std::path::Path;
 use tempdir::TempDir;
-
-use super::{
-  check_result, copy_folder, create_rewrite_test, initialize, run_match_test, substitutions,
-};
-
-static LANGUAGE: &str = JAVA;
 
 fn feature_flag_system_1_treated() -> PiranhaArguments {
   PiranhaArguments::new_substitutions(
@@ -80,20 +77,20 @@ fn feature_flag_system_1_control() -> PiranhaArguments {
 }
 
 fn feature_flag_system_2_control() -> PiranhaArguments {
-  PiranhaArguments::new(
+  PiranhaArguments::new_substitutions(
     JAVA,
     "test-resources/java/feature_flag_system_2/control/input",
     "test-resources/java/feature_flag_system_2/control/configurations",
+    substitutions! {
+      "stale_flag_name"=> "STALE_FLAG",
+      "treated"=> "false",
+      "treated_complement" => "true",
+      "namespace" => "some_long_name"
+    },
   )
   .merge(
     PiranhaArgumentsBuilder::default()
       .cleanup_comments(true)
-      .substitutions(substitutions! {
-        "stale_flag_name"=> "STALE_FLAG",
-        "treated"=> "false",
-        "treated_complement" => "true",
-        "namespace" => "some_long_name"
-      })
       .build(),
   )
 }
@@ -143,82 +140,26 @@ fn consecutive_scope_level_rules() -> PiranhaArguments {
   )
 }
 
-create_rewrite_test!(
-  test_feature_flag_system_2_treated,
-  feature_flag_system_2_treated(),
-  "test-resources/java/feature_flag_system_2/treated/expected",
-  4
-);
+create_rewrite_test! {
+  test_feature_flag_system_1_treated: feature_flag_system_1_treated(), "test-resources/java/feature_flag_system_1/treated/expected",2,
+  test_feature_flag_system_1_control: feature_flag_system_1_control(), "test-resources/java/feature_flag_system_1/control/expected",2,
+  test_feature_flag_system_2_treated: feature_flag_system_2_treated(), "test-resources/java/feature_flag_system_2/treated/expected",4,
+  test_feature_flag_system_2_control: feature_flag_system_2_control(), "test-resources/java/feature_flag_system_2/control/expected",4,
+  test_scenarios_find_and_propagate:  find_and_propagate(), "test-resources/java/find_and_propagate/expected", 2,
+  test_non_seed_user_rule:  non_seed_user_rule(), "test-resources/java/non_seed_user_rule/expected", 1,
+  test_new_line_character_used_in_string_literal:  new_line_character_used_in_string_literal(), "test-resources/java/new_line_character_used_in_string_literal/expected", 1,
+  test_insert_field_and_initializer: insert_field_and_initializer(), "test-resources/java/insert_field_and_initializer/expected", 1,
+  test_consecutive_scope_level_rules:  consecutive_scope_level_rules(), "test-resources/java/consecutive_scope_level_rules/expected", 1,
+}
 
-create_rewrite_test!(
-  test_feature_flag_system_1_control,
-  feature_flag_system_1_control(),
-  "test-resources/java/feature_flag_system_1/control/expected",
-  2
-);
+fn match_only() -> PiranhaArguments {
+  PiranhaArguments::new(
+    JAVA,
+    "test-resources/java/structural_find/input/XPFlagCleanerPositiveCases.java",
+    "test-resources/java/structural_find/configurations",
+  )
+}
 
-create_rewrite_test!(
-  test_feature_flag_system_1_treated,
-  feature_flag_system_1_treated(),
-  "test-resources/java/feature_flag_system_1/treated/expected",
-  2
-);
-
-create_rewrite_test!(
-  test_feature_flag_system_2_control,
-  feature_flag_system_2_control(),
-  "test-resources/java/feature_flag_system_2/control/expected",
-  4
-);
-
-create_rewrite_test!(
-  test_scenarios_find_and_propagate,
-  find_and_propagate(),
-  "test-resources/java/find_and_propagate/expected",
-  2
-);
-
-create_rewrite_test!(
-  test_non_seed_user_rule,
-  non_seed_user_rule(),
-  "test-resources/java/non_seed_user_rule/expected",
-  1
-);
-
-create_rewrite_test!(
-  test_insert_field_and_initializer,
-  insert_field_and_initializer(),
-  "test-resources/java/insert_field_and_initializer/expected",
-  1
-);
-
-create_rewrite_test!(
-  test_new_line_character_used_in_string_literal,
-  new_line_character_used_in_string_literal(),
-  "test-resources/java/new_line_character_used_in_string_literal/expected",
-  1
-);
-
-create_rewrite_test!(
-  test_consecutive_scope_level_rules,
-  consecutive_scope_level_rules(),
-  "test-resources/java/consecutive_scope_level_rules/expected",
-  1
-);
-
-#[test]
-fn test_java_match_only() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "structural_find");
-  let file_name = "XPFlagCleanerPositiveCases.java";
-  let arg = PiranhaArgumentsBuilder::default()
-    .path_to_configurations(format!(
-      "test-resources/{relative_path_to_tests}/configurations/"
-    ))
-    .path_to_codebase(format!(
-      "test-resources/{relative_path_to_tests}/input/{file_name}"
-    ))
-    .language(JAVA.to_string())
-    .build();
-  run_match_test(arg, 20);
+create_match_test! {
+  test_java_match_only: match_only(), 20,
 }

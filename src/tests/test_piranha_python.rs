@@ -11,40 +11,42 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::PYTHON;
-
 use super::{
-  get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test, run_rewrite_test,
+  check_result, copy_folder, create_match_test, create_rewrite_test, initialize, substitutions,
 };
+use crate::execute_piranha;
+use crate::models::{
+  default_configs::PYTHON,
+  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+};
+use std::path::Path;
+use tempdir::TempDir;
 
-static LANGUAGE: &str = "python";
-
-#[test]
-fn test_python_delete_modify_str_literal_from_list() {
-  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "delete_cleanup_str_in_list");
-
-  let substitutions = vec![
-    vec!["str_literal".to_string(), "dependency2".to_string()],
-    vec!["str_to_replace".to_string(), "dependency1".to_string()],
-    vec!["str_replacement".to_string(), "dependency1_1".to_string()],
-  ];
-
-  let piranha_argument = get_piranha_arguments_for_test_with_substitutions(
-    relative_path_to_tests,
+fn delete_modify_str_literal_from_list() -> PiranhaArguments {
+  PiranhaArguments::new_substitutions(
     PYTHON,
-    substitutions,
-  );
-
-  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
+    "test-resources/python/delete_cleanup_str_in_list/input",
+    "test-resources/python/delete_cleanup_str_in_list/configurations",
+    substitutions! {
+      "str_literal" => "dependency2",
+      "str_to_replace"=>  "dependency1",
+      "str_replacement" => "dependency1_1"
+    },
+  )
 }
 
-#[test]
-fn test_python_match_only() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "structural_find");
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, PYTHON),
-    3,
-  );
+create_rewrite_test!(
+  test_delete_modify_str_literal_from_list: delete_modify_str_literal_from_list(),
+  "test-resources/python/delete_cleanup_str_in_list/expected",
+  1,
+);
+
+fn match_only() -> PiranhaArguments {
+  PiranhaArguments::new(
+    PYTHON,
+    "test-resources/python/structural_find/input/",
+    "test-resources/python/structural_find/configurations",
+  )
 }
+
+create_match_test!(test_match_only: match_only(), 3,);

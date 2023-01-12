@@ -11,42 +11,36 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::TSX;
+use super::{create_match_test, initialize};
+use crate::execute_piranha;
+use crate::models::{default_configs::TSX, piranha_arguments::PiranhaArguments};
 
-use super::{get_piranha_arguments_for_test, initialize, run_match_test};
-
-#[test]
-fn test_ts_match_only_find_fors() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}/{}", TSX, "structural_find", "find_jsx_elements");
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, TSX),
-    4,
-  );
+fn match_only_find_fors() -> PiranhaArguments {
+  PiranhaArguments::new(
+    TSX,
+    "test-resources/tsx/structural_find/find_jsx_elements/input/",
+    "test-resources/tsx/structural_find/find_jsx_elements/configurations",
+  )
 }
 
-#[test]
-fn test_ts_match_only_find_fors_within_functions() {
-  initialize();
-  let relative_path_to_tests = &format!(
-    "{}/{}/{}",
-    TSX, "structural_find", "find_props_identifiers_within_b_jsx_elements"
-  );
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, TSX),
-    2,
-  );
+fn match_find_props_identifiers_within_b_jsx_elements() -> PiranhaArguments {
+  PiranhaArguments::new(
+    TSX,
+    "test-resources/tsx/structural_find/find_props_identifiers_within_b_jsx_elements/input/",
+    "test-resources/tsx/structural_find/find_props_identifiers_within_b_jsx_elements/configurations",
+  )
 }
 
-#[test]
-fn test_ts_match_only_find_fors_within_functions_not_within_whiles() {
-  initialize();
-  let relative_path_to_tests = &format!(
-    "{}/{}/{}",
-    TSX, "structural_find", "find_props_identifiers_within_variable_declarators_not_within_divs"
-  );
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, TSX),
-    2,
-  );
+fn find_props_identifiers_within_variable_declarators_not_within_divs() -> PiranhaArguments {
+  PiranhaArguments::new(
+    TSX,
+    "test-resources/tsx/structural_find/find_props_identifiers_within_variable_declarators_not_within_divs/input/",
+    "test-resources/tsx/structural_find/find_props_identifiers_within_variable_declarators_not_within_divs/configurations",
+  )
+}
+
+create_match_test! {
+  test_ts_match_only_find_fors:  match_only_find_fors(), 4,
+  test_match_find_props_identifiers_within_b_jsx_elements: match_find_props_identifiers_within_b_jsx_elements(), 2,
+  test_find_props_identifiers_within_variable_declarators_not_within_divs: find_props_identifiers_within_variable_declarators_not_within_divs(), 2,
 }
