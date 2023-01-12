@@ -71,6 +71,19 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
   assert!(all_files_match);
 }
 
+/// This macro creates a new match test case.
+/// Arguments:
+/// * test_name: Name of the test (identifier)
+/// * piranha_arg: expression of type PiranhaArgument
+/// * expected_number_of_matches: expression returning the expected number of matches
+///
+/// Usage:
+/// ```
+/// create_rewrite_test! {
+///  test_a1: a1(), "path/to/expected_a1", 2,
+///  test_a2: a2(), "path/to/expected_a2", 3,
+/// }
+/// ```
 macro_rules! create_match_test {
   ($($test_name:ident:  $piranha_arg: expr, $expected_number_of_matches: expr, )*) => {
     $(
