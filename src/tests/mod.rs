@@ -87,6 +87,20 @@ macro_rules! create_match_test {
   };
 }
 
+/// This macro creates a new rewrite test case.
+/// Arguments:
+/// * test_name: Name of the test (identifier)
+/// * piranha_arg: expression of type PiranhaArgument
+/// * expected_path: expression returning the `expected_path`
+/// * files_changed: expression returning the expected number of files changed after the rewriting
+///
+/// Usage:
+/// ```
+/// create_rewrite_test! {
+///  test_a1: a1(), "path/to/expected_a1", 2,
+///  test_a2: a2(), "path/to/expected_a2", 3,
+/// }
+/// ```
 macro_rules! create_rewrite_test {
   ($($test_name:ident:  $piranha_arg: expr, $expected_path: expr, $files_changed: expr, )*) => {
     $(
@@ -125,6 +139,25 @@ macro_rules! create_rewrite_test {
   };
 }
 
+/// This macro accepts substitutions as `key` => `value` pairs and transforms it to a `Vec<Vec<String>>`.
+///
+/// Usage:
+/// ```
+/// substitutions! {
+/// "project" => "Piranha",
+/// "language" => "Rust"
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```
+/// vec!\[
+///      vec!\["project".to_string(), "Piranha".to_string()\]
+///      vec!\["language".to_string(), "language".to_string()\]
+/// \]
+/// ```
+///
 macro_rules! substitutions(
   { $($key:literal => $value:literal),+ } => {
       {
