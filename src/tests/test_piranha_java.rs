@@ -32,7 +32,7 @@ create_rewrite_tests! {
       "treated"=>  "true",
       "treated_complement" => "false",
       "namespace" => "some_long_name"
-    };
+    }, delete_file_if_empty= false;
   test_feature_flag_system_1_control: "feature_flag_system_1/control", 2,
     substitutions =  substitutions! {
       "stale_flag_name"=> "STALE_FLAG",

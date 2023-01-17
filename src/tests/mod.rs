@@ -11,11 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::piranha_output::PiranhaOutputSummary;
-use crate::utilities::{eq_without_whitespace, find_file, read_file};
+use crate::utilities::{eq_without_whitespace, read_file};
 use log::error;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 mod test_piranha_java;
 mod test_piranha_kt;
