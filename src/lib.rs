@@ -12,8 +12,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use models::{
-  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary,
-  source_code_unit::SourceCodeUnit,
+  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
+  piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,
 };
 
 pub mod models;
@@ -61,6 +61,9 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
   m.add_function(wrap_pyfunction!(execute_piranha, m)?)?;
   m.add_class::<PiranhaArguments>()?;
+  m.add_class::<PiranhaOutputSummary>()?;
+  m.add_class::<Edit>()?;
+  m.add_class::<Match>()?;
   Ok(())
 }
 

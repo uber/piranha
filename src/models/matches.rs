@@ -14,14 +14,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use getset::Getters;
-use pyo3::prelude::pyclass;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Serialize;
+
+use crate::utilities::gen_py_str_methods;
 
 #[derive(Serialize, Debug, Clone, Getters)]
 #[pyclass]
 pub(crate) struct Match {
   // Code snippet that matched
   #[get = "pub"]
+  #[pyo3(get)]
   matched_string: String,
   // Range of the entire AST node captured by the match
   #[pyo3(get)]
@@ -31,6 +34,7 @@ pub(crate) struct Match {
   #[get = "pub"]
   matches: HashMap<String, String>,
 }
+gen_py_str_methods!(Match);
 
 impl Match {
   pub(crate) fn new(
@@ -85,6 +89,7 @@ struct Range {
   #[pyo3(get)]
   end_point: Point,
 }
+gen_py_str_methods!(Range);
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
@@ -96,3 +101,4 @@ struct Point {
   #[pyo3(get)]
   column: usize,
 }
+gen_py_str_methods!(Point);

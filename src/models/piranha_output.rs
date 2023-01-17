@@ -16,20 +16,30 @@ use std::path::PathBuf;
 use itertools::Itertools;
 use serde_derive::Serialize;
 
+use crate::utilities::gen_py_str_methods;
+
 use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
-use pyo3::prelude::pyclass;
+use pyo3::{prelude::pyclass, pymethods};
+
+/// A class to represent Piranha's output
 #[derive(Serialize, Debug, Clone, Default)]
 #[pyclass]
 pub struct PiranhaOutputSummary {
+  /// Path to the file
   #[pyo3(get)]
   path: String,
+  /// Content of the file after all the rewrites
   #[pyo3(get)]
   content: String,
+  /// All the occurrences of "match-only" rules
   #[pyo3(get)]
   matches: Vec<(String, Match)>,
+  /// All the applied edits
   #[pyo3(get)]
   rewrites: Vec<Edit>,
 }
+
+gen_py_str_methods!(PiranhaOutputSummary);
 
 impl PiranhaOutputSummary {
   pub(crate) fn new(source_code_unit: &SourceCodeUnit) -> PiranhaOutputSummary {
