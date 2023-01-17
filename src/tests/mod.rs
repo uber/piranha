@@ -83,7 +83,7 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
 /// This macro creates a new match test case.
 /// Arguments:
 /// * test_name: Name of the test (identifier)
-/// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input`, and `configurations`
+/// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input` and `configurations`
 /// * expected_number_of_matches: expression returning the expected number of matches
 ///
 /// Usage:
