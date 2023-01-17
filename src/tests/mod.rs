@@ -79,18 +79,32 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
 ///
 /// Usage:
 /// ```
-/// create_rewrite_test! {
+/// create_match_test! {
 ///  test_a1: a1(), "path/to/expected_a1", 2,
 ///  test_a2: a2(), "path/to/expected_a2", 3,
 /// }
 /// ```
 macro_rules! create_match_test {
-  ($($test_name:ident:  $piranha_arg: expr, $expected_number_of_matches: expr, )*) => {
+  ($language: expr,
+    $($test_name:ident: $path_to_test: expr,
+                        $expected_number_of_matches: expr
+                        $(,$kw: ident = $value: expr)* ; )*) => {
     $(
     #[test]
     fn $test_name() {
       initialize();
-      let output_summaries = execute_piranha(&$piranha_arg);
+      let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
+      let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+      let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+      let piranha_arguments =  piranha_argument!{
+        path_to_codebase = path_to_codebase,
+        path_to_configurations = path_to_configurations,
+        language= $language.to_string(),
+        $(
+          $kw = $value,
+        )*
+      };
+      let output_summaries = execute_piranha(&piranha_arguments);
       assert_eq!(
         output_summaries.iter().flat_map(|os| os.matches().iter()).count(),
         $expected_number_of_matches
@@ -115,35 +129,41 @@ macro_rules! create_match_test {
 /// }
 /// ```
 macro_rules! create_rewrite_test {
-  ($($test_name:ident:  $piranha_arg: expr, $expected_path: expr, $files_changed: expr, )*) => {
+  ($language: expr,
+    $($test_name:ident: $path_to_test: expr,
+                        $files_changed: expr
+                        $(,$kw: ident = $value: expr)* ; )*) => {
     $(
     #[test]
     fn $test_name() {
       initialize();
+      let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
+      let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+      let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+      let path_to_expected = _path.join("expected");
 
       // Copy the test scenario to temporary directory
       let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
       let temp_dir_path = &temp_dir.path();
       copy_folder(
-        Path::new(&$piranha_arg.path_to_codebase()),
+        Path::new(&path_to_codebase),
         temp_dir_path,
       );
 
-      // Default piranha argument with `path_to_codebase` pointing
-      // to `temp_dir`
-      let arg_for_codebase_path = PiranhaArgumentsBuilder::default()
-          .path_to_codebase(temp_dir_path.to_str().unwrap().to_string())
-          .build();
-
-      //Overrides the $piranha_arg parameter's `path_to_code_base` field
-      let piranha_arguments = arg_for_codebase_path.merge($piranha_arg);
+      let piranha_arguments =  piranha_argument!{
+        path_to_codebase = temp_dir_path.to_str().unwrap().to_string(),
+        path_to_configurations = path_to_configurations,
+        language= $language.to_string(),
+        $(
+         $kw = $value,
+        )*
+      };
 
       let output_summaries = execute_piranha(&piranha_arguments);
       // Checks if there are any rewrites performed for the file
       assert!(output_summaries.iter().any(|x|!x.rewrites().is_empty()));
 
       assert_eq!(output_summaries.len(), $files_changed);
-      let path_to_expected = Path::new(env!("CARGO_MANIFEST_DIR")).join($expected_path);
       check_result(output_summaries, path_to_expected);
       // Delete temp_dir
       _ = temp_dir.close().unwrap();
@@ -172,6 +192,7 @@ macro_rules! create_rewrite_test {
 /// ```
 ///
 macro_rules! substitutions(
+  () =>  { vec![] };
   { $($key:literal => $value:literal),+ } => {
       {
           let mut substitutions: Vec<Vec<String>> = vec![];

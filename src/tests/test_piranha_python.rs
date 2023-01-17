@@ -17,36 +17,19 @@ use super::{
 use crate::execute_piranha;
 use crate::models::{
   default_configs::PYTHON,
-  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+  piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
 };
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-fn delete_modify_str_literal_from_list() -> PiranhaArguments {
-  PiranhaArguments::new_substitutions(
-    PYTHON,
-    "test-resources/python/delete_cleanup_str_in_list/input",
-    "test-resources/python/delete_cleanup_str_in_list/configurations",
-    substitutions! {
-      "str_literal" => "dependency2",
-      "str_to_replace"=>  "dependency1",
-      "str_replacement" => "dependency1_1"
-    },
-  )
-}
-
 create_rewrite_test!(
-  test_delete_modify_str_literal_from_list: delete_modify_str_literal_from_list(),
-  "test-resources/python/delete_cleanup_str_in_list/expected",
-  1,
+  PYTHON,
+  test_delete_modify_str_literal_from_list:  "delete_cleanup_str_in_list", 1,
+  substitutions = substitutions! {
+    "str_literal" => "dependency2",
+    "str_to_replace"=>  "dependency1",
+    "str_replacement" => "dependency1_1"
+  };
 );
 
-fn match_only() -> PiranhaArguments {
-  PiranhaArguments::new(
-    PYTHON,
-    "test-resources/python/structural_find/input/",
-    "test-resources/python/structural_find/configurations",
-  )
-}
-
-create_match_test!(test_match_only: match_only(), 3,);
+create_match_test!(PYTHON, test_match_only: "structural_find", 3;);

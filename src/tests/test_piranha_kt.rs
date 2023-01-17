@@ -13,95 +13,43 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::{
   default_configs::KOTLIN,
-  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+  piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
 };
 
 use super::{check_result, copy_folder, create_rewrite_test, initialize, substitutions};
 use crate::execute_piranha;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-fn feature_flag_system_1_treated() -> PiranhaArguments {
-  PiranhaArguments::new(
-    KOTLIN,
-    "test-resources/kt/feature_flag_system_1/treated/input",
-    "test-resources/kt/feature_flag_system_1/treated/configurations",
-  )
-  .merge(
-    PiranhaArgumentsBuilder::default()
-      .substitutions(substitutions! {
-        "stale_flag_name" => "STALE_FLAG",
-        "treated"=>  "true",
-        "treated_complement" => "false"
-      })
-      .build(),
-  )
-}
-
-fn feature_flag_system_1_control() -> PiranhaArguments {
-  PiranhaArguments::new_substitutions(
-    KOTLIN,
-    "test-resources/kt/feature_flag_system_1/control/input",
-    "test-resources/kt/feature_flag_system_1/control/configurations",
-    substitutions! {
-      "stale_flag_name" => "STALE_FLAG",
-      "treated"=>  "false",
-      "treated_complement" => "true"
-    },
-  )
-}
-
-fn feature_flag_system_2_treated() -> PiranhaArguments {
-  PiranhaArguments::new_substitutions(
-    KOTLIN,
-    "test-resources/kt/feature_flag_system_2/treated/input",
-    "test-resources/kt/feature_flag_system_2/treated/configurations",
-    substitutions! {
+create_rewrite_test! {
+  KOTLIN,
+  test_feature_flag_system_1_treated: "feature_flag_system_1/treated", 2, substitutions= substitutions! {
+    "stale_flag_name" => "STALE_FLAG",
+    "treated"=>  "true",
+    "treated_complement" => "false"
+  };
+  test_feature_flag_system_2_treated: "feature_flag_system_2/treated",4,
+    substitutions= substitutions! {
       "stale_flag_name" => "STALE_FLAG",
       "treated"=>  "true",
       "treated_complement" => "false",
       "namespace" => "some_long_name"
     },
-  )
-  .merge(
-    PiranhaArgumentsBuilder::default()
-      .cleanup_comments(true)
-      .build(),
-  )
-}
+    cleanup_comments= true;
 
-fn feature_flag_system_2_control() -> PiranhaArguments {
-  PiranhaArguments::new_substitutions(
-    KOTLIN,
-    "test-resources/kt/feature_flag_system_2/control/input",
-    "test-resources/kt/feature_flag_system_2/control/configurations",
-    substitutions! {
+  test_feature_flag_system_1_control:  "feature_flag_system_1/control", 2,
+    substitutions= substitutions! {
       "stale_flag_name" => "STALE_FLAG",
       "treated"=>  "false",
-      "treated_complement" => "true",
-      "namespace" => "some_long_name"
-    },
-  )
-  .merge(
-    PiranhaArgumentsBuilder::default()
-      .cleanup_comments(true)
-      .build(),
-  )
-}
-
-fn file_scoped_chain_rules() -> PiranhaArguments {
-  PiranhaArguments::new(
-    KOTLIN,
-    "test-resources/kt/file_scoped_chain_rules/input",
-    "test-resources/kt/file_scoped_chain_rules/configurations",
-  )
-}
-
-create_rewrite_test! {
-  test_feature_flag_system_1_treated: feature_flag_system_1_treated(), "test-resources/kt/feature_flag_system_1/treated/expected", 2,
-  test_feature_flag_system_2_treated: feature_flag_system_2_treated(), "test-resources/kt/feature_flag_system_2/treated/expected", 4,
-  test_feature_flag_system_1_control: feature_flag_system_1_control(), "test-resources/kt/feature_flag_system_1/control/expected", 2,
-  test_feature_flag_system_2_control:  feature_flag_system_2_control(), "test-resources/kt/feature_flag_system_2/control/expected", 4,
-  test_file_scoped_chain_rules: file_scoped_chain_rules(), "test-resources/kt/file_scoped_chain_rules/expected", 1,
+      "treated_complement" => "true"
+    };
+  test_feature_flag_system_2_control: "feature_flag_system_2/control", 4,
+      substitutions= substitutions! {
+        "stale_flag_name" => "STALE_FLAG",
+        "treated"=>  "false",
+        "treated_complement" => "true",
+        "namespace" => "some_long_name"
+      }, cleanup_comments= true;
+  test_file_scoped_chain_rules: "file_scoped_chain_rules",  1;
 }

@@ -10,37 +10,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-
 use super::{create_match_test, initialize};
 use crate::execute_piranha;
-use crate::models::{default_configs::TYPESCRIPT, piranha_arguments::PiranhaArguments};
-
-fn find_fors() -> PiranhaArguments {
-  PiranhaArguments::new(
-    TYPESCRIPT,
-    "test-resources/ts/structural_find/find_fors/input/",
-    "test-resources/ts/structural_find/find_fors/configurations",
-  )
-}
-
-fn find_fors_within_functions() -> PiranhaArguments {
-  PiranhaArguments::new(
-    TYPESCRIPT,
-    "test-resources/ts/structural_find/find_fors_within_functions/input/",
-    "test-resources/ts/structural_find/find_fors_within_functions/configurations",
-  )
-}
-
-fn find_fors_within_functions_not_within_whiles() -> PiranhaArguments {
-  PiranhaArguments::new(
-    TYPESCRIPT,
-    "test-resources/ts/structural_find/find_fors_within_functions_not_within_whiles/input/",
-    "test-resources/ts/structural_find/find_fors_within_functions_not_within_whiles/configurations",
-  )
-}
+use crate::models::{
+  default_configs::TYPESCRIPT, piranha_arguments::piranha_argument,
+  piranha_arguments::PiranhaArgumentsBuilder,
+};
+use std::path::PathBuf;
 
 create_match_test! {
-  test_find_fors_within_functions_not_within_whiles:  find_fors_within_functions_not_within_whiles(), 1,
-  test_find_fors_within_functions: find_fors_within_functions(), 2,
-  test_find_fors: find_fors(), 3,
+  TYPESCRIPT,
+  test_find_fors_within_functions_not_within_whiles:  "structural_find/find_fors_within_functions_not_within_whiles", 1;
+  test_find_fors_within_functions:"structural_find/find_fors_within_functions", 2;
+  test_find_fors: "structural_find/find_fors", 3;
 }
