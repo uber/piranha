@@ -83,14 +83,14 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
 /// This macro creates a new match test case.
 /// Arguments:
 /// * test_name: Name of the test (identifier)
-/// * piranha_arg: expression of type PiranhaArgument
+/// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input`, and `configurations`
 /// * expected_number_of_matches: expression returning the expected number of matches
 ///
 /// Usage:
 /// ```
 /// create_match_test! {
-///  test_a1: a1(), "path/to/expected_a1", 2,
-///  test_a2: a2(), "path/to/expected_a2", 3,
+///  test_a1:  "relative/path_1", 2;
+///  test_a2:  "relative/path_2", 3;
 /// }
 /// ```
 macro_rules! create_match_test {
@@ -125,16 +125,17 @@ macro_rules! create_match_test {
 
 /// This macro creates a new rewrite test case.
 /// Arguments:
+/// * language: target language
 /// * test_name: Name of the test (identifier)
-/// * piranha_arg: expression of type PiranhaArgument
-/// * expected_path: expression returning the `expected_path`
+/// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input`, `expected` and `configurations`
 /// * files_changed: expression returning the expected number of files changed after the rewriting
 ///
 /// Usage:
 /// ```
 /// create_rewrite_test! {
-///  test_a1: a1(), "path/to/expected_a1", 2,
-///  test_a2: a2(), "path/to/expected_a2", 3,
+/// "java".to_string(),
+///  test_a1:  "relative/path_1", 2;
+///  test_a2:  "relative/path_2", 3;
 /// }
 /// ```
 macro_rules! create_rewrite_test {
