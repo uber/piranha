@@ -208,7 +208,7 @@ pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputE
   // Log the edit
   let replace_range: Range = edit.p_match().range();
   let replacement = edit.replacement_string();
-  debug!("{:?}", edit);
+  debug!("{}", edit);
   // Create the new source code content by appropriately
   // replacing the range with the replacement string.
   let new_source_code = [
