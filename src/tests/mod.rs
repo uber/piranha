@@ -11,10 +11,11 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::utilities::{eq_without_whitespace, read_file};
+use crate::models::piranha_output::PiranhaOutputSummary;
+use crate::utilities::{eq_without_whitespace, find_file, read_file};
 use log::error;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 mod test_piranha_java;
 mod test_piranha_kt;
@@ -194,6 +195,7 @@ macro_rules! create_rewrite_tests {
 
       assert_eq!(output_summaries.len(), $files_changed);
       check_result(temp_dir_path, &path_to_expected);
+
       // Delete temp_dir
       _ = temp_dir.close().unwrap();
     }

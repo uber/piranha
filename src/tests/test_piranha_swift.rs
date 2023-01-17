@@ -37,5 +37,4 @@ create_rewrite_tests! {
     cleanup_comments = true,
     global_tag_prefix ="universal_tag.".to_string(),
     cleanup_comments_buffer = 3, delete_file_if_empty= false;
-
 }
