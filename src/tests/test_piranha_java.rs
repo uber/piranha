@@ -18,7 +18,7 @@ use crate::{
   execute_piranha,
   models::{
     default_configs::JAVA,
-    piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
+    piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
   },
 };
 use std::path::{Path, PathBuf};

@@ -190,7 +190,7 @@ impl PiranhaArguments {
       };
     }
 
-    piranha_argument! {
+    piranha_arguments! {
       path_to_codebase= path_to_codebase,
       path_to_configurations = path_to_configurations,
       language= language,
@@ -305,7 +305,7 @@ impl PiranhaArgumentsBuilder {
 }
 
 #[macro_export]
-macro_rules! piranha_argument {
+macro_rules! piranha_arguments {
     ($($kw: ident = $value: expr,)*) => {
       PiranhaArgumentsBuilder::default()
       $(
@@ -315,4 +315,4 @@ macro_rules! piranha_argument {
     };
 }
 
-pub use piranha_argument;
+pub use piranha_arguments;

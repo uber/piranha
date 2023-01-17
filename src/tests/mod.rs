@@ -105,7 +105,7 @@ macro_rules! create_match_tests {
       let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
       let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
       let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-      let piranha_arguments =  piranha_argument!{
+      let piranha_arguments =  piranha_arguments!{
         path_to_codebase = path_to_codebase,
         path_to_configurations = path_to_configurations,
         language= $language.to_string(),
@@ -160,7 +160,7 @@ macro_rules! create_rewrite_tests {
         temp_dir_path,
       );
 
-      let piranha_arguments =  piranha_argument!{
+      let piranha_arguments =  piranha_arguments!{
         path_to_codebase = temp_dir_path.to_str().unwrap().to_string(),
         path_to_configurations = path_to_configurations,
         language= $language.to_string(),

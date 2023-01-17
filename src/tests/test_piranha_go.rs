@@ -17,7 +17,7 @@ use super::{
 use crate::execute_piranha;
 use crate::models::{
   default_configs::GO,
-  piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
+  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
 };
 use std::path::{Path, PathBuf};
 use tempdir::TempDir;

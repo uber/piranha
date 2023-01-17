@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::models::{
   default_configs::KOTLIN,
-  piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
+  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
 };
 
 use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};

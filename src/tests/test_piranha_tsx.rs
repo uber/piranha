@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use super::{create_match_tests, initialize};
 use crate::execute_piranha;
 use crate::models::{
-  default_configs::TSX, piranha_arguments::piranha_argument,
+  default_configs::TSX, piranha_arguments::piranha_arguments,
   piranha_arguments::PiranhaArgumentsBuilder,
 };
 

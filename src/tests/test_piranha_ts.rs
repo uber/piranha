@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use super::{create_match_tests, initialize};
 use crate::execute_piranha;
 use crate::models::{
-  default_configs::TYPESCRIPT, piranha_arguments::piranha_argument,
+  default_configs::TYPESCRIPT, piranha_arguments::piranha_arguments,
   piranha_arguments::PiranhaArgumentsBuilder,
 };
 use std::path::PathBuf;
