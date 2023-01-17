@@ -22,22 +22,6 @@ use crate::models::{
 use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-// fn match_only_go_stmt_for_loop() -> PiranhaArguments {
-//   PiranhaArguments::new(
-//     GO,
-//     "test-resources/go/structural_find/go_stmt_for_loop/input/",
-//     "test-resources/go/structural_find/go_stmt_for_loop/configurations",
-//   )
-// }
-
-// fn match_only_for_loop() -> PiranhaArguments {
-//   PiranhaArguments::new(
-//     GO,
-//     "test-resources/go/structural_find/for_loop/input/",
-//     "test-resources/go/structural_find/for_loop/configurations",
-//   )
-// }
-
 create_match_test! {
   GO,
   test_match_only_for_loop: "structural_find/go_stmt_for_loop", 1;

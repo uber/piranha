@@ -38,6 +38,15 @@ fn initialize() {
   });
 }
 
+/// Copies the files under `src` to `dst`.
+/// The copy is NOT recursive.
+/// The files under `src` are copied under `dst`.
+///
+/// # Arguments
+/// * src: Path to the directory to be copied
+/// * dest: Path to destination
+///
+/// This method causes side effect.
 fn copy_folder(src: &Path, dst: &Path) {
   for entry in fs::read_dir(src).unwrap() {
     let entry = entry.unwrap();
@@ -187,7 +196,7 @@ macro_rules! create_rewrite_test {
 /// ```
 /// vec!\[
 ///      vec!\["project".to_string(), "Piranha".to_string()\]
-///      vec!\["language".to_string(), "language".to_string()\]
+///      vec!\["language".to_string(), "Rust".to_string()\]
 /// \]
 /// ```
 ///
