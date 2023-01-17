@@ -305,6 +305,29 @@ impl PiranhaArgumentsBuilder {
 }
 
 #[macro_export]
+/// This macro can be used to construct a PiranhaArgument (via the builder).'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// piranha_arguments! {
+///   path_to_codebase = "path/to/code/base".to_string(),
+///   language = "Java".to_string(),
+///   path_to_configurations = "path/to/configurations".to_string(),
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// PiranhaArgumentsBuilder::default()
+///      .path_to_codebase("path/to/code/base".to_string())
+///      .language("Java".to_string())
+///      .path_to_configurations("path/to/configurations".to_string())
+///      .build()
+/// ```
+///
 macro_rules! piranha_arguments {
     ($($kw: ident = $value: expr,)*) => {
       PiranhaArgumentsBuilder::default()

@@ -43,18 +43,21 @@ fn initialize() {
 /// The files under `src` are copied under `dst`.
 ///
 /// # Arguments
+///
 /// * src: Path to the directory to be copied
 /// * dest: Path to destination
 ///
-/// This method causes side effect.
+/// This method causes side effects - writes new files to a directory
 fn copy_folder(src: &Path, dst: &Path) {
   for entry in fs::read_dir(src).unwrap() {
     let entry = entry.unwrap();
     let path = entry.path();
     if path.is_file() {
-      let file_path = dst.join(path.file_name().unwrap());
-      let source_code = read_file(&path).unwrap();
-      _ = fs::write(file_path.as_path(), source_code);
+      _ = fs::copy(
+        path.to_str().unwrap(),
+        dst.join(path.file_name().unwrap()).to_str().unwrap(),
+      )
+      .unwrap();
     }
   }
 }
@@ -81,7 +84,8 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
 }
 
 /// This macro creates a new match test case.
-/// Arguments:
+///
+/// # Arguments:
 /// * test_name: Name of the test (identifier)
 /// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input` and `configurations`
 /// * expected_number_of_matches: expression returning the expected number of matches
@@ -89,6 +93,7 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
 /// Usage:
 /// ```
 /// create_match_tests! {
+///  "java",
 ///  test_a1:  "relative/path_1", 2;
 ///  test_a2:  "relative/path_2", 3;
 /// }
@@ -124,7 +129,8 @@ macro_rules! create_match_tests {
 }
 
 /// This macro creates a new rewrite test case.
-/// Arguments:
+///
+/// # Arguments:
 /// * language: target language
 /// * test_name: Name of the test (identifier)
 /// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input`, `expected` and `configurations`
