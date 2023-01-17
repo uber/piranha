@@ -17,7 +17,6 @@ use crate::{
   models::{edit::Edit, matches::Match},
   utilities::MapOfVec,
 };
-use colored::Colorize;
 use itertools::Itertools;
 use log::debug;
 use std::collections::HashMap;
@@ -209,15 +208,7 @@ pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputE
   // Log the edit
   let replace_range: Range = edit.p_match().range();
   let replacement = edit.replacement_string();
-  let replaced_code_snippet = edit.p_match().matched_string();
-  let mut edit_kind = "Delete code".red(); //;
-  let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
-  if !replacement.is_empty() {
-    edit_kind = "Update code".green();
-    replacement_snippet_fmt.push_str(&format!("\n to \n{}", replacement.italic()))
-  }
-  #[rustfmt::skip]
-  debug!("\n {} at ({:?}) -\n {}", edit_kind , &replace_range, replacement_snippet_fmt);
+  debug!("{}", edit);
   // Create the new source code content by appropriately
   // replacing the range with the replacement string.
   let new_source_code = [

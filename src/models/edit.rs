@@ -11,14 +11,16 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
+use colored::Colorize;
 use getset::Getters;
 use serde_derive::Serialize;
 use tree_sitter::Range;
 
 use super::matches::Match;
-use pyo3::prelude::pyclass;
+use crate::utilities::gen_py_str_methods;
+use pyo3::{prelude::pyclass, pymethods};
 
 #[derive(Serialize, Debug, Clone, Getters)]
 #[pyclass]
@@ -36,6 +38,8 @@ pub(crate) struct Edit {
   #[get = "pub"]
   matched_rule: String,
 }
+
+gen_py_str_methods!(Edit);
 
 impl Edit {
   pub(crate) fn new(p_match: Match, replacement_string: String, matched_rule: String) -> Self {
@@ -56,5 +60,24 @@ impl Edit {
       replacement_string: String::new(),
       matched_rule: "Delete Range".to_string(),
     }
+  }
+}
+
+impl fmt::Display for Edit {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let replace_range: Range = self.p_match().range();
+    let replacement = self.replacement_string();
+    let replaced_code_snippet = self.p_match().matched_string();
+    let mut edit_kind = "Delete code".red();
+    let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
+    if !replacement.is_empty() {
+      edit_kind = "Update code".green();
+      replacement_snippet_fmt.push_str(&format!("\n to \n{}", replacement.italic()))
+    }
+    write!(
+      f,
+      "\n {} at ({:?}) -\n {}",
+      edit_kind, &replace_range, replacement_snippet_fmt
+    )
   }
 }

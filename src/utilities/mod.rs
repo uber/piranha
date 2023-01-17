@@ -19,7 +19,6 @@ use std::fs::{self, DirEntry};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
-
 // Reads a file.
 pub(crate) fn read_file(file_path: &PathBuf) -> Result<String, String> {
   File::open(file_path)
@@ -98,6 +97,22 @@ pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
     .unwrap()
     .path()
 }
+
+macro_rules! gen_py_str_methods {
+  ($struct_name:ident) => {
+    #[pymethods]
+    impl $struct_name {
+      fn __repr__(&self) -> String {
+        format!("{:?}", self)
+      }
+      fn __str__(&self) -> String {
+        self.__repr__()
+      }
+    }
+  };
+}
+
+pub(crate) use gen_py_str_methods;
 
 #[cfg(test)]
 #[path = "unit_tests/utilities_test.rs"]
