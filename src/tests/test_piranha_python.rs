@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use super::{
-  check_result, copy_folder, create_match_test, create_rewrite_test, initialize, substitutions,
+  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
 };
 use crate::execute_piranha;
 use crate::models::{
@@ -22,7 +22,7 @@ use crate::models::{
 use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-create_rewrite_test!(
+create_rewrite_tests!(
   PYTHON,
   test_delete_modify_str_literal_from_list:  "delete_cleanup_str_in_list", 1,
   substitutions = substitutions! {
@@ -32,4 +32,4 @@ create_rewrite_test!(
   };
 );
 
-create_match_test!(PYTHON, test_match_only: "structural_find", 3;);
+create_match_tests!(PYTHON, test_match_only: "structural_find", 3;);

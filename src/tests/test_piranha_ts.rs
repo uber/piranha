@@ -10,7 +10,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use super::{create_match_test, initialize};
+use super::{create_match_tests, initialize};
 use crate::execute_piranha;
 use crate::models::{
   default_configs::TYPESCRIPT, piranha_arguments::piranha_argument,
@@ -18,7 +18,7 @@ use crate::models::{
 };
 use std::path::PathBuf;
 
-create_match_test! {
+create_match_tests! {
   TYPESCRIPT,
   test_find_fors_within_functions_not_within_whiles:  "structural_find/find_fors_within_functions_not_within_whiles", 1;
   test_find_fors_within_functions:"structural_find/find_fors_within_functions", 2;

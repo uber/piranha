@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::{check_result, copy_folder, create_rewrite_test, initialize, substitutions};
+use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};
 use crate::execute_piranha;
 use crate::models::{
   default_configs::SWIFT,
@@ -20,7 +20,7 @@ use crate::models::{
 use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-create_rewrite_test! {
+create_rewrite_tests! {
   SWIFT,
   // Tests cascading file delete based on enum and type alias.
   // This scenario is "derived" from plugin cleanup.

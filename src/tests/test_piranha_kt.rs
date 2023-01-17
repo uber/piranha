@@ -16,13 +16,13 @@ use crate::models::{
   piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
 };
 
-use super::{check_result, copy_folder, create_rewrite_test, initialize, substitutions};
+use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};
 use crate::execute_piranha;
 
 use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-create_rewrite_test! {
+create_rewrite_tests! {
   KOTLIN,
   test_feature_flag_system_1_treated: "feature_flag_system_1/treated", 2, substitutions= substitutions! {
     "stale_flag_name" => "STALE_FLAG",

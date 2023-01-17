@@ -13,14 +13,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::path::PathBuf;
 
-use super::{create_match_test, initialize};
+use super::{create_match_tests, initialize};
 use crate::execute_piranha;
 use crate::models::{
   default_configs::TSX, piranha_arguments::piranha_argument,
   piranha_arguments::PiranhaArgumentsBuilder,
 };
 
-create_match_test! {
+create_match_tests! {
   TSX,
   test_ts_match_only_find_fors: "structural_find/find_jsx_elements", 4;
   test_match_find_props_identifiers_within_b_jsx_elements: "structural_find/find_props_identifiers_within_b_jsx_elements", 2;

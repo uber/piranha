@@ -88,12 +88,12 @@ fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: P
 ///
 /// Usage:
 /// ```
-/// create_match_test! {
+/// create_match_tests! {
 ///  test_a1:  "relative/path_1", 2;
 ///  test_a2:  "relative/path_2", 3;
 /// }
 /// ```
-macro_rules! create_match_test {
+macro_rules! create_match_tests {
   ($language: expr,
     $($test_name:ident: $path_to_test: expr,
                         $expected_number_of_matches: expr
@@ -132,13 +132,13 @@ macro_rules! create_match_test {
 ///
 /// Usage:
 /// ```
-/// create_rewrite_test! {
+/// create_rewrite_tests! {
 /// "java".to_string(),
 ///  test_a1:  "relative/path_1", 2;
 ///  test_a2:  "relative/path_2", 3;
 /// }
 /// ```
-macro_rules! create_rewrite_test {
+macro_rules! create_rewrite_tests {
   ($language: expr,
     $($test_name:ident: $path_to_test: expr,
                         $files_changed: expr
@@ -211,6 +211,6 @@ macro_rules! substitutions(
    };
 );
 
-pub(crate) use create_match_test;
-pub(crate) use create_rewrite_test;
+pub(crate) use create_match_tests;
+pub(crate) use create_rewrite_tests;
 pub(crate) use substitutions;

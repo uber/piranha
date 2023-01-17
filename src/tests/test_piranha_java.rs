@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use super::{
-  check_result, copy_folder, create_match_test, create_rewrite_test, initialize, substitutions,
+  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
 };
 use crate::{
   execute_piranha,
@@ -24,7 +24,7 @@ use crate::{
 use std::path::{Path, PathBuf};
 use tempdir::TempDir;
 
-create_rewrite_test! {
+create_rewrite_tests! {
   JAVA,
   test_feature_flag_system_1_treated: "feature_flag_system_1/treated/", 2,
     substitutions = substitutions! {
@@ -61,7 +61,7 @@ create_rewrite_test! {
   test_consecutive_scope_level_rules: "consecutive_scope_level_rules",1;
 }
 
-create_match_test! {
+create_match_tests! {
   JAVA,
   test_java_match_only: "structural_find", 20;
 }
