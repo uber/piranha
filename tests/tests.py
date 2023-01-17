@@ -11,8 +11,7 @@
 
 
 
-from cProfile import run
-from polyglot_piranha import execute_piranha, PiranhaArguments, PiranhaOutputSummary, run_piranha_cli
+from polyglot_piranha import execute_piranha, PiranhaArguments, PiranhaOutputSummary
 from os.path import join, basename
 from os import listdir
 import re
@@ -60,7 +59,6 @@ def test_piranha_match_only():
         {},
         dry_run=True,
     )
-    x = run_piranha_cli("", "", True)
     output_summaries = execute_piranha(args)
     assert len(output_summaries[0].matches) == 20
     for summary in output_summaries:
