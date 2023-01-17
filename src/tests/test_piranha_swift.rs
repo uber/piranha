@@ -11,59 +11,30 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::{default_configs::SWIFT, piranha_arguments::PiranhaArgumentsBuilder};
+use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};
+use crate::execute_piranha;
+use crate::models::{
+  default_configs::SWIFT,
+  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
+};
+use std::path::{Path, PathBuf};
+use tempdir::TempDir;
 
-use super::{get_piranha_arguments_for_test_with_substitutions, initialize, run_rewrite_test};
-
-// Tests cascading file delete based on enum and type alias.
-// This scenario is "derived" from plugin cleanup.
-// This cleanup requires the concept of global tags
-#[test]
-fn test_cascading_delete_file() {
-  initialize();
-
-  let relative_path_to_tests = &format!("{}/{}", SWIFT, "cascade_file_delete");
-  let substitutions = vec![vec![
-    "stale_flag_name".to_string(),
-    "Premium-Icon".to_string(),
-  ]];
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      SWIFT,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 3, relative_path_to_tests);
-
-  // initialize();
-  // run_rewrite_test(, 3);
-}
-
-// Tests cascading file delete based on enum and type alias.
-// This scenario is "derived" from plugin cleanup.
-// Checks custom global_tags
-#[test]
-fn test_cascading_delete_file_custom_global_tag() {
-  initialize();
-
-  let relative_path_to_tests = &format!("{}/{}", SWIFT, "cascade_file_delete_custom_global_tag");
-  let substitutions = vec![vec![
-    "stale_flag_name".to_string(),
-    "Premium-Icon".to_string(),
-  ]];
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .global_tag_prefix("universal_tag.".to_string())
-    .cleanup_comments_buffer(3)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      SWIFT,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 3, relative_path_to_tests);
+create_rewrite_tests! {
+  SWIFT,
+  // Tests cascading file delete based on enum and type alias.
+  // This scenario is "derived" from plugin cleanup.
+  // This cleanup requires the concept of global tags
+  test_cascading_delete_file:  "cascade_file_delete", 3,
+    substitutions = substitutions! {
+      "stale_flag_name" => "Premium-Icon"
+    },
+    cleanup_comments = true;
+  test_cascading_delete_file_custom_global_tag: "cascade_file_delete_custom_global_tag", 3,
+    substitutions = substitutions! {
+    "stale_flag_name" => "Premium-Icon"
+    },
+    cleanup_comments = true,
+    global_tag_prefix ="universal_tag.".to_string(),
+    cleanup_comments_buffer = 3;
 }

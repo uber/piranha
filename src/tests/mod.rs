@@ -11,11 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::execute_piranha;
-use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
 use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::utilities::{eq_without_whitespace, find_file, read_file};
 use log::error;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 mod test_piranha_java;
@@ -33,81 +32,42 @@ use std::sync::Once;
 
 static INIT: Once = Once::new();
 
-fn get_piranha_arguments_for_test(
-  relative_path_to_tests: &str, language: &str,
-) -> PiranhaArguments {
-  PiranhaArgumentsBuilder::default()
-    .path_to_codebase(format!("test-resources/{relative_path_to_tests}/input/"))
-    .path_to_configurations(format!(
-      "test-resources/{relative_path_to_tests}/configurations/"
-    ))
-    .language(language.to_string())
-    .dry_run(true)
-    .build()
-}
-
-fn get_piranha_arguments_for_test_with_substitutions(
-  relative_path_to_tests: &str, language: &str, substitutions: Vec<Vec<String>>,
-) -> PiranhaArguments {
-  PiranhaArgumentsBuilder::default()
-    .substitutions(substitutions)
-    .build()
-    .merge(get_piranha_arguments_for_test(
-      relative_path_to_tests,
-      language,
-    ))
-}
-
 fn initialize() {
   INIT.call_once(|| {
     env_logger::init();
   });
 }
 
-// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
-// and checks if the number of matches == `number_of_matches`.
-fn run_match_test(piranha_arguments: PiranhaArguments, expected_number_of_matches: usize) {
-  print!("{:?}", piranha_arguments);
-  let output_summaries = execute_piranha(&piranha_arguments);
-  assert_eq!(
-    output_summaries
-      .iter()
-      .flat_map(|os| os.matches().iter())
-      .count(),
-    expected_number_of_matches
-  );
-}
-
-// Runs a piranha over the target `<relative_path_to_tests>/input` (using configurations `<relative_path_to_tests>/configuration`)
-// and checks if the output of piranha is same as `<relative_path_to_tests>/expected`.
-// It also asserts the number of changed files in the expected output.
-fn run_rewrite_test(
-  piranha_arguments: PiranhaArguments, n_files_changed: usize, relative_path_to_tests: &str,
-) {
-  print!("Here {:?}", piranha_arguments);
-
-  let output_summaries = execute_piranha(&piranha_arguments);
-  // Checks if there are any rewrites performed for the file
-  assert!(
-    output_summaries
-      .iter()
-      .flat_map(|os| os.rewrites().iter())
-      .count()
-      > 0
-  );
-
-  assert_eq!(output_summaries.len(), n_files_changed);
-  let path_to_expected = Path::new(env!("CARGO_MANIFEST_DIR"))
-    .join(format!("test-resources/{relative_path_to_tests}/expected"));
-  check_result(output_summaries, path_to_expected);
+/// Copies the files under `src` to `dst`.
+/// The copy is NOT recursive.
+/// The files under `src` are copied under `dst`.
+///
+/// # Arguments
+///
+/// * src: Path to the directory to be copied
+/// * dest: Path to destination
+///
+/// This method causes side effects - writes new files to a directory
+fn copy_folder(src: &Path, dst: &Path) {
+  for entry in fs::read_dir(src).unwrap() {
+    let entry = entry.unwrap();
+    let path = entry.path();
+    if path.is_file() {
+      _ = fs::copy(
+        path.to_str().unwrap(),
+        dst.join(path.file_name().unwrap()).to_str().unwrap(),
+      )
+      .unwrap();
+    }
+  }
 }
 
 /// Checks if the file updates returned by piranha are as expected.
-fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: PathBuf) {
+fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: PathBuf) {
   let mut all_files_match = true;
 
-  for source_code_unit in &updated_files {
-    let updated_file_name = &source_code_unit
+  for summary in &output_summaries {
+    let updated_file_name = &summary
       .path()
       .file_name()
       .and_then(|f| f.to_str().map(|x| x.to_string()))
@@ -115,10 +75,148 @@ fn check_result(updated_files: Vec<PiranhaOutputSummary>, path_to_expected: Path
     let expected_file_path = find_file(&path_to_expected, updated_file_name);
     let expected_content = read_file(&expected_file_path).unwrap();
 
-    if !eq_without_whitespace(source_code_unit.content(), &expected_content) {
+    if !eq_without_whitespace(summary.content(), &expected_content) {
       all_files_match = false;
-      error!("{}", &source_code_unit.content());
+      error!("{}", &summary.content());
     }
   }
   assert!(all_files_match);
 }
+
+/// This macro creates a new match test case.
+///
+/// # Arguments:
+/// * test_name: Name of the test (identifier)
+/// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input` and `configurations`
+/// * expected_number_of_matches: expression returning the expected number of matches
+///
+/// Usage:
+/// ```
+/// create_match_tests! {
+///  "java",
+///  test_a1:  "relative/path_1", 2;
+///  test_a2:  "relative/path_2", 3;
+/// }
+/// ```
+macro_rules! create_match_tests {
+  ($language: expr,
+    $($test_name:ident: $path_to_test: expr,
+                        $expected_number_of_matches: expr
+                        $(,$kw: ident = $value: expr)* ; )*) => {
+    $(
+    #[test]
+    fn $test_name() {
+      initialize();
+      let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
+      let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+      let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+      let piranha_arguments =  piranha_arguments!{
+        path_to_codebase = path_to_codebase,
+        path_to_configurations = path_to_configurations,
+        language= $language.to_string(),
+        $(
+          $kw = $value,
+        )*
+      };
+      let output_summaries = execute_piranha(&piranha_arguments);
+      assert_eq!(
+        output_summaries.iter().flat_map(|os| os.matches().iter()).count(),
+        $expected_number_of_matches
+      );
+    }
+  )*
+  };
+}
+
+/// This macro creates a new rewrite test case.
+///
+/// # Arguments:
+/// * language: target language
+/// * test_name: Name of the test (identifier)
+/// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input`, `expected` and `configurations`
+/// * files_changed: expression returning the expected number of files changed after the rewriting
+///
+/// Usage:
+/// ```
+/// create_rewrite_tests! {
+/// "java".to_string(),
+///  test_a1:  "relative/path_1", 2;
+///  test_a2:  "relative/path_2", 3;
+/// }
+/// ```
+macro_rules! create_rewrite_tests {
+  ($language: expr,
+    $($test_name:ident: $path_to_test: expr,
+                        $files_changed: expr
+                        $(,$kw: ident = $value: expr)* ; )*) => {
+    $(
+    #[test]
+    fn $test_name() {
+      initialize();
+      let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
+      let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+      let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+      let path_to_expected = _path.join("expected");
+
+      // Copy the test scenario to temporary directory
+      let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
+      let temp_dir_path = &temp_dir.path();
+      copy_folder(
+        Path::new(&path_to_codebase),
+        temp_dir_path,
+      );
+
+      let piranha_arguments =  piranha_arguments!{
+        path_to_codebase = temp_dir_path.to_str().unwrap().to_string(),
+        path_to_configurations = path_to_configurations,
+        language= $language.to_string(),
+        $(
+         $kw = $value,
+        )*
+      };
+
+      let output_summaries = execute_piranha(&piranha_arguments);
+      // Checks if there are any rewrites performed for the file
+      assert!(output_summaries.iter().any(|x|!x.rewrites().is_empty()));
+
+      assert_eq!(output_summaries.len(), $files_changed);
+      check_result(output_summaries, path_to_expected);
+      // Delete temp_dir
+      _ = temp_dir.close().unwrap();
+    }
+  )*
+  };
+}
+
+/// This macro accepts substitutions as `key` => `value` pairs and transforms it to a `Vec<Vec<String>>`.
+///
+/// Usage:
+/// ```
+/// substitutions! {
+/// "project" => "Piranha",
+/// "language" => "Rust"
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```
+/// vec!\[
+///      vec!\["project".to_string(), "Piranha".to_string()\]
+///      vec!\["language".to_string(), "Rust".to_string()\]
+/// \]
+/// ```
+///
+macro_rules! substitutions(
+  () =>  { vec![] };
+  { $($key:literal => $value:literal),+ } => {
+      {
+          vec![$(vec![$key.to_string(), $value.to_string()],)+]
+
+      }
+   };
+);
+
+pub(crate) use create_match_tests;
+pub(crate) use create_rewrite_tests;
+pub(crate) use substitutions;

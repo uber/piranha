@@ -11,106 +11,45 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::{default_configs::KOTLIN, piranha_arguments::PiranhaArgumentsBuilder};
-
-use super::{
-  get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_rewrite_test,
+use crate::models::{
+  default_configs::KOTLIN,
+  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
 };
 
-static LANGUAGE: &str = "kt";
+use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};
+use crate::execute_piranha;
 
-#[test]
-fn test_kotlin_scenarios_treated_ff1() {
-  let relative_path_to_tests = &format!("{}/{}/{}", KOTLIN, "feature_flag_system_1", "treated");
+use std::path::{Path, PathBuf};
+use tempdir::TempDir;
 
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "true".to_string()],
-    vec!["treated_complement".to_string(), "false".to_string()],
-  ];
+create_rewrite_tests! {
+  KOTLIN,
+  test_feature_flag_system_1_treated: "feature_flag_system_1/treated", 2, substitutions= substitutions! {
+    "stale_flag_name" => "STALE_FLAG",
+    "treated"=>  "true",
+    "treated_complement" => "false"
+  };
+  test_feature_flag_system_2_treated: "feature_flag_system_2/treated",4,
+    substitutions= substitutions! {
+      "stale_flag_name" => "STALE_FLAG",
+      "treated"=>  "true",
+      "treated_complement" => "false",
+      "namespace" => "some_long_name"
+    },
+    cleanup_comments= true;
 
-  let piranha_argument = get_piranha_arguments_for_test_with_substitutions(
-    relative_path_to_tests,
-    KOTLIN,
-    substitutions,
-  );
-
-  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
-}
-
-#[test]
-fn test_kotlin_scenarios_treated_ff2() {
-  let relative_path_to_tests = &format!("{}/{}/{}", KOTLIN, "feature_flag_system_2", "treated");
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "true".to_string()],
-    vec!["treated_complement".to_string(), "false".to_string()],
-    vec!["namespace".to_string(), "some_long_name".to_string()],
-  ];
-
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      KOTLIN,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
-}
-
-#[test]
-fn test_kotlin_scenarios_control_ff1() {
-  let relative_path_to_tests = &format!("{}/{}/{}", KOTLIN, "feature_flag_system_1", "control");
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "false".to_string()],
-    vec!["treated_complement".to_string(), "true".to_string()],
-  ];
-
-  let piranha_argument = get_piranha_arguments_for_test_with_substitutions(
-    relative_path_to_tests,
-    KOTLIN,
-    substitutions,
-  );
-
-  run_rewrite_test(piranha_argument, 2, relative_path_to_tests);
-}
-
-#[test]
-fn test_kotlin_scenarios_control_ff2() {
-  let relative_path_to_tests = &format!("{}/{}/{}", KOTLIN, "feature_flag_system_2", "control");
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "STALE_FLAG".to_string()],
-    vec!["treated".to_string(), "false".to_string()],
-    vec!["treated_complement".to_string(), "true".to_string()],
-    vec!["namespace".to_string(), "some_long_name".to_string()],
-  ];
-
-  let piranha_argument = PiranhaArgumentsBuilder::default()
-    .cleanup_comments(true)
-    .build()
-    .merge(get_piranha_arguments_for_test_with_substitutions(
-      relative_path_to_tests,
-      KOTLIN,
-      substitutions,
-    ));
-
-  run_rewrite_test(piranha_argument, 4, relative_path_to_tests);
-}
-
-#[test]
-fn test_kt_scenarios_file_scoped_chain_rule() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "file_scoped_chain_rules");
-  run_rewrite_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, KOTLIN),
-    1,
-    relative_path_to_tests,
-  );
+  test_feature_flag_system_1_control:  "feature_flag_system_1/control", 2,
+    substitutions= substitutions! {
+      "stale_flag_name" => "STALE_FLAG",
+      "treated"=>  "false",
+      "treated_complement" => "true"
+    };
+  test_feature_flag_system_2_control: "feature_flag_system_2/control", 4,
+      substitutions= substitutions! {
+        "stale_flag_name" => "STALE_FLAG",
+        "treated"=>  "false",
+        "treated_complement" => "true",
+        "namespace" => "some_long_name"
+      }, cleanup_comments= true;
+  test_file_scoped_chain_rules: "file_scoped_chain_rules",  1;
 }

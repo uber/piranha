@@ -190,42 +190,40 @@ impl PiranhaArguments {
       };
     }
 
-    Self {
-      path_to_codebase,
-      path_to_configurations,
-      language,
-      substitutions: subs,
-      dry_run: get_keyword_arg!("dry_run", default_dry_run, "bool"),
-      cleanup_comments: get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
-      cleanup_comments_buffer: get_keyword_arg!(
+    piranha_arguments! {
+      path_to_codebase= path_to_codebase,
+      path_to_configurations = path_to_configurations,
+      language= language,
+      substitutions= subs,
+      dry_run= get_keyword_arg!("dry_run", default_dry_run, "bool"),
+      cleanup_comments= get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
+      cleanup_comments_buffer= get_keyword_arg!(
         "cleanup_comments_buffer",
         default_cleanup_comments_buffer,
         "num"
       ),
-      number_of_ancestors_in_parent_scope: get_keyword_arg!(
+      number_of_ancestors_in_parent_scope= get_keyword_arg!(
         "number_of_ancestors_in_parent_scope",
         default_number_of_ancestors_in_parent_scope,
         "num"
       ),
-      delete_consecutive_new_lines: get_keyword_arg!(
+      delete_consecutive_new_lines= get_keyword_arg!(
         "delete_consecutive_new_lines",
         default_delete_consecutive_new_lines,
         "bool"
       ),
-      global_tag_prefix: get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
-      delete_file_if_empty: get_keyword_arg!(
+      global_tag_prefix= get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
+      delete_file_if_empty= get_keyword_arg!(
         "delete_file_if_empty",
         default_delete_file_if_empty,
         "bool"
       ),
-      path_to_output_summary: get_keyword_arg!(
+      path_to_output_summary= get_keyword_arg!(
         "path_to_output_summary",
         default_path_to_output_summaries,
         "option"
       ),
-      ..Default::default()
     }
-    .merge(PiranhaArgumentsBuilder::default().build())
   }
 }
 
@@ -248,24 +246,14 @@ impl PiranhaArguments {
       };
     }
 
-    let substitutions = merge!(substitutions, default_substitutions);
-
-    let input_substitutions = substitutions
-      .iter()
-      .map(|x| (x[0].clone(), x[1].clone()))
-      .collect();
-
-    let language = merge!(language, default_language);
-    let piranha_language = PiranhaLanguage::from(language.as_str());
-
     Self {
       path_to_codebase: merge!(path_to_codebase, default_path_to_codebase),
-      substitutions,
-      input_substitutions,
+      substitutions: merge!(substitutions, default_substitutions),
+      input_substitutions: merge!(input_substitutions, default_input_substitutions),
       path_to_configurations: merge!(path_to_configurations, default_path_to_configurations),
       path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
-      language,
-      piranha_language,
+      language: merge!(language, default_language),
+      piranha_language: merge!(piranha_language, default_piranha_language),
       delete_file_if_empty: merge!(delete_file_if_empty, default_delete_file_if_empty),
       delete_consecutive_new_lines: merge!(
         delete_consecutive_new_lines,
@@ -289,10 +277,23 @@ impl PiranhaArgumentsBuilder {
   /// * parse `piranha_arguments.toml` (if it exists)
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
-    let created_args = self
-      .create()
-      .unwrap()
-      .merge(PiranhaArgumentsBuilder::default().create().unwrap());
+    let _arg = &self.create().unwrap();
+    let input_substitutions = _arg
+      .substitutions
+      .iter()
+      .map(|x| (x[0].clone(), x[1].clone()))
+      .collect();
+
+    let piranha_language = PiranhaLanguage::from(_arg.language.as_str());
+
+    let created_args = _arg.merge(
+      PiranhaArgumentsBuilder::default()
+        .input_substitutions(input_substitutions)
+        .piranha_language(piranha_language)
+        .create()
+        .unwrap(),
+    );
+
     let path_to_toml = PathBuf::from(created_args.path_to_configurations())
       .join(default_name_of_piranha_argument_toml());
     if path_to_toml.exists() {
@@ -302,3 +303,39 @@ impl PiranhaArgumentsBuilder {
     created_args
   }
 }
+
+#[macro_export]
+/// This macro can be used to construct a PiranhaArgument (via the builder).'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// piranha_arguments! {
+///   path_to_codebase = "path/to/code/base".to_string(),
+///   language = "Java".to_string(),
+///   path_to_configurations = "path/to/configurations".to_string(),
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// PiranhaArgumentsBuilder::default()
+///      .path_to_codebase("path/to/code/base".to_string())
+///      .language("Java".to_string())
+///      .path_to_configurations("path/to/configurations".to_string())
+///      .build()
+/// ```
+///
+macro_rules! piranha_arguments {
+    ($($kw: ident = $value: expr,)*) => {
+      PiranhaArgumentsBuilder::default()
+      $(
+        .$kw($value)
+       )*
+      .build()
+    };
+}
+
+pub use piranha_arguments;

@@ -21,3 +21,4 @@ polyglot/piranha/demo/piranha
 **.pyc
 target
 Cargo.lock
+tmp_test*

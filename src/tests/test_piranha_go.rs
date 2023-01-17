@@ -11,85 +11,39 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::GO;
-
 use super::{
-  get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test, run_rewrite_test,
+  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
 };
+use crate::execute_piranha;
+use crate::models::{
+  default_configs::GO,
+  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
+};
+use std::path::{Path, PathBuf};
+use tempdir::TempDir;
 
-#[test]
-fn test_go_match_only_go_expr_for_loop() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "go_stmt_for_loop");
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, GO),
-    1,
-  );
+create_match_tests! {
+  GO,
+  test_match_only_for_loop: "structural_find/go_stmt_for_loop", 1;
+  test_match_only_go_stmt_for_loop:"structural_find/for_loop", 4;
 }
 
-#[test]
-fn test_go_match_only_for_loop() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}/{}", GO, "structural_find", "for_loop");
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, GO),
-    4,
-  );
-}
-
-#[test]
-fn test_go_builtin_boolean_expression_simplify() {
-  initialize();
-  let relative_path_to_tests = &format!(
-    "{}/{}/{}/{}",
-    GO, "feature_flag", "builtin_rules", "boolean_expression_simplify"
-  );
-  let substitutions = vec![
-    vec!["true_flag_name".to_string(), "true".to_string()],
-    vec!["false_flag_name".to_string(), "false".to_string()],
-    vec!["nil_flag_name".to_string(), "nil".to_string()],
-  ];
-
-  let piranha_argument =
-    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
-
-  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
-}
-
-#[test]
-fn test_go_builtin_statement_cleanup() {
-  initialize();
-  let relative_path_to_tests = &format!(
-    "{}/{}/{}/{}",
-    GO, "feature_flag", "builtin_rules", "statement_cleanup"
-  );
-  let substitutions = vec![
-    vec!["treated_complement".to_string(), "false".to_string()],
-    vec!["treated".to_string(), "true".to_string()],
-  ];
-
-  let piranha_argument =
-    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
-
-  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
-}
-
-#[test]
-fn test_go_const_same_file() {
-  initialize();
-
-  let relative_path_to_tests = &format!(
-    "{}/{}/{}/{}",
-    GO, "feature_flag", "system_1", "const_same_file"
-  );
-
-  let substitutions = vec![
-    vec!["stale_flag_name".to_string(), "staleFlag".to_string()],
-    vec!["treated".to_string(), "false".to_string()],
-  ];
-  let piranha_argument =
-    get_piranha_arguments_for_test_with_substitutions(relative_path_to_tests, GO, substitutions);
-
-  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
+create_rewrite_tests! {
+  GO,
+  test_builtin_boolean_expression_simplify:  "feature_flag/builtin_rules/boolean_expression_simplify", 1,
+    substitutions= substitutions! {
+      "true_flag_name" => "true",
+      "false_flag_name" => "false",
+      "nil_flag_name" => "nil"
+    };
+  test_builtin_statement_cleanup: "feature_flag/builtin_rules/statement_cleanup", 1,
+    substitutions= substitutions! {
+      "treated" => "true",
+      "treated_complement" => "false"
+    };
+  test_const_same_file: "feature_flag/system_1/const_same_file", 1,
+    substitutions= substitutions! {
+      "stale_flag_name" => "staleFlag",
+      "treated" => "false"
+    };
 }

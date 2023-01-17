@@ -11,40 +11,25 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::PYTHON;
-
 use super::{
-  get_piranha_arguments_for_test, get_piranha_arguments_for_test_with_substitutions, initialize,
-  run_match_test, run_rewrite_test,
+  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
 };
+use crate::execute_piranha;
+use crate::models::{
+  default_configs::PYTHON,
+  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
+};
+use std::path::{Path, PathBuf};
+use tempdir::TempDir;
 
-static LANGUAGE: &str = "python";
+create_rewrite_tests!(
+  PYTHON,
+  test_delete_modify_str_literal_from_list:  "delete_cleanup_str_in_list", 1,
+  substitutions = substitutions! {
+    "str_literal" => "dependency2",
+    "str_to_replace"=>  "dependency1",
+    "str_replacement" => "dependency1_1"
+  };
+);
 
-#[test]
-fn test_python_delete_modify_str_literal_from_list() {
-  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "delete_cleanup_str_in_list");
-
-  let substitutions = vec![
-    vec!["str_literal".to_string(), "dependency2".to_string()],
-    vec!["str_to_replace".to_string(), "dependency1".to_string()],
-    vec!["str_replacement".to_string(), "dependency1_1".to_string()],
-  ];
-
-  let piranha_argument = get_piranha_arguments_for_test_with_substitutions(
-    relative_path_to_tests,
-    PYTHON,
-    substitutions,
-  );
-
-  run_rewrite_test(piranha_argument, 1, relative_path_to_tests);
-}
-
-#[test]
-fn test_python_match_only() {
-  initialize();
-  let relative_path_to_tests = &format!("{}/{}", LANGUAGE, "structural_find");
-  run_match_test(
-    get_piranha_arguments_for_test(relative_path_to_tests, PYTHON),
-    3,
-  );
-}
+create_match_tests!(PYTHON, test_match_only: "structural_find", 3;);
