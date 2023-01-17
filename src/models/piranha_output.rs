@@ -28,7 +28,7 @@ pub struct PiranhaOutputSummary {
   /// Path to the file
   #[pyo3(get)]
   path: String,
-  ///content of the file after all the rewrites
+  /// Content of the file after all the rewrites
   #[pyo3(get)]
   content: String,
   /// All the occurrences of "match-only" rules
