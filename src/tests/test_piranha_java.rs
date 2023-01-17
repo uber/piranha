@@ -18,7 +18,7 @@ use crate::{
   execute_piranha,
   models::{
     default_configs::JAVA,
-    piranha_arguments::{piranha_argument, PiranhaArguments, PiranhaArgumentsBuilder},
+    piranha_arguments::{piranha_argument, PiranhaArgumentsBuilder},
   },
 };
 use std::path::{Path, PathBuf};
@@ -59,14 +59,6 @@ create_rewrite_test! {
   test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
   test_insert_field_and_initializer:  "insert_field_and_initializer", 1;
   test_consecutive_scope_level_rules: "consecutive_scope_level_rules",1;
-}
-
-fn match_only() -> PiranhaArguments {
-  PiranhaArguments::new(
-    JAVA,
-    "test-resources/java/structural_find/input/XPFlagCleanerPositiveCases.java",
-    "test-resources/java/structural_find/configurations",
-  )
 }
 
 create_match_test! {

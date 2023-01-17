@@ -195,11 +195,8 @@ macro_rules! substitutions(
   () =>  { vec![] };
   { $($key:literal => $value:literal),+ } => {
       {
-          let mut substitutions: Vec<Vec<String>> = vec![];
-          $(
-            substitutions.push(vec![$key.to_string(), $value.to_string()]);
-          )+
-          substitutions
+          vec![$(vec![$key.to_string(), $value.to_string()],)+]
+
       }
    };
 );

@@ -228,26 +228,6 @@ impl PiranhaArguments {
 }
 
 impl PiranhaArguments {
-  pub fn new(language: &str, path_to_codebase: &str, path_to_configurations: &str) -> Self {
-    PiranhaArgumentsBuilder::default()
-      .path_to_codebase(path_to_codebase.to_string())
-      .path_to_configurations(path_to_configurations.to_string())
-      .language(language.to_string())
-      .dry_run(true)
-      .build()
-  }
-
-  pub fn new_substitutions(
-    language: &str, path_to_codebase: &str, path_to_configurations: &str,
-    substitutions: Vec<Vec<String>>,
-  ) -> Self {
-    Self::new(language, path_to_codebase, path_to_configurations).merge(
-      PiranhaArgumentsBuilder::default()
-        .substitutions(substitutions)
-        .build(),
-    )
-  }
-
   pub fn get_language(&self) -> String {
     self.language.clone()
   }
