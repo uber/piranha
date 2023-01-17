@@ -68,7 +68,7 @@ impl fmt::Display for Edit {
     let replace_range: Range = self.p_match().range();
     let replacement = self.replacement_string();
     let replaced_code_snippet = self.p_match().matched_string();
-    let mut edit_kind = "Delete code".red(); //;
+    let mut edit_kind = "Delete code".red();
     let mut replacement_snippet_fmt = format!("{} ", replaced_code_snippet.italic());
     if !replacement.is_empty() {
       edit_kind = "Update code".green();
