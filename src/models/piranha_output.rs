@@ -25,7 +25,7 @@ use pyo3::{prelude::pyclass, pymethods};
 #[derive(Serialize, Debug, Clone, Default)]
 #[pyclass]
 pub struct PiranhaOutputSummary {
-  /// path to the file
+  /// Path to the file
   #[pyo3(get)]
   path: String,
   ///content of the file after all the rewrites
