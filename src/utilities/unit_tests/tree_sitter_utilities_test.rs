@@ -127,11 +127,7 @@ fn test_substitute_tags() {
     ("init".to_string(), "true".to_string()),
   ]);
   assert_eq!(
-    substitute_tags(
-      "@variable_name foo bar @init".to_string(),
-      &substitutions,
-      false
-    ),
+    substitute_tags("@variable_name foo bar @init", &substitutions, false),
     "isFlagTreated foo bar true"
   )
 }

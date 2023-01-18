@@ -82,3 +82,15 @@ pub fn default_piranha_language() -> PiranhaLanguage {
 pub fn default_delete_consecutive_new_lines() -> bool {
   false
 }
+
+pub fn default_query() -> String {
+  String::new()
+}
+
+pub fn default_replace_node() -> String {
+  String::new()
+}
+
+pub fn default_replace() -> String {
+  String::new()
+}
