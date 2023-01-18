@@ -51,9 +51,6 @@ pub(crate) struct RuleStore {
   // Command line arguments passed to piranha
   #[get = "pub"]
   piranha_args: PiranhaArguments,
-  // Command line arguments passed to piranha
-  #[get = "pub"]
-  global_tags: HashMap<String, String>,
 }
 
 impl From<PiranhaArguments> for RuleStore {
@@ -86,12 +83,6 @@ impl RuleStore {
     );
     trace!("Rule Store {}", format!("{:#?}", rule_store));
     rule_store
-  }
-
-  pub(crate) fn default_substitutions(&self) -> HashMap<String, String> {
-    let mut default_subs = self.piranha_args.input_substitutions().clone();
-    default_subs.extend(self.global_tags().clone());
-    default_subs
   }
 
   /// Add a new global rule, along with grep heuristics (If it doesn't already exist)
@@ -165,15 +156,6 @@ impl RuleStore {
       .find(|level| level.name().eq(scope_level))
       .map(|scope| scope.rules().to_vec())
       .unwrap_or_else(Vec::new)
-  }
-
-  pub(crate) fn add_global_tags(&mut self, new_entries: &HashMap<String, String>) {
-    let global_substitutions: HashMap<String, String> = new_entries
-      .iter()
-      .filter(|e| e.0.starts_with(self.piranha_args.global_tag_prefix()))
-      .map(|(a, b)| (a.to_string(), b.to_string()))
-      .collect();
-    let _ = &self.global_tags.extend(global_substitutions);
   }
 
   /// To create the current set of global rules, certain substitutions were applied.
@@ -264,7 +246,6 @@ impl Default for RuleStore {
       rule_query_cache: HashMap::default(),
       global_rules: Vec::default(),
       piranha_args: PiranhaArgumentsBuilder::default().build(),
-      global_tags: HashMap::default(),
     }
   }
 }
