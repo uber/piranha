@@ -20,7 +20,9 @@ class_declaration name: (type_identifier) @enum_declaration_name
 )"""
 replace_node = "ee"
 replace = ""
+groups = ["Cleanup Rule"]
 holes = ["universal_tag.enum_entry_name"]
+
 
 # Matches a switch case that returns the "stale_flag_name" string literal.
 [[rules]]
@@ -48,6 +50,7 @@ query = """
 (#eq? @type_arg "@enum_declaration_name")
 )
 """
+groups = ["Cleanup Rule"]
 holes = ["enum_declaration_name"]
 
 # Deletes factory calss that uses the universal_tag.enum_entry_name and inherits the relevant type alias.
@@ -68,4 +71,5 @@ query = """
 """
 replace_node = "source_file"
 replace = ""
+groups = ["Cleanup Rule"]
 holes = ["universal_tag.enum_entry_name", "inherits_plugin_switch"]
