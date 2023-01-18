@@ -120,8 +120,7 @@ impl From<PiranhaArguments> for InstantiatedRuleGraph {
       .map(|x| InstantiatedRule::new(x, piranha_arguments.input_substitutions()))
       .collect();
 
-    let graph_cardinality = rule_graph.log_graph_cardinality();
-    info!("Number of rules and edges loaded : {:?}", graph_cardinality);
+    rule_graph.log_graph_cardinality();
 
     InstantiatedRuleGraph {
       rule_graph,

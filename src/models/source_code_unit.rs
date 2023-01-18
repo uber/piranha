@@ -24,10 +24,7 @@ use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
-  models::{
-    rule_graph,
-    rule_store::{GLOBAL, PARENT},
-  },
+  models::rule_store::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
     get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
     PiranhaHelpers,
