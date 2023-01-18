@@ -189,7 +189,7 @@ impl Piranha {
   }
   /// Instantiate Flag-cleaner
   fn new(piranha_arguments: &PiranhaArguments) -> Self {
-    let graph_rule_store = RuleStore::new(piranha_arguments);
+    let graph_rule_store = RuleStore::from(piranha_arguments.clone());
     Self {
       rule_store: graph_rule_store,
       path_to_codebase: String::from(piranha_arguments.path_to_codebase()),

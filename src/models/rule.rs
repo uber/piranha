@@ -137,7 +137,7 @@ impl Rule {
   }
 }
 
-#[derive(Debug, Getters, Clone)]
+#[derive(Debug, Getters, Clone, PartialEq)]
 pub(crate) struct InstantiatedRule {
   #[get = "pub"]
   rule: Rule,

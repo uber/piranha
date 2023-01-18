@@ -24,7 +24,10 @@ use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
-  models::rule_store::{GLOBAL, PARENT},
+  models::{
+    rule_graph,
+    rule_store::{GLOBAL, PARENT},
+  },
   utilities::tree_sitter_utilities::{
     get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
     PiranhaHelpers,
@@ -216,7 +219,9 @@ impl SourceCodeUnit {
 
       // Add Global rules as seed rules
       for r in &next_rules_by_scope[GLOBAL] {
-        rules_store.add_to_global_rules(r);
+        if !rules_store.global_rules().contains(r) {
+          rules_store.set_rule_graph(rules_store.rule_graph().add_seed_rule(r.clone()));
+        }
       }
 
       // Process the parent
@@ -228,14 +233,9 @@ impl SourceCodeUnit {
         &next_rules_by_scope[PARENT],
       ) {
         self.rewrites_mut().push(edit.clone());
-        debug!(
-          "\n{}",
-          format!(
-            "Cleaning up the context, by applying the rule - {}",
-            edit.matched_rule()
-          )
-          .green()
-        );
+
+        #[rustfmt::skip]
+        debug!("{}",format!("Cleaning up the context, by applying the rule - {}", edit.matched_rule()).green());
         // Apply the matched rule to the parent
         let applied_edit = self.apply_edit(&edit, parser);
         current_replace_range = get_replace_range(applied_edit);
