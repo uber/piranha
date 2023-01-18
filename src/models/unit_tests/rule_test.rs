@@ -12,6 +12,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
 use std::collections::HashSet;
+
+use super::InstantiatedRule;
 use {
   super::Rule,
   crate::models::{
@@ -31,7 +33,7 @@ fn test_rule_try_instantiate_positive() {
     (String::from("variable_name"), String::from("foobar")),
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
-  let instantiated_rule = rule.instantiate(&substitutions);
+  let instantiated_rule = InstantiatedRule::new(&rule, &substitutions);
   assert_eq!(
     instantiated_rule.query(),
     "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
@@ -47,13 +49,13 @@ fn test_rule_try_instantiate_negative() {
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
-  let _ = rule.instantiate(&substitutions);
+  let _ = InstantiatedRule::new(&rule, &substitutions);
 }
 
 /// Positive tests for `rule.get_edit` method for given rule and input source code.
 #[test]
 fn test_get_edit_positive_recursive() {
-  let rule = Rule::new("test", "(
+  let _rule = Rule::new("test", "(
                            ((local_variable_declaration
                                            declarator: (variable_declarator
                                                                name: (_) @variable_name
@@ -69,6 +71,7 @@ fn test_get_edit_positive_recursive() {
                               (#not-eq? @a.rhs \"@init\")
                             )")]),
                           ]));
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
           pub void foobar(){
             boolean isFlagTreated = true;
@@ -91,17 +94,17 @@ fn test_get_edit_positive_recursive() {
     rule_store.piranha_args(),
   );
   let node = source_code_unit.root_node();
-  let matches = source_code_unit.get_matches(rule.clone(), &mut rule_store, node, true);
+  let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
   assert!(!matches.is_empty());
 
-  let edit = source_code_unit.get_edit(rule, &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true);
   assert!(edit.is_some());
 }
 
 /// Negative tests for `rule.get_edit` method for given rule and input source code.
 #[test]
 fn test_get_edit_negative_recursive() {
-  let rule = Rule::new("test", "(
+  let _rule = Rule::new("test", "(
                            ((local_variable_declaration
                                            declarator: (variable_declarator
                                                                name: (_) @variable_name
@@ -127,6 +130,7 @@ fn test_get_edit_negative_recursive() {
           }
         }";
 
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let mut rule_store = RuleStore::default();
   let mut parser = PiranhaLanguage::from(JAVA).parser();
 
@@ -138,16 +142,16 @@ fn test_get_edit_negative_recursive() {
     rule_store.piranha_args(),
   );
   let node = source_code_unit.root_node();
-  let matches = source_code_unit.get_matches(rule.clone(), &mut rule_store, node, true);
+  let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
   assert!(matches.is_empty());
-  let edit = source_code_unit.get_edit(rule, &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true);
   assert!(edit.is_none());
 }
 
 /// Positive tests for `rule.get_edit_for_context` method for given rule and input source code.
 #[test]
 fn test_get_edit_for_context_positive() {
-  let rule = Rule::new(
+  let _rule = Rule::new(
     "test",
     "(
           (binary_expression
@@ -161,6 +165,7 @@ fn test_get_edit_for_context_positive() {
     HashSet::new(),
     HashSet::new(),
   );
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
 
   let source_code = "class A {
           boolean f = something && true;
@@ -186,7 +191,7 @@ fn test_get_edit_for_context_positive() {
 /// Negative tests for `rule.get_edit_for_context` method for given rule and input source code.
 #[test]
 fn test_get_edit_for_context_negative() {
-  let rule = Rule::new(
+  let _rule = Rule::new(
     "test",
     "(
           (binary_expression
@@ -200,7 +205,7 @@ fn test_get_edit_for_context_negative() {
     HashSet::new(),
     HashSet::new(),
   );
-
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class A {
           boolean f = true;
           boolean x = something && true;

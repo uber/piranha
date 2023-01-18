@@ -14,11 +14,15 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
+use getset::Getters;
 use serde_derive::Deserialize;
 
 use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
 
-use super::constraint::Constraint;
+use super::{
+  constraint::Constraint,
+  default_configs::{default_query, default_replace, default_replace_node},
+};
 
 static SEED: &str = "Seed Rule";
 static CLEAN_UP: &str = "Cleanup Rule";
@@ -29,72 +33,63 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
+  #[get = "pub"]
   name: String,
   /// Tree-sitter query as string
-  query: Option<String>,
+  #[serde(default = "default_query")]
+  #[get = "pub"]
+  query: String,
   /// The tag corresponding to the node to be replaced
-  replace_node: Option<String>,
+  #[serde(default = "default_replace_node")]
+  #[get = "pub"]
+  replace_node: String,
   /// Replacement pattern
-  replace: Option<String>,
+  #[serde(default = "default_replace")]
+  #[get = "pub"]
+  replace: String,
   /// Group(s) to which the rule belongs
   #[serde(default)]
+  #[get = "pub"]
   groups: HashSet<String>,
   /// Holes that need to be filled, in order to instantiate a rule
   #[serde(default)]
+  #[get = "pub"]
   holes: HashSet<String>,
   /// Additional constraints for matching the rule
   #[serde(default)]
+  #[get = "pub"]
   constraints: HashSet<Constraint>,
-  /// Heuristics for identifying potential files containing occurrence of the rule.
-  #[serde(default)]
-  grep_heuristics: HashSet<String>,
 }
 
 impl Rule {
+  /// Dummy rules are helper rules that make it easier to define the rule graph
+  pub(crate) fn is_dummy_rule(&self) -> bool {
+    *self.query() == default_query() && *self.replace_node() == default_replace_node()
+  }
+
+  /// Checks if `self` is a seed rule
   pub(crate) fn is_seed_rule(&self) -> bool {
     self.groups().contains(&SEED.to_string())
   }
 
-  // Dummy rules are helper rules that make it easier to define the rule graph.
-  pub(crate) fn is_dummy_rule(&self) -> bool {
-    self.query.is_none() && self.replace.is_none()
-  }
-
-  // Checks if a rule is `match-only` i.e. it has a query but no replace.
+  /// Checks if a rule is `match-only` i.e. it has a query but no replace_node
   pub(crate) fn is_match_only_rule(&self) -> bool {
-    self.query.is_some() && self.replace.is_none()
-  }
-
-  /// Instantiate `self` with substitutions or panic.
-  pub(crate) fn instantiate(&self, substitutions: &HashMap<String, String>) -> Rule {
-    let relevant_substitutions = self
-      .holes()
-      .iter()
-      .filter_map(|hole| substitutions.get(hole).map(|subs| (hole, subs)))
-      .map(|(a, b)| (a.clone(), b.clone()))
-      .collect::<HashMap<String, String>>();
-    self.update(&relevant_substitutions)
+    *self.query() != default_query() && *self.replace_node() == default_replace_node()
   }
 
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  fn update(&self, relevant_substitutions: &HashMap<String, String>) -> Rule {
-    if relevant_substitutions.len() != self.holes().len() {
+  fn substitute(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
+    if substitutions_for_holes.len() != self.holes().len() {
       #[rustfmt::skip]
-      panic!("{}", format!( "Could not instantiate the rule {:?} with substitutions {:?}", self, relevant_substitutions).red());
+      panic!("{}", format!( "Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions_for_holes).red());
     }
     let updated_rule = self.clone();
-    let query = updated_rule
-      .query
-      .map(|r| substitute_tags(r, relevant_substitutions, false));
-    let replace = updated_rule
-      .replace
-      .map(|r| substitute_tags(r, relevant_substitutions, false));
     Rule {
-      query,
-      replace,
+      query: substitute_tags(updated_rule.query(), substitutions_for_holes, false),
+      replace: substitute_tags(updated_rule.replace(), substitutions_for_holes, false),
       ..updated_rule
     }
   }
@@ -103,30 +98,16 @@ impl Rule {
   /// Note: a rule can belong to more than one group.
   pub(crate) fn group_rules(
     rules: &Vec<Rule>,
-  ) -> (HashMap<String, Rule>, HashMap<String, Vec<String>>) {
+  ) -> (HashMap<String, Rule>, HashMap<&String, Vec<&String>>) {
     let mut rules_by_name = HashMap::new();
     let mut rules_by_group = HashMap::new();
     for rule in rules {
-      rules_by_name.insert(rule.name.to_string(), rule.clone());
+      rules_by_name.insert(rule.name().to_string(), rule.clone());
       for tag in rule.groups() {
-        rules_by_group.collect(tag.to_string(), rule.name.to_string());
+        rules_by_group.collect(tag, rule.name());
       }
     }
     (rules_by_name, rules_by_group)
-  }
-
-  /// Records the string that should be grepped in order to find files that
-  /// potentially could match this global rule.
-  pub(crate) fn add_grep_heuristics_for_global_rules(
-    &mut self, substitutions: &HashMap<String, String>,
-  ) {
-    let mut gh = HashSet::new();
-    for hole in self.holes() {
-      if let Some(x) = substitutions.get(&hole) {
-        gh.insert(x.clone());
-      }
-    }
-    self.grep_heuristics = gh.clone();
   }
 
   /// Adds the rule to a new group - "SEED" if applicable.
@@ -135,47 +116,6 @@ impl Rule {
       return;
     }
     self.groups.insert(SEED.to_string());
-  }
-
-  pub(crate) fn replace_node(&self) -> String {
-    if let Some(rn) = &self.replace_node {
-      return rn.to_string();
-    }
-    panic!("No replace_node pattern!")
-  }
-
-  pub(crate) fn query(&self) -> String {
-    if let Some(q) = &self.query {
-      return q.to_string();
-    }
-    panic!("No query pattern!")
-  }
-
-  pub(crate) fn replace(&self) -> String {
-    if let Some(rp) = &self.replace {
-      return rp.to_string();
-    }
-    panic!("No replace pattern!")
-  }
-
-  pub(crate) fn constraints(&self) -> HashSet<Constraint> {
-    self.constraints.clone()
-  }
-
-  pub(crate) fn grep_heuristics(&self) -> HashSet<String> {
-    self.grep_heuristics.clone()
-  }
-
-  pub(crate) fn holes(&self) -> HashSet<String> {
-    self.holes.clone()
-  }
-
-  fn groups(&self) -> HashSet<String> {
-    self.groups.clone()
-  }
-
-  pub(crate) fn name(&self) -> String {
-    String::from(&self.name)
   }
 }
 
@@ -187,14 +127,59 @@ impl Rule {
   ) -> Self {
     Self {
       name: name.to_string(),
-      query: Some(query.to_string()),
-      replace_node: Some(replace_node.to_string()),
-      replace: Some(replace.to_string()),
+      query: query.to_string(),
+      replace_node: replace_node.to_string(),
+      replace: replace.to_string(),
       groups: HashSet::default(),
       holes,
       constraints,
-      grep_heuristics: HashSet::default(),
     }
+  }
+}
+
+#[derive(Debug, Getters, Clone)]
+pub(crate) struct InstantiatedRule {
+  #[get = "pub"]
+  rule: Rule,
+  #[get = "pub"]
+  substitutions: HashMap<String, String>,
+}
+
+impl InstantiatedRule {
+  pub(crate) fn new(rule: &Rule, substitutions: &HashMap<String, String>) -> Self {
+    let substitutions_for_holes = rule
+      .holes()
+      .iter()
+      .filter_map(|h| substitutions.get(h).map(|s| (h.to_string(), s.to_string())))
+      .collect();
+    InstantiatedRule {
+      rule: rule.substitute(&substitutions_for_holes),
+      substitutions: substitutions_for_holes,
+    }
+  }
+
+  pub fn name(&self) -> String {
+    self.rule().name().to_string()
+  }
+
+  pub fn replace(&self) -> String {
+    self.rule().replace().to_string()
+  }
+
+  pub fn query(&self) -> String {
+    self.rule().query().to_string()
+  }
+
+  pub fn replace_node(&self) -> String {
+    self.rule().replace_node().to_string()
+  }
+
+  pub fn holes(&self) -> &HashSet<String> {
+    self.rule().holes()
+  }
+
+  pub fn constraints(&self) -> &HashSet<Constraint> {
+    self.rule().constraints()
   }
 }
 
