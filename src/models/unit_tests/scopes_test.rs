@@ -1,5 +1,20 @@
+/*
+ Copyright (c) 2022 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 use crate::models::{
-  default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
+  default_configs::JAVA,
+  language::PiranhaLanguage,
+  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
 };
 
 /*
@@ -82,7 +97,7 @@ fn _get_method_scope() -> ScopeGenerator {
     .unwrap();
 }
 
-fn _get_rule_store() -> RuleStore {
+fn _get_rule_store() -> (PiranhaArguments, RuleStore) {
   let mut piranha_language = PiranhaLanguage::from(JAVA);
   piranha_language.set_scopes(vec![_get_method_scope(), _get_class_scope()]);
   let piranha_args = PiranhaArgumentsBuilder::default()
@@ -90,7 +105,7 @@ fn _get_rule_store() -> RuleStore {
     .piranha_language(piranha_language)
     .create()
     .unwrap();
-  RuleStore::from(&piranha_args)
+  (piranha_args.clone(), RuleStore::from(&piranha_args))
 }
 
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.
@@ -106,7 +121,7 @@ fn test_get_scope_query_positive() {
       }
     }";
 
-  let mut rule_store = _get_rule_store();
+  let (piranha_arguments, mut rule_store) = _get_rule_store();
   let mut parser = PiranhaLanguage::from(JAVA).parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -114,7 +129,7 @@ fn test_get_scope_query_positive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &piranha_arguments,
   );
 
   let scope_query_method = source_code_unit.get_scope_query("Method", 133, 134, &mut rule_store);
@@ -162,7 +177,7 @@ fn test_get_scope_query_negative() {
         }
       }
     }";
-  let mut rule_store = _get_rule_store();
+  let (piranha_arguments, mut rule_store) = _get_rule_store();
   let mut parser = PiranhaLanguage::from(JAVA).parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -170,7 +185,7 @@ fn test_get_scope_query_negative() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &piranha_arguments,
   );
 
   let _ = source_code_unit.get_scope_query("Method", 9, 10, &mut rule_store);

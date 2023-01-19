@@ -190,17 +190,14 @@ fn execute_persist_in_temp_folder(
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(file_path.as_path(), source_code);
-  let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(java.name().to_string())
-    .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     file_path.as_path(),
-    &piranha_args,
+    args,
   );
-  source_code_unit.persist(args);
+  source_code_unit.persist();
   check_predicate(&tmp_dir)
 }
 

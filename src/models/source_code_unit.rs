@@ -308,13 +308,13 @@ impl SourceCodeUnit {
   /// Writes the current contents of `code` to the file system.
   /// Based on the user's specifications, this function will delete a file if empty
   /// and replace three consecutive newline characters with two.
-  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
+  pub(crate) fn persist(&self) {
     if self.code.as_str().is_empty() {
-      if *piranha_arguments.delete_file_if_empty() {
+      if *self.piranha_arguments.delete_file_if_empty() {
         fs::remove_file(&self.path).expect("Unable to Delete file");
       }
     } else {
-      let content = if *piranha_arguments.delete_consecutive_new_lines() {
+      let content = if *self.piranha_arguments.delete_consecutive_new_lines() {
         let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
         regex.replace_all(self.code(), "\n${2}").to_string()
       } else {
@@ -505,9 +505,8 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<InstantiatedRule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope = *rules_store
-      .piranha_args()
-      .number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope =
+      *self.piranha_arguments.number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
       "\n{}",
@@ -623,7 +622,7 @@ impl SourceCodeUnit {
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    let mut updated_substitutions = rule_store.piranha_args().input_substitutions().clone();
+    let mut updated_substitutions = self.piranha_arguments.input_substitutions().clone();
     updated_substitutions.extend(substitutions.clone());
     rule.constraints().iter().all(|constraint| {
       self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)

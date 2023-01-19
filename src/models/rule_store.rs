@@ -25,18 +25,18 @@ use regex::Regex;
 use tree_sitter::Query;
 
 use crate::{
-  models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+  models::piranha_arguments::PiranhaArguments,
   models::scopes::ScopeQueryGenerator,
   utilities::{read_file, MapOfVec},
 };
 
-use super::{rule::InstantiatedRule, rule_graph::InstantiatedRuleGraph};
+use super::{language::PiranhaLanguage, rule::InstantiatedRule, rule_graph::InstantiatedRuleGraph};
 
 pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";
 
 /// This maintains the state for Piranha.
-#[derive(Debug, Getters, Setters)]
+#[derive(Debug, Getters, Setters, Default)]
 pub(crate) struct RuleStore {
   // A graph that captures the flow amongst the rules
   #[get = "pub"]
@@ -44,16 +44,16 @@ pub(crate) struct RuleStore {
   rule_graph: InstantiatedRuleGraph,
   // Caches the compiled tree-sitter queries.
   rule_query_cache: HashMap<String, Query>,
-  // Command line arguments passed to piranha
+  // Target Language
   #[get = "pub"]
-  piranha_args: PiranhaArguments,
+  piranha_language: PiranhaLanguage,
 }
 
 impl From<&PiranhaArguments> for RuleStore {
   fn from(piranha_args: &PiranhaArguments) -> Self {
     let rule_store = RuleStore {
       rule_graph: InstantiatedRuleGraph::from(piranha_args),
-      piranha_args: piranha_args.clone(),
+      piranha_language: piranha_args.piranha_language().clone(),
       ..Default::default()
     };
     info!(
@@ -76,12 +76,7 @@ impl RuleStore {
     self
       .rule_query_cache
       .entry(query_str.to_string())
-      .or_insert_with(|| {
-        self
-          .piranha_args
-          .piranha_language()
-          .create_query(query_str.to_string())
-      })
+      .or_insert_with(|| self.piranha_language.create_query(query_str.to_string()))
   }
 
   /// Get the next rules to be applied grouped by the scope in which they should be performed.
@@ -122,7 +117,6 @@ impl RuleStore {
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
   pub(crate) fn get_scope_query_generators(&self, scope_level: &str) -> Vec<ScopeQueryGenerator> {
     self
-      .piranha_args()
       .piranha_language()
       .scopes()
       .iter()
@@ -159,10 +153,7 @@ impl RuleStore {
   pub(crate) fn does_file_extension_match(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
     de.path()
       .extension()
-      .and_then(|e| {
-        e.to_str()
-          .filter(|x| x.eq(&self.piranha_args().get_language()))
-      })
+      .and_then(|e| e.to_str().filter(|x| x.eq(&self.piranha_language().name())))
       .is_some()
   }
 
@@ -209,15 +200,5 @@ impl RuleStore {
       format!("{} files will be analyzed.", files.len()).green()
     );
     files
-  }
-}
-
-impl Default for RuleStore {
-  fn default() -> Self {
-    RuleStore {
-      rule_graph: InstantiatedRuleGraph::default(),
-      rule_query_cache: HashMap::default(),
-      piranha_args: PiranhaArgumentsBuilder::default().build(),
-    }
   }
 }

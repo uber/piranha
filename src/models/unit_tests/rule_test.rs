@@ -10,7 +10,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
+use crate::models::{
+  default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
+};
 use std::collections::HashSet;
 
 use super::InstantiatedRule;
@@ -91,7 +93,7 @@ fn test_get_edit_positive_recursive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &PiranhaArgumentsBuilder::default().build(),
   );
   let node = source_code_unit.root_node();
   let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
@@ -139,7 +141,7 @@ fn test_get_edit_negative_recursive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &PiranhaArgumentsBuilder::default().build(),
   );
   let node = source_code_unit.root_node();
   let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
@@ -180,7 +182,7 @@ fn test_get_edit_for_context_positive() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &PiranhaArgumentsBuilder::default().build(),
   );
   let edit =
     source_code_unit.get_edit_for_context(41_usize, 44_usize, &mut rule_store, &vec![rule]);
@@ -220,7 +222,7 @@ fn test_get_edit_for_context_negative() {
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &PiranhaArgumentsBuilder::default().build(),
   );
   let edit =
     source_code_unit.get_edit_for_context(29_usize, 33_usize, &mut rule_store, &vec![rule]);
