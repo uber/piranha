@@ -109,9 +109,9 @@ pub(crate) struct InstantiatedRuleGraph {
   pub(crate) seed_rules: Vec<InstantiatedRule>,
 }
 
-impl From<PiranhaArguments> for InstantiatedRuleGraph {
-  fn from(piranha_arguments: PiranhaArguments) -> Self {
-    let (rules, edges) = _read_config_files(&piranha_arguments);
+impl From<&PiranhaArguments> for InstantiatedRuleGraph {
+  fn from(piranha_arguments: &PiranhaArguments) -> Self {
+    let (rules, edges) = _read_config_files(piranha_arguments);
     let rule_graph = RuleGraph::new(&edges, &rules);
     let seed_rules = rule_graph
       .get_rules()

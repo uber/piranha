@@ -49,11 +49,11 @@ pub(crate) struct RuleStore {
   piranha_args: PiranhaArguments,
 }
 
-impl From<PiranhaArguments> for RuleStore {
-  fn from(piranha_args: PiranhaArguments) -> Self {
+impl From<&PiranhaArguments> for RuleStore {
+  fn from(piranha_args: &PiranhaArguments) -> Self {
     let rule_store = RuleStore {
-      rule_graph: InstantiatedRuleGraph::from(piranha_args.clone()),
-      piranha_args,
+      rule_graph: InstantiatedRuleGraph::from(piranha_args),
+      piranha_args: piranha_args.clone(),
       ..Default::default()
     };
     info!(

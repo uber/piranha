@@ -90,7 +90,7 @@ fn _get_rule_store() -> RuleStore {
     .piranha_language(piranha_language)
     .create()
     .unwrap();
-  RuleStore::from(piranha_args)
+  RuleStore::from(&piranha_args)
 }
 
 /// Positive test for the generated scope query, given scope generators, source code and position of pervious edit.

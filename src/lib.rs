@@ -78,7 +78,7 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
   info!("Executing Polyglot Piranha !!!");
 
-  let mut piranha = Piranha::new(piranha_arguments);
+  let mut piranha = Piranha::from(piranha_arguments);
   piranha.perform_cleanup();
 
   let source_code_units = piranha.get_updated_files();
@@ -115,8 +115,8 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
   info!("Total number of matches {}", total_number_of_matches);
   info!("Total number of rewrites {}", total_number_of_rewrites);
 }
-
-// Maintains the state of Piranha and the updated content of files in the source code.
+// Maintains the state of Piranha and the updated content of files in the source code
+#[derive(Default)]
 struct Piranha {
   // Maintains Piranha's state
   rule_store: RuleStore,
@@ -187,13 +187,14 @@ impl Piranha {
       }
     }
   }
-  /// Instantiate Flag-cleaner
-  fn new(piranha_arguments: &PiranhaArguments) -> Self {
-    let graph_rule_store = RuleStore::from(piranha_arguments.clone());
+}
+
+impl From<&PiranhaArguments> for Piranha {
+  fn from(piranha_arguments: &PiranhaArguments) -> Self {
     Self {
-      rule_store: graph_rule_store,
-      path_to_codebase: String::from(piranha_arguments.path_to_codebase()),
-      relevant_files: HashMap::new(),
+      rule_store: RuleStore::from(piranha_arguments),
+      path_to_codebase: piranha_arguments.path_to_codebase().to_string(),
+      ..Default::default()
     }
   }
 }
