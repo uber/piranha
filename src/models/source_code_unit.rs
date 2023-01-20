@@ -304,25 +304,28 @@ impl SourceCodeUnit {
     for rule in rules {
       self.apply_rule(rule.to_owned(), rules_store, parser, &scope_query)
     }
+    self.perform_delete_consecutive_new_lines();
   }
 
-  /// Writes the current contents of `code` to the file system.
-  /// Based on the user's specifications, this function will delete a file if empty
-  /// and replace three consecutive newline characters with two.
-  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
-    if self.code.as_str().is_empty() {
-      if *piranha_arguments.delete_file_if_empty() {
-        fs::remove_file(&self.path).expect("Unable to Delete file");
-      }
-    } else {
-      let content = if *piranha_arguments.delete_consecutive_new_lines() {
-        let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
-        regex.replace_all(self.code(), "\n${2}").to_string()
-      } else {
-        self.code().to_string()
-      };
-      fs::write(&self.path, content).expect("Unable to Write file");
+  /// Replaces three consecutive newline characters with two
+  pub(crate) fn perform_delete_consecutive_new_lines(&mut self) {
+    if *self.piranha_arguments.delete_consecutive_new_lines() {
+      let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
+      let x = &regex.replace_all(self.code(), "\n${2}").into_owned();
+      self.code = x.clone();
     }
+  }
+
+  /// Writes the current contents of `code` to the file system and deletes a file if empty.
+  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
+    if *piranha_arguments.dry_run() {
+      return;
+    }
+    if self.code.as_str().is_empty() && *piranha_arguments.delete_file_if_empty() {
+      fs::remove_file(&self.path).expect("Unable to Delete file");
+      return;
+    }
+    fs::write(&self.path, self.code()).expect("Unable to Write file");
   }
 
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {

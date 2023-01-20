@@ -28,7 +28,7 @@ create_rewrite_tests! {
     "stale_flag_name" => "STALE_FLAG",
     "treated"=>  "true",
     "treated_complement" => "false"
-  };
+  }, delete_file_if_empty= false;
   test_feature_flag_system_2_treated: "feature_flag_system_2/treated",4,
     substitutions= substitutions! {
       "stale_flag_name" => "STALE_FLAG",
@@ -43,7 +43,7 @@ create_rewrite_tests! {
       "stale_flag_name" => "STALE_FLAG",
       "treated"=>  "false",
       "treated_complement" => "true"
-    };
+    }, delete_file_if_empty= false;
   test_feature_flag_system_2_control: "feature_flag_system_2/control", 4,
       substitutions= substitutions! {
         "stale_flag_name" => "STALE_FLAG",

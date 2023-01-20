@@ -39,7 +39,7 @@ create_rewrite_tests! {
       "treated"=> "false",
       "treated_complement" => "true",
       "namespace" => "some_long_name"
-    },cleanup_comments = true;
+    },cleanup_comments = true , delete_file_if_empty= false;
   test_feature_flag_system_2_treated: "feature_flag_system_2/treated", 4,
     substitutions= substitutions! {
       "stale_flag_name" => "STALE_FLAG",
@@ -53,8 +53,8 @@ create_rewrite_tests! {
       "treated"=> "false",
       "treated_complement" => "true",
       "namespace" => "some_long_name"
-    }, cleanup_comments = true;
-  test_scenarios_find_and_propagate:  "find_and_propagate", 2;
+    }, cleanup_comments = true , delete_file_if_empty= false;
+  test_scenarios_find_and_propagate:  "find_and_propagate", 2, delete_file_if_empty= false;
   test_non_seed_user_rule:  "non_seed_user_rule", 1, substitutions = substitutions! {"input_type_name" => "ArrayList"};
   test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
   test_insert_field_and_initializer:  "insert_field_and_initializer", 1;
