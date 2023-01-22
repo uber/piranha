@@ -29,12 +29,12 @@ create_rewrite_tests! {
     substitutions = substitutions! {
       "stale_flag_name" => "Premium-Icon"
     },
-    cleanup_comments = true;
+    cleanup_comments = true, delete_file_if_empty= false;
   test_cascading_delete_file_custom_global_tag: "cascade_file_delete_custom_global_tag", 3,
     substitutions = substitutions! {
     "stale_flag_name" => "Premium-Icon"
     },
     cleanup_comments = true,
     global_tag_prefix ="universal_tag.".to_string(),
-    cleanup_comments_buffer = 3;
+    cleanup_comments_buffer = 3, delete_file_if_empty= false;
 }

@@ -182,7 +182,7 @@ fn test_apply_edit_comma_handling_via_regex() {
   ));
 }
 fn execute_persist_in_temp_folder(
-  source_code: &str, args: &PiranhaArguments,
+  source_code: &str, piranha_arguments: &PiranhaArguments,
   check_predicate: &dyn Fn(&TempDir) -> Result<bool, io::Error>,
 ) -> Result<bool, io::Error> {
   let java = get_java_tree_sitter_language();
@@ -190,17 +190,15 @@ fn execute_persist_in_temp_folder(
   let tmp_dir = TempDir::new("example")?;
   let file_path = &tmp_dir.path().join("Sample1.java");
   _ = fs::write(file_path.as_path(), source_code);
-  let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(java.name().to_string())
-    .build();
-  let source_code_unit = SourceCodeUnit::new(
+  let mut source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     file_path.as_path(),
-    &piranha_args,
+    piranha_arguments,
   );
-  source_code_unit.persist(args);
+  source_code_unit.perform_delete_consecutive_new_lines();
+  source_code_unit.persist(piranha_arguments);
   check_predicate(&tmp_dir)
 }
 
@@ -208,7 +206,6 @@ fn execute_persist_in_temp_folder(
 fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(true)
-    .delete_file_if_empty(true)
     .build();
   println!("{:?}", args);
   let source_code = "";
@@ -240,7 +237,6 @@ fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
 fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(true)
-    .delete_file_if_empty(true)
     .build();
   let source_code_test_1 = "class Test {
     public void foobar() {
@@ -293,7 +289,6 @@ fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
 fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(false)
-    .delete_file_if_empty(true)
     .build();
   let source_code = "class Test {
     public void foobar() {

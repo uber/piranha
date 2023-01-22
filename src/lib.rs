@@ -83,13 +83,9 @@ pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutpu
 
   let source_code_units = piranha.get_updated_files();
 
-  if !*piranha_arguments.dry_run() {
-    for scu in source_code_units {
-      scu.persist(piranha_arguments);
-    }
+  for scu in source_code_units.iter() {
+    scu.persist(piranha_arguments);
   }
-
-  // flag_cleaner.relevant_files
   let summaries = piranha
     .get_updated_files()
     .iter()

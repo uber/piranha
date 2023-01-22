@@ -11,11 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::piranha_output::PiranhaOutputSummary;
-use crate::utilities::{eq_without_whitespace, find_file, read_file};
+use crate::utilities::{eq_without_whitespace, read_file};
 use log::error;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 mod test_piranha_java;
 mod test_piranha_kt;
@@ -63,23 +62,37 @@ fn copy_folder(src: &Path, dst: &Path) {
 }
 
 /// Checks if the file updates returned by piranha are as expected.
-fn check_result(output_summaries: Vec<PiranhaOutputSummary>, path_to_expected: PathBuf) {
+fn check_result(path_to_codebase: &Path, path_to_expected: &Path) {
   let mut all_files_match = true;
 
-  for summary in &output_summaries {
-    let updated_file_name = &summary
-      .path()
-      .file_name()
-      .and_then(|f| f.to_str().map(|x| x.to_string()))
-      .unwrap();
-    let expected_file_path = find_file(&path_to_expected, updated_file_name);
-    let expected_content = read_file(&expected_file_path).unwrap();
+  let count_files = |path: &Path| {
+    let mut count = 0;
+    for dir_entry in fs::read_dir(path).unwrap() {
+      if dir_entry.unwrap().path().is_file() {
+        count += 1;
+      }
+    }
+    count
+  };
 
-    if !eq_without_whitespace(summary.content(), &expected_content) {
-      all_files_match = false;
-      error!("{}", &summary.content());
+  assert_eq!(count_files(path_to_codebase), count_files(path_to_expected));
+
+  for p in fs::read_dir(path_to_codebase).unwrap() {
+    let dir_entry = p.unwrap();
+    if dir_entry.path().is_file() {
+      let path = dir_entry.path();
+      let file_name = path.file_name().unwrap();
+      let cb_content = read_file(&dir_entry.path().to_path_buf()).unwrap();
+      let expected_file_path = path_to_expected.join(file_name);
+      let expected_content = read_file(&expected_file_path).unwrap();
+
+      if !eq_without_whitespace(&cb_content, &expected_content) {
+        all_files_match = false;
+        error!("{}", &cb_content);
+      }
     }
   }
+
   assert!(all_files_match);
 }
 
@@ -180,7 +193,8 @@ macro_rules! create_rewrite_tests {
       assert!(output_summaries.iter().any(|x|!x.rewrites().is_empty()));
 
       assert_eq!(output_summaries.len(), $files_changed);
-      check_result(output_summaries, path_to_expected);
+      check_result(temp_dir_path, &path_to_expected);
+
       // Delete temp_dir
       _ = temp_dir.close().unwrap();
     }
