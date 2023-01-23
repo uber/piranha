@@ -1,0 +1,4 @@
+[[edges]]
+scope = "Parent"
+from = "replace_isToggleEnabled_with_boolean_literal"
+to = ["true_and_something"]

@@ -1,0 +1,19 @@
+class SampleClass {
+    init() {
+        // Code 1
+        if TestEnum.stale_flag.isEnabled && abcd() {
+            // Code 2
+        } else if TestEnum.stale_flag {
+            // Code 3
+        } else if TestEnum.stale_flag.type {
+            // code 4
+        } else if TestEnum.staled_flag.isEnabled {
+            // code 5
+        } else if TestEnum.staled_flag {
+            // code 6
+        } else if TestEnum.staled_flag.type {
+            // code 7
+        }
+        // Code 8
+    }
+}
