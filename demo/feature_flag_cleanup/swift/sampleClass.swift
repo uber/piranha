@@ -5,7 +5,9 @@ class SampleClass {
             // Code 2
         } else if abcd() && TestEnum.stale_flag.isEnabled {
             // Code 2
-        } else if TestEnum.stale_flag {
+        } else if !TestEnum.stale_flag.isEnabled && abcd() {
+            // Code 2
+        } else if TestEnum.stale_flag && !true {
             // Code 3
         } else if TestEnum.stale_flag.type {
             // code 4
