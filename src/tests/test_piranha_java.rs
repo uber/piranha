@@ -61,7 +61,6 @@ create_rewrite_tests! {
   test_consecutive_scope_level_rules: "consecutive_scope_level_rules",1;
   test_user_option_delete_if_empty: "user_option_delete_if_empty", 1;
   test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty=false;
-  // test_user_option_delete_consecutive_lines :  "user_option_delete_consecutive_lines", 1, delete_consecutive_new_lines=true;
 }
 
 create_match_tests! {
