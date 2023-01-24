@@ -23,5 +23,6 @@ class SampleClass {
         // Code 11
 
         let v1 = false && abcd()
+        let v2 = abcd() && false 
     }
 }

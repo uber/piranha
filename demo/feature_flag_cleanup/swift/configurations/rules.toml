@@ -166,3 +166,21 @@ query = """(
 )"""
 replace_node = "conjunction_expression"
 replace = "false"
+
+#
+# Before 
+#   abcd() && false
+# After 
+#   false
+#
+[[rules]]
+name = "something_and_false"
+query = """(
+(conjunction_expression
+        lhs: (_) @lhs
+        rhs: (boolean_literal) @false
+    ) @conjunction_expression
+(#eq? @false "false")
+)"""
+replace_node = "conjunction_expression"
+replace = "false"
