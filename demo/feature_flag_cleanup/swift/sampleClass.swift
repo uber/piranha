@@ -9,7 +9,7 @@ class SampleClass {
             // Code 2
         } else if TestEnum.stale_flag && !true {
             // Code 3
-        } else if TestEnum.stale_flag.type {
+        } else if TestEnum.stale_flag.type && !false {
             // code 4
         } else if TestEnum.staled_flag.isEnabled {
             // code 5

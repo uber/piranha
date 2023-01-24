@@ -91,3 +91,21 @@ query = """(
 )"""
 replace_node = "not_expression"
 replace = "false"
+
+#
+# Before 
+#   !false
+# After 
+#   true
+#
+[[rules]]
+name = "not_false"
+query = """(
+(prefix_expression
+        operation: (bang)
+        target: (boolean_literal) @false
+    ) @not_expression
+(#eq? @false "false")
+)"""
+replace_node = "not_expression"
+replace = "true"

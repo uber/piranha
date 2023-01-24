@@ -1,4 +1,4 @@
 [[edges]]
 scope = "Parent"
 from = "replace_isToggleEnabled_with_boolean_literal"
-to = ["something_and_true", "true_and_something", "not_true"]
+to = ["something_and_true", "true_and_something", "not_true", "not_false"]
