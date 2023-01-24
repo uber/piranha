@@ -3,6 +3,8 @@ class SampleClass {
         // Code 1
         if TestEnum.stale_flag.isEnabled && abcd() {
             // Code 2
+        } else if abcd() && TestEnum.stale_flag.isEnabled {
+            // Code 2
         } else if TestEnum.stale_flag {
             // Code 3
         } else if TestEnum.stale_flag.type {

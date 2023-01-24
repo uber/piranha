@@ -52,5 +52,24 @@ query = """(
 (#eq? @true "true")
 )"""
 groups = ["Cleanup Rule"]
-replace_node = "parameter_access"
+replace_node = "conjunction_expression"
 replace = "@rhs"
+
+#
+# Before 
+#   abcd() && true
+# After 
+#   abcd()
+#
+[[rules]]
+name = "something_and_true"
+query = """(
+(conjunction_expression
+        lhs: (_) @lhs
+        rhs: (boolean_literal) @true
+    ) @conjunction_expression
+(#eq? @true "true")
+)"""
+groups = ["Cleanup Rule"]
+replace_node = "conjunction_expression"
+replace = "@lhs"
