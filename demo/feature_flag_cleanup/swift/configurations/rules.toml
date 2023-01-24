@@ -148,3 +148,21 @@ query = """(
 groups = ["Cleanup Rule"]
 replace_node = "disjunction_expression"
 replace = "true"
+
+#
+# Before 
+#   false && abcd()
+# After 
+#   false
+#
+[[rules]]
+name = "false_and_something"
+query = """(
+(conjunction_expression
+        lhs: (boolean_literal) @false
+        rhs: (_) 
+    ) @conjunction_expression
+(#eq? @false "false")
+)"""
+replace_node = "conjunction_expression"
+replace = "false"

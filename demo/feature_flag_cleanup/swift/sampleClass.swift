@@ -19,7 +19,9 @@ class SampleClass {
             // code 9
         } else if TestEnum.staled_flag.type {
             // code 10
-        }
+        } 
         // Code 11
+
+        let v1 = false && abcd()
     }
 }
