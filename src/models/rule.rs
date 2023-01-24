@@ -70,18 +70,6 @@ impl Rule {
 
   /// Instantiate `self` with substitutions or panic.
   pub(crate) fn instantiate(&self, substitutions: &HashMap<String, String>) -> Rule {
-    if let Ok(r) = self.try_instantiate(substitutions) {
-      return r;
-    }
-    #[rustfmt::skip]
-      panic!("{}", format!("Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions).red());
-  }
-
-  /// Tries to instantiate the rule (`self`) based on the substitutions.
-  /// Note this could fail if the `substitutions` doesn't contain mappings for each hole.
-  pub(crate) fn try_instantiate(
-    &self, substitutions: &HashMap<String, String>,
-  ) -> Result<Rule, String> {
     let relevant_substitutions = self
       .holes()
       .iter()
@@ -92,19 +80,22 @@ impl Rule {
   }
 
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  fn update(&self, substitutions: &HashMap<String, String>) -> Result<Rule, String> {
-    if substitutions.len() != self.holes().len() {
+  fn update(&self, relevant_substitutions: &HashMap<String, String>) -> Rule {
+    if relevant_substitutions.len() != self.holes().len() {
       #[rustfmt::skip]
-        return Err(format!("Could not instantiate a rule - {:?}. Some Holes {:?} not found in table {:?}", self, self.holes(), substitutions));
-    } else {
-      let mut updated_rule = self.clone();
-      if !updated_rule.holes().is_empty() {
-        updated_rule.update_query(substitutions);
-        if !updated_rule.is_match_only_rule() {
-          updated_rule.update_replace(substitutions);
-        }
-      }
-      Ok(updated_rule)
+      panic!("{}", format!( "Could not instantiate the rule {:?} with substitutions {:?}", self, relevant_substitutions).red());
+    }
+    let updated_rule = self.clone();
+    let query = updated_rule
+      .query
+      .map(|r| substitute_tags(r, relevant_substitutions, false));
+    let replace = updated_rule
+      .replace
+      .map(|r| substitute_tags(r, relevant_substitutions, false));
+    Rule {
+      query,
+      replace,
+      ..updated_rule
     }
   }
 
@@ -183,24 +174,8 @@ impl Rule {
     self.groups.clone()
   }
 
-  pub(crate) fn update_replace(&mut self, substitutions: &HashMap<String, String>) {
-    self.set_replace(substitute_tags(self.replace(), substitutions, false));
-  }
-
-  pub(crate) fn update_query(&mut self, substitutions: &HashMap<String, String>) {
-    self.set_query(substitute_tags(self.query(), substitutions, false));
-  }
-
   pub(crate) fn name(&self) -> String {
     String::from(&self.name)
-  }
-
-  pub(crate) fn set_replace(&mut self, replace: String) {
-    self.replace = Some(replace);
-  }
-
-  pub(crate) fn set_query(&mut self, query: String) {
-    self.query = Some(query);
   }
 }
 

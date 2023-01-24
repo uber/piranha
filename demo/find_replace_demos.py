@@ -60,8 +60,7 @@ def java_demo():
         cleanup_comments=True,
     )
 
-    _ = run_piranha_cli(file_path, configuration_path, False)
-
+    _ = execute_piranha(args)
     new_mtime = getmtime(file_path)
 
     assert old_mtime < new_mtime
@@ -71,6 +70,5 @@ FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(messag
 logging.basicConfig(format=FORMAT)
 logging.getLogger().setLevel(logging.INFO)
 swift_demo()
-strings_demo()
 java_demo()
 print("Completed running the Find/Replace demos")

@@ -54,7 +54,7 @@ create_rewrite_tests! {
       "treated_complement" => "true",
       "namespace" => "some_long_name"
     }, cleanup_comments = true , delete_file_if_empty= false;
-  test_scenarios_find_and_propagate:  "find_and_propagate", 2, delete_file_if_empty= false;
+  test_scenarios_find_and_propagate:  "find_and_propagate", 2, substitutions = substitutions! {"super_interface_name" => "SomeInterface"},  delete_file_if_empty= false;
   test_non_seed_user_rule:  "non_seed_user_rule", 1, substitutions = substitutions! {"input_type_name" => "ArrayList"};
   test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
   test_insert_field_and_initializer:  "insert_field_and_initializer", 1;
@@ -64,4 +64,24 @@ create_rewrite_tests! {
 create_match_tests! {
   JAVA,
   test_java_match_only: "structural_find", 20;
+}
+
+#[test]
+#[should_panic(
+  expected = "Could not instantiate the rule Rule { name: \"find_interface_extension\""
+)]
+fn test_scenarios_find_and_propagate_panic() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("find_and_propagate");
+  let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+  let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = path_to_codebase,
+    path_to_configurations = path_to_configurations,
+    language= JAVA.to_string(),
+  };
+
+  let _ = execute_piranha(&piranha_arguments);
 }

@@ -31,24 +31,23 @@ fn test_rule_try_instantiate_positive() {
     (String::from("variable_name"), String::from("foobar")),
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
-  let instantiated_rule = rule.try_instantiate(&substitutions);
-  assert!(instantiated_rule.is_ok());
+  let instantiated_rule = rule.instantiate(&substitutions);
   assert_eq!(
-    instantiated_rule.ok().unwrap().query(),
+    instantiated_rule.query(),
     "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
   )
 }
 
-/// Tests whether a valid rule can be is *not* instantiated given invalid substitutions.
+/// Tests whether a valid rule is *not* instantiated given invalid substitutions.
 #[test]
+#[should_panic]
 fn test_rule_try_instantiate_negative() {
   let rule = Rule::new("test","(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))",
         "abc", "",HashSet::from([String::from("variable_name")]), HashSet::new());
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
-  let instantiated_rule = rule.try_instantiate(&substitutions);
-  assert!(instantiated_rule.is_err());
+  let _ = rule.instantiate(&substitutions);
 }
 
 /// Positive tests for `rule.get_edit` method for given rule and input source code.
