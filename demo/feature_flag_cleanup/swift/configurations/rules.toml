@@ -109,3 +109,22 @@ query = """(
 )"""
 replace_node = "not_expression"
 replace = "true"
+
+#
+# Before 
+#   true || abcd()
+# After 
+#   true
+#
+[[rules]]
+name = "true_or_something"
+query = """(
+(disjunction_expression
+        lhs: (boolean_literal) @true
+        rhs: (_) 
+    ) @disjunction_expression
+(#eq? @true "true")
+)"""
+groups = ["Cleanup Rule"]
+replace_node = "disjunction_expression"
+replace = "true"

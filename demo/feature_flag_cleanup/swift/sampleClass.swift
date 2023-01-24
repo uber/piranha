@@ -11,13 +11,15 @@ class SampleClass {
             // Code 3
         } else if TestEnum.stale_flag.type && !false {
             // code 4
-        } else if TestEnum.staled_flag.isEnabled {
-            // code 5
-        } else if TestEnum.staled_flag {
-            // code 6
-        } else if TestEnum.staled_flag.type {
+        } else if TestEnum.stale_flag.isEnabled || abcd() {
             // code 7
+        }else if TestEnum.staled_flag.isEnabled {
+            // code 8
+        } else if TestEnum.staled_flag {
+            // code 9
+        } else if TestEnum.staled_flag.type {
+            // code 10
         }
-        // Code 8
+        // Code 11
     }
 }
