@@ -13,7 +13,7 @@ class SampleClass {
             // code 4
         } else if TestEnum.stale_flag.isEnabled || abcd() {
             // code 7
-        }else if TestEnum.staled_flag.isEnabled {
+        } else if def || TestEnum.stale_flag.isEnabled {
             // code 8
         } else if TestEnum.staled_flag {
             // code 9

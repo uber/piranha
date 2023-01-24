@@ -128,3 +128,23 @@ query = """(
 groups = ["Cleanup Rule"]
 replace_node = "disjunction_expression"
 replace = "true"
+
+
+#
+# Before 
+#   abcd() || true
+# After 
+#   true
+#
+[[rules]]
+name = "something_or_true"
+query = """(
+(disjunction_expression
+        lhs: (_)
+        rhs: (boolean_literal) @true 
+    ) @disjunction_expression
+(#eq? @true "true")
+)"""
+groups = ["Cleanup Rule"]
+replace_node = "disjunction_expression"
+replace = "true"
