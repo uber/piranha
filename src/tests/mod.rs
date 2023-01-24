@@ -88,8 +88,8 @@ fn execute_piranha_and_check_result(
 
   let count_files = |path: &Path| {
     let mut count = 0;
-    for dir_entry in fs::read_dir(path).unwrap() {
-      if dir_entry.unwrap().path().is_file() {
+    for dir_entry in fs::read_dir(path).unwrap().flatten() {
+      if dir_entry.path().is_file() && ".placeholder" != dir_entry.file_name().to_str().unwrap() {
         count += 1;
       }
     }
