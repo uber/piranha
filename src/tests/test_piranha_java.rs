@@ -12,7 +12,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use super::{
-  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
+  copy_folder_to_temp_dir, create_match_tests, create_rewrite_tests,
+  execute_piranha_and_check_result, initialize, substitutions,
 };
 use crate::{
   execute_piranha,
@@ -21,8 +22,7 @@ use crate::{
     piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
   },
 };
-use std::path::{Path, PathBuf};
-use tempdir::TempDir;
+use std::path::PathBuf;
 
 create_rewrite_tests! {
   JAVA,
@@ -59,6 +59,9 @@ create_rewrite_tests! {
   test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
   test_insert_field_and_initializer:  "insert_field_and_initializer", 1;
   test_consecutive_scope_level_rules: "consecutive_scope_level_rules",1;
+  test_user_option_delete_if_empty: "user_option_delete_if_empty", 1;
+  test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty=false;
+  // test_user_option_delete_consecutive_lines :  "user_option_delete_consecutive_lines", 1, delete_consecutive_new_lines=true;
 }
 
 create_match_tests! {
@@ -84,4 +87,43 @@ fn test_scenarios_find_and_propagate_panic() {
   };
 
   let _ = execute_piranha(&piranha_arguments);
+}
+
+#[test]
+fn test_user_option_delete_consecutive_lines() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("user_option_delete_consecutive_lines");
+  let temp_dir = copy_folder_to_temp_dir(&_path.join("input"));
+
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
+    path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
+    language= JAVA.to_string(),
+    delete_consecutive_new_lines= true,
+  };
+
+  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, false);
+  // Delete temp_dir
+  temp_dir.close().unwrap();
+}
+
+#[test]
+fn test_user_option_do_not_delete_consecutive_lines() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("user_option_do_not_delete_consecutive_lines");
+  let temp_dir = copy_folder_to_temp_dir(&_path.join("input"));
+
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
+    path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
+    language= JAVA.to_string(),
+  };
+
+  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, false);
+  // Delete temp_dir
+  temp_dir.close().unwrap();
 }

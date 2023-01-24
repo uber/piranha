@@ -11,10 +11,13 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::execute_piranha;
+use crate::models::piranha_arguments::PiranhaArguments;
 use crate::utilities::{eq_without_whitespace, read_file};
-use log::error;
+
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use tempdir::TempDir;
 
 mod test_piranha_java;
 mod test_piranha_kt;
@@ -47,22 +50,40 @@ fn initialize() {
 /// * dest: Path to destination
 ///
 /// This method causes side effects - writes new files to a directory
-fn copy_folder(src: &Path, dst: &Path) {
-  for entry in fs::read_dir(src).unwrap() {
+fn copy_folder_to_temp_dir(src: &PathBuf) -> TempDir {
+  // Copy the test scenario to temporary directory
+  let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
+  let temp_dir_path = &temp_dir.path();
+  for entry in fs::read_dir(src.as_path()).unwrap() {
     let entry = entry.unwrap();
     let path = entry.path();
     if path.is_file() {
       _ = fs::copy(
         path.to_str().unwrap(),
-        dst.join(path.file_name().unwrap()).to_str().unwrap(),
+        temp_dir_path
+          .join(path.file_name().unwrap())
+          .to_str()
+          .unwrap(),
       )
       .unwrap();
     }
   }
+  temp_dir
 }
 
 /// Checks if the file updates returned by piranha are as expected.
-fn check_result(path_to_codebase: &Path, path_to_expected: &Path) {
+fn execute_piranha_and_check_result(
+  piranha_arguments: &PiranhaArguments, path_to_expected: &Path, files_changed: usize,
+  ignore_whitespace: bool,
+) {
+  let path_to_codebase = Path::new(piranha_arguments.path_to_codebase());
+
+  let output_summaries = execute_piranha(piranha_arguments);
+
+  assert!(output_summaries.iter().any(|x| !x.rewrites().is_empty()));
+
+  assert_eq!(output_summaries.len(), files_changed);
+
   let mut all_files_match = true;
 
   let count_files = |path: &Path| {
@@ -86,10 +107,16 @@ fn check_result(path_to_codebase: &Path, path_to_expected: &Path) {
       let expected_file_path = path_to_expected.join(file_name);
       let expected_content = read_file(&expected_file_path).unwrap();
 
-      if !eq_without_whitespace(&cb_content, &expected_content) {
-        all_files_match = false;
-        error!("{}", &cb_content);
+      if (ignore_whitespace && eq_without_whitespace(&cb_content, &expected_content))
+        || (cb_content
+          .trim_end()
+          .eq(&expected_content.trim_end().to_string()))
+      {
+        continue;
       }
+
+      all_files_match = false;
+      print!("{}", &cb_content);
     }
   }
 
@@ -167,34 +194,18 @@ macro_rules! create_rewrite_tests {
     fn $test_name() {
       initialize();
       let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
-      let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
-      let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-      let path_to_expected = _path.join("expected");
-
-      // Copy the test scenario to temporary directory
-      let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
-      let temp_dir_path = &temp_dir.path();
-      copy_folder(
-        Path::new(&path_to_codebase),
-        temp_dir_path,
-      );
+      let temp_dir= copy_folder_to_temp_dir(&_path.join("input"));
 
       let piranha_arguments =  piranha_arguments!{
-        path_to_codebase = temp_dir_path.to_str().unwrap().to_string(),
-        path_to_configurations = path_to_configurations,
+        path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
+        path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
         language= $language.to_string(),
         $(
-         $kw = $value,
+          $kw = $value,
         )*
       };
 
-      let output_summaries = execute_piranha(&piranha_arguments);
-      // Checks if there are any rewrites performed for the file
-      assert!(output_summaries.iter().any(|x|!x.rewrites().is_empty()));
-
-      assert_eq!(output_summaries.len(), $files_changed);
-      check_result(temp_dir_path, &path_to_expected);
-
+      execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), $files_changed, true);
       // Delete temp_dir
       _ = temp_dir.close().unwrap();
     }

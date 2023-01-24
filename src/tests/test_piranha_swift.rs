@@ -11,14 +11,16 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};
-use crate::execute_piranha;
+use super::{
+  copy_folder_to_temp_dir, create_rewrite_tests, execute_piranha_and_check_result, initialize,
+  substitutions,
+};
+
 use crate::models::{
   default_configs::SWIFT,
   piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
 };
-use std::path::{Path, PathBuf};
-use tempdir::TempDir;
+use std::path::PathBuf;
 
 create_rewrite_tests! {
   SWIFT,
