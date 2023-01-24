@@ -282,9 +282,9 @@ fn _get_tree_sitter_edit(
 ///
 /// Note that,  it escapes newline characters for tree-sitter-queries.
 pub(crate) fn substitute_tags(
-  input_string: String, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
+  input_string: &str, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
 ) -> String {
-  let mut output = input_string;
+  let mut output = input_string.to_string();
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
     let key = format!("@{}", tag);

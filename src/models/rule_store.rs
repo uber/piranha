@@ -32,7 +32,7 @@ use crate::{
 
 use super::{
   outgoing_edges::{Edges, OutgoingEdges},
-  rule::Rules,
+  rule::{InstantiatedRule, Rules},
 };
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -47,7 +47,7 @@ pub(crate) struct RuleStore {
   rule_query_cache: HashMap<String, Query>,
   // Current global rules to be applied.
   #[get = "pub"]
-  global_rules: Vec<Rule>,
+  global_rules: Vec<InstantiatedRule>,
   // Command line arguments passed to piranha
   #[get = "pub"]
   piranha_args: PiranhaArguments,
@@ -77,7 +77,7 @@ impl RuleStore {
 
     for (_, rule) in rule_store.rule_graph().rules_by_name().clone() {
       if rule.is_seed_rule() {
-        rule_store.add_to_global_rules(&rule, args.input_substitutions());
+        rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, args.input_substitutions()));
       }
     }
     info!(
@@ -95,14 +95,11 @@ impl RuleStore {
   }
 
   /// Add a new global rule, along with grep heuristics (If it doesn't already exist)
-  pub(crate) fn add_to_global_rules(
-    &mut self, rule: &Rule, tag_captures: &HashMap<String, String>,
-  ) {
-    let mut r = rule.instantiate(tag_captures);
+  pub(crate) fn add_to_global_rules(&mut self, rule: &InstantiatedRule) {
+    let r = rule.clone();
     if !self.global_rules.iter().any(|r| {
       r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
     }) {
-      r.add_grep_heuristics_for_global_rules(tag_captures);
       #[rustfmt::skip]
       debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
       self.global_rules.push(r);
@@ -126,9 +123,9 @@ impl RuleStore {
   /// Get the next rules to be applied grouped by the scope in which they should be performed.
   pub(crate) fn get_next(
     &self, rule_name: &String, tag_matches: &HashMap<String, String>,
-  ) -> HashMap<String, Vec<Rule>> {
+  ) -> HashMap<String, Vec<InstantiatedRule>> {
     // let rule_name = rule.name();
-    let mut next_rules: HashMap<String, Vec<Rule>> = HashMap::new();
+    let mut next_rules: HashMap<String, Vec<InstantiatedRule>> = HashMap::new();
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
     for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
       let to_rule_name = &self.rule_graph().rules_by_name()[&to_rule];
@@ -136,19 +133,19 @@ impl RuleStore {
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
         for (next_next_rules_scope, next_next_rules) in
-          self.get_next(&to_rule_name.name(), tag_matches)
+          self.get_next(to_rule_name.name(), tag_matches)
         {
           for next_next_rule in next_next_rules {
             // Group the next rules based on the scope
-            next_rules.collect(
-              String::from(&next_next_rules_scope),
-              next_next_rule.instantiate(tag_matches),
-            )
+            next_rules.collect(String::from(&next_next_rules_scope), next_next_rule)
           }
         }
       } else {
         // Group the next rules based on the scope
-        next_rules.collect(String::from(&scope), to_rule_name.instantiate(tag_matches));
+        next_rules.collect(
+          String::from(&scope),
+          InstantiatedRule::new(to_rule_name, tag_matches),
+        );
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope
@@ -191,7 +188,7 @@ impl RuleStore {
     let reg_x = self
       .global_rules()
       .iter()
-      .flat_map(|r| r.grep_heuristics())
+      .flat_map(|r| r.substitutions().values())
       .sorted()
       //Remove duplicates
       .dedup()

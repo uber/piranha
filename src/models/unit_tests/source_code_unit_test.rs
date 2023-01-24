@@ -26,7 +26,7 @@ use crate::models::{
   default_configs::{JAVA, SWIFT},
   language::PiranhaLanguage,
   piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  rule::Rule,
+  rule::{InstantiatedRule, Rule},
   rule_store::RuleStore,
 };
 use {
@@ -311,7 +311,7 @@ fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
 
 #[test]
 fn test_satisfies_constraints_positive() {
-  let rule = Rule::new(
+  let _rule = Rule::new(
     "test",
     "(
       ((local_variable_declaration
@@ -335,6 +335,7 @@ fn test_satisfies_constraints_positive() {
       )],
     )]),
   );
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){
         boolean isFlagTreated = true;
@@ -377,7 +378,7 @@ fn test_satisfies_constraints_positive() {
 
 #[test]
 fn test_satisfies_constraints_negative() {
-  let rule = Rule::new(
+  let _rule = Rule::new(
     "test",
     "(
       ((local_variable_declaration
@@ -401,6 +402,7 @@ fn test_satisfies_constraints_negative() {
       )],
     )]),
   );
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){
         boolean isFlagTreated = true;
