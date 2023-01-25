@@ -184,3 +184,34 @@ query = """(
 )"""
 replace_node = "conjunction_expression"
 replace = "false"
+
+
+# Before 
+#   if placeholder() {
+#     abcd()
+#   } else if true {
+#     efg()
+#   } else {
+#     hij()
+#   }
+# After 
+#   if placeholder() {
+#     abcd()
+#   } else {
+#     efg()
+#   }
+#
+[[rules]]
+name = "else_if_always_true"
+query = """ (
+(_) @previous_statement
+(if_statement
+        condition: (boolean_literal) @condition
+        (statements) @if_block
+        (_) 
+    ) @if_else_block
+(#eq? @condition "true")
+(#eq? @previous_statement "else")
+)"""
+replace_node = "if_else_block"
+replace = "{ @if_block }"

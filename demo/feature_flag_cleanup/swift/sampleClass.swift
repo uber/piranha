@@ -24,5 +24,15 @@ class SampleClass {
 
         let v1 = false && abcd()
         let v2 = abcd() && false 
+
+        if TestEnum.stale_flag.isEnabled {
+            abcd()
+        } else if TestEnum.stale_flag.isEnabled{
+            efg()
+        } else if TestEnum.stale_flag.isEnabled{
+            hij()
+        } else {
+            klm()
+        }
     }
 }

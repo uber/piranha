@@ -8,4 +8,5 @@ to = [
   "not_false",
   "true_or_something",
   "something_or_true",
+  "if_always_true",
 ]
