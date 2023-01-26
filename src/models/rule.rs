@@ -14,6 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
+use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
@@ -33,32 +34,40 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters)]
-pub(crate) struct Rule {
+#[derive(Deserialize, Debug, Clone, PartialEq, Getters, Builder)]
+#[builder(build_fn(name = "create"))]
+pub struct Rule {
   /// Name of the rule. (It is unique)
+  #[builder(default = "String::new()")]
   #[get = "pub"]
   name: String,
   /// Tree-sitter query as string
+  #[builder(default = "default_query()")]
   #[serde(default = "default_query")]
   #[get = "pub"]
   query: String,
   /// The tag corresponding to the node to be replaced
+  #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
   #[get = "pub"]
   replace_node: String,
   /// Replacement pattern
+  #[builder(default = "default_replace()")]
   #[serde(default = "default_replace")]
   #[get = "pub"]
   replace: String,
   /// Group(s) to which the rule belongs
+  #[builder(default = "HashSet::new()")]
   #[serde(default)]
   #[get = "pub"]
   groups: HashSet<String>,
   /// Holes that need to be filled, in order to instantiate a rule
+  #[builder(default = "HashSet::new()")]
   #[serde(default)]
   #[get = "pub"]
   holes: HashSet<String>,
   /// Additional constraints for matching the rule
+  #[builder(default = "HashSet::new()")]
   #[serde(default)]
   #[get = "pub"]
   constraints: HashSet<Constraint>,
@@ -125,18 +134,37 @@ impl Rule {
     name: &str, query: &str, replace_node: &str, replace: &str, holes: HashSet<String>,
     constraints: HashSet<Constraint>,
   ) -> Self {
-    Self {
-      name: name.to_string(),
-      query: query.to_string(),
-      replace_node: replace_node.to_string(),
-      replace: replace.to_string(),
-      groups: HashSet::default(),
-      holes,
-      constraints,
+    piranha_rule! {
+      name= name.to_string(),
+      query= query.to_string(),
+      replace_node= replace_node.to_string(),
+      replace= replace.to_string(),
+      groups= HashSet::default(),
+      holes= holes,
+      constraints= constraints,
     }
   }
 }
 
+impl RuleBuilder {
+  pub fn build(&self) -> Rule {
+    let rule = &mut self.create().unwrap();
+    rule.add_to_seed_rules_group();
+    return rule.clone();
+  }
+}
+
+#[macro_export]
+macro_rules! piranha_rule {
+  ($($kw: ident = $value: expr,)*) => {
+    RuleBuilder::default()
+    $(
+      .$kw($value)
+     )*
+    .build()
+  };
+}
+pub use piranha_rule;
 #[derive(Debug, Getters, Clone)]
 pub(crate) struct InstantiatedRule {
   #[get = "pub"]

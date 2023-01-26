@@ -19,20 +19,23 @@ use crate::{
 };
 use std::collections::HashMap;
 
-#[derive(Debug, Default, Getters)]
-pub(crate) struct RuleGraph {
+#[derive(Debug, Default, Getters, Clone, PartialEq)]
+pub struct RuleGraph {
   #[get = "pub(crate)"]
   graph: HashMap<String, Vec<(String, String)>>,
   // All the input rules stored by name
+  #[get = "pub(crate)"]
+  edges: Vec<OutgoingEdges>,
+  #[get = "pub(crate)"]
+  rules: Vec<Rule>,
   #[get = "pub(crate)"]
   rules_by_name: HashMap<String, Rule>,
 }
 
 impl RuleGraph {
   // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
-  pub(crate) fn new(edges: &Vec<OutgoingEdges>, all_rules: &Vec<Rule>) -> Self {
-    let (rules_by_name, rules_by_group) = Rule::group_rules(all_rules);
-
+  pub(crate) fn new(edges: &Vec<OutgoingEdges>, rules: &Vec<Rule>) -> Self {
+    let (rules_by_name, rules_by_group) = Rule::group_rules(rules);
     // A closure that gets the rules corresponding to the given rule name or group name.
     let get_rules_for_tag_or_name = |val: &String| {
       rules_by_name
@@ -59,8 +62,16 @@ impl RuleGraph {
     }
     RuleGraph {
       graph,
+      edges: edges.clone(),
+      rules: rules.clone(),
       rules_by_name,
     }
+  }
+
+  pub(crate) fn merge(&self, rule_graph: &RuleGraph) -> Self {
+    let all_rules = [rule_graph.rules().clone(), self.rules().clone()].concat();
+    let all_edges = [rule_graph.edges().clone(), self.edges().clone()].concat();
+    RuleGraph::new(&all_edges, &all_rules)
   }
 
   /// Get all the outgoing edges for `rule_name`

@@ -11,14 +11,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::{
-  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
-};
+use super::{check_result, copy_folder, create_rewrite_tests, initialize, substitutions};
 use crate::{
   execute_piranha,
   models::{
     default_configs::JAVA,
     piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
+    rule::{piranha_rule, RuleBuilder},
+    rule_graph::RuleGraph,
   },
 };
 use std::path::{Path, PathBuf};
@@ -61,9 +61,46 @@ create_rewrite_tests! {
   test_consecutive_scope_level_rules: "consecutive_scope_level_rules",1;
 }
 
-create_match_tests! {
-  JAVA,
-  test_java_match_only: "structural_find", 20;
+#[test]
+fn test_java_match_only() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("structural_find");
+  let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+  let rule = piranha_rule! {
+    name= "replace_isToggleEnabled_with_boolean_literal".to_string(),
+    query= "((
+        (method_invocation 
+          name : (_) @name
+          arguments: ((argument_list 
+                          ([
+                            (field_access field: (_)@argument)
+                            (_) @argument
+                           ])) )
+              
+        ) @method_invocation
+      )
+      (#eq? @name \"isToggleEnabled\")
+      (#eq? @argument \"STALE_FLAG\")
+      )".to_string(),
+  };
+
+  let rule_graph = RuleGraph::new(&vec![], &vec![rule]);
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = path_to_codebase,
+    rule_graph = rule_graph,
+    language= JAVA.to_string(),
+  };
+
+  let output_summaries = execute_piranha(&piranha_arguments);
+  assert_eq!(
+    output_summaries
+      .iter()
+      .flat_map(|os| os.matches().iter())
+      .count(),
+    20
+  );
 }
 
 #[test]

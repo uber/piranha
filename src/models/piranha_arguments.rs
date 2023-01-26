@@ -20,9 +20,11 @@ use super::{
     default_global_tag_prefix, default_input_substitutions, default_language,
     default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
     default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
-    default_piranha_language, default_substitutions,
+    default_piranha_language, default_rule_graph, default_substitutions,
   },
   language::PiranhaLanguage,
+  rule_graph::RuleGraph,
+  rule_store::read_user_config_files,
 };
 use clap::Parser;
 use derive_builder::Builder;
@@ -68,6 +70,13 @@ pub struct PiranhaArguments {
   #[clap(short = 'f', long)]
   #[serde(skip)]
   path_to_configurations: String,
+
+  /// A graph that captures the flow amongst the rules
+  #[builder(default = "default_rule_graph()")]
+  #[clap(skip)]
+  #[serde(skip)]
+  #[get = "pub"]
+  rule_graph: RuleGraph,
 
   /// Path to output summary json file
   #[get = "pub"]
@@ -251,6 +260,7 @@ impl PiranhaArguments {
       substitutions: merge!(substitutions, default_substitutions),
       input_substitutions: merge!(input_substitutions, default_input_substitutions),
       path_to_configurations: merge!(path_to_configurations, default_path_to_configurations),
+      rule_graph: self.rule_graph().merge(other.rule_graph()),
       path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
       language: merge!(language, default_language),
       piranha_language: merge!(piranha_language, default_piranha_language),
@@ -286,10 +296,23 @@ impl PiranhaArgumentsBuilder {
 
     let piranha_language = PiranhaLanguage::from(_arg.language.as_str());
 
+    let language_rule_graph = RuleGraph::new(
+      &piranha_language.edges().clone().unwrap_or_default().edges,
+      &piranha_language.rules().clone().unwrap_or_default().rules,
+    );
+
+    let mut user_rule_graph = _arg.rule_graph().clone();
+    if !_arg.path_to_codebase().eq(&default_path_to_codebase()) {
+      user_rule_graph = read_user_config_files(_arg.path_to_configurations());
+    }
+
+    let rule_graph = language_rule_graph.merge(&user_rule_graph);
+
     let created_args = _arg.merge(
       PiranhaArgumentsBuilder::default()
         .input_substitutions(input_substitutions)
         .piranha_language(piranha_language)
+        .rule_graph(rule_graph)
         .create()
         .unwrap(),
     );

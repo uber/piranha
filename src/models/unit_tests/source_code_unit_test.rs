@@ -21,13 +21,16 @@ use tempdir::TempDir;
 
 use tree_sitter::Parser;
 
-use crate::models::{
-  constraint::Constraint,
-  default_configs::{JAVA, SWIFT},
-  language::PiranhaLanguage,
-  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  rule::{InstantiatedRule, Rule},
-  rule_store::RuleStore,
+use crate::{
+  models::{
+    constraint::Constraint,
+    default_configs::{JAVA, SWIFT},
+    language::PiranhaLanguage,
+    piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+    rule::{InstantiatedRule, RuleBuilder},
+    rule_store::RuleStore,
+  },
+  piranha_rule,
 };
 use {
   super::SourceCodeUnit,
@@ -311,18 +314,17 @@ fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
 
 #[test]
 fn test_satisfies_constraints_positive() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule! {
+    name= "test".to_string(),
+    query = "(
       ((local_variable_declaration
                       declarator: (variable_declarator
                                           name: (_) @variable_name
                                           value: [(true) (false)] @init)) @variable_declaration)
-      )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
+      )".to_string(),
+    replace_node = "variable_declaration".to_string(),
+    replace = "".to_string(),
+    constraints = HashSet::from([Constraint::new(
       String::from("(method_declaration) @md"),
       vec![String::from(
         "(
@@ -331,10 +333,10 @@ fn test_satisfies_constraints_positive() {
                          right: (_) @a.rhs) @assignment)
          (#eq? @a.lhs \"@variable_name\")
          (#not-eq? @a.rhs \"@init\")
-       )",
+       )".to_string(),
       )],
     )]),
-  );
+  };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){
@@ -378,18 +380,17 @@ fn test_satisfies_constraints_positive() {
 
 #[test]
 fn test_satisfies_constraints_negative() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule! {
+    name = "test".to_string(),
+    query= "(
       ((local_variable_declaration
-                      declarator: (variable_declarator
-                                          name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
-      )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
+          declarator: (variable_declarator
+          name: (_) @variable_name
+          value: [(true) (false)] @init)) @variable_declaration)
+      )".to_string(),
+    replace= "".to_string(),
+    replace_node= "variable_declaration".to_string(),
+    constraints= HashSet::from([Constraint::new(
       String::from("(method_declaration) @md"),
       vec![String::from(
         "(
@@ -401,7 +402,8 @@ fn test_satisfies_constraints_negative() {
        )",
       )],
     )]),
-  );
+  };
+
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){

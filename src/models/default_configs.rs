@@ -13,7 +13,7 @@
 
 use std::collections::HashMap;
 
-use super::language::PiranhaLanguage;
+use super::{language::PiranhaLanguage, rule_graph::RuleGraph};
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -33,6 +33,10 @@ pub fn default_language() -> String {
 
 pub fn default_substitutions() -> Vec<Vec<String>> {
   vec![]
+}
+
+pub fn default_rule_graph() -> RuleGraph {
+  RuleGraph::default()
 }
 
 pub fn default_delete_file_if_empty() -> bool {

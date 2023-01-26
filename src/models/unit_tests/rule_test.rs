@@ -10,14 +10,20 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
+use crate::{
+  constraint,
+  models::{default_configs::JAVA, language::PiranhaLanguage},
+  utilities::eq_without_whitespace,
+};
 use std::collections::HashSet;
 
 use super::InstantiatedRule;
 use {
-  super::Rule,
+  super::{Rule, RuleBuilder},
   crate::models::{
-    constraint::Constraint, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+    constraint::{Constraint, ConstraintBuilder},
+    rule_store::RuleStore,
+    source_code_unit::SourceCodeUnit,
   },
   std::collections::HashMap,
   std::path::PathBuf,
@@ -27,25 +33,39 @@ use {
 #[test]
 fn test_rule_try_instantiate_positive() {
   let holes = HashSet::from([String::from("variable_name")]);
-  let rule = Rule::new("test","(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))",
-        "@abc", "",holes, HashSet::new());
+  let rule = piranha_rule! {
+    name= "test".to_string(),
+    query= "(
+      ((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) 
+      (#eq? @a.lhs \"@variable_name\")
+    )".to_string(),
+    replace_node = "abc".to_string(),
+    replace= "".to_string(),
+    holes= holes,
+  };
+
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("variable_name"), String::from("foobar")),
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
   let instantiated_rule = InstantiatedRule::new(&rule, &substitutions);
-  assert_eq!(
-    instantiated_rule.query(),
+  assert!(eq_without_whitespace(
+    &instantiated_rule.query(),
     "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
-  )
+  ))
 }
 
 /// Tests whether a valid rule is *not* instantiated given invalid substitutions.
 #[test]
 #[should_panic]
 fn test_rule_try_instantiate_negative() {
-  let rule = Rule::new("test","(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))",
-        "abc", "",HashSet::from([String::from("variable_name")]), HashSet::new());
+  let rule = piranha_rule! {
+  name= "test".to_string(),
+  query= "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"@variable_name\"))".to_string(),
+  replace_node= "abc".to_string(),
+  replace= "".to_string(),
+  holes= HashSet::from(["variable_name".to_string()]),
+  };
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
@@ -55,22 +75,28 @@ fn test_rule_try_instantiate_negative() {
 /// Positive tests for `rule.get_edit` method for given rule and input source code.
 #[test]
 fn test_get_edit_positive_recursive() {
-  let _rule = Rule::new("test", "(
+  let _rule = Rule::new(
+    "test",
+    "(
                            ((local_variable_declaration
-                                           declarator: (variable_declarator
-                                                               name: (_) @variable_name
-                                                               value: [(true) (false)] @init)) @variable_declaration)
-                           )", "variable_declaration", "" ,HashSet::new(), 
-                           HashSet::from([
-                          Constraint::new(String::from("(method_declaration) @md"),
-                            vec![String::from("(
+                              declarator: (variable_declarator
+                                  name: (_) @variable_name
+                                  value: [(true) (false)] @init))
+                            @variable_declaration))",
+    "variable_declaration",
+    "",
+    HashSet::new(),
+    HashSet::from([constraint! {
+      matcher = "(method_declaration) @md",
+      queries = ["(
                               ((assignment_expression
                                               left: (_) @a.lhs
                                               right: (_) @a.rhs) @assignment)
                               (#eq? @a.lhs \"@variable_name\")
                               (#not-eq? @a.rhs \"@init\")
-                            )")]),
-                          ]));
+                            )",]
+    }]),
+  );
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
           pub void foobar(){
@@ -151,19 +177,18 @@ fn test_get_edit_negative_recursive() {
 /// Positive tests for `rule.get_edit_for_context` method for given rule and input source code.
 #[test]
 fn test_get_edit_for_context_positive() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule!(
+    name = "test".to_string(),
+    query = "(
           (binary_expression
               left : (_)* @lhs
               operator:\"&&\"
               right: [(true) (parenthesized_expression (true))]
           )
-      @binary_expression)",
-    "binary_expression",
-    "",
-    HashSet::new(),
-    HashSet::new(),
+      @binary_expression)"
+      .to_string(),
+    replace_node = "binary_expression".to_string(),
+    replace = "".to_string(),
   );
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
 
@@ -191,20 +216,18 @@ fn test_get_edit_for_context_positive() {
 /// Negative tests for `rule.get_edit_for_context` method for given rule and input source code.
 #[test]
 fn test_get_edit_for_context_negative() {
-  let _rule = Rule::new(
-    "test",
-    "(
-          (binary_expression
-              left : (_)* @lhs
-              operator:\"&&\"
-              right: [(true) (parenthesized_expression (true))]
-          )
-      @binary_expression)",
-    "binary_expression",
-    "",
-    HashSet::new(),
-    HashSet::new(),
-  );
+  let _rule = piranha_rule! {
+    name = "test".to_string(),
+    query = "(
+            (binary_expression
+                left : (_)* @lhs
+                operator:\"&&\"
+                right: [(true) (parenthesized_expression (true))]
+            )
+        @binary_expression)".to_string(),
+    replace_node = "binary_expression".to_string(),
+    replace = "".to_string(),
+  };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class A {
           boolean f = true;

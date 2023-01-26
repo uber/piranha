@@ -11,11 +11,12 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters)]
-pub(crate) struct Constraint {
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
+pub struct Constraint {
   /// Scope in which the constraint query has to be applied
   #[get = "pub"]
   matcher: String,
@@ -31,3 +32,14 @@ impl Constraint {
     Self { matcher, queries }
   }
 }
+
+#[macro_export]
+macro_rules! constraint {
+  (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
+    ConstraintBuilder::default()
+      .matcher($matcher.to_string())
+      .queries(vec![$($q.to_string(),)*])
+      .build().unwrap()
+  };
+}
+pub use constraint;

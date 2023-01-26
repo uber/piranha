@@ -26,13 +26,14 @@ use tree_sitter::Query;
 
 use crate::{
   models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  models::{rule::Rule, rule_graph::RuleGraph, scopes::ScopeQueryGenerator},
+  models::scopes::ScopeQueryGenerator,
   utilities::{read_file, read_toml, MapOfVec},
 };
 
 use super::{
-  outgoing_edges::{Edges, OutgoingEdges},
+  outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
+  rule_graph::RuleGraph,
 };
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -40,9 +41,6 @@ pub(crate) static PARENT: &str = "Parent";
 /// This maintains the state for Piranha.
 #[derive(Debug, Getters)]
 pub(crate) struct RuleStore {
-  // A graph that captures the flow amongst the rules
-  #[get = "pub"]
-  rule_graph: RuleGraph,
   // Caches the compiled tree-sitter queries.
   rule_query_cache: HashMap<String, Query>,
   // Current global rules to be applied.
@@ -67,23 +65,24 @@ impl From<PiranhaArguments> for RuleStore {
 
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
-    let (rules, edges) = read_config_files(args);
-    let rule_graph = RuleGraph::new(&edges, &rules);
     let mut rule_store = RuleStore {
-      rule_graph,
       piranha_args: args.clone(),
       ..Default::default()
     };
 
-    for (_, rule) in rule_store.rule_graph().rules_by_name().clone() {
+    for (_, rule) in rule_store
+      .piranha_args()
+      .rule_graph()
+      .rules_by_name()
+      .clone()
+    {
       if rule.is_seed_rule() {
         rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, args.input_substitutions()));
       }
     }
-    info!(
-      "Number of rules and edges loaded : {:?}",
-      rule_store.rule_graph.get_number_of_rules_and_edges()
-    );
+
+    #[rustfmt::skip]
+    info!("Number of rules and edges loaded : {:?}", rule_store.piranha_args().rule_graph().get_number_of_rules_and_edges());
     trace!("Rule Store {}", format!("{:#?}", rule_store));
     rule_store
   }
@@ -127,8 +126,8 @@ impl RuleStore {
     // let rule_name = rule.name();
     let mut next_rules: HashMap<String, Vec<InstantiatedRule>> = HashMap::new();
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
-    for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
-      let to_rule_name = &self.rule_graph().rules_by_name()[&to_rule];
+    for (scope, to_rule) in self.piranha_args().rule_graph().get_neighbors(rule_name) {
+      let to_rule_name = &self.piranha_args().rule_graph().rules_by_name()[&to_rule];
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
@@ -260,7 +259,6 @@ impl RuleStore {
 impl Default for RuleStore {
   fn default() -> Self {
     RuleStore {
-      rule_graph: RuleGraph::default(),
       rule_query_cache: HashMap::default(),
       global_rules: Vec::default(),
       piranha_args: PiranhaArgumentsBuilder::default().build(),
@@ -269,22 +267,13 @@ impl Default for RuleStore {
   }
 }
 
-fn read_config_files(args: &PiranhaArguments) -> (Vec<Rule>, Vec<OutgoingEdges>) {
-  let path_to_config = Path::new(args.path_to_configurations());
-  // Read the language specific cleanup rules and edges
-  let language_rules: Rules = args.piranha_language().rules().clone().unwrap_or_default();
-  let language_edges: Edges = args.piranha_language().edges().clone().unwrap_or_default();
-
+pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
+  let path_to_config = Path::new(path_to_configurations);
   // Read the API specific cleanup rules and edges
   let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
-
   for r in input_rules.rules.iter_mut() {
     r.add_to_seed_rules_group();
   }
-
-  let all_rules = [language_rules.rules, input_rules.rules].concat();
-  let all_edges = [language_edges.edges, input_edges.edges].concat();
-
-  (all_rules, all_edges)
+  RuleGraph::new(&input_edges.edges, &input_rules.rules)
 }

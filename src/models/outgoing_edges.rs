@@ -24,9 +24,9 @@ pub(crate) struct Edges {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct OutgoingEdges {
   #[get = "pub with_prefix"]
-  from: String,
+  pub(crate) from: String,
   #[get = "pub with_prefix"]
-  to: Vec<String>,
+  pub(crate) to: Vec<String>,
   #[get = "pub with_prefix"]
-  scope: String,
+  pub(crate) scope: String,
 }
