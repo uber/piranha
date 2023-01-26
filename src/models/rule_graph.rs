@@ -25,7 +25,10 @@ pub(crate) struct RuleGraph {
   graph: HashMap<String, Vec<(String, String)>>,
   // All the input rules stored by name
   #[get = "pub(crate)"]
-  rules_by_name: HashMap<String, Rule>,
+  rules: Vec<Rule>,
+  /// Edges of the rule graph
+  #[get = "pub(crate)"]
+  edges: Vec<OutgoingEdges>,
 }
 
 impl RuleGraph {
@@ -59,8 +62,15 @@ impl RuleGraph {
     }
     RuleGraph {
       graph,
-      rules_by_name,
+      edges: edges.clone(),
+      rules: all_rules.clone(),
     }
+  }
+
+  pub(crate) fn merge(&self, rule_graph: &RuleGraph) -> Self {
+    let all_rules = [rule_graph.rules().clone(), self.rules().clone()].concat();
+    let all_edges = [rule_graph.edges().clone(), self.edges().clone()].concat();
+    RuleGraph::new(&all_edges, &all_rules)
   }
 
   /// Get all the outgoing edges for `rule_name`
@@ -75,5 +85,9 @@ impl RuleGraph {
       edges += destinations.len();
     }
     (self.graph.len(), edges)
+  }
+
+  pub(crate) fn get_rule_named(&self, name: &String) -> &Rule {
+    self.rules().iter().find(|x| x.name() == name).unwrap()
   }
 }
