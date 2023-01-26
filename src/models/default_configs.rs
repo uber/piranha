@@ -11,86 +11,106 @@
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use super::language::PiranhaLanguage;
+use super::{constraint::Constraint, language::PiranhaLanguage};
 
-pub const JAVA: &str = "java";
-pub const KOTLIN: &str = "kt";
-pub const GO: &str = "go";
-pub const PYTHON: &str = "py";
-pub const SWIFT: &str = "swift";
-pub const TYPESCRIPT: &str = "ts";
-pub const TSX: &str = "tsx";
+pub(crate) const JAVA: &str = "java";
+pub(crate) const KOTLIN: &str = "kt";
+pub(crate) const GO: &str = "go";
+pub(crate) const PYTHON: &str = "py";
+pub(crate) const SWIFT: &str = "swift";
+pub(crate) const TYPESCRIPT: &str = "ts";
+pub(crate) const TSX: &str = "tsx";
 
-pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
+pub(crate) fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
 }
 
-pub fn default_language() -> String {
+pub(crate) fn default_language() -> String {
   JAVA.to_string()
 }
 
-pub fn default_substitutions() -> Vec<Vec<String>> {
+pub(crate) fn default_substitutions() -> Vec<Vec<String>> {
   vec![]
 }
 
-pub fn default_delete_file_if_empty() -> bool {
+pub(crate) fn default_delete_file_if_empty() -> bool {
   true
 }
 
-pub fn default_cleanup_comments_buffer() -> usize {
+pub(crate) fn default_cleanup_comments_buffer() -> usize {
   2
 }
 
-pub fn default_cleanup_comments() -> bool {
+pub(crate) fn default_cleanup_comments() -> bool {
   false
 }
 
-pub fn default_global_tag_prefix() -> String {
+pub(crate) fn default_global_tag_prefix() -> String {
   "GLOBAL_TAG.".to_string()
 }
 
-pub fn default_dry_run() -> bool {
+pub(crate) fn default_dry_run() -> bool {
   false
 }
 
-pub fn default_path_to_codebase() -> String {
+pub(crate) fn default_path_to_codebase() -> String {
   String::new()
 }
 
-pub fn default_name_of_piranha_argument_toml() -> String {
+pub(crate) fn default_name_of_piranha_argument_toml() -> String {
   "piranha_arguments.toml".to_string()
 }
 
-pub fn default_input_substitutions() -> HashMap<String, String> {
+pub(crate) fn default_input_substitutions() -> HashMap<String, String> {
   HashMap::new()
 }
 
-pub fn default_path_to_configurations() -> String {
+pub(crate) fn default_path_to_configurations() -> String {
   String::new()
 }
 
-pub fn default_path_to_output_summaries() -> Option<String> {
+pub(crate) fn default_path_to_output_summaries() -> Option<String> {
   None
 }
 
-pub fn default_piranha_language() -> PiranhaLanguage {
+pub(crate) fn default_piranha_language() -> PiranhaLanguage {
   PiranhaLanguage::default()
 }
 
-pub fn default_delete_consecutive_new_lines() -> bool {
+pub(crate) fn default_delete_consecutive_new_lines() -> bool {
   false
 }
 
-pub fn default_query() -> String {
+pub(crate) fn default_rule_name() -> String {
   String::new()
 }
 
-pub fn default_replace_node() -> String {
+pub(crate) fn default_query() -> String {
   String::new()
 }
 
-pub fn default_replace() -> String {
+pub(crate) fn default_replace_node() -> String {
   String::new()
+}
+
+pub(crate) fn default_replace() -> String {
+  String::new()
+}
+
+pub(crate) fn default_holes() -> HashSet<String> {
+  HashSet::new()
+}
+
+pub(crate) fn default_groups() -> HashSet<String> {
+  HashSet::new()
+}
+
+pub(crate) fn default_constraints() -> HashSet<Constraint> {
+  HashSet::new()
+}
+
+pub(crate) fn default_queries() -> Vec<String> {
+  Vec::new()
 }

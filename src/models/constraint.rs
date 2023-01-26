@@ -11,17 +11,22 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters)]
+use super::default_configs::{default_queries, default_query};
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 pub(crate) struct Constraint {
   /// Scope in which the constraint query has to be applied
+  #[builder(default = "default_query()")]
   #[get = "pub"]
   matcher: String,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
   #[get = "pub"]
   #[serde(default)]
+  #[builder(default = "default_queries()")]
   queries: Vec<String>,
 }
 
@@ -31,3 +36,14 @@ impl Constraint {
     Self { matcher, queries }
   }
 }
+
+#[macro_export]
+macro_rules! constraint {
+  (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
+    ConstraintBuilder::default()
+      .matcher($matcher.to_string())
+      .queries(vec![$($q.to_string(),)*])
+      .build().unwrap()
+  };
+}
+pub use constraint;
