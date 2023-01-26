@@ -134,9 +134,9 @@ fn test_get_edit_negative_recursive() {
     name= "test",
     query= "(
       ((local_variable_declaration
-                      declarator: (variable_declarator
-                                          name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
+        declarator: (variable_declarator
+          name: (_) @variable_name
+          value: [(true) (false)] @init)) @variable_declaration)
       )",
     replace_node = "variable_declaration",
     replace = "",
@@ -145,8 +145,8 @@ fn test_get_edit_negative_recursive() {
           queries = [
             "(
               ((assignment_expression
-                              left: (_) @a.lhs
-                              right: (_) @a.rhs) @assignment)
+                left: (_) @a.lhs
+                right: (_) @a.rhs) @assignment)
               (#eq? @a.lhs \"@variable_name\")
               (#not-eq? @a.rhs \"@init\")
             )",
