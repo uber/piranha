@@ -8,5 +8,9 @@ to = [
   "not_false",
   "true_or_something",
   "something_or_true",
-  "if_always_true",
 ]
+
+[[edges]]
+scope = "Parent"
+from = "else_if_always_true"
+to = ["if_always_true"]

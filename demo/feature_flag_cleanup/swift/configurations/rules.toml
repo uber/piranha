@@ -204,6 +204,29 @@ replace = "false"
 [[rules]]
 name = "else_if_always_true"
 query = """ (
+(else)
+(if_statement
+        condition: (boolean_literal) @condition
+        (statements) @if_block
+        (_) 
+    ) @if_else_block
+(#eq? @condition "true")
+)"""
+replace_node = "if_else_block"
+replace = "{ @if_block }"
+
+# Before 
+#   if true {
+#     abcd()
+#   } else {
+#     hij()
+#   }
+# After 
+#   abcd()
+#
+[[rules]]
+name = "if_always_true"
+query = """ (
 (_) @previous_statement
 (if_statement
         condition: (boolean_literal) @condition
@@ -211,7 +234,8 @@ query = """ (
         (_) 
     ) @if_else_block
 (#eq? @condition "true")
-(#eq? @previous_statement "else")
+(#not-eq? @previous_statement "else")
 )"""
+groups = ["Cleanup Rule"]
 replace_node = "if_else_block"
-replace = "{ @if_block }"
+replace = "@if_block"
