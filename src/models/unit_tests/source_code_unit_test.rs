@@ -20,7 +20,7 @@ use crate::{
     default_configs::{JAVA, SWIFT},
     language::PiranhaLanguage,
     piranha_arguments::PiranhaArgumentsBuilder,
-    rule::Rule,
+    rule::{InstantiatedRule, Rule},
     rule_store::RuleStore,
   },
   utilities::eq_without_whitespace,
