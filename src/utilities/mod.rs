@@ -44,7 +44,7 @@ where
         T::default()
       } else {
         #[rustfmt::skip]
-      panic!("Could not read file: {:?} \n Error : \n {:?}", file_path, err);
+      panic!("Could not read file: {file_path:?} \n Error : \n {err:?}");
       }
     }
   }

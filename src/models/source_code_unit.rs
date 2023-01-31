@@ -134,7 +134,7 @@ impl SourceCodeUnit {
         query_again = true;
 
         // Add all the (code_snippet, tag) mapping to the substitution table.
-        self.add_to_substitutions(edit.p_match().matches(), rule_store);
+        self.substitutions.extend(edit.p_match().matches().clone());
 
         // Apply edit_1
         let applied_ts_edit = self.apply_edit(&edit, parser);
@@ -157,7 +157,7 @@ impl SourceCodeUnit {
         // Note that, here we DO NOT invoke the `_apply_edit` method and only update the `substitutions`
         // By NOT invoking this we simulate the application of an identity rule
         //
-        self.add_to_substitutions(m.matches(), rule_store);
+        self.substitutions.extend(m.matches().clone());
 
         self.propagate(m.range(), rule.clone(), rule_store, parser);
       }
@@ -241,7 +241,7 @@ impl SourceCodeUnit {
         current_replace_range = get_replace_range(applied_edit);
         current_rule = edit.matched_rule().to_string();
         // Add the (tag, code_snippet) mapping to substitution table.
-        self.add_to_substitutions(edit.p_match().matches(), rules_store);
+        self.substitutions.extend(edit.p_match().matches().clone());
       } else {
         // No more parents found for cleanup
         break;
@@ -370,7 +370,7 @@ impl SourceCodeUnit {
       .ast
       .root_node()
       .descendant_for_byte_range(start_byte, start_byte)
-      .unwrap_or(self.ast.root_node());
+      .unwrap_or_else(|| self.ast.root_node());
 
     for node in traverse(node.walk(), Order::Post) {
       if node.start_position().row == row || node.end_position().row == row {
@@ -505,13 +505,6 @@ impl SourceCodeUnit {
     self.code = replacement_content.to_string();
   }
 
-  pub(crate) fn add_to_substitutions(
-    &mut self, new_entries: &HashMap<String, String>, rule_store: &mut RuleStore,
-  ) {
-    let _ = &self.substitutions.extend(new_entries.clone());
-    rule_store.add_global_tags(new_entries);
-  }
-
   // Apply all the `rules` to the node, parent, grand parent and great grand parent.
   // Short-circuit on the first match.
   pub(crate) fn get_edit_for_context(
@@ -529,7 +522,6 @@ impl SourceCodeUnit {
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
-        self.root_node(),
         changed_node,
         self.code().to_string(),
         number_of_ancestors_in_parent_scope,
@@ -629,20 +621,17 @@ impl SourceCodeUnit {
         break;
       }
     }
-    panic!("Could not create scope query for {:?}", scope_level);
+    panic!("Could not create scope query for {scope_level:?}");
   }
 
   fn is_satisfied(
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    let updated_substitutions = &substitutions
-      .clone()
-      .into_iter()
-      .chain(rule_store.default_substitutions())
-      .collect();
+    let mut updated_substitutions = rule_store.piranha_args().input_substitutions().clone();
+    updated_substitutions.extend(substitutions.clone());
     rule.constraints().iter().all(|constraint| {
-      self._is_satisfied(constraint.clone(), node, rule_store, updated_substitutions)
+      self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)
     })
   }
 
@@ -690,6 +679,15 @@ impl SourceCodeUnit {
       current_node = parent;
     }
     matched_matcher
+  }
+
+  pub(crate) fn global_substitutions(&self) -> HashMap<String, String> {
+    self
+      .substitutions()
+      .iter()
+      .filter(|e| e.0.starts_with(self.piranha_arguments.global_tag_prefix()))
+      .map(|(a, b)| (a.to_string(), b.to_string()))
+      .collect()
   }
 }
 

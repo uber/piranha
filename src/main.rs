@@ -49,8 +49,5 @@ fn write_output_summary(
       return;
     }
   }
-  panic!(
-    "Could not write the output summary to the file - {}",
-    path_to_json
-  );
+  panic!("Could not write the output summary to the file - {path_to_json}");
 }
