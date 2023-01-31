@@ -71,7 +71,7 @@ impl RuleGraph {
   /// Get the number of nodes and edges in the rule graph
   pub(crate) fn get_number_of_rules_and_edges(&self) -> (usize, usize) {
     let mut edges = 0;
-    for (_, destinations) in &self.graph {
+    for destinations in self.graph.values() {
       edges += destinations.len();
     }
     (self.graph.len(), edges)

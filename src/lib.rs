@@ -11,6 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+#![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
   edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
   piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,

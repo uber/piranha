@@ -207,7 +207,7 @@ fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
   let args = PiranhaArgumentsBuilder::default()
     .delete_consecutive_new_lines(true)
     .build();
-  println!("{:?}", args);
+  println!("{args:?}");
   let source_code = "";
   fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
     let paths = fs::read_dir(temp_dir)?;

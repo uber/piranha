@@ -162,7 +162,7 @@ fn accumulate_repeated_tags(
           let code_snippet = &capture.node.utf8_text(source_code.as_bytes()).unwrap();
           code_snippet_by_tag
             .entry(tag_name.clone())
-            .and_modify(|x| x.push_str(format!("\n{}", code_snippet).as_str()))
+            .and_modify(|x| x.push_str(format!("\n{code_snippet}").as_str()))
             .or_insert_with(|| code_snippet.to_string());
         }
       }
@@ -180,14 +180,14 @@ fn accumulate_repeated_tags(
 // outermost node captured by the query.
 // This function gets the range of the ast corresponding to the `replace_node` tag of the query.
 fn get_range_for_replace_node(
-  query: &Query, query_matches: &Vec<Vec<tree_sitter::QueryCapture>>, replace_node_name: &String,
+  query: &Query, query_matches: &[Vec<tree_sitter::QueryCapture>], replace_node_name: &String,
 ) -> Option<Range> {
   let tag_names_by_index: HashMap<usize, &String> =
     query.capture_names().iter().enumerate().collect();
   // Iterate over each tag name in the query
   for tag_name in query.capture_names().iter() {
     // Iterate over each query match for this range of code snippet
-    for captures in query_matches.clone() {
+    for captures in query_matches.iter().cloned() {
       // Iterate over each capture
       for capture in captures {
         if tag_names_by_index[&(capture.index as usize)].eq(tag_name)
@@ -287,7 +287,7 @@ pub(crate) fn substitute_tags(
   let mut output = input_string.to_string();
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
-    let key = format!("@{}", tag);
+    let key = format!("@{tag}");
     let substitution_value = if is_tree_sitter_query {
       substitute.replace('\n', "\\n").to_string()
     } else {
@@ -320,14 +320,12 @@ fn get_non_str_eq_parent(node: Node, source_code: String) -> Option<Node> {
 }
 
 /// Returns the node, its parent, grand parent and great grand parent
-pub(crate) fn get_context<'a>(
-  root_node: Node, prev_node: Node<'a>, source_code: String, count: u8,
-) -> Vec<Node<'a>> {
+pub(crate) fn get_context(prev_node: Node<'_>, source_code: String, count: u8) -> Vec<Node<'_>> {
   let mut output = Vec::new();
   if count > 0 {
     output.push(prev_node);
     if let Some(parent) = get_non_str_eq_parent(prev_node, source_code.to_string()) {
-      output.extend(get_context(root_node, parent, source_code, count - 1));
+      output.extend(get_context(parent, source_code, count - 1));
     }
   }
   output

@@ -370,7 +370,7 @@ impl SourceCodeUnit {
       .ast
       .root_node()
       .descendant_for_byte_range(start_byte, start_byte)
-      .unwrap_or(self.ast.root_node());
+      .unwrap_or_else(|| self.ast.root_node());
 
     for node in traverse(node.walk(), Order::Post) {
       if node.start_position().row == row || node.end_position().row == row {
@@ -522,7 +522,6 @@ impl SourceCodeUnit {
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
-        self.root_node(),
         changed_node,
         self.code().to_string(),
         number_of_ancestors_in_parent_scope,
@@ -622,7 +621,7 @@ impl SourceCodeUnit {
         break;
       }
     }
-    panic!("Could not create scope query for {:?}", scope_level);
+    panic!("Could not create scope query for {scope_level:?}");
   }
 
   fn is_satisfied(
