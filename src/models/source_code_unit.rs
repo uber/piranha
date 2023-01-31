@@ -621,7 +621,7 @@ impl SourceCodeUnit {
         break;
       }
     }
-    panic!("Could not create scope query for {:?}", scope_level);
+    panic!("Could not create scope query for {scope_level:?}");
   }
 
   fn is_satisfied(

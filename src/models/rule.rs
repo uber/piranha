@@ -84,7 +84,7 @@ impl Rule {
   fn substitute(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
     if substitutions_for_holes.len() != self.holes().len() {
       #[rustfmt::skip]
-      panic!("{}", format!( "Could not instantiate the rule {:?} with substitutions {:?}", self, substitutions_for_holes).red());
+      panic!("{}", format!( "Could not instantiate the rule {self:?} with substitutions {substitutions_for_holes:?}").red());
     }
     let updated_rule = self.clone();
     Rule {

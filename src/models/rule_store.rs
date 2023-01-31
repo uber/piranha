@@ -81,7 +81,7 @@ impl RuleStore {
       "Number of rules and edges loaded : {:?}",
       rule_store.rule_graph.get_number_of_rules_and_edges()
     );
-    trace!("Rule Store {}", format!("{:#?}", rule_store));
+    trace!("Rule Store {}", format!("{rule_store:#?}"));
     rule_store
   }
 

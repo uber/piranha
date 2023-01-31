@@ -162,7 +162,7 @@ fn accumulate_repeated_tags(
           let code_snippet = &capture.node.utf8_text(source_code.as_bytes()).unwrap();
           code_snippet_by_tag
             .entry(tag_name.clone())
-            .and_modify(|x| x.push_str(format!("\n{}", code_snippet).as_str()))
+            .and_modify(|x| x.push_str(format!("\n{code_snippet}").as_str()))
             .or_insert_with(|| code_snippet.to_string());
         }
       }
@@ -287,7 +287,7 @@ pub(crate) fn substitute_tags(
   let mut output = input_string.to_string();
   for (tag, substitute) in substitutions {
     // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
-    let key = format!("@{}", tag);
+    let key = format!("@{tag}");
     let substitution_value = if is_tree_sitter_query {
       substitute.replace('\n', "\\n").to_string()
     } else {
