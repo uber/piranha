@@ -11,6 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+#![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
   edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
   piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,
@@ -136,10 +137,12 @@ impl Piranha {
   fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
+    let piranha_args = self.rule_store.piranha_args().clone();
     parser
-      .set_language(*self.rule_store.piranha_args().piranha_language().language())
+      .set_language(*piranha_args.piranha_language().language())
       .expect("Could not set the language for the parser.");
 
+    let mut current_global_substitutions = piranha_args.input_substitutions().clone();
     // Keep looping until new `global` rules are added.
     loop {
       let current_rules = self.rule_store.global_rules().clone();
@@ -148,23 +151,26 @@ impl Piranha {
       // Iterate over each file containing the usage of the feature flag API
 
       for (path, content) in self.rule_store.get_relevant_files(&self.path_to_codebase) {
-        self
+        // Get the `SourceCodeUnit` for the file `path` from the cache `relevant_files`.
+        // In case of miss, lazily insert a new `SourceCodeUnit`.
+        let source_code_unit = self
           .relevant_files
-          // Get the content of the file for `path` from the cache `relevant_files`
           .entry(path.to_path_buf())
-          // Populate the cache (`relevant_files`) with the content, in case of cache miss (lazily)
           .or_insert_with(|| {
-            // Create new source code unit
             SourceCodeUnit::new(
               &mut parser,
               content,
-              &self.rule_store.default_substitutions(),
+              &current_global_substitutions,
               path.as_path(),
-              self.rule_store.piranha_args(),
+              &piranha_args,
             )
-          })
-          // Apply the rules to this file
-          .apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
+          });
+
+        // Apply the rules in this `SourceCodeUnit`
+        source_code_unit.apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
+
+        // Add the substitutions for the global tags to the `current_global_substitutions`
+        current_global_substitutions.extend(source_code_unit.global_substitutions());
 
         // Break when a new `global` rule is added
         if self.rule_store.global_rules().len() > current_rules.len() {
