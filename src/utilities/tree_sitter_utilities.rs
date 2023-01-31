@@ -180,14 +180,14 @@ fn accumulate_repeated_tags(
 // outermost node captured by the query.
 // This function gets the range of the ast corresponding to the `replace_node` tag of the query.
 fn get_range_for_replace_node(
-  query: &Query, query_matches: &Vec<Vec<tree_sitter::QueryCapture>>, replace_node_name: &String,
+  query: &Query, query_matches: &[Vec<tree_sitter::QueryCapture>], replace_node_name: &String,
 ) -> Option<Range> {
   let tag_names_by_index: HashMap<usize, &String> =
     query.capture_names().iter().enumerate().collect();
   // Iterate over each tag name in the query
   for tag_name in query.capture_names().iter() {
     // Iterate over each query match for this range of code snippet
-    for captures in query_matches.clone() {
+    for captures in query_matches.iter().cloned() {
       // Iterate over each capture
       for capture in captures {
         if tag_names_by_index[&(capture.index as usize)].eq(tag_name)
@@ -320,14 +320,12 @@ fn get_non_str_eq_parent(node: Node, source_code: String) -> Option<Node> {
 }
 
 /// Returns the node, its parent, grand parent and great grand parent
-pub(crate) fn get_context<'a>(
-  root_node: Node, prev_node: Node<'a>, source_code: String, count: u8,
-) -> Vec<Node<'a>> {
+pub(crate) fn get_context(prev_node: Node<'_>, source_code: String, count: u8) -> Vec<Node<'_>> {
   let mut output = Vec::new();
   if count > 0 {
     output.push(prev_node);
     if let Some(parent) = get_non_str_eq_parent(prev_node, source_code.to_string()) {
-      output.extend(get_context(root_node, parent, source_code, count - 1));
+      output.extend(get_context(parent, source_code, count - 1));
     }
   }
   output
