@@ -39,4 +39,11 @@ class SampleClass {
         isEnabled = f2() || placeholder_false 
         isEnabled = v2 || placeholder_false 
     }
+
+    func checkAndFalse() {
+        isEnabled = placeholder_false && f1()
+        isEnabled = placeholder_false && v1
+        isEnabled = f2() && placeholder_false 
+        isEnabled = v2 && placeholder_false 
+    }
 }

@@ -52,6 +52,7 @@ groups = ["boolean_expression_simplify"]
 replace_node = "conjunction_expression"
 replace = "@lhs"
 is_seed_rule = false
+
 #
 # Before 
 #   true || abcd()
@@ -73,6 +74,8 @@ groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "true"
 is_seed_rule = false
+
+#
 #   false || abcd()
 # After 
 #   abcd()
@@ -115,6 +118,7 @@ replace_node = "disjunction_expression"
 replace = "true"
 is_seed_rule = false
 
+# Before
 #   abcd() || false
 # After 
 #   abcd()
@@ -133,6 +137,53 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "@lhs"
+is_seed_rule = false
+
+#
+# Before 
+#   false && abcd()
+# After 
+#   false
+#
+[[rules]]
+name = "false_and_something"
+query = """(
+(conjunction_expression
+        lhs: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+        rhs: (_) 
+    ) @conjunction_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "conjunction_expression"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before 
+#   abcd && false
+# After 
+#   false
+#
+# Note that this rule only applies when the lhs of the conjunction is an identifier. 
+# In other scenarios (i.e. is a method invocation or some other expression) we would not simplify at all, as:
+# such expressions could have side effects
+[[rules]]
+name = "some_identifier_and_false"
+query = """(
+(conjunction_expression
+        lhs: (simple_identifier) 
+        rhs: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    ) @conjunction_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "conjunction_expression"
+replace = "false"
 is_seed_rule = false
 
 # Dummy rule that acts as a junction for all boolean based cleanups
