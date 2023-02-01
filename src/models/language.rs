@@ -155,17 +155,23 @@ impl From<&str> for PiranhaLanguage {
         scopes: vec![],
         comment_nodes: vec![],
       },
-      SWIFT => PiranhaLanguage {
-        name: language.to_string(),
-        supported_language: SupportedLanguage::Swift,
-        language: tree_sitter_swift::language(),
-        scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/swift/scope_config.toml"))
+      SWIFT => {
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/swift/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/swift/edges.toml"));
+        PiranhaLanguage {
+          name: language.to_string(),
+          supported_language: SupportedLanguage::Swift,
+          language: tree_sitter_swift::language(),
+          scopes: parse_toml::<ScopeConfig>(include_str!(
+            "../cleanup_rules/swift/scope_config.toml"
+          ))
           .scopes()
           .to_vec(),
-        comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
-        rules: None,
-        edges: None,
-      },
+          comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
+          rules: Some(rules),
+          edges: Some(edges),
+        }
+      }
       TYPESCRIPT => PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Ts,

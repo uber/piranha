@@ -11,4 +11,8 @@
 
 class SampleClass {
     var isEnabled = true
+    var isEnabled2 = f1()
+    var isEnabled3 = v1
+    var isEnabled4 = f2()
+    var isEnabled5 = v2
 }

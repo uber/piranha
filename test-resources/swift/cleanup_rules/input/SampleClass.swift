@@ -11,4 +11,8 @@
 
 class SampleClass {
     var isEnabled = TestEnum.stale_flag_one.isEnabled
+    var isEnabled2 = TestEnum.stale_flag_one.isEnabled && f1()
+    var isEnabled3 = TestEnum.stale_flag_one.isEnabled && v1
+    var isEnabled4 = f2() && TestEnum.stale_flag_one.isEnabled 
+    var isEnabled5 = v2 && TestEnum.stale_flag_one.isEnabled 
 }
