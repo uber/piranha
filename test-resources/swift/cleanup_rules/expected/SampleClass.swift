@@ -19,5 +19,6 @@ class SampleClass {
         isEnabled = v2
         isEnabled = v2
         isEnabled = v2
+        isEnabled = false
     }
 }
