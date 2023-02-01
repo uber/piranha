@@ -11,4 +11,13 @@
 
 class SampleClass {
     var isEnabled = TestEnum.stale_flag_one.isEnabled
+
+    func sampleFunction() {
+        isEnabled = TestEnum.stale_flag_one.isEnabled && f1()
+        isEnabled = TestEnum.stale_flag_one.isEnabled && v1
+        isEnabled = f2() && TestEnum.stale_flag_one.isEnabled 
+        isEnabled = v2 && TestEnum.stale_flag_one.isEnabled 
+        isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && true)
+        isEnabled = (TestEnum.stale_flag_one.isEnabled && true) && v2
+    }
 }
