@@ -35,3 +35,4 @@ query = """(
 replace_node = "parameter_access"
 replace = "true"
 holes = ["stale_flag"]
+groups = ["replace_expression_with_boolean_literal"]

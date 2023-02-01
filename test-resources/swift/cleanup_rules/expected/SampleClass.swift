@@ -11,4 +11,13 @@
 
 class SampleClass {
     var isEnabled = true
+
+    func sampleFunction() {
+        isEnabled = f1()
+        isEnabled = v1
+        isEnabled = f2()
+        isEnabled = v2
+        isEnabled = v2
+        isEnabled = v2
+    }
 }
