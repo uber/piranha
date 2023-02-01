@@ -21,4 +21,19 @@ class SampleClass {
         isEnabled = v2
         isEnabled = false
     }
+
+    func checkOrTrue() {
+        //simple
+        isEnabled = true
+        isEnabled = true
+        isEnabled = true
+
+        //nested
+        isEnabled = true
+        isEnabled = true
+
+        //nested and-or
+        isEnabled = v1
+        isEnabled = v1
+    }
 }
