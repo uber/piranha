@@ -7,11 +7,11 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-toml
-        files: src/
+        files: src/|test-resources/|demo/
       - id: end-of-file-fixer
-        files: src/
+        files: src/|test-resources/|demo/
       - id: mixed-line-ending
-        files: src/
+        files: src/|test-resources/|demo/
   - repo: local
     hooks:
       - id: toml-fmt
