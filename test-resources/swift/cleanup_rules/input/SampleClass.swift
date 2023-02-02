@@ -19,5 +19,6 @@ class SampleClass {
         isEnabled = v2 && TestEnum.stale_flag_one.isEnabled 
         isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && true)
         isEnabled = (TestEnum.stale_flag_one.isEnabled && true) && v2
+        isEnabled = !TestEnum.stale_flag_one.isEnabled
     }
 }
