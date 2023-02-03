@@ -97,7 +97,7 @@ fn test_user_option_delete_consecutive_lines() {
 fn test_user_option_do_not_delete_consecutive_lines() {
   let _path = PathBuf::from("test-resources")
     .join(JAVA)
-    .join("user_option_delete_consecutive_lines");
+    .join("user_option_do_not_delete_consecutive_lines");
   _helper_user_option_delete_consecutive_lines(_path, false);
 }
 
