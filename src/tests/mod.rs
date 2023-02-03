@@ -40,7 +40,7 @@ fn initialize() {
   });
 }
 
-// We use a `.placeholder` file because git does not allows us to commit an empty directory
+// We use a `.placeholder` file because git does not allow us to commit an empty directory
 static PLACEHOLDER: &str = ".placeholder";
 
 /// Copies the files under `src` to `dst`.
