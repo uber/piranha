@@ -87,34 +87,40 @@ fn test_scenarios_find_and_propagate_panic() {
 
 #[test]
 fn test_user_option_delete_consecutive_lines() {
-  _helper_user_option_delete_consecutive_lines(true);
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("user_option_delete_consecutive_lines");
+  _helper_user_option_delete_consecutive_lines(_path, true);
 }
 
 #[test]
 fn test_user_option_do_not_delete_consecutive_lines() {
-  _helper_user_option_delete_consecutive_lines(false);
-}
-
-fn _helper_user_option_delete_consecutive_lines(delete_consecutive_new_lines: bool) {
-  initialize();
   let _path = PathBuf::from("test-resources")
     .join(JAVA)
-    .join(if delete_consecutive_new_lines {
-      "user_option_delete_consecutive_lines"
-    } else {
-      "user_option_do_not_delete_consecutive_lines"
-    });
+    .join("user_option_delete_consecutive_lines");
+  _helper_user_option_delete_consecutive_lines(_path, false);
+}
 
-  let temp_dir = copy_folder_to_temp_dir(&_path.join("input"));
+fn _helper_user_option_delete_consecutive_lines(
+  path_to_scenario: PathBuf, delete_consecutive_new_lines: bool,
+) {
+  initialize();
+
+  let temp_dir = copy_folder_to_temp_dir(&path_to_scenario.join("input"));
 
   let piranha_arguments = piranha_arguments! {
     path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
+    path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
     language = JAVA.to_string(),
     delete_consecutive_new_lines = delete_consecutive_new_lines,
   };
 
-  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, false);
+  execute_piranha_and_check_result(
+    &piranha_arguments,
+    &path_to_scenario.join("expected"),
+    1,
+    false,
+  );
   // Delete temp_dir
   temp_dir.close().unwrap();
 }

@@ -90,9 +90,9 @@ fn execute_piranha_and_check_result(
     let mut count = 0;
     for dir_entry in fs::read_dir(path).unwrap().flatten() {
       if dir_entry.path().is_file() {
-        // If the directory contains a file named `.placeholder` we assume that the directory is empty
+        // If the directory contains a file named `.placeholder` we ignore that file
         if PLACEHOLDER == dir_entry.file_name().to_str().unwrap() {
-          return 0;
+          continue;
         }
         count += 1;
       }
