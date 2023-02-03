@@ -11,16 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::{
-  check_result, copy_folder, create_match_tests, create_rewrite_tests, initialize, substitutions,
-};
-use crate::execute_piranha;
-use crate::models::{
-  default_configs::PYTHON,
-  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
-};
-use std::path::{Path, PathBuf};
-use tempdir::TempDir;
+use super::{create_match_tests, create_rewrite_tests, substitutions};
+
+use crate::models::default_configs::PYTHON;
 
 create_rewrite_tests!(
   PYTHON,

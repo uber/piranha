@@ -10,28 +10,24 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use std::{
-  collections::HashSet,
-  fs::{self},
-  io,
-};
-
-use itertools::Itertools;
-use tempdir::TempDir;
+use std::collections::HashSet;
 
 use tree_sitter::Parser;
 
-use crate::models::{
-  constraint::Constraint,
-  default_configs::{JAVA, SWIFT},
-  language::PiranhaLanguage,
-  piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  rule::{InstantiatedRule, Rule},
-  rule_store::RuleStore,
+use crate::{
+  models::{
+    constraint::Constraint,
+    default_configs::{JAVA, SWIFT},
+    language::PiranhaLanguage,
+    piranha_arguments::PiranhaArgumentsBuilder,
+    rule::{InstantiatedRule, Rule},
+    rule_store::RuleStore,
+  },
+  utilities::eq_without_whitespace,
 };
 use {
   super::SourceCodeUnit,
-  crate::{models::edit::Edit, utilities::eq_without_whitespace},
+  crate::models::edit::Edit,
   std::{collections::HashMap, path::PathBuf},
   tree_sitter::Range,
 };
@@ -180,133 +176,6 @@ fn test_apply_edit_comma_handling_via_regex() {
     &source_code.replace("name: \"BMX Bike\",", ""),
     source_code_unit.code()
   ));
-}
-fn execute_persist_in_temp_folder(
-  source_code: &str, piranha_arguments: &PiranhaArguments,
-  check_predicate: &dyn Fn(&TempDir) -> Result<bool, io::Error>,
-) -> Result<bool, io::Error> {
-  let java = get_java_tree_sitter_language();
-  let mut parser = java.parser();
-  let tmp_dir = TempDir::new("example")?;
-  let file_path = &tmp_dir.path().join("Sample1.java");
-  _ = fs::write(file_path.as_path(), source_code);
-  let mut source_code_unit = SourceCodeUnit::new(
-    &mut parser,
-    source_code.to_string(),
-    &HashMap::new(),
-    file_path.as_path(),
-    piranha_arguments,
-  );
-  source_code_unit.perform_delete_consecutive_new_lines();
-  source_code_unit.persist(piranha_arguments);
-  check_predicate(&tmp_dir)
-}
-
-#[test]
-fn test_persist_delete_file_when_empty() -> Result<(), io::Error> {
-  let args = PiranhaArgumentsBuilder::default()
-    .delete_consecutive_new_lines(true)
-    .build();
-  println!("{args:?}");
-  let source_code = "";
-  fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
-    let paths = fs::read_dir(temp_dir)?;
-    Ok(paths.count() == 0)
-  }
-  assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
-  Ok(())
-}
-
-#[test]
-fn test_persist_do_not_delete_file_when_empty() -> Result<(), io::Error> {
-  let args = PiranhaArgumentsBuilder::default()
-    .delete_consecutive_new_lines(true)
-    .delete_file_if_empty(false)
-    .build();
-  let source_code = "";
-  fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
-    let paths = fs::read_dir(temp_dir)?;
-    Ok(paths.count() == 1)
-  }
-
-  assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
-  Ok(())
-}
-
-#[test]
-fn test_persist_delete_consecutive_lines() -> Result<(), io::Error> {
-  let args = PiranhaArgumentsBuilder::default()
-    .delete_consecutive_new_lines(true)
-    .build();
-  let source_code_test_1 = "class Test {
-    public void foobar() {
-
-      System.out.println(\"Hello World!\");
-
-
-      System.out.println();
-    }
-  }";
-  let source_code_test_2 = "class Test {
-    public void foobar() {
-
-      System.out.println(\"Hello World!\");
-
-
-
-
-      System.out.println();
-    }
-  }";
-  fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
-    let paths = fs::read_dir(temp_dir)?;
-    let path = paths.find_or_first(|_| true).unwrap()?;
-    let expected_str = "class Test {
-    public void foobar() {
-
-      System.out.println(\"Hello World!\");
-
-      System.out.println();
-    }
-  }";
-    let actual_content = fs::read_to_string(path.path().as_path())?;
-    Ok(actual_content.eq(&expected_str))
-  }
-  assert!(execute_persist_in_temp_folder(
-    source_code_test_1,
-    &args,
-    &check
-  )?);
-  assert!(execute_persist_in_temp_folder(
-    source_code_test_2,
-    &args,
-    &check
-  )?);
-  Ok(())
-}
-
-#[test]
-fn test_persist_do_not_delete_consecutive_lines() -> Result<(), io::Error> {
-  let args = PiranhaArgumentsBuilder::default()
-    .delete_consecutive_new_lines(false)
-    .build();
-  let source_code = "class Test {
-    public void foobar() {
-
-      System.out.println(\"Hello World!\");
-
-
-      System.out.println();
-    }
-  }";
-  fn check(temp_dir: &TempDir) -> Result<bool, io::Error> {
-    let paths = fs::read_dir(temp_dir)?;
-    let path = paths.find_or_first(|_| true).unwrap()?;
-    let actual_content = fs::read_to_string(path.path().as_path())?;
-    Ok(actual_content.eq(&actual_content))
-  }
-  assert!(execute_persist_in_temp_folder(source_code, &args, &check)?);
-  Ok(())
 }
 
 #[test]

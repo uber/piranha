@@ -11,14 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::path::PathBuf;
+use super::create_match_tests;
 
-use super::{create_match_tests, initialize};
-use crate::execute_piranha;
-use crate::models::{
-  default_configs::TSX, piranha_arguments::piranha_arguments,
-  piranha_arguments::PiranhaArgumentsBuilder,
-};
+use crate::models::default_configs::TSX;
 
 create_match_tests! {
   TSX,
