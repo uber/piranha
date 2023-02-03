@@ -330,7 +330,7 @@ impl PiranhaArgumentsBuilder {
 ///
 macro_rules! piranha_arguments {
     ($($kw: ident = $value: expr,)*) => {
-      PiranhaArgumentsBuilder::default()
+      $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
       $(
         .$kw($value)
        )*

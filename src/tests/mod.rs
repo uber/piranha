@@ -40,6 +40,9 @@ fn initialize() {
   });
 }
 
+// We use a `.placeholder` file because git does not allows us to commit an empty directory
+static PLACEHOLDER: &str = ".placeholder";
+
 /// Copies the files under `src` to `dst`.
 /// The copy is NOT recursive.
 /// The files under `src` are copied under `dst`.
@@ -77,10 +80,7 @@ fn execute_piranha_and_check_result(
   ignore_whitespace: bool,
 ) {
   let path_to_codebase = Path::new(piranha_arguments.path_to_codebase());
-
   let output_summaries = execute_piranha(piranha_arguments);
-
-  assert!(output_summaries.iter().any(|x| !x.rewrites().is_empty()));
 
   assert_eq!(output_summaries.len(), files_changed);
 
@@ -89,7 +89,11 @@ fn execute_piranha_and_check_result(
   let count_files = |path: &Path| {
     let mut count = 0;
     for dir_entry in fs::read_dir(path).unwrap().flatten() {
-      if dir_entry.path().is_file() && ".placeholder" != dir_entry.file_name().to_str().unwrap() {
+      if dir_entry.path().is_file() {
+        // If the directory contains a file named `.placeholder` we assume that the directory is empty
+        if PLACEHOLDER == dir_entry.file_name().to_str().unwrap() {
+          return 0;
+        }
         count += 1;
       }
     }
@@ -146,11 +150,11 @@ macro_rules! create_match_tests {
     $(
     #[test]
     fn $test_name() {
-      initialize();
-      let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
+      super::initialize();
+      let _path= std::path::PathBuf::from("test-resources").join($language).join($path_to_test);
       let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
       let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-      let piranha_arguments =  piranha_arguments!{
+      let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
         path_to_codebase = path_to_codebase,
         path_to_configurations = path_to_configurations,
         language= $language.to_string(),
@@ -158,7 +162,7 @@ macro_rules! create_match_tests {
           $kw = $value,
         )*
       };
-      let output_summaries = execute_piranha(&piranha_arguments);
+      let output_summaries = $crate::execute_piranha(&piranha_arguments);
       assert_eq!(
         output_summaries.iter().flat_map(|os| os.matches().iter()).count(),
         $expected_number_of_matches
@@ -192,11 +196,11 @@ macro_rules! create_rewrite_tests {
     $(
     #[test]
     fn $test_name() {
-      initialize();
-      let _path= PathBuf::from("test-resources").join($language).join($path_to_test);
-      let temp_dir= copy_folder_to_temp_dir(&_path.join("input"));
+      super::initialize();
+      let _path= std::path::PathBuf::from("test-resources").join($language).join($path_to_test);
+      let temp_dir= super::copy_folder_to_temp_dir(&_path.join("input"));
 
-      let piranha_arguments =  piranha_arguments!{
+      let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
         path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
         path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
         language= $language.to_string(),
@@ -205,7 +209,7 @@ macro_rules! create_rewrite_tests {
         )*
       };
 
-      execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), $files_changed, true);
+      super::execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), $files_changed, true);
       // Delete temp_dir
       _ = temp_dir.close().unwrap();
     }

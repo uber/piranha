@@ -11,17 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::{
-  default_configs::KOTLIN,
-  piranha_arguments::{piranha_arguments, PiranhaArgumentsBuilder},
-};
+use crate::models::default_configs::KOTLIN;
 
-use super::{
-  copy_folder_to_temp_dir, create_rewrite_tests, execute_piranha_and_check_result, initialize,
-  substitutions,
-};
-
-use std::path::PathBuf;
+use super::{create_rewrite_tests, substitutions};
 
 create_rewrite_tests! {
   KOTLIN,
