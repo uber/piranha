@@ -38,6 +38,7 @@ create_rewrite_tests! {
     global_tag_prefix ="universal_tag.".to_string(),
     cleanup_comments_buffer = 3, delete_file_if_empty= false;
 
+  // TODO: This test is flaky.
   // test_cleanup_rules_file: "cleanup_rules", 1,
   //   substitutions = substitutions! {
   //     "stale_flag" => "stale_flag_one",
