@@ -10,13 +10,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use super::{create_match_tests, initialize};
-use crate::execute_piranha;
-use crate::models::{
-  default_configs::TYPESCRIPT, piranha_arguments::piranha_arguments,
-  piranha_arguments::PiranhaArgumentsBuilder,
-};
-use std::path::PathBuf;
+use super::create_match_tests;
+
+use crate::models::default_configs::TYPESCRIPT;
 
 create_match_tests! {
   TYPESCRIPT,
