@@ -16,7 +16,7 @@ use crate::models::piranha_arguments::PiranhaArguments;
 use crate::utilities::{eq_without_whitespace, read_file};
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tempdir::TempDir;
 
 mod test_piranha_java;
@@ -53,11 +53,11 @@ static PLACEHOLDER: &str = ".placeholder";
 /// * dest: Path to destination
 ///
 /// This method causes side effects - writes new files to a directory
-fn copy_folder_to_temp_dir(src: &PathBuf) -> TempDir {
+fn copy_folder_to_temp_dir(src: &Path) -> TempDir {
   // Copy the test scenario to temporary directory
   let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
   let temp_dir_path = &temp_dir.path();
-  for entry in fs::read_dir(src.as_path()).unwrap() {
+  for entry in fs::read_dir(src).unwrap() {
     let entry = entry.unwrap();
     let path = entry.path();
     if path.is_file() {
