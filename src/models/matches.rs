@@ -21,7 +21,7 @@ use tree_sitter::Node;
 
 use crate::utilities::{
   gen_py_str_methods,
-  tree_sitter_utilities::{get_node_for_range, PiranhaHelpers},
+  tree_sitter_utilities::{get_all_matches_for_query, get_node_for_range},
 };
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
@@ -122,7 +122,8 @@ impl SourceCodeUnit {
     } else {
       Some(rule.replace_node())
     };
-    let all_query_matches = node.get_all_matches_for_query(
+    let all_query_matches = get_all_matches_for_query(
+      &node,
       self.code().to_string(),
       rule_store.query(&rule.query()),
       recursive,

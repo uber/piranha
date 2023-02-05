@@ -17,7 +17,7 @@ use log::trace;
 use serde_derive::Deserialize;
 
 use crate::utilities::tree_sitter_utilities::{
-  get_node_for_range, substitute_tags, PiranhaHelpers,
+  get_match_for_query, get_node_for_range, substitute_tags,
 };
 
 use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
@@ -65,9 +65,12 @@ impl SourceCodeUnit {
         changed_node.kind()
       );
       for m in &scope_matchers {
-        if let Some(p_match) =
-          changed_node.get_match_for_query(self.code(), rules_store.query(m.matcher()), false)
-        {
+        if let Some(p_match) = get_match_for_query(
+          &changed_node,
+          self.code(),
+          rules_store.query(m.matcher()),
+          false,
+        ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
           return substitute_tags(m.generator(), p_match.matches(), true);

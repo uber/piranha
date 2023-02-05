@@ -14,9 +14,12 @@ use std::collections::HashMap;
 
 use tree_sitter::Query;
 
-use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
+use crate::{
+  models::{default_configs::JAVA, language::PiranhaLanguage},
+  utilities::tree_sitter_utilities::get_all_matches_for_query,
+};
 
-use super::{substitute_tags, PiranhaHelpers};
+use super::substitute_tags;
 
 #[test]
 fn test_get_all_matches_for_query_positive() {
@@ -60,7 +63,8 @@ fn test_get_all_matches_for_query_positive() {
     .expect("Could not parse code");
   let node = ast.root_node();
 
-  let matches = node.get_all_matches_for_query(
+  let matches = get_all_matches_for_query(
+    &node,
     source_code.to_string(),
     &query,
     true,
@@ -111,7 +115,8 @@ fn test_get_all_matches_for_query_negative() {
     .expect("Could not parse code");
   let node = ast.root_node();
 
-  let matches = node.get_all_matches_for_query(
+  let matches = get_all_matches_for_query(
+    &node,
     source_code.to_string(),
     &query,
     true,

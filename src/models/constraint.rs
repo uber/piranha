@@ -18,7 +18,7 @@ use serde_derive::Deserialize;
 use tree_sitter::Node;
 
 use crate::utilities::tree_sitter_utilities::{
-  get_node_for_range, substitute_tags, PiranhaHelpers,
+  get_match_for_query, get_node_for_range, substitute_tags,
 };
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
@@ -72,9 +72,12 @@ impl SourceCodeUnit {
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
       let matcher_query_str = substitute_tags(constraint.matcher(), substitutions, true);
-      if let Some(p_match) =
-        parent.get_match_for_query(self.code(), rule_store.query(&matcher_query_str), false)
-      {
+      if let Some(p_match) = get_match_for_query(
+        &parent,
+        self.code(),
+        rule_store.query(&matcher_query_str),
+        false,
+      ) {
         matched_matcher = true;
         let scope_node = get_node_for_range(
           self.root_node(),
@@ -85,10 +88,7 @@ impl SourceCodeUnit {
           let query_str = substitute_tags(query_with_holes, substitutions, true);
           let query = &rule_store.query(&query_str);
           // If this query matches anywhere within the scope, return false.
-          if scope_node
-            .get_match_for_query(self.code(), query, true)
-            .is_some()
-          {
+          if get_match_for_query(&scope_node, self.code(), query, true).is_some() {
             return false;
           }
         }
