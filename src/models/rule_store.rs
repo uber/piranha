@@ -26,7 +26,11 @@ use tree_sitter::Query;
 
 use crate::{
   models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  models::{rule::Rule, rule_graph::RuleGraph, scopes::ScopeQueryGenerator},
+  models::{
+    rule::Rule,
+    rule_graph::{RuleGraph, RuleGraphBuilder},
+    scopes::ScopeQueryGenerator,
+  },
   utilities::{read_file, read_toml, MapOfVec},
 };
 
@@ -65,14 +69,17 @@ impl From<PiranhaArguments> for RuleStore {
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
     let (rules, edges) = read_config_files(args);
-    let rule_graph = RuleGraph::new(&edges, &rules);
+    let rule_graph = RuleGraphBuilder::default()
+      .rules(rules)
+      .edges(edges)
+      .build();
     let mut rule_store = RuleStore {
       rule_graph,
       piranha_args: args.clone(),
       ..Default::default()
     };
 
-    for (_, rule) in rule_store.rule_graph().rules_by_name().clone() {
+    for rule in rule_store.rule_graph().rules().clone() {
       if rule.is_seed_rule() {
         rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, args.input_substitutions()));
       }
@@ -119,7 +126,7 @@ impl RuleStore {
     let mut next_rules: HashMap<String, Vec<InstantiatedRule>> = HashMap::new();
     // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
     for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
-      let to_rule_name = &self.rule_graph().rules_by_name()[&to_rule];
+      let to_rule_name = &self.rule_graph().get_rule_named(&to_rule).unwrap();
       // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
       if to_rule_name.is_dummy_rule() {
         // Call this method recursively on the dummy node
