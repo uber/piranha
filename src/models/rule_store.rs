@@ -267,7 +267,7 @@ fn read_config_files(args: &PiranhaArguments) -> RuleGraph {
 
 pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
   let path_to_config = Path::new(path_to_configurations);
-  // Read the API specific cleanup rules and edges
+  // Read the rules and edges provided by the user
   let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
   for r in input_rules.rules.iter_mut() {
