@@ -110,6 +110,7 @@ struct Point {
 }
 gen_py_str_methods!(Point);
 
+// Implements instance methods related to getting matches for rule
 impl SourceCodeUnit {
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_matches(

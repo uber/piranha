@@ -344,6 +344,7 @@ macro_rules! piranha_arguments {
 }
 pub use piranha_arguments;
 
+// Implements instance methods related to applying the user options provided in  piranha arguments
 impl SourceCodeUnit {
   /// Delete the comment associated to the deleted code element
   pub(crate) fn _delete_associated_comment(
