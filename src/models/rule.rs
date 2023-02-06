@@ -17,7 +17,7 @@ use colored::Colorize;
 use getset::Getters;
 use serde_derive::Deserialize;
 
-use crate::utilities::{tree_sitter_utilities::substitute_tags, MapOfVec};
+use crate::utilities::tree_sitter_utilities::substitute_tags;
 
 use super::{
   constraint::Constraint,

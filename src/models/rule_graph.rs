@@ -101,4 +101,13 @@ impl RuleGraph {
       .map(|x| x.name())
       .collect_vec()
   }
+
+  pub(crate) fn merge(&self, rule_graph: &RuleGraph) -> Self {
+    let all_rules = [rule_graph.rules().clone(), self.rules().clone()].concat();
+    let all_edges = [rule_graph.edges().clone(), self.edges().clone()].concat();
+    RuleGraphBuilder::default()
+      .rules(all_rules)
+      .edges(all_edges)
+      .build()
+  }
 }

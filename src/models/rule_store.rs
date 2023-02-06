@@ -27,7 +27,6 @@ use tree_sitter::Query;
 use crate::{
   models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
   models::{
-    rule::Rule,
     rule_graph::{RuleGraph, RuleGraphBuilder},
     scopes::ScopeQueryGenerator,
   },
@@ -35,7 +34,7 @@ use crate::{
 };
 
 use super::{
-  outgoing_edges::{Edges, OutgoingEdges},
+  outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
 };
 
@@ -68,11 +67,7 @@ impl From<PiranhaArguments> for RuleStore {
 
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
-    let (rules, edges) = read_config_files(args);
-    let rule_graph = RuleGraphBuilder::default()
-      .rules(rules)
-      .edges(edges)
-      .build();
+    let rule_graph = read_config_files(args);
     let mut rule_store = RuleStore {
       rule_graph,
       piranha_args: args.clone(),
@@ -257,22 +252,29 @@ impl Default for RuleStore {
   }
 }
 
-fn read_config_files(args: &PiranhaArguments) -> (Vec<Rule>, Vec<OutgoingEdges>) {
-  let path_to_config = Path::new(args.path_to_configurations());
-  // Read the language specific cleanup rules and edges
-  let language_rules: Rules = args.piranha_language().rules().clone().unwrap_or_default();
-  let language_edges: Edges = args.piranha_language().edges().clone().unwrap_or_default();
+fn read_config_files(args: &PiranhaArguments) -> RuleGraph {
+  let piranha_language = args.piranha_language();
 
-  // Read the API specific cleanup rules and edges
+  let built_in_rules = RuleGraphBuilder::default()
+    .edges(piranha_language.edges().clone().unwrap_or_default().edges)
+    .rules(piranha_language.rules().clone().unwrap_or_default().rules)
+    .build();
+
+  let user_defined_rules = read_user_config_files(args.path_to_configurations());
+
+  built_in_rules.merge(&user_defined_rules)
+}
+
+pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
+  let path_to_config = Path::new(path_to_configurations);
+  // Read the rules and edges provided by the user
   let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
-
   for r in input_rules.rules.iter_mut() {
     r.add_to_seed_rules_group();
   }
-
-  let all_rules = [language_rules.rules, input_rules.rules].concat();
-  let all_edges = [language_edges.edges, input_edges.edges].concat();
-
-  (all_rules, all_edges)
+  RuleGraphBuilder::default()
+    .rules(input_rules.rules)
+    .edges(input_edges.edges)
+    .build()
 }
