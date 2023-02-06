@@ -110,4 +110,5 @@ impl RuleGraph {
       .edges(all_edges)
       .build()
   }
+
 }
