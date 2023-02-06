@@ -41,6 +41,7 @@ impl Constraint {
   }
 }
 
+// Implements instance methods related to applying a constraint
 impl SourceCodeUnit {
   pub(crate) fn is_satisfied(
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,

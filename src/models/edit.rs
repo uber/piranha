@@ -88,6 +88,7 @@ impl fmt::Display for Edit {
   }
 }
 
+// Implements instance methods related to getting edits for rule(s)
 impl SourceCodeUnit {
   // Apply all the `rules` to the node, parent, grand parent and great grand parent.
   // Short-circuit on the first match.
