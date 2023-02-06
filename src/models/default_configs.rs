@@ -94,3 +94,7 @@ pub fn default_replace_node() -> String {
 pub fn default_replace() -> String {
   String::new()
 }
+
+pub fn default_rule_graph() -> HashMap<String, Vec<(String, String)>> {
+  HashMap::new()
+}
