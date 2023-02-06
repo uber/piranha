@@ -46,6 +46,7 @@ pub(crate) struct ScopeQueryGenerator {
   generator: String, // a tree-sitter query matching the exact AST node
 }
 
+// Implements instance methods related to getting the scope
 impl SourceCodeUnit {
   /// Generate a tree-sitter based query representing the scope of the previous edit.
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
