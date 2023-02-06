@@ -94,22 +94,6 @@ impl Rule {
     }
   }
 
-  /// Groups the rules based on the field `rule.groups`
-  /// Note: a rule can belong to more than one group.
-  pub(crate) fn group_rules(
-    rules: &Vec<Rule>,
-  ) -> (HashMap<String, Rule>, HashMap<&String, Vec<&String>>) {
-    let mut rules_by_name = HashMap::new();
-    let mut rules_by_group = HashMap::new();
-    for rule in rules {
-      rules_by_name.insert(rule.name().to_string(), rule.clone());
-      for tag in rule.groups() {
-        rules_by_group.collect(tag, rule.name());
-      }
-    }
-    (rules_by_name, rules_by_group)
-  }
-
   /// Adds the rule to a new group - "SEED" if applicable.
   pub(crate) fn add_to_seed_rules_group(&mut self) {
     if self.groups().contains(&CLEAN_UP.to_string()) {

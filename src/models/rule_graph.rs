@@ -11,7 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use derive_builder::Builder;
 use getset::Getters;
+use itertools::Itertools;
 
 use crate::{
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
@@ -19,50 +21,55 @@ use crate::{
 };
 use std::collections::HashMap;
 
-#[derive(Debug, Default, Getters)]
+use super::default_configs::default_rule_graph;
+
+#[derive(Debug, Default, Getters, Builder)]
+#[builder(build_fn(name = "create"))]
 pub(crate) struct RuleGraph {
+  /// All the rules in the graph
+  #[get = "pub(crate)"]
+  rules: Vec<Rule>,
+  /// Edges of the rule graph
+  #[get = "pub(crate)"]
+  edges: Vec<OutgoingEdges>,
+
+  /// The graph itself
+  #[builder(default = "default_rule_graph()")]
   #[get = "pub(crate)"]
   graph: HashMap<String, Vec<(String, String)>>,
-  // All the input rules stored by name
-  #[get = "pub(crate)"]
-  rules_by_name: HashMap<String, Rule>,
 }
 
-impl RuleGraph {
-  // Constructs a graph of rules based on the input `edges` that represent the relationship between two rules or groups of rules.
-  pub(crate) fn new(edges: &Vec<OutgoingEdges>, all_rules: &Vec<Rule>) -> Self {
-    let (rules_by_name, rules_by_group) = Rule::group_rules(all_rules);
-
-    // A closure that gets the rules corresponding to the given rule name or group name.
-    let get_rules_for_tag_or_name = |val: &String| {
-      rules_by_name
-        .get(val)
-        .map(|v| vec![v.name()])
-        .unwrap_or_else(|| rules_by_group.get(val).cloned().unwrap_or_default())
-    };
+impl RuleGraphBuilder {
+  pub fn build(&self) -> RuleGraph {
+    let _rule_graph = self.create().unwrap();
 
     let mut graph = HashMap::new();
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
-    for edge in edges {
-      for from_rule in get_rules_for_tag_or_name(edge.get_from()) {
+    for edge in _rule_graph.edges() {
+      for from_rule in _rule_graph.get_rules_for_group(edge.get_from()) {
         for outgoing_edge in edge.get_to() {
-          for to_rule in get_rules_for_tag_or_name(outgoing_edge) {
+          for to_rule in _rule_graph.get_rules_for_group(outgoing_edge) {
             // Add edge to the adjacency list
             graph.collect(
-              from_rule.clone(),
-              (String::from(edge.get_scope()), to_rule.clone()),
+              from_rule.to_string(),
+              (edge.get_scope().to_string(), to_rule.to_string()),
             );
           }
         }
       }
     }
-    RuleGraph {
-      graph,
-      rules_by_name,
-    }
-  }
 
+    RuleGraphBuilder::default()
+      .edges(_rule_graph.edges().clone())
+      .rules(_rule_graph.rules().clone())
+      .graph(graph)
+      .create()
+      .unwrap()
+  }
+}
+
+impl RuleGraph {
   /// Get all the outgoing edges for `rule_name`
   pub(crate) fn get_neighbors(&self, rule_name: &String) -> Vec<(String, String)> {
     self.graph.get(rule_name).cloned().unwrap_or_default()
@@ -75,5 +82,23 @@ impl RuleGraph {
       edges += destinations.len();
     }
     (self.graph.len(), edges)
+  }
+
+  /// Returns a rule named `name` (if found)
+  pub(crate) fn get_rule_named(&self, name: &String) -> Option<&Rule> {
+    self.rules().iter().find(|x| x.name() == name)
+  }
+
+  // Returns rule(s) with name or group as given `group`
+  pub(crate) fn get_rules_for_group(&self, group: &String) -> Vec<&String> {
+    if let Some(r) = self.get_rule_named(group) {
+      return vec![r.name()];
+    }
+    self
+      .rules()
+      .iter()
+      .filter(|x| x.groups().contains(group))
+      .map(|x| x.name())
+      .collect_vec()
   }
 }
