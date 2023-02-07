@@ -53,6 +53,13 @@ pub enum SupportedLanguage {
   Python,
 }
 
+impl std::str::FromStr for PiranhaLanguage {
+  type Err = String;
+  fn from_str(language: &str) -> Result<Self, Self::Err> {
+    Ok(PiranhaLanguage::from(language))
+  }
+}
+
 impl Default for SupportedLanguage {
   fn default() -> Self {
     SupportedLanguage::Java

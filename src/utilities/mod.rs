@@ -13,6 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 pub(crate) mod tree_sitter_utilities;
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs::File;
 #[cfg(test)]
 use std::fs::{self, DirEntry};
@@ -85,6 +86,18 @@ pub(crate) fn has_name(dir_entry: &DirEntry, file_name: &str) -> bool {
     .file_name()
     .map(|e| e.eq(file_name))
     .unwrap_or(false)
+}
+
+/// Parse a single key-value pair
+/// I have literally copy pasted this method from here
+/// https://github.com/clap-rs/clap/blob/master/examples/typed-derive.rs#L48
+pub(crate) fn parse_key_val(
+  s: &str,
+) -> Result<(String, String), Box<dyn Error + Send + Sync + 'static>> {
+  let pos = s
+    .find('=')
+    .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
+  Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
 
 /// Returns the file with the given name within the given directory.

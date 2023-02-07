@@ -86,8 +86,7 @@ fn _get_rule_store() -> RuleStore {
   let mut piranha_language = PiranhaLanguage::from(JAVA);
   piranha_language.set_scopes(vec![_get_method_scope(), _get_class_scope()]);
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(JAVA.to_string())
-    .piranha_language(piranha_language)
+    .language(piranha_language)
     .create()
     .unwrap();
   RuleStore::from(piranha_args)

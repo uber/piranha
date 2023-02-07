@@ -139,10 +139,10 @@ impl Piranha {
     let mut parser = Parser::new();
     let piranha_args = self.rule_store.piranha_args().clone();
     parser
-      .set_language(*piranha_args.piranha_language().language())
+      .set_language(*piranha_args.language().language())
       .expect("Could not set the language for the parser.");
 
-    let mut current_global_substitutions = piranha_args.input_substitutions().clone();
+    let mut current_global_substitutions = piranha_args.input_substitutions();
     // Keep looping until new `global` rules are added.
     loop {
       let current_rules = self.rule_store.global_rules().clone();
