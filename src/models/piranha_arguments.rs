@@ -49,7 +49,7 @@ pub struct PiranhaArguments {
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
-  #[clap(short= 'S',value_parser = parse_key_val)]
+  #[clap(short= 's',value_parser = parse_key_val)]
   #[serde(default = "default_substitutions")]
   substitutions: Vec<(String, String)>,
 
@@ -69,7 +69,7 @@ pub struct PiranhaArguments {
   // the target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
-  #[clap(short= 'p', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
+  #[clap(short= 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
   .map(|s| s.parse::<PiranhaLanguage>().unwrap()))]
   #[serde(skip)]
   language: PiranhaLanguage,

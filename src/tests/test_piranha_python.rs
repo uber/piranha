@@ -46,12 +46,12 @@ fn test_cli() {
       "-f",
       "test-resources/py/delete_cleanup_str_in_list/configurations",
     ])
-    .args(["-p", "py"])
+    .args(["-l", "py"])
     .args(["-j", temp_file.to_str().unwrap()])
     .arg("--dry-run")
-    .args(["-S", "str_literal=dependency2"])
-    .args(["-S", "str_to_replace=dependency1"])
-    .args(["-S", "str_replacement=dependency1_1"]);
+    .args(["-s", "str_literal=dependency2"])
+    .args(["-s", "str_to_replace=dependency1"])
+    .args(["-s", "str_replacement=dependency1_1"]);
 
   cmd.assert().success();
 
