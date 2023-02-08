@@ -13,7 +13,7 @@
 
 use std::collections::HashMap;
 
-use super::language::PiranhaLanguage;
+use super::{language::PiranhaLanguage, piranha_arguments::Substitution};
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -31,7 +31,7 @@ pub fn default_language() -> String {
   JAVA.to_string()
 }
 
-pub fn default_substitutions() -> Vec<(String, String)> {
+pub fn default_substitutions() -> Vec<Substitution> {
   vec![]
 }
 

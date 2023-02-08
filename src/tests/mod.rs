@@ -240,7 +240,10 @@ macro_rules! substitutions(
   () =>  { vec![] };
   { $($key:literal => $value:literal),+ } => {
       {
-          vec![$(($key.to_string(), $value.to_string()),)+]
+          vec![$(crate::models::piranha_arguments::Substitution{
+            key: $key.to_string(),
+            value: $value.to_string()
+          },)+]
 
       }
    };

@@ -49,9 +49,9 @@ pub struct PiranhaArguments {
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
-  #[clap(short= 's',value_parser = parse_key_val)]
+  #[clap(short= 's',value_parser = parse_key_val, default_values_t=default_substitutions())]
   #[serde(default = "default_substitutions")]
-  substitutions: Vec<(String, String)>,
+  substitutions: Vec<Substitution>,
 
   /// Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
   #[get = "pub"]
@@ -66,7 +66,8 @@ pub struct PiranhaArguments {
   #[clap(short = 'j', long)]
   #[serde(skip)]
   path_to_output_summary: Option<String>,
-  // the target language
+
+  /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
   #[clap(short= 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
@@ -148,7 +149,10 @@ impl PiranhaArguments {
   ) -> Self {
     let subs = substitutions
       .iter()
-      .map(|(k, v)| (k.to_string(), v.to_string()))
+      .map(|(key, value)| Substitution {
+        key: key.to_string(),
+        value: value.to_string(),
+      })
       .collect_vec();
 
     // gets `$arg_name` from `keyword_arguments` else invokes `$default_fn`
@@ -273,7 +277,11 @@ impl PiranhaArguments {
   }
 
   pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
-    self.substitutions.iter().cloned().collect()
+    self
+      .substitutions
+      .iter()
+      .map(|s| (s.key.to_string(), s.value.to_string()))
+      .collect()
   }
 }
 
@@ -330,3 +338,15 @@ macro_rules! piranha_arguments {
 }
 
 pub use piranha_arguments;
+
+#[derive(Deserialize, Clone, Debug, Parser, Default, PartialEq)]
+pub struct Substitution {
+  pub key: String,
+  pub value: String,
+}
+
+impl std::fmt::Display for Substitution {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{0} => {1}", self.key, self.key)
+  }
+}
