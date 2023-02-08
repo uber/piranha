@@ -39,7 +39,7 @@ fn test_cli() {
   let temp_file = temp_dir.path().join("output.txt");
   _ = File::create(temp_file.as_path());
 
-  let mut cmd = Command::cargo_bin(env!("CARGO_PKG_NAME")).unwrap();
+  let mut cmd = Command::cargo_bin("polyglot_piranha").unwrap();
   cmd
     .args(["-c", "test-resources/py/delete_cleanup_str_in_list/input"])
     .args([
