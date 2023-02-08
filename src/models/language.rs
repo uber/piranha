@@ -106,6 +106,8 @@ impl From<&str> for PiranhaLanguage {
 
 impl std::str::FromStr for PiranhaLanguage {
   type Err = &'static str;
+  /// This method is leveraged by `clap` to parse the command line
+  /// argument into PiranhaLanguage
   fn from_str(language: &str) -> Result<Self, Self::Err> {
     match language {
       JAVA => {
