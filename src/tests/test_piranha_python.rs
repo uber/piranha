@@ -13,25 +13,15 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use assert_cmd::prelude::{CommandCargoExt, OutputAssertExt};
 
-use std::{fs::File, process::Command};
+use std::{fs::File, path::Path, process::Command};
 use tempdir::TempDir;
 
-use super::{create_match_tests, create_rewrite_tests, substitutions};
+use super::create_match_tests;
 
 use crate::{
   models::{default_configs::PYTHON, piranha_output::PiranhaOutputSummary},
-  utilities::read_file,
+  utilities::{eq_without_whitespace, read_file},
 };
-
-create_rewrite_tests!(
-  PYTHON,
-  test_delete_modify_str_literal_from_list:  "delete_cleanup_str_in_list", 1,
-  substitutions = substitutions! {
-    "str_literal" => "dependency2",
-    "str_to_replace"=>  "dependency1",
-    "str_replacement" => "dependency1_1"
-  };
-);
 
 #[test]
 fn test_cli() {
@@ -54,13 +44,12 @@ fn test_cli() {
     .args(["-s", "str_replacement=dependency1_1"]);
 
   cmd.assert().success();
-
   let content = read_file(&temp_file).unwrap();
-  assert!(!content.is_empty());
   let output: Vec<PiranhaOutputSummary> = serde_json::from_str(&content).unwrap();
-  assert!(!output.is_empty());
-  assert!(output[0].path().to_str().unwrap().contains("only_lists.py"));
-  assert!(!output[0].rewrites().is_empty());
+  let expected_path =
+    Path::new("test-resources/py/delete_cleanup_str_in_list/expected/only_lists.py");
+  let expected = read_file(&expected_path.to_path_buf()).unwrap();
+  assert!(eq_without_whitespace(output[0].content(), &expected));
 
   _ = temp_dir.close();
 }
