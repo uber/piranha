@@ -24,7 +24,7 @@ use crate::{
 };
 
 #[test]
-fn test_cli() {
+fn test_delete_modify_str_literal_from_list_via_cli() {
   let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
   let temp_file = temp_dir.path().join("output.txt");
   _ = File::create(temp_file.as_path());
