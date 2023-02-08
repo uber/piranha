@@ -16,6 +16,7 @@ from os.path import join, basename
 from os import listdir
 import re
 
+
 def test_piranha_rewrite():
     args = PiranhaArguments(
         "test-resources/java/feature_flag_system_1/treated/input",
