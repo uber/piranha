@@ -66,7 +66,7 @@ pub struct PiranhaArguments {
   #[clap(short = 'j', long)]
   #[serde(skip)]
   path_to_output_summary: Option<String>,
-  // the target language
+  /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
   #[clap(short= 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])

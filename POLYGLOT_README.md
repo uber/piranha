@@ -171,14 +171,14 @@ Usage: polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-t
 Options:
   -c, --path-to-codebase <PATH_TO_CODEBASE>
           Path to source code folder or file
-  -S <SUBSTITUTIONS>
+  -s <SUBSTITUTIONS>
           These substitutions instantiate the initial set of rules. Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
           Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
   -j, --path-to-output-summary <PATH_TO_OUTPUT_SUMMARY>
           Path to output summary json file
-  -p <LANGUAGE>
-          [possible values: java, swift, py, kt, go, tsx, ts]
+  -l <LANGUAGE>
+          The target language [possible values: java, swift, py, kt, go, tsx, ts]
       --delete-file-if-empty
           User option that determines whether an empty file will be deleted
       --delete-consecutive-new-lines
@@ -194,6 +194,7 @@ Options:
       --dry-run
           Disables in-place rewriting of code
   -h, --help
+          Print help
 ```
 
 The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.
