@@ -116,6 +116,27 @@ impl Rule {
 }
 
 #[macro_export]
+/// This macro can be used to construct a Rule (via the builder).'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// piranha_rule! {
+///   name = "Some Rule".to_string(),
+///   query= "(method_invocation name: (_) @name) @mi".to_string()
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// RuleBuilder::default()
+///      .name("Some Rule".to_string())
+///      .query("(method_invocation name: (_) @name) @mi".to_string)
+///      .build()
+/// ```
+///
 macro_rules! piranha_rule {
   (name = $name:expr
                 $(, query =$query: expr)?

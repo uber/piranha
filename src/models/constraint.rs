@@ -31,6 +31,27 @@ pub(crate) struct Constraint {
 }
 
 #[macro_export]
+/// This macro can be used to construct a Constraint (via the builder).'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// constraint! {
+///   matcher = "(method_declaration) @md".to_string(),
+///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// ConstraintBuilder::default()
+///      .matcher("(method_declaration) @md".to_string())
+///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
+///      .build()
+/// ```
+///
 macro_rules! constraint {
   (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
     $crate::models::constraint::ConstraintBuilder::default()
