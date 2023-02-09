@@ -231,6 +231,59 @@ replace_node = "not_expression"
 replace = "true"
 is_seed_rule = false
 
+#
+# Next two rules take care of if-else cleanup, these 2 rules depend on their order in this file
+# 
+
+#
+# Before 
+#   if true {
+#     abcd()
+#   } else {
+#     hij()
+#   }
+# After 
+#   abcd()
+#
+[[rules]]
+name = "if_always_true"
+query = """ (
+(if_statement
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    ) @if_else_block
+(#eq? @condition_literal "true")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = "@if_block"
+is_seed_rule = false
+
+# Before 
+#   else if true {
+#     abcd()
+#   } else {
+#     hij()
+#   }
+# After 
+#   abcd()
+#
+[[rules]]
+name = "else_if_always_true"
+query = """ (
+(else)
+(if_statement
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    ) @if_else_block
+(#eq? @condition_literal "true")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = "{ @if_block }"
+is_seed_rule = false
+
+
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
 # A pattern here is - if there is an outgoing edge to B there is another to C.
@@ -238,4 +291,8 @@ is_seed_rule = false
 # X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
+is_seed_rule = false
+
+[[rules]]
+name = "statement_cleanup"
 is_seed_rule = false
