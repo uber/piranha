@@ -11,19 +11,19 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::utilities::read_toml;
-
 use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
-    default_global_tag_prefix, default_input_substitutions, default_language,
-    default_name_of_piranha_argument_toml, default_number_of_ancestors_in_parent_scope,
-    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
-    default_piranha_language, default_substitutions,
+    default_global_tag_prefix, default_name_of_piranha_argument_toml,
+    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
+    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
+    default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
 };
+use crate::utilities::{parse_key_val, read_toml};
+use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
@@ -46,23 +46,14 @@ pub struct PiranhaArguments {
   #[serde(skip)]
   path_to_codebase: String,
 
-  // Input arguments provided to Piranha, mapped to tag names -
-  // @stale_flag_name, @namespace, @treated, @treated_complement
-  // These substitutions instantiate the initial set of feature flag rules
-  #[get = "pub"]
-  #[builder(default = "default_input_substitutions()")]
-  #[clap(skip)]
-  #[serde(skip)]
-  input_substitutions: HashMap<String, String>,
-
-  // Substitutions to instantiate the initial set of feature flag rules
+  /// These substitutions instantiate the initial set of rules.
+  /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
-  #[clap(skip)]
+  #[clap(short = 's',value_parser = parse_key_val)]
   #[serde(default = "default_substitutions")]
-  substitutions: Vec<Vec<String>>,
+  substitutions: Vec<(String, String)>,
 
-  /// Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`,
-  /// and  `edges.toml` (optional)
+  /// Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
   #[get = "pub"]
   #[builder(default = "default_path_to_configurations()")]
   #[clap(short = 'f', long)]
@@ -75,18 +66,13 @@ pub struct PiranhaArguments {
   #[clap(short = 'j', long)]
   #[serde(skip)]
   path_to_output_summary: Option<String>,
-
-  // the target language
-  #[builder(default = "default_language()")]
-  #[clap(skip)]
-  #[serde(default = "default_language")]
-  language: String,
-
+  /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
-  #[clap(skip)]
+  #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
+  .map(|s| s.parse::<PiranhaLanguage>().unwrap()))]
   #[serde(skip)]
-  piranha_language: PiranhaLanguage,
+  language: PiranhaLanguage,
 
   /// User option that determines whether an empty file will be deleted
   #[get = "pub"]
@@ -162,7 +148,7 @@ impl PiranhaArguments {
   ) -> Self {
     let subs = substitutions
       .iter()
-      .map(|(k, v)| vec![k.to_string(), v.to_string()])
+      .map(|(k, v)| (k.to_string(), v.to_string()))
       .collect_vec();
 
     // gets `$arg_name` from `keyword_arguments` else invokes `$default_fn`
@@ -191,34 +177,34 @@ impl PiranhaArguments {
     }
 
     piranha_arguments! {
-      path_to_codebase= path_to_codebase,
+      path_to_codebase = path_to_codebase,
       path_to_configurations = path_to_configurations,
-      language= language,
-      substitutions= subs,
-      dry_run= get_keyword_arg!("dry_run", default_dry_run, "bool"),
-      cleanup_comments= get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
-      cleanup_comments_buffer= get_keyword_arg!(
+      language = PiranhaLanguage::from(language.as_str()),
+      substitutions = subs,
+      dry_run = get_keyword_arg!("dry_run", default_dry_run, "bool"),
+      cleanup_comments = get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
+      cleanup_comments_buffer = get_keyword_arg!(
         "cleanup_comments_buffer",
         default_cleanup_comments_buffer,
         "num"
       ),
-      number_of_ancestors_in_parent_scope= get_keyword_arg!(
+      number_of_ancestors_in_parent_scope = get_keyword_arg!(
         "number_of_ancestors_in_parent_scope",
         default_number_of_ancestors_in_parent_scope,
         "num"
       ),
-      delete_consecutive_new_lines= get_keyword_arg!(
+      delete_consecutive_new_lines = get_keyword_arg!(
         "delete_consecutive_new_lines",
         default_delete_consecutive_new_lines,
         "bool"
       ),
-      global_tag_prefix= get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
-      delete_file_if_empty= get_keyword_arg!(
+      global_tag_prefix = get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
+      delete_file_if_empty = get_keyword_arg!(
         "delete_file_if_empty",
         default_delete_file_if_empty,
         "bool"
       ),
-      path_to_output_summary= get_keyword_arg!(
+      path_to_output_summary = get_keyword_arg!(
         "path_to_output_summary",
         default_path_to_output_summaries,
         "option"
@@ -229,7 +215,25 @@ impl PiranhaArguments {
 
 impl PiranhaArguments {
   pub fn get_language(&self) -> String {
-    self.language.clone()
+    self.language.name().to_string()
+  }
+
+  pub fn from_cli() -> Self {
+    let p = PiranhaArguments::parse();
+    piranha_arguments! {
+      path_to_codebase = p.path_to_codebase().to_string(),
+      substitutions = p.substitutions.clone(),
+      language = p.language().clone(),
+      path_to_configurations = p.path_to_configurations().to_string(),
+      path_to_output_summary = p.path_to_output_summary().clone(),
+      delete_file_if_empty = *p.delete_file_if_empty(),
+      delete_consecutive_new_lines = *p.delete_consecutive_new_lines(),
+      global_tag_prefix = p.global_tag_prefix().to_string(),
+      number_of_ancestors_in_parent_scope = *p.number_of_ancestors_in_parent_scope(),
+      cleanup_comments_buffer = *p.cleanup_comments_buffer(),
+      cleanup_comments = *p.cleanup_comments(),
+      dry_run = *p.dry_run(),
+    }
   }
 
   pub fn merge(&self, other: PiranhaArguments) -> Self {
@@ -249,11 +253,9 @@ impl PiranhaArguments {
     Self {
       path_to_codebase: merge!(path_to_codebase, default_path_to_codebase),
       substitutions: merge!(substitutions, default_substitutions),
-      input_substitutions: merge!(input_substitutions, default_input_substitutions),
       path_to_configurations: merge!(path_to_configurations, default_path_to_configurations),
       path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
-      language: merge!(language, default_language),
-      piranha_language: merge!(piranha_language, default_piranha_language),
+      language: merge!(language, default_piranha_language),
       delete_file_if_empty: merge!(delete_file_if_empty, default_delete_file_if_empty),
       delete_consecutive_new_lines: merge!(
         delete_consecutive_new_lines,
@@ -269,6 +271,10 @@ impl PiranhaArguments {
       dry_run: merge!(dry_run, default_dry_run),
     }
   }
+
+  pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
+    self.substitutions.iter().cloned().collect()
+  }
 }
 
 impl PiranhaArgumentsBuilder {
@@ -278,29 +284,14 @@ impl PiranhaArgumentsBuilder {
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
     let _arg = &self.create().unwrap();
-    let input_substitutions = _arg
-      .substitutions
-      .iter()
-      .map(|x| (x[0].clone(), x[1].clone()))
-      .collect();
 
-    let piranha_language = PiranhaLanguage::from(_arg.language.as_str());
-
-    let created_args = _arg.merge(
-      PiranhaArgumentsBuilder::default()
-        .input_substitutions(input_substitutions)
-        .piranha_language(piranha_language)
-        .create()
-        .unwrap(),
-    );
-
-    let path_to_toml = PathBuf::from(created_args.path_to_configurations())
-      .join(default_name_of_piranha_argument_toml());
+    let path_to_toml =
+      PathBuf::from(_arg.path_to_configurations()).join(default_name_of_piranha_argument_toml());
     if path_to_toml.exists() {
       let args_from_file = read_toml::<PiranhaArguments>(&path_to_toml, false);
-      return created_args.merge(args_from_file);
+      return _arg.merge(args_from_file);
     }
-    created_args
+    _arg.clone()
   }
 }
 

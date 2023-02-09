@@ -31,7 +31,7 @@ pub fn default_language() -> String {
   JAVA.to_string()
 }
 
-pub fn default_substitutions() -> Vec<Vec<String>> {
+pub fn default_substitutions() -> Vec<(String, String)> {
   vec![]
 }
 
@@ -61,10 +61,6 @@ pub fn default_path_to_codebase() -> String {
 
 pub fn default_name_of_piranha_argument_toml() -> String {
   "piranha_arguments.toml".to_string()
-}
-
-pub fn default_input_substitutions() -> HashMap<String, String> {
-  HashMap::new()
 }
 
 pub fn default_path_to_configurations() -> String {

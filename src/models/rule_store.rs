@@ -76,7 +76,7 @@ impl RuleStore {
 
     for rule in rule_store.rule_graph().rules().clone() {
       if rule.is_seed_rule() {
-        rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, args.input_substitutions()));
+        rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, &args.input_substitutions()));
       }
     }
     info!(
@@ -108,7 +108,7 @@ impl RuleStore {
       .or_insert_with(|| {
         self
           .piranha_args
-          .piranha_language()
+          .language()
           .create_query(query_str.to_string())
       })
   }
@@ -152,7 +152,7 @@ impl RuleStore {
   pub(crate) fn get_scope_query_generators(&self, scope_level: &str) -> Vec<ScopeQueryGenerator> {
     self
       .piranha_args()
-      .piranha_language()
+      .language()
       .scopes()
       .iter()
       .find(|level| level.name().eq(scope_level))
@@ -253,7 +253,7 @@ impl Default for RuleStore {
 }
 
 fn read_config_files(args: &PiranhaArguments) -> RuleGraph {
-  let piranha_language = args.piranha_language();
+  let piranha_language = args.language();
 
   let built_in_rules = RuleGraphBuilder::default()
     .edges(piranha_language.edges().clone().unwrap_or_default().edges)

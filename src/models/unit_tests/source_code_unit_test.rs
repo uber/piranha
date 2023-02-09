@@ -40,7 +40,7 @@ impl SourceCodeUnit {
       &HashMap::new(),
       PathBuf::new().as_path(),
       &PiranhaArgumentsBuilder::default()
-        .language(language_name)
+        .language(PiranhaLanguage::from(language_name.as_str()))
         .build(),
     )
   }
@@ -218,9 +218,7 @@ fn test_satisfies_constraints_positive() {
   let mut rule_store = RuleStore::default();
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
-  let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(java.name().to_string())
-    .build();
+  let piranha_args = PiranhaArgumentsBuilder::default().language(java).build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
@@ -285,9 +283,7 @@ fn test_satisfies_constraints_negative() {
   let mut rule_store = RuleStore::default();
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
-  let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .language(java.name().to_string())
-    .build();
+  let piranha_arguments = &PiranhaArgumentsBuilder::default().language(java).build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),

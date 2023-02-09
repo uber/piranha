@@ -17,7 +17,9 @@ use super::{
 };
 use crate::{
   execute_piranha,
-  models::{default_configs::JAVA, piranha_arguments::piranha_arguments},
+  models::{
+    default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::piranha_arguments,
+  },
 };
 use std::path::PathBuf;
 
@@ -79,7 +81,7 @@ fn test_scenarios_find_and_propagate_panic() {
   let piranha_arguments = piranha_arguments! {
     path_to_codebase = path_to_codebase,
     path_to_configurations = path_to_configurations,
-    language= JAVA.to_string(),
+    language = PiranhaLanguage::from(JAVA),
   };
 
   let _ = execute_piranha(&piranha_arguments);
@@ -111,7 +113,7 @@ fn _helper_user_option_delete_consecutive_lines(
   let piranha_arguments = piranha_arguments! {
     path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
     path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
-    language = JAVA.to_string(),
+    language = PiranhaLanguage::from(JAVA),
     delete_consecutive_new_lines = delete_consecutive_new_lines,
   };
 
