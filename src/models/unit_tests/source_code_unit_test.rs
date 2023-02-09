@@ -15,14 +15,15 @@ use std::collections::HashSet;
 use tree_sitter::Parser;
 
 use crate::{
+  constraint,
   models::{
-    constraint::Constraint,
     default_configs::{JAVA, SWIFT},
     language::PiranhaLanguage,
     piranha_arguments::PiranhaArgumentsBuilder,
-    rule::{InstantiatedRule, Rule},
+    rule::InstantiatedRule,
     rule_store::RuleStore,
   },
+  piranha_rule,
   utilities::eq_without_whitespace,
 };
 use {
@@ -180,30 +181,28 @@ fn test_apply_edit_comma_handling_via_regex() {
 
 #[test]
 fn test_satisfies_constraints_positive() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
       ((local_variable_declaration
                       declarator: (variable_declarator
                                           name: (_) @variable_name
                                           value: [(true) (false)] @init)) @variable_declaration)
       )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
-      String::from("(method_declaration) @md"),
-      vec![String::from(
-        "(
-         ((assignment_expression
-                         left: (_) @a.lhs
-                         right: (_) @a.rhs) @assignment)
-         (#eq? @a.lhs \"@variable_name\")
-         (#not-eq? @a.rhs \"@init\")
-       )",
-      )],
-    )]),
-  );
+    replace_node= "variable_declaration",
+    replace= "",
+    constraints= [constraint!{
+      matcher= "(method_declaration) @md",
+      queries= ["(
+        ((assignment_expression
+                        left: (_) @a.lhs
+                        right: (_) @a.rhs) @assignment)
+        (#eq? @a.lhs \"@variable_name\")
+        (#not-eq? @a.rhs \"@init\")
+      )",]
+    }]
+
+  };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){
@@ -245,30 +244,27 @@ fn test_satisfies_constraints_positive() {
 
 #[test]
 fn test_satisfies_constraints_negative() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
       ((local_variable_declaration
-                      declarator: (variable_declarator
-                                          name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
+          declarator: (variable_declarator
+          name: (_) @variable_name
+          value: [(true) (false)] @init)) @variable_declaration)
       )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
-      String::from("(method_declaration) @md"),
-      vec![String::from(
-        "(
-         ((assignment_expression
-                         left: (_) @a.lhs
-                         right: (_) @a.rhs) @assignment)
-         (#eq? @a.lhs \"@variable_name\")
-         (#not-eq? @a.rhs \"@init\")
-       )",
-      )],
-    )]),
-  );
+    replace_node= "variable_declaration",
+    replace= "",
+    constraints= [constraint!{
+      matcher= "(method_declaration) @md",
+      queries= ["(
+        ((assignment_expression
+                        left: (_) @a.lhs
+                        right: (_) @a.rhs) @assignment)
+        (#eq? @a.lhs \"@variable_name\")
+        (#not-eq? @a.rhs \"@init\")
+      )",]
+    }]
+  };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){

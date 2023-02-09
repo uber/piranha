@@ -14,6 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
+use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
@@ -21,7 +22,10 @@ use crate::utilities::tree_sitter_utilities::substitute_tags;
 
 use super::{
   constraint::Constraint,
-  default_configs::{default_query, default_replace, default_replace_node},
+  default_configs::{
+    default_constraints, default_groups, default_holes, default_query, default_replace,
+    default_replace_node, default_rule_name,
+  },
 };
 
 static SEED: &str = "Seed Rule";
@@ -33,33 +37,41 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder)]
 pub(crate) struct Rule {
   /// Name of the rule. (It is unique)
+  #[builder(default = "default_rule_name()")]
   #[get = "pub"]
   name: String,
   /// Tree-sitter query as string
+  #[builder(default = "default_query()")]
   #[serde(default = "default_query")]
   #[get = "pub"]
   query: String,
   /// The tag corresponding to the node to be replaced
+  #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
   #[get = "pub"]
   replace_node: String,
   /// Replacement pattern
+  #[builder(default = "default_replace()")]
   #[serde(default = "default_replace")]
   #[get = "pub"]
   replace: String,
   /// Group(s) to which the rule belongs
-  #[serde(default)]
+
+  #[builder(default = "default_groups()")]
+  #[serde(default = "default_groups")]
   #[get = "pub"]
   groups: HashSet<String>,
   /// Holes that need to be filled, in order to instantiate a rule
-  #[serde(default)]
+  #[builder(default = "default_holes()")]
+  #[serde(default = "default_holes")]
   #[get = "pub"]
   holes: HashSet<String>,
   /// Additional constraints for matching the rule
-  #[serde(default)]
+  #[builder(default = "default_constraints()")]
+  #[serde(default = "default_constraints")]
   #[get = "pub"]
   constraints: HashSet<Constraint>,
 }
@@ -103,23 +115,49 @@ impl Rule {
   }
 }
 
-#[cfg(test)]
-impl Rule {
-  pub(crate) fn new(
-    name: &str, query: &str, replace_node: &str, replace: &str, holes: HashSet<String>,
-    constraints: HashSet<Constraint>,
-  ) -> Self {
-    Self {
-      name: name.to_string(),
-      query: query.to_string(),
-      replace_node: replace_node.to_string(),
-      replace: replace.to_string(),
-      groups: HashSet::default(),
-      holes,
-      constraints,
-    }
-  }
+#[macro_export]
+/// This macro can be used to construct a Rule (via the builder).'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// piranha_rule! {
+///   name = "Some Rule".to_string(),
+///   query= "(method_invocation name: (_) @name) @mi".to_string()
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// RuleBuilder::default()
+///      .name("Some Rule".to_string())
+///      .query("(method_invocation name: (_) @name) @mi".to_string)
+///      .build()
+/// ```
+///
+macro_rules! piranha_rule {
+  (name = $name:expr
+                $(, query =$query: expr)?
+                $(, replace_node = $replace_node:expr)?
+                $(, replace = $replace:expr)?
+                $(, holes = [$($hole: expr)*])?
+                $(, groups = [$($group_name: expr)*])?
+                $(, constraints = [$($constraint:tt)*])?
+              ) => {
+    $crate::models::rule::RuleBuilder::default()
+    .name($name.to_string())
+    $(.query($query.to_string()))?
+    $(.replace_node($replace_node.to_string()))?
+    $(.replace($replace.to_string()))?
+    $(.holes(HashSet::from([$($hole.to_string(),)*])))?
+    $(.groups(HashSet::from([$($group_name.to_string(),)*])))?
+    $(.constraints(HashSet::from([$($constraint)*])))?
+    .build().unwrap()
+  };
 }
+pub use piranha_rule;
 
 #[derive(Debug, Getters, Clone)]
 pub(crate) struct InstantiatedRule {

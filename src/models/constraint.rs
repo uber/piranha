@@ -11,23 +11,53 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters)]
+use super::default_configs::{default_matcher, default_queries};
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 pub(crate) struct Constraint {
   /// Scope in which the constraint query has to be applied
+  #[builder(default = "default_matcher()")]
   #[get = "pub"]
   matcher: String,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
+  #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
   queries: Vec<String>,
 }
 
-impl Constraint {
-  #[cfg(test)]
-  pub(crate) fn new(matcher: String, queries: Vec<String>) -> Self {
-    Self { matcher, queries }
-  }
+#[macro_export]
+/// This macro can be used to construct a Constraint (via the builder)'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// constraint! {
+///   matcher = "(method_declaration) @md".to_string(),
+///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// ConstraintBuilder::default()
+///      .matcher("(method_declaration) @md".to_string())
+///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
+///      .build()
+/// ```
+///
+macro_rules! constraint {
+  (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
+    $crate::models::constraint::ConstraintBuilder::default()
+      .matcher($matcher.to_string())
+      .queries(vec![$($q.to_string(),)*])
+      .build().unwrap()
+  };
 }
+pub use constraint;
