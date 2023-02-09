@@ -23,7 +23,7 @@ use super::{
   language::PiranhaLanguage,
 };
 use crate::utilities::{parse_key_val, read_toml};
-use clap::builder::TypedValueParser as _;
+use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
@@ -49,7 +49,7 @@ pub struct PiranhaArguments {
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
-  #[clap(short= 's',value_parser = parse_key_val)]
+  #[clap(short = 's',value_parser = parse_key_val)]
   #[serde(default = "default_substitutions")]
   substitutions: Vec<(String, String)>,
 
@@ -69,7 +69,7 @@ pub struct PiranhaArguments {
   /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
-  #[clap(short= 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
+  #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
   .map(|s| s.parse::<PiranhaLanguage>().unwrap()))]
   #[serde(skip)]
   language: PiranhaLanguage,
@@ -177,34 +177,34 @@ impl PiranhaArguments {
     }
 
     piranha_arguments! {
-      path_to_codebase= path_to_codebase,
+      path_to_codebase = path_to_codebase,
       path_to_configurations = path_to_configurations,
-      language= PiranhaLanguage::from(language.as_str()),
-      substitutions= subs,
-      dry_run= get_keyword_arg!("dry_run", default_dry_run, "bool"),
-      cleanup_comments= get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
-      cleanup_comments_buffer= get_keyword_arg!(
+      language = PiranhaLanguage::from(language.as_str()),
+      substitutions = subs,
+      dry_run = get_keyword_arg!("dry_run", default_dry_run, "bool"),
+      cleanup_comments = get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
+      cleanup_comments_buffer = get_keyword_arg!(
         "cleanup_comments_buffer",
         default_cleanup_comments_buffer,
         "num"
       ),
-      number_of_ancestors_in_parent_scope= get_keyword_arg!(
+      number_of_ancestors_in_parent_scope = get_keyword_arg!(
         "number_of_ancestors_in_parent_scope",
         default_number_of_ancestors_in_parent_scope,
         "num"
       ),
-      delete_consecutive_new_lines= get_keyword_arg!(
+      delete_consecutive_new_lines = get_keyword_arg!(
         "delete_consecutive_new_lines",
         default_delete_consecutive_new_lines,
         "bool"
       ),
-      global_tag_prefix= get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
-      delete_file_if_empty= get_keyword_arg!(
+      global_tag_prefix = get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
+      delete_file_if_empty = get_keyword_arg!(
         "delete_file_if_empty",
         default_delete_file_if_empty,
         "bool"
       ),
-      path_to_output_summary= get_keyword_arg!(
+      path_to_output_summary = get_keyword_arg!(
         "path_to_output_summary",
         default_path_to_output_summaries,
         "option"
@@ -221,18 +221,18 @@ impl PiranhaArguments {
   pub fn from_cli() -> Self {
     let p = PiranhaArguments::parse();
     piranha_arguments! {
-      path_to_codebase= p.path_to_codebase().to_string(),
+      path_to_codebase = p.path_to_codebase().to_string(),
       substitutions = p.substitutions.clone(),
       language = p.language().clone(),
       path_to_configurations = p.path_to_configurations().to_string(),
       path_to_output_summary = p.path_to_output_summary().clone(),
-      delete_file_if_empty= *p.delete_file_if_empty(),
-      delete_consecutive_new_lines= *p.delete_consecutive_new_lines(),
-      global_tag_prefix= p.global_tag_prefix().to_string(),
-      number_of_ancestors_in_parent_scope= *p.number_of_ancestors_in_parent_scope(),
-      cleanup_comments_buffer= *p.cleanup_comments_buffer(),
-      cleanup_comments= *p.cleanup_comments(),
-      dry_run= *p.dry_run(),
+      delete_file_if_empty = *p.delete_file_if_empty(),
+      delete_consecutive_new_lines = *p.delete_consecutive_new_lines(),
+      global_tag_prefix = p.global_tag_prefix().to_string(),
+      number_of_ancestors_in_parent_scope = *p.number_of_ancestors_in_parent_scope(),
+      cleanup_comments_buffer = *p.cleanup_comments_buffer(),
+      cleanup_comments = *p.cleanup_comments(),
+      dry_run = *p.dry_run(),
     }
   }
 

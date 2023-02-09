@@ -81,7 +81,7 @@ fn test_scenarios_find_and_propagate_panic() {
   let piranha_arguments = piranha_arguments! {
     path_to_codebase = path_to_codebase,
     path_to_configurations = path_to_configurations,
-    language= PiranhaLanguage::from(JAVA),
+    language = PiranhaLanguage::from(JAVA),
   };
 
   let _ = execute_piranha(&piranha_arguments);

@@ -23,6 +23,9 @@ use crate::{
   utilities::{eq_without_whitespace, read_file},
 };
 
+/// This test is almost equivalent to create_rewrite_tests!(PYTHON, test_delete_modify_str_literal_from_list: ...)
+/// It is "almost equivalent" because we pass `--dry-run`and the compare the contents of
+/// of expected files against `PiranhaOutputSummary`
 #[test]
 fn test_delete_modify_str_literal_from_list_via_cli() {
   let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
