@@ -31,7 +31,7 @@ pub(crate) struct Constraint {
 }
 
 #[macro_export]
-/// This macro can be used to construct a Constraint (via the builder).'
+/// This macro can be used to construct a Constraint (via the builder)'
 /// Allows to use builder pattern more "dynamically"
 ///
 /// Usage:
