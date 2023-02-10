@@ -24,7 +24,7 @@ use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
-  models::rule_store::{GLOBAL, PARENT},
+  models::rule_graph::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
     get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
     PiranhaHelpers,
@@ -193,7 +193,10 @@ impl SourceCodeUnit {
     // let file_level_scope_names = [METHOD, CLASS];
     loop {
       // Get all the (next) rules that could be after applying the current rule (`rule`).
-      let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
+      let next_rules_by_scope = self
+        .piranha_arguments
+        .rule_graph()
+        .get_next(&current_rule, self.substitutions());
 
       debug!(
         "\n{}",

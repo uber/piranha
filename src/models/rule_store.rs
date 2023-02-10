@@ -26,27 +26,15 @@ use tree_sitter::Query;
 
 use crate::{
   models::piranha_arguments::PiranhaArguments,
-  models::{
-    rule_graph::{RuleGraph, RuleGraphBuilder},
-    scopes::ScopeQueryGenerator,
-  },
-  utilities::{read_file, read_toml, MapOfVec},
+  models::scopes::ScopeQueryGenerator,
+  utilities::{read_file, MapOfVec},
 };
 
-use super::{
-  language::PiranhaLanguage,
-  outgoing_edges::Edges,
-  rule::{InstantiatedRule, Rules},
-};
+use super::{language::PiranhaLanguage, rule::InstantiatedRule};
 
-pub(crate) static GLOBAL: &str = "Global";
-pub(crate) static PARENT: &str = "Parent";
 /// This maintains the state for Piranha.
 #[derive(Debug, Getters, Default)]
 pub(crate) struct RuleStore {
-  // A graph that captures the flow amongst the rules
-  #[get = "pub"]
-  rule_graph: RuleGraph,
   // Caches the compiled tree-sitter queries.
   rule_query_cache: HashMap<String, Query>,
   // Current global rules to be applied.
@@ -68,21 +56,19 @@ impl From<PiranhaArguments> for RuleStore {
 
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
-    let rule_graph = read_config_files(args);
     let mut rule_store = RuleStore {
-      rule_graph,
       language: args.language().clone(),
       ..Default::default()
     };
 
-    for rule in rule_store.rule_graph().rules().clone() {
+    for rule in args.rule_graph().rules().clone() {
       if rule.is_seed_rule() {
         rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, &args.input_substitutions()));
       }
     }
     info!(
       "Number of rules and edges loaded : {:?}",
-      rule_store.rule_graph.get_number_of_rules_and_edges()
+      args.rule_graph().get_number_of_rules_and_edges()
     );
     trace!("Rule Store {}", format!("{rule_store:#?}"));
     rule_store
@@ -107,41 +93,6 @@ impl RuleStore {
       .rule_query_cache
       .entry(query_str.to_string())
       .or_insert_with(|| self.language.create_query(query_str.to_string()))
-  }
-
-  /// Get the next rules to be applied grouped by the scope in which they should be performed.
-  pub(crate) fn get_next(
-    &self, rule_name: &String, tag_matches: &HashMap<String, String>,
-  ) -> HashMap<String, Vec<InstantiatedRule>> {
-    // let rule_name = rule.name();
-    let mut next_rules: HashMap<String, Vec<InstantiatedRule>> = HashMap::new();
-    // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
-    for (scope, to_rule) in self.rule_graph.get_neighbors(rule_name) {
-      let to_rule_name = &self.rule_graph().get_rule_named(&to_rule).unwrap();
-      // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
-      if to_rule_name.is_dummy_rule() {
-        // Call this method recursively on the dummy node
-        for (next_next_rules_scope, next_next_rules) in
-          self.get_next(to_rule_name.name(), tag_matches)
-        {
-          for next_next_rule in next_next_rules {
-            // Group the next rules based on the scope
-            next_rules.collect(String::from(&next_next_rules_scope), next_next_rule)
-          }
-        }
-      } else {
-        // Group the next rules based on the scope
-        next_rules.collect(
-          String::from(&scope),
-          InstantiatedRule::new(to_rule_name, tag_matches),
-        );
-      }
-    }
-    // Add empty entry, incase no next rule was found for a particular scope
-    for scope in [PARENT, GLOBAL] {
-      next_rules.entry(scope.to_string()).or_default();
-    }
-    next_rules
   }
 
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
@@ -180,13 +131,6 @@ impl RuleStore {
     Regex::new(reg_x.as_str()).unwrap()
   }
 
-  pub(crate) fn does_file_extension_match(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
-    de.path()
-      .extension()
-      .and_then(|e| e.to_str().filter(|x| x.eq(&self.language().name())))
-      .is_some()
-  }
-
   /// Checks if any global rule has a hole
   pub(crate) fn any_global_rules_has_holes(&self) -> bool {
     self.global_rules().iter().any(|x| !x.holes().is_empty())
@@ -211,7 +155,7 @@ impl RuleStore {
       // Ignore errors
       .filter_map(|e| e.ok())
       // Filter files with the desired extension
-      .filter(|de| self.does_file_extension_match(de))
+      .filter(|de| self.language().can_parse(de))
       // Read the file
       .map(|f| (f.path(), read_file(&f.path()).unwrap()))
       .collect();
@@ -231,31 +175,4 @@ impl RuleStore {
     );
     files
   }
-}
-
-fn read_config_files(args: &PiranhaArguments) -> RuleGraph {
-  let piranha_language = args.language();
-
-  let built_in_rules = RuleGraphBuilder::default()
-    .edges(piranha_language.edges().clone().unwrap_or_default().edges)
-    .rules(piranha_language.rules().clone().unwrap_or_default().rules)
-    .build();
-
-  let user_defined_rules = read_user_config_files(args.path_to_configurations());
-
-  built_in_rules.merge(&user_defined_rules)
-}
-
-pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
-  let path_to_config = Path::new(path_to_configurations);
-  // Read the rules and edges provided by the user
-  let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
-  let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
-  for r in input_rules.rules.iter_mut() {
-    r.add_to_seed_rules_group();
-  }
-  RuleGraphBuilder::default()
-    .rules(input_rules.rules)
-    .edges(input_edges.edges)
-    .build()
 }
