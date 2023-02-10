@@ -36,7 +36,7 @@ use serde_derive::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
-#[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Default, Builder)]
+#[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Builder)]
 #[clap(name = "Piranha")]
 #[pyclass]
 #[builder(build_fn(name = "create"))]
@@ -130,6 +130,12 @@ pub struct PiranhaArguments {
   #[clap(skip)]
   #[serde(skip)]
   rule_graph: RuleGraph,
+}
+
+impl Default for PiranhaArguments {
+    fn default() -> Self {
+        PiranhaArgumentsBuilder::default().build()
+    }
 }
 
 #[pymethods]
