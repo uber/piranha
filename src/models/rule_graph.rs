@@ -164,9 +164,6 @@ pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGra
   // Read the rules and edges provided by the user
   let input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
-  // for r in input_rules.rules.iter_mut() {
-  //   r.add_to_seed_rules_group();
-  // }
   RuleGraphBuilder::default()
     .rules(input_rules.rules)
     .edges(input_edges.edges)
