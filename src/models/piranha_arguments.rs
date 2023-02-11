@@ -302,7 +302,7 @@ impl PiranhaArgumentsBuilder {
     let mut _arg = self.create().unwrap();
 
     // Read from `piranha_arguments.toml` if present
-    // This is supported until we support the deprecated `run_piranha_cli`.
+    // Until we stop supporting the deprecated `run_piranha_cli` API.
     if let Some(toml_args) = get_piranha_arguments_from_toml(_arg.path_to_configurations()) {
       _arg = _arg.merge(toml_args);
     }
@@ -340,7 +340,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   let mut user_defined_rules = if !_arg.path_to_configurations().is_empty() {
     read_user_config_files(_arg.path_to_configurations())
   } else {
-    //.Get the user-defined rule graph (if any) via the Python/Rust API
+    // Get the user-defined rule graph (if any) via the Python/Rust API
     _arg.rule_graph().clone()
   };
   for r in user_defined_rules.rules_mut() {
