@@ -124,9 +124,9 @@ pub struct PiranhaArguments {
 }
 
 impl Default for PiranhaArguments {
-    fn default() -> Self {
-        PiranhaArgumentsBuilder::default().build()
-    }
+  fn default() -> Self {
+    PiranhaArgumentsBuilder::default().build()
+  }
 }
 
 #[pymethods]
