@@ -309,12 +309,7 @@ impl PiranhaArgumentsBuilder {
 
     let rule_graph = built_in_rules.merge(&user_defined_rules);
 
-    let arg_rg = PiranhaArgumentsBuilder::default()
-      .rule_graph(rule_graph)
-      .create()
-      .unwrap();
-
-    _arg = _arg.merge(arg_rg);
+    _arg = PiranhaArguments { rule_graph, .._arg };
 
     let path_to_piranha_args_toml =
       PathBuf::from(_arg.path_to_configurations()).join(default_name_of_piranha_argument_toml());
