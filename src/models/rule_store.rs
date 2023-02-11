@@ -20,7 +20,7 @@ use colored::Colorize;
 use getset::Getters;
 use itertools::Itertools;
 use jwalk::WalkDir;
-use log::{debug, info, trace};
+use log::{debug, trace};
 use regex::Regex;
 use tree_sitter::Query;
 
@@ -45,15 +45,6 @@ pub(crate) struct RuleStore {
   language: PiranhaLanguage,
 }
 
-impl From<PiranhaArguments> for RuleStore {
-  fn from(piranha_args: PiranhaArguments) -> Self {
-    RuleStore {
-      language: piranha_args.language().clone(),
-      ..Default::default()
-    }
-  }
-}
-
 impl RuleStore {
   pub(crate) fn new(args: &PiranhaArguments) -> RuleStore {
     let mut rule_store = RuleStore {
@@ -62,14 +53,12 @@ impl RuleStore {
     };
 
     for rule in args.rule_graph().rules().clone() {
+      debug!("*** {:?}", rule);
       if rule.is_seed_rule() {
+        debug!("Is seed rule");
         rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, &args.input_substitutions()));
       }
     }
-    info!(
-      "Number of rules and edges loaded : {:?}",
-      args.rule_graph().get_number_of_rules_and_edges()
-    );
     trace!("Rule Store {}", format!("{rule_store:#?}"));
     rule_store
   }

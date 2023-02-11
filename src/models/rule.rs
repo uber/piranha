@@ -152,11 +152,13 @@ macro_rules! piranha_rule {
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
     $(.holes(HashSet::from([$($hole.to_string(),)*])))?
-    $(.groups(HashSet::from([$($group_name.to_string(),)*])))?
-    $(.constraints(HashSet::from([$($constraint)*])))?
+    $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
+    $(.constraints(std::collections::HashSet::from([$($constraint)*])))?
     .build().unwrap()
   };
 }
+
+pub use piranha_rule;
 
 #[derive(Debug, Getters, Clone)]
 pub(crate) struct InstantiatedRule {

@@ -11,6 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
@@ -21,7 +22,7 @@ pub(crate) struct Edges {
 }
 
 // Captures an entry from the `edges.toml` file.
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
 pub struct OutgoingEdges {
   #[get = "pub with_prefix"]
   from: String,
@@ -29,4 +30,15 @@ pub struct OutgoingEdges {
   to: Vec<String>,
   #[get = "pub with_prefix"]
   scope: String,
+}
+
+#[macro_export]
+macro_rules! edges {
+  (from = $from: expr, to = [$($to: expr)*], scope = $scope: expr) => {
+    $crate::models::outgoing_edges::OutgoingEdgesBuilder::default()
+    .from($from.to_string())
+    .to(vec![$($to.to_string())*])
+    .scope($scope.to_string())
+    .build().unwrap()
+  };
 }

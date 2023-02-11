@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use derive_builder::Builder;
-use getset::Getters;
+use getset::{Getters, MutGetters};
 use itertools::Itertools;
 
 use crate::{
@@ -30,10 +30,11 @@ use super::{
 pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";
 
-#[derive(Debug, Default, Getters, Builder, Clone, PartialEq)]
+#[derive(Debug, Default, Getters, MutGetters, Builder, Clone, PartialEq)]
 #[builder(build_fn(name = "create"))]
 pub struct RuleGraph {
   /// All the rules in the graph
+  #[get_mut = "pub(crate)"]
   #[get = "pub(crate)"]
   rules: Vec<Rule>,
   /// Edges of the rule graph
@@ -51,6 +52,10 @@ impl RuleGraphBuilder {
     let _rule_graph = self.create().unwrap();
 
     let mut graph = HashMap::new();
+
+    for r in _rule_graph.rules() {
+      graph.insert(r.name().to_string(), vec![]);
+    }
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
     for edge in _rule_graph.edges() {
@@ -157,11 +162,8 @@ impl RuleGraph {
 pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
   let path_to_config = Path::new(path_to_configurations);
   // Read the rules and edges provided by the user
-  let mut input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
+  let input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
   let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
-  for r in input_rules.rules.iter_mut() {
-    r.add_to_seed_rules_group();
-  }
   RuleGraphBuilder::default()
     .rules(input_rules.rules)
     .edges(input_edges.edges)

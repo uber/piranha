@@ -29,6 +29,7 @@ use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
+use log::{info, warn};
 use pyo3::{prelude::*, types::PyDict};
 use serde_derive::Deserialize;
 
@@ -299,27 +300,58 @@ impl PiranhaArgumentsBuilder {
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
     let mut _arg = self.create().unwrap();
-    let piranha_language = _arg.language();
-    let built_in_rules = RuleGraphBuilder::default()
-      .edges(piranha_language.edges().clone().unwrap_or_default().edges)
-      .rules(piranha_language.rules().clone().unwrap_or_default().rules)
-      .build();
 
-    let user_defined_rules = read_user_config_files(_arg.path_to_configurations());
-
-    let rule_graph = built_in_rules.merge(&user_defined_rules);
-
-    _arg = PiranhaArguments { rule_graph, .._arg };
-
-    let path_to_piranha_args_toml =
-      PathBuf::from(_arg.path_to_configurations()).join(default_name_of_piranha_argument_toml());
-    if path_to_piranha_args_toml.exists() {
-      let args_from_file = read_toml::<PiranhaArguments>(&path_to_piranha_args_toml, false);
-      _arg = _arg.merge(args_from_file);
+    // Read from `piranha_arguments.toml` if present
+    // Until we stop supporting the deprecated `run_piranha_cli` API.
+    if let Some(toml_args) = get_piranha_arguments_from_toml(_arg.path_to_configurations()) {
+      _arg = _arg.merge(toml_args);
     }
 
-    _arg.clone()
+    let rule_graph = get_rule_graph(&_arg);
+    _arg = PiranhaArguments { rule_graph, .._arg };
+    #[rustfmt::skip]
+    info!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
+    _arg
   }
+}
+
+fn get_piranha_arguments_from_toml(path_to_configurations: &String) -> Option<PiranhaArguments> {
+  let path_to_piranha_args_toml =
+    PathBuf::from(path_to_configurations).join(default_name_of_piranha_argument_toml());
+  if path_to_piranha_args_toml.exists() {
+    return Some(read_toml(&path_to_piranha_args_toml, false));
+  }
+  None
+}
+
+/// Gets rule graph for PiranhaArguments
+///   * Loads the language specific graphs
+///   * Merges these with the user defined graphs
+/// Returns this merged graph
+fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
+  // Get the built-in rule -graph for the language
+  let piranha_language = _arg.language();
+  let built_in_rules = RuleGraphBuilder::default()
+    .edges(piranha_language.edges().clone().unwrap_or_default().edges)
+    .rules(piranha_language.rules().clone().unwrap_or_default().rules)
+    .build();
+
+  // In the scenario when rules/edges are passed as toml files
+  let mut user_defined_rules = if !_arg.path_to_configurations().is_empty() {
+    read_user_config_files(_arg.path_to_configurations())
+  } else {
+    // Get the user-defined rule graph (if any) via the Python/Rust API
+    _arg.rule_graph().clone()
+  };
+  for r in user_defined_rules.rules_mut() {
+    _ = &r.add_to_seed_rules_group();
+  }
+
+  if user_defined_rules.graph().is_empty() {
+    warn!("NO RULES PROVIDED. Please provide rules via the RuleGraph API or as toml files");
+  }
+
+  built_in_rules.merge(&user_defined_rules)
 }
 
 #[macro_export]
