@@ -86,6 +86,13 @@ impl PiranhaLanguage {
     parser
   }
 
+  pub(crate) fn can_parse(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
+    de.path()
+      .extension()
+      .and_then(|e| e.to_str().filter(|x| x.eq(&self.name())))
+      .is_some()
+  }
+
   #[cfg(test)]
   pub(crate) fn set_scopes(&mut self, scopes: Vec<ScopeGenerator>) {
     self.scopes = scopes;

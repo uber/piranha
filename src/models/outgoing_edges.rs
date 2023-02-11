@@ -22,7 +22,7 @@ pub(crate) struct Edges {
 
 // Captures an entry from the `edges.toml` file.
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
-pub(crate) struct OutgoingEdges {
+pub struct OutgoingEdges {
   #[get = "pub with_prefix"]
   from: String,
   #[get = "pub with_prefix"]

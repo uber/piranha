@@ -18,9 +18,10 @@ use super::{
     default_global_tag_prefix, default_name_of_piranha_argument_toml,
     default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
     default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
-    default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
+    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
+  rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
 };
 use crate::utilities::{parse_key_val, read_toml};
 use clap::builder::TypedValueParser;
@@ -121,6 +122,13 @@ pub struct PiranhaArguments {
   #[clap(long, default_value_t = false)]
   #[serde(default = "default_dry_run")]
   dry_run: bool,
+
+  // A graph that captures the flow amongst the rules
+  #[get = "pub"]
+  #[builder(default = "default_rule_graph()")]
+  #[clap(skip)]
+  #[serde(skip)]
+  rule_graph: RuleGraph,
 }
 
 impl Default for PiranhaArguments {
@@ -275,6 +283,7 @@ impl PiranhaArguments {
       cleanup_comments_buffer: merge!(cleanup_comments_buffer, default_cleanup_comments_buffer),
       cleanup_comments: merge!(cleanup_comments, default_cleanup_comments),
       dry_run: merge!(dry_run, default_dry_run),
+      rule_graph: merge!(rule_graph, default_rule_graph),
     }
   }
 
@@ -289,14 +298,26 @@ impl PiranhaArgumentsBuilder {
   /// * parse `piranha_arguments.toml` (if it exists)
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
-    let _arg = &self.create().unwrap();
+    let mut _arg = self.create().unwrap();
+    let piranha_language = _arg.language();
+    let built_in_rules = RuleGraphBuilder::default()
+      .edges(piranha_language.edges().clone().unwrap_or_default().edges)
+      .rules(piranha_language.rules().clone().unwrap_or_default().rules)
+      .build();
 
-    let path_to_toml =
+    let user_defined_rules = read_user_config_files(_arg.path_to_configurations());
+
+    let rule_graph = built_in_rules.merge(&user_defined_rules);
+
+    _arg = PiranhaArguments { rule_graph, .._arg };
+
+    let path_to_piranha_args_toml =
       PathBuf::from(_arg.path_to_configurations()).join(default_name_of_piranha_argument_toml());
-    if path_to_toml.exists() {
-      let args_from_file = read_toml::<PiranhaArguments>(&path_to_toml, false);
-      return _arg.merge(args_from_file);
+    if path_to_piranha_args_toml.exists() {
+      let args_from_file = read_toml::<PiranhaArguments>(&path_to_piranha_args_toml, false);
+      _arg = _arg.merge(args_from_file);
     }
+
     _arg.clone()
   }
 }

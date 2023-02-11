@@ -38,7 +38,7 @@ pub(crate) struct Rules {
 }
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder)]
-pub(crate) struct Rule {
+pub struct Rule {
   /// Name of the rule. (It is unique)
   #[builder(default = "default_rule_name()")]
   #[get = "pub"]
@@ -157,7 +157,6 @@ macro_rules! piranha_rule {
     .build().unwrap()
   };
 }
-pub use piranha_rule;
 
 #[derive(Debug, Getters, Clone)]
 pub(crate) struct InstantiatedRule {
