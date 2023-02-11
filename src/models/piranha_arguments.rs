@@ -307,6 +307,7 @@ impl PiranhaArgumentsBuilder {
       _arg = _arg.merge(toml_args);
     }
 
+    let rule_graph = get_rule_graph(&_arg);
     _arg = PiranhaArguments { rule_graph, .._arg };
     #[rustfmt::skip]
     info!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
