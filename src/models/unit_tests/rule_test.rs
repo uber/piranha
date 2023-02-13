@@ -11,9 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 use crate::{
-  constraint,
-  models::{default_configs::JAVA, language::PiranhaLanguage},
-  utilities::eq_without_whitespace,
+  constraint, models::piranha_arguments::PiranhaArgumentsBuilder, utilities::eq_without_whitespace,
 };
 use std::collections::HashSet;
 
@@ -107,14 +105,15 @@ fn test_get_edit_positive_recursive() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = PiranhaLanguage::from(JAVA).parser();
+  let args = PiranhaArgumentsBuilder::default().build();
+  let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &args,
   );
   let node = source_code_unit.root_node();
   let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
@@ -163,14 +162,16 @@ fn test_get_edit_negative_recursive() {
 
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let mut rule_store = RuleStore::default();
-  let mut parser = PiranhaLanguage::from(JAVA).parser();
+
+  let args = PiranhaArgumentsBuilder::default().build();
+  let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &args,
   );
   let node = source_code_unit.root_node();
   let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
@@ -201,15 +202,15 @@ fn test_get_edit_for_context_positive() {
         }";
 
   let mut rule_store = RuleStore::default();
-
-  let mut parser = PiranhaLanguage::from(JAVA).parser();
+  let args = PiranhaArgumentsBuilder::default().build();
+  let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &args,
   );
   let edit =
     source_code_unit.get_edit_for_context(41_usize, 44_usize, &mut rule_store, &vec![rule]);
@@ -240,14 +241,15 @@ fn test_get_edit_for_context_negative() {
 
   let mut rule_store = RuleStore::default();
 
-  let mut parser = PiranhaLanguage::from(JAVA).parser();
+  let args = PiranhaArgumentsBuilder::default().build();
+  let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
     &HashMap::new(),
     PathBuf::new().as_path(),
-    rule_store.piranha_args(),
+    &args,
   );
   let edit =
     source_code_unit.get_edit_for_context(29_usize, 33_usize, &mut rule_store, &vec![rule]);

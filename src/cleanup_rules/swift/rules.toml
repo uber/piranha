@@ -72,6 +72,25 @@ groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "true"
 
+#   false || abcd()
+# After 
+#   abcd()
+#
+[[rules]]
+name = "false_or_something"
+query = """(
+(disjunction_expression
+        lhs: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+        rhs: (_) @rhs
+    ) @disjunction_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "disjunction_expression"
+replace = "@rhs"
+
 
 #
 # Before 
@@ -94,6 +113,24 @@ groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "true"
 
+#   abcd() || false
+# After 
+#   abcd()
+#
+[[rules]]
+name = "something_or_false"
+query = """(
+(disjunction_expression
+        lhs: (_) @lhs
+        rhs: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    ) @disjunction_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "disjunction_expression"
+replace = "@lhs"
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
 # A pattern here is - if there is an outgoing edge to B there is another to C.

@@ -13,7 +13,6 @@ class SampleClass {
     var isEnabled = true
 
     func sampleFunction() {
-        isEnabled = f1()
         isEnabled = v1
         isEnabled = f2()
         isEnabled = v2
@@ -35,5 +34,12 @@ class SampleClass {
         //nested and-or
         isEnabled = v1
         isEnabled = v1
+    }
+    
+    func checkOrFalse() {
+        isEnabled = f1()
+        isEnabled = v1
+        isEnabled = f2()
+        isEnabled = v2
     }
 }
