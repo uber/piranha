@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use super::default_configs::{default_matcher, default_queries};
 use derive_builder::Builder;
 use getset::Getters;
-use pyo3::prelude::*;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]

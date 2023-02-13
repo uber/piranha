@@ -17,7 +17,7 @@ use crate::utilities::tree_sitter_utilities::substitute_tags;
 use colored::Colorize;
 use derive_builder::Builder;
 use getset::Getters;
-use pyo3::prelude::*;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
 use super::{

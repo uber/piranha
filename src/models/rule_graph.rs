@@ -26,7 +26,7 @@ use super::{
   outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
 };
-use pyo3::prelude::*;
+use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";

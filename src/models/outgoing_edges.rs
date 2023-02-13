@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use derive_builder::Builder;
 use getset::Getters;
-use pyo3::prelude::*;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `edges.toml` file
