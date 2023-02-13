@@ -23,7 +23,7 @@ use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 use super::default_configs::{default_matcher, default_queries};
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
-pub(crate) struct Constraint {
+pub struct Constraint {
   /// Scope in which the constraint query has to be applied
   #[builder(default = "default_matcher()")]
   #[get = "pub"]
@@ -65,6 +65,7 @@ macro_rules! constraint {
       .build().unwrap()
   };
 }
+
 pub use constraint;
 
 impl Instantiate for Constraint {

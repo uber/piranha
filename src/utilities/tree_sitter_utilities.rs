@@ -314,7 +314,7 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
 }
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
-pub(crate) struct TSQuery(pub(crate) String);
+pub struct TSQuery(pub(crate) String);
 
 #[cfg(test)]
 #[path = "unit_tests/tree_sitter_utilities_test.rs"]

@@ -15,7 +15,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::utilities::tree_sitter_utilities::TSQuery;
 
-use super::{constraint::Constraint, language::PiranhaLanguage};
+use super::{constraint::Constraint, language::PiranhaLanguage, rule_graph::RuleGraph};
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -93,7 +93,7 @@ pub fn default_replace() -> String {
   String::new()
 }
 
-pub fn default_rule_graph() -> HashMap<String, Vec<(String, String)>> {
+pub fn default_rule_graph_map() -> HashMap<String, Vec<(String, String)>> {
   HashMap::new()
 }
 
@@ -119,4 +119,8 @@ pub(crate) fn default_matcher() -> TSQuery {
 
 pub(crate) fn default_rule_name() -> String {
   String::new()
+}
+
+pub(crate) fn default_rule_graph() -> RuleGraph {
+  RuleGraph::default()
 }
