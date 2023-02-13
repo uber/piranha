@@ -11,11 +11,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use std::collections::HashMap;
+
 use derive_builder::Builder;
 use getset::Getters;
+use itertools::Itertools;
 use serde_derive::Deserialize;
 
-use crate::utilities::tree_sitter_utilities::TSQuery;
+use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::default_configs::{default_matcher, default_queries};
 
@@ -63,3 +66,17 @@ macro_rules! constraint {
   };
 }
 pub use constraint;
+
+impl Instantiate for Constraint {
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Constraint {
+    Constraint {
+      matcher: self.matcher().instantiate(substitutions_for_holes),
+      queries: self
+        .queries()
+        .iter()
+        .map(|x| x.instantiate(substitutions_for_holes))
+        .collect_vec(),
+    }
+  }
+}

@@ -656,9 +656,10 @@ impl SourceCodeUnit {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-      let matcher_query_str = constraint.matcher().instantiate(substitutions);
+      let instantiated_constraint = constraint.instantiate(substitutions);
+      let matcher_query_str = instantiated_constraint.matcher();
       if let Some(p_match) =
-        parent.get_match_for_query(self.code(), rule_store.query(&matcher_query_str), false)
+        parent.get_match_for_query(self.code(), rule_store.query(matcher_query_str), false)
       {
         matched_matcher = true;
         let scope_node = get_node_for_range(
