@@ -13,7 +13,9 @@
 
 use crate::{
   models::{
-    default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::{PiranhaArgumentsBuilder, PiranhaArguments},
+    default_configs::JAVA,
+    language::PiranhaLanguage,
+    piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
   },
   utilities::tree_sitter_utilities::TSQuery,
 };

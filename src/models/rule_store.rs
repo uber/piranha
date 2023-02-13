@@ -25,12 +25,9 @@ use regex::Regex;
 use tree_sitter::Query;
 
 use crate::{
-  models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
-  models::{
-    rule_graph::{RuleGraph, RuleGraphBuilder},
-    scopes::ScopeQueryGenerator,
-  },
-  utilities::{read_file, read_toml, tree_sitter_utilities::TSQuery, MapOfVec},
+  models::piranha_arguments::PiranhaArguments,
+  models::scopes::ScopeQueryGenerator,
+  utilities::{read_file, tree_sitter_utilities::TSQuery, MapOfVec},
 };
 
 use super::{language::PiranhaLanguage, rule::InstantiatedRule};
