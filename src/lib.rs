@@ -121,6 +121,8 @@ struct Piranha {
   path_to_codebase: String,
   // Files updated by Piranha.
   relevant_files: HashMap<PathBuf, SourceCodeUnit>,
+  // Piranha Arguments
+  piranha_arguments: PiranhaArguments,
 }
 
 impl Piranha {
@@ -137,7 +139,7 @@ impl Piranha {
   fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
-    let piranha_args = self.rule_store.piranha_args().clone();
+    let piranha_args = &self.piranha_arguments;
     parser
       .set_language(*piranha_args.language().language())
       .expect("Could not set the language for the parser.");
@@ -162,7 +164,7 @@ impl Piranha {
               content,
               &current_global_substitutions,
               path.as_path(),
-              &piranha_args,
+              piranha_args,
             )
           });
 
@@ -191,6 +193,7 @@ impl Piranha {
       rule_store: graph_rule_store,
       path_to_codebase: String::from(piranha_arguments.path_to_codebase()),
       relevant_files: HashMap::new(),
+      piranha_arguments: piranha_arguments.clone(),
     }
   }
 }

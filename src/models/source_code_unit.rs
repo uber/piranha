@@ -24,14 +24,13 @@ use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
-  models::rule_store::{GLOBAL, PARENT},
   utilities::{
     tree_sitter_utilities::{
       get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, PiranhaHelpers,
       TSQuery,
     },
     Instantiate,
-  },
+  }, models::rule_graph::{PARENT, GLOBAL},
 };
 
 use super::{
@@ -196,7 +195,10 @@ impl SourceCodeUnit {
     // let file_level_scope_names = [METHOD, CLASS];
     loop {
       // Get all the (next) rules that could be after applying the current rule (`rule`).
-      let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
+      let next_rules_by_scope = self
+        .piranha_arguments
+        .rule_graph()
+        .get_next(&current_rule, self.substitutions());
 
       debug!(
         "\n{}",
@@ -514,9 +516,8 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<InstantiatedRule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope = *rules_store
-      .piranha_args()
-      .number_of_ancestors_in_parent_scope();
+    let number_of_ancestors_in_parent_scope =
+      *self.piranha_arguments.number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
       "\n{}",
@@ -631,7 +632,7 @@ impl SourceCodeUnit {
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    let mut updated_substitutions = rule_store.piranha_args().input_substitutions();
+    let mut updated_substitutions = self.piranha_arguments.input_substitutions();
     updated_substitutions.extend(substitutions.clone());
     rule.constraints().iter().all(|constraint| {
       self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)
