@@ -11,9 +11,9 @@
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use super::language::PiranhaLanguage;
+use super::{constraint::Constraint, language::PiranhaLanguage};
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -31,7 +31,7 @@ pub fn default_language() -> String {
   JAVA.to_string()
 }
 
-pub fn default_substitutions() -> Vec<Vec<String>> {
+pub fn default_substitutions() -> Vec<(String, String)> {
   vec![]
 }
 
@@ -63,10 +63,6 @@ pub fn default_name_of_piranha_argument_toml() -> String {
   "piranha_arguments.toml".to_string()
 }
 
-pub fn default_input_substitutions() -> HashMap<String, String> {
-  HashMap::new()
-}
-
 pub fn default_path_to_configurations() -> String {
   String::new()
 }
@@ -92,5 +88,33 @@ pub fn default_replace_node() -> String {
 }
 
 pub fn default_replace() -> String {
+  String::new()
+}
+
+pub fn default_rule_graph() -> HashMap<String, Vec<(String, String)>> {
+  HashMap::new()
+}
+
+pub(crate) fn default_holes() -> HashSet<String> {
+  HashSet::new()
+}
+
+pub(crate) fn default_groups() -> HashSet<String> {
+  HashSet::new()
+}
+
+pub(crate) fn default_constraints() -> HashSet<Constraint> {
+  HashSet::new()
+}
+
+pub(crate) fn default_queries() -> Vec<String> {
+  Vec::new()
+}
+
+pub(crate) fn default_matcher() -> String {
+  String::new()
+}
+
+pub(crate) fn default_rule_name() -> String {
   String::new()
 }

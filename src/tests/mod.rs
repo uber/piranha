@@ -16,7 +16,7 @@ use crate::models::piranha_arguments::PiranhaArguments;
 use crate::utilities::{eq_without_whitespace, read_file};
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tempdir::TempDir;
 
 mod test_piranha_java;
@@ -53,11 +53,11 @@ static PLACEHOLDER: &str = ".placeholder";
 /// * dest: Path to destination
 ///
 /// This method causes side effects - writes new files to a directory
-fn copy_folder_to_temp_dir(src: &PathBuf) -> TempDir {
+fn copy_folder_to_temp_dir(src: &Path) -> TempDir {
   // Copy the test scenario to temporary directory
   let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
   let temp_dir_path = &temp_dir.path();
-  for entry in fs::read_dir(src.as_path()).unwrap() {
+  for entry in fs::read_dir(src).unwrap() {
     let entry = entry.unwrap();
     let path = entry.path();
     if path.is_file() {
@@ -157,7 +157,7 @@ macro_rules! create_match_tests {
       let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
         path_to_codebase = path_to_codebase,
         path_to_configurations = path_to_configurations,
-        language= $language.to_string(),
+        language= $crate::models::language::PiranhaLanguage::from($language),
         $(
           $kw = $value,
         )*
@@ -203,7 +203,7 @@ macro_rules! create_rewrite_tests {
       let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
         path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
         path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
-        language= $language.to_string(),
+        language= $crate::models::language::PiranhaLanguage::from($language),
         $(
           $kw = $value,
         )*
@@ -240,7 +240,7 @@ macro_rules! substitutions(
   () =>  { vec![] };
   { $($key:literal => $value:literal),+ } => {
       {
-          vec![$(vec![$key.to_string(), $value.to_string()],)+]
+          vec![$(($key.to_string(), $value.to_string()),)+]
 
       }
    };

@@ -377,7 +377,7 @@ impl SourceCodeUnit {
         relevant_nodes_found = true;
         let is_comment: bool = self
           .piranha_arguments
-          .piranha_language()
+          .language()
           .is_comment(node.kind().to_string());
         relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
         if is_comment {
@@ -628,7 +628,7 @@ impl SourceCodeUnit {
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    let mut updated_substitutions = rule_store.piranha_args().input_substitutions().clone();
+    let mut updated_substitutions = rule_store.piranha_args().input_substitutions();
     updated_substitutions.extend(substitutions.clone());
     rule.constraints().iter().all(|constraint| {
       self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)

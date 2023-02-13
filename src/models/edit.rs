@@ -15,14 +15,14 @@ use std::{collections::HashMap, fmt};
 
 use colored::Colorize;
 use getset::Getters;
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Range;
 
 use super::matches::Match;
 use crate::utilities::gen_py_str_methods;
 use pyo3::{prelude::pyclass, pymethods};
 
-#[derive(Serialize, Debug, Clone, Getters)]
+#[derive(Serialize, Debug, Clone, Getters, Deserialize)]
 #[pyclass]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
