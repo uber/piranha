@@ -25,9 +25,12 @@ use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
   models::rule_store::{GLOBAL, PARENT},
-  utilities::tree_sitter_utilities::{
-    get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, substitute_tags,
-    PiranhaHelpers,
+  utilities::{
+    tree_sitter_utilities::{
+      get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, PiranhaHelpers,
+      TSQuery,
+    },
+    Instantiate,
   },
 };
 
@@ -88,7 +91,7 @@ impl SourceCodeUnit {
   /// Will apply the `rule` to all of its occurrences in the source code unit.
   fn apply_rule(
     &mut self, rule: InstantiatedRule, rules_store: &mut RuleStore, parser: &mut Parser,
-    scope_query: &Option<String>,
+    scope_query: &Option<TSQuery>,
   ) {
     loop {
       if !self._apply_rule(rule.clone(), rules_store, parser, scope_query) {
@@ -118,7 +121,7 @@ impl SourceCodeUnit {
   /// *** Propagate the change
   fn _apply_rule(
     &mut self, rule: InstantiatedRule, rule_store: &mut RuleStore, parser: &mut Parser,
-    scope_query: &Option<String>,
+    scope_query: &Option<TSQuery>,
   ) -> bool {
     let scope_node = self.get_scope_node(scope_query, rule_store);
 
@@ -188,7 +191,7 @@ impl SourceCodeUnit {
     let mut current_replace_range = replace_range;
 
     let mut current_rule = rule.name();
-    let mut next_rules_stack: VecDeque<(String, InstantiatedRule)> = VecDeque::new();
+    let mut next_rules_stack: VecDeque<(TSQuery, InstantiatedRule)> = VecDeque::new();
     // Perform the parent edits, while queueing the Method and Class level edits.
     // let file_level_scope_names = [METHOD, CLASS];
     loop {
@@ -250,7 +253,7 @@ impl SourceCodeUnit {
 
     // Apply the next rules from the stack
     for (sq, rle) in &next_rules_stack {
-      self.apply_rule(rle.clone(), rules_store, parser, &Some(sq.to_string()));
+      self.apply_rule(rle.clone(), rules_store, parser, &Some(sq.clone()));
     }
   }
 
@@ -258,7 +261,7 @@ impl SourceCodeUnit {
   fn add_rules_to_stack(
     &mut self, next_rules_by_scope: &HashMap<String, Vec<InstantiatedRule>>,
     current_match_range: Range, rules_store: &mut RuleStore,
-    stack: &mut VecDeque<(String, InstantiatedRule)>,
+    stack: &mut VecDeque<(TSQuery, InstantiatedRule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
       // Scope level is not "PArent" or "Global"
@@ -277,7 +280,7 @@ impl SourceCodeUnit {
     }
   }
 
-  fn get_scope_node(&self, scope_query: &Option<String>, rules_store: &mut RuleStore) -> Node {
+  fn get_scope_node(&self, scope_query: &Option<TSQuery>, rules_store: &mut RuleStore) -> Node {
     // Get scope node
     // let mut scope_node = self.root_node();
     if let Some(query_str) = scope_query {
@@ -301,7 +304,7 @@ impl SourceCodeUnit {
   /// Apply all `rules` sequentially.
   pub(crate) fn apply_rules(
     &mut self, rules_store: &mut RuleStore, rules: &[InstantiatedRule], parser: &mut Parser,
-    scope_query: Option<String>,
+    scope_query: Option<TSQuery>,
   ) {
     for rule in rules {
       self.apply_rule(rule.to_owned(), rules_store, parser, &scope_query)
@@ -582,7 +585,7 @@ impl SourceCodeUnit {
       .get_matches(rule, rule_store, node, recursive)
       .first()
       .map(|p_match| {
-        let replacement_string = substitute_tags(&rule.replace(), p_match.matches(), false);
+        let replacement_string = rule.replace().instantiate(p_match.matches());
         let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
         trace!("Rewrite found : {:#?}", edit);
         edit
@@ -593,7 +596,7 @@ impl SourceCodeUnit {
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
   pub(crate) fn get_scope_query(
     &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
-  ) -> String {
+  ) -> TSQuery {
     let root_node = self.root_node();
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
     // Get the scope matchers for `scope_level` from the `scope_config.toml`.
@@ -612,7 +615,7 @@ impl SourceCodeUnit {
         {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return substitute_tags(m.generator(), p_match.matches(), true);
+          return m.generator().instantiate(p_match.matches());
         }
       }
       if let Some(parent) = changed_node.parent() {
@@ -653,7 +656,7 @@ impl SourceCodeUnit {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-      let matcher_query_str = substitute_tags(constraint.matcher(), substitutions, true);
+      let matcher_query_str = constraint.matcher().instantiate(substitutions);
       if let Some(p_match) =
         parent.get_match_for_query(self.code(), rule_store.query(&matcher_query_str), false)
       {
@@ -664,9 +667,8 @@ impl SourceCodeUnit {
           p_match.range().end_byte,
         );
         for query_with_holes in constraint.queries() {
-          let query_str = substitute_tags(query_with_holes, substitutions, true);
-          let query = &rule_store.query(&query_str);
-          // If this query matches anywhere within the scope, return false.
+          let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
+
           if scope_node
             .get_match_for_query(self.code(), query, true)
             .is_some()

@@ -15,6 +15,7 @@ use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
+use crate::utilities::tree_sitter_utilities::TSQuery;
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct ScopeConfig {
@@ -34,9 +35,9 @@ pub(crate) struct ScopeGenerator {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
 pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
-  matcher: String, // a tree-sitter query matching some enclosing AST pattern (like method or class)
+  matcher: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
-  generator: String, // a tree-sitter query matching the exact AST node
+  generator: TSQuery, // a tree-sitter query matching the exact AST node
 }
 
 #[cfg(test)]

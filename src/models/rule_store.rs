@@ -30,7 +30,7 @@ use crate::{
     rule_graph::{RuleGraph, RuleGraphBuilder},
     scopes::ScopeQueryGenerator,
   },
-  utilities::{read_file, read_toml, MapOfVec},
+  utilities::{read_file, read_toml, tree_sitter_utilities::TSQuery, MapOfVec},
 };
 
 use super::{
@@ -94,22 +94,22 @@ impl RuleStore {
       r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
     }) {
       #[rustfmt::skip]
-      debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
+      debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query().0).bright_blue());
       self.global_rules.push(r);
     }
   }
 
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
-  pub(crate) fn query(&mut self, query_str: &String) -> &Query {
+  pub(crate) fn query(&mut self, query_str: &TSQuery) -> &Query {
     self
       .rule_query_cache
-      .entry(query_str.to_string())
+      .entry(query_str.0.to_string())
       .or_insert_with(|| {
         self
           .piranha_args
           .language()
-          .create_query(query_str.to_string())
+          .create_query(query_str.0.to_string())
       })
   }
 

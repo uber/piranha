@@ -18,7 +18,7 @@ use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
-use crate::utilities::tree_sitter_utilities::substitute_tags;
+use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::{
   constraint::Constraint,
@@ -47,7 +47,7 @@ pub(crate) struct Rule {
   #[builder(default = "default_query()")]
   #[serde(default = "default_query")]
   #[get = "pub"]
-  query: String,
+  query: TSQuery,
   /// The tag corresponding to the node to be replaced
   #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
@@ -92,20 +92,6 @@ impl Rule {
     *self.query() != default_query() && *self.replace_node() == default_replace_node()
   }
 
-  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  fn substitute(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
-    if substitutions_for_holes.len() != self.holes().len() {
-      #[rustfmt::skip]
-      panic!("{}", format!( "Could not instantiate the rule {self:?} with substitutions {substitutions_for_holes:?}").red());
-    }
-    let updated_rule = self.clone();
-    Rule {
-      query: substitute_tags(updated_rule.query(), substitutions_for_holes, false),
-      replace: substitute_tags(updated_rule.replace(), substitutions_for_holes, false),
-      ..updated_rule
-    }
-  }
-
   /// Adds the rule to a new group - "SEED" if applicable.
   pub(crate) fn add_to_seed_rules_group(&mut self) {
     if self.groups().contains(&CLEAN_UP.to_string()) {
@@ -148,7 +134,7 @@ macro_rules! piranha_rule {
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
-    $(.query($query.to_string()))?
+    $(.query($crate::utilities::tree_sitter_utilities::TSQuery($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
     $(.holes(HashSet::from([$($hole.to_string(),)*])))?
@@ -175,7 +161,7 @@ impl InstantiatedRule {
       .filter_map(|h| substitutions.get(h).map(|s| (h.to_string(), s.to_string())))
       .collect();
     InstantiatedRule {
-      rule: rule.substitute(&substitutions_for_holes),
+      rule: rule.instantiate(&substitutions_for_holes),
       substitutions: substitutions_for_holes,
     }
   }
@@ -188,8 +174,8 @@ impl InstantiatedRule {
     self.rule().replace().to_string()
   }
 
-  pub fn query(&self) -> String {
-    self.rule().query().to_string()
+  pub fn query(&self) -> TSQuery {
+    self.rule().query().clone()
   }
 
   pub fn replace_node(&self) -> String {
@@ -202,6 +188,22 @@ impl InstantiatedRule {
 
   pub fn constraints(&self) -> &HashSet<Constraint> {
     self.rule().constraints()
+  }
+}
+
+impl Instantiate for Rule {
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
+    if substitutions_for_holes.len() != self.holes().len() {
+      #[rustfmt::skip]
+      panic!("{}", format!( "Could not instantiate the rule {self:?} with substitutions {substitutions_for_holes:?}").red());
+    }
+    let updated_rule = self.clone();
+    Rule {
+      query: updated_rule.query().instantiate(substitutions_for_holes),
+      replace: updated_rule.replace().instantiate(substitutions_for_holes),
+      ..updated_rule
+    }
   }
 }
 

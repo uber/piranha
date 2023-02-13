@@ -15,6 +15,8 @@ use derive_builder::Builder;
 use getset::Getters;
 use serde_derive::Deserialize;
 
+use crate::utilities::tree_sitter_utilities::TSQuery;
+
 use super::default_configs::{default_matcher, default_queries};
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
@@ -22,12 +24,12 @@ pub(crate) struct Constraint {
   /// Scope in which the constraint query has to be applied
   #[builder(default = "default_matcher()")]
   #[get = "pub"]
-  matcher: String,
+  matcher: TSQuery,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
   #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
-  queries: Vec<String>,
+  queries: Vec<TSQuery>,
 }
 
 #[macro_export]
@@ -55,8 +57,8 @@ pub(crate) struct Constraint {
 macro_rules! constraint {
   (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
     $crate::models::constraint::ConstraintBuilder::default()
-      .matcher($matcher.to_string())
-      .queries(vec![$($q.to_string(),)*])
+      .matcher($crate::utilities::tree_sitter_utilities::TSQuery($matcher.to_string()))
+      .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery($q.to_string()),)*])
       .build().unwrap()
   };
 }
