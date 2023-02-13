@@ -129,11 +129,7 @@ import java.util.List;
         "test-resources/java/insert_field_and_import/input",
         "test-resources/java/insert_field_and_initializer/configurations",
         "java",
-        {
-            "stale_flag_name": "STALE_FLAG",
-            "treated": "true",
-            "treated_complement": "false",
-        },
+        {},
         rule_graph = rule_graph,
         dry_run=True,
     )
