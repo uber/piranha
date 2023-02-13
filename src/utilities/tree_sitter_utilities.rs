@@ -313,7 +313,7 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct TSQuery(pub(crate) String);
 
 #[cfg(test)]

@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use colored::Colorize;
 use derive_builder::Builder;
@@ -63,17 +63,17 @@ pub(crate) struct Rule {
   #[builder(default = "default_groups()")]
   #[serde(default = "default_groups")]
   #[get = "pub"]
-  groups: HashSet<String>,
+  groups: Vec<String>,
   /// Holes that need to be filled, in order to instantiate a rule
   #[builder(default = "default_holes()")]
   #[serde(default = "default_holes")]
   #[get = "pub"]
-  holes: HashSet<String>,
+  holes: Vec<String>,
   /// Additional constraints for matching the rule
   #[builder(default = "default_constraints()")]
   #[serde(default = "default_constraints")]
   #[get = "pub"]
-  constraints: HashSet<Constraint>,
+  constraints: Vec<Constraint>,
 }
 
 impl Rule {
@@ -97,7 +97,7 @@ impl Rule {
     if self.groups().contains(&CLEAN_UP.to_string()) {
       return;
     }
-    self.groups.insert(SEED.to_string());
+    self.groups.push(SEED.to_string());
   }
 }
 
@@ -137,9 +137,9 @@ macro_rules! piranha_rule {
     $(.query($crate::utilities::tree_sitter_utilities::TSQuery($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
-    $(.holes(HashSet::from([$($hole.to_string(),)*])))?
-    $(.groups(HashSet::from([$($group_name.to_string(),)*])))?
-    $(.constraints(HashSet::from([$($constraint)*])))?
+    $(.holes(vec![$($hole.to_string(),)*]))?
+    $(.groups(vec![$($group_name.to_string(),)*]))?
+    $(.constraints(vec![$($constraint)*]))?
     .build().unwrap()
   };
 }
@@ -182,11 +182,11 @@ impl InstantiatedRule {
     self.rule().replace_node().to_string()
   }
 
-  pub fn holes(&self) -> &HashSet<String> {
+  pub fn holes(&self) -> &Vec<String> {
     self.rule().holes()
   }
 
-  pub fn constraints(&self) -> &HashSet<Constraint> {
+  pub fn constraints(&self) -> &Vec<Constraint> {
     self.rule().constraints()
   }
 }

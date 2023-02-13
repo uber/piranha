@@ -19,7 +19,7 @@ use crate::utilities::tree_sitter_utilities::TSQuery;
 
 use super::default_configs::{default_matcher, default_queries};
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Getters, Builder)]
 pub(crate) struct Constraint {
   /// Scope in which the constraint query has to be applied
   #[builder(default = "default_matcher()")]

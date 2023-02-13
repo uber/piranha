@@ -17,14 +17,14 @@ use serde_derive::Deserialize;
 
 use crate::utilities::tree_sitter_utilities::TSQuery;
 // Represents the content in the `scope_config.toml` file
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Default, Getters)]
 pub(crate) struct ScopeConfig {
   #[get = "pub"]
   scopes: Vec<ScopeGenerator>,
 }
 
 // Represents an entry in the `scope_config.toml` file
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Builder, Getters)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Default, Builder, Getters)]
 pub(crate) struct ScopeGenerator {
   #[get = "pub"]
   name: String,
@@ -32,7 +32,7 @@ pub(crate) struct ScopeGenerator {
   rules: Vec<ScopeQueryGenerator>,
 }
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Default, Getters, Builder)]
 pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
   matcher: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)

@@ -15,7 +15,6 @@ use crate::{
   models::{default_configs::JAVA, language::PiranhaLanguage},
   utilities::eq_without_whitespace,
 };
-use std::collections::HashSet;
 
 use super::InstantiatedRule;
 use {
