@@ -13,7 +13,6 @@ class SampleClass {
     var isEnabled = TestEnum.stale_flag_one.isEnabled
 
     func sampleFunction() {
-        isEnabled = TestEnum.stale_flag_one.isEnabled && f1()
         isEnabled = TestEnum.stale_flag_one.isEnabled && v1
         isEnabled = f2() && TestEnum.stale_flag_one.isEnabled 
         isEnabled = v2 && TestEnum.stale_flag_one.isEnabled 
@@ -35,5 +34,12 @@ class SampleClass {
         //nested and-or
         isEnabled = v1 && (TestEnum.stale_flag_one.isEnabled || v2)
         isEnabled = (TestEnum.stale_flag_one.isEnabled || v2) && v1
+    }
+    
+    func checkOrFalse() {
+        isEnabled = !TestEnum.stale_flag_one.isEnabled || f1()
+        isEnabled = !TestEnum.stale_flag_one.isEnabled || v1
+        isEnabled = f2() || !TestEnum.stale_flag_one.isEnabled 
+        isEnabled = v2 || !TestEnum.stale_flag_one.isEnabled 
     }
 }

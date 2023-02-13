@@ -65,6 +65,7 @@ macro_rules! constraint {
       .build().unwrap()
   };
 }
+
 pub use constraint;
 
 impl Instantiate for Constraint {
