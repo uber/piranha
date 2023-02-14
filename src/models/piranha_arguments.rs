@@ -30,7 +30,10 @@ use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
 use log::{info, warn};
-use pyo3::{prelude::*, types::PyDict};
+use pyo3::{
+  prelude::{pyclass, pymethods},
+  types::PyDict,
+};
 use serde_derive::Deserialize;
 
 use std::{collections::HashMap, path::PathBuf};
@@ -150,11 +153,12 @@ impl PiranhaArguments {
   /// Constructs PiranhaArguments
   ///
   /// # Arguments:
-  /// * path_to_codebase: Path to the root of the code base that Piranha will update
-  /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
   /// * language: Target language
   /// * substitutions : Substitutions to instantiate the initial set of feature flag rules
   /// * kw_args: Keyword arguments to capture the following piranha argument options
+  ///   * path_to_codebase: Path to the root of the code base that Piranha will update
+  ///   * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+  ///   * rule_graph: the graph constructed via the RuleGraph DSL
   ///   * dry_run (bool) : Disables in-place rewriting of code
   ///   * cleanup_comments (bool) : Enables deletion of associated comments
   ///   * cleanup_comments_buffer (usize): The number of lines to consider for cleaning up the comments
@@ -164,9 +168,9 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    path_to_configurations: String, language: String, substitutions: &PyDict,
-    path_to_codebase: Option<String>, code_snippet: Option<String>, dry_run: Option<bool>,
-    cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<usize>,
+    language: String, substitutions: &PyDict, path_to_configurations: Option<String>,
+    rule_graph: Option<RuleGraph>, path_to_codebase: Option<String>, code_snippet: Option<String>,
+    dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<usize>,
     number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
     global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
     path_to_output_summary: Option<String>,
@@ -176,9 +180,11 @@ impl PiranhaArguments {
       .map(|(k, v)| (k.to_string(), v.to_string()))
       .collect_vec();
 
+    let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     piranha_arguments! {
       path_to_codebase = path_to_codebase.unwrap_or_else(default_path_to_codebase),
-      path_to_configurations = path_to_configurations,
+      path_to_configurations = path_to_configurations.unwrap_or_else(default_path_to_configurations),
+      rule_graph= rg,
       code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
       language = PiranhaLanguage::from(language.as_str()),
       substitutions = subs,

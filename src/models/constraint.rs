@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use derive_builder::Builder;
 use getset::Getters;
 use itertools::Itertools;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
@@ -23,16 +24,37 @@ use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 use super::default_configs::{default_matcher, default_queries};
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[pyclass]
 pub struct Constraint {
   /// Scope in which the constraint query has to be applied
   #[builder(default = "default_matcher()")]
   #[get = "pub"]
+  #[pyo3(get)]
   matcher: TSQuery,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
   #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
+  #[pyo3(get)]
   queries: Vec<TSQuery>,
+}
+
+#[pymethods]
+impl Constraint {
+  #[new]
+  fn py_new(matcher: String, queries: Option<Vec<String>>) -> Self {
+    ConstraintBuilder::default()
+      .matcher(TSQuery(matcher))
+      .queries(
+        queries
+          .unwrap_or_default()
+          .iter()
+          .map(|x| TSQuery(x.to_string()))
+          .collect_vec(),
+      )
+      .build()
+      .unwrap()
+  }
 }
 
 #[macro_export]
