@@ -70,7 +70,7 @@ impl RuleStore {
       r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
     }) {
       #[rustfmt::skip]
-      debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query().0).bright_blue());
+      debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query().get_query()).bright_blue());
       self.global_rules.push(r);
     }
   }
@@ -80,8 +80,8 @@ impl RuleStore {
   pub(crate) fn query(&mut self, query_str: &TSQuery) -> &Query {
     self
       .rule_query_cache
-      .entry(query_str.0.to_string())
-      .or_insert_with(|| self.language.create_query(query_str.0.to_string()))
+      .entry(query_str.get_query())
+      .or_insert_with(|| self.language.create_query(query_str.get_query()))
   }
 
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
