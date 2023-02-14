@@ -16,6 +16,7 @@ use std::collections::{HashMap, HashSet};
 use colored::Colorize;
 use derive_builder::Builder;
 use getset::Getters;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
@@ -38,10 +39,12 @@ pub(crate) struct Rules {
 }
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder)]
+#[pyclass]
 pub struct Rule {
   /// Name of the rule. (It is unique)
   #[builder(default = "default_rule_name()")]
   #[get = "pub"]
+  #[pyo3(get)]
   name: String,
   /// Tree-sitter query as string
   #[builder(default = "default_query()")]
@@ -52,27 +55,31 @@ pub struct Rule {
   #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
   #[get = "pub"]
+  #[pyo3(get)]
   replace_node: String,
   /// Replacement pattern
   #[builder(default = "default_replace()")]
   #[serde(default = "default_replace")]
   #[get = "pub"]
+  #[pyo3(get)]
   replace: String,
   /// Group(s) to which the rule belongs
-
   #[builder(default = "default_groups()")]
   #[serde(default = "default_groups")]
   #[get = "pub"]
+  #[pyo3(get)]
   groups: HashSet<String>,
   /// Holes that need to be filled, in order to instantiate a rule
   #[builder(default = "default_holes()")]
   #[serde(default = "default_holes")]
   #[get = "pub"]
+  #[pyo3(get)]
   holes: HashSet<String>,
   /// Additional constraints for matching the rule
   #[builder(default = "default_constraints()")]
   #[serde(default = "default_constraints")]
   #[get = "pub"]
+  #[pyo3(get)]
   constraints: HashSet<Constraint>,
 }
 
@@ -142,6 +149,40 @@ macro_rules! piranha_rule {
     $(.constraints(std::collections::HashSet::from([$($constraint)*])))?
     .build().unwrap()
   };
+}
+
+#[pymethods]
+impl Rule {
+  #[new]
+  fn py_new(
+    name: String, query: String, replace: Option<String>, replace_node: Option<String>,
+    holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
+    constraints: Option<HashSet<Constraint>>,
+  ) -> Self {
+    let mut rule_builder = RuleBuilder::default();
+    rule_builder.name(name).query(TSQuery(query));
+    if let Some(replace) = replace {
+      rule_builder.replace(replace);
+    }
+
+    if let Some(replace_node) = replace_node {
+      rule_builder.replace_node(replace_node);
+    }
+
+    if let Some(holes) = holes {
+      rule_builder.holes(holes);
+    }
+
+    if let Some(groups) = groups {
+      rule_builder.groups(groups);
+    }
+
+    if let Some(constraints) = constraints {
+      rule_builder.constraints(constraints);
+    }
+
+    rule_builder.build().unwrap()
+  }
 }
 
 pub use piranha_rule;

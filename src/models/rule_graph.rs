@@ -22,29 +22,47 @@ use crate::{
 use std::{collections::HashMap, path::Path};
 
 use super::{
-  default_configs::default_rule_graph_map,
+  default_configs::{default_edges, default_rule_graph_map, default_rules},
   outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
 };
+use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";
 
 #[derive(Debug, Default, Getters, MutGetters, Builder, Clone, PartialEq)]
 #[builder(build_fn(name = "create"))]
+#[pyclass]
 pub struct RuleGraph {
   /// All the rules in the graph
   #[get_mut = "pub(crate)"]
   #[get = "pub(crate)"]
+  #[pyo3(get)]
+  #[builder(default = "default_rules()")]
   rules: Vec<Rule>,
   /// Edges of the rule graph
   #[get = "pub(crate)"]
+  #[builder(default = "default_edges()")]
+  #[pyo3(get)]
   edges: Vec<OutgoingEdges>,
 
   /// The graph itself
   #[builder(default = "default_rule_graph_map()")]
   #[get = "pub(crate)"]
+  #[pyo3(get)]
   graph: HashMap<String, Vec<(String, String)>>,
+}
+
+#[pymethods]
+impl RuleGraph {
+  #[new]
+  fn py_new(rules: Vec<Rule>, edges: Vec<OutgoingEdges>) -> Self {
+    RuleGraphBuilder::default()
+      .rules(rules)
+      .edges(edges)
+      .build()
+  }
 }
 
 impl RuleGraphBuilder {
@@ -59,7 +77,7 @@ impl RuleGraphBuilder {
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
     for edge in _rule_graph.edges() {
-      for from_rule in _rule_graph.get_rules_for_group(edge.get_from()) {
+      for from_rule in _rule_graph.get_rules_for_group(edge.get_frm()) {
         for outgoing_edge in edge.get_to() {
           for to_rule in _rule_graph.get_rules_for_group(outgoing_edge) {
             // Add edge to the adjacency list
