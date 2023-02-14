@@ -131,7 +131,7 @@ pub(crate) use gen_py_str_methods;
 use self::tree_sitter_utilities::TSQuery;
 
 pub(crate) trait Instantiate {
-  /// Replaces the all the occurrences of a tree-sitter specific tag  with the corresponding string values
+  /// Replaces the all the occurrences of a tree-sitter specific tag with the corresponding string values
   /// specified in `substitutions`
   ///
   /// # Arguments
@@ -159,7 +159,7 @@ impl Instantiate for TSQuery {
       .iter()
       .map(|(k, v)| (k.to_string(), v.replace('\n', "\\n")))
       .collect();
-    TSQuery(self.0.instantiate(&substitutions))
+    TSQuery::new(self.get_query().instantiate(&substitutions))
   }
 }
 

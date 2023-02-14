@@ -88,7 +88,7 @@ pub fn default_delete_consecutive_new_lines() -> bool {
 }
 
 pub(crate) fn default_query() -> TSQuery {
-  TSQuery(String::new())
+  TSQuery::new(String::new())
 }
 
 pub fn default_replace_node() -> String {
@@ -128,7 +128,7 @@ pub(crate) fn default_queries() -> Vec<TSQuery> {
 }
 
 pub(crate) fn default_matcher() -> TSQuery {
-  TSQuery(String::new())
+  TSQuery::new(String::new())
 }
 
 pub(crate) fn default_rule_name() -> String {
