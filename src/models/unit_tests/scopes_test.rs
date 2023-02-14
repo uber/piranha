@@ -43,8 +43,10 @@ use {
 
 fn _get_class_scope() -> ScopeGenerator {
   let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
-    .matcher(TSQuery("(class_declaration name:(_) @n) @c".to_string()))
-    .generator(TSQuery(
+    .matcher(TSQuery::new(
+      "(class_declaration name:(_) @n) @c".to_string(),
+    ))
+    .generator(TSQuery::new(
       "(
       ((class_declaration name:(_) @z) @qc)
       (#eq? @z \"@n\")
@@ -62,7 +64,7 @@ fn _get_class_scope() -> ScopeGenerator {
 
 fn _get_method_scope() -> ScopeGenerator {
   let scope_query_generator_method: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
-    .matcher(TSQuery(
+    .matcher(TSQuery::new(
       "(
     [(method_declaration 
               name : (_) @n
@@ -73,7 +75,7 @@ fn _get_method_scope() -> ScopeGenerator {
     ]@xdn)"
         .to_string(),
     ))
-    .generator(TSQuery(
+    .generator(TSQuery::new(
       "(
       [(((method_declaration 
                 name : (_) @z
@@ -135,9 +137,9 @@ fn test_get_scope_query_positive() {
   let mut rule_store = RuleStore::new(&piranha_args);
   let scope_query_method = source_code_unit.get_scope_query("Method", 133, 134, &mut rule_store);
 
-  println!("{}", scope_query_method.0.as_str());
+  println!("{}", scope_query_method.get_query().as_str());
   assert!(eq_without_whitespace(
-    scope_query_method.0.as_str(),
+    scope_query_method.get_query().as_str(),
     "(
       [(((method_declaration 
                 name : (_) @z
@@ -157,7 +159,7 @@ fn test_get_scope_query_positive() {
 
   let scope_query_class = source_code_unit.get_scope_query("Class", 133, 134, &mut rule_store);
   assert!(eq_without_whitespace(
-    scope_query_class.0.as_str(),
+    scope_query_class.get_query().as_str(),
     "(
         ((class_declaration name:(_) @z) @qc)
         (#eq? @z \"Test\")

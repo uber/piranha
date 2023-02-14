@@ -50,6 +50,7 @@ pub struct Rule {
   #[builder(default = "default_query()")]
   #[serde(default = "default_query")]
   #[get = "pub"]
+  #[pyo3(get)]
   query: TSQuery,
   /// The tag corresponding to the node to be replaced
   #[builder(default = "default_replace_node()")]
@@ -141,7 +142,7 @@ macro_rules! piranha_rule {
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
-    $(.query($crate::utilities::tree_sitter_utilities::TSQuery($query.to_string())))?
+    $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
     $(.holes(HashSet::from([$($hole.to_string(),)*])))?
@@ -160,7 +161,7 @@ impl Rule {
     constraints: Option<HashSet<Constraint>>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
-    rule_builder.name(name).query(TSQuery(query));
+    rule_builder.name(name).query(TSQuery::new(query));
     if let Some(replace) = replace {
       rule_builder.replace(replace);
     }
