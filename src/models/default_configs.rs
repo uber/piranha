@@ -13,9 +13,11 @@
 
 use std::collections::{HashMap, HashSet};
 
+use super::{
+  constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
+  rule_graph::RuleGraph,
+};
 use crate::utilities::tree_sitter_utilities::TSQuery;
-
-use super::{constraint::Constraint, language::PiranhaLanguage, rule_graph::RuleGraph};
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -107,6 +109,14 @@ pub(crate) fn default_groups() -> HashSet<String> {
 
 pub(crate) fn default_constraints() -> HashSet<Constraint> {
   HashSet::new()
+}
+
+pub(crate) fn default_rules() -> Vec<Rule> {
+  Vec::new()
+}
+
+pub(crate) fn default_edges() -> Vec<OutgoingEdges> {
+  vec![]
 }
 
 pub(crate) fn default_queries() -> Vec<TSQuery> {

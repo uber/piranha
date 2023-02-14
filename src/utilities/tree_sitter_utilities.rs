@@ -25,6 +25,8 @@ use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Rang
 
 use super::eq_without_whitespace;
 
+use pyo3::prelude::pyclass;
+
 #[rustfmt::skip]
 pub(crate) trait PiranhaHelpers {
 
@@ -313,6 +315,7 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
+#[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
 pub struct TSQuery(pub(crate) String);
 
