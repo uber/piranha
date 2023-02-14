@@ -27,7 +27,7 @@ use tree_sitter::Query;
 use crate::{
   models::piranha_arguments::PiranhaArguments,
   models::scopes::ScopeQueryGenerator,
-  utilities::{read_file, tree_sitter_utilities::TSQuery, MapOfVec},
+  utilities::{read_file, tree_sitter_utilities::TSQuery},
 };
 
 use super::{language::PiranhaLanguage, rule::InstantiatedRule};

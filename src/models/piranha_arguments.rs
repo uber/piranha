@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use super::{
   default_configs::{
-    default_cleanup_comments, default_cleanup_comments_buffer,
+    default_cleanup_comments, default_cleanup_comments_buffer, default_code_snippet,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_name_of_piranha_argument_toml,
     default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
@@ -44,9 +44,16 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
-  #[clap(short = 'c', long)]
+  #[clap(short = 'c', long, default_value_t= default_path_to_codebase())]
   #[serde(skip)]
   path_to_codebase: String,
+
+  /// Code snippet to transform
+  #[get = "pub"]
+  #[builder(default = "default_code_snippet()")]
+  #[clap(short = 't', long, default_value_t= default_code_snippet())]
+  #[serde(skip)]
+  code_snippet: String,
 
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
@@ -159,7 +166,7 @@ impl PiranhaArguments {
   #[args(keyword_arguments = "**")]
   fn py_new(
     path_to_codebase: String, path_to_configurations: String, language: String,
-    substitutions: &PyDict, keyword_arguments: Option<&PyDict>,
+    code_snippet: Option<String>, substitutions: &PyDict, keyword_arguments: Option<&PyDict>,
   ) -> Self {
     let subs = substitutions
       .iter()
@@ -194,6 +201,7 @@ impl PiranhaArguments {
     piranha_arguments! {
       path_to_codebase = path_to_codebase,
       path_to_configurations = path_to_configurations,
+      code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
       language = PiranhaLanguage::from(language.as_str()),
       substitutions = subs,
       dry_run = get_keyword_arg!("dry_run", default_dry_run, "bool"),
@@ -272,6 +280,7 @@ impl PiranhaArguments {
       path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
       language: merge!(language, default_piranha_language),
       delete_file_if_empty: merge!(delete_file_if_empty, default_delete_file_if_empty),
+      code_snippet: merge!(code_snippet, default_code_snippet),
       delete_consecutive_new_lines: merge!(
         delete_consecutive_new_lines,
         default_delete_consecutive_new_lines
