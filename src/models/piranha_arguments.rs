@@ -163,75 +163,33 @@ impl PiranhaArguments {
   ///   * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
   /// Returns PiranhaArgument.
   #[new]
-  #[args(keyword_arguments = "**")]
   fn py_new(
-    path_to_codebase: String, path_to_configurations: String, language: String,
-    code_snippet: Option<String>, substitutions: &PyDict, keyword_arguments: Option<&PyDict>,
+    path_to_configurations: String, language: String, substitutions: &PyDict,
+    path_to_codebase: Option<String>, code_snippet: Option<String>, dry_run: Option<bool>,
+    cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<usize>,
+    number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
+    global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
+    path_to_output_summary: Option<String>,
   ) -> Self {
     let subs = substitutions
       .iter()
       .map(|(k, v)| (k.to_string(), v.to_string()))
       .collect_vec();
 
-    // gets `$arg_name` from `keyword_arguments` else invokes `$default_fn`
-    // It also converts this string value to the appropriate data type.
-    macro_rules! get_keyword_arg {
-      ($arg_name:literal, $default_fn:ident, "bool") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| x.is_true().unwrap())
-      };
-      ($arg_name:literal, $default_fn:ident, "num") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| x.to_string().parse().unwrap())
-      };
-      ($arg_name:literal, $default_fn:ident, "string") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| x.to_string())
-      };
-      ($arg_name:literal, $default_fn:ident, "option") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| Some(x.to_string()))
-      };
-    }
-
     piranha_arguments! {
-      path_to_codebase = path_to_codebase,
+      path_to_codebase = path_to_codebase.unwrap_or_else(default_path_to_codebase),
       path_to_configurations = path_to_configurations,
       code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
       language = PiranhaLanguage::from(language.as_str()),
       substitutions = subs,
-      dry_run = get_keyword_arg!("dry_run", default_dry_run, "bool"),
-      cleanup_comments = get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
-      cleanup_comments_buffer = get_keyword_arg!(
-        "cleanup_comments_buffer",
-        default_cleanup_comments_buffer,
-        "num"
-      ),
-      number_of_ancestors_in_parent_scope = get_keyword_arg!(
-        "number_of_ancestors_in_parent_scope",
-        default_number_of_ancestors_in_parent_scope,
-        "num"
-      ),
-      delete_consecutive_new_lines = get_keyword_arg!(
-        "delete_consecutive_new_lines",
-        default_delete_consecutive_new_lines,
-        "bool"
-      ),
-      global_tag_prefix = get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
-      delete_file_if_empty = get_keyword_arg!(
-        "delete_file_if_empty",
-        default_delete_file_if_empty,
-        "bool"
-      ),
-      path_to_output_summary = get_keyword_arg!(
-        "path_to_output_summary",
-        default_path_to_output_summaries,
-        "option"
-      ),
+      dry_run = dry_run.unwrap_or_else(default_dry_run),
+      cleanup_comments = cleanup_comments.unwrap_or_else(default_cleanup_comments),
+      cleanup_comments_buffer = cleanup_comments_buffer.unwrap_or_else(default_cleanup_comments_buffer),
+      number_of_ancestors_in_parent_scope = number_of_ancestors_in_parent_scope.unwrap_or_else(default_number_of_ancestors_in_parent_scope),
+      delete_consecutive_new_lines = delete_consecutive_new_lines.unwrap_or_else(default_delete_consecutive_new_lines),
+      global_tag_prefix = global_tag_prefix.unwrap_or_else(default_global_tag_prefix),
+      delete_file_if_empty = delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty),
+      path_to_output_summary = path_to_output_summary,
     }
   }
 }

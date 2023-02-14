@@ -9,6 +9,9 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
+
 def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:
     """
     Executes piranha for the given `piranha_arguments` and returns `PiranhaOutputSummary` for each file analyzed by Piranha
@@ -48,11 +51,19 @@ class PiranhaArguments:
 
     def __init__(
         self,
-        path_to_codebase: str,
-        path_to_configuration: str,
+        path_to_configurations: str,
         language: str,
         substitutions: dict,
-        **kwargs
+        path_to_codebase: Optional[str] = None,
+        code_snippet: Optional[str] = None,
+        dry_run: Optional[bool] = None,
+        cleanup_comments: Optional[bool] = None,
+        cleanup_comments_buffer: Optional[int] = None,
+        number_of_ancestors_in_parent_scope: Optional[int] = None,
+        delete_file_if_empty : Optional[bool] = None,
+        delete_consecutive_new_lines : Optional[bool] = None,
+        path_to_output: Optional[str] = None
+ 
     ):
         """
         Constructs `PiranhaArguments`

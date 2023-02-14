@@ -19,14 +19,14 @@ import re
 
 def test_piranha_rewrite():
     args = PiranhaArguments(
-        "test-resources/java/feature_flag_system_1/treated/input",
-        "test-resources/java/feature_flag_system_1/treated/configurations",
-        "java",
-        {
+        path_to_configurations="test-resources/java/feature_flag_system_1/treated/configurations",
+        language="java",
+        substitutions={
             "stale_flag_name": "STALE_FLAG",
             "treated": "true",
             "treated_complement": "false",
         },
+        path_to_codebase="test-resources/java/feature_flag_system_1/treated/input",
         dry_run=True,
     )
 
@@ -53,10 +53,10 @@ def test_piranha_rewrite():
 
 def test_piranha_match_only():
     args = PiranhaArguments(
-        "test-resources/java/structural_find/input",
-        "test-resources/java/structural_find/configurations",
-        "java",
-        {},
+        path_to_configurations="test-resources/java/structural_find/configurations",
+        language="java",
+        substitutions={},
+        path_to_codebase="test-resources/java/structural_find/input",
         dry_run=True,
     )
     output_summaries = execute_piranha(args)
