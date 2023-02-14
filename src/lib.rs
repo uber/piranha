@@ -13,8 +13,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
-  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
-  piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,
+  constraint::Constraint, edit::Edit, matches::Match, outgoing_edges::OutgoingEdges,
+  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary, rule::Rule,
+  rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
 
 pub mod models;
@@ -65,6 +66,10 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_class::<PiranhaOutputSummary>()?;
   m.add_class::<Edit>()?;
   m.add_class::<Match>()?;
+  m.add_class::<RuleGraph>()?;
+  m.add_class::<Rule>()?;
+  m.add_class::<OutgoingEdges>()?;
+  m.add_class::<Constraint>()?;
   Ok(())
 }
 
