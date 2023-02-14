@@ -30,7 +30,10 @@ use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
 use log::{info, warn};
-use pyo3::{prelude::*, types::PyDict};
+use pyo3::{
+  prelude::{pyclass, pymethods},
+  types::PyDict,
+};
 use serde_derive::Deserialize;
 
 use std::{collections::HashMap, path::PathBuf};
@@ -159,7 +162,7 @@ impl PiranhaArguments {
   #[args(keyword_arguments = "**")]
   fn py_new(
     path_to_codebase: String, path_to_configurations: String, language: String,
-    substitutions: &PyDict, keyword_arguments: Option<&PyDict>,
+    substitutions: &PyDict, rule_graph: Option<RuleGraph>, keyword_arguments: Option<&PyDict>,
   ) -> Self {
     let subs = substitutions
       .iter()
@@ -190,10 +193,11 @@ impl PiranhaArguments {
           .map_or_else($default_fn, |x| Some(x.to_string()))
       };
     }
-
+    let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     piranha_arguments! {
       path_to_codebase = path_to_codebase,
       path_to_configurations = path_to_configurations,
+      rule_graph= rg,
       language = PiranhaLanguage::from(language.as_str()),
       substitutions = subs,
       dry_run = get_keyword_arg!("dry_run", default_dry_run, "bool"),
