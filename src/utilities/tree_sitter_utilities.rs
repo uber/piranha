@@ -317,7 +317,18 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 #[pyclass]
-pub struct TSQuery(pub(crate) String);
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
+pub struct TSQuery(String);
+
+impl TSQuery {
+  pub(crate) fn new(query: String) -> Self {
+    Self(query)
+  }
+
+  pub(crate) fn get_query(&self) -> String {
+    self.0.to_string()
+  }
+}
 
 #[cfg(test)]
 #[path = "unit_tests/tree_sitter_utilities_test.rs"]

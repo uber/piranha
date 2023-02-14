@@ -44,12 +44,12 @@ impl Constraint {
   #[new]
   fn py_new(matcher: String, queries: Option<Vec<String>>) -> Self {
     ConstraintBuilder::default()
-      .matcher(TSQuery(matcher))
+      .matcher(TSQuery::new(matcher))
       .queries(
         queries
           .unwrap_or_default()
           .iter()
-          .map(|x| TSQuery(x.to_string()))
+          .map(|x| TSQuery::new(x.to_string()))
           .collect_vec(),
       )
       .build()
@@ -82,8 +82,8 @@ impl Constraint {
 macro_rules! constraint {
   (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
     $crate::models::constraint::ConstraintBuilder::default()
-      .matcher($crate::utilities::tree_sitter_utilities::TSQuery($matcher.to_string()))
-      .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery($q.to_string()),)*])
+      .matcher($crate::utilities::tree_sitter_utilities::TSQuery::new($matcher.to_string()))
+      .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       .build().unwrap()
   };
 }
