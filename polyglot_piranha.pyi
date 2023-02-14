@@ -170,9 +170,9 @@ class Point:
 class Constraint:
     """ A class to capture Constraints of a Piranha Rule
     """
-    matcher: str
+    matcher: TSQuery
     "Scope in which the constraint query has to be applied"
-    queries: list[str]
+    queries: list[TSQuery]
     "The Tree-sitter queries that need to be applied in the `matcher` scope"
 
     def __init__(
@@ -197,7 +197,7 @@ class Rule:
     """
     name: str
     "Name of the rule"
-    query: str
+    query: TSQuery
     "Tree-sitter query as string"
     replace_node: str
     "The tag corresponding to the node to be replaced"
@@ -294,3 +294,11 @@ class RuleGraph:
                 The edges in the graph
         """
         ...
+
+class TSQuery:
+    "Captures a Tree sitter query"
+    def query(self):
+        """The query
+        """
+        ...
+    
