@@ -195,11 +195,11 @@ class Rule:
     "The tag corresponding to the node to be replaced"
     replace: str
     "Replacement pattern"
-    groups: set[str]
+    groups: list[str]
     "Group(s) to which the rule belongs"
-    holes: set[str]
+    holes: list[str]
     "Holes that need to be filled, in order to instantiate a rule"
-    constraints: set[Constraint]
+    constraints: list[Constraint]
     "Additional constraints for matching the rule"
 
     def __init__(
@@ -208,9 +208,9 @@ class Rule:
         query: str,
         replace_node: Optional[str] = None,
         replace: Optional[str] = None,
-        groups: set[str] = set(),
-        holes: set[str] = set(),
-        constraints: set[Constraint] = set(),
+        groups: list[str] = list(),
+        holes: list[str] = list(),
+        constraints: list[Constraint] = list(),
     ):
         """
         Constructs `Rule`
