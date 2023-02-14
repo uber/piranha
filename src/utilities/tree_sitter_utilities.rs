@@ -315,7 +315,6 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
 pub struct TSQuery(String);
