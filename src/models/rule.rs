@@ -198,11 +198,15 @@ pub(crate) struct InstantiatedRule {
 
 impl InstantiatedRule {
   pub(crate) fn new(rule: &Rule, substitutions: &HashMap<String, String>) -> Self {
-    let substitutions_for_holes = rule
+    let substitutions_for_holes: HashMap<String, String> = rule
       .holes()
       .iter()
       .filter_map(|h| substitutions.get(h).map(|s| (h.to_string(), s.to_string())))
       .collect();
+    if substitutions_for_holes.len() != rule.holes().len() {
+      #[rustfmt::skip]
+      panic!("{}", format!( "Could not instantiate the rule {rule:?} with substitutions {substitutions_for_holes:?}").red());
+    }
     InstantiatedRule {
       rule: rule.instantiate(&substitutions_for_holes),
       substitutions: substitutions_for_holes,
@@ -236,11 +240,9 @@ impl InstantiatedRule {
 
 impl Instantiate for Rule {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  /// This functions assumes that each hole in the rule can be substituted .
+  /// i.e. It assumes that `substitutions_for_holes` is exaustive and complete
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
-    if substitutions_for_holes.len() != self.holes().len() {
-      #[rustfmt::skip]
-      panic!("{}", format!( "Could not instantiate the rule {self:?} with substitutions {substitutions_for_holes:?}").red());
-    }
     let updated_rule = self.clone();
     Rule {
       query: updated_rule.query().instantiate(substitutions_for_holes),
