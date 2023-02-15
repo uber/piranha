@@ -76,15 +76,17 @@ class PiranhaArguments:
             substitutions: dict
                  Substitutions to instantiate the initial set of rules
             keyword arguments: _
-                 path_to_codebase (str) : Path to source code folder or file
                  path_to_configurations (str) : Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml`
-                 rule_graph (str) : The rule graph constructed via RuleGraph DSL
+                 rule_graph (RuleGraph) : The rule graph constructed via RuleGraph DSL
+                 path_to_codebase (str) : Path to source code folder or file
+                 code_snippet (str) : The input code snippet to transform
                  dry_run (bool) : Disables in-place rewriting of code
                  cleanup_comments (bool) : Enables deletion of associated comments
                  cleanup_comments_buffer (int): The number of lines to consider for cleaning up the comments
                  number_of_ancestors_in_parent_scope (int): The number of ancestors considered when PARENT rules
                  delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  delete_consecutive_new_lines (bool) : Replaces consecutive \ns  with a \n
+                 path_to_output (str): Path to the output json file
         """
         ...
 

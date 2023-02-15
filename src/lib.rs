@@ -148,16 +148,15 @@ impl Piranha {
       .set_language(*piranha_args.language().language())
       .expect("Could not set the language for the parser.");
 
+    let mut path_to_codebase = self.piranha_arguments.path_to_codebase().to_string();
+
     let temp_dir = if !self.piranha_arguments.code_snippet().is_empty() {
-      Some(self.write_code_snippet_to_temp())
+      let td = self.write_code_snippet_to_temp();
+      path_to_codebase = td.path().to_str().unwrap_or_default().to_string();
+      Some(td)
     } else {
       None
     };
-
-    let path_to_codebase = temp_dir
-      .as_ref()
-      .map(|t| t.path().to_str().unwrap_or_default().to_string())
-      .unwrap_or(self.piranha_arguments.path_to_codebase().to_string());
 
     let mut current_global_substitutions = piranha_args.input_substitutions();
     // Keep looping until new `global` rules are added.
