@@ -301,4 +301,3 @@ class TSQuery:
         """The query
         """
         ...
-    
