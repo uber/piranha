@@ -104,7 +104,9 @@ fn test_get_edit_positive_recursive() {
 
   let mut rule_store = RuleStore::default();
 
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase("/some/test/path".to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -162,7 +164,9 @@ fn test_get_edit_negative_recursive() {
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let mut rule_store = RuleStore::default();
 
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase("/some/test/path".to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -201,7 +205,9 @@ fn test_get_edit_for_context_positive() {
         }";
 
   let mut rule_store = RuleStore::default();
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase("/some/test/path".to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -240,7 +246,9 @@ fn test_get_edit_for_context_negative() {
 
   let mut rule_store = RuleStore::default();
 
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase("/some/test/path".to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
