@@ -13,10 +13,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
-  constraint::Constraint, default_configs::default_path_to_codebase, edit::Edit, matches::Match,
-  outgoing_edges::OutgoingEdges, piranha_arguments::PiranhaArguments,
-  piranha_output::PiranhaOutputSummary, rule::Rule, rule_graph::RuleGraph,
-  source_code_unit::SourceCodeUnit,
+  constraint::Constraint, edit::Edit, matches::Match, outgoing_edges::OutgoingEdges,
+  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary, rule::Rule,
+  rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
 
 pub mod models;
@@ -149,7 +148,11 @@ impl Piranha {
       .set_language(*piranha_args.language().language())
       .expect("Could not set the language for the parser.");
 
-    let temp_dir = self.write_code_snippet_to_temp();
+    let temp_dir = if !self.piranha_arguments.code_snippet().is_empty() {
+      Some(self.write_code_snippet_to_temp())
+    } else {
+      None
+    };
 
     let path_to_codebase = temp_dir
       .as_ref()
@@ -214,19 +217,11 @@ impl Piranha {
   }
 
   /// Write the input code snippet into a temp directory.
-  /// Returns: The created input code snipper
+  /// Returns: A temporary directory containing the created input code snippet as a file
   /// This function panics if it finds that neither `code_snippet` nor `path_to_configuration` are provided  
-  fn write_code_snippet_to_temp(&self) -> Option<TempDir> {
-    if self.piranha_arguments.code_snippet().is_empty() {
-      if self.piranha_arguments.path_to_codebase() == &default_path_to_codebase() {
-        panic!("Please either provide a path to code base or a input code snippet !!!")
-      }
-      return None;
-    }
-
+  fn write_code_snippet_to_temp(&self) -> TempDir {
     let temp_dir = TempDir::new_in(".", "tmp").unwrap();
     let temp_dir_path = temp_dir.path();
-
     let sample_file = temp_dir_path.join(format!(
       "sample.{}",
       self.piranha_arguments.language().name()
@@ -235,6 +230,6 @@ impl Piranha {
     file
       .write_all(self.piranha_arguments.code_snippet().as_bytes())
       .unwrap();
-    Some(temp_dir)
+    temp_dir
   }
 }
