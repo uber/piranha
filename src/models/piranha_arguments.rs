@@ -47,14 +47,14 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
-  #[clap(short = 'c', long, default_value_t= default_path_to_codebase())]
+  #[clap(short = 'c', long, default_value_t = default_path_to_codebase())]
   #[serde(skip)]
   path_to_codebase: String,
 
   /// Code snippet to transform
   #[get = "pub"]
   #[builder(default = "default_code_snippet()")]
-  #[clap(short = 't', long, default_value_t= default_code_snippet())]
+  #[clap(short = 't', long, default_value_t = default_code_snippet())]
   #[serde(skip)]
   code_snippet: String,
 
@@ -155,16 +155,18 @@ impl PiranhaArguments {
   /// # Arguments:
   /// * language: Target language
   /// * substitutions : Substitutions to instantiate the initial set of feature flag rules
-  /// * kw_args: Keyword arguments to capture the following piranha argument options
-  ///   * path_to_codebase: Path to the root of the code base that Piranha will update
-  ///   * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
-  ///   * rule_graph: the graph constructed via the RuleGraph DSL
-  ///   * dry_run (bool) : Disables in-place rewriting of code
-  ///   * cleanup_comments (bool) : Enables deletion of associated comments
-  ///   * cleanup_comments_buffer (usize): The number of lines to consider for cleaning up the comments
-  ///   * number_of_ancestors_in_parent_scope (usize): The number of ancestors considered when `PARENT` rules
-  ///   * delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
-  ///   * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
+  /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+  /// * rule_graph: the graph constructed via the RuleGraph DSL
+  /// * path_to_codebase: Path to the root of the code base that Piranha will update
+  /// * code_snippet: Input code snippet to transform
+  /// * dry_run (bool) : Disables in-place rewriting of code
+  /// * cleanup_comments (bool) : Enables deletion of associated comments
+  /// * cleanup_comments_buffer (usize): The number of lines to consider for cleaning up the comments
+  /// * number_of_ancestors_in_parent_scope (usize): The number of ancestors considered when `PARENT` rules
+  /// * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
+  /// * global_tag_prefix (string): the prefix for global tags
+  /// * delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
+  /// * path_to_output_summary : Path to the file where the Piranha output summary should be persisted
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
@@ -184,7 +186,7 @@ impl PiranhaArguments {
     piranha_arguments! {
       path_to_codebase = path_to_codebase.unwrap_or_else(default_path_to_codebase),
       path_to_configurations = path_to_configurations.unwrap_or_else(default_path_to_configurations),
-      rule_graph= rg,
+      rule_graph = rg,
       code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
       language = PiranhaLanguage::from(language.as_str()),
       substitutions = subs,
@@ -272,6 +274,10 @@ impl PiranhaArgumentsBuilder {
   /// * parse `piranha_arguments.toml` (if it exists)
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
+    if let Err(e) = &self._validate() {
+      panic!("{}", e);
+    };
+
     let mut _arg = self.create().unwrap();
 
     // Read from `piranha_arguments.toml` if present
@@ -285,6 +291,18 @@ impl PiranhaArgumentsBuilder {
     #[rustfmt::skip]
     info!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
     _arg
+  }
+
+  fn _validate(&self) -> Result<bool, String> {
+    let _arg = self.create().unwrap();
+    if _arg.code_snippet().is_empty() && _arg.path_to_codebase().is_empty() {
+      return Err(
+        "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`. 
+      Please specify the `path_to_codebase` or `code_snippet` when creating PiranhaArgument !!!"
+          .to_string(),
+      );
+    }
+    Ok(true)
   }
 }
 
