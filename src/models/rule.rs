@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use colored::Colorize;
 use derive_builder::Builder;
@@ -69,19 +69,19 @@ pub struct Rule {
   #[serde(default = "default_groups")]
   #[get = "pub"]
   #[pyo3(get)]
-  groups: Vec<String>,
+  groups: HashSet<String>,
   /// Holes that need to be filled, in order to instantiate a rule
   #[builder(default = "default_holes()")]
   #[serde(default = "default_holes")]
   #[get = "pub"]
   #[pyo3(get)]
-  holes: Vec<String>,
+  holes: HashSet<String>,
   /// Additional constraints for matching the rule
   #[builder(default = "default_constraints()")]
   #[serde(default = "default_constraints")]
   #[get = "pub"]
   #[pyo3(get)]
-  constraints: Vec<Constraint>,
+  constraints: HashSet<Constraint>,
 }
 
 impl Rule {
@@ -105,7 +105,7 @@ impl Rule {
     if self.groups().contains(&CLEAN_UP.to_string()) {
       return;
     }
-    self.groups.push(SEED.to_string());
+    self.groups.insert(SEED.to_string());
   }
 }
 
@@ -145,9 +145,9 @@ macro_rules! piranha_rule {
     $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
-    $(.holes(vec![$($hole.to_string(),)*]))?
-    $(.groups(vec![$($group_name.to_string(),)*]))?
-    $(.constraints(vec![$($constraint)*]))?
+    $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
+    $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
+    $(.constraints(std::collections::HashSet::from([$($constraint)*])))?
     .build().unwrap()
   };
 }
@@ -157,7 +157,8 @@ impl Rule {
   #[new]
   fn py_new(
     name: String, query: String, replace: Option<String>, replace_node: Option<String>,
-    holes: Option<Vec<String>>, groups: Option<Vec<String>>, constraints: Option<Vec<Constraint>>,
+    holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
+    constraints: Option<HashSet<Constraint>>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
     rule_builder.name(name).query(TSQuery::new(query));
@@ -228,11 +229,11 @@ impl InstantiatedRule {
     self.rule().replace_node().to_string()
   }
 
-  pub fn holes(&self) -> &Vec<String> {
+  pub fn holes(&self) -> &HashSet<String> {
     self.rule().holes()
   }
 
-  pub fn constraints(&self) -> &Vec<Constraint> {
+  pub fn constraints(&self) -> &HashSet<Constraint> {
     self.rule().constraints()
   }
 }
