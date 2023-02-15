@@ -380,3 +380,7 @@ macro_rules! piranha_arguments {
 }
 
 pub use piranha_arguments;
+
+#[cfg(test)]
+#[path = "unit_tests/piranha_arguments_test.rs"]
+mod piranha_arguments_test;
