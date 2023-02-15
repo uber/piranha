@@ -11,7 +11,7 @@
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::{
   constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
@@ -99,16 +99,16 @@ pub fn default_rule_graph_map() -> HashMap<String, Vec<(String, String)>> {
   HashMap::new()
 }
 
-pub(crate) fn default_holes() -> Vec<String> {
-  Vec::new()
+pub(crate) fn default_holes() -> HashSet<String> {
+  HashSet::new()
 }
 
-pub(crate) fn default_groups() -> Vec<String> {
-  Vec::new()
+pub(crate) fn default_groups() -> HashSet<String> {
+  HashSet::new()
 }
 
-pub(crate) fn default_constraints() -> Vec<Constraint> {
-  Vec::new()
+pub(crate) fn default_constraints() -> HashSet<Constraint> {
+  HashSet::new()
 }
 
 pub(crate) fn default_rules() -> Vec<Rule> {

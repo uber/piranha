@@ -82,7 +82,7 @@ def test_insert_field_add_import():
         replace="""{
   private List<String> names;\n @class_members
 }""",
-        constraints= list([
+        constraints= set([
             Constraint(
                 matcher= "(class_declaration ) @c_cd",
                 queries = ["""
@@ -101,8 +101,8 @@ def test_insert_field_add_import():
         replace="""@pkg_dcl
 import java.util.List;
 """,
-        groups= list(["Cleanup Rule"]),
-        constraints= list([
+        groups= set(["Cleanup Rule"]),
+        constraints= set([
             Constraint(
                 matcher= "(program ) @prgrm",
                 queries = ["""
