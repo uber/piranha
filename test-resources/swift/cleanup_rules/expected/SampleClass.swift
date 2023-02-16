@@ -10,15 +10,12 @@
 // limitations under the License.
 
 class SampleClass {
-    var isEnabled = true
-
     func sampleFunction() {
         isEnabled = v1
         isEnabled = f2()
         isEnabled = v2
         isEnabled = v2
         isEnabled = v2
-        isEnabled = false
     }
 
     func checkOrTrue() {
