@@ -178,6 +178,59 @@ func simplify_if_statement_false() {
     }
 }
 
+func simplify_if_statement_false_comment_demo_single_comment() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    // this comment doesnt get removed but it should
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+func simplify_if_statement_false_comment_demo_double_comment() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    // this comment doesnt get removed
+    // this comment does get removed - but only if theres another comment above it
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    /* this comment does get removed
+    with all the lines
+    in it 
+    */
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment_one_line() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    /* this comment doesnt get removed */
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+
 func simplify_identity_eq() {
     if exp.BoolValue("true") == exp.BoolValue("true") {
         fmt.Println("keep 1")

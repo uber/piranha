@@ -109,6 +109,25 @@ func simplify_if_statement_false() {
     // no alternative, should remove the whole `if_statement`
 }
 
+func simplify_if_statement_false_comment_demo_single_comment() {
+    fmt.Println("remain")
+    // this comment doesnt get removed but it should
+}
+
+func simplify_if_statement_false_comment_demo_double_comment() {
+    fmt.Println("remain")
+    // this comment doesnt get removed
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment() {
+    fmt.Println("remain")
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment_one_line() {
+    fmt.Println("remain")
+    /* this comment doesnt get removed */
+}
+
 func simplify_identity_eq() {
     fmt.Println("keep 1")
     fmt.Println("keep 2")

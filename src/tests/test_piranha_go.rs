@@ -28,15 +28,15 @@ create_rewrite_tests! {
       "true_flag_name" => "true",
       "false_flag_name" => "false",
       "nil_flag_name" => "nil"
-    };
+    },cleanup_comments = true;
   test_builtin_statement_cleanup: "feature_flag/builtin_rules/statement_cleanup", 1,
     substitutions= substitutions! {
       "treated" => "true",
       "treated_complement" => "false"
-    };
+    },cleanup_comments = true;
   test_const_same_file: "feature_flag/system_1/const_same_file", 1,
     substitutions= substitutions! {
       "stale_flag_name" => "staleFlag",
       "treated" => "false"
-    };
+    },cleanup_comments = true;
 }
