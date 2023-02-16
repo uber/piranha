@@ -24,8 +24,9 @@ use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Rang
 
 use super::eq_without_whitespace;
 
-/// Applies the query upon `self`, and gets all the matches
+/// Applies the query upon the given node, and gets all the matches
 /// # Arguments
+/// * `node` - the root node to apply the query upon
 /// * `source_code` - the corresponding source code string for the node.
 /// * `query` - the query to be applied
 /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
@@ -45,8 +46,9 @@ pub(crate) fn get_match_for_query(
   None
 }
 
-/// Applies the query upon `self`, and gets the first match
+/// Applies the query upon the given `node`, and gets the first match
 /// # Arguments
+/// * `node` - the root node to apply the query upon
 /// * `source_code` - the corresponding source code string for the node.
 /// * `query` - the query to be applied
 /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
@@ -96,8 +98,9 @@ pub(crate) fn get_all_matches_for_query(
   output
 }
 
-/// Applies the query upon `self`, and gets the first match
+/// Applies the query upon given `node`, and gets the first match
 /// # Arguments
+/// * `node` - the root node to apply the query upon
 /// * `source_code` - the corresponding source code string for the node.
 /// * `query` - the query to be applied
 ///
