@@ -89,6 +89,25 @@ fn test_scenarios_find_and_propagate_panic() {
 }
 
 #[test]
+#[should_panic(expected = "Could not instantiate the rule Rule { name: \"delete_class\"")]
+fn test_scenarios_find_and_propagate_invalid_substitutions_panic() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("find_and_propagate_invalid_substitutions");
+  let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+  let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = path_to_codebase,
+    path_to_configurations = path_to_configurations,
+    language = PiranhaLanguage::from(JAVA),
+    substitutions = substitutions! {"super_interface_name" => "SomeInterface"},
+  };
+
+  let _ = execute_piranha(&piranha_arguments);
+}
+
+#[test]
 fn test_user_option_delete_consecutive_lines() {
   let _path = PathBuf::from("test-resources")
     .join(JAVA)
