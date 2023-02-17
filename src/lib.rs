@@ -122,8 +122,6 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
 struct Piranha {
   // Maintains Piranha's state
   rule_store: RuleStore,
-  // Path to source code folder
-  path_to_codebase: String,
   // Files updated by Piranha.
   relevant_files: HashMap<PathBuf, SourceCodeUnit>,
   // Piranha Arguments
@@ -157,7 +155,10 @@ impl Piranha {
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
 
-      for (path, content) in self.rule_store.get_relevant_files(&self.path_to_codebase) {
+      for (path, content) in self
+        .rule_store
+        .get_relevant_files(self.piranha_arguments.path_to_codebase())
+      {
         // Get the `SourceCodeUnit` for the file `path` from the cache `relevant_files`.
         // In case of miss, lazily insert a new `SourceCodeUnit`.
         let source_code_unit = self
@@ -196,7 +197,6 @@ impl Piranha {
     let graph_rule_store = RuleStore::new(piranha_arguments);
     Self {
       rule_store: graph_rule_store,
-      path_to_codebase: String::from(piranha_arguments.path_to_codebase()),
       relevant_files: HashMap::new(),
       piranha_arguments: piranha_arguments.clone(),
     }
