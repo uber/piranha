@@ -145,7 +145,7 @@ macro_rules! piranha_rule {
     $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
-    $(.holes(HashSet::from([$($hole.to_string(),)*])))?
+    $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.constraints(std::collections::HashSet::from([$($constraint)*])))?
     .build().unwrap()

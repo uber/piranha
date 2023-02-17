@@ -13,7 +13,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use crate::{
   constraint, models::piranha_arguments::PiranhaArgumentsBuilder, utilities::eq_without_whitespace,
 };
-use std::collections::HashSet;
 
 use super::InstantiatedRule;
 use {
