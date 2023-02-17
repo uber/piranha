@@ -258,6 +258,14 @@ impl PiranhaArgumentsBuilder {
           .to_string(),
       );
     }
+
+    if !_arg.code_snippet().is_empty() && !_arg.path_to_codebase().is_empty() {
+      return Err(
+        "Invalid Piranha Argument. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both. "
+          .to_string(),
+      );
+    }
+
     Ok(true)
   }
 }
