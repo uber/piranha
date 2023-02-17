@@ -15,15 +15,15 @@ use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer, default_code_snippet,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
-    default_global_tag_prefix, default_name_of_piranha_argument_toml,
-    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
-    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
-    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
+    default_global_tag_prefix, default_number_of_ancestors_in_parent_scope,
+    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
+    default_piranha_language, default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON,
+    SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
 };
-use crate::utilities::{parse_key_val, read_toml};
+use crate::utilities::parse_key_val;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
@@ -36,7 +36,7 @@ use pyo3::{
 };
 use serde_derive::Deserialize;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Builder)]
@@ -260,15 +260,6 @@ impl PiranhaArgumentsBuilder {
     }
     Ok(true)
   }
-}
-
-fn get_piranha_arguments_from_toml(path_to_configurations: &String) -> Option<PiranhaArguments> {
-  let path_to_piranha_args_toml =
-    PathBuf::from(path_to_configurations).join(default_name_of_piranha_argument_toml());
-  if path_to_piranha_args_toml.exists() {
-    return Some(read_toml(&path_to_piranha_args_toml, false));
-  }
-  None
 }
 
 /// Gets rule graph for PiranhaArguments
