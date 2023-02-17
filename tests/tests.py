@@ -101,7 +101,6 @@ def test_insert_field_add_import():
         replace="""@pkg_dcl
 import java.util.List;
 """,
-        groups= set(["Cleanup Rule"]),
         constraints= set([
             Constraint(
                 matcher= "(program ) @prgrm",
@@ -112,6 +111,7 @@ import java.util.List;
                 )"""]
             )
         ]),
+        is_seed_rule= False
     )
 
     edge1 = OutgoingEdges(

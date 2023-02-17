@@ -44,4 +44,4 @@ query = """
 """
 replace_node = "import_header"
 replace = ""
-groups = ["Cleanup Rule"]
+is_seed_rule = false

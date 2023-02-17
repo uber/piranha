@@ -128,6 +128,7 @@ macro_rules! piranha_rule {
                 $(, replace_node = $replace_node:expr)?
                 $(, replace = $replace:expr)?
                 $(, holes = [$($hole: expr)*])?
+                $(, is_seed_rule = $is_seed_rule:expr)?
                 $(, groups = [$($group_name: expr)*])?
                 $(, constraints = [$($constraint:tt)*])?
               ) => {
@@ -149,7 +150,7 @@ impl Rule {
   fn py_new(
     name: String, query: String, replace: Option<String>, replace_node: Option<String>,
     holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    constraints: Option<HashSet<Constraint>>,
+    constraints: Option<HashSet<Constraint>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
     rule_builder.name(name).query(TSQuery::new(query));
@@ -171,6 +172,10 @@ impl Rule {
 
     if let Some(constraints) = constraints {
       rule_builder.constraints(constraints);
+    }
+
+    if let Some(is_seed_rule) = is_seed_rule {
+      rule_builder.is_seed_rule(is_seed_rule);
     }
 
     rule_builder.build().unwrap()

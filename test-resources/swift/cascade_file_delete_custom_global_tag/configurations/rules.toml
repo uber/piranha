@@ -50,7 +50,6 @@ query = """
 (#eq? @type_arg "@enum_declaration_name")
 )
 """
-groups = ["Cleanup Rule"]
 holes = ["enum_declaration_name"]
 is_seed_rule = false
 
