@@ -17,6 +17,7 @@ use super::{
   constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
   rule_graph::RuleGraph,
 };
+use crate::utilities::tree_sitter_utilities::TSQuery;
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -82,8 +83,8 @@ pub fn default_delete_consecutive_new_lines() -> bool {
   false
 }
 
-pub fn default_query() -> String {
-  String::new()
+pub(crate) fn default_query() -> TSQuery {
+  TSQuery::new(String::new())
 }
 
 pub fn default_replace_node() -> String {
@@ -118,12 +119,12 @@ pub(crate) fn default_edges() -> Vec<OutgoingEdges> {
   vec![]
 }
 
-pub(crate) fn default_queries() -> Vec<String> {
+pub(crate) fn default_queries() -> Vec<TSQuery> {
   Vec::new()
 }
 
-pub(crate) fn default_matcher() -> String {
-  String::new()
+pub(crate) fn default_matcher() -> TSQuery {
+  TSQuery::new(String::new())
 }
 
 pub(crate) fn default_rule_name() -> String {

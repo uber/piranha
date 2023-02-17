@@ -20,6 +20,7 @@ use std::fs::{self, DirEntry};
 use std::hash::Hash;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
+
 // Reads a file.
 pub(crate) fn read_file(file_path: &PathBuf) -> Result<String, String> {
   File::open(file_path)
@@ -126,6 +127,41 @@ macro_rules! gen_py_str_methods {
 }
 
 pub(crate) use gen_py_str_methods;
+
+use self::tree_sitter_utilities::TSQuery;
+
+pub(crate) trait Instantiate {
+  /// Replaces the all the occurrences of a tree-sitter specific tag with the corresponding string values
+  /// specified in `substitutions`
+  ///
+  /// # Arguments
+  ///
+  /// * `input_string` : the string to be transformed
+  /// * `substitutions` : a map between tree-sitter tag and the replacement string
+  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self;
+}
+
+impl Instantiate for String {
+  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self {
+    let mut output = self.to_string();
+    for (tag, substitute) in substitutions {
+      // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
+      let key = format!("@{tag}");
+      output = output.replace(&key, substitute);
+    }
+    output
+  }
+}
+
+impl Instantiate for TSQuery {
+  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self {
+    let substitutions = substitutions
+      .iter()
+      .map(|(k, v)| (k.to_string(), v.replace('\n', "\\n")))
+      .collect();
+    TSQuery::new(self.get_query().instantiate(&substitutions))
+  }
+}
 
 #[cfg(test)]
 #[path = "unit_tests/utilities_test.rs"]

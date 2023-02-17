@@ -19,10 +19,13 @@ use crate::{
 };
 use itertools::Itertools;
 use log::debug;
+use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
 use super::eq_without_whitespace;
+
+use pyo3::prelude::pyclass;
 
 #[rustfmt::skip]
 pub(crate) trait PiranhaHelpers {
@@ -270,34 +273,6 @@ fn _get_tree_sitter_edit(
   }
 }
 
-/// Replaces the all the occurrences of a specific tag  with the corresponding string values
-/// specified in `substitutions`, and returns this new string.
-///
-/// # Arguments
-///
-/// * `input_string` : the string to be transformed
-/// * `substitutions` : a map between tree-sitter tag and the replacement string
-/// * `is_tree_sitter_query` : true if the `input_string` is a tree-sitter query, false if it is a
-///     replacement pattern.
-///
-/// Note that,  it escapes newline characters for tree-sitter-queries.
-pub(crate) fn substitute_tags(
-  input_string: &str, substitutions: &HashMap<String, String>, is_tree_sitter_query: bool,
-) -> String {
-  let mut output = input_string.to_string();
-  for (tag, substitute) in substitutions {
-    // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
-    let key = format!("@{tag}");
-    let substitution_value = if is_tree_sitter_query {
-      substitute.replace('\n', "\\n").to_string()
-    } else {
-      substitute.to_string()
-    };
-    output = output.replace(&key, &substitution_value);
-  }
-  output
-}
-
 /// Get the smallest node within `self` that spans the given range.
 pub(crate) fn get_node_for_range(root_node: Node, start_byte: usize, end_byte: usize) -> Node {
   root_node
@@ -337,6 +312,20 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
     end_byte: input_edit.new_end_byte,
     start_point: input_edit.start_position,
     end_point: input_edit.new_end_position,
+  }
+}
+
+#[pyclass]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
+pub struct TSQuery(String);
+
+impl TSQuery {
+  pub(crate) fn new(query: String) -> Self {
+    Self(query)
+  }
+
+  pub(crate) fn get_query(&self) -> String {
+    self.0.to_string()
   }
 }
 

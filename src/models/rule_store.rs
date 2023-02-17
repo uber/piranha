@@ -27,7 +27,7 @@ use tree_sitter::Query;
 use crate::{
   models::piranha_arguments::PiranhaArguments,
   models::scopes::ScopeQueryGenerator,
-  utilities::{read_file, MapOfVec},
+  utilities::{read_file, tree_sitter_utilities::TSQuery},
 };
 
 use super::{language::PiranhaLanguage, rule::InstantiatedRule};
@@ -70,18 +70,18 @@ impl RuleStore {
       r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
     }) {
       #[rustfmt::skip]
-      debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query()).bright_blue());
+      debug!("{}", format!("Added Global Rule : {:?} - {}", r.name(), r.query().get_query()).bright_blue());
       self.global_rules.push(r);
     }
   }
 
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
-  pub(crate) fn query(&mut self, query_str: &String) -> &Query {
+  pub(crate) fn query(&mut self, query_str: &TSQuery) -> &Query {
     self
       .rule_query_cache
-      .entry(query_str.to_string())
-      .or_insert_with(|| self.language.create_query(query_str.to_string()))
+      .entry(query_str.get_query())
+      .or_insert_with(|| self.language.create_query(query_str.get_query()))
   }
 
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file

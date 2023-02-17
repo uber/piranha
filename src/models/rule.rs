@@ -13,12 +13,13 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::collections::{HashMap, HashSet};
 
-use crate::utilities::tree_sitter_utilities::substitute_tags;
 use colored::Colorize;
 use derive_builder::Builder;
 use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
+
+use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::{
   constraint::Constraint,
@@ -50,7 +51,7 @@ pub struct Rule {
   #[serde(default = "default_query")]
   #[get = "pub"]
   #[pyo3(get)]
-  query: String,
+  query: TSQuery,
   /// The tag corresponding to the node to be replaced
   #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
@@ -99,20 +100,6 @@ impl Rule {
     *self.query() != default_query() && *self.replace_node() == default_replace_node()
   }
 
-  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  fn substitute(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
-    if substitutions_for_holes.len() != self.holes().len() {
-      #[rustfmt::skip]
-      panic!("{}", format!( "Could not instantiate the rule {self:?} with substitutions {substitutions_for_holes:?}").red());
-    }
-    let updated_rule = self.clone();
-    Rule {
-      query: substitute_tags(updated_rule.query(), substitutions_for_holes, false),
-      replace: substitute_tags(updated_rule.replace(), substitutions_for_holes, false),
-      ..updated_rule
-    }
-  }
-
   /// Adds the rule to a new group - "SEED" if applicable.
   pub(crate) fn add_to_seed_rules_group(&mut self) {
     if self.groups().contains(&CLEAN_UP.to_string()) {
@@ -155,7 +142,7 @@ macro_rules! piranha_rule {
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
-    $(.query($query.to_string()))?
+    $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace($replace.to_string()))?
     $(.holes(HashSet::from([$($hole.to_string(),)*])))?
@@ -174,7 +161,7 @@ impl Rule {
     constraints: Option<HashSet<Constraint>>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
-    rule_builder.name(name).query(query);
+    rule_builder.name(name).query(TSQuery::new(query));
     if let Some(replace) = replace {
       rule_builder.replace(replace);
     }
@@ -211,13 +198,19 @@ pub(crate) struct InstantiatedRule {
 
 impl InstantiatedRule {
   pub(crate) fn new(rule: &Rule, substitutions: &HashMap<String, String>) -> Self {
-    let substitutions_for_holes = rule
+    let substitutions_for_holes: HashMap<String, String> = rule
       .holes()
       .iter()
       .filter_map(|h| substitutions.get(h).map(|s| (h.to_string(), s.to_string())))
       .collect();
+    // Since filter_map (above) discards any element of `rules.holes()` for which there isn't a valid substitution,
+    // checking that the lengths match is enough to verify all holes have a matching substitution.
+    if substitutions_for_holes.len() != rule.holes().len() {
+      #[rustfmt::skip]
+      panic!("{}", format!( "Could not instantiate the rule {rule:?} with substitutions {substitutions_for_holes:?}").red());
+    }
     InstantiatedRule {
-      rule: rule.substitute(&substitutions_for_holes),
+      rule: rule.instantiate(&substitutions_for_holes),
       substitutions: substitutions_for_holes,
     }
   }
@@ -230,8 +223,8 @@ impl InstantiatedRule {
     self.rule().replace().to_string()
   }
 
-  pub fn query(&self) -> String {
-    self.rule().query().to_string()
+  pub fn query(&self) -> TSQuery {
+    self.rule().query().clone()
   }
 
   pub fn replace_node(&self) -> String {
@@ -244,6 +237,20 @@ impl InstantiatedRule {
 
   pub fn constraints(&self) -> &HashSet<Constraint> {
     self.rule().constraints()
+  }
+}
+
+impl Instantiate for Rule {
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  /// This functions assumes that each hole in the rule can be substituted.
+  /// i.e. It assumes that `substitutions_for_holes` is exaustive and complete
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
+    let updated_rule = self.clone();
+    Rule {
+      query: updated_rule.query().instantiate(substitutions_for_holes),
+      replace: updated_rule.replace().instantiate(substitutions_for_holes),
+      ..updated_rule
+    }
   }
 }
 

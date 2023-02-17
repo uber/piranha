@@ -42,7 +42,7 @@ fn test_rule_try_instantiate_positive() {
   ]);
   let instantiated_rule = InstantiatedRule::new(&rule, &substitutions);
   assert!(eq_without_whitespace(
-    instantiated_rule.query().as_str(),
+    instantiated_rule.query().get_query().as_str(),
     "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
   ))
 }
