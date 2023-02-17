@@ -118,3 +118,4 @@ query = """
 """
 replace_node = "@assignment"
 replace = ""
+is_seed_rule = false

@@ -46,3 +46,4 @@ replace = "@treated"
 replace_node = "call_exp"
 groups = ["replace_expression_with_boolean_literal", "Cleanup Rule"]
 holes = ["const_id", "treated"]
+is_seed_rule = false

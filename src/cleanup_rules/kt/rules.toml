@@ -30,6 +30,7 @@ query = """
 """
 replace = "@consequence"
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before :
 # else if (true) { doSomething() } else { doSomethingElse()}
@@ -51,6 +52,7 @@ query = """
 """
 replace = "@consequence"
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 #  else if (false) { doSomething(); } else { doSomethingElse();}
@@ -71,6 +73,7 @@ query = """
 """
 replace = "@alternative"
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 #  else if (false) { doSomething(); }
@@ -89,6 +92,7 @@ query = """
 """
 replace = ""
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 # if (true) { doSomething() }
@@ -107,6 +111,7 @@ query = """
 """
 replace = "@consequence"
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 # if (true) { doSomething() } else { doSomethingElse()}
@@ -127,6 +132,7 @@ query = """
 """
 replace = "@consequence"
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 #  if (false) { doSomething(); } else { doSomethingElse();}
@@ -149,6 +155,7 @@ query = """
 )"""
 replace = "@alternative"
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 #  else if (false) { doSomething(); }
@@ -165,6 +172,7 @@ query = """
 )"""
 replace = ""
 replace_node = "if_expression"
+is_seed_rule = false
 
 # Before : 
 #  !false
@@ -183,6 +191,7 @@ query = """
 """
 replace = "true"
 replace_node = "prefix_expression"
+is_seed_rule = false
 
 # Before : 
 #  !true
@@ -201,6 +210,7 @@ query = """
 """
 replace = "false"
 replace_node = "prefix_expression"
+is_seed_rule = false
 
 # Before : 
 #  true && abc()
@@ -220,6 +230,7 @@ query = """
 """
 replace = "@rhs"
 replace_node = "conjunction_expression"
+is_seed_rule = false
 
 # Before :
 #  abc() && true
@@ -237,6 +248,7 @@ query = """
 )"""
 replace = "@lhs"
 replace_node = "conjunction_expression"
+is_seed_rule = false
 
 # Before :
 #  false && abc()
@@ -254,6 +266,7 @@ query = """
 )"""
 replace = "false"
 replace_node = "conjunction_expression"
+is_seed_rule = false
 
 # Before :
 #  abc() && false
@@ -272,6 +285,7 @@ query = """
 """
 replace = "false"
 replace_node = "conjunction_expression"
+is_seed_rule = false
 
 # Before :
 #  abc() || true
@@ -289,6 +303,7 @@ query = """
 )"""
 replace = "@lhs"
 replace_node = "disjunction_expression"
+is_seed_rule = false
 
 # Before :
 #  true || abc()
@@ -307,6 +322,7 @@ query = """
 """
 replace = "true"
 replace_node = "disjunction_expression"
+is_seed_rule = false
 
 # Before: 
 #  abc() || false
@@ -324,6 +340,7 @@ query = """
 )"""
 replace = "@lhs"
 replace_node = "disjunction_expression"
+is_seed_rule = false
 
 # Before: 
 #  false || abc()
@@ -341,6 +358,7 @@ query = """
 )"""
 replace = "@rhs"
 replace_node = "disjunction_expression"
+is_seed_rule = false
 
 # Before :
 #  {
@@ -368,6 +386,7 @@ query = """
 )"""
 replace = ""
 replace_node = "post"
+is_seed_rule = false
 
 [[rules]]
 name = "delete_empty_enum_declaration"
@@ -376,6 +395,7 @@ query = """
     (enum_class_body)) @enum_declaration"""
 replace = ""
 replace_node = "enum_declaration"
+is_seed_rule = false
 [[rules.constraints]]
 matcher = """(class_declaration (_) @nm
     (enum_class_body)) @ed"""
@@ -388,6 +408,7 @@ query = """
 (source_file) @source_file"""
 replace = ""
 replace_node = "program"
+is_seed_rule = false
 [[rules.constraints]]
 matcher = "(source_file) @sf"
 queries = [
@@ -433,6 +454,7 @@ query = """(
 replace = ""
 replace_node = "property_declaration"
 holes = ["variable_name"]
+is_seed_rule = false
 
 [[rules]]
 name = "delete_local_var_property_declaration"
@@ -442,6 +464,7 @@ query = """
 """
 replace = ""
 replace_node = "property_declaration"
+is_seed_rule = false
 
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
@@ -470,7 +493,7 @@ query = """
 """
 replace = ""
 replace_node = "property_declaration"
-
+is_seed_rule = false
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
 [[rules.constraints]]
@@ -499,6 +522,7 @@ query = """
 replace = ""
 replace_node = "assignment"
 holes = ["variable_name", "init"]
+is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.constraints]]
@@ -523,6 +547,7 @@ query = """
 replace = ""
 replace_node = "assignment"
 holes = ["variable_name", "init"]
+is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.constraints]]
@@ -547,6 +572,7 @@ query = """
 """
 replace = ""
 replace_node = "assignment"
+is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
 [[rules.constraints]]
 matcher = "(function_declaration) @md"
@@ -601,6 +627,7 @@ query = """
 """
 replace = "@init"
 replace_node = "identifier"
+is_seed_rule = false
 # [[rules.constraints]]
 # There should exist no local variable declaration named `@identifer`
 # matcher = "(function_declaration) @md"
@@ -619,8 +646,9 @@ replace_node = "identifier"
 # X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
-
+is_seed_rule = false
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
+is_seed_rule = false
