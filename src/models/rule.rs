@@ -199,6 +199,8 @@ impl InstantiatedRule {
       .iter()
       .filter_map(|h| substitutions.get(h).map(|s| (h.to_string(), s.to_string())))
       .collect();
+    // Since filter_map (above) discards any element of `rules.holes()` for which there isn't a valid substitution,
+    // Checking that the lengths match is enough to verify all holes have a matching substitution.
     if substitutions_for_holes.len() != rule.holes().len() {
       #[rustfmt::skip]
       panic!("{}", format!( "Could not instantiate the rule {rule:?} with substitutions {substitutions_for_holes:?}").red());
