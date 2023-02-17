@@ -16,7 +16,7 @@ use tree_sitter::Parser;
 use crate::{
   constraint,
   models::{
-    default_configs::{JAVA, SWIFT},
+    default_configs::{JAVA, SWIFT, UNUSED_CODE_PATH},
     language::PiranhaLanguage,
     piranha_arguments::PiranhaArgumentsBuilder,
     rule::InstantiatedRule,
@@ -218,7 +218,7 @@ fn test_satisfies_constraints_positive() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase("/some/test/path".to_string())
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -283,7 +283,7 @@ fn test_satisfies_constraints_negative() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .path_to_codebase("/some/test/path".to_string())
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
