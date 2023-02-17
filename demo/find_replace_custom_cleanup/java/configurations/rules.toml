@@ -28,7 +28,7 @@ name = "add_import_statement"
 query = "(package_declaration (_)@package_name) @package_declaration"
 replace_node = "package_declaration"
 replace = "@package_declaration\nimport java.util.Collections;\n"
-groups = ["Cleanup Rule"]
+is_seed_rule = false
 [[rules.constraints]]
 matcher = "((program) @cu)"
 queries = [
