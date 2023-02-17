@@ -225,44 +225,6 @@ impl PiranhaArguments {
     }
   }
 
-  pub fn merge(&self, other: PiranhaArguments) -> Self {
-    /// Accepts field name (e.g. `language`) and function name (e.g. `default_language`) which returns default value for that field.
-    /// It checks if the value `self.language` is same as value returned by `default_language()`.
-    /// If the value is same it returns the value from `other (e.g. `other.language`) else it returns it from `self`
-    macro_rules! merge {
-      ($field_name:ident, $default_fn:ident) => {
-        if self.$field_name != $default_fn() {
-          self.$field_name.clone()
-        } else {
-          other.$field_name.clone()
-        }
-      };
-    }
-
-    Self {
-      path_to_codebase: merge!(path_to_codebase, default_path_to_codebase),
-      substitutions: merge!(substitutions, default_substitutions),
-      path_to_configurations: merge!(path_to_configurations, default_path_to_configurations),
-      path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
-      language: merge!(language, default_piranha_language),
-      delete_file_if_empty: merge!(delete_file_if_empty, default_delete_file_if_empty),
-      code_snippet: merge!(code_snippet, default_code_snippet),
-      delete_consecutive_new_lines: merge!(
-        delete_consecutive_new_lines,
-        default_delete_consecutive_new_lines
-      ),
-      global_tag_prefix: merge!(global_tag_prefix, default_global_tag_prefix),
-      number_of_ancestors_in_parent_scope: merge!(
-        number_of_ancestors_in_parent_scope,
-        default_number_of_ancestors_in_parent_scope
-      ),
-      cleanup_comments_buffer: merge!(cleanup_comments_buffer, default_cleanup_comments_buffer),
-      cleanup_comments: merge!(cleanup_comments, default_cleanup_comments),
-      dry_run: merge!(dry_run, default_dry_run),
-      rule_graph: merge!(rule_graph, default_rule_graph),
-    }
-  }
-
   pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
     self.substitutions.iter().cloned().collect()
   }
@@ -279,12 +241,6 @@ impl PiranhaArgumentsBuilder {
     };
 
     let mut _arg = self.create().unwrap();
-
-    // Read from `piranha_arguments.toml` if present
-    // Until we stop supporting the deprecated `run_piranha_cli` API.
-    if let Some(toml_args) = get_piranha_arguments_from_toml(_arg.path_to_configurations()) {
-      _arg = _arg.merge(toml_args);
-    }
 
     let rule_graph = get_rule_graph(&_arg);
     _arg = PiranhaArguments { rule_graph, .._arg };

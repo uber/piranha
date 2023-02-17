@@ -112,7 +112,7 @@ Polyglot Piranha can be used as a python library or as a command line tool.
 
 `pip install polyglot-piranha`
 
-Currently, we support one simple API (`run_piranha_cli`) that wraps the command line usage of Polyglot Piranha. We believe this makes it easy to incorporate Piranha in *"pipelining"*.
+Currently, we support one simple API (`execute_piranha`) that wraps the command line usage of Polyglot Piranha. We believe this makes it easy to incorporate Piranha in *"pipelining"*.
 
 <h4> <code>execute_piranha</code></h4>
 

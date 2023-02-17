@@ -29,39 +29,14 @@ use itertools::Itertools;
 use log::{debug, info};
 use tree_sitter::Parser;
 
-use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, rule_store::RuleStore};
+use crate::models::rule_store::RuleStore;
 
 use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
 use tempdir::TempDir;
 
-/// Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}.
-///
-/// # Arguments:
-/// * path_to_codebase: Path to the root of the code base that Piranha will update
-/// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
-/// * dry_run: determines if Piranha should actually update the code.
-///
-/// Returns Piranha Output Summary for each file touched or analyzed by Piranha.
-/// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
-#[pyfunction]
-#[deprecated(since = "0.2.1", note = "please use `execute_piranha` instead")]
-pub fn run_piranha_cli(
-  path_to_codebase: String, path_to_configurations: String, dry_run: bool,
-) -> Vec<PiranhaOutputSummary> {
-  let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(path_to_codebase)
-    .path_to_configurations(path_to_configurations)
-    .dry_run(dry_run)
-    .build();
-
-  debug!("{:?}", args);
-  execute_piranha(&args)
-}
-
 #[pymodule]
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   pyo3_log::init();
-  m.add_function(wrap_pyfunction!(run_piranha_cli, m)?)?;
   m.add_function(wrap_pyfunction!(execute_piranha, m)?)?;
   m.add_class::<PiranhaArguments>()?;
   m.add_class::<PiranhaOutputSummary>()?;
