@@ -9,6 +9,9 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
+
+
 def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:
     """
     Executes piranha for the given `piranha_arguments` and returns `PiranhaOutputSummary` for each file analyzed by Piranha
@@ -48,32 +51,42 @@ class PiranhaArguments:
 
     def __init__(
         self,
-        path_to_codebase: str,
-        path_to_configuration: str,
         language: str,
         substitutions: dict,
-        **kwargs
+        path_to_configurations: Optional[str],
+        rule_graph: Optional[RuleGraph]= None,
+        path_to_codebase: Optional[str] = None,
+        code_snippet: Optional[str] = None,
+        dry_run: Optional[bool] = None,
+        cleanup_comments: Optional[bool] = None,
+        cleanup_comments_buffer: Optional[int] = None,
+        number_of_ancestors_in_parent_scope: Optional[int] = None,
+        delete_file_if_empty : Optional[bool] = None,
+        delete_consecutive_new_lines : Optional[bool] = None,
+        path_to_output: Optional[str] = None
+ 
     ):
         """
         Constructs `PiranhaArguments`
 
         Parameters
         ------------
-            path_to_codebase: str
-                Path to source code folder or file
-            path_to_configurations: str
-                 Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml` (optional)
             language: str
                 the target language
             substitutions: dict
                  Substitutions to instantiate the initial set of rules
             keyword arguments: _
+                 path_to_configurations (str) : Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml`
+                 rule_graph (RuleGraph) : The rule graph constructed via RuleGraph DSL
+                 path_to_codebase (str) : Path to source code folder or file
+                 code_snippet (str) : The input code snippet to transform
                  dry_run (bool) : Disables in-place rewriting of code
                  cleanup_comments (bool) : Enables deletion of associated comments
                  cleanup_comments_buffer (int): The number of lines to consider for cleaning up the comments
                  number_of_ancestors_in_parent_scope (int): The number of ancestors considered when PARENT rules
                  delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  delete_consecutive_new_lines (bool) : Replaces consecutive \ns  with a \n
+                 path_to_output (str): Path to the output json file
         """
         ...
 
@@ -155,3 +168,138 @@ class Range:
 class Point:
     row: int
     column: int
+
+class Constraint:
+    """ A class to capture Constraints of a Piranha Rule
+    """
+    matcher: TSQuery
+    "Scope in which the constraint query has to be applied"
+    queries: list[TSQuery]
+    "The Tree-sitter queries that need to be applied in the `matcher` scope"
+
+    def __init__(
+        self,
+        matcher: str,
+        queries: list[str] = []
+    ):
+        """
+        Constructs `Constraint`
+
+        Parameters
+        ------------
+            matcher: str
+                Scope in which the constraint query has to be applied
+            queries: list[str]
+                 The Tree-sitter queries that need to be applied in the `matcher` scope
+        """
+        ...
+
+class Rule:
+    """ A class to capture Piranha Rule
+    """
+    name: str
+    "Name of the rule"
+    query: TSQuery
+    "Tree-sitter query as string"
+    replace_node: str
+    "The tag corresponding to the node to be replaced"
+    replace: str
+    "Replacement pattern"
+    groups: set[str]
+    "Group(s) to which the rule belongs"
+    holes: set[str]
+    "Holes that need to be filled, in order to instantiate a rule"
+    constraints: set[Constraint]
+    "Additional constraints for matching the rule"
+
+    def __init__(
+        self,
+        name: str,
+        query: str,
+        replace_node: Optional[str] = None,
+        replace: Optional[str] = None,
+        groups: set[str] = set(),
+        holes: set[str] = set(),
+        constraints: set[Constraint] = set(),
+    ):
+        """
+        Constructs `Rule`
+
+        Parameters
+        ------------
+            name: str
+                Name of the rule
+            query: str
+                Tree-sitter query as string
+            replace_node: str
+                The tag corresponding to the node to be replaced
+            replace: str
+                Replacement pattern
+            groups: set[str]
+                Group(s) to which the rule belongs
+            holes: set[str]
+                Holes that need to be filled, in order to instantiate a rule
+            constraints: set[Constraint]
+                Additional constraints for matching the rule
+        """
+        ...
+
+class OutgoingEdges:
+    frm: str
+    "The source rule or group of rules"
+    to: list[str]
+    "The target edges or groups of edges"
+    scope: str
+    "The scope label for the edge"
+
+    def __init__(
+        self,
+        frm: str,
+        to: list[str],
+        scope: str,
+    ):
+        """
+        Constructs `OutgoingEdge`
+
+        Parameters
+        ------------
+            frm: str
+                The source rule or group of rules
+            to: list[str]
+                The target edges or groups of edges
+            scope: str
+                The scope label for the edge
+        """
+        ...
+
+class RuleGraph:
+    rules: list[Rule]
+    "The rules in the graph"
+    edges: list[OutgoingEdges]
+    "The edges in the graph"
+    graph: dict
+    "The graph itself (as an adjacency list)"
+
+    def __init__(
+        self,
+        rules: list[Rule],
+        edges: list[OutgoingEdges],
+    ):
+        """
+        Constructs `OutgoingEdge`
+
+        Parameters
+        ------------
+            rules: list[Rule]
+                The rules in the graph
+            edges: list[OutgoingEdges]
+                The edges in the graph
+        """
+        ...
+
+class TSQuery:
+    "Captures a Tree sitter query"
+    def query(self):
+        """The query
+        """
+        ...

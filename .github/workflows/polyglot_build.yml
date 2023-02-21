@@ -32,7 +32,7 @@ jobs:
           cargo install taplo-cli --locked
           pre-commit run --all-files
       - name: Run unit and integration tests
-        run: cargo test
+        run: cargo build && cargo test
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:

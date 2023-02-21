@@ -11,9 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use derive_builder::Builder;
 use getset::Getters;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
-
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `edges.toml` file
 pub(crate) struct Edges {
@@ -21,12 +22,44 @@ pub(crate) struct Edges {
 }
 
 // Captures an entry from the `edges.toml` file.
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
-pub(crate) struct OutgoingEdges {
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
+#[pyclass]
+pub struct OutgoingEdges {
+  /// The source rule or group of rules
   #[get = "pub with_prefix"]
-  from: String,
+  #[serde(alias = "from")]
+  #[pyo3(get)]
+  frm: String,
+  /// The target edges or groups of edges
   #[get = "pub with_prefix"]
+  #[pyo3(get)]
   to: Vec<String>,
+  /// The scope label for the edge
   #[get = "pub with_prefix"]
+  #[pyo3(get)]
   scope: String,
+}
+
+#[macro_export]
+macro_rules! edges {
+  (from = $from: expr, to = [$($to: expr)*], scope = $scope: expr) => {
+    $crate::models::outgoing_edges::OutgoingEdgesBuilder::default()
+    .frm($from.to_string())
+    .to(vec![$($to.to_string())*])
+    .scope($scope.to_string())
+    .build().unwrap()
+  };
+}
+
+#[pymethods]
+impl OutgoingEdges {
+  #[new]
+  fn py_new(from: String, to: Vec<String>, scope: String) -> Self {
+    OutgoingEdgesBuilder::default()
+      .frm(from)
+      .to(to)
+      .scope(scope)
+      .build()
+      .unwrap()
+  }
 }

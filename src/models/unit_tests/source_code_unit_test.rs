@@ -10,19 +10,19 @@ Copyright (c) 2022 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use std::collections::HashSet;
 
 use tree_sitter::Parser;
 
 use crate::{
+  constraint,
   models::{
-    constraint::Constraint,
-    default_configs::{JAVA, SWIFT},
+    default_configs::{JAVA, SWIFT, UNUSED_CODE_PATH},
     language::PiranhaLanguage,
     piranha_arguments::PiranhaArgumentsBuilder,
-    rule::{InstantiatedRule, Rule},
+    rule::InstantiatedRule,
     rule_store::RuleStore,
   },
+  piranha_rule,
   utilities::eq_without_whitespace,
 };
 use {
@@ -40,7 +40,8 @@ impl SourceCodeUnit {
       &HashMap::new(),
       PathBuf::new().as_path(),
       &PiranhaArgumentsBuilder::default()
-        .language(language_name)
+        .path_to_codebase("some/test/path/".to_string())
+        .language(PiranhaLanguage::from(language_name.as_str()))
         .build(),
     )
   }
@@ -180,30 +181,28 @@ fn test_apply_edit_comma_handling_via_regex() {
 
 #[test]
 fn test_satisfies_constraints_positive() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
       ((local_variable_declaration
                       declarator: (variable_declarator
                                           name: (_) @variable_name
                                           value: [(true) (false)] @init)) @variable_declaration)
       )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
-      String::from("(method_declaration) @md"),
-      vec![String::from(
-        "(
-         ((assignment_expression
-                         left: (_) @a.lhs
-                         right: (_) @a.rhs) @assignment)
-         (#eq? @a.lhs \"@variable_name\")
-         (#not-eq? @a.rhs \"@init\")
-       )",
-      )],
-    )]),
-  );
+    replace_node= "variable_declaration",
+    replace= "",
+    constraints= [constraint!{
+      matcher= "(method_declaration) @md",
+      queries= ["(
+        ((assignment_expression
+                        left: (_) @a.lhs
+                        right: (_) @a.rhs) @assignment)
+        (#eq? @a.lhs \"@variable_name\")
+        (#not-eq? @a.rhs \"@init\")
+      )",]
+    }]
+
+  };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){
@@ -219,7 +218,8 @@ fn test_satisfies_constraints_positive() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .language(java.name().to_string())
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
@@ -247,30 +247,27 @@ fn test_satisfies_constraints_positive() {
 
 #[test]
 fn test_satisfies_constraints_negative() {
-  let _rule = Rule::new(
-    "test",
-    "(
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
       ((local_variable_declaration
-                      declarator: (variable_declarator
-                                          name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
+          declarator: (variable_declarator
+          name: (_) @variable_name
+          value: [(true) (false)] @init)) @variable_declaration)
       )",
-    "variable_declaration",
-    "",
-    HashSet::new(),
-    HashSet::from([Constraint::new(
-      String::from("(method_declaration) @md"),
-      vec![String::from(
-        "(
-         ((assignment_expression
-                         left: (_) @a.lhs
-                         right: (_) @a.rhs) @assignment)
-         (#eq? @a.lhs \"@variable_name\")
-         (#not-eq? @a.rhs \"@init\")
-       )",
-      )],
-    )]),
-  );
+    replace_node= "variable_declaration",
+    replace= "",
+    constraints= [constraint!{
+      matcher= "(method_declaration) @md",
+      queries= ["(
+        ((assignment_expression
+                        left: (_) @a.lhs
+                        right: (_) @a.rhs) @assignment)
+        (#eq? @a.lhs \"@variable_name\")
+        (#not-eq? @a.rhs \"@init\")
+      )",]
+    }]
+  };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
       pub void foobar(){
@@ -286,7 +283,8 @@ fn test_satisfies_constraints_negative() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .language(java.name().to_string())
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,

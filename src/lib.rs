@@ -13,8 +13,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
-  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
-  piranha_output::PiranhaOutputSummary, source_code_unit::SourceCodeUnit,
+  constraint::Constraint, edit::Edit, matches::Match, outgoing_edges::OutgoingEdges,
+  piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary, rule::Rule,
+  rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
 
 pub mod models;
@@ -22,7 +23,7 @@ pub mod models;
 mod tests;
 pub mod utilities;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 use itertools::Itertools;
 use log::{debug, info};
@@ -31,6 +32,7 @@ use tree_sitter::Parser;
 use crate::models::{piranha_arguments::PiranhaArgumentsBuilder, rule_store::RuleStore};
 
 use pyo3::prelude::{pyfunction, pymodule, wrap_pyfunction, PyModule, PyResult, Python};
+use tempdir::TempDir;
 
 /// Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}.
 ///
@@ -65,6 +67,10 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_class::<PiranhaOutputSummary>()?;
   m.add_class::<Edit>()?;
   m.add_class::<Match>()?;
+  m.add_class::<RuleGraph>()?;
+  m.add_class::<Rule>()?;
+  m.add_class::<OutgoingEdges>()?;
+  m.add_class::<Constraint>()?;
   Ok(())
 }
 
@@ -117,10 +123,10 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
 struct Piranha {
   // Maintains Piranha's state
   rule_store: RuleStore,
-  // Path to source code folder
-  path_to_codebase: String,
   // Files updated by Piranha.
   relevant_files: HashMap<PathBuf, SourceCodeUnit>,
+  // Piranha Arguments
+  piranha_arguments: PiranhaArguments,
 }
 
 impl Piranha {
@@ -137,12 +143,22 @@ impl Piranha {
   fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
     let mut parser = Parser::new();
-    let piranha_args = self.rule_store.piranha_args().clone();
+    let piranha_args = &self.piranha_arguments;
     parser
-      .set_language(*piranha_args.piranha_language().language())
+      .set_language(*piranha_args.language().language())
       .expect("Could not set the language for the parser.");
 
-    let mut current_global_substitutions = piranha_args.input_substitutions().clone();
+    let mut path_to_codebase = self.piranha_arguments.path_to_codebase().to_string();
+
+    let temp_dir = if !self.piranha_arguments.code_snippet().is_empty() {
+      let td = self.write_code_snippet_to_temp();
+      path_to_codebase = td.path().to_str().unwrap_or_default().to_string();
+      Some(td)
+    } else {
+      None
+    };
+
+    let mut current_global_substitutions = piranha_args.input_substitutions();
     // Keep looping until new `global` rules are added.
     loop {
       let current_rules = self.rule_store.global_rules().clone();
@@ -150,7 +166,7 @@ impl Piranha {
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
 
-      for (path, content) in self.rule_store.get_relevant_files(&self.path_to_codebase) {
+      for (path, content) in self.rule_store.get_relevant_files(&path_to_codebase) {
         // Get the `SourceCodeUnit` for the file `path` from the cache `relevant_files`.
         // In case of miss, lazily insert a new `SourceCodeUnit`.
         let source_code_unit = self
@@ -162,7 +178,7 @@ impl Piranha {
               content,
               &current_global_substitutions,
               path.as_path(),
-              &piranha_args,
+              piranha_args,
             )
           });
 
@@ -183,14 +199,36 @@ impl Piranha {
         break;
       }
     }
+    // Delete the temp dir inside which the input code snippet was copied
+    if let Some(t) = temp_dir {
+      _ = t.close();
+    }
   }
+
   /// Instantiate Flag-cleaner
   fn new(piranha_arguments: &PiranhaArguments) -> Self {
     let graph_rule_store = RuleStore::new(piranha_arguments);
     Self {
       rule_store: graph_rule_store,
-      path_to_codebase: String::from(piranha_arguments.path_to_codebase()),
       relevant_files: HashMap::new(),
+      piranha_arguments: piranha_arguments.clone(),
     }
+  }
+
+  /// Write the input code snippet into a temp directory.
+  /// Returns: A temporary directory containing the created input code snippet as a file
+  /// This function panics if it finds that neither `code_snippet` nor `path_to_configuration` are provided  
+  fn write_code_snippet_to_temp(&self) -> TempDir {
+    let temp_dir = TempDir::new_in(".", "tmp").unwrap();
+    let temp_dir_path = temp_dir.path();
+    let sample_file = temp_dir_path.join(format!(
+      "sample.{}",
+      self.piranha_arguments.language().name()
+    ));
+    let mut file = File::create(sample_file).unwrap();
+    file
+      .write_all(self.piranha_arguments.code_snippet().as_bytes())
+      .unwrap();
+    temp_dir
   }
 }

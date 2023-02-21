@@ -11,9 +11,13 @@
  limitations under the License.
 */
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use super::language::PiranhaLanguage;
+use super::{
+  constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
+  rule_graph::RuleGraph,
+};
+use crate::utilities::tree_sitter_utilities::TSQuery;
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -23,6 +27,10 @@ pub const SWIFT: &str = "swift";
 pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 
+#[cfg(test)]
+//FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
+pub(crate) const UNUSED_CODE_PATH: &str = "/dev/null";
+
 pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
 }
@@ -31,7 +39,7 @@ pub fn default_language() -> String {
   JAVA.to_string()
 }
 
-pub fn default_substitutions() -> Vec<Vec<String>> {
+pub fn default_substitutions() -> Vec<(String, String)> {
   vec![]
 }
 
@@ -59,12 +67,12 @@ pub fn default_path_to_codebase() -> String {
   String::new()
 }
 
-pub fn default_name_of_piranha_argument_toml() -> String {
-  "piranha_arguments.toml".to_string()
+pub fn default_code_snippet() -> String {
+  String::new()
 }
 
-pub fn default_input_substitutions() -> HashMap<String, String> {
-  HashMap::new()
+pub fn default_name_of_piranha_argument_toml() -> String {
+  "piranha_arguments.toml".to_string()
 }
 
 pub fn default_path_to_configurations() -> String {
@@ -83,8 +91,8 @@ pub fn default_delete_consecutive_new_lines() -> bool {
   false
 }
 
-pub fn default_query() -> String {
-  String::new()
+pub(crate) fn default_query() -> TSQuery {
+  TSQuery::new(String::new())
 }
 
 pub fn default_replace_node() -> String {
@@ -95,6 +103,42 @@ pub fn default_replace() -> String {
   String::new()
 }
 
-pub fn default_rule_graph() -> HashMap<String, Vec<(String, String)>> {
+pub fn default_rule_graph_map() -> HashMap<String, Vec<(String, String)>> {
   HashMap::new()
+}
+
+pub(crate) fn default_holes() -> HashSet<String> {
+  HashSet::new()
+}
+
+pub(crate) fn default_groups() -> HashSet<String> {
+  HashSet::new()
+}
+
+pub(crate) fn default_constraints() -> HashSet<Constraint> {
+  HashSet::new()
+}
+
+pub(crate) fn default_rules() -> Vec<Rule> {
+  Vec::new()
+}
+
+pub(crate) fn default_edges() -> Vec<OutgoingEdges> {
+  vec![]
+}
+
+pub(crate) fn default_queries() -> Vec<TSQuery> {
+  Vec::new()
+}
+
+pub(crate) fn default_matcher() -> TSQuery {
+  TSQuery::new(String::new())
+}
+
+pub(crate) fn default_rule_name() -> String {
+  String::new()
+}
+
+pub(crate) fn default_rule_graph() -> RuleGraph {
+  RuleGraph::default()
 }

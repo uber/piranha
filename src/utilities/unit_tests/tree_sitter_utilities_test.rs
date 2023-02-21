@@ -14,9 +14,12 @@ use std::collections::HashMap;
 
 use tree_sitter::Query;
 
-use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
+use crate::{
+  models::{default_configs::JAVA, language::PiranhaLanguage},
+  utilities::Instantiate,
+};
 
-use super::{substitute_tags, PiranhaHelpers};
+use super::{PiranhaHelpers, TSQuery};
 
 #[test]
 fn test_get_all_matches_for_query_positive() {
@@ -121,13 +124,15 @@ fn test_get_all_matches_for_query_negative() {
 }
 
 #[test]
-fn test_substitute_tags() {
+fn test_instantiate() {
   let substitutions = HashMap::from([
     ("variable_name".to_string(), "isFlagTreated".to_string()),
     ("init".to_string(), "true".to_string()),
   ]);
   assert_eq!(
-    substitute_tags("@variable_name foo bar @init", &substitutions, false),
+    TSQuery("@variable_name foo bar @init".to_string())
+      .instantiate(&substitutions)
+      .0,
     "isFlagTreated foo bar true"
   )
 }
