@@ -12,9 +12,11 @@
  * limitations under the License.
  */
 package com.uber.piranha;
+import java.util.ArrayList;
 
 class TestSubClass extends TestClass {
 
+  ArrayList<String> someArrayList;
   @Override
   void testMethod() {
     System.out.println("Hi World!");
