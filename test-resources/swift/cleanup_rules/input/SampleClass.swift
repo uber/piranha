@@ -93,4 +93,94 @@ class SampleClass {
             f5()
         }
     }
+    
+    func checkIfFalse() {
+        //test comments to be cleaned
+        if !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        }
+
+        if !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        } else {
+            f2()
+        }
+
+        if !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+            //test comments to be cleaned
+        } else if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else if !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        }
+    }
+
+    func checkIfLetFalse() {
+        if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        }
+
+        if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        } else {
+            f2()
+        }
+
+        if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        } else if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        }
+    }
 }
