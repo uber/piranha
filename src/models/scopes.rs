@@ -13,9 +13,14 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use derive_builder::Builder;
 use getset::Getters;
+use log::trace;
 use serde_derive::Deserialize;
 
-use crate::utilities::tree_sitter_utilities::TSQuery;
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
+use crate::utilities::tree_sitter_utilities::{get_match_for_query, TSQuery};
+use crate::utilities::Instantiate;
+
+use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct ScopeConfig {
@@ -38,6 +43,47 @@ pub(crate) struct ScopeQueryGenerator {
   matcher: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
   generator: TSQuery, // a tree-sitter query matching the exact AST node
+}
+
+// Implements instance methods related to getting the scope
+impl SourceCodeUnit {
+  /// Generate a tree-sitter based query representing the scope of the previous edit.
+  /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
+  pub(crate) fn get_scope_query(
+    &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
+  ) -> TSQuery {
+    let root_node = self.root_node();
+    let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
+    // Get the scope matchers for `scope_level` from the `scope_config.toml`.
+    let scope_matchers = rules_store.get_scope_query_generators(scope_level);
+
+    // Match the `scope_matcher.matcher` to the parent
+    loop {
+      trace!(
+        "Getting scope {} for node kind {}",
+        scope_level,
+        changed_node.kind()
+      );
+      for m in &scope_matchers {
+        if let Some(p_match) = get_match_for_query(
+          &changed_node,
+          self.code(),
+          rules_store.query(m.matcher()),
+          false,
+        ) {
+          // Generate the scope query for the specific context by substituting the
+          // the tags with code snippets appropriately in the `generator` query.
+          return m.generator().instantiate(p_match.matches());
+        }
+      }
+      if let Some(parent) = changed_node.parent() {
+        changed_node = parent;
+      } else {
+        break;
+      }
+    }
+    panic!("Could not create scope query for {scope_level:?}");
+  }
 }
 
 #[cfg(test)]
