@@ -42,7 +42,7 @@ use serde_derive::Deserialize;
 use tree_sitter::{InputEdit, Range};
 use tree_sitter_traversal::{traverse, Order};
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Builder)]
