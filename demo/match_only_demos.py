@@ -10,10 +10,10 @@ match_only_dir = join(dirname(__file__), "match_only")
 def java_demo():
     info("Running the Match-only demo for Java")
     args = PiranhaArguments(
-        join(match_only_dir, "java"),
-        join(match_only_dir, "java/configurations"),
         "java",
         {},
+        path_to_codebase=join(match_only_dir, "java"),
+        path_to_configurations=join(match_only_dir, "java/configurations"),
     )
     output_summary_java = execute_piranha(args)
 
@@ -29,8 +29,10 @@ def go_demo():
     info("Running the Match-only demo for go")
 
     args = PiranhaArguments(
-        join(match_only_dir, "go"), join(
-            match_only_dir, "go/configurations"), "go", {}
+        "go",
+        {},
+        path_to_codebase=join(match_only_dir, "go"),
+        path_to_configurations=join(match_only_dir, "go/configurations"),
     )
     output_summary_go = execute_piranha(args)
 
@@ -45,8 +47,10 @@ def ts_demo():
     info("Running the Match-only demo for TypeScript")
 
     args = PiranhaArguments(
-        join(match_only_dir, "ts"), join(
-            match_only_dir, "ts/configurations"), "ts", {}
+        "ts",
+        {},
+        path_to_codebase=join(match_only_dir, "ts"),
+        path_to_configurations=join(match_only_dir, "ts/configurations"),
     )
     output_summary_typescript = execute_piranha(args)
 
@@ -61,10 +65,10 @@ def ts_demo():
 def tsx_demo():
     info("Running the Match-only demo for TypeScript with React")
     args = PiranhaArguments(
-        join(match_only_dir, "tsx"),
-        join(match_only_dir, "tsx/configurations"),
         "tsx",
         {},
+        path_to_codebase=join(match_only_dir, "tsx"),
+        path_to_configurations=join(match_only_dir, "tsx/configurations"),
     )
     output_summary_typescript = execute_piranha(args)
 

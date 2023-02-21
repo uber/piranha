@@ -17,14 +17,14 @@ def run_java_ff_demo():
     old_mtime = getmtime(modified_file_path)
 
     args = PiranhaArguments(
-        directory_path,
-        configuration_path,
         "java",
         {
             "stale_flag_name": "SAMPLE_STALE_FLAG",
             "treated": "true",
             "treated_complement": "false",
         },
+        path_to_codebase=directory_path,
+        path_to_configurations=configuration_path,
     )
     output_summary_java = execute_piranha(args)
 
@@ -50,14 +50,14 @@ def run_kt_ff_demo():
     old_mtime = getmtime(modified_file_path)
 
     args = PiranhaArguments(
-        directory_path,
-        configuration_path,
         "kt",
         {
             "stale_flag_name": "SAMPLE_STALE_FLAG",
             "treated": "true",
             "treated_complement": "false",
         },
+        path_to_codebase=directory_path,
+        path_to_configurations=configuration_path,
     )
 
     output_summary_kt = execute_piranha(args)
