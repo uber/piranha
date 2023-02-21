@@ -13,135 +13,123 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 //! Defines the traits containing with utility functions that interface with tree-sitter.
 
+use super::eq_without_whitespace;
 use crate::{
   models::{edit::Edit, matches::Match},
   utilities::MapOfVec,
 };
 use itertools::Itertools;
 use log::debug;
+use pyo3::prelude::pyclass;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Range};
 
-use super::eq_without_whitespace;
-
-use pyo3::prelude::pyclass;
-
-#[rustfmt::skip]
-pub(crate) trait PiranhaHelpers {
-
-     /// Applies the query upon `self`, and gets the first match
-    /// # Arguments
-    /// * `source_code` - the corresponding source code string for the node.
-    /// * `query` - the query to be applied
-    ///
-    /// # Returns
-    /// List of matches (list of captures), grouped by the outermost tag of the query
-    fn get_query_capture_groups(&self, source_code: &str, query: &Query) -> HashMap<Range, Vec<Vec<QueryCapture>>> ;
-
-    /// Applies the query upon `self`, and gets the first match
-    /// # Arguments
-    /// * `source_code` - the corresponding source code string for the node.
-    /// * `query` - the query to be applied
-    /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
-    ///
-    /// # Returns
-    /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
-    fn get_all_matches_for_query(&self, source_code: String, query: &Query, recursive: bool, replace_node_tag: Option<String>) -> Vec<Match> ;
-
-    /// Applies the query upon `self`, and gets all the matches
-    /// # Arguments
-    /// * `source_code` - the corresponding source code string for the node.
-    /// * `query` - the query to be applied
-    /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
-    ///
-    /// # Returns
-    /// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
-    /// By default it returns the range of the outermost node for each query match.
-    /// If `replace_node` is provided in the rule, it returns the range of the node corresponding to that tag.
-    fn get_match_for_query(&self, source_code: &str, query: &Query, recursive: bool) -> Option<Match>;
+/// Applies the query upon the given node, and gets all the matches
+/// # Arguments
+/// * `node` - the root node to apply the query upon
+/// * `source_code` - the corresponding source code string for the node.
+/// * `query` - the query to be applied
+/// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+///
+/// # Returns
+/// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
+/// By default it returns the range of the outermost node for each query match.
+/// If `replace_node` is provided in the rule, it returns the range of the node corresponding to that tag.
+pub(crate) fn get_match_for_query(
+  node: &Node, source_code: &str, query: &Query, recursive: bool,
+) -> Option<Match> {
+  if let Some(m) =
+    get_all_matches_for_query(node, source_code.to_string(), query, recursive, None).first()
+  {
+    return Some(m.clone());
+  }
+  None
 }
 
-impl PiranhaHelpers for Node<'_> {
-  fn get_match_for_query(
-    &self, source_code: &str, query: &Query, recursive: bool,
-  ) -> Option<Match> {
-    if let Some(m) = self
-      .get_all_matches_for_query(source_code.to_string(), query, recursive, None)
-      .first()
-    {
-      return Some(m.clone());
+/// Applies the query upon the given `node`, and gets the first match
+/// # Arguments
+/// * `node` - the root node to apply the query upon
+/// * `source_code` - the corresponding source code string for the node.
+/// * `query` - the query to be applied
+/// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+///
+/// # Returns
+/// The range of the match in the source code and the corresponding mapping from tags to code snippets.
+pub(crate) fn get_all_matches_for_query(
+  node: &Node, source_code: String, query: &Query, recursive: bool, replace_node: Option<String>,
+) -> Vec<Match> {
+  let query_capture_groups = _get_query_capture_groups(node, &source_code, query);
+  // In the below code, we get the code snippet corresponding to each tag for each QueryMatch.
+  // It could happen that we have multiple occurrences of the same tag (in queries
+  // that use the quantifier operator (*/+)). Therefore for each query match, we have to group (join) the codes snippets
+  // corresponding to the same tag.
+  let mut output = vec![];
+  for (captured_node_range, query_matches) in query_capture_groups {
+    // This ensures that each query pattern in rule.query matches the same node.
+    if query_matches.len() != query.pattern_count() {
+      continue;
     }
-    None
-  }
 
-  fn get_all_matches_for_query(
-    &self, source_code: String, query: &Query, recursive: bool, replace_node: Option<String>,
-  ) -> Vec<Match> {
-    let query_capture_groups = self.get_query_capture_groups(&source_code, query);
-    // In the below code, we get the code snippet corresponding to each tag for each QueryMatch.
-    // It could happen that we have multiple occurrences of the same tag (in queries
-    // that use the quantifier operator (*/+)). Therefore for each query match, we have to group (join) the codes snippets
-    // corresponding to the same tag.
-    let mut output = vec![];
-    for (captured_node_range, query_matches) in query_capture_groups {
-      // This ensures that each query pattern in rule.query matches the same node.
-      if query_matches.len() != query.pattern_count() {
-        continue;
-      }
+    // Check if the range of the self (node), and the range of outermost node captured by the query are equal.
+    let range_matches_self = node.start_byte() == captured_node_range.start_byte
+      && node.end_byte() == captured_node_range.end_byte;
 
-      // Check if the range of the self (node), and the range of outermost node captured by the query are equal.
-      let range_matches_self = self.start_byte() == captured_node_range.start_byte
-        && self.end_byte() == captured_node_range.end_byte;
+    // If `recursive` it allows matches to the subtree of self (Node)
+    // Else it ensure that the query perfectly matches the node (`self`).
+    if recursive || range_matches_self {
+      let mut replace_node_range = captured_node_range;
 
-      // If `recursive` it allows matches to the subtree of self (Node)
-      // Else it ensure that the query perfectly matches the node (`self`).
-      if recursive || range_matches_self {
-        let mut replace_node_range = captured_node_range;
-
-        if let Some(replace_node_name) = &replace_node {
-          if let Some(r) = get_range_for_replace_node(query, &query_matches, replace_node_name) {
-            replace_node_range = r;
-          }
+      if let Some(replace_node_name) = &replace_node {
+        if let Some(r) = get_range_for_replace_node(query, &query_matches, replace_node_name) {
+          replace_node_range = r;
         }
-        let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
-        output.push(Match::new(
-          source_code[replace_node_range.start_byte..replace_node_range.end_byte].to_string(),
-          replace_node_range,
-          code_snippet_by_tag,
-        ));
       }
+      let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
+      output.push(Match::new(
+        source_code[replace_node_range.start_byte..replace_node_range.end_byte].to_string(),
+        replace_node_range,
+        code_snippet_by_tag,
+      ));
     }
-    // This sorts the matches from bottom to top
-    output.sort_by(|a, b| a.range().start_byte.cmp(&b.range().start_byte));
-    output.reverse();
-    output
   }
+  // This sorts the matches from bottom to top
+  output.sort_by(|a, b| a.range().start_byte.cmp(&b.range().start_byte));
+  output.reverse();
+  output
+}
 
-  fn get_query_capture_groups(
-    &self, source_code: &str, query: &Query,
-  ) -> HashMap<Range, Vec<Vec<QueryCapture>>> {
-    let mut cursor = QueryCursor::new();
+/// Applies the query upon given `node`, and gets the first match
+/// # Arguments
+/// * `node` - the root node to apply the query upon
+/// * `source_code` - the corresponding source code string for the node.
+/// * `query` - the query to be applied
+///
+/// # Returns
+/// List of matches (list of captures), grouped by the outermost tag of the query
+fn _get_query_capture_groups<'a>(
+  node: &'a Node<'a>, source_code: &'a str, query: &'a Query,
+) -> HashMap<Range, Vec<Vec<QueryCapture<'a>>>> {
+  let mut cursor = QueryCursor::new();
 
-    // Match the query to the node get list of QueryMatch instances.
-    // a QueryMatch is like a Map<tag, Node>
-    let query_matches = cursor.matches(query, *self, source_code.as_bytes());
+  // Match the query to the node get list of QueryMatch instances.
+  // a QueryMatch is like a Map<tag, Node>
+  let query_matches = cursor.matches(query, *node, source_code.as_bytes());
 
-    // Since a node can be a part of multiple QueryMatch instances,
-    // we group the query match instances based on the range of the outermost node they matched.
-    let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> = HashMap::new();
-    for query_match in query_matches {
-      // The first capture in any query match is it's outermost tag.
-      // Ensure the outermost s-expression for is tree-sitter query is tagged.
-      if let Some(captured_node) = query_match.captures.first() {
-        query_matches_by_node_range.collect(
-          captured_node.node.range(),
-          query_match.captures.iter().cloned().collect_vec(),
-        );
-      }
+  // Since a node can be a part of multiple QueryMatch instances,
+  // we group the query match instances based on the range of the outermost node they matched.
+  let mut query_matches_by_node_range: HashMap<Range, Vec<Vec<QueryCapture>>> = HashMap::new();
+  for query_match in query_matches {
+    // The first capture in any query match is it's outermost tag.
+    // Ensure the outermost s-expression for is tree-sitter query is tagged.
+    if let Some(captured_node) = query_match.captures.first() {
+      query_matches_by_node_range.collect(
+        captured_node.node.range(),
+        query_match.captures.iter().cloned().collect_vec(),
+      );
     }
-    query_matches_by_node_range
   }
+  query_matches_by_node_range
 }
 
 // Join code snippets corresponding to the corresponding to the same tag with `\n`.
