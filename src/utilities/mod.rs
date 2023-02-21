@@ -116,12 +116,7 @@ macro_rules! gen_py_str_methods {
   ($struct_name:ident) => {
     #[pymethods]
     impl $struct_name {
-      fn __repr__(&self) -> String {
-        format!("{:?}", self)
-      }
-      fn __str__(&self) -> String {
-        self.__repr__()
-      }
+      gen_py_str_methods!();
     }
   };
   () => {
