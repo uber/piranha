@@ -13,8 +13,10 @@
  */
 package com.uber.piranha;
 
-class TestSubClass extends TestClass {
+import java.util.ArrayList;
 
+class TestSubClass extends TestClass {
+  ArrayList<String> someArrayList;
   @Override
   void testMethod() {
     System.out.println("Hi World!");
