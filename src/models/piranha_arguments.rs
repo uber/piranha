@@ -38,14 +38,13 @@ use pyo3::{
   types::PyDict,
 };
 use regex::Regex;
-use serde_derive::Deserialize;
 use tree_sitter::{InputEdit, Range};
 use tree_sitter_traversal::{traverse, Order};
 
 use std::{collections::HashMap, fs};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
-#[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Builder)]
+#[derive(Clone, Getters, CopyGetters, Debug, Parser, Builder)]
 #[clap(name = "Piranha")]
 #[pyclass]
 #[builder(build_fn(name = "create"))]
@@ -54,97 +53,83 @@ pub struct PiranhaArguments {
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
   #[clap(short = 'c', long, default_value_t = default_path_to_codebase())]
-  #[serde(skip)]
   path_to_codebase: String,
 
   /// Code snippet to transform
   #[get = "pub"]
   #[builder(default = "default_code_snippet()")]
   #[clap(short = 't', long, default_value_t = default_code_snippet())]
-  #[serde(skip)]
   code_snippet: String,
 
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
   #[clap(short = 's',value_parser = parse_key_val)]
-  #[serde(default = "default_substitutions")]
   substitutions: Vec<(String, String)>,
 
   /// Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
   #[get = "pub"]
   #[builder(default = "default_path_to_configurations()")]
   #[clap(short = 'f', long)]
-  #[serde(skip)]
   path_to_configurations: String,
 
   /// Path to output summary json file
   #[get = "pub"]
   #[builder(default = "default_path_to_output_summaries()")]
   #[clap(short = 'j', long)]
-  #[serde(skip)]
   path_to_output_summary: Option<String>,
   /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
   #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
   .map(|s| s.parse::<PiranhaLanguage>().unwrap()))]
-  #[serde(skip)]
   language: PiranhaLanguage,
 
   /// User option that determines whether an empty file will be deleted
   #[get = "pub"]
   #[builder(default = "default_delete_file_if_empty()")]
   #[clap(long, default_value_t = default_delete_file_if_empty())]
-  #[serde(default = "default_delete_file_if_empty")]
   delete_file_if_empty: bool,
 
   /// Replaces consecutive `\n`s  with a `\n`
   #[get = "pub"]
   #[builder(default = "default_delete_consecutive_new_lines()")]
   #[clap(long, default_value_t = default_delete_consecutive_new_lines())]
-  #[serde(default = "default_delete_consecutive_new_lines")]
   delete_consecutive_new_lines: bool,
 
   /// the prefix used for global tag names
   #[get = "pub"]
   #[builder(default = "default_global_tag_prefix()")]
   #[clap(long, default_value_t = default_global_tag_prefix())]
-  #[serde(default = "default_global_tag_prefix")]
   global_tag_prefix: String,
 
   /// The number of ancestors considered when `PARENT` rules
   #[get = "pub"]
   #[builder(default = "default_number_of_ancestors_in_parent_scope()")]
   #[clap(long, default_value_t = default_number_of_ancestors_in_parent_scope())]
-  #[serde(default = "default_number_of_ancestors_in_parent_scope")]
   number_of_ancestors_in_parent_scope: u8,
   /// The number of lines to consider for cleaning up the comments
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments_buffer()")]
   #[clap(long, default_value_t = default_cleanup_comments_buffer())]
-  #[serde(default = "default_cleanup_comments_buffer")]
   cleanup_comments_buffer: usize,
 
   /// Enables deletion of associated comments
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments()")]
   #[clap(long, default_value_t = default_cleanup_comments())]
-  #[serde(default = "default_cleanup_comments")]
   cleanup_comments: bool,
 
   /// Disables in-place rewriting of code
   #[get = "pub"]
   #[builder(default = "default_dry_run()")]
   #[clap(long, default_value_t = false)]
-  #[serde(default = "default_dry_run")]
   dry_run: bool,
 
   // A graph that captures the flow amongst the rules
   #[get = "pub"]
   #[builder(default = "default_rule_graph()")]
   #[clap(skip)]
-  #[serde(skip)]
   rule_graph: RuleGraph,
 }
 
