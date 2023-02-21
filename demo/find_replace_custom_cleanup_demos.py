@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname, getmtime
-from polyglot_piranha import run_piranha_cli, execute_piranha, PiranhaArguments
+from polyglot_piranha import execute_piranha, PiranhaArguments
 import logging
 from logging import info
 
@@ -54,7 +54,17 @@ def python_demo():
 
     old_mtime = getmtime(file_path)
 
-    _ = run_piranha_cli(directory_path, configuration_path, False)
+    args = PiranhaArguments(
+        "py",
+        {
+            "str_literal": "dependency2",
+            "str_to_replace": "dependency1",
+            "str_replacement": "dependency1_1"
+        },
+        path_to_configurations=configuration_path,
+        path_to_codebase=directory_path,
+    )
+    _ = execute_piranha(args)
 
     new_mtime = getmtime(file_path)
 

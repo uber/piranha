@@ -25,25 +25,6 @@ def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSum
     """
     ...
 
-def run_piranha_cli(path_to_codebase: str, path_to_configurations: str, dry_run: bool) -> list[PiranhaOutputSummary]:
-    """
-    [THIS FUNCTION IS DEPRECATED SINCE 0.2.2]
-    Executes piranha for the provided configuration at {path_to_configurations} upon the given {path_to_codebase}.
-
-    Parameters
-    ------------
-        path_to_codebase (str): Path to the root of the code base that Piranha will update
-        path_to_configurations (str): Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
-        dry_run (bool): determines if Piranha should actually update the code.
-
-    Returns:
-    --------------
-        list[PiranhaOutputSummary]:  Piranha Output Summary for each file touched or analyzed by Piranha. 
-        For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
-    """
-    ...
-
-
 class PiranhaArguments:
     """
     A class to capture Piranha's configurations

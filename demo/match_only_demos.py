@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname
-from polyglot_piranha import run_piranha_cli, execute_piranha, PiranhaArguments
+from polyglot_piranha import execute_piranha, PiranhaArguments
 import logging
 from logging import info
 

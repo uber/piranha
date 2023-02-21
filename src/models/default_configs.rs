@@ -71,10 +71,6 @@ pub fn default_code_snippet() -> String {
   String::new()
 }
 
-pub fn default_name_of_piranha_argument_toml() -> String {
-  "piranha_arguments.toml".to_string()
-}
-
 pub fn default_path_to_configurations() -> String {
   String::new()
 }
