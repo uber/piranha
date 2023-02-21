@@ -28,7 +28,7 @@ fn piranha_argument_invalid_no_codebase_and_snippet() {
 
 #[test]
 #[should_panic(
-  expected = "Invalid Piranha Argument. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both. "
+  expected = "Invalid Piranha arguments. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both."
 )]
 fn piranha_argument_invalid_both_codebase_and_snippet() {
   let _ = piranha_arguments! {
