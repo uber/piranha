@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use super::{
   default_configs::{
-    default_cleanup_comments, default_cleanup_comments_buffer,
+    default_cleanup_comments, default_cleanup_comments_buffer, default_code_snippet,
     default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
     default_global_tag_prefix, default_name_of_piranha_argument_toml,
     default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
@@ -47,9 +47,16 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
-  #[clap(short = 'c', long)]
+  #[clap(short = 'c', long, default_value_t = default_path_to_codebase())]
   #[serde(skip)]
   path_to_codebase: String,
+
+  /// Code snippet to transform
+  #[get = "pub"]
+  #[builder(default = "default_code_snippet()")]
+  #[clap(short = 't', long, default_value_t = default_code_snippet())]
+  #[serde(skip)]
+  code_snippet: String,
 
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
@@ -146,88 +153,51 @@ impl PiranhaArguments {
   /// Constructs PiranhaArguments
   ///
   /// # Arguments:
-  /// * path_to_codebase: Path to the root of the code base that Piranha will update
-  /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
   /// * language: Target language
   /// * substitutions : Substitutions to instantiate the initial set of feature flag rules
-  /// * kw_args: Keyword arguments to capture the following piranha argument options
-  ///   * dry_run (bool) : Disables in-place rewriting of code
-  ///   * cleanup_comments (bool) : Enables deletion of associated comments
-  ///   * cleanup_comments_buffer (usize): The number of lines to consider for cleaning up the comments
-  ///   * number_of_ancestors_in_parent_scope (usize): The number of ancestors considered when `PARENT` rules
-  ///   * delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
-  ///   * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
+  /// * path_to_configuration: Path to the directory that contains - `piranha_arguments.toml`, `rules.toml` and optionally `edges.toml`
+  /// * rule_graph: the graph constructed via the RuleGraph DSL
+  /// * path_to_codebase: Path to the root of the code base that Piranha will update
+  /// * code_snippet: Input code snippet to transform
+  /// * dry_run (bool) : Disables in-place rewriting of code
+  /// * cleanup_comments (bool) : Enables deletion of associated comments
+  /// * cleanup_comments_buffer (usize): The number of lines to consider for cleaning up the comments
+  /// * number_of_ancestors_in_parent_scope (usize): The number of ancestors considered when `PARENT` rules
+  /// * delete_consecutive_new_lines (bool) : Replaces consecutive `\n`s  with a `\n`
+  /// * global_tag_prefix (string): the prefix for global tags
+  /// * delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
+  /// * path_to_output_summary : Path to the file where the Piranha output summary should be persisted
   /// Returns PiranhaArgument.
   #[new]
-  #[args(keyword_arguments = "**")]
   fn py_new(
-    path_to_codebase: String, path_to_configurations: String, language: String,
-    substitutions: &PyDict, rule_graph: Option<RuleGraph>, keyword_arguments: Option<&PyDict>,
+    language: String, substitutions: &PyDict, path_to_configurations: Option<String>,
+    rule_graph: Option<RuleGraph>, path_to_codebase: Option<String>, code_snippet: Option<String>,
+    dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<usize>,
+    number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
+    global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
+    path_to_output_summary: Option<String>,
   ) -> Self {
     let subs = substitutions
       .iter()
       .map(|(k, v)| (k.to_string(), v.to_string()))
       .collect_vec();
 
-    // gets `$arg_name` from `keyword_arguments` else invokes `$default_fn`
-    // It also converts this string value to the appropriate data type.
-    macro_rules! get_keyword_arg {
-      ($arg_name:literal, $default_fn:ident, "bool") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| x.is_true().unwrap())
-      };
-      ($arg_name:literal, $default_fn:ident, "num") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| x.to_string().parse().unwrap())
-      };
-      ($arg_name:literal, $default_fn:ident, "string") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| x.to_string())
-      };
-      ($arg_name:literal, $default_fn:ident, "option") => {
-        keyword_arguments
-          .and_then(|x| x.get_item($arg_name))
-          .map_or_else($default_fn, |x| Some(x.to_string()))
-      };
-    }
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     piranha_arguments! {
-      path_to_codebase = path_to_codebase,
-      path_to_configurations = path_to_configurations,
-      rule_graph= rg,
+      path_to_codebase = path_to_codebase.unwrap_or_else(default_path_to_codebase),
+      path_to_configurations = path_to_configurations.unwrap_or_else(default_path_to_configurations),
+      rule_graph = rg,
+      code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
       language = PiranhaLanguage::from(language.as_str()),
       substitutions = subs,
-      dry_run = get_keyword_arg!("dry_run", default_dry_run, "bool"),
-      cleanup_comments = get_keyword_arg!("cleanup_comments", default_cleanup_comments, "bool"),
-      cleanup_comments_buffer = get_keyword_arg!(
-        "cleanup_comments_buffer",
-        default_cleanup_comments_buffer,
-        "num"
-      ),
-      number_of_ancestors_in_parent_scope = get_keyword_arg!(
-        "number_of_ancestors_in_parent_scope",
-        default_number_of_ancestors_in_parent_scope,
-        "num"
-      ),
-      delete_consecutive_new_lines = get_keyword_arg!(
-        "delete_consecutive_new_lines",
-        default_delete_consecutive_new_lines,
-        "bool"
-      ),
-      global_tag_prefix = get_keyword_arg!("global_tag_prefix", default_global_tag_prefix, "string"),
-      delete_file_if_empty = get_keyword_arg!(
-        "delete_file_if_empty",
-        default_delete_file_if_empty,
-        "bool"
-      ),
-      path_to_output_summary = get_keyword_arg!(
-        "path_to_output_summary",
-        default_path_to_output_summaries,
-        "option"
-      ),
+      dry_run = dry_run.unwrap_or_else(default_dry_run),
+      cleanup_comments = cleanup_comments.unwrap_or_else(default_cleanup_comments),
+      cleanup_comments_buffer = cleanup_comments_buffer.unwrap_or_else(default_cleanup_comments_buffer),
+      number_of_ancestors_in_parent_scope = number_of_ancestors_in_parent_scope.unwrap_or_else(default_number_of_ancestors_in_parent_scope),
+      delete_consecutive_new_lines = delete_consecutive_new_lines.unwrap_or_else(default_delete_consecutive_new_lines),
+      global_tag_prefix = global_tag_prefix.unwrap_or_else(default_global_tag_prefix),
+      delete_file_if_empty = delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty),
+      path_to_output_summary = path_to_output_summary,
     }
   }
 }
@@ -276,6 +246,7 @@ impl PiranhaArguments {
       path_to_output_summary: merge!(path_to_output_summary, default_path_to_output_summaries),
       language: merge!(language, default_piranha_language),
       delete_file_if_empty: merge!(delete_file_if_empty, default_delete_file_if_empty),
+      code_snippet: merge!(code_snippet, default_code_snippet),
       delete_consecutive_new_lines: merge!(
         delete_consecutive_new_lines,
         default_delete_consecutive_new_lines
@@ -303,6 +274,10 @@ impl PiranhaArgumentsBuilder {
   /// * parse `piranha_arguments.toml` (if it exists)
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
+    if let Err(e) = &self._validate() {
+      panic!("{}", e);
+    };
+
     let mut _arg = self.create().unwrap();
 
     // Read from `piranha_arguments.toml` if present
@@ -316,6 +291,26 @@ impl PiranhaArgumentsBuilder {
     #[rustfmt::skip]
     info!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
     _arg
+  }
+
+  fn _validate(&self) -> Result<bool, String> {
+    let _arg = self.create().unwrap();
+    if _arg.code_snippet().is_empty() && _arg.path_to_codebase().is_empty() {
+      return Err(
+        "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`. 
+      Please specify the `path_to_codebase` or `code_snippet` when creating PiranhaArgument !!!"
+          .to_string(),
+      );
+    }
+
+    if !_arg.code_snippet().is_empty() && !_arg.path_to_codebase().is_empty() {
+      return Err(
+        "Invalid Piranha arguments. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both."
+          .to_string(),
+      );
+    }
+
+    Ok(true)
   }
 }
 
@@ -393,3 +388,7 @@ macro_rules! piranha_arguments {
 }
 
 pub use piranha_arguments;
+
+#[cfg(test)]
+#[path = "unit_tests/piranha_arguments_test.rs"]
+mod piranha_arguments_test;

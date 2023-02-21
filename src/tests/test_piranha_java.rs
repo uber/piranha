@@ -22,6 +22,7 @@ use crate::{
     rule_graph::RuleGraphBuilder,
   },
   piranha_rule,
+  utilities::eq_without_whitespace,
 };
 use std::path::PathBuf;
 
@@ -40,9 +41,9 @@ create_rewrite_tests! {
       "treated"=> "false",
       "treated_complement" => "true",
       "namespace" => "some_long_name"
-    },cleanup_comments = true , delete_file_if_empty= false;
+    },cleanup_comments = true , delete_file_if_empty = false;
   test_feature_flag_system_2_treated: "feature_flag_system_2/treated", 4,
-    substitutions= substitutions! {
+    substitutions = substitutions! {
       "stale_flag_name" => "STALE_FLAG",
       "treated"=>  "true",
       "treated_complement" => "false",
@@ -54,13 +55,13 @@ create_rewrite_tests! {
       "treated"=> "false",
       "treated_complement" => "true",
       "namespace" => "some_long_name"
-    }, cleanup_comments = true , delete_file_if_empty= false;
-  test_scenarios_find_and_propagate:  "find_and_propagate", 2, substitutions = substitutions! {"super_interface_name" => "SomeInterface"},  delete_file_if_empty= false;
+    }, cleanup_comments = true , delete_file_if_empty = false;
+  test_scenarios_find_and_propagate:  "find_and_propagate", 2, substitutions = substitutions! {"super_interface_name" => "SomeInterface"},  delete_file_if_empty = false;
   test_non_seed_user_rule:  "non_seed_user_rule", 1, substitutions = substitutions! {"input_type_name" => "ArrayList"};
-  test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
   test_insert_field_and_initializer:  "insert_field_and_initializer", 1;
   test_user_option_delete_if_empty: "user_option_delete_if_empty", 1;
-  test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty=false;
+  test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty =false;
+  test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
 }
 
 create_match_tests! {
@@ -113,6 +114,39 @@ fn test_user_option_delete_consecutive_lines() {
     .join(JAVA)
     .join("user_option_delete_consecutive_lines");
   _helper_user_option_delete_consecutive_lines(_path, true);
+}
+
+#[test]
+fn test_new_line_character_used_in_string_literal_code_snippet() {
+  initialize();
+  let path_to_scenario = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("new_line_character_used_in_string_literal");
+
+  let piranha_arguments = piranha_arguments! {
+    path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
+    language = PiranhaLanguage::from(JAVA),
+    dry_run = true,
+    code_snippet = "package com.uber.piranha;
+    class SomeClass {
+      void someMethod(String s) {
+        assert (s.equals(\"Hello \\n World\"));
+      }
+    }".to_string(),
+  };
+
+  let expected = "package com.uber.piranha;
+  class SomeClass {
+    void someMethod(String s) {
+      assert (\"Hello \\n World\".equals(s));
+    }
+  }";
+  let output_summaries = execute_piranha(&piranha_arguments);
+  assert!(output_summaries.len() == 1);
+  assert!(eq_without_whitespace(
+    output_summaries[0].content(),
+    expected
+  ));
 }
 
 #[test]
@@ -173,7 +207,7 @@ fn test_consecutive_scope_level_rules() {
         }",
       constraints = [
         constraint! {
-          matcher= "(class_declaration ) @c_cd",
+          matcher = "(class_declaration ) @c_cd",
           queries = ["(
             (class_declaration name:(_) @name ) @cd
             (#eq? @name \"InnerFooBar\")
@@ -206,7 +240,7 @@ fn test_consecutive_scope_level_rules() {
   let edges = vec![edges! {
     from = "add_inner_class",
     to = ["add_field_declaration"],
-    scope= "Class"
+    scope = "Class"
   }];
 
   let args = piranha_arguments! {

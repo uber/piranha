@@ -27,6 +27,10 @@ pub const SWIFT: &str = "swift";
 pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 
+#[cfg(test)]
+//FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
+pub(crate) const UNUSED_CODE_PATH: &str = "/dev/null";
+
 pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
 }
@@ -60,6 +64,10 @@ pub fn default_dry_run() -> bool {
 }
 
 pub fn default_path_to_codebase() -> String {
+  String::new()
+}
+
+pub fn default_code_snippet() -> String {
   String::new()
 }
 

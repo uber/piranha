@@ -11,7 +11,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 use crate::{
-  constraint, models::piranha_arguments::PiranhaArgumentsBuilder, utilities::eq_without_whitespace,
+  constraint,
+  models::{default_configs::UNUSED_CODE_PATH, piranha_arguments::PiranhaArgumentsBuilder},
+  utilities::eq_without_whitespace,
 };
 
 use super::InstantiatedRule;
@@ -104,7 +106,9 @@ fn test_get_edit_positive_recursive() {
 
   let mut rule_store = RuleStore::default();
 
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -162,7 +166,9 @@ fn test_get_edit_negative_recursive() {
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let mut rule_store = RuleStore::default();
 
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -201,7 +207,9 @@ fn test_get_edit_for_context_positive() {
         }";
 
   let mut rule_store = RuleStore::default();
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
@@ -240,7 +248,9 @@ fn test_get_edit_for_context_negative() {
 
   let mut rule_store = RuleStore::default();
 
-  let args = PiranhaArgumentsBuilder::default().build();
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .build();
   let mut parser = args.language().parser();
 
   let source_code_unit = SourceCodeUnit::new(
