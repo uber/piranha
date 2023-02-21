@@ -19,7 +19,7 @@ use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
-use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
+use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::{
   constraint::Constraint,
@@ -180,6 +180,8 @@ impl Rule {
 
     rule_builder.build().unwrap()
   }
+
+  gen_py_str_methods!();
 }
 
 pub use piranha_rule;

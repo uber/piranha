@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::{models::edit::Edit, utilities::read_toml};
+use crate::models::edit::Edit;
 
 use super::{
   default_configs::{
@@ -441,9 +441,9 @@ impl SourceCodeUnit {
       return;
     }
     if self.code().as_str().is_empty() && *self.piranha_arguments().delete_file_if_empty() {
-      fs::remove_file(self.path()).expect("Unable to Delete file");
+      std::fs::remove_file(self.path()).expect("Unable to Delete file");
       return;
     }
-    fs::write(self.path(), self.code()).expect("Unable to Write file");
+    std::fs::write(self.path(), self.code()).expect("Unable to Write file");
   }
 }

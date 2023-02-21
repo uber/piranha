@@ -15,6 +15,8 @@ use derive_builder::Builder;
 use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
+
+use crate::utilities::gen_py_str_methods;
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default)]
 // Represents the `edges.toml` file
 pub(crate) struct Edges {
@@ -62,4 +64,6 @@ impl OutgoingEdges {
       .build()
       .unwrap()
   }
+
+  gen_py_str_methods!();
 }

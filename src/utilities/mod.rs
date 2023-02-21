@@ -124,6 +124,14 @@ macro_rules! gen_py_str_methods {
       }
     }
   };
+  () => {
+    fn __repr__(&self) -> String {
+      format!("{:?}", self)
+    }
+    fn __str__(&self) -> String {
+      self.__repr__()
+    }
+  };
 }
 
 pub(crate) use gen_py_str_methods;
