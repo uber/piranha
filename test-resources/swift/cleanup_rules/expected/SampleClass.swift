@@ -143,4 +143,12 @@ class SampleClass {
         
         }
     }
+    
+    func checkGaurdTrue() {
+        f1()
+    }
+
+    func checkGaurdTrueWithAnd() {
+        f1()
+    }
 }

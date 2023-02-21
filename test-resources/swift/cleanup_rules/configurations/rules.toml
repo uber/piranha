@@ -18,7 +18,6 @@
 # After 
 #   true
 #
-
 [[rules]]
 name = "test_rule_replace_true_placeholder"
 query = """(
@@ -71,7 +70,6 @@ groups = ["replace_expression_with_boolean_literal"]
 # After 
 #   false
 #
-
 [[rules]]
 name = "test_rule_replace_false_placeholder"
 query = """(

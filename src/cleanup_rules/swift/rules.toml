@@ -259,6 +259,7 @@ replace_node = "if_else_block"
 replace = "@if_block"
 is_seed_rule = false
 
+#
 # Before 
 #   else if true {
 #     abcd()
@@ -380,6 +381,30 @@ query = """(
 groups = ["if_cleanup"]
 replace_node = "if_else_block"
 replace = "@alternatives"
+is_seed_rule = false
+
+#
+# Before
+#   guard true else {
+#       return f1()
+#   }
+#   f2()
+# After 
+#   f2()
+#
+[[rules]]
+name = "guard_always_true"
+query = """(
+(guard_statement
+    condition: [(boolean_literal) @true  
+            (tuple_expression 
+                value: (boolean_literal) @true)]
+    ) @guard_block
+(#eq? @true "true")
+)"""
+groups = ["guard_cleanup"]
+replace_node = "guard_block"
+replace = ""
 is_seed_rule = false
 
 

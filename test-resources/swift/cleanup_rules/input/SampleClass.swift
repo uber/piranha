@@ -183,4 +183,18 @@ class SampleClass {
             f2()
         }
     }
+    
+    func checkGaurdTrue() {
+        guard TestEnum.stale_flag_one.isEnabled || f1() else {
+            return
+        }
+        f1()
+    }
+    
+    func checkGaurdTrueWithAnd() {
+        guard TestEnum.stale_flag_one.isEnabled && true else {
+            return
+        }
+        f1()
+    }
 }
