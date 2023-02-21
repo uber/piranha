@@ -16,17 +16,17 @@ use std::collections::HashMap;
 use getset::Getters;
 use log::{debug, trace};
 use pyo3::prelude::{pyclass, pymethods};
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
 
 use crate::utilities::{
   gen_py_str_methods,
-  tree_sitter_utilities::{get_node_for_range, PiranhaHelpers},
+  tree_sitter_utilities::{get_all_matches_for_query, get_node_for_range},
 };
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
-#[derive(Serialize, Debug, Clone, Getters)]
+#[derive(Serialize, Debug, Clone, Getters, Deserialize)]
 #[pyclass]
 pub(crate) struct Match {
   // Code snippet that matched
@@ -84,7 +84,9 @@ impl Match {
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
 /// Note `LocalRange` derives serialize.
-#[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(
+  serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize,
+)]
 #[pyclass]
 struct Range {
   #[pyo3(get)]
@@ -100,7 +102,9 @@ gen_py_str_methods!(Range);
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
-#[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(
+  serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize,
+)]
 #[pyclass]
 struct Point {
   #[pyo3(get)]
@@ -123,7 +127,8 @@ impl SourceCodeUnit {
     } else {
       Some(rule.replace_node())
     };
-    let all_query_matches = node.get_all_matches_for_query(
+    let all_query_matches = get_all_matches_for_query(
+      &node,
       self.code().to_string(),
       rule_store.query(&rule.query()),
       recursive,

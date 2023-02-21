@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::path::PathBuf;
 
 use itertools::Itertools;
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::utilities::gen_py_str_methods;
 
@@ -22,7 +22,7 @@ use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
 use pyo3::{prelude::pyclass, pymethods};
 
 /// A class to represent Piranha's output
-#[derive(Serialize, Debug, Clone, Default)]
+#[derive(Serialize, Debug, Clone, Default, Deserialize)]
 #[pyclass]
 pub struct PiranhaOutputSummary {
   /// Path to the file

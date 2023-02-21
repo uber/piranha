@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Uber Technologies, Inc.
+ Copyright (c) 2022 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -14,11 +14,9 @@ Copyright (c) 2022 Uber Technologies, Inc.
 //! Defines the entry-point for Piranha.
 use std::{fs, time::Instant};
 
-use clap::Parser;
 use log::{debug, info};
 use polyglot_piranha::{
-  execute_piranha,
-  models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
+  execute_piranha, models::piranha_arguments::PiranhaArguments,
   models::piranha_output::PiranhaOutputSummary,
 };
 
@@ -28,7 +26,7 @@ fn main() {
 
   info!("Executing Polyglot Piranha");
 
-  let args = PiranhaArguments::parse().merge(PiranhaArgumentsBuilder::default().build());
+  let args = PiranhaArguments::from_cli();
 
   debug!("Piranha Arguments are \n{:#?}", args);
   let piranha_output_summaries = execute_piranha(&args);

@@ -16,12 +16,11 @@ use getset::Getters;
 use log::trace;
 use serde_derive::Deserialize;
 
-use crate::utilities::tree_sitter_utilities::{
-  get_node_for_range, substitute_tags, PiranhaHelpers,
-};
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
+use crate::utilities::tree_sitter_utilities::{get_match_for_query, TSQuery};
+use crate::utilities::Instantiate;
 
 use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
-
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct ScopeConfig {
@@ -41,9 +40,9 @@ pub(crate) struct ScopeGenerator {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
 pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
-  matcher: String, // a tree-sitter query matching some enclosing AST pattern (like method or class)
+  matcher: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
-  generator: String, // a tree-sitter query matching the exact AST node
+  generator: TSQuery, // a tree-sitter query matching the exact AST node
 }
 
 // Implements instance methods related to getting the scope
@@ -52,7 +51,7 @@ impl SourceCodeUnit {
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
   pub(crate) fn get_scope_query(
     &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
-  ) -> String {
+  ) -> TSQuery {
     let root_node = self.root_node();
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
     // Get the scope matchers for `scope_level` from the `scope_config.toml`.
@@ -66,12 +65,15 @@ impl SourceCodeUnit {
         changed_node.kind()
       );
       for m in &scope_matchers {
-        if let Some(p_match) =
-          changed_node.get_match_for_query(self.code(), rules_store.query(m.matcher()), false)
-        {
+        if let Some(p_match) = get_match_for_query(
+          &changed_node,
+          self.code(),
+          rules_store.query(m.matcher()),
+          false,
+        ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return substitute_tags(m.generator(), p_match.matches(), true);
+          return m.generator().instantiate(p_match.matches());
         }
       }
       if let Some(parent) = changed_node.parent() {

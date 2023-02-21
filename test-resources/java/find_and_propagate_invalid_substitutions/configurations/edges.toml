@@ -11,6 +11,6 @@
 
 # The edges in this file specify the flow between the rules
 [[edges]]
-scope = "Class"
-from = "add_inner_class"
-to = ["add_field_declaration"]
+scope = "Global"
+from = "find_interface_extension"
+to = ["delete_class"]

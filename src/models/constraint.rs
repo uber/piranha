@@ -13,31 +13,99 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
+use derive_builder::Builder;
 use getset::Getters;
+use itertools::Itertools;
+use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
-use crate::utilities::tree_sitter_utilities::{
-  get_node_for_range, substitute_tags, PiranhaHelpers,
-};
+use crate::utilities::tree_sitter_utilities::{get_match_for_query, get_node_for_range};
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters)]
-pub(crate) struct Constraint {
+use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
+
+use super::default_configs::{default_matcher, default_queries};
+
+#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
+#[pyclass]
+pub struct Constraint {
   /// Scope in which the constraint query has to be applied
+  #[builder(default = "default_matcher()")]
   #[get = "pub"]
-  matcher: String,
+  #[pyo3(get)]
+  matcher: TSQuery,
   /// The Tree-sitter queries that need to be applied in the `matcher` scope
+  #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
-  queries: Vec<String>,
+  #[pyo3(get)]
+  queries: Vec<TSQuery>,
 }
 
+#[pymethods]
 impl Constraint {
-  #[cfg(test)]
-  pub(crate) fn new(matcher: String, queries: Vec<String>) -> Self {
-    Self { matcher, queries }
+  #[new]
+  fn py_new(matcher: String, queries: Option<Vec<String>>) -> Self {
+    ConstraintBuilder::default()
+      .matcher(TSQuery::new(matcher))
+      .queries(
+        queries
+          .unwrap_or_default()
+          .iter()
+          .map(|x| TSQuery::new(x.to_string()))
+          .collect_vec(),
+      )
+      .build()
+      .unwrap()
+  }
+}
+
+#[macro_export]
+/// This macro can be used to construct a Constraint (via the builder)'
+/// Allows to use builder pattern more "dynamically"
+///
+/// Usage:
+///
+/// ```ignore
+/// constraint! {
+///   matcher = "(method_declaration) @md".to_string(),
+///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
+/// }
+/// ```
+///
+/// expands to
+///
+/// ```ignore
+/// ConstraintBuilder::default()
+///      .matcher("(method_declaration) @md".to_string())
+///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
+///      .build()
+/// ```
+///
+macro_rules! constraint {
+  (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
+    $crate::models::constraint::ConstraintBuilder::default()
+      .matcher($crate::utilities::tree_sitter_utilities::TSQuery::new($matcher.to_string()))
+      .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
+      .build().unwrap()
+  };
+}
+
+pub use constraint;
+
+impl Instantiate for Constraint {
+  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Constraint {
+    Constraint {
+      matcher: self.matcher().instantiate(substitutions_for_holes),
+      queries: self
+        .queries()
+        .iter()
+        .map(|x| x.instantiate(substitutions_for_holes))
+        .collect_vec(),
+    }
   }
 }
 
@@ -47,7 +115,7 @@ impl SourceCodeUnit {
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
     rule_store: &mut RuleStore,
   ) -> bool {
-    let mut updated_substitutions = rule_store.piranha_args().input_substitutions().clone();
+    let mut updated_substitutions = self.piranha_arguments().input_substitutions();
     updated_substitutions.extend(substitutions.clone());
     rule.constraints().iter().all(|constraint| {
       self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)
@@ -72,10 +140,14 @@ impl SourceCodeUnit {
     // Get the scope_node of the constraint (`scope.matcher`)
     let mut matched_matcher = false;
     while let Some(parent) = current_node.parent() {
-      let matcher_query_str = substitute_tags(constraint.matcher(), substitutions, true);
-      if let Some(p_match) =
-        parent.get_match_for_query(self.code(), rule_store.query(&matcher_query_str), false)
-      {
+      let instantiated_constraint = constraint.instantiate(substitutions);
+      let matcher_query_str = instantiated_constraint.matcher();
+      if let Some(p_match) = get_match_for_query(
+        &parent,
+        self.code(),
+        rule_store.query(matcher_query_str),
+        false,
+      ) {
         matched_matcher = true;
         let scope_node = get_node_for_range(
           self.root_node(),
@@ -83,13 +155,9 @@ impl SourceCodeUnit {
           p_match.range().end_byte,
         );
         for query_with_holes in constraint.queries() {
-          let query_str = substitute_tags(query_with_holes, substitutions, true);
-          let query = &rule_store.query(&query_str);
-          // If this query matches anywhere within the scope, return false.
-          if scope_node
-            .get_match_for_query(self.code(), query, true)
-            .is_some()
-          {
+          let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
+
+          if get_match_for_query(&scope_node, self.code(), query, true).is_some() {
             return false;
           }
         }

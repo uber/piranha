@@ -23,12 +23,12 @@ def java_demo():
     old_mtime = getmtime(file_path)
 
     args = PiranhaArguments(
-        directory_path,
-        configuration_path,
         "java",
         {
             "input_type_name": "ArrayList",
         },
+        path_to_configurations=configuration_path,
+        path_to_codebase=directory_path,
     )
     _ = execute_piranha(args)
 

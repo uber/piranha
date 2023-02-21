@@ -157,7 +157,7 @@ macro_rules! create_match_tests {
       let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
         path_to_codebase = path_to_codebase,
         path_to_configurations = path_to_configurations,
-        language= $language.to_string(),
+        language= $crate::models::language::PiranhaLanguage::from($language),
         $(
           $kw = $value,
         )*
@@ -203,7 +203,7 @@ macro_rules! create_rewrite_tests {
       let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
         path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
         path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
-        language= $language.to_string(),
+        language= $crate::models::language::PiranhaLanguage::from($language),
         $(
           $kw = $value,
         )*
@@ -240,7 +240,7 @@ macro_rules! substitutions(
   () =>  { vec![] };
   { $($key:literal => $value:literal),+ } => {
       {
-          vec![$(vec![$key.to_string(), $value.to_string()],)+]
+          vec![$(($key.to_string(), $value.to_string()),)+]
 
       }
    };

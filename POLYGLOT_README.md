@@ -166,15 +166,19 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 Polyglot Piranha
 A refactoring tool that eliminates dead code related to stale feature flags.
 
-Usage: polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS>
+Usage: polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS> -l <LANGUAGE>
 
 Options:
   -c, --path-to-codebase <PATH_TO_CODEBASE>
           Path to source code folder or file
+  -s <SUBSTITUTIONS>
+          These substitutions instantiate the initial set of rules. Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
-          Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml` (optional)
+          Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
   -j, --path-to-output-summary <PATH_TO_OUTPUT_SUMMARY>
           Path to output summary json file
+  -l <LANGUAGE>
+          The target language [possible values: java, swift, py, kt, go, tsx, ts]
       --delete-file-if-empty
           User option that determines whether an empty file will be deleted
       --delete-consecutive-new-lines
@@ -190,7 +194,7 @@ Options:
       --dry-run
           Disables in-place rewriting of code
   -h, --help
-          Print help information
+          Print help
 ```
 
 The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/piranha_output.rs) produced for each file touched or analyzed by Piranha.

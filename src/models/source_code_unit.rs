@@ -23,9 +23,9 @@ use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
-  models::rule_store::{GLOBAL, PARENT},
+  models::rule_graph::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
-    get_node_for_range, get_replace_range, get_tree_sitter_edit, PiranhaHelpers,
+    get_match_for_query, get_node_for_range, get_replace_range, get_tree_sitter_edit, TSQuery,
   },
 };
 
@@ -88,7 +88,7 @@ impl SourceCodeUnit {
   /// Will apply the `rule` to all of its occurrences in the source code unit.
   fn apply_rule(
     &mut self, rule: InstantiatedRule, rules_store: &mut RuleStore, parser: &mut Parser,
-    scope_query: &Option<String>,
+    scope_query: &Option<TSQuery>,
   ) {
     loop {
       if !self._apply_rule(rule.clone(), rules_store, parser, scope_query) {
@@ -118,7 +118,7 @@ impl SourceCodeUnit {
   /// *** Propagate the change
   fn _apply_rule(
     &mut self, rule: InstantiatedRule, rule_store: &mut RuleStore, parser: &mut Parser,
-    scope_query: &Option<String>,
+    scope_query: &Option<TSQuery>,
   ) -> bool {
     let scope_node = self.get_scope_node(scope_query, rule_store);
 
@@ -188,12 +188,15 @@ impl SourceCodeUnit {
     let mut current_replace_range = replace_range;
 
     let mut current_rule = rule.name();
-    let mut next_rules_stack: VecDeque<(String, InstantiatedRule)> = VecDeque::new();
+    let mut next_rules_stack: VecDeque<(TSQuery, InstantiatedRule)> = VecDeque::new();
     // Perform the parent edits, while queueing the Method and Class level edits.
     // let file_level_scope_names = [METHOD, CLASS];
     loop {
       // Get all the (next) rules that could be after applying the current rule (`rule`).
-      let next_rules_by_scope = rules_store.get_next(&current_rule, self.substitutions());
+      let next_rules_by_scope = self
+        .piranha_arguments
+        .rule_graph()
+        .get_next(&current_rule, self.substitutions());
 
       debug!(
         "\n{}",
@@ -250,7 +253,7 @@ impl SourceCodeUnit {
 
     // Apply the next rules from the stack
     for (sq, rle) in &next_rules_stack {
-      self.apply_rule(rle.clone(), rules_store, parser, &Some(sq.to_string()));
+      self.apply_rule(rle.clone(), rules_store, parser, &Some(sq.clone()));
     }
   }
 
@@ -258,7 +261,7 @@ impl SourceCodeUnit {
   fn add_rules_to_stack(
     &mut self, next_rules_by_scope: &HashMap<String, Vec<InstantiatedRule>>,
     current_match_range: Range, rules_store: &mut RuleStore,
-    stack: &mut VecDeque<(String, InstantiatedRule)>,
+    stack: &mut VecDeque<(TSQuery, InstantiatedRule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
       // Scope level is not "PArent" or "Global"
@@ -277,17 +280,18 @@ impl SourceCodeUnit {
     }
   }
 
-  fn get_scope_node(&self, scope_query: &Option<String>, rules_store: &mut RuleStore) -> Node {
+  fn get_scope_node(&self, scope_query: &Option<TSQuery>, rules_store: &mut RuleStore) -> Node {
     // Get scope node
     // let mut scope_node = self.root_node();
     if let Some(query_str) = scope_query {
       // Apply the scope query in the source code and get the appropriate node
       let tree_sitter_scope_query = rules_store.query(query_str);
-      if let Some(p_match) =
-        &self
-          .root_node()
-          .get_match_for_query(self.code(), tree_sitter_scope_query, true)
-      {
+      if let Some(p_match) = get_match_for_query(
+        &self.root_node(),
+        self.code(),
+        tree_sitter_scope_query,
+        true,
+      ) {
         return get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
@@ -301,7 +305,7 @@ impl SourceCodeUnit {
   /// Apply all `rules` sequentially.
   pub(crate) fn apply_rules(
     &mut self, rules_store: &mut RuleStore, rules: &[InstantiatedRule], parser: &mut Parser,
-    scope_query: Option<String>,
+    scope_query: Option<TSQuery>,
   ) {
     for rule in rules {
       self.apply_rule(rule.to_owned(), rules_store, parser, &scope_query)

@@ -16,7 +16,7 @@ use std::{collections::HashMap, fmt};
 use colored::Colorize;
 use getset::Getters;
 use log::{debug, trace};
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 use tree_sitter::{Node, Range};
 
 use super::{
@@ -24,11 +24,12 @@ use super::{
 };
 use crate::utilities::{
   gen_py_str_methods,
-  tree_sitter_utilities::{get_context, get_node_for_range, substitute_tags},
+  tree_sitter_utilities::{get_context, get_node_for_range},
+  Instantiate,
 };
 use pyo3::{prelude::pyclass, pymethods};
 
-#[derive(Serialize, Debug, Clone, Getters)]
+#[derive(Serialize, Debug, Clone, Getters, Deserialize)]
 #[pyclass]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
@@ -96,8 +97,8 @@ impl SourceCodeUnit {
     &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
     rules: &Vec<InstantiatedRule>,
   ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope = *rules_store
-      .piranha_args()
+    let number_of_ancestors_in_parent_scope = *self
+      .piranha_arguments()
       .number_of_ancestors_in_parent_scope();
     let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
     debug!(
@@ -132,7 +133,7 @@ impl SourceCodeUnit {
       .get_matches(rule, rule_store, node, recursive)
       .first()
       .map(|p_match| {
-        let replacement_string = substitute_tags(&rule.replace(), p_match.matches(), false);
+        let replacement_string = rule.replace().instantiate(p_match.matches());
         let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
         trace!("Rewrite found : {:#?}", edit);
         edit

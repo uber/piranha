@@ -20,12 +20,12 @@ def swift_demo():
     old_mtime = getmtime(file_path)
 
     args = PiranhaArguments(
-        file_path,
-        configuration_path,
         "swift",
         {
             "stale_flag_name": "test_second_experiment",
         },
+        path_to_configurations=configuration_path,
+        path_to_codebase=file_path,
         cleanup_comments=True,
     )
 
@@ -51,12 +51,12 @@ def java_demo():
     old_mtime = getmtime(file_path)
 
     args = PiranhaArguments(
-        file_path,
-        configuration_path,
         "java",
         {
             "stale_flag_name": "STALE_FLAG",
         },
+        path_to_configurations=configuration_path,
+        path_to_codebase=file_path,
         cleanup_comments=True,
     )
 

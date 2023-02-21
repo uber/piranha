@@ -12,31 +12,57 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 
 use derive_builder::Builder;
-use getset::Getters;
+use getset::{Getters, MutGetters};
 use itertools::Itertools;
 
 use crate::{
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
-  utilities::MapOfVec,
+  utilities::{read_toml, MapOfVec},
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
-use super::default_configs::default_rule_graph;
+use super::{
+  default_configs::{default_edges, default_rule_graph_map, default_rules},
+  outgoing_edges::Edges,
+  rule::{InstantiatedRule, Rules},
+};
+use pyo3::prelude::{pyclass, pymethods};
 
-#[derive(Debug, Default, Getters, Builder)]
+pub(crate) static GLOBAL: &str = "Global";
+pub(crate) static PARENT: &str = "Parent";
+
+#[derive(Debug, Default, Getters, MutGetters, Builder, Clone, PartialEq)]
 #[builder(build_fn(name = "create"))]
-pub(crate) struct RuleGraph {
+#[pyclass]
+pub struct RuleGraph {
   /// All the rules in the graph
+  #[get_mut = "pub(crate)"]
   #[get = "pub(crate)"]
+  #[pyo3(get)]
+  #[builder(default = "default_rules()")]
   rules: Vec<Rule>,
   /// Edges of the rule graph
   #[get = "pub(crate)"]
+  #[builder(default = "default_edges()")]
+  #[pyo3(get)]
   edges: Vec<OutgoingEdges>,
 
   /// The graph itself
-  #[builder(default = "default_rule_graph()")]
+  #[builder(default = "default_rule_graph_map()")]
   #[get = "pub(crate)"]
+  #[pyo3(get)]
   graph: HashMap<String, Vec<(String, String)>>,
+}
+
+#[pymethods]
+impl RuleGraph {
+  #[new]
+  fn py_new(rules: Vec<Rule>, edges: Vec<OutgoingEdges>) -> Self {
+    RuleGraphBuilder::default()
+      .rules(rules)
+      .edges(edges)
+      .build()
+  }
 }
 
 impl RuleGraphBuilder {
@@ -44,10 +70,14 @@ impl RuleGraphBuilder {
     let _rule_graph = self.create().unwrap();
 
     let mut graph = HashMap::new();
+
+    for r in _rule_graph.rules() {
+      graph.insert(r.name().to_string(), vec![]);
+    }
     // Add the edge(s) to the graph. Multiple edges will be added
     // when either edge endpoint is a group name.
     for edge in _rule_graph.edges() {
-      for from_rule in _rule_graph.get_rules_for_group(edge.get_from()) {
+      for from_rule in _rule_graph.get_rules_for_group(edge.get_frm()) {
         for outgoing_edge in edge.get_to() {
           for to_rule in _rule_graph.get_rules_for_group(outgoing_edge) {
             // Add edge to the adjacency list
@@ -110,4 +140,50 @@ impl RuleGraph {
       .edges(all_edges)
       .build()
   }
+
+  /// Get the next rules to be applied grouped by the scope in which they should be performed.
+  pub(crate) fn get_next(
+    &self, rule_name: &String, tag_matches: &HashMap<String, String>,
+  ) -> HashMap<String, Vec<InstantiatedRule>> {
+    // let rule_name = rule.name();
+    let mut next_rules: HashMap<String, Vec<InstantiatedRule>> = HashMap::new();
+    // Iterate over each entry (Edge) in the adjacency list corresponding to `rule_name`
+    for (scope, to_rule) in self.get_neighbors(rule_name) {
+      let to_rule_name = &self.get_rule_named(&to_rule).unwrap();
+      // If the to_rule_name is a dummy rule, skip it and rather return it's next rules.
+      if to_rule_name.is_dummy_rule() {
+        // Call this method recursively on the dummy node
+        for (next_next_rules_scope, next_next_rules) in
+          self.get_next(to_rule_name.name(), tag_matches)
+        {
+          for next_next_rule in next_next_rules {
+            // Group the next rules based on the scope
+            next_rules.collect(String::from(&next_next_rules_scope), next_next_rule)
+          }
+        }
+      } else {
+        // Group the next rules based on the scope
+        next_rules.collect(
+          String::from(&scope),
+          InstantiatedRule::new(to_rule_name, tag_matches),
+        );
+      }
+    }
+    // Add empty entry, incase no next rule was found for a particular scope
+    for scope in [PARENT, GLOBAL] {
+      next_rules.entry(scope.to_string()).or_default();
+    }
+    next_rules
+  }
+}
+
+pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
+  let path_to_config = Path::new(path_to_configurations);
+  // Read the rules and edges provided by the user
+  let input_rules: Rules = read_toml(&path_to_config.join("rules.toml"), true);
+  let input_edges: Edges = read_toml(&path_to_config.join("edges.toml"), true);
+  RuleGraphBuilder::default()
+    .rules(input_rules.rules)
+    .edges(input_edges.edges)
+    .build()
 }
