@@ -11,6 +11,8 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::{models::edit::Edit, utilities::read_toml};
+
 use super::{
   default_configs::{
     default_cleanup_comments, default_cleanup_comments_buffer, default_code_snippet,
@@ -22,21 +24,25 @@ use super::{
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
+  source_code_unit::SourceCodeUnit,
 };
-use crate::utilities::{parse_key_val, read_toml};
+use crate::utilities::parse_key_val;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
-use log::{info, warn};
+use log::{debug, info, warn};
 use pyo3::{
   prelude::{pyclass, pymethods},
   types::PyDict,
 };
+use regex::Regex;
 use serde_derive::Deserialize;
+use tree_sitter::{InputEdit, Range};
+use tree_sitter_traversal::{traverse, Order};
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Builder)]
@@ -386,9 +392,113 @@ macro_rules! piranha_arguments {
       .build()
     };
 }
-
 pub use piranha_arguments;
 
 #[cfg(test)]
 #[path = "unit_tests/piranha_arguments_test.rs"]
 mod piranha_arguments_test;
+
+// Implements instance methods related to applying the user options provided in  piranha arguments
+impl SourceCodeUnit {
+  /// Delete the comment associated to the deleted code element
+  pub(crate) fn _delete_associated_comment(
+    &mut self, edit: &Edit, applied_edit: &mut InputEdit, parser: &mut tree_sitter::Parser,
+  ) {
+    // Check if the edit kind is "DELETE something"
+    if *self.piranha_arguments().cleanup_comments() && edit.replacement_string().is_empty() {
+      let deleted_at = edit.p_match().range().start_point.row;
+      if let Some(comment_range) = self._get_comment_at_line(
+        deleted_at,
+        *self.piranha_arguments().cleanup_comments_buffer(),
+        edit.p_match().range().start_byte,
+      ) {
+        debug!("Deleting an associated comment");
+        *applied_edit = self._apply_edit(&Edit::delete_range(self.code(), comment_range), parser);
+      }
+    }
+  }
+
+  /// This function reports the range of the comment associated to the deleted element.
+  ///
+  /// # Arguments:
+  /// * row : The row number where the deleted element started
+  /// * buffer: Number of lines that we want to look up to find associated comment
+  ///
+  /// # Algorithm :
+  /// Get all the nodes that either start and end at [row]
+  /// If **all** nodes are comments
+  /// * return the range of the comment
+  /// If the [row] has no node that either starts/ends there:
+  /// * recursively call this method for [row] -1 (until buffer is positive)
+  /// This function reports the range of the comment associated to the deleted element.
+  ///
+  /// # Arguments:
+  /// * row : The row number where the deleted element started
+  /// * buffer: Number of lines that we want to look up to find associated comment
+  ///
+  /// # Algorithm :
+  /// Get all the nodes that either start and end at [row]
+  /// If **all** nodes are comments
+  /// * return the range of the comment
+  /// If the [row] has no node that either starts/ends there:
+  /// * recursively call this method for [row] -1 (until buffer is positive)
+  fn _get_comment_at_line(
+    &mut self, row: usize, buffer: usize, start_byte: usize,
+  ) -> Option<Range> {
+    // Get all nodes that start or end on `updated_row`.
+    let mut relevant_nodes_found = false;
+    let mut relevant_nodes_are_comments = true;
+    let mut comment_range = None;
+    // Since the previous edit was a delete, the start and end of the replacement range is [start_byte].
+    let node = self
+      .root_node()
+      .descendant_for_byte_range(start_byte, start_byte)
+      .unwrap_or_else(|| self.root_node());
+
+    for node in traverse(node.walk(), Order::Post) {
+      if node.start_position().row == row || node.end_position().row == row {
+        relevant_nodes_found = true;
+        let is_comment: bool = self
+          .piranha_arguments()
+          .language()
+          .is_comment(node.kind().to_string());
+        relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
+        if is_comment {
+          comment_range = Some(node.range());
+        }
+      }
+    }
+
+    if relevant_nodes_found {
+      if relevant_nodes_are_comments {
+        return comment_range;
+      }
+    } else if buffer > 0 {
+      // We pass [start_byte] itself, because we know that parent of the current row is the parent of the above row too.
+      // If that's not the case, its okay, because we will not find any comments in these scenarios.
+      return self._get_comment_at_line(row - 1, buffer - 1, start_byte);
+    }
+    None
+  }
+
+  /// Replaces three consecutive newline characters with two
+  pub(crate) fn perform_delete_consecutive_new_lines(&mut self) {
+    if *self.piranha_arguments().delete_consecutive_new_lines() {
+      let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
+      let x = &regex.replace_all(self.code(), "\n${2}").into_owned();
+      self.set_code(x.clone());
+    }
+  }
+
+  /// Writes the current contents of `code` to the file system and deletes a file if empty.
+  pub(crate) fn persist(&self) {
+    if *self.piranha_arguments().dry_run() {
+      return;
+    }
+    if self.code().as_str().is_empty() && *self.piranha_arguments().delete_file_if_empty() {
+      fs::remove_file(self.path()).expect("Unable to Delete file");
+      return;
+    }
+    fs::write(self.path(), self.code()).expect("Unable to Write file");
+  }
+}

@@ -15,11 +15,18 @@ use std::{collections::HashMap, fmt};
 
 use colored::Colorize;
 use getset::Getters;
+use log::{debug, trace};
 use serde_derive::{Deserialize, Serialize};
-use tree_sitter::Range;
+use tree_sitter::{Node, Range};
 
-use super::matches::Match;
-use crate::utilities::gen_py_str_methods;
+use super::{
+  matches::Match, rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
+};
+use crate::utilities::{
+  gen_py_str_methods,
+  tree_sitter_utilities::{get_context, get_node_for_range},
+  Instantiate,
+};
 use pyo3::{prelude::pyclass, pymethods};
 
 #[derive(Serialize, Debug, Clone, Getters, Deserialize)]
@@ -79,5 +86,57 @@ impl fmt::Display for Edit {
       "\n {} at ({:?}) -\n {}",
       edit_kind, &replace_range, replacement_snippet_fmt
     )
+  }
+}
+
+// Implements instance methods related to getting edits for rule(s)
+impl SourceCodeUnit {
+  // Apply all the `rules` to the node, parent, grand parent and great grand parent.
+  // Short-circuit on the first match.
+  pub(crate) fn get_edit_for_context(
+    &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
+    rules: &Vec<InstantiatedRule>,
+  ) -> Option<Edit> {
+    let number_of_ancestors_in_parent_scope = *self
+      .piranha_arguments()
+      .number_of_ancestors_in_parent_scope();
+    let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
+    debug!(
+      "\n{}",
+      format!("Changed node kind {}", changed_node.kind()).blue()
+    );
+    // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
+    let context = || {
+      get_context(
+        changed_node,
+        self.code().to_string(),
+        number_of_ancestors_in_parent_scope,
+      )
+    };
+    for rule in rules {
+      for ancestor in &context() {
+        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+          return Some(edit);
+        }
+      }
+    }
+    None
+  }
+
+  /// Gets the first match for the rule in `self`
+  pub(crate) fn get_edit(
+    &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
+  ) -> Option<Edit> {
+    // Get all matches for the query in the given scope `node`.
+
+    return self
+      .get_matches(rule, rule_store, node, recursive)
+      .first()
+      .map(|p_match| {
+        let replacement_string = rule.replace().instantiate(p_match.matches());
+        let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
+        trace!("Rewrite found : {:#?}", edit);
+        edit
+      });
   }
 }
