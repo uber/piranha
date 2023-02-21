@@ -14,10 +14,17 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::collections::HashMap;
 
 use getset::Getters;
+use log::{debug, trace};
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::{Deserialize, Serialize};
+use tree_sitter::Node;
 
-use crate::utilities::gen_py_str_methods;
+use crate::utilities::{
+  gen_py_str_methods,
+  tree_sitter_utilities::{get_all_matches_for_query, get_node_for_range},
+};
+
+use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
 #[derive(Serialize, Debug, Clone, Getters, Deserialize)]
 #[pyclass]
@@ -106,3 +113,42 @@ struct Point {
   column: usize,
 }
 gen_py_str_methods!(Point);
+
+// Implements instance methods related to getting matches for rule
+impl SourceCodeUnit {
+  /// Gets the first match for the rule in `self`
+  pub(crate) fn get_matches(
+    &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
+  ) -> Vec<Match> {
+    let mut output: Vec<Match> = vec![];
+    // Get all matches for the query in the given scope `node`.
+    let replace_node_tag = if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
+      None
+    } else {
+      Some(rule.replace_node())
+    };
+    let all_query_matches = get_all_matches_for_query(
+      &node,
+      self.code().to_string(),
+      rule_store.query(&rule.query()),
+      recursive,
+      replace_node_tag,
+    );
+
+    // Return the first match that satisfies constraint of the rule
+    for p_match in all_query_matches {
+      let matched_node = get_node_for_range(
+        self.root_node(),
+        p_match.range().start_byte,
+        p_match.range().end_byte,
+      );
+
+      if self.is_satisfied(matched_node, rule, p_match.matches(), rule_store) {
+        trace!("Found match {:#?}", p_match);
+        output.push(p_match);
+      }
+    }
+    debug!("Matches found {}", output.len());
+    output
+  }
+}
