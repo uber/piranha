@@ -112,6 +112,10 @@ pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
     .path()
 }
 
+// The macro has two match arms, one for the case where
+// (i) it adds the impl block for a given struct with `__str__` and `__repr__` functions
+// (ii) it adds `__str__` and `__repr__` functions to an existing impl block.
+// TODO: Cleanup this macro such that second match arm is called from the first match arm.
 macro_rules! gen_py_str_methods {
   ($struct_name:ident) => {
     #[pymethods]
@@ -122,6 +126,14 @@ macro_rules! gen_py_str_methods {
       fn __str__(&self) -> String {
         self.__repr__()
       }
+    }
+  };
+  () => {
+    fn __repr__(&self) -> String {
+      format!("{:?}", self)
+    }
+    fn __str__(&self) -> String {
+      self.__repr__()
     }
   };
 }

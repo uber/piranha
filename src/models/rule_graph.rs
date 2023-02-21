@@ -17,7 +17,7 @@ use itertools::Itertools;
 
 use crate::{
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
-  utilities::{read_toml, MapOfVec},
+  utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
 use std::{collections::HashMap, path::Path};
 
@@ -63,9 +63,11 @@ impl RuleGraph {
       .edges(edges)
       .build()
   }
+  gen_py_str_methods!();
 }
 
 impl RuleGraphBuilder {
+  /// Build the rule graph.
   pub fn build(&self) -> RuleGraph {
     let _rule_graph = self.create().unwrap();
 

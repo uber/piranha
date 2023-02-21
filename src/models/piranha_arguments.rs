@@ -41,7 +41,7 @@ use regex::Regex;
 use tree_sitter::{InputEdit, Range};
 use tree_sitter_traversal::{traverse, Order};
 
-use std::{collections::HashMap, fs};
+use std::collections::HashMap;
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Clone, Getters, CopyGetters, Debug, Parser, Builder)]
@@ -426,9 +426,9 @@ impl SourceCodeUnit {
       return;
     }
     if self.code().as_str().is_empty() && *self.piranha_arguments().delete_file_if_empty() {
-      fs::remove_file(self.path()).expect("Unable to Delete file");
+      std::fs::remove_file(self.path()).expect("Unable to Delete file");
       return;
     }
-    fs::write(self.path(), self.code()).expect("Unable to Write file");
+    std::fs::write(self.path(), self.code()).expect("Unable to Write file");
   }
 }

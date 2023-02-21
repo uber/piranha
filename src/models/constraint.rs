@@ -20,7 +20,10 @@ use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
-use crate::utilities::tree_sitter_utilities::{get_match_for_query, get_node_for_range};
+use crate::utilities::{
+  gen_py_str_methods,
+  tree_sitter_utilities::{get_match_for_query, get_node_for_range},
+};
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 
@@ -60,6 +63,7 @@ impl Constraint {
       .build()
       .unwrap()
   }
+  gen_py_str_methods!();
 }
 
 #[macro_export]
