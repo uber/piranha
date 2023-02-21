@@ -339,9 +339,12 @@ impl SourceCodeUnit {
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), &edit_to_apply);
     // Apply edit to the tree
+    let number_of_errors = self._number_of_errors();
     self.ast.edit(&ts_edit);
     self._replace_file_contents_and_re_parse(&new_source_code, parser, true);
-    if self.ast.root_node().has_error() {
+
+    // Panic if the number of errors increased after the edit
+    if self._number_of_errors() > number_of_errors {
       let msg = format!(
         "Produced syntactically incorrect source code {}",
         self.code()
@@ -350,6 +353,13 @@ impl SourceCodeUnit {
       panic!("{}", msg);
     }
     ts_edit
+  }
+
+  /// Returns the number of errors, extra nodes and missing nodes in the AST
+  fn _number_of_errors(&self) -> usize {
+    traverse(self.root_node().walk(), Order::Post)
+      .filter(|node| node.has_error() || node.is_extra() || node.is_missing())
+      .count()
   }
 
   /// Deletes the trailing comma after the {deleted_range}
