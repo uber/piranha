@@ -12,40 +12,36 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use std::{
   collections::{HashMap, VecDeque},
-  fs,
   path::{Path, PathBuf},
 };
 
 use colored::Colorize;
 use itertools::Itertools;
-use log::{debug, error, trace};
-use regex::Regex;
+use log::{debug, error};
+
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
   models::rule_graph::{GLOBAL, PARENT},
-  utilities::{
-    tree_sitter_utilities::{
-      get_context, get_node_for_range, get_replace_range, get_tree_sitter_edit, PiranhaHelpers,
-      TSQuery,
-    },
-    Instantiate,
+  utilities::tree_sitter_utilities::{
+    get_match_for_query, get_node_for_range, get_replace_range, get_tree_sitter_edit, TSQuery,
   },
 };
 
 use super::{
-  constraint::Constraint, edit::Edit, matches::Match, piranha_arguments::PiranhaArguments,
-  rule::InstantiatedRule, rule_store::RuleStore,
+  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule::InstantiatedRule,
+  rule_store::RuleStore,
 };
-use getset::{CopyGetters, Getters, MutGetters};
+use getset::{CopyGetters, Getters, MutGetters, Setters};
 // Maintains the updated source code content and AST of the file
-#[derive(Clone, Getters, CopyGetters, MutGetters)]
+#[derive(Clone, Getters, CopyGetters, MutGetters, Setters)]
 pub(crate) struct SourceCodeUnit {
   // The tree representing the file
   ast: Tree,
   // The content of a file
   #[get = "pub"]
+  #[set = "pub(crate)"]
   code: String,
   // The tag substitution cache.
   // This map is looked up to instantiate new rules.
@@ -64,6 +60,7 @@ pub(crate) struct SourceCodeUnit {
   #[get_mut = "pub"]
   matches: Vec<(String, Match)>,
   // Piranha Arguments passed by the user
+  #[get = "pub"]
   piranha_arguments: PiranhaArguments,
 }
 
@@ -289,11 +286,12 @@ impl SourceCodeUnit {
     if let Some(query_str) = scope_query {
       // Apply the scope query in the source code and get the appropriate node
       let tree_sitter_scope_query = rules_store.query(query_str);
-      if let Some(p_match) =
-        &self
-          .root_node()
-          .get_match_for_query(self.code(), tree_sitter_scope_query, true)
-      {
+      if let Some(p_match) = get_match_for_query(
+        &self.root_node(),
+        self.code(),
+        tree_sitter_scope_query,
+        true,
+      ) {
         return get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
@@ -315,93 +313,11 @@ impl SourceCodeUnit {
     self.perform_delete_consecutive_new_lines();
   }
 
-  /// Replaces three consecutive newline characters with two
-  pub(crate) fn perform_delete_consecutive_new_lines(&mut self) {
-    if *self.piranha_arguments.delete_consecutive_new_lines() {
-      let regex = Regex::new(r"\n(\s*\n)+(\s*\n)").unwrap();
-      let x = &regex.replace_all(self.code(), "\n${2}").into_owned();
-      self.code = x.clone();
-    }
-  }
-
-  /// Writes the current contents of `code` to the file system and deletes a file if empty.
-  pub(crate) fn persist(&self, piranha_arguments: &PiranhaArguments) {
-    if *piranha_arguments.dry_run() {
-      return;
-    }
-    if self.code.as_str().is_empty() && *piranha_arguments.delete_file_if_empty() {
-      fs::remove_file(&self.path).expect("Unable to Delete file");
-      return;
-    }
-    fs::write(&self.path, self.code()).expect("Unable to Write file");
-  }
-
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
     // Get the tree_sitter's input edit representation
     let mut applied_edit = self._apply_edit(edit, parser);
-    // Check if the edit kind is "DELETE something"
-    if *self.piranha_arguments.cleanup_comments() && edit.replacement_string().is_empty() {
-      let deleted_at = edit.p_match().range().start_point.row;
-      if let Some(comment_range) = self.get_comment_at_line(
-        deleted_at,
-        *self.piranha_arguments.cleanup_comments_buffer(),
-        edit.p_match().range().start_byte,
-      ) {
-        debug!("Deleting an associated comment");
-        applied_edit = self._apply_edit(&Edit::delete_range(self.code(), comment_range), parser);
-      }
-    }
+    self._delete_associated_comment(edit, &mut applied_edit, parser);
     applied_edit
-  }
-
-  /// This function reports the range of the comment associated to the deleted element.
-  ///
-  /// # Arguments:
-  /// * row : The row number where the deleted element started
-  /// * buffer: Number of lines that we want to look up to find associated comment
-  ///
-  /// # Algorithm :
-  /// Get all the nodes that either start and end at [row]
-  /// If **all** nodes are comments
-  /// * return the range of the comment
-  /// If the [row] has no node that either starts/ends there:
-  /// * recursively call this method for [row] -1 (until buffer is positive)
-  fn get_comment_at_line(&mut self, row: usize, buffer: usize, start_byte: usize) -> Option<Range> {
-    // Get all nodes that start or end on `updated_row`.
-    let mut relevant_nodes_found = false;
-    let mut relevant_nodes_are_comments = true;
-    let mut comment_range = None;
-    // Since the previous edit was a delete, the start and end of the replacement range is [start_byte].
-    let node = self
-      .ast
-      .root_node()
-      .descendant_for_byte_range(start_byte, start_byte)
-      .unwrap_or_else(|| self.ast.root_node());
-
-    for node in traverse(node.walk(), Order::Post) {
-      if node.start_position().row == row || node.end_position().row == row {
-        relevant_nodes_found = true;
-        let is_comment: bool = self
-          .piranha_arguments
-          .language()
-          .is_comment(node.kind().to_string());
-        relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
-        if is_comment {
-          comment_range = Some(node.range());
-        }
-      }
-    }
-
-    if relevant_nodes_found {
-      if relevant_nodes_are_comments {
-        return comment_range;
-      }
-    } else if buffer > 0 {
-      // We pass [start_byte] itself, because we know that parent of the current row is the parent of the above row too.
-      // If that's not the case, its okay, because we will not find any comments in these scenarios.
-      return self.get_comment_at_line(row - 1, buffer - 1, start_byte);
-    }
-    None
   }
 
   /// Applies an edit to the source code unit
@@ -509,181 +425,6 @@ impl SourceCodeUnit {
       .expect("Could not generate new tree!");
     self.ast = new_tree;
     self.code = replacement_content.to_string();
-  }
-
-  // Apply all the `rules` to the node, parent, grand parent and great grand parent.
-  // Short-circuit on the first match.
-  pub(crate) fn get_edit_for_context(
-    &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
-    rules: &Vec<InstantiatedRule>,
-  ) -> Option<Edit> {
-    let number_of_ancestors_in_parent_scope =
-      *self.piranha_arguments.number_of_ancestors_in_parent_scope();
-    let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
-    debug!(
-      "\n{}",
-      format!("Changed node kind {}", changed_node.kind()).blue()
-    );
-    // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
-    let context = || {
-      get_context(
-        changed_node,
-        self.code().to_string(),
-        number_of_ancestors_in_parent_scope,
-      )
-    };
-    for rule in rules {
-      for ancestor in &context() {
-        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
-          return Some(edit);
-        }
-      }
-    }
-    None
-  }
-
-  /// Gets the first match for the rule in `self`
-  pub(crate) fn get_matches(
-    &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
-  ) -> Vec<Match> {
-    let mut output: Vec<Match> = vec![];
-    // Get all matches for the query in the given scope `node`.
-    let replace_node_tag = if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
-      None
-    } else {
-      Some(rule.replace_node())
-    };
-    let all_query_matches = node.get_all_matches_for_query(
-      self.code().to_string(),
-      rule_store.query(&rule.query()),
-      recursive,
-      replace_node_tag,
-    );
-
-    // Return the first match that satisfies constraint of the rule
-    for p_match in all_query_matches {
-      let matched_node = get_node_for_range(
-        self.root_node(),
-        p_match.range().start_byte,
-        p_match.range().end_byte,
-      );
-
-      if self.is_satisfied(matched_node, rule, p_match.matches(), rule_store) {
-        trace!("Found match {:#?}", p_match);
-        output.push(p_match);
-      }
-    }
-    debug!("Matches found {}", output.len());
-    output
-  }
-
-  /// Gets the first match for the rule in `self`
-  pub(crate) fn get_edit(
-    &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
-  ) -> Option<Edit> {
-    // Get all matches for the query in the given scope `node`.
-
-    return self
-      .get_matches(rule, rule_store, node, recursive)
-      .first()
-      .map(|p_match| {
-        let replacement_string = rule.replace().instantiate(p_match.matches());
-        let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
-        trace!("Rewrite found : {:#?}", edit);
-        edit
-      });
-  }
-
-  /// Generate a tree-sitter based query representing the scope of the previous edit.
-  /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
-  pub(crate) fn get_scope_query(
-    &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
-  ) -> TSQuery {
-    let root_node = self.root_node();
-    let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
-    // Get the scope matchers for `scope_level` from the `scope_config.toml`.
-    let scope_matchers = rules_store.get_scope_query_generators(scope_level);
-
-    // Match the `scope_matcher.matcher` to the parent
-    loop {
-      trace!(
-        "Getting scope {} for node kind {}",
-        scope_level,
-        changed_node.kind()
-      );
-      for m in &scope_matchers {
-        if let Some(p_match) =
-          changed_node.get_match_for_query(self.code(), rules_store.query(m.matcher()), false)
-        {
-          // Generate the scope query for the specific context by substituting the
-          // the tags with code snippets appropriately in the `generator` query.
-          return m.generator().instantiate(p_match.matches());
-        }
-      }
-      if let Some(parent) = changed_node.parent() {
-        changed_node = parent;
-      } else {
-        break;
-      }
-    }
-    panic!("Could not create scope query for {scope_level:?}");
-  }
-
-  fn is_satisfied(
-    &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
-    rule_store: &mut RuleStore,
-  ) -> bool {
-    let mut updated_substitutions = self.piranha_arguments.input_substitutions();
-    updated_substitutions.extend(substitutions.clone());
-    rule.constraints().iter().all(|constraint| {
-      self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)
-    })
-  }
-
-  /// Checks if the node satisfies the constraints.
-  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
-  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
-  /// i.e. finds scope for constraint.
-  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
-  fn _is_satisfied(
-    &self, constraint: Constraint, node: Node, rule_store: &mut RuleStore,
-    substitutions: &HashMap<String, String>,
-  ) -> bool {
-    let mut current_node = node;
-    // This ensures that the below while loop considers the current node too when checking for constraints.
-    // It does not make sense to check for constraint if current node is a "leaf" node.
-    if node.child_count() > 0 {
-      current_node = node.child(0).unwrap();
-    }
-    // Get the scope_node of the constraint (`scope.matcher`)
-    let mut matched_matcher = false;
-    while let Some(parent) = current_node.parent() {
-      let instantiated_constraint = constraint.instantiate(substitutions);
-      let matcher_query_str = instantiated_constraint.matcher();
-      if let Some(p_match) =
-        parent.get_match_for_query(self.code(), rule_store.query(matcher_query_str), false)
-      {
-        matched_matcher = true;
-        let scope_node = get_node_for_range(
-          self.root_node(),
-          p_match.range().start_byte,
-          p_match.range().end_byte,
-        );
-        for query_with_holes in constraint.queries() {
-          let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
-
-          if scope_node
-            .get_match_for_query(self.code(), query, true)
-            .is_some()
-          {
-            return false;
-          }
-        }
-        break;
-      }
-      current_node = parent;
-    }
-    matched_matcher
   }
 
   pub(crate) fn global_substitutions(&self) -> HashMap<String, String> {
