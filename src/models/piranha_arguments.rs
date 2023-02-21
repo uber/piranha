@@ -274,7 +274,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
     .rules(piranha_language.rules().clone().unwrap_or_default().rules)
     .build();
 
-  // TODO: Move to `PiranhaArgumentBuilder`'s _validate
+  // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
   // Get the user-defined rule graph (if any) via the Python/Rust API
   let mut user_defined_rules = _arg.rule_graph().clone();
   // In the scenario when rules/edges are passed as toml files
