@@ -130,8 +130,9 @@ query = """
 )"""
 replace_node = "method_invocation"
 replace = "@treated"
-groups = ["replace_expression_with_boolean_literal", "Cleanup Rule"]
+groups = ["replace_expression_with_boolean_literal"]
 holes = ["m_name", "treated"]
+is_seed_rule = false
 
 # For @m_name = `isStaleFeature`, @treated = `true`
 # Before : 
@@ -158,9 +159,8 @@ query = """
 """
 replace_node = "expression_statement"
 replace = ""
-groups = ["Cleanup Rule"]
 holes = ["m_name"]
-
+is_seed_rule = false
 #
 # For @stale_flag_name = `STALE_FLAG`, @treated = `true`
 # Before : 

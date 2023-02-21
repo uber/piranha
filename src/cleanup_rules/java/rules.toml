@@ -33,6 +33,7 @@ query = """
 """
 replace = "@consequence"
 replace_node = "if_statement"
+is_seed_rule = false
 
 # Before : 
 #  if (true) { doSomething(); } else { doSomethingElse();}
@@ -55,6 +56,7 @@ query = """
 @if_statement)"""
 replace = "@alternative"
 replace_node = "if_statement"
+is_seed_rule = false
 
 # Before : 
 #  !false
@@ -73,6 +75,7 @@ query = """
 """
 replace = "true"
 replace_node = "unary_expression"
+is_seed_rule = false
 
 # Before : 
 #  !true
@@ -91,6 +94,7 @@ query = """
 """
 replace = "false"
 replace_node = "unary_expression"
+is_seed_rule = false
 
 # Before : 
 #  {
@@ -128,6 +132,7 @@ query = """
     ]@block)"""
 replace = "@nested.statements"
 replace_node = "nested.block"
+is_seed_rule = false
 
 # Before : 
 #  true && abc()
@@ -148,6 +153,7 @@ query = """
 """
 replace = "@rhs"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before :
 #  abc() && true
@@ -167,6 +173,7 @@ query = """
 @binary_expression)"""
 replace = "@lhs"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before :
 #  false && abc()
@@ -186,6 +193,7 @@ query = """
 @binary_expression)"""
 replace = "false"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before :
 #  abc() && false
@@ -206,6 +214,7 @@ query = """
 """
 replace = "false"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before :
 #  abc() || true
@@ -225,6 +234,7 @@ query = """
 @binary_expression)"""
 replace = "@lhs"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before :
 #  true || abc()
@@ -245,6 +255,7 @@ query = """
 """
 replace = "true"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before: 
 #  abc() || false
@@ -264,6 +275,7 @@ query = """(
 @binary_expression)"""
 replace = "@lhs"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before: 
 #  false || abc()
@@ -283,6 +295,7 @@ query = """
 @binary_expression)"""
 replace = "@rhs"
 replace_node = "binary_expression"
+is_seed_rule = false
 
 # Before :
 #  {
@@ -305,6 +318,7 @@ query = """(
          ((statement)+ @post)) @b)"""
 replace = ""
 replace_node = "post"
+is_seed_rule = false
 
 # Before :
 #  true ? abc() : def();
@@ -322,6 +336,7 @@ query = """
 @ternary_expression)"""
 replace = "@consequence"
 replace_node = "ternary_expression"
+is_seed_rule = false
 
 # Before :
 #  false ? abc() : def();
@@ -339,7 +354,7 @@ query = """
 @ternary_expression)"""
 replace = "@alternative"
 replace_node = "ternary_expression"
-
+is_seed_rule = false
 
 [[rules]]
 name = "delete_empty_enum_declaration"
@@ -347,6 +362,7 @@ query = """
 (enum_declaration) @enum_declaration"""
 replace = ""
 replace_node = "enum_declaration"
+is_seed_rule = false
 [[rules.constraints]]
 matcher = "(enum_declaration) @ed"
 queries = ["(enum_constant) @ec"]
@@ -363,6 +379,7 @@ query = """(
   (package_declaration (_) @package_name)?) @program)"""
 replace = ""
 replace_node = "program"
+is_seed_rule = false
 [[rules.constraints]]
 matcher = "(program) @c_program"
 queries = [
@@ -411,6 +428,7 @@ query = """
 """
 replace = ""
 replace_node = "variable_declaration"
+is_seed_rule = false
 
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
@@ -441,6 +459,7 @@ query = """
 """
 replace = ""
 replace_node = "field_declaration"
+is_seed_rule = false
 
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
@@ -471,7 +490,7 @@ query = """
 """
 replace = ""
 replace_node = "expression_statement"
-
+is_seed_rule = false
 holes = ["variable_name", "init"]
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
@@ -501,6 +520,7 @@ query = """
 """
 replace = ""
 replace_node = "expression_statement"
+is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 [[rules.constraints]]
 matcher = "(method_declaration) @md"
@@ -546,6 +566,7 @@ query = """
 replace = "@init"
 replace_node = "identifier"
 holes = ["variable_name", "init"]
+is_seed_rule = false
 [[rules.constraints]]
 # There should exist no local variable declaration named `@identifer`
 matcher = "[(method_declaration) (constructor_declaration)] @md"
@@ -564,8 +585,9 @@ queries = ["""(
 # X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
-
+is_seed_rule = false
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
+is_seed_rule = false

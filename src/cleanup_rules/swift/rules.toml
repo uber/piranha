@@ -29,6 +29,7 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "conjunction_expression"
 replace = "@rhs"
+is_seed_rule = false
 
 #
 # Before 
@@ -50,7 +51,7 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "conjunction_expression"
 replace = "@lhs"
-
+is_seed_rule = false
 #
 # Before 
 #   true || abcd()
@@ -71,7 +72,7 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "true"
-
+is_seed_rule = false
 #   false || abcd()
 # After 
 #   abcd()
@@ -90,7 +91,7 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "@rhs"
-
+is_seed_rule = false
 
 #
 # Before 
@@ -112,6 +113,7 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "true"
+is_seed_rule = false
 
 #   abcd() || false
 # After 
@@ -131,6 +133,8 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "@lhs"
+is_seed_rule = false
+
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
 # A pattern here is - if there is an outgoing edge to B there is another to C.
@@ -138,3 +142,4 @@ replace = "@lhs"
 # X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
+is_seed_rule = false

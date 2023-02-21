@@ -202,6 +202,7 @@ class Rule:
         groups: set[str] = set(),
         holes: set[str] = set(),
         constraints: set[Constraint] = set(),
+        is_seed_rule: bool = True,
     ):
         """
         Constructs `Rule`

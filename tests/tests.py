@@ -11,6 +11,7 @@
 
 
 
+from pathlib import Path
 from polyglot_piranha import Constraint, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
 from os import listdir
@@ -85,8 +86,7 @@ def test_insert_field_add_import():
         constraints= set([
             Constraint(
                 matcher= "(class_declaration ) @c_cd",
-                queries = ["""
-                (
+                queries = ["""(
                     (field_declaration (variable_declarator name:(_) @name )) @field
                     (#eq? @name "names")
                 )"""]
@@ -101,7 +101,6 @@ def test_insert_field_add_import():
         replace="""@pkg_dcl
 import java.util.List;
 """,
-        groups= set(["Cleanup Rule"]),
         constraints= set([
             Constraint(
                 matcher= "(program ) @prgrm",
@@ -112,6 +111,7 @@ import java.util.List;
                 )"""]
             )
         ]),
+        is_seed_rule= False
     )
 
     edge1 = OutgoingEdges(
@@ -141,17 +141,27 @@ import java.util.List;
 
 def is_as_expected(path_to_scenario, output_summary):
     expected_output = join(path_to_scenario, "expected")
+    input_dir = join(path_to_scenario, "input")
     for file_name in listdir(expected_output):
         with open(join(expected_output, file_name), "r") as f:
             file_content = f.read()
             expected_content = "".join(file_content.split())
+
+            # Search for the file in the output summary
             updated_content = [
                 "".join(o.content.split())
                 for o in output_summary
                 if basename(o.path) == file_name
-            ][0]
-            if expected_content != updated_content:
-                return False
+            ]
+            # Check if the file was rewritten
+            if updated_content:
+                if expected_content != updated_content[0]:
+                    return False
+            else:
+                # The scenario where the file is not expected to be rewritten
+                original_content= Path(join(input_dir, file_name)).read_text()
+                if expected_content != "".join(original_content.split()):
+                    return False
     return True
 
 

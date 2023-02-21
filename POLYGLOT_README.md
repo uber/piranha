@@ -353,7 +353,7 @@ Each rule also contains the `groups` property, that specifies the kind of change
 cleanup will be performed by Piranha. For instance, `replace_expression_with_boolean_literal` will trigger deep cleanups to eliminate dead code (like eliminating `consequent` of a `if statement`) caused by replacing an expression with a boolean literal.
 Currently, Piranha provides deep clean-ups for edits that belong the groups - `replace_expression_with_boolean_literal`, `delete_statement`, and `delete_method`. Basically, by adding an appropriate entry to the groups, a user can hook up their rules to the pre-built cleanup rules.
 
-Adding `"Cleanup Rule"` to the `groups` which ensures that the user defined rule is treated as a cleanup rule not as a seed rule (For more details refer to `demo/find_replace_custom_cleanup`).
+Setting the `is_seed_rule=False` ensures that the user defined rule is treated as a cleanup rule not as a seed rule (For more details refer to `demo/find_replace_custom_cleanup`).
 
 A user can also define exclusion filters for a rule (`rules.constraints`). These constraints allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that occur inside static methods (For more details, refer to the `demo/match_only`).
 

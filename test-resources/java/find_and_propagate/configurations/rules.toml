@@ -39,5 +39,5 @@ query = """
 """
 replace_node = "prg"
 replace = ""
-groups = ["Cleanup Rule"]
 holes = ["class_name"]
+is_seed_rule = false

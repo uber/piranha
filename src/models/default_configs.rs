@@ -138,3 +138,7 @@ pub(crate) fn default_rule_name() -> String {
 pub(crate) fn default_rule_graph() -> RuleGraph {
   RuleGraph::default()
 }
+
+pub(crate) fn default_is_seed_rule() -> bool {
+  true
+}

@@ -241,7 +241,7 @@ impl PiranhaArgumentsBuilder {
   }
 
   fn _validate(&self) -> Result<bool, String> {
-    let _arg = self.create().unwrap();
+    let _arg: PiranhaArguments = self.create().unwrap();
     if _arg.code_snippet().is_empty() && _arg.path_to_codebase().is_empty() {
       return Err(
         "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`. 
@@ -268,20 +268,18 @@ impl PiranhaArgumentsBuilder {
 fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   // Get the built-in rule -graph for the language
   let piranha_language = _arg.language();
+
   let built_in_rules = RuleGraphBuilder::default()
     .edges(piranha_language.edges().clone().unwrap_or_default().edges)
     .rules(piranha_language.rules().clone().unwrap_or_default().rules)
     .build();
 
+  // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
+  // Get the user-defined rule graph (if any) via the Python/Rust API
+  let mut user_defined_rules = _arg.rule_graph().clone();
   // In the scenario when rules/edges are passed as toml files
-  let mut user_defined_rules = if !_arg.path_to_configurations().is_empty() {
-    read_user_config_files(_arg.path_to_configurations())
-  } else {
-    // Get the user-defined rule graph (if any) via the Python/Rust API
-    _arg.rule_graph().clone()
-  };
-  for r in user_defined_rules.rules_mut() {
-    _ = &r.add_to_seed_rules_group();
+  if !_arg.path_to_configurations().is_empty() {
+    user_defined_rules = read_user_config_files(_arg.path_to_configurations())
   }
 
   if user_defined_rules.graph().is_empty() {

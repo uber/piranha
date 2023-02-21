@@ -106,7 +106,6 @@ holes = ["str_literal"]
 # `\s*` (match zero or more empty spaces) -> `\\\\s*`
 [[rules]]
 name = "delete_empty_list_assignment"
-groups = ["Cleanup Rule"]
 query = """
 (
 (assignment
@@ -118,3 +117,4 @@ query = """
 """
 replace_node = "@assignment"
 replace = ""
+is_seed_rule = false

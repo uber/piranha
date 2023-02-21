@@ -53,9 +53,7 @@ impl RuleStore {
     };
 
     for rule in args.rule_graph().rules().clone() {
-      debug!("*** {:?}", rule);
-      if rule.is_seed_rule() {
-        debug!("Is seed rule");
+      if *rule.is_seed_rule() {
         rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, &args.input_substitutions()));
       }
     }

@@ -14,7 +14,7 @@
 # Dummy rule that acts as a junction for all boolean based cleanups
 [[rules]]
 name = "boolean_literal_cleanup"
-
+is_seed_rule = false
 # Before :
 #  !false
 # After :
@@ -36,6 +36,7 @@ query = """
 replace = "true"
 replace_node = "unary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before :
 #  !true
@@ -58,6 +59,7 @@ query = """
 replace = "false"
 replace_node = "unary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 [[rules]]
 name = "simplify_true_and_something"
@@ -73,6 +75,7 @@ query = """
 replace = "@rhs"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before :
 #  abc() && true
@@ -93,6 +96,7 @@ query = """
 replace = "@lhs"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before :
 #  false && abc()
@@ -113,6 +117,7 @@ query = """
 replace = "false"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before :
 #  abc() && false
@@ -138,6 +143,7 @@ query = """
 replace = "false"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before :
 #  something || true
@@ -164,6 +170,7 @@ query = """
 replace = "true"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before :
 #  true || abc()
@@ -184,6 +191,7 @@ query = """
 replace = "true"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before:
 #  abc() || false
@@ -204,6 +212,7 @@ query = """
 replace = "@lhs"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Before:
 #  false || abc()
@@ -223,6 +232,7 @@ query = """
 replace = "@rhs"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Simplifies equal identity comparison
 # Note that `nil == nil` is not compilable in Go, but compiles in tree-sitter
@@ -245,6 +255,7 @@ query = """
 replace = "true"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Simplifies not equal identity comparison
 # Note that `nil != nil` is not compilable in Go, but compiles in tree-sitter
@@ -267,10 +278,12 @@ query = """
 replace = "false"
 replace_node = "binary_expression"
 groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 
 # Dummy rule that acts as a junction for all statement based cleanups
 [[rules]]
 name = "statement_cleanup"
+is_seed_rule = false
 
 # Before :
 #  if (true) { doSomething(); }
@@ -300,6 +313,7 @@ query = """
 replace = "@consequence"
 replace_node = "if_statement"
 groups = ["if_cleanup"]
+is_seed_rule = false
 
 # Before :
 #  if (true) { doSomething(); } else { doSomethingElse();}
@@ -329,6 +343,7 @@ query = """
 replace = "@alternative"
 replace_node = "if_statement"
 groups = ["if_cleanup"]
+is_seed_rule = false
 
 # Before :
 #  {
@@ -364,11 +379,13 @@ query = """
 """
 replace = "@nested.statements"
 replace_node = "nested.block"
+is_seed_rule = false
 
 #####
 # Dummy rule to introduce a cycle for `delete_statement_after_return`
 [[rules]]
 name = "return_statement_cleanup"
+is_seed_rule = false
 
 # This rule is not deleting multiple statements after return.
 # Thus, we have a cycle between dummy rule `return_statement_cleanup` and `delete_statement_after_return`
@@ -388,6 +405,7 @@ query = """
 """
 replace = ""
 replace_node = "post"
+is_seed_rule = false
 
 # TODO: rules and edges for "if with short statement"
 # collect examples and write tests for it
@@ -423,7 +441,7 @@ query = """
 """
 replace = ""
 replace_node = "short_v_decl"
-
+is_seed_rule = false
 # Check if there is an assignment to @variable_name with a value other than @value
 # Note that the query is against a short_var_declaration while
 # the constraint is against an assigment_statement
@@ -455,7 +473,7 @@ query = """
 replace = "@value"
 replace_node = "identifier"
 holes = ["variable_name", "value"]
-
+is_seed_rule = false
 [[rules.constraints]]
 matcher = "(block) @block"
 queries = ["""

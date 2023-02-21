@@ -24,13 +24,10 @@ use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 use super::{
   constraint::Constraint,
   default_configs::{
-    default_constraints, default_groups, default_holes, default_query, default_replace,
-    default_replace_node, default_rule_name,
+    default_constraints, default_groups, default_holes, default_is_seed_rule, default_query,
+    default_replace, default_replace_node, default_rule_name,
   },
 };
-
-static SEED: &str = "Seed Rule";
-static CLEAN_UP: &str = "Cleanup Rule";
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 // Represents the `rules.toml` file
@@ -82,6 +79,13 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   constraints: HashSet<Constraint>,
+
+  /// Additional constraints for matching the rule
+  #[builder(default = "default_is_seed_rule()")]
+  #[serde(default = "default_is_seed_rule")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  is_seed_rule: bool,
 }
 
 impl Rule {
@@ -90,22 +94,9 @@ impl Rule {
     *self.query() == default_query() && *self.replace_node() == default_replace_node()
   }
 
-  /// Checks if `self` is a seed rule
-  pub(crate) fn is_seed_rule(&self) -> bool {
-    self.groups().contains(&SEED.to_string())
-  }
-
   /// Checks if a rule is `match-only` i.e. it has a query but no replace_node
   pub(crate) fn is_match_only_rule(&self) -> bool {
     *self.query() != default_query() && *self.replace_node() == default_replace_node()
-  }
-
-  /// Adds the rule to a new group - "SEED" if applicable.
-  pub(crate) fn add_to_seed_rules_group(&mut self) {
-    if self.groups().contains(&CLEAN_UP.to_string()) {
-      return;
-    }
-    self.groups.insert(SEED.to_string());
   }
 }
 
@@ -137,6 +128,7 @@ macro_rules! piranha_rule {
                 $(, replace_node = $replace_node:expr)?
                 $(, replace = $replace:expr)?
                 $(, holes = [$($hole: expr)*])?
+                $(, is_seed_rule = $is_seed_rule:expr)?
                 $(, groups = [$($group_name: expr)*])?
                 $(, constraints = [$($constraint:tt)*])?
               ) => {
@@ -158,7 +150,7 @@ impl Rule {
   fn py_new(
     name: String, query: String, replace: Option<String>, replace_node: Option<String>,
     holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    constraints: Option<HashSet<Constraint>>,
+    constraints: Option<HashSet<Constraint>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
     rule_builder.name(name).query(TSQuery::new(query));
@@ -180,6 +172,10 @@ impl Rule {
 
     if let Some(constraints) = constraints {
       rule_builder.constraints(constraints);
+    }
+
+    if let Some(is_seed_rule) = is_seed_rule {
+      rule_builder.is_seed_rule(is_seed_rule);
     }
 
     rule_builder.build().unwrap()

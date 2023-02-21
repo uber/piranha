@@ -224,7 +224,7 @@ fn test_consecutive_scope_level_rules() {
         )",
       replace_node = "class_body",
       replace = "{\n private String address;\n @class_members \n}",
-      groups = ["Cleanup Rule"],
+      is_seed_rule= false,
       constraints = [
         constraint! {
           matcher = "(class_declaration ) @c_cd",
