@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::{models::edit::Edit, utilities::read_toml};
+use crate::models::edit::Edit;
 
 use super::{
   default_configs::{
@@ -42,7 +42,7 @@ use serde_derive::Deserialize;
 use tree_sitter::{InputEdit, Range};
 use tree_sitter_traversal::{traverse, Order};
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Deserialize, Clone, Getters, CopyGetters, Debug, Parser, Builder)]
