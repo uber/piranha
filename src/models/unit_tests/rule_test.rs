@@ -95,7 +95,7 @@ fn test_get_edit_positive_recursive() {
   };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
-          pub void foobar(){
+          public void foobar(){
             boolean isFlagTreated = true;
             isFlagTreated = true;
             if (isFlagTreated) {
@@ -154,7 +154,7 @@ fn test_get_edit_negative_recursive() {
       ]
   };
   let source_code = "class Test {
-          pub void foobar(){
+          public void foobar(){
             boolean isFlagTreated = true;
             isFlagTreated = false;
             if (isFlagTreated) {

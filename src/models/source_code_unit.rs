@@ -70,7 +70,7 @@ impl SourceCodeUnit {
     piranha_arguments: &PiranhaArguments,
   ) -> Self {
     let ast = parser.parse(&code, None).expect("Could not parse code");
-    Self {
+    let source_code_unit = Self {
       ast,
       code,
       substitutions: substitutions.clone(),
@@ -78,7 +78,14 @@ impl SourceCodeUnit {
       rewrites: Vec::new(),
       matches: Vec::new(),
       piranha_arguments: piranha_arguments.clone(),
+    };
+    // Panic if allow dirty ast is false and the tree is syntactically incorrect
+    if !piranha_arguments.allow_dirty_ast() && source_code_unit._number_of_errors() > 0 {
+      error!("{}: {}", "Syntax Error".red(), path.to_str().unwrap().red());
+      _ = &source_code_unit._panic_for_syntax_error();
     }
+
+    source_code_unit
   }
 
   pub(crate) fn root_node(&self) -> Node<'_> {
@@ -345,20 +352,24 @@ impl SourceCodeUnit {
 
     // Panic if the number of errors increased after the edit
     if self._number_of_errors() > number_of_errors {
-      let msg = format!(
-        "Produced syntactically incorrect source code {}",
-        self.code()
-      );
-      error!("{}", msg);
-      panic!("{}", msg);
+      self._panic_for_syntax_error();
     }
     ts_edit
   }
 
-  /// Returns the number of errors, extra nodes and missing nodes in the AST
+  fn _panic_for_syntax_error(&self) {
+    let msg = format!(
+      "Produced syntactically incorrect source code {}",
+      self.code()
+    );
+    error!("{}", msg);
+    panic!("{}", msg);
+  }
+
+  /// Returns the number of errors in the AST
   fn _number_of_errors(&self) -> usize {
     traverse(self.root_node().walk(), Order::Post)
-      .filter(|node| node.has_error() || node.is_extra() || node.is_missing())
+      .filter(|node| node.has_error())
       .count()
   }
 
