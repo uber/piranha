@@ -10,15 +10,12 @@
 // limitations under the License.
 
 class SampleClass {
-    var isEnabled = TestEnum.stale_flag_one.isEnabled
-
     func sampleFunction() {
         isEnabled = TestEnum.stale_flag_one.isEnabled && v1
         isEnabled = f2() && TestEnum.stale_flag_one.isEnabled 
         isEnabled = v2 && TestEnum.stale_flag_one.isEnabled 
         isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && true)
         isEnabled = (TestEnum.stale_flag_one.isEnabled && true) && v2
-        isEnabled = !TestEnum.stale_flag_one.isEnabled
     }
 
     func checkOrTrue() {
@@ -37,9 +34,9 @@ class SampleClass {
     }
     
     func checkOrFalse() {
-        isEnabled = !TestEnum.stale_flag_one.isEnabled || f1()
-        isEnabled = !TestEnum.stale_flag_one.isEnabled || v1
-        isEnabled = f2() || !TestEnum.stale_flag_one.isEnabled 
-        isEnabled = v2 || !TestEnum.stale_flag_one.isEnabled 
+        isEnabled = placeholder_false || f1()
+        isEnabled = placeholder_false || v1
+        isEnabled = f2() || placeholder_false 
+        isEnabled = v2 || placeholder_false 
     }
 }
