@@ -158,4 +158,9 @@ class SampleClass {
     func checkGuardFalseWithAnd() {
         return
     }
+    
+    func checkTernary() {
+        var value = 2
+        var value2 = 3
+    }
 }
