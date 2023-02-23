@@ -93,4 +93,8 @@ internal class XPFlagCleanerPositiveCases {
             println("Hi world")
         }
     }
+
+    fun check_comments(a: Int, z: Int) {
+        println("Hello World!")
+    }
 }

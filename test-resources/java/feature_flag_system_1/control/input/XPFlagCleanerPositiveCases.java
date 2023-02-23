@@ -94,6 +94,14 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
+  public void check_comment_cleanup(){
+    System.out.println("Hellow World!");
+    // Should be deleted
+    if (experimentation.isFlagTreated(TestExperimentName.STALE_FLAG)) {
+      System.out.println("Hello World");
+    }
+  }
+
   public void other_api_stale_flag() {
 
     if (experimentation.isFlagTreated(TestExperimentName.STALE_FLAG)) {

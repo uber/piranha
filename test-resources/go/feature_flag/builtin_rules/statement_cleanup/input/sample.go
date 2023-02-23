@@ -115,7 +115,7 @@ func simplify_if_statement_false_comment_demo_single_comment() {
         fmt.Println("remain")
     }
     // this comment doesnt get removed but it should
-    if exp1.BoolValue("false") {
+    if exp.BoolValue("false") {
         fmt.Println("to be removed 2")
     }
 }

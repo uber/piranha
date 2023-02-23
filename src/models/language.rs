@@ -28,20 +28,28 @@ use super::{
 
 #[derive(Debug, Clone, Getters, PartialEq)]
 pub struct PiranhaLanguage {
+  /// The extension of the language FIXME: - https://github.com/uber/piranha/issues/365
   #[get = "pub"]
   name: String,
+  /// the language (enum)
   #[get = "pub"]
   supported_language: SupportedLanguage,
+  /// the language (As tree sitter model)
   #[get = "pub"]
   language: tree_sitter::Language,
+  /// Built-in rules for the language
   #[get = "pub(crate)"]
   rules: Option<Rules>,
+  /// Built-in edges for the language
   #[get = "pub(crate)"]
   edges: Option<Edges>,
+  /// Scope configurations for the language
   #[get = "pub(crate)"]
   scopes: Vec<ScopeGenerator>,
+  /// The node kinds to be considered when reasoning about comments
   #[get = "pub"]
   comment_nodes: Vec<String>,
+  /// The node kinds to be ignored when reasoning about comments
   #[get = "pub"]
   ignore_nodes_for_comments: Vec<String>,
 }
