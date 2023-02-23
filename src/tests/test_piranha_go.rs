@@ -33,7 +33,7 @@ create_rewrite_tests! {
     substitutions= substitutions! {
       "treated" => "true",
       "treated_complement" => "false"
-    };
+    }, cleanup_comments = true;
   test_const_same_file: "feature_flag/system_1/const_same_file", 1,
     substitutions= substitutions! {
       "stale_flag_name" => "staleFlag",

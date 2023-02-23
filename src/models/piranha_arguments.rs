@@ -386,6 +386,13 @@ impl SourceCodeUnit {
       .unwrap_or_else(|| self.root_node());
 
     for node in traverse(node.walk(), Order::Post) {
+      if self
+        .piranha_arguments()
+        .language()
+        .should_ignore_node_for_comment(&node)
+      {
+        continue;
+      }
       if node.start_position().row == row || node.end_position().row == row {
         relevant_nodes_found = true;
         let is_comment: bool = self

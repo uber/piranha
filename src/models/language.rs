@@ -15,7 +15,7 @@ use std::str::FromStr;
 
 use getset::Getters;
 use serde_derive::Deserialize;
-use tree_sitter::{Parser, Query};
+use tree_sitter::{Node, Parser, Query};
 
 use crate::utilities::parse_toml;
 
@@ -42,6 +42,8 @@ pub struct PiranhaLanguage {
   scopes: Vec<ScopeGenerator>,
   #[get = "pub"]
   comment_nodes: Vec<String>,
+  #[get = "pub"]
+  ignore_nodes_for_comments: Vec<String>,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]
@@ -64,6 +66,13 @@ impl Default for SupportedLanguage {
 impl PiranhaLanguage {
   pub fn is_comment(&self, kind: String) -> bool {
     self.comment_nodes().contains(&kind)
+  }
+
+  pub fn should_ignore_node_for_comment(&self, node: &Node) -> bool {
+    node.end_byte() - node.start_byte() == 1
+      || self
+        .ignore_nodes_for_comments()
+        .contains(&node.kind().to_string())
   }
 
   pub fn create_query(&self, query_str: String) -> Query {
@@ -132,6 +141,7 @@ impl std::str::FromStr for PiranhaLanguage {
           .scopes()
           .to_vec(),
           comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
+          ignore_nodes_for_comments: vec![],
         })
       }
       GO => {
@@ -147,6 +157,7 @@ impl std::str::FromStr for PiranhaLanguage {
             .scopes()
             .to_vec(),
           comment_nodes: vec!["comment".to_string()],
+          ignore_nodes_for_comments: vec!["block".to_string(), "statement_list".to_string()],
         })
       }
       KOTLIN => {
@@ -162,6 +173,7 @@ impl std::str::FromStr for PiranhaLanguage {
             .scopes()
             .to_vec(),
           comment_nodes: vec!["comment".to_string()],
+          ignore_nodes_for_comments: vec![],
         })
       }
       PYTHON => Ok(PiranhaLanguage {
@@ -172,6 +184,7 @@ impl std::str::FromStr for PiranhaLanguage {
         edges: None,
         scopes: vec![],
         comment_nodes: vec![],
+        ignore_nodes_for_comments: vec![],
       }),
       SWIFT => {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/swift/rules.toml"));
@@ -188,6 +201,7 @@ impl std::str::FromStr for PiranhaLanguage {
           comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
           rules: Some(rules),
           edges: Some(edges),
+          ignore_nodes_for_comments: vec![],
         })
       }
       TYPESCRIPT => Ok(PiranhaLanguage {
@@ -198,6 +212,7 @@ impl std::str::FromStr for PiranhaLanguage {
         edges: None,
         scopes: vec![],
         comment_nodes: vec![],
+        ignore_nodes_for_comments: vec![],
       }),
       TSX => Ok(PiranhaLanguage {
         name: language.to_string(),
@@ -207,6 +222,7 @@ impl std::str::FromStr for PiranhaLanguage {
         edges: None,
         scopes: vec![],
         comment_nodes: vec![],
+        ignore_nodes_for_comments: vec![],
       }),
       _ => Err("Language not supported"),
     }
