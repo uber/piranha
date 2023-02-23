@@ -407,6 +407,31 @@ replace_node = "guard_block"
 replace = ""
 is_seed_rule = false
 
+#
+# Before
+#   guard false else {
+#       return f1()
+#   }
+#   f2()
+# After 
+#   return f1()
+#   f2()
+#
+[[rules]]
+name = "guard_always_false"
+query = """(
+(guard_statement
+    condition: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    (statements) @else_block
+    ) @guard_block
+(#eq? @false "false")
+)"""
+groups = ["guard_cleanup"]
+replace_node = "guard_block"
+replace = "@else_block"
+is_seed_rule = false
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 

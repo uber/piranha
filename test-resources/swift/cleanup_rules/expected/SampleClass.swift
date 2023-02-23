@@ -151,4 +151,11 @@ class SampleClass {
     func checkGaurdTrueWithAnd() {
         f1()
     }
+    func checkGuardFalse() {
+        return
+    }
+
+    func checkGuardFalseWithAnd() {
+        return
+    }
 }

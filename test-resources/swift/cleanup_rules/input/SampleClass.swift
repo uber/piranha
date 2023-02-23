@@ -197,4 +197,15 @@ class SampleClass {
         }
         f1()
     }
+    func checkGuardFalse() {
+        guard placeholder_false || false else {
+            return
+        }
+    }
+
+    func checkGuardFalseWithAnd() {
+        guard placeholder_false && true else {
+            return
+        }
+    }
 }
