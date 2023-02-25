@@ -72,7 +72,6 @@ func simplify_if_statement_false_comment_demo_single_comment() {
 
 func simplify_if_statement_false_comment_demo_double_comment() {
     fmt.Println("remain")
-    // this comment doesnt get removed
 }
 
 func simplify_if_statement_false_comment_demo_multiline_comment() {

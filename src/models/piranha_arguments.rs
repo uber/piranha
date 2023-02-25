@@ -275,7 +275,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 
   // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
   // Get the user-defined rule graph (if any) via the Python/Rust API
-  let mut user_defined_rules = _arg.rule_graph().clone();
+  let mut user_defined_rules: RuleGraph = _arg.rule_graph().clone();
   // In the scenario when rules/edges are passed as toml files
   if !_arg.path_to_configurations().is_empty() {
     user_defined_rules = read_user_config_files(_arg.path_to_configurations())
@@ -331,20 +331,13 @@ mod piranha_arguments_test;
 impl SourceCodeUnit {
   /// Delete the comment associated to the deleted code element
   pub(crate) fn _delete_associated_comment(
-    &mut self, edit: &Edit, applied_edit: &mut InputEdit, parser: &mut tree_sitter::Parser,
-  ) {
-    // Check if the edit kind is "DELETE something"
-    if *self.piranha_arguments().cleanup_comments() && edit.replacement_string().is_empty() {
-      let deleted_at = edit.p_match().range().start_point.row;
-      if let Some(comment_range) = self._get_comment_at_line(
-        deleted_at,
-        *self.piranha_arguments().cleanup_comments_buffer(),
-        edit.p_match().range().start_byte,
-      ) {
-        debug!("Deleting an associated comment");
-        *applied_edit = self._apply_edit(&Edit::delete_range(self.code(), comment_range), parser);
-      }
+    &mut self, edit: &Edit, parser: &mut tree_sitter::Parser,
+  ) -> Option<InputEdit> {
+    if let Some(comment_range) = self._get_nearest_comment_range(edit, 0) {
+      debug!("Deleting an associated comment");
+      return Some(self.apply_edit(&Edit::delete_range(self.code(), comment_range), parser));
     }
+    None
   }
 
   /// Replaces three consecutive newline characters with two

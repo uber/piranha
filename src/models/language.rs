@@ -22,6 +22,7 @@ use crate::utilities::parse_toml;
 
 use super::{
   default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT},
+  edit::Edit,
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
@@ -251,7 +252,7 @@ impl SourceCodeUnit {
   /// This function reports the range of the comment associated to the deleted element.
   ///
   /// # Arguments:
-  /// * row : The row number where the deleted element started
+  /// * delete_edit : The edit that deleted the element
   /// * buffer: Number of lines that we want to look up to find associated comment
   ///
   /// # Algorithm :
@@ -272,9 +273,11 @@ impl SourceCodeUnit {
   /// * return the range of the comment
   /// If the [row] has no node that either starts/ends there:
   /// * recursively call this method for [row] -1 (until buffer is positive)
-  pub(crate) fn _get_comment_at_line(
-    &mut self, row: usize, buffer: usize, start_byte: usize,
+  pub(crate) fn _get_nearest_comment_range(
+    &mut self, delete_edit: &Edit, buffer: usize,
   ) -> Option<Range> {
+    let start_byte = delete_edit.p_match().range().start_byte;
+    let row = delete_edit.p_match().range().start_point.row - buffer;
     // Get all nodes that start or end on `updated_row`.
     let mut relevant_nodes_found = false;
     let mut relevant_nodes_are_comments = true;
@@ -307,10 +310,10 @@ impl SourceCodeUnit {
       if relevant_nodes_are_comments {
         return comment_range;
       }
-    } else if buffer > 0 {
+    } else if buffer <= *self.piranha_arguments().cleanup_comments_buffer() {
       // We pass [start_byte] itself, because we know that parent of the current row is the parent of the above row too.
       // If that's not the case, its okay, because we will not find any comments in these scenarios.
-      return self._get_comment_at_line(row - 1, buffer - 1, start_byte);
+      return self._get_nearest_comment_range(delete_edit, buffer + 1);
     }
     None
   }

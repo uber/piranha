@@ -68,6 +68,10 @@ impl Edit {
       matched_rule: "Delete Range".to_string(),
     }
   }
+
+  pub(crate) fn is_delete(&self) -> bool {
+    self.replacement_string.trim().is_empty()
+  }
 }
 
 impl fmt::Display for Edit {
