@@ -114,7 +114,7 @@ func simplify_if_statement_false_comment_demo_single_comment() {
     } else {
         fmt.Println("remain")
     }
-    // this comment doesnt get removed but it should
+    // this comment will be deleted
     if exp.BoolValue("false") {
         fmt.Println("to be removed 2")
     }
@@ -127,8 +127,8 @@ func simplify_if_statement_false_comment_demo_double_comment() {
     } else {
         fmt.Println("remain")
     }
-    // this comment doesnt get removed
-    // this comment does get removed - but only if theres another comment above it
+    // these comments
+    // will be deleted
     if exp.BoolValue("false") {
         fmt.Println("to be removed 2")
     }
@@ -155,7 +155,7 @@ func simplify_if_statement_false_comment_demo_multiline_comment_one_line() {
     } else {
         fmt.Println("remain")
     }
-    /* this comment doesnt get removed */
+    /* this comment will be deleted */
     if exp.BoolValue("false") {
         fmt.Println("to be removed 2")
     }

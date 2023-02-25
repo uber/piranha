@@ -24,6 +24,7 @@ use super::{
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
+  source_code_unit::SourceCodeUnit,
 };
 
 #[derive(Debug, Clone, Getters, PartialEq)]
@@ -46,10 +47,10 @@ pub struct PiranhaLanguage {
   /// Scope configurations for the language
   #[get = "pub(crate)"]
   scopes: Vec<ScopeGenerator>,
-  /// The node kinds to be considered when reasoning about comments
+  /// The node kinds to be considered when searching for comments
   #[get = "pub"]
   comment_nodes: Vec<String>,
-  /// The node kinds to be ignored when reasoning about comments
+  /// The node kinds to be ignored when searching for comments
   #[get = "pub"]
   ignore_nodes_for_comments: Vec<String>,
 }
@@ -72,17 +73,6 @@ impl Default for SupportedLanguage {
 }
 
 impl PiranhaLanguage {
-  pub fn is_comment(&self, kind: String) -> bool {
-    self.comment_nodes().contains(&kind)
-  }
-
-  pub fn should_ignore_node_for_comment(&self, node: &Node) -> bool {
-    node.end_byte() - node.start_byte() == 1
-      || self
-        .ignore_nodes_for_comments()
-        .contains(&node.kind().to_string())
-  }
-
   pub fn create_query(&self, query_str: String) -> Query {
     let query = Query::new(self.language, query_str.as_str());
     if let Ok(q) = query {
@@ -234,5 +224,26 @@ impl std::str::FromStr for PiranhaLanguage {
       }),
       _ => Err("Language not supported"),
     }
+  }
+}
+
+impl SourceCodeUnit {
+  /// Checks if the given node kind is a comment in the language (i.e. &self)
+  pub(crate) fn is_comment(&self, kind: String) -> bool {
+    self
+      .piranha_arguments()
+      .language()
+      .comment_nodes()
+      .contains(&kind)
+  }
+
+  /// Checks if the given node should be ignored when searching comments
+  pub(crate) fn should_ignore_node_for_comment_search(&self, node: Node) -> bool {
+    node.end_byte() - node.start_byte() == 1
+      || self
+        .piranha_arguments()
+        .language()
+        .ignore_nodes_for_comments()
+        .contains(&node.kind().to_string())
   }
 }

@@ -385,20 +385,17 @@ impl SourceCodeUnit {
       .descendant_for_byte_range(start_byte, start_byte)
       .unwrap_or_else(|| self.root_node());
 
+    // Search for all nodes starting/ending in the current row.
+    // if it is not amongst the `language.ignore_node_for_comment`, then check if it is a comment
+    // If the node is a comment, then return its range
     for node in traverse(node.walk(), Order::Post) {
-      if self
-        .piranha_arguments()
-        .language()
-        .should_ignore_node_for_comment(&node)
-      {
+      if self.should_ignore_node_for_comment_search(node) {
         continue;
       }
+
       if node.start_position().row == row || node.end_position().row == row {
         relevant_nodes_found = true;
-        let is_comment: bool = self
-          .piranha_arguments()
-          .language()
-          .is_comment(node.kind().to_string());
+        let is_comment: bool = self.is_comment(node.kind().to_string());
         relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
         if is_comment {
           comment_range = Some(node.range());
