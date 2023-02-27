@@ -36,3 +36,8 @@ to = ["if_cleanup"]
 scope = "Parent"
 from = "statement_cleanup"
 to = ["guard_cleanup"]
+
+[[edges]]
+scope = "Class"
+from = "enum_entry_cleanup"
+to = ["enum_entry_cleanup_from_variable"]

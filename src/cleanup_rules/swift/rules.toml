@@ -431,6 +431,137 @@ query = """(
 groups = ["guard_cleanup"]
 replace_node = "guard_block"
 replace = "@else_block"
+
+# Next 3 rules cleanup an enum entry from all variables of the enum
+# These 3 rules depend on order of the rules in this file
+
+#
+# for @stale_flag = one
+# Before
+# enum TestEnum {
+#    var v1: String {
+#        switch self {
+#        case .one:
+#            return "one"
+#        }
+#    }
+# }   
+#
+# After
+# enum TestEnum {
+#    var v1: String {
+#        switch self {
+#        }
+#    }
+# }  
+[[rules]]
+name = "delete_enum_variable_switch"
+query = """(
+(enum_class_body
+    (property_declaration
+        computed_value: (computed_property
+            (statements
+                (switch_statement
+                    expr: (self_expression)
+                    (switch_entry
+                        (switch_pattern
+                            (pattern
+                                (simple_identifier) @switch_case))@switch_pattern)@switch_entry)))))
+
+(#eq? @switch_case "@stale_flag")
+)"""
+replace_node = "switch_entry"
+replace = ""
+holes = ["stale_flag"]
+groups = ["enum_entry_cleanup_from_variable"]
+is_seed_rule = false
+
+#
+# for @stale_flag = one
+# Before
+# enum TestEnum {
+#    var v1: String {
+#        switch self {
+#        case .two, .one:
+#            return "one"
+#        }
+#    }
+# }   
+#
+# After
+# enum TestEnum {
+#    var v1: String {
+#        switch self {
+#        case .two, .two:
+#            return "one"
+#        }
+#    }
+# }  
+[[rules]]
+name = "delete_enum_variable_switch_previous_available"
+query = """(
+(enum_class_body
+    (property_declaration
+        computed_value: (computed_property
+            (statements
+                (switch_statement
+                    expr: (self_expression)
+                    (switch_entry
+                        .(switch_pattern) @previous_pattern
+                        (switch_pattern
+                            (pattern
+                                (simple_identifier) @switch_case))@switch_pattern))))))
+
+(#eq? @switch_case "@stale_flag")
+)"""
+replace_node = "switch_pattern"
+replace = ""
+holes = ["stale_flag"]
+groups = ["enum_entry_cleanup_from_variable"]
+is_seed_rule = false
+
+#
+# for @stale_flag = one
+# Before
+# enum TestEnum {
+#    var v1: String {
+#        switch self {
+#        case .one, .two:
+#            return "one"
+#        }
+#    }
+# }   
+#
+# After
+# enum TestEnum {
+#    var v1: String {
+#        switch self {
+#        case .two:
+#            return "one"
+#        }
+#    }
+# }
+[[rules]]
+name = "delete_enum_variable_switch_next_available"
+query = """(
+(enum_class_body
+    (property_declaration
+        computed_value: (computed_property
+            (statements
+                (switch_statement
+                    expr: (self_expression)
+                    (switch_entry
+                        (switch_pattern
+                            (pattern
+                                (simple_identifier) @switch_case))@switch_pattern
+                        .(switch_pattern) @next_pattern))))))
+
+(#eq? @switch_case "@stale_flag")
+)"""
+replace_node = "switch_pattern"
+replace = ""
+holes = ["stale_flag"]
+groups = ["enum_entry_cleanup_from_variable"]
 is_seed_rule = false
 
 # Dummy rule that acts as a junction for all boolean based cleanups
