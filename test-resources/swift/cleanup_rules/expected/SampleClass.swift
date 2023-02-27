@@ -47,9 +47,40 @@ class SampleClass {
         isEnabled = false
     }
     
-     func checkNotCondition() {
+    func checkNotCondition() {
         isEnabled = v2
         isEnabled = v2
         isEnabled = v2
+    }
+
+    func checkIfTrueCleanup() {
+        f1()
+        f2()  
+        
+        if isEnabled {
+            f2()
+        } else {
+            f3()
+        }  
+
+        if isEnabled {
+            f2()
+        } else {
+            f3()
+        } 
+
+        if isEnabled {
+            f2()
+        } else if isDisabled {
+            f3()
+        } else {
+            f4()
+        } 
+
+        if isEnabled {
+            f2()
+        } else  {
+            f4()
+        } 
     }
 }

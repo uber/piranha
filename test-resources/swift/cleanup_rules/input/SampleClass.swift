@@ -52,4 +52,45 @@ class SampleClass {
         isEnabled = (TestEnum.stale_flag_one.isEnabled && !false) && v2
         isEnabled = v2 || (placeholder_false || !true)
     } 
+
+    func checkIfTrueCleanup() {
+        f1()
+        if TestEnum.stale_flag_one.isEnabled {
+            f2()
+        }
+
+        if isEnabled {
+            f2()
+        } else if TestEnum.stale_flag_one.isEnabled {
+            f3()
+        } 
+
+        if isEnabled {
+            f2()
+        } else if TestEnum.stale_flag_one.isEnabled {
+            f3()
+        } else {
+            f4()
+        } 
+
+        if isEnabled {
+            f2()
+        } else if isDisabled {
+            f3()
+        } else if TestEnum.stale_flag_one.isEnabled {
+            f4()
+        } else {
+            f5()
+        }
+
+        if isEnabled {
+            f2()
+        }  else if TestEnum.stale_flag_one.isEnabled {
+            f4()
+        } else if isDisabled {
+            f3()
+        } else {
+            f5()
+        }
+    }
 }
