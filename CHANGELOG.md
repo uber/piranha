@@ -16,3 +16,12 @@ Version 0.2.1
 * Support for structural match/replace (with chaining) for Go [#256]
 * Support for structural match/replace (with chaining) for TS / TSX [#260]
 * Improve documentation [#261, #259, #258, #257]
+
+
+Version 0.3.0
+-------------
+* Introduce Feature flag cleanup for Go and Swift 
+* Introduce a Python / Rust API for defining rules, edges and the arguments 
+* Introduce code snippet mode 
+* Improvements for the command line interface 
+* Bug fixes
