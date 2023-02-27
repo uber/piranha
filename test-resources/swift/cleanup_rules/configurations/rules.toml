@@ -40,6 +40,33 @@ groups = ["replace_expression_with_boolean_literal"]
 #
 # For @stale_flag_name = stale_flag and @treated = true
 # Before 
+#   !TestEnum.stale_flag.isEnabled
+# After 
+#   false
+#
+
+[[rules]]
+name = "replace_isToggleDisabled_with_boolean_literal"
+query = """(
+(navigation_expression
+        target: (navigation_expression
+            target: (prefix_expression
+                operation: (bang))
+            suffix: (navigation_suffix
+                suffix: (simple_identifier) @param))
+        suffix: (navigation_suffix
+            suffix: (simple_identifier) @access_identifier)) @parameter_access
+(#eq? @param "@stale_flag")
+(#eq? @access_identifier "isEnabled")
+)"""
+replace_node = "parameter_access"
+replace = "@treated_complement"
+holes = ["stale_flag", "treated_complement"]
+groups = ["replace_expression_with_boolean_literal"]
+
+#
+# For @stale_flag_name = stale_flag and @treated = true
+# Before 
 #   placeholder_false
 # After 
 #   false

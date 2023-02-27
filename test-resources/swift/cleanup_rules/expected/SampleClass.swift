@@ -83,4 +83,64 @@ class SampleClass {
             f4()
         } 
     }
+    
+    func checkIfFalse() {
+        f2()
+
+        if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+        
+        }
+    }
+
+    func checkIfLetFalse() {
+        f2()
+
+        if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+        
+        }
+    }
 }
