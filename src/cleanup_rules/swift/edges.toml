@@ -31,3 +31,8 @@ to = ["boolean_literal_cleanup"]
 scope = "File"
 from = "statement_cleanup"
 to = ["if_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "statement_cleanup"
+to = ["guard_cleanup"]
