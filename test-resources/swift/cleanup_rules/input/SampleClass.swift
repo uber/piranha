@@ -46,4 +46,10 @@ class SampleClass {
         isEnabled = f2() && placeholder_false 
         isEnabled = v2 && placeholder_false 
     }
+    
+    func checkNotCondition() {
+        isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && !false)
+        isEnabled = (TestEnum.stale_flag_one.isEnabled && !false) && v2
+        isEnabled = v2 || (placeholder_false || !true)
+    } 
 }

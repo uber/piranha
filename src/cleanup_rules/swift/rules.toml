@@ -118,6 +118,7 @@ replace_node = "disjunction_expression"
 replace = "true"
 is_seed_rule = false
 
+#
 # Before
 #   abcd() || false
 # After 
@@ -163,6 +164,28 @@ is_seed_rule = false
 
 #
 # Before 
+#   !true
+# After 
+#   false
+#
+[[rules]]
+name = "not_true"
+query = """(
+(prefix_expression
+        operation: (bang)
+        target: [(boolean_literal) @true
+            (tuple_expression
+                value: (boolean_literal) @true)]
+        ) @not_expression
+(#eq? @true "true")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "not_expression"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before 
 #   abcd && false
 # After 
 #   false
@@ -184,6 +207,28 @@ query = """(
 groups = ["boolean_expression_simplify"]
 replace_node = "conjunction_expression"
 replace = "false"
+is_seed_rule = false
+
+#
+# Before
+#   !false
+# After
+#   true
+#
+[[rules]]
+name = "not_false"
+query = """(
+(prefix_expression
+        operation: (bang)
+        target: [(boolean_literal) @false
+            (tuple_expression
+                value: (boolean_literal) @false)]
+    ) @not_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "not_expression"
+replace = "true"
 is_seed_rule = false
 
 # Dummy rule that acts as a junction for all boolean based cleanups
