@@ -38,8 +38,7 @@ use pyo3::{
   types::PyDict,
 };
 use regex::Regex;
-use tree_sitter::{InputEdit, Range};
-use tree_sitter_traversal::{traverse, Order};
+use tree_sitter::InputEdit;
 
 use std::collections::HashMap;
 
@@ -276,7 +275,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 
   // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
   // Get the user-defined rule graph (if any) via the Python/Rust API
-  let mut user_defined_rules = _arg.rule_graph().clone();
+  let mut user_defined_rules: RuleGraph = _arg.rule_graph().clone();
   // In the scenario when rules/edges are passed as toml files
   if !_arg.path_to_configurations().is_empty() {
     user_defined_rules = read_user_config_files(_arg.path_to_configurations())
@@ -331,82 +330,40 @@ mod piranha_arguments_test;
 // Implements instance methods related to applying the user options provided in  piranha arguments
 impl SourceCodeUnit {
   /// Delete the comment associated to the deleted code element
+  ///
+  /// From `apply_edit` we call `_delete_associated_comment` and from `_delete_associated_comment` we recursively call `apply_edit`.
+  /// This ensures that can delete a series of comments.
+  ///
+  /// Let's say `apply_edit` deletes `int foo` in the below example.
+  /// ```ignore
+  /// // some
+  /// // comment
+  /// int foo;
+  /// ```
+  ///
+  /// becomes
+  ///
+  /// ```ignore
+  /// // some
+  /// // comment
+  /// ```
+  ///
+  /// now `_delete_associated_comment` is triggered, and now we produce
+  /// ```ignore
+  /// // some
+  /// ```
+  ///
+  /// Since `_delete_associated_comment` is effectively called recursively
+  ///
+  /// ```ignore
+  /// <all comments are deleted>
+  /// ```
   pub(crate) fn _delete_associated_comment(
-    &mut self, edit: &Edit, applied_edit: &mut InputEdit, parser: &mut tree_sitter::Parser,
-  ) {
-    // Check if the edit kind is "DELETE something"
-    if *self.piranha_arguments().cleanup_comments() && edit.replacement_string().is_empty() {
-      let deleted_at = edit.p_match().range().start_point.row;
-      if let Some(comment_range) = self._get_comment_at_line(
-        deleted_at,
-        *self.piranha_arguments().cleanup_comments_buffer(),
-        edit.p_match().range().start_byte,
-      ) {
-        debug!("Deleting an associated comment");
-        *applied_edit = self._apply_edit(&Edit::delete_range(self.code(), comment_range), parser);
-      }
-    }
-  }
-
-  /// This function reports the range of the comment associated to the deleted element.
-  ///
-  /// # Arguments:
-  /// * row : The row number where the deleted element started
-  /// * buffer: Number of lines that we want to look up to find associated comment
-  ///
-  /// # Algorithm :
-  /// Get all the nodes that either start and end at [row]
-  /// If **all** nodes are comments
-  /// * return the range of the comment
-  /// If the [row] has no node that either starts/ends there:
-  /// * recursively call this method for [row] -1 (until buffer is positive)
-  /// This function reports the range of the comment associated to the deleted element.
-  ///
-  /// # Arguments:
-  /// * row : The row number where the deleted element started
-  /// * buffer: Number of lines that we want to look up to find associated comment
-  ///
-  /// # Algorithm :
-  /// Get all the nodes that either start and end at [row]
-  /// If **all** nodes are comments
-  /// * return the range of the comment
-  /// If the [row] has no node that either starts/ends there:
-  /// * recursively call this method for [row] -1 (until buffer is positive)
-  fn _get_comment_at_line(
-    &mut self, row: usize, buffer: usize, start_byte: usize,
-  ) -> Option<Range> {
-    // Get all nodes that start or end on `updated_row`.
-    let mut relevant_nodes_found = false;
-    let mut relevant_nodes_are_comments = true;
-    let mut comment_range = None;
-    // Since the previous edit was a delete, the start and end of the replacement range is [start_byte].
-    let node = self
-      .root_node()
-      .descendant_for_byte_range(start_byte, start_byte)
-      .unwrap_or_else(|| self.root_node());
-
-    for node in traverse(node.walk(), Order::Post) {
-      if node.start_position().row == row || node.end_position().row == row {
-        relevant_nodes_found = true;
-        let is_comment: bool = self
-          .piranha_arguments()
-          .language()
-          .is_comment(node.kind().to_string());
-        relevant_nodes_are_comments = relevant_nodes_are_comments && is_comment;
-        if is_comment {
-          comment_range = Some(node.range());
-        }
-      }
-    }
-
-    if relevant_nodes_found {
-      if relevant_nodes_are_comments {
-        return comment_range;
-      }
-    } else if buffer > 0 {
-      // We pass [start_byte] itself, because we know that parent of the current row is the parent of the above row too.
-      // If that's not the case, its okay, because we will not find any comments in these scenarios.
-      return self._get_comment_at_line(row - 1, buffer - 1, start_byte);
+    &mut self, edit: &Edit, parser: &mut tree_sitter::Parser,
+  ) -> Option<InputEdit> {
+    if let Some(comment_range) = self._get_nearest_comment_range(edit, 0) {
+      debug!("Deleting an associated comment");
+      return Some(self.apply_edit(&Edit::delete_range(self.code(), comment_range), parser));
     }
     None
   }

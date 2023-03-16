@@ -313,13 +313,6 @@ impl SourceCodeUnit {
     self.perform_delete_consecutive_new_lines();
   }
 
-  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
-    // Get the tree_sitter's input edit representation
-    let mut applied_edit = self._apply_edit(edit, parser);
-    self._delete_associated_comment(edit, &mut applied_edit, parser);
-    applied_edit
-  }
-
   /// Applies an edit to the source code unit
   /// # Arguments
   /// * `replace_range` - the range of code to be replaced
@@ -330,24 +323,30 @@ impl SourceCodeUnit {
   /// The `edit:InputEdit` performed.
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
-  pub(crate) fn _apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
-    let mut edit_to_apply = edit.clone();
+  pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
+    let mut edit: Edit = edit.clone();
     // Check if the edit is a `Delete` operation then delete trailing comma
-    if edit.replacement_string().trim().is_empty() {
-      edit_to_apply = self.delete_trailing_comma(edit);
+    if edit.is_delete() {
+      edit = self.delete_trailing_comma(&edit);
     }
     // Get the tree_sitter's input edit representation
-    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), &edit_to_apply);
+    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), &edit);
     // Apply edit to the tree
     self.ast.edit(&ts_edit);
     self._replace_file_contents_and_re_parse(&new_source_code, parser, true);
-    if self.ast.root_node().has_error() {
+    if self.root_node().has_error() {
       let msg = format!(
         "Produced syntactically incorrect source code {}",
         self.code()
       );
       error!("{}", msg);
       panic!("{}", msg);
+    }
+    // Check if the edit is a `Delete` operation then delete associated comment
+    if edit.is_delete() && *self.piranha_arguments().cleanup_comments() {
+      if let Some(deleted_comment) = self._delete_associated_comment(&edit, parser) {
+        return deleted_comment;
+      }
     }
     ts_edit
   }
