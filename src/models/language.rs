@@ -57,8 +57,9 @@ pub struct PiranhaLanguage {
   ignore_nodes_for_comments: Vec<String>,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Default)]
 pub enum SupportedLanguage {
+  #[default]
   Java,
   Kotlin,
   Go,
@@ -66,12 +67,6 @@ pub enum SupportedLanguage {
   Ts,
   Tsx,
   Python,
-}
-
-impl Default for SupportedLanguage {
-  fn default() -> Self {
-    SupportedLanguage::Java
-  }
 }
 
 impl PiranhaLanguage {
