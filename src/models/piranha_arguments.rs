@@ -330,6 +330,34 @@ mod piranha_arguments_test;
 // Implements instance methods related to applying the user options provided in  piranha arguments
 impl SourceCodeUnit {
   /// Delete the comment associated to the deleted code element
+  ///
+  /// From `apply_edit` we call `_delete_associated_comment` and from `_delete_associated_comment` we recursively call `apply_edit`.
+  /// This ensures that can delete a series of comments.
+  ///
+  /// Let's say `apply_edit` deletes `int foo` in the below example.
+  /// ```
+  /// // some
+  /// // comment
+  /// int foo;
+  /// ```
+  ///
+  /// becomes
+  ///
+  /// ```
+  /// // some
+  /// // comment
+  /// ```
+  ///
+  /// now `_delete_associated_comment` is triggered, and now we produce
+  /// ```
+  /// // some
+  /// ```
+  ///
+  /// Since `_delete_associated_comment` is effectively called recursively
+  ///
+  /// ```
+  /// <all comments are deleted>
+  /// ```
   pub(crate) fn _delete_associated_comment(
     &mut self, edit: &Edit, parser: &mut tree_sitter::Parser,
   ) -> Option<InputEdit> {
