@@ -52,6 +52,7 @@ groups = ["boolean_expression_simplify"]
 replace_node = "conjunction_expression"
 replace = "@lhs"
 is_seed_rule = false
+
 #
 # Before 
 #   true || abcd()
@@ -73,6 +74,8 @@ groups = ["boolean_expression_simplify"]
 replace_node = "disjunction_expression"
 replace = "true"
 is_seed_rule = false
+
+#
 #   false || abcd()
 # After 
 #   abcd()
@@ -115,6 +118,8 @@ replace_node = "disjunction_expression"
 replace = "true"
 is_seed_rule = false
 
+#
+# Before
 #   abcd() || false
 # After 
 #   abcd()
@@ -135,6 +140,299 @@ replace_node = "disjunction_expression"
 replace = "@lhs"
 is_seed_rule = false
 
+#
+# Before 
+#   false && abcd()
+# After 
+#   false
+#
+[[rules]]
+name = "false_and_something"
+query = """(
+(conjunction_expression
+        lhs: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+        rhs: (_) 
+    ) @conjunction_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "conjunction_expression"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before 
+#   !true
+# After 
+#   false
+#
+[[rules]]
+name = "not_true"
+query = """(
+(prefix_expression
+        operation: (bang)
+        target: [(boolean_literal) @true
+            (tuple_expression
+                value: (boolean_literal) @true)]
+        ) @not_expression
+(#eq? @true "true")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "not_expression"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before 
+#   abcd && false
+# After 
+#   false
+#
+# Note that this rule only applies when the lhs of the conjunction is an identifier. 
+# In other scenarios (i.e. is a method invocation or some other expression) we would not simplify at all, as:
+# such expressions could have side effects
+[[rules]]
+name = "some_identifier_and_false"
+query = """(
+(conjunction_expression
+        lhs: (simple_identifier) 
+        rhs: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    ) @conjunction_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "conjunction_expression"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before
+#   !false
+# After
+#   true
+#
+[[rules]]
+name = "not_false"
+query = """(
+(prefix_expression
+        operation: (bang)
+        target: [(boolean_literal) @false
+            (tuple_expression
+                value: (boolean_literal) @false)]
+    ) @not_expression
+(#eq? @false "false")
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "not_expression"
+replace = "true"
+is_seed_rule = false
+
+#
+# Next two rules take care of if-else cleanup, these 2 rules depend on their order in this file
+# 
+
+#
+# Before 
+#   if true {
+#     abcd()
+#   } else {
+#     hij()
+#   }
+# After 
+#   abcd()
+#
+[[rules]]
+name = "if_always_true"
+query = """ (
+(if_statement
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    ) @if_else_block
+(#eq? @condition_literal "true")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = "@if_block"
+is_seed_rule = false
+
+#
+# Before 
+#   else if true {
+#     abcd()
+#   } else {
+#     hij()
+#   }
+# After 
+#   abcd()
+#
+[[rules]]
+name = "else_if_always_true"
+query = """ (
+(else)
+(if_statement
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    ) @if_else_block
+(#eq? @condition_literal "true")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = "{ @if_block }"
+is_seed_rule = false
+
+# Order of next 3 rules should not be changed as, we depend on order to clean if always false cases.
+# Before 
+#   if false {
+#     abcd()
+#   } 
+#   hij()
+# After 
+#   hij()
+# 
+[[rules]]
+name = "if_always_false"
+query = """(  
+(if_statement
+    bound_identifier: (_)?
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    [(statements) (if_statement)]? @alternatives 
+    ) @if_else_block
+(#eq? @condition_literal "false")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = "@alternatives"
+is_seed_rule = false
+
+
+# Before 
+#   if v1 {
+#       f1()
+#   } else if false {
+#       f2()
+#   } else {
+#       f3()
+#   }
+#   f4()
+# After 
+#   if v1 {
+#       f1()
+#   } else {
+#       f3()
+#   }
+#   f4()
+[[rules]]
+name = "else_if_always_false_followed_by_else"
+query = """(  
+(else)
+(if_statement
+    bound_identifier: (_)?
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    (statements)? @alternatives 
+    ) @if_else_block
+(#eq? @condition_literal "false")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = """{ 
+    @alternatives
+    }"""
+is_seed_rule = false
+
+
+# Before 
+#   if v1 {
+#       f1()
+#   } else if false {
+#       f2()
+#   } else if v2{
+#       f3()
+#   } else {
+#       f4()
+#   }
+#   f5()
+# After 
+#   if v1 {
+#       f1()
+#   } else if v2 {
+#       f3()
+#   } else {
+#       f4()
+#   }
+#   f5()
+[[rules]]
+name = "else_if_always_false_followed_by_else_if"
+query = """(  
+(else)
+(if_statement
+    bound_identifier: (_)?
+    condition: (boolean_literal) @condition_literal
+    .(statements) @if_block
+    (if_statement) @alternatives 
+    ) @if_else_block
+(#eq? @condition_literal "false")
+)"""
+groups = ["if_cleanup"]
+replace_node = "if_else_block"
+replace = "@alternatives"
+is_seed_rule = false
+
+#
+# Before
+#   guard true else {
+#       return f1()
+#   }
+#   f2()
+# After 
+#   f2()
+#
+[[rules]]
+name = "guard_always_true"
+query = """(
+(guard_statement
+    condition: [(boolean_literal) @true  
+            (tuple_expression 
+                value: (boolean_literal) @true)]
+    ) @guard_block
+(#eq? @true "true")
+)"""
+groups = ["guard_cleanup"]
+replace_node = "guard_block"
+replace = ""
+is_seed_rule = false
+
+#
+# Before
+#   guard false else {
+#       return f1()
+#   }
+#   f2()
+# After 
+#   return f1()
+#   f2()
+#
+[[rules]]
+name = "guard_always_false"
+query = """(
+(guard_statement
+    condition: [(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    (statements) @else_block
+    ) @guard_block
+(#eq? @false "false")
+)"""
+groups = ["guard_cleanup"]
+replace_node = "guard_block"
+replace = "@else_block"
+is_seed_rule = false
+
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
 # A pattern here is - if there is an outgoing edge to B there is another to C.
@@ -142,4 +440,8 @@ is_seed_rule = false
 # X -> B, X - C, A -> X, D -> X, ...
 [[rules]]
 name = "boolean_literal_cleanup"
+is_seed_rule = false
+
+[[rules]]
+name = "statement_cleanup"
 is_seed_rule = false

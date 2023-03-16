@@ -10,15 +10,12 @@
 // limitations under the License.
 
 class SampleClass {
-    var isEnabled = TestEnum.stale_flag_one.isEnabled
-
     func sampleFunction() {
         isEnabled = TestEnum.stale_flag_one.isEnabled && v1
         isEnabled = f2() && TestEnum.stale_flag_one.isEnabled 
         isEnabled = v2 && TestEnum.stale_flag_one.isEnabled 
         isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && true)
         isEnabled = (TestEnum.stale_flag_one.isEnabled && true) && v2
-        isEnabled = !TestEnum.stale_flag_one.isEnabled
     }
 
     func checkOrTrue() {
@@ -37,9 +34,178 @@ class SampleClass {
     }
     
     func checkOrFalse() {
-        isEnabled = !TestEnum.stale_flag_one.isEnabled || f1()
-        isEnabled = !TestEnum.stale_flag_one.isEnabled || v1
-        isEnabled = f2() || !TestEnum.stale_flag_one.isEnabled 
-        isEnabled = v2 || !TestEnum.stale_flag_one.isEnabled 
+        isEnabled = placeholder_false || f1()
+        isEnabled = placeholder_false || v1
+        isEnabled = f2() || placeholder_false 
+        isEnabled = v2 || placeholder_false 
+    }
+
+    func checkAndFalse() {
+        isEnabled = placeholder_false && f1()
+        isEnabled = placeholder_false && v1
+        isEnabled = f2() && placeholder_false 
+        isEnabled = v2 && placeholder_false 
+    }
+    
+    func checkNotCondition() {
+        isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && !false)
+        isEnabled = (TestEnum.stale_flag_one.isEnabled && !false) && v2
+        isEnabled = v2 || (placeholder_false || !true)
+    } 
+
+    func checkIfTrueCleanup() {
+        f1()
+        if TestEnum.stale_flag_one.isEnabled {
+            f2()
+        }
+
+        if isEnabled {
+            f2()
+        } else if TestEnum.stale_flag_one.isEnabled {
+            f3()
+        } 
+
+        if isEnabled {
+            f2()
+        } else if TestEnum.stale_flag_one.isEnabled {
+            f3()
+        } else {
+            f4()
+        } 
+
+        if isEnabled {
+            f2()
+        } else if isDisabled {
+            f3()
+        } else if TestEnum.stale_flag_one.isEnabled {
+            f4()
+        } else {
+            f5()
+        }
+
+        if isEnabled {
+            f2()
+        }  else if TestEnum.stale_flag_one.isEnabled {
+            f4()
+        } else if isDisabled {
+            f3()
+        } else {
+            f5()
+        }
+    }
+    
+    func checkIfFalse() {
+        //test comments to be cleaned
+        if !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        }
+
+        if !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        } else {
+            f2()
+        }
+
+        if !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+            //test comments to be cleaned
+        } else if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else if !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        }
+    }
+
+    func checkIfLetFalse() {
+        if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        }
+
+        if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        } else {
+            f2()
+        }
+
+        if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f1()
+        } else if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else if let v1 = v1, !TestEnum.stale_flag_one.isEnabled && abc {
+            f2()
+        }
+    }
+    
+    func checkGaurdTrue() {
+        guard TestEnum.stale_flag_one.isEnabled || f1() else {
+            return
+        }
+        f1()
+    }
+    
+    func checkGaurdTrueWithAnd() {
+        guard TestEnum.stale_flag_one.isEnabled && true else {
+            return
+        }
+        f1()
+    }
+    func checkGuardFalse() {
+        guard placeholder_false || false else {
+            return
+        }
+    }
+
+    func checkGuardFalseWithAnd() {
+        guard placeholder_false && true else {
+            return
+        }
     }
 }
