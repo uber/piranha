@@ -335,7 +335,7 @@ impl SourceCodeUnit {
   /// This ensures that can delete a series of comments.
   ///
   /// Let's say `apply_edit` deletes `int foo` in the below example.
-  /// ```
+  /// ```ignore
   /// // some
   /// // comment
   /// int foo;
@@ -343,19 +343,19 @@ impl SourceCodeUnit {
   ///
   /// becomes
   ///
-  /// ```
+  /// ```ignore
   /// // some
   /// // comment
   /// ```
   ///
   /// now `_delete_associated_comment` is triggered, and now we produce
-  /// ```
+  /// ```ignore
   /// // some
   /// ```
   ///
   /// Since `_delete_associated_comment` is effectively called recursively
   ///
-  /// ```
+  /// ```ignore
   /// <all comments are deleted>
   /// ```
   pub(crate) fn _delete_associated_comment(
