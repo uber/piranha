@@ -74,6 +74,10 @@ class XPFlagCleanerPositiveCases {
     }
   }
 
+  public void check_comment_cleanup(){
+    System.out.println("Hellow World!");
+  }
+
   public void other_api_stale_flag() {
 
     System.out.println("Hi world");

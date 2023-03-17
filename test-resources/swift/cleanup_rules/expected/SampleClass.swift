@@ -10,15 +10,12 @@
 // limitations under the License.
 
 class SampleClass {
-    var isEnabled = true
-
     func sampleFunction() {
         isEnabled = v1
         isEnabled = f2()
         isEnabled = v2
         isEnabled = v2
         isEnabled = v2
-        isEnabled = false
     }
 
     func checkOrTrue() {
@@ -41,5 +38,124 @@ class SampleClass {
         isEnabled = v1
         isEnabled = f2()
         isEnabled = v2
+    }
+
+    func checkAndFalse() {
+        isEnabled = false
+        isEnabled = false
+        isEnabled = f2() && false
+        isEnabled = false
+    }
+    
+    func checkNotCondition() {
+        isEnabled = v2
+        isEnabled = v2
+        isEnabled = v2
+    }
+
+    func checkIfTrueCleanup() {
+        f1()
+        f2()  
+        
+        if isEnabled {
+            f2()
+        } else {
+            f3()
+        }  
+
+        if isEnabled {
+            f2()
+        } else {
+            f3()
+        } 
+
+        if isEnabled {
+            f2()
+        } else if isDisabled {
+            f3()
+        } else {
+            f4()
+        } 
+
+        if isEnabled {
+            f2()
+        } else  {
+            f4()
+        } 
+    }
+    
+    func checkIfFalse() {
+        f2()
+
+        if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+        
+        }
+    }
+
+    func checkIfLetFalse() {
+        f2()
+
+        if v1 {
+            f2()
+        } else {
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+            f3()
+        }
+
+        if v1 {
+            f1()
+        } else if v2 {
+            f3()
+        } else {
+            f4()
+        }
+
+        if v1 {
+            f1()
+        } else { 
+        
+        }
+    }
+    
+    func checkGaurdTrue() {
+        f1()
+    }
+
+    func checkGaurdTrueWithAnd() {
+        f1()
+    }
+    func checkGuardFalse() {
+        return
+    }
+
+    func checkGuardFalseWithAnd() {
+        return
     }
 }

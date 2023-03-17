@@ -255,7 +255,7 @@ fn test_consecutive_scope_level_rules() {
   execute_piranha_and_check_result(&args, _path.join("expected").as_path(), 1, true)
 }
 
-/// This test is to check if the Piranha is able to handle a syntactically incorrect tree.
+/// This test is to check if Piranha is able to handle a syntactically incorrect tree.
 #[test]
 fn test_handle_syntactically_incorrect_tree() {
   let _path = PathBuf::from("test-resources")
@@ -287,7 +287,7 @@ fn test_handle_syntactically_incorrect_tree() {
   temp_dir.close().unwrap();
 }
 
-/// This test is to check if the Piranha panics when it encounters a syntactically incorrect tree and
+/// This test is to check if Piranha panics when it encounters a syntactically incorrect tree and
 /// allow_dirty_ast is *not* set (to true).
 #[test]
 #[should_panic(expected = "Produced syntactically incorrect source code")]
@@ -320,8 +320,8 @@ fn test_do_not_allow_syntactically_incorrect_tree() {
   temp_dir.close().unwrap();
 }
 
-/// This test is to check if the Piranha is able to handle a syntactically incorrect tree.
-/// We expect the Piranha to panic in this case because the rule produces a "more" syntactically incorrect tree.
+/// This test is to check if Piranha is able to handle a syntactically incorrect tree.
+/// We expect Piranha to panic in this case because the rule produces a "more" syntactically incorrect tree.
 #[test]
 #[should_panic(expected = "Produced syntactically incorrect source code")]
 fn test_handle_syntactically_incorrect_tree_panic() {

@@ -63,3 +63,21 @@ func after_return4() string {
 
     return "not enabled"
 }
+
+
+func simplify_if_statement_false_comment_demo_single_comment() {
+    fmt.Println("remain")
+}
+
+
+func simplify_if_statement_false_comment_demo_double_comment() {
+    fmt.Println("remain")
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment() {
+    fmt.Println("remain")
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment_one_line() {
+    fmt.Println("remain")
+}

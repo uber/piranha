@@ -135,4 +135,12 @@ internal class XPFlagCleanerPositiveCases {
             println("Hi world")
         }
     }
+
+    fun check_comments(a: Int, z: Int) {
+        println("Hello World!")
+        // Should be deleted!
+        if (!experimentation.isStaleFeature().cachedValue) {
+            println("Hello World")
+        }
+    }
 }
