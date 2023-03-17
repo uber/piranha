@@ -126,7 +126,7 @@ fn test_apply_edit_negative() {
 /// Positive test of an edit being applied  given replacement range  and replacement string.
 /// This scenario checks the logic that removes the comma identified by tree-sitter.
 #[test]
-fn test_apply_edit_comma_handling_via_grammar() {
+fn test_apply_edit_trailing_comma_handling_via_grammar() {
   let source_code = "class Test {
       @SuppressWarnings(\"NullAway\",\"FooBar\")
       public void is_valid(@Nullable String s){
@@ -146,6 +146,35 @@ fn test_apply_edit_comma_handling_via_grammar() {
   );
   assert!(eq_without_whitespace(
     &source_code.replace("\"NullAway\",", ""),
+    source_code_unit.code()
+  ));
+}
+
+/// Positive test of an edit being applied  given replacement range  and replacement string.
+/// This scenario checks the logic that removes the comma identified by tree-sitter.
+#[test]
+fn test_apply_edit_leading_comma_handling_via_grammar() {
+  let source_code = "class Test {
+      @SuppressWarnings(\"NullAway\",\"FooBar\")
+      public void is_valid(@Nullable String s){
+        return s != null && check(s);
+      }
+    }";
+
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+
+  let mut source_code_unit =
+    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
+
+  let _ = source_code_unit.apply_edit(
+    &Edit::delete_range(source_code, range(48, 56, 2, 38, 2, 48)),
+    &mut parser,
+  );
+  print!("{}", source_code_unit.code());
+
+  assert!(eq_without_whitespace(
+    &source_code.replace(",\"FooBar\"", ""),
     source_code_unit.code()
   ));
 }

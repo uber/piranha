@@ -17,7 +17,7 @@ use std::{
 
 use colored::Colorize;
 use itertools::Itertools;
-use log::{debug, error};
+use log::{debug, error, info};
 
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
 use tree_sitter_traversal::{traverse, Order};
@@ -327,6 +327,7 @@ impl SourceCodeUnit {
     let mut edit: Edit = edit.clone();
     // Check if the edit is a `Delete` operation then delete trailing comma
     if edit.is_delete() {
+      info!("Is delete!");
       edit = self.delete_trailing_comma(&edit);
     }
     // Get the tree_sitter's input edit representation
@@ -359,39 +360,25 @@ impl SourceCodeUnit {
   /// code range of the closest node
   ///
   /// Algorithm:
-  /// Get the node after the {deleted_range}'s end byte (heuristic 5 characters)
+  /// Get the node immediately after the {deleted_range}'s end byte
   /// Traverse this node and get the node closest to the range {deleted_range}'s end byte
   /// IF this closest node is a comma, extend the {new_delete_range} to include the comma.
   fn delete_trailing_comma(&self, edit: &Edit) -> Edit {
-    let deleted_range: Range = edit.p_match().range();
-    let mut new_deleted_range = deleted_range;
+    debug!("Delete trailing comma!");
+    let mut new_deleted_range = edit.p_match().range();
 
     // Get the node immediately after the to-be-deleted code
-    if let Some(parent_node) = self
-      .ast
-      .root_node()
-      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 1)
-      .and_then(|n| n.parent())
-    {
-      // Traverse this `parent_node` to find the closest next node after the `replace_range`
-      if let Some(node_after_to_be_deleted_node) = traverse(parent_node.walk(), Order::Post)
-        .filter(|n| n.start_byte() >= deleted_range.end_byte)
-        .min_by(|a, b| {
-          (a.start_byte() - deleted_range.end_byte).cmp(&(b.start_byte() - deleted_range.end_byte))
-        })
-      {
-        // If the next closest node to the "to be deleted node" is a comma , extend the
-        // the deletion range to include the comma
-        if node_after_to_be_deleted_node
-          .utf8_text(self.code().as_bytes())
-          .unwrap()
-          .trim()
-          .eq(",")
-        {
-          new_deleted_range.end_byte = node_after_to_be_deleted_node.end_byte();
-          new_deleted_range.end_point = node_after_to_be_deleted_node.end_position();
-        }
-      }
+
+    if let Some(next_node_range) = self.get_trailing_comma(edit) {
+      // If the previous closest node to the "to be deleted node" is a comma , extend the
+      // the deletion range to include the comma
+      new_deleted_range.end_byte = next_node_range.end_byte;
+      new_deleted_range.end_point = next_node_range.end_point;
+    } else if let Some(prev_node_range) = self.get_leading_comma(edit) {
+      // If the previous closest node to the "to be deleted node" is a comma , extend the
+      // the deletion range to include the comma
+      new_deleted_range.start_byte = prev_node_range.start_byte;
+      new_deleted_range.start_point = prev_node_range.start_point;
     }
     return Edit::new(
       Match::new(
@@ -402,6 +389,66 @@ impl SourceCodeUnit {
       edit.replacement_string().to_string(),
       edit.matched_rule().to_string(),
     );
+  }
+
+  fn _is_comma(&self, node: &Node) -> bool {
+    let content = node.utf8_text(self.code().as_bytes()).unwrap().to_string();
+    return content.trim().eq(",");
+  }
+
+  fn get_trailing_comma(&self, edit: &Edit) -> Option<Range> {
+    debug!("Looking up next node!");
+    let deleted_range: Range = edit.p_match().range();
+    // Get the node immediately after the to-be-deleted code
+    if let Some(parent_node) = self
+      .root_node()
+      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 1)
+      .and_then(|n| n.parent())
+    {
+      // Traverse this `parent_node` to find the closest next node after the `replace_range`
+      if let Some(next_node) = traverse(parent_node.walk(), Order::Post)
+        .filter(|n| n.start_byte() >= deleted_range.end_byte)
+        .min_by(|a, b| {
+          (a.start_byte() - deleted_range.end_byte).cmp(&(b.start_byte() - deleted_range.end_byte))
+        })
+      {
+        if self._is_comma(&next_node) {
+          return Some(next_node.range());
+        }
+      }
+    }
+    None
+  }
+
+  fn get_leading_comma(&self, edit: &Edit) -> Option<Range> {
+    debug!("Looking up previous node!");
+    let deleted_range: Range = edit.p_match().range();
+    // Get the node immediately before the to-be-deleted code
+    if let Some(parent_node) = self
+      .root_node()
+      .descendant_for_byte_range(
+        deleted_range.start_byte,
+        if deleted_range.start_byte == 0 {
+          0
+        } else {
+          deleted_range.start_byte - 1
+        },
+      )
+      .and_then(|n| n.parent())
+    {
+      // Traverse this `parent_node` to find the closest before (previous to) the `replace_range`
+      if let Some(previous_node) = traverse(parent_node.walk(), Order::Post)
+        .filter(|n| n.end_byte() <= deleted_range.start_byte)
+        .min_by(|a, b| {
+          (deleted_range.start_byte - a.end_byte()).cmp(&(deleted_range.start_byte - b.end_byte()))
+        })
+      {
+        if self._is_comma(&previous_node) {
+          return Some(previous_node.range());
+        }
+      }
+    }
+    None
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
