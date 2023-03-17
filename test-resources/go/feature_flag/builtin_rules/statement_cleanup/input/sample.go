@@ -106,3 +106,57 @@ func after_return4() string {
     fmt.Println("5")
     return "enabled"
 }
+
+
+func simplify_if_statement_false_comment_demo_single_comment() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    // this comment will be deleted
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+
+func simplify_if_statement_false_comment_demo_double_comment() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    // these comments
+    // will be deleted
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    /* this comment does get removed
+    with all the lines
+    in it 
+    */
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}
+
+func simplify_if_statement_false_comment_demo_multiline_comment_one_line() {
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed")
+    } else {
+        fmt.Println("remain")
+    }
+    /* this comment will be deleted */
+    if exp.BoolValue("false") {
+        fmt.Println("to be removed 2")
+    }
+}

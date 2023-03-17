@@ -18,9 +18,8 @@
 # After 
 #   true
 #
-
 [[rules]]
-name = "replace_isToggleEnabled_with_boolean_literal"
+name = "test_rule_replace_true_placeholder"
 query = """(
 (navigation_expression
         target: (navigation_expression
@@ -62,4 +61,21 @@ query = """(
 replace_node = "parameter_access"
 replace = "@treated_complement"
 holes = ["stale_flag", "treated_complement"]
+groups = ["replace_expression_with_boolean_literal"]
+
+#
+# For @stale_flag_name = stale_flag and @treated = true
+# Before 
+#   placeholder_false
+# After 
+#   false
+#
+[[rules]]
+name = "test_rule_replace_false_placeholder"
+query = """(
+(simple_identifier) @variable
+(#eq? @variable "placeholder_false")
+)"""
+replace_node = "variable"
+replace = "false"
 groups = ["replace_expression_with_boolean_literal"]
