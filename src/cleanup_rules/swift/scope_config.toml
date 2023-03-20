@@ -21,6 +21,26 @@ generator = """(
 (#eq? @name "@cls_name")              
 )"""
 
+[[scopes]]
+name = "Function"
+[[scopes.rules]]
+matcher = """(
+    (function_declaration
+        name: (simple_identifier)? @name
+        (parameter)? @params
+        body: (function_body)
+    ) @function
+)"""
+generator = """(
+    (function_declaration
+        name: (simple_identifier)? @func_name
+        (parameter)? @parameters
+        body: (function_body)
+    ) @func
+    (#eq? @func_name "@name")
+    (#eq? @parameters "@params")
+)"""
+
 
 [[scopes]]
 name = "File"
