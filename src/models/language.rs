@@ -20,7 +20,8 @@ use tree_sitter::{Parser, Query};
 use crate::utilities::parse_toml;
 
 use super::{
-  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT},
+  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, SWIFT, THRIFT, TSX, TYPESCRIPT},
+  edit::Edit,
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
@@ -61,6 +62,7 @@ pub enum SupportedLanguage {
   Ts,
   Tsx,
   Python,
+  Thrift,
 }
 
 impl PiranhaLanguage {
@@ -205,6 +207,16 @@ impl std::str::FromStr for PiranhaLanguage {
         edges: None,
         scopes: vec![],
         comment_nodes: vec![],
+      }),
+      THRIFT => Ok(PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Thrift,
+        language: tree_sitter_thrift::language(),
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
+        ignore_nodes_for_comments: vec![],
       }),
       _ => Err("Language not supported"),
     }
