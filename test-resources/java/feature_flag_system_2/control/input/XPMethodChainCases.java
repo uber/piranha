@@ -44,11 +44,11 @@ class XPMethodChainCases {
       System.out.println("!!!");
     }
     // test for identifier && false
-    if (a && false){
+    if (a && sp.isStaleFeature().getCachedValue()){
       System.out.println("!!!");
     }
     // test for identifier || true
-    if (a || true){
+    if (a || !sp.isStaleFeature().getCachedValue()){
       System.out.println("!!!");
     }
     SomeParamRev spr = SomeParamRev.create(cp);
