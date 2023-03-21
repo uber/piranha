@@ -227,11 +227,12 @@ impl std::str::FromStr for PiranhaLanguage {
 impl SourceCodeUnit {
   /// Checks if the given node kind is a comment in the language (i.e. &self)
   pub(crate) fn is_comment(&self, kind: String) -> bool {
-    self
-      .piranha_arguments()
-      .language()
-      .comment_nodes()
-      .contains(&kind)
+    *self.piranha_arguments().cleanup_comments()
+      && self
+        .piranha_arguments()
+        .language()
+        .comment_nodes()
+        .contains(&kind)
   }
 
   /// Checks if the given node should be ignored when searching comments

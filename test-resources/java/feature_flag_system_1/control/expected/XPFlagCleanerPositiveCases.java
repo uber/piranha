@@ -23,7 +23,7 @@ import javax.inject.Inject;
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
-    SOME_FLAG,
+    SOME_FLAG
   }
 
   enum AnotherTestExperimentName {

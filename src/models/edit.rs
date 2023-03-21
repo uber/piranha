@@ -14,7 +14,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 use std::{collections::HashMap, fmt};
 
 use colored::Colorize;
-use getset::Getters;
+use getset::{Getters, MutGetters};
 use log::{debug, trace};
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::{Node, Range};
@@ -29,12 +29,13 @@ use crate::utilities::{
 };
 use pyo3::{prelude::pyclass, pymethods};
 
-#[derive(Serialize, Debug, Clone, Getters, Deserialize)]
+#[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
   #[pyo3(get)]
   #[get = "pub"]
+  #[get_mut = "pub"]
   p_match: Match,
   // The string to replace the substring encompassed by the match
   #[pyo3(get)]
