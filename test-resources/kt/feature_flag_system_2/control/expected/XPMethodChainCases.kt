@@ -44,7 +44,7 @@ internal class XPMethodChainCases {
                 println("!!!")
             }
             // simple_identifier || true
-            println("!!!")
+            println("Test for simple_identifier or true!!!")
             val spr = SomeParamRev.create(cp)
             // Does not match API- is reverse order
             if (spr.cachedValue.isStaleFeature()) {
