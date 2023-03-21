@@ -37,7 +37,14 @@ internal class XPMethodChainCases {
                 println("!!!")
             }
 
+            if (sp.isOtherFlag().cachedValue && false) {
+                println("!!!")
+            }
             if (sp.isOtherFlag().cachedValue) {
+                println("!!!")
+            }
+            // simple_identifier || true
+            if (a){
                 println("!!!")
             }
             val spr = SomeParamRev.create(cp)
