@@ -42,7 +42,7 @@ internal class XPMethodChainCases {
                 println("!!!")
             }
             if (sp.isOtherFlag().cachedValue && sp.isStaleFeature().cachedValue) {
-                println("!!!")
+                println("LHS is not a simple identifier!!!")
             }
             if (sp.isOtherFlag().cachedValue || sp.isStaleFeature().cachedValue) {
                 println("!!!")
