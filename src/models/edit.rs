@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
 use colored::Colorize;
 use getset::{Getters, MutGetters};
@@ -57,8 +57,10 @@ impl Edit {
       matched_rule,
     }
   }
-
+  #[cfg(test)]
   pub(crate) fn delete_range(code: &str, replacement_range: Range) -> Self {
+    use std::collections::HashMap;
+
     Self {
       p_match: Match::new(
         code[replacement_range.start_byte..replacement_range.end_byte].to_string(),

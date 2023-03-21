@@ -72,7 +72,6 @@ class XPMethodChainCases {
 
   class TestMethodChainTest {
 
-    // Matches annotation
     public void testSomethingControl() {
       System.out.println();
     }

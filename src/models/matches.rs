@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{cmp::Ordering, collections::HashMap};
+use std::collections::HashMap;
 
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
@@ -23,6 +23,7 @@ use tree_sitter::Node;
 use crate::utilities::{
   gen_py_str_methods,
   tree_sitter_utilities::{get_all_matches_for_query, get_node_for_range},
+  MapOfVec,
 };
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
@@ -45,7 +46,7 @@ pub(crate) struct Match {
   #[pyo3(get)]
   #[get]
   #[get_mut]
-  associated_matches: HashMap<String, Range>,
+  associated_matches: HashMap<String, Vec<Range>>,
 }
 gen_py_str_methods!(Match);
 
@@ -61,24 +62,11 @@ impl Match {
     }
   }
 
-  // fn add_associated_match(&mut self, key: String, range: tree_sitter::Range) {
-  //   if self.associated_matches().contains_key(&key) {
-  //     self
-  //       .associated_matches_mut()
-  //       .get_mut(&key)
-  //       .unwrap()
-  //       .push(Range::from(range));
-  //   } else {
-  //     self
-  //       .associated_matches_mut()
-  //       .insert(key, vec![Range::from(range)]);
-  //   }
-  // }
-
-  pub(crate) fn expand_to_associated_matches(&mut self) {
+  pub(crate) fn expand_to_associated_matches(&mut self, code: &String) {
     let associated_ranges = self
       .associated_matches
       .values()
+      .flatten()
       .sorted()
       .cloned()
       .collect_vec();
@@ -92,6 +80,7 @@ impl Match {
       self.range.end_byte = end_range.end_byte;
       self.range.end_point = end_range.end_point;
     }
+    self.matched_string = code[self.range.start_byte..self.range.end_byte].to_string()
   }
 
   /// Get the edit's replacement range.
@@ -113,7 +102,9 @@ impl Match {
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
 /// Note `LocalRange` derives serialize.
-#[derive(serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, Ord, Deserialize)]
+#[derive(
+  serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize,
+)]
 #[pyclass]
 struct Range {
   #[pyo3(get)]
@@ -124,12 +115,6 @@ struct Range {
   start_point: Point,
   #[pyo3(get)]
   end_point: Point,
-}
-
-impl PartialOrd for Range {
-  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    self.start_byte.partial_cmp(&other.start_byte)
-  }
 }
 
 impl From<tree_sitter::Range> for Range {
@@ -170,9 +155,6 @@ impl SourceCodeUnit {
   pub(crate) fn get_matches(
     &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
   ) -> Vec<Match> {
-    if rule.rule().name().eq("simplify_if_statement_false") {
-      print!("Here");
-    }
     let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
     let replace_node_tag = if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
@@ -190,6 +172,9 @@ impl SourceCodeUnit {
 
     // Return the first match that satisfies constraint of the rule
     for p_match in all_query_matches.iter_mut() {
+      if rule.rule().name().contains("simplify_if_statement_false") {
+        print!("Here");
+      }
       let matched_node = get_node_for_range(
         self.root_node(),
         p_match.range().start_byte,
@@ -206,57 +191,88 @@ impl SourceCodeUnit {
   }
 
   fn populate_associated_elements(&self, node: &Node, mtch: &mut Match) {
-    let mut associated_elements = HashMap::new();
+    self.get_trailing_associated_elements(node, mtch);
+    self.get_leading_associated_elements(node, mtch);
+  }
 
+  fn get_trailing_associated_elements(&self, node: &Node, mtch: &mut Match) {
     let mut current_node = *node;
-    if let Some(p) = current_node.parent() {
-      let parent_node_content = p.utf8_text(self.code().as_bytes()).unwrap();
-      if parent_node_content.eq(current_node.utf8_text(self.code().as_bytes()).unwrap()) {
-        current_node = p;
+    let mut buf = 2;
+    let mut found_comment = false;
+    let mut found_comma = false;
+    loop {
+      if current_node.next_sibling().is_some() {
+        while let Some(next_sibling) = current_node.next_sibling() {
+          let content = next_sibling.utf8_text(self.code().as_bytes()).unwrap();
+          if content.trim().eq(",") && !found_comma {
+            mtch
+              .associated_matches
+              .collect("Comma".to_string(), Range::from(next_sibling.range()));
+            current_node = next_sibling;
+            found_comma = true;
+          } else if self.is_comment(next_sibling.kind().to_string())
+            && next_sibling.start_position().row == mtch.range().end_point.row
+          {
+            mtch
+              .associated_matches
+              .collect("Comment".to_string(), Range::from(next_sibling.range()));
+            current_node = next_sibling;
+            found_comment = true;
+          } else {
+            break;
+          }
+        }
       }
-    }
-
-    while let Some(next_sibling) = current_node.next_sibling() {
-      let content = next_sibling.utf8_text(self.code().as_bytes()).unwrap();
-      if content.trim().eq(",") {
-        associated_elements.insert("Comma".to_string(), Range::from(next_sibling.range()));
-        current_node = next_sibling;
-      } else if self.is_comment(next_sibling.kind().to_string())
-        && next_sibling.start_position().row == mtch.range().end_point.row
-      {
-        associated_elements.insert("Comment".to_string(), Range::from(next_sibling.range()));
-        current_node = next_sibling;
-      } else {
-        break;
-      }
-    }
-
-    current_node = *node;
-    if let Some(p) = current_node.parent() {
-      let parent_node_content = p.utf8_text(self.code().as_bytes()).unwrap();
-      if parent_node_content.eq(current_node.utf8_text(self.code().as_bytes()).unwrap()) {
-        current_node = p;
-      }
-    }
-    while let Some(previous_sibling) = current_node.prev_sibling() {
-      let content = previous_sibling.utf8_text(self.code().as_bytes()).unwrap();
-      if content.trim().eq(",") {
-        associated_elements
-          .entry("Comma".to_string())
-          .or_insert_with(|| Range::from(previous_sibling.range()));
-        current_node = previous_sibling;
-        continue;
-      } else if self._is_comment_safe_to_delete(&previous_sibling, node) {
-        associated_elements.insert("Comment".to_string(), Range::from(previous_sibling.range()));
-        current_node = previous_sibling;
-        continue;
+      if buf >= 0 && (!found_comma || !found_comment) {
+        if let Some(p) = current_node.parent() {
+          current_node = p;
+          buf -= 1;
+          continue;
+        }
       }
       break;
     }
-    mtch.associated_matches = associated_elements;
   }
 
-  fn _is_comment_safe_to_delete(&self, comment: &Node, deleted_node: &Node) -> bool {
+  fn get_leading_associated_elements(&self, node: &Node, mtch: &mut Match) {
+    let mut current_node = *node;
+    let mut buf = 2;
+    let mut found_comment = false;
+    let mut found_comma = mtch.associated_matches.contains_key("Comma");
+    loop {
+      if current_node.prev_sibling().is_some() {
+        while let Some(previous_sibling) = current_node.prev_sibling() {
+          let content = previous_sibling.utf8_text(self.code().as_bytes()).unwrap();
+          if content.trim().eq(",") && !found_comma {
+            mtch
+              .associated_matches
+              .collect("Comma".to_string(), Range::from(previous_sibling.range()));
+            current_node = previous_sibling;
+            found_comma = true;
+            continue;
+          } else if self._is_comment_safe_to_delete(&previous_sibling, node, mtch) {
+            mtch
+              .associated_matches
+              .collect("Comment".to_string(), Range::from(previous_sibling.range()));
+            current_node = previous_sibling;
+            found_comment = true;
+            continue;
+          }
+          break;
+        }
+      }
+      if buf >= 0 && (!found_comma || !found_comment) {
+        if let Some(p) = current_node.parent() {
+          current_node = p;
+          buf -= 1;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  fn _is_comment_safe_to_delete(&self, comment: &Node, deleted_node: &Node, mtch: &Match) -> bool {
     if !self.is_comment(comment.kind().to_string()) {
       return false;
     }
@@ -265,18 +281,37 @@ impl SourceCodeUnit {
     {
       return true;
     }
+
     if let Some(previous_node) = comment.prev_sibling() {
       if self.overlaps(comment, &previous_node) {
         return false;
+      }
+    }
+    if let Some(next_node) = comment.next_sibling() {
+      if next_node.start_byte() < deleted_node.start_byte() {
+        let associated_ranges = mtch
+          .associated_matches
+          .values()
+          .flatten()
+          .sorted()
+          .cloned()
+          .collect_vec();
+        let start_range = associated_ranges
+          .first()
+          .cloned()
+          .unwrap_or(Range::from(deleted_node.range()));
+        if next_node.start_byte() < start_range.start_byte {
+          return false;
+        }
       }
     }
     true
   }
 
   fn overlaps(&self, node_1: &Node, node_2: &Node) -> bool {
-    (node_1.start_position().row <= node_2.start_position().row
-      && node_2.start_position().row <= node_1.end_position().row)
-      || (node_1.start_position().row <= node_2.end_position().row
-        && node_2.end_position().row <= node_1.end_position().row)
+    (node_1.start_position().row < node_2.start_position().row
+      && node_2.start_position().row < node_1.end_position().row)
+      || (node_1.start_position().row < node_2.end_position().row
+        && node_2.end_position().row < node_1.end_position().row)
   }
 }
