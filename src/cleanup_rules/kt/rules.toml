@@ -309,7 +309,7 @@ query = """
                         [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
 (#eq? @rhs "true")  
 )"""
-replace = "@lhs"
+replace = "true"
 replace_node = "disjunction_expression"
 is_seed_rule = false
 
