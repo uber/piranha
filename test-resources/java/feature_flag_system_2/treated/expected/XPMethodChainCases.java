@@ -35,8 +35,16 @@ class XPMethodChainCases {
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    if (sp.otherFlag().getCachedValue()) {
+    if (sp.otherFlag().getCachedValue() || true) {
       System.out.println("!!!");
+    }
+    // test for identifier || true
+    if (a || true){
+      System.out.println("!!!")
+    }
+    // test for identifier && false
+    if (a && false){
+      System.out.println("!!!")
     }
     SomeParamRev spr = SomeParamRev.create(cp);
     // Does not match API- is reverse order

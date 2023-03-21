@@ -33,7 +33,19 @@ class XPMethodChainCases {
       System.out.println("!!!");
     }
 
+    if (sp.otherFlag().getCachedValue() && false) {
+      System.out.println("!!!");
+    }
+
     if (sp.otherFlag().getCachedValue()) {
+      System.out.println("!!!");
+    }
+    // test for identifier && false
+    if (a && false){
+      System.out.println("!!!");
+    }
+    // test for identifier || true
+    if (a || true){
       System.out.println("!!!");
     }
     SomeParamRev spr = SomeParamRev.create(cp);
