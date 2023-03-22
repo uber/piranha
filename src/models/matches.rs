@@ -23,7 +23,6 @@ use tree_sitter::Node;
 use crate::utilities::{
   gen_py_str_methods,
   tree_sitter_utilities::{get_all_matches_for_query, get_node_for_range},
-  MapOfVec,
 };
 
 use super::{
@@ -45,11 +44,16 @@ pub(crate) struct Match {
   #[pyo3(get)]
   #[get = "pub"]
   matches: HashMap<String, String>,
-
-  #[pyo3(get)]
+  // Captures the range of the associated comma
   #[get]
   #[get_mut]
-  associated_matches: HashMap<String, Vec<Range>>,
+  #[serde(skip)]
+  associated_comma: Option<Range>,
+  // Captures the range of the associated comments
+  #[get]
+  #[get_mut]
+  #[serde(skip)]
+  associated_comments: Vec<Range>,
 }
 gen_py_str_methods!(Match);
 
@@ -61,23 +65,31 @@ impl Match {
       matched_string,
       range: Range::from(range),
       matches,
-      associated_matches: HashMap::new(),
+      associated_comma: None,
+      associated_comments: Vec::new(),
     }
   }
-
+  ///
+  /// Returns the first and last associated ranges for the match.
+  /// If there are no associated ranges, returns the range of the match itself.
   fn get_first_and_last_associated_ranges(&self) -> (Range, Range) {
-    let associated_ranges = self
-      .associated_matches
-      .values()
-      .flatten()
-      .sorted()
-      .cloned()
-      .collect_vec();
-    let start_range = associated_ranges.first().cloned().unwrap_or(self.range);
-    let end_range = associated_ranges.last().cloned().unwrap_or(self.range);
-    (start_range, end_range)
+    // Sort all the associated ranges
+    let associated_ranges = [
+      self.associated_comma().iter().collect_vec(),
+      self.associated_comments().iter().collect_vec(),
+    ]
+    .concat()
+    .iter()
+    .sorted()
+    .cloned()
+    .collect_vec();
+    let start_range = associated_ranges.first().cloned().unwrap_or(&self.range);
+    let end_range = associated_ranges.last().cloned().unwrap_or(&self.range);
+    (*start_range, *end_range)
   }
 
+  /// Merge the associated matches of the given match into the current match.
+  /// It basically extends the range to include the first and last associated match of the given match.
   pub(crate) fn expand_to_associated_matches(&mut self, code: &String) {
     let (start_range, end_range) = self.get_first_and_last_associated_ranges();
     if start_range.start_byte < self.range.start_byte {
@@ -114,13 +126,15 @@ impl Match {
     self.get_associated_elements(node, code, piranha_arguments, false);
   }
 
+  /// Get the associated elements for the match.
+  /// We currently capture leading and trailing comments and commas.
   fn get_associated_elements(
     &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments, trailing: bool,
   ) {
     let mut current_node = *node;
     let mut buf = *piranha_arguments.cleanup_comments_buffer();
-    let mut found_comment = self.associated_matches.contains_key("Comment");
-    let mut found_comma = self.associated_matches.contains_key("Comma");
+    let mut found_comment = !self.associated_comments().is_empty();
+    let mut found_comma = self.associated_comma().is_some();
     loop {
       // If we are looking for trailing elements, we start from the next sibling of the node
       // Else we start from the previous sibling of the node
@@ -131,19 +145,15 @@ impl Match {
       } {
         let content = sibling.utf8_text(code.as_bytes()).unwrap();
         // Check if the sibling is a comment
-        if content.trim().eq(",") && !found_comma {
+        if !found_comma && content.trim().eq(",") {
           // Add the comma to the associated matches
-          self
-            .associated_matches
-            .collect("Comma".to_string(), Range::from(sibling.range()));
+          self.associated_comma = Some(Range::from(sibling.range()));
           current_node = sibling;
           found_comma = true;
           continue;
         } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           // Add the comment to the associated matches
-          self
-            .associated_matches
-            .collect("Comment".to_string(), Range::from(sibling.range()));
+          self.associated_comments.push(Range::from(sibling.range()));
           current_node = sibling;
           found_comment = true;
           continue;
@@ -170,6 +180,7 @@ impl Match {
       && piranha_arguments.language().comment_nodes().contains(&kind)
   }
 
+  /// Checks if the given comment is safe to delete.
   fn _is_comment_safe_to_delete(
     &mut self, comment: &Node, deleted_node: &Node, piranha_arguments: &PiranhaArguments,
     trailing: bool,
@@ -209,6 +220,7 @@ impl Match {
     true
   }
 
+  /// Checks if the given node_1 overlaps with the given node_2
   fn overlaps(&self, node_1: &Node, node_2: &Node) -> bool {
     (node_1.start_position().row < node_2.start_position().row
       && node_2.start_position().row < node_1.end_position().row)

@@ -336,13 +336,8 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
-    let mut edit: Edit = edit.clone();
-    // Check if the edit is a `Delete` operation then delete trailing comma
-    if edit.is_delete() {
-      edit.p_match_mut().expand_to_associated_matches(self.code());
-    }
     // Get the tree_sitter's input edit representation
-    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), &edit);
+    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), edit);
     // Apply edit to the tree
     let number_of_errors = self._number_of_errors();
     self.ast.edit(&ts_edit);
