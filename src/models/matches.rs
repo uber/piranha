@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
-use log::{debug, trace};
+use log::trace;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
@@ -119,6 +119,7 @@ impl Match {
     }
   }
 
+  // Populates the leading and trailing comma and comment ranges for the match.
   fn populate_associated_elements(
     &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments,
   ) {
@@ -150,27 +151,25 @@ impl Match {
           self.associated_comma = Some(Range::from(sibling.range()));
           current_node = sibling;
           found_comma = true;
-          continue;
+          continue; // Continue the inner loop (i.e. evaluate next sibling)
         } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           // Add the comment to the associated matches
           self.associated_comments.push(Range::from(sibling.range()));
           current_node = sibling;
           found_comment = true;
-          continue;
+          continue; // Continue the inner loop (i.e. evaluate next sibling)
         }
-        break;
+        break; // Break the inner loop
       }
 
+      let parent = current_node.parent();
       // If buf is <0 or we have found a comment and a comma, we break
-      if buf >= 0 && (!found_comma || !found_comment) {
-        // we go up the tree and check the parent's siblings
-        if let Some(p) = current_node.parent() {
-          current_node = p;
-          buf -= 1;
-          continue;
-        }
+      if buf < 0 || (found_comma && found_comment) || parent.is_none() {
+        break; // Break the outer loop
       }
-      break;
+      current_node = parent.unwrap();
+      buf -= 1;
+      continue; // Continue the outer loop (i.e. lookup parent's siblings for comma/comment)
     }
   }
 
@@ -301,9 +300,6 @@ impl SourceCodeUnit {
 
     // Return the first match that satisfies constraint of the rule
     for p_match in all_query_matches.iter_mut() {
-      if rule.rule().name().contains("simplify_if_statement_false") {
-        print!("Here");
-      }
       let matched_node = get_node_for_range(
         self.root_node(),
         p_match.range().start_byte,
@@ -315,7 +311,7 @@ impl SourceCodeUnit {
         output.push(p_match.clone());
       }
     }
-    debug!("Matches found {}", output.len());
+    trace!("Matches found {}", output.len());
     output
   }
 }
