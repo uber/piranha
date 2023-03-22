@@ -24,7 +24,6 @@ use super::{
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
-  source_code_unit::SourceCodeUnit,
 };
 
 #[derive(Debug, Clone, Getters, PartialEq)]
@@ -219,17 +218,5 @@ impl std::str::FromStr for PiranhaLanguage {
       }),
       _ => Err("Language not supported"),
     }
-  }
-}
-
-impl SourceCodeUnit {
-  /// Checks if the given node kind is a comment in the language (i.e. &self)
-  pub(crate) fn is_comment(&self, kind: String) -> bool {
-    *self.piranha_arguments().cleanup_comments()
-      && self
-        .piranha_arguments()
-        .language()
-        .comment_nodes()
-        .contains(&kind)
   }
 }

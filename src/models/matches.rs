@@ -26,7 +26,10 @@ use crate::utilities::{
   MapOfVec,
 };
 
-use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
+use super::{
+  piranha_arguments::PiranhaArguments, rule::InstantiatedRule, rule_store::RuleStore,
+  source_code_unit::SourceCodeUnit,
+};
 
 #[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
@@ -62,7 +65,7 @@ impl Match {
     }
   }
 
-  pub(crate) fn expand_to_associated_matches(&mut self, code: &String) {
+  fn get_first_and_last_associated_ranges(&self) -> (Range, Range) {
     let associated_ranges = self
       .associated_matches
       .values()
@@ -72,6 +75,11 @@ impl Match {
       .collect_vec();
     let start_range = associated_ranges.first().cloned().unwrap_or(self.range);
     let end_range = associated_ranges.last().cloned().unwrap_or(self.range);
+    (start_range, end_range)
+  }
+
+  pub(crate) fn expand_to_associated_matches(&mut self, code: &String) {
+    let (start_range, end_range) = self.get_first_and_last_associated_ranges();
     if start_range.start_byte < self.range.start_byte {
       self.range.start_byte = start_range.start_byte;
       self.range.start_point = start_range.start_point;
@@ -97,6 +105,115 @@ impl Match {
         column: self.range.end_point.column,
       },
     }
+  }
+
+  fn populate_associated_elements(
+    &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments,
+  ) {
+    self.get_associated_elements(node, code, piranha_arguments, true);
+    self.get_associated_elements(node, code, piranha_arguments, false);
+  }
+
+  fn get_associated_elements(
+    &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments, trailing: bool,
+  ) {
+    let mut current_node = *node;
+    let mut buf = *piranha_arguments.cleanup_comments_buffer();
+    let mut found_comment = self.associated_matches.contains_key("Comment");
+    let mut found_comma = self.associated_matches.contains_key("Comma");
+    loop {
+      // If we are looking for trailing elements, we start from the next sibling of the node
+      // Else we start from the previous sibling of the node
+      while let Some(sibling) = if trailing {
+        current_node.next_sibling()
+      } else {
+        current_node.prev_sibling()
+      } {
+        let content = sibling.utf8_text(code.as_bytes()).unwrap();
+        // Check if the sibling is a comment
+        if content.trim().eq(",") && !found_comma {
+          // Add the comma to the associated matches
+          self
+            .associated_matches
+            .collect("Comma".to_string(), Range::from(sibling.range()));
+          current_node = sibling;
+          found_comma = true;
+          continue;
+        } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
+          // Add the comment to the associated matches
+          self
+            .associated_matches
+            .collect("Comment".to_string(), Range::from(sibling.range()));
+          current_node = sibling;
+          found_comment = true;
+          continue;
+        }
+        break;
+      }
+
+      // If buf is <0 or we have found a comment and a comma, we break
+      if buf >= 0 && (!found_comma || !found_comment) {
+        // we go up the tree and check the parent's siblings
+        if let Some(p) = current_node.parent() {
+          current_node = p;
+          buf -= 1;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  /// Checks if the given node kind is a comment in the language (determined from piranha arguments)
+  fn is_comment(&self, kind: String, piranha_arguments: &PiranhaArguments) -> bool {
+    *piranha_arguments.cleanup_comments()
+      && piranha_arguments.language().comment_nodes().contains(&kind)
+  }
+
+  fn _is_comment_safe_to_delete(
+    &mut self, comment: &Node, deleted_node: &Node, piranha_arguments: &PiranhaArguments,
+    trailing: bool,
+  ) -> bool {
+    // Check if the comment is a comment in the language
+    if !self.is_comment(comment.kind().to_string(), piranha_arguments) {
+      return false;
+    }
+    // If trailing, check if the comment is on the same line as the deleted node
+    // i.e. where the deleted node ends or starts
+    let is_on_same_line = comment.range().start_point.row == deleted_node.range().end_point.row
+      || comment.range().start_point.row == deleted_node.range().start_point.row;
+
+    // If trailing, return if the comment is on the same line as the deleted node
+    if trailing {
+      return is_on_same_line;
+    }
+    // If not trailing, return if the comment is on the same line as the deleted node
+    if is_on_same_line {
+      return true;
+    }
+    // Check if the previous node does not overlap with the comment
+    if let Some(previous_node) = comment.prev_sibling() {
+      if self.overlaps(comment, &previous_node) {
+        return false;
+      }
+    }
+    // Check if there exists no node between the comment and the deleted node
+    if let Some(next_node) = comment.next_sibling() {
+      if next_node.start_byte() < deleted_node.start_byte() {
+        let (start_range, _) = self.get_first_and_last_associated_ranges();
+        if next_node.start_byte() < start_range.start_byte {
+          return false;
+        }
+      }
+    }
+    true
+  }
+
+  fn overlaps(&self, node_1: &Node, node_2: &Node) -> bool {
+    (node_1.start_position().row < node_2.start_position().row
+      && node_2.start_position().row < node_1.end_position().row)
+      || (node_1.start_position().row < node_2.end_position().row
+        && node_2.end_position().row < node_1.end_position().row)
   }
 }
 /// A range of positions in a multi-line text document, both in terms of bytes and of
@@ -181,137 +298,12 @@ impl SourceCodeUnit {
         p_match.range().end_byte,
       );
       if self.is_satisfied(matched_node, rule, p_match.matches(), rule_store) {
-        self.populate_associated_elements(&matched_node, p_match);
+        p_match.populate_associated_elements(&matched_node, self.code(), self.piranha_arguments());
         trace!("Found match {:#?}", p_match);
         output.push(p_match.clone());
       }
     }
     debug!("Matches found {}", output.len());
     output
-  }
-
-  fn populate_associated_elements(&self, node: &Node, mtch: &mut Match) {
-    self.get_trailing_associated_elements(node, mtch);
-    self.get_leading_associated_elements(node, mtch);
-  }
-
-  fn get_trailing_associated_elements(&self, node: &Node, mtch: &mut Match) {
-    let mut current_node = *node;
-    let mut buf = 2;
-    let mut found_comment = false;
-    let mut found_comma = false;
-    loop {
-      if current_node.next_sibling().is_some() {
-        while let Some(next_sibling) = current_node.next_sibling() {
-          let content = next_sibling.utf8_text(self.code().as_bytes()).unwrap();
-          if content.trim().eq(",") && !found_comma {
-            mtch
-              .associated_matches
-              .collect("Comma".to_string(), Range::from(next_sibling.range()));
-            current_node = next_sibling;
-            found_comma = true;
-          } else if self.is_comment(next_sibling.kind().to_string())
-            && next_sibling.start_position().row == mtch.range().end_point.row
-          {
-            mtch
-              .associated_matches
-              .collect("Comment".to_string(), Range::from(next_sibling.range()));
-            current_node = next_sibling;
-            found_comment = true;
-          } else {
-            break;
-          }
-        }
-      }
-      if buf >= 0 && (!found_comma || !found_comment) {
-        if let Some(p) = current_node.parent() {
-          current_node = p;
-          buf -= 1;
-          continue;
-        }
-      }
-      break;
-    }
-  }
-
-  fn get_leading_associated_elements(&self, node: &Node, mtch: &mut Match) {
-    let mut current_node = *node;
-    let mut buf = 2;
-    let mut found_comment = false;
-    let mut found_comma = mtch.associated_matches.contains_key("Comma");
-    loop {
-      if current_node.prev_sibling().is_some() {
-        while let Some(previous_sibling) = current_node.prev_sibling() {
-          let content = previous_sibling.utf8_text(self.code().as_bytes()).unwrap();
-          if content.trim().eq(",") && !found_comma {
-            mtch
-              .associated_matches
-              .collect("Comma".to_string(), Range::from(previous_sibling.range()));
-            current_node = previous_sibling;
-            found_comma = true;
-            continue;
-          } else if self._is_comment_safe_to_delete(&previous_sibling, node, mtch) {
-            mtch
-              .associated_matches
-              .collect("Comment".to_string(), Range::from(previous_sibling.range()));
-            current_node = previous_sibling;
-            found_comment = true;
-            continue;
-          }
-          break;
-        }
-      }
-      if buf >= 0 && (!found_comma || !found_comment) {
-        if let Some(p) = current_node.parent() {
-          current_node = p;
-          buf -= 1;
-          continue;
-        }
-      }
-      break;
-    }
-  }
-
-  fn _is_comment_safe_to_delete(&self, comment: &Node, deleted_node: &Node, mtch: &Match) -> bool {
-    if !self.is_comment(comment.kind().to_string()) {
-      return false;
-    }
-    if comment.range().start_point.row == deleted_node.range().start_point.row
-      && comment.range().end_point.row == deleted_node.range().start_point.row
-    {
-      return true;
-    }
-
-    if let Some(previous_node) = comment.prev_sibling() {
-      if self.overlaps(comment, &previous_node) {
-        return false;
-      }
-    }
-    if let Some(next_node) = comment.next_sibling() {
-      if next_node.start_byte() < deleted_node.start_byte() {
-        let associated_ranges = mtch
-          .associated_matches
-          .values()
-          .flatten()
-          .sorted()
-          .cloned()
-          .collect_vec();
-        let start_range = associated_ranges
-          .first()
-          .cloned()
-          .unwrap_or(Range::from(deleted_node.range()));
-        if next_node.start_byte() < start_range.start_byte {
-          return false;
-        }
-      }
-    }
-    true
-  }
-
-  fn overlaps(&self, node_1: &Node, node_2: &Node) -> bool {
-    (node_1.start_position().row < node_2.start_position().row
-      && node_2.start_position().row < node_1.end_position().row)
-      || (node_1.start_position().row < node_2.end_position().row
-        && node_2.end_position().row < node_1.end_position().row)
   }
 }
