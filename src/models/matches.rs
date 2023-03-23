@@ -49,7 +49,7 @@ pub(crate) struct Match {
   #[get_mut]
   #[serde(skip)]
   associated_comma: Option<Range>,
-  // Captures the range of the associated comments
+  // Captures the range(s) of the associated comments
   #[get]
   #[get_mut]
   #[serde(skip)]

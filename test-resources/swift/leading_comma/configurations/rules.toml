@@ -1,0 +1,9 @@
+[[rules]]
+name = "Delete switc case"
+query = """(
+(switch_pattern (pattern (simple_identifier) @switch_case))@switch_pattern
+(#eq? @switch_case "@stale_flag")
+)"""
+replace_node = "switch_patttern"
+replace = ""
+holes = ["stale_flag"]
