@@ -361,14 +361,13 @@ impl SourceCodeUnit {
       "Produced syntactically incorrect source code {}",
       self.code()
     );
-    error!("{}", msg);
     panic!("{}", msg);
   }
 
   /// Returns the number of errors in the AST
   fn _number_of_errors(&self) -> usize {
     traverse(self.root_node().walk(), Order::Post)
-      .filter(|node| node.has_error())
+      .filter(|node| node.is_error() || node.is_missing())
       .count()
   }
 
