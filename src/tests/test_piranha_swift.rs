@@ -32,7 +32,7 @@ create_rewrite_tests! {
     cleanup_comments = true,
     global_tag_prefix ="universal_tag.".to_string(),
     cleanup_comments_buffer = 3, delete_file_if_empty= false;
-  test_cleanup_rules_file: "cleanup_rules", 2,
+  test_cleanup_rules_file: "cleanup_rules", 1,
     substitutions = substitutions! {
       "stale_flag" => "stale_flag_one",
       "treated" => "true",

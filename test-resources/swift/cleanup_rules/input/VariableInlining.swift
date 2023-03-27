@@ -8,6 +8,7 @@
 // License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
+
 class C21{
     func f211(){
         var a = true
@@ -23,7 +24,7 @@ class C22{
 
 class C23{
     func f233(){
-        var a = true // again, no invocation
+        var a = true
         if a{
         f234()
         }
@@ -41,6 +42,71 @@ class C24{
 class C25{
     var a = true
     func f254(){
+        a = true
+    }
+}
+
+class C1{
+    func f1(){
+        var a = true
+        var b = false
+        if a {
+            doSomething()
+        }
+        if b {
+            doSomethingElse()
+        }
+    }
+}
+
+class C2{
+    func f2(){
+        var a = true
+        if a {
+            a = false
+        }
+    }
+}
+
+class C3{
+    var a = true
+
+    func f3(){
+        if a {
+            doSomething()
+        }
+    }
+}
+
+class C4{
+    var a = true
+
+    func f4(){
+        a = false
+    }
+
+    func f5(){
+        if a {
+            doSomething()
+        }
+    }
+}
+
+class C5{
+    var a
+
+    func f6(){
+        a = true
+    }
+
+    func f7(){
+        a = false
+    }
+}
+
+class C6{
+    var a
+    func f8(){
         a = true
     }
 }

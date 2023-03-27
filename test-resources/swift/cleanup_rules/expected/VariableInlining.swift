@@ -10,30 +10,103 @@
 // limitations under the License.
 
 class C21{
-    func f1(){
+    func f211(){
         
     }
 }
 
 class C22{
-    func f2(){
+    func f222(){
         var a = true
         a = false
     }
 }
 
 class C23{
-    func f3(){
+    func f233(){
+        
         if true{
-             f4()
+        f234()
         }
     }
 }
 
 class C24{
-    func f3(a: Bool){
+    func f243(a: Bool){
         if a{
-            f4()
+            f244()
         }
+    }
+}
+
+class C25{
+    
+    func f254(){
+        
+    }
+}
+
+class C1{
+    func f1(){
+        
+        
+        if true {
+            doSomething()
+        }
+        if false {
+            doSomethingElse()
+        }
+    }
+}
+
+class C2{
+    func f2(){
+        var a = true
+        if a {
+            a = false
+        }
+    }
+}
+
+class C3{
+    
+
+    func f3(){
+        if true {
+            doSomething()
+        }
+    }
+}
+
+class C4{
+    var a = true
+
+    func f4(){
+        a = false
+    }
+
+    func f5(){
+        if a {
+            doSomething()
+        }
+    }
+}
+
+class C5{
+    var a
+
+    func f6(){
+        a = true
+    }
+
+    func f7(){
+        a = false
+    }
+}
+
+class C6{
+    
+    func f8(){
+        
     }
 }
