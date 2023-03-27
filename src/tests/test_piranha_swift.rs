@@ -36,9 +36,7 @@ create_rewrite_tests! {
     substitutions = substitutions! {
       "stale_flag" => "stale_flag_one",
       "treated" => "true",
-      "treated_complement" => "false",
-      "input_var" => "a",
-      "input_val" => "true"
+      "treated_complement" => "false"
     },
     cleanup_comments = true, delete_file_if_empty= false;
 }
