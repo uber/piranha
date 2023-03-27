@@ -57,7 +57,7 @@ internal class XPFlagCleanerPositiveCases {
         tBool = false
         tBool = false
 
-        tBool = false
+        tBool = true
 
         tBool = tBool
         tBool = false
