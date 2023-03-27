@@ -43,6 +43,14 @@ class XPMethodChainCases {
     if (sp.otherFlag().getCachedValue() || sp.isStaleFeature().getCachedValue()) {
       System.out.println("!!!");
     }
+    // test for identifier || true
+    if (a || sp.isStaleFeature().getCachedValue()){
+      System.out.println("!!!");
+    }
+    // test for identifier && false
+    if (b && !sp.isStaleFeature().getCachedValue()){
+      System.out.println("!!! b");
+    }
     SomeParamRev spr = SomeParamRev.create(cp);
     // Does not match API- is reverse order
     if (spr.getCachedValue().isStaleFeature()) {
