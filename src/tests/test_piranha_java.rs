@@ -254,3 +254,102 @@ fn test_consecutive_scope_level_rules() {
 
   execute_piranha_and_check_result(&args, _path.join("expected").as_path(), 1, true)
 }
+
+/// This test is to check if Piranha is able to handle a syntactically incorrect tree.
+#[test]
+fn test_handle_syntactically_incorrect_tree() {
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("handle_syntactically_incorrect_tree");
+  let temp_dir = copy_folder_to_temp_dir(&_path.join("input"));
+
+  let rule = piranha_rule! {
+    name = "Append l",
+    query = "(
+  (variable_declarator value: (decimal_integer_literal) @value)
+  (#not-match? @value \"l|L\")
+  )",
+    replace_node = "value",
+    replace = "@valuel"
+  };
+
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
+    language = PiranhaLanguage::from(JAVA),
+    rule_graph = RuleGraphBuilder::default()
+                .rules(vec![rule])
+                .build(),
+    allow_dirty_ast = true,
+  };
+
+  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
+  // Delete temp_dir
+  temp_dir.close().unwrap();
+}
+
+/// This test is to check if Piranha panics when it encounters a syntactically incorrect tree and
+/// allow_dirty_ast is *not* set (to true).
+#[test]
+#[should_panic(expected = "Produced syntactically incorrect source code")]
+fn test_do_not_allow_syntactically_incorrect_tree() {
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("handle_syntactically_incorrect_tree");
+  let temp_dir = copy_folder_to_temp_dir(&_path.join("input"));
+
+  let rule = piranha_rule! {
+    name = "Append l",
+    query = "(
+  (variable_declarator value: (decimal_integer_literal) @value)
+  (#not-match? @value \"l|L\")
+  )",
+    replace_node = "value",
+    replace = "@valuel"
+  };
+
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
+    language = PiranhaLanguage::from(JAVA),
+    rule_graph = RuleGraphBuilder::default()
+                .rules(vec![rule])
+                .build(),
+  };
+
+  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
+  // Delete temp_dir
+  temp_dir.close().unwrap();
+}
+
+/// This test is to check if Piranha is able to handle a syntactically incorrect tree.
+/// We expect Piranha to panic in this case because the rule produces a "more" syntactically incorrect tree.
+#[test]
+#[should_panic(expected = "Produced syntactically incorrect source code")]
+fn test_handle_syntactically_incorrect_tree_panic() {
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("handle_syntactically_incorrect_tree");
+  let temp_dir = copy_folder_to_temp_dir(&_path.join("input"));
+
+  let rule = piranha_rule! {
+    name = "Append x (wrong rule)",
+    query = "(
+  (variable_declarator value: (decimal_integer_literal) @value)
+  (#not-match? @value \"X|x\")
+  )",
+    replace_node = "value",
+    // Purposefully appending `x` so that it results in a incorrect syntax tree.
+    replace = "@valuex"
+  };
+
+  let piranha_arguments = piranha_arguments! {
+    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
+    language = PiranhaLanguage::from(JAVA),
+    rule_graph = RuleGraphBuilder::default()
+                .rules(vec![rule])
+                .build(),
+  };
+
+  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
+  // Delete temp_dir
+  temp_dir.close().unwrap();
+}
