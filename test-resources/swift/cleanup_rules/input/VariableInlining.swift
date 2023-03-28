@@ -9,145 +9,145 @@
 // // express or implied. See the License for the specific language governing permissions and
 // // limitations under the License.
 
-// class C21{
-//     func f211(){
-//         var a = true
-//     }
-// }
+class C21{
+    func f211(){
+        var a = true
+    }
+}
 
-// class C22{
-//     func f222(){
-//         var a = true
-//         a = false
-//     }
-// }
+class C22{
+    func f222(){
+        var a = true
+        a = false
+    }
+}
 
-// class C23{
-//     func f233(){
-//         var a = true
-//         if a{
-//         f234()
-//         }
-//     }
-// }
+class C23{
+    func f233(){
+        var a = true
+        if a{
+         f234()
+        }
+    }
+}
 
-// class C24{
-//     func f243(a: Bool){
-//         if a{
-//             f244()
-//         }
-//     }
-// }
+class C24{
+    func f243(a: Bool){
+        if a{
+            f244()
+        }
+    }
+}
 
-// class C25{
-//     var a = true
-//     func f254(){
-//         a = true
-//     }
-// }
+class C25{
+    var a = true
+    func f254(){
+        a = true
+    }
+}
 
-// class C26{
-//     var a = true
-//     func f254(){
-//         self.a = true
-//     }
-// }
+class C26{
+    var a = true
+    func f254(){
+        self.a = true
+    }
+}
 
-// class C1{
-//     func f1(){
-//         var a = true
-//         var b = false
-//         if a {
-//             doSomething()
-//         }
-//         if b {
-//             doSomethingElse()
-//         }
-//     }
-// }
+class C1{
+    func fa1(){
+        var a = true
+        var b = false
+        if a {
+            doSomething()
+        }
+        if b {
+            doSomethingElse()
+        }
+    }
+}
 
-// class C11{
-//     var a = true
-//     var b = false
-//     func f1(){
-//         if a {
-//             doSomething()
-//         }
-//         if b {
-//             doSomethingElse()
-//         }
-//     }
-// }
+class C11{
+    var a = true
+    var b = false
+    func f11(){
+        if a {
+            doSomething()
+        }
+        if b {
+            doSomethingElse()
+        }
+    }
+}
 
-// class C12{
-//     var a = true
-//     var b = false
-//     func f1(){
-//         if self.a {
-//             doSomething()
-//         }
-//         if self.b {
-//             doSomethingElse()
-//         }
-//     }
-// }
+class C12{
+    var a = true
+    var b = false
+    func f12(){
+        if self.a {
+            doSomething()
+        }
+        if self.b {
+            doSomethingElse()
+        }
+    }
+}
 
-// class C2{
-//     func f2(){
-//         var a = true
-//         if a {
-//             a = false
-//         }
-//     }
-// }
+class C2{
+    func f2(){
+        var a = true
+        if a {
+            a = false
+        }
+    }
+}
 
-// class C3{
-//     var a = true
+class C3{
+    var a = true
 
-//     func f3(){
-//         if a {
-//             doSomething()
-//         }
-//     }
-// }
+    func f3(){
+        if a {
+            doSomething()
+        }
+    }
+}
 
-// class C31{
-//     var a = true
+class C31{
+    var a = true
 
-//     func f3(){
-//         if self.a {
-//             doSomething()
-//         }
-//     }
-// }
+    func f31(){
+        if self.a {
+            doSomething()
+        }
+    }
+}
 
-// class C4{
-//     var a = true
+class C4{
+    var a = true
 
-//     func f4(){
-//         a = false
-//     }
+    func f4(){
+        a = false
+    }
 
-//     func f5(){
-//         if a {
-//             doSomething()
-//         }
-//     }
-// }
+    func f5(){
+        if a {
+            doSomething()
+        }
+    }
+}
 
-// class C41{
-//     var a = true
+class C41{
+    var a = true
 
-//     func f4(){
-//         self.a = false
-//     }
+    func f41(){
+        self.a = false
+    }
 
-//     func f5(){
-//         if self.a {
-//             doSomething()
-//         }
-//     }
-// }
+    func f51(){
+        if self.a {
+            doSomething()
+        }
+    }
+}
 
 class C5{
     var a = true
@@ -161,28 +161,61 @@ class C5{
     }
 }
 
-// class C6{
-//     var a
-//     init(){
-//         a = true
-//     }
-// }
+class C6{
+    var a
+    init(){
+        a = true
+        if a {
+            doSomething()
+        }
+    }
+}
 
-// class C61{
-//     var a
-//     init(){
-//         self.a = true
-//     }
-// }
+class C61{
+    var a
+    init(){
+        a = true
+        if a {
+            doSomething()
+        }
+    }
 
-// class C71{
-//     var a
+    func f61(){
+        a = false
+    }
+}
 
-//     init(){
-//         a = true
+class C62{
+    var a
+    init(){
+        a = true
+        if a {
+            doSomething()
+        }
+    }
 
-//         if a {
-//             var b = false
-//         }
-//     }
-// }
+    func f62(){
+        if a {
+            doSomething()
+        }
+    }
+}
+
+class C61{
+    var a = true
+    init(){
+        self.a = true
+    }
+}
+
+class C71{
+    var a
+
+    init(){
+        a = true
+
+        if a {
+            var b = false
+        }
+    }
+}
