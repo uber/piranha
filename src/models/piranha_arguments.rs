@@ -15,9 +15,9 @@ use crate::models::edit::Edit;
 
 use super::{
   default_configs::{
-    default_cleanup_comments, default_cleanup_comments_buffer, default_code_snippet,
-    default_delete_consecutive_new_lines, default_delete_file_if_empty, default_dry_run,
-    default_global_tag_prefix, default_number_of_ancestors_in_parent_scope,
+    default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
+    default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
+    default_dry_run, default_global_tag_prefix, default_number_of_ancestors_in_parent_scope,
     default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
     default_piranha_language, default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON,
     SWIFT, TSX, TYPESCRIPT,
@@ -130,6 +130,12 @@ pub struct PiranhaArguments {
   #[builder(default = "default_rule_graph()")]
   #[clap(skip)]
   rule_graph: RuleGraph,
+
+  /// Allows syntax errors in the input source code
+  #[get = "pub"]
+  #[builder(default = "default_allow_dirty_ast()")]
+  #[clap(long, default_value_t = default_allow_dirty_ast())]
+  allow_dirty_ast: bool,
 }
 
 impl Default for PiranhaArguments {
