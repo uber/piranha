@@ -86,6 +86,9 @@ class PiranhaOutputSummary:
     path: str
     "path to the file"
 
+    original_content: str
+    "Path to the file"
+
     content: str
     "content of the file after all the rewrites"
 

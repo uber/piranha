@@ -29,7 +29,7 @@ use crate::{
 #[test]
 fn test_delete_modify_str_literal_from_list_via_cli() {
   let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
-  let temp_file = temp_dir.path().join("output.txt");
+  let temp_file = temp_dir.path().join("output.json");
   _ = File::create(temp_file.as_path());
 
   let mut cmd = Command::cargo_bin("polyglot_piranha").unwrap();
