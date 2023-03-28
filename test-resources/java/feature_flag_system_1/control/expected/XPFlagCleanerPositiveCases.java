@@ -67,11 +67,7 @@ class XPFlagCleanerPositiveCases {
 
   public void complex_conditional_contains_stale_flag(boolean tBool) {
 
-    if (tBool) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    System.out.println("Hello World");
   }
 
   public void check_comment_cleanup(){
@@ -89,7 +85,7 @@ class XPFlagCleanerPositiveCases {
 
     tBool = false;
 
-    tBool = false;
+    tBool = true;
 
     tBool = tBool;
 

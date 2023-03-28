@@ -42,8 +42,8 @@ func simplify_not() {
 }
 
 // simplify `!true` and `!false` and also:
-// true && something -> true
-// something && true -> true
+// true && something -> something
+// something && true -> something
 func simplify_true_and_something(something bool) {
     if exp.BoolValue("true") && something {
         fmt.Println("only something")
@@ -62,7 +62,7 @@ func simplify_true_and_something(something bool) {
 
 // simplify `!true` and `!false` and also:
 // false && something -> false
-// something && false -> true
+// something && false -> false
 func simplify_false_and_something(something bool) {
     if exp.BoolValue("false") && something {
         fmt.Println("only false")
@@ -96,6 +96,15 @@ func simplify_false_and_something(something bool) {
         fmt.Println("keep 1")
     } else {
         fmt.Println("keep 2")
+    }
+    // function call && false
+    if f1() && exp.BoolValue("false") {
+        fmt.Println("keep as it is")
+    }
+
+    // function call || true
+    if f1() || exp.BoolValue("true") {
+        fmt.Println("keep as it is")
     }
 }
 

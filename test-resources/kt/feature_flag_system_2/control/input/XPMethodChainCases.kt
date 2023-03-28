@@ -42,10 +42,18 @@ internal class XPMethodChainCases {
                 println("!!!")
             }
             if (sp.isOtherFlag().cachedValue && sp.isStaleFeature().cachedValue) {
-                println("!!!")
+                println("LHS is not a simple identifier!!!")
             }
             if (sp.isOtherFlag().cachedValue || sp.isStaleFeature().cachedValue) {
                 println("!!!")
+            }
+            // simple_identifier && false, should be deleted
+            if (a && sp.isStaleFeature().cachedValue){
+                println("Test for simple identifier && false!!!")
+            }
+            // simple_identifier || true
+            if (a || !sp.isStaleFeature().cachedValue){
+                println("Test for simple_identifier || true!!!")
             }
             val spr = SomeParamRev.create(cp)
             // Does not match API- is reverse order

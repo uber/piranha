@@ -115,7 +115,7 @@ fn _get_piranha_args() -> PiranhaArguments {
 #[test]
 fn test_get_scope_query_positive() {
   let source_code = "class Test {
-      pub void foobar(int a, int b, int c){
+      public void foobar(int a, int b, int c){
         boolean isFlagTreated = true;
         isFlagTreated = false;
         if (isFlagTreated) {
