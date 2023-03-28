@@ -13,6 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use crate::execute_piranha;
 use crate::models::piranha_arguments::PiranhaArguments;
+use crate::step::delete_private_fields;
 use crate::utilities::{eq_without_whitespace, read_file};
 
 use std::fs;
@@ -81,7 +82,7 @@ fn execute_piranha_and_check_result(
 ) {
   let path_to_codebase = Path::new(piranha_arguments.path_to_codebase());
   let output_summaries = execute_piranha(piranha_arguments);
-
+  delete_private_fields(&output_summaries);
   assert_eq!(output_summaries.len(), files_changed);
 
   let mut all_files_match = true;

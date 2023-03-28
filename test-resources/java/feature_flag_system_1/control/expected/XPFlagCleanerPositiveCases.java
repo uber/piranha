@@ -51,8 +51,6 @@ class XPFlagCleanerPositiveCases {
     TestExperimentName[] treated();
   }
 
-  private XPTest experimentation;
-
   private boolean tBool = false;
 
   public void conditional_contains_stale_flag() {

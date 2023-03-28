@@ -64,11 +64,14 @@ class XPFlagCleanerPositiveCases {
 
   private XPTest experimentation;
 
+  private Double some_fld = 0.0;
+
   private boolean tBool = false;
 
   public void conditional_contains_stale_flag() {
 
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+      System.out.println("Print this" + some_fld.toString());
       System.out.println("Hello World");
     }
     if (!experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {

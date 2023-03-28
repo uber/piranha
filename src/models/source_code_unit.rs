@@ -12,7 +12,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 */
 use std::{
   collections::{HashMap, VecDeque},
-  path::{Path, PathBuf},
+  path::Path,
 };
 
 use colored::Colorize;
@@ -53,7 +53,7 @@ pub(crate) struct SourceCodeUnit {
   substitutions: HashMap<String, String>,
   // The path to the source code.
   #[get = "pub"]
-  path: PathBuf,
+  path: String,
 
   // Rewrites applied to this source code unit
   #[get = "pub"]
@@ -79,7 +79,12 @@ impl SourceCodeUnit {
       original_content: code.to_string(),
       code,
       substitutions: substitutions.clone(),
-      path: path.to_path_buf(),
+      path: path
+        .canonicalize()
+        .unwrap_or(path.to_path_buf())
+        .to_str()
+        .unwrap()
+        .to_string(),
       rewrites: Vec::new(),
       matches: Vec::new(),
       piranha_arguments: piranha_arguments.clone(),

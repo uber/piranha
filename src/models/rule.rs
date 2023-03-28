@@ -140,6 +140,7 @@ macro_rules! piranha_rule {
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.constraints(std::collections::HashSet::from([$($constraint)*])))?
+    $(.is_seed_rule($is_seed_rule))?
     .build().unwrap()
   };
 }

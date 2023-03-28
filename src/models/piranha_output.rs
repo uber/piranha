@@ -52,7 +52,7 @@ gen_py_str_methods!(PiranhaOutputSummary);
 impl PiranhaOutputSummary {
   pub(crate) fn new(source_code_unit: &SourceCodeUnit) -> PiranhaOutputSummary {
     return PiranhaOutputSummary {
-      path: String::from(source_code_unit.path().as_os_str().to_str().unwrap()),
+      path: String::from(source_code_unit.path()),
       original_content: source_code_unit.original_content().to_string(),
       content: source_code_unit.code().to_string(),
       matches: source_code_unit.matches().iter().cloned().collect_vec(),

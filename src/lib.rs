@@ -18,11 +18,12 @@ use models::{
   rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
 
+pub mod common_java_rules;
 pub mod models;
+pub mod step;
 #[cfg(test)]
 mod tests;
 pub mod utilities;
-
 use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 use itertools::Itertools;

@@ -40,7 +40,7 @@ use pyo3::{
 use regex::Regex;
 use tree_sitter::InputEdit;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Clone, Getters, CopyGetters, Debug, Parser, Builder)]
@@ -392,6 +392,6 @@ impl SourceCodeUnit {
       std::fs::remove_file(self.path()).expect("Unable to Delete file");
       return;
     }
-    std::fs::write(self.path(), self.code()).expect("Unable to Write file");
+    std::fs::write(Path::new(self.path()), self.code()).expect("Unable to Write file");
   }
 }
