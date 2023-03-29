@@ -39,6 +39,7 @@ use tempdir::TempDir;
 fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   pyo3_log::init();
   m.add_function(wrap_pyfunction!(execute_piranha, m)?)?;
+  m.add_function(wrap_pyfunction!(execute_feature_flag_cleanup, m)?)?;
   m.add_class::<PiranhaArguments>()?;
   m.add_class::<PiranhaOutputSummary>()?;
   m.add_class::<Edit>()?;
@@ -48,6 +49,15 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_class::<OutgoingEdges>()?;
   m.add_class::<Constraint>()?;
   Ok(())
+}
+
+#[pyfunction]
+pub fn execute_feature_flag_cleanup(
+  piranha_arguments: &PiranhaArguments,
+) -> Vec<PiranhaOutputSummary> {
+  let summaries = execute_piranha(piranha_arguments);
+  piranha_arguments.cleanup(summaries.clone());
+  summaries
 }
 
 /// Executes piranha for the given `piranha_arguments`.

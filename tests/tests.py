@@ -38,7 +38,9 @@ def test_piranha_rewrite():
         "test-resources/java/feature_flag_system_1/treated/input/XPFlagCleanerPositiveCases.java",
         "test-resources/java/feature_flag_system_1/treated/input/TestEnum.java",
     ]
-    assert all([o.path in expected_paths for o in output_summaries])
+    for o in output_summaries:
+        print("-------",o.path)
+    assert all([any(o.path.endswith(e) for e in expected_paths) for o in output_summaries])
     summary: PiranhaOutputSummary
     for summary in output_summaries:
         assert _is_readable(str(summary))

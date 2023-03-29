@@ -12,6 +12,19 @@
 from typing import Optional
 
 
+def execute_feature_flag_cleanup(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:
+    """
+    Executes piranha for the given `piranha_arguments` and returns `PiranhaOutputSummary` for each file analyzed by Piranha
+    Parameters
+    ------------
+        piranha_arguments: Piranha Arguments
+            Configurations for piranha
+    Returns
+    ------------
+    List of `PiranhaOutPutSummary`
+    """
+    ...
+
 def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:
     """
     Executes piranha for the given `piranha_arguments` and returns `PiranhaOutputSummary` for each file analyzed by Piranha

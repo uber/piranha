@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::execute_piranha;
+use crate::execute_feature_flag_cleanup;
 use crate::models::piranha_arguments::PiranhaArguments;
 
 use crate::utilities::{eq_without_whitespace, read_file};
@@ -81,8 +81,7 @@ fn execute_piranha_and_check_result(
   ignore_whitespace: bool,
 ) {
   let path_to_codebase = Path::new(piranha_arguments.path_to_codebase());
-  let output_summaries = execute_piranha(piranha_arguments);
-  piranha_arguments.cleanup(output_summaries.clone());
+  let output_summaries = execute_feature_flag_cleanup(piranha_arguments);
   assert_eq!(output_summaries.len(), files_changed);
 
   let mut all_files_match = true;
