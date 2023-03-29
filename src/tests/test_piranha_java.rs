@@ -127,8 +127,7 @@ fn test_new_line_character_used_in_string_literal_code_snippet() {
     void someMethod(String s) {
       assert (s.equals(\"Hello \\n World\"));
     }
-  }"
-  .to_string();
+  }";
   let piranha_arguments = piranha_arguments! {
     path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
     language = PiranhaLanguage::from(JAVA),
@@ -148,7 +147,7 @@ fn test_new_line_character_used_in_string_literal_code_snippet() {
     output_summaries[0].content(),
     expected
   ));
-  assert!(output_summaries[0].original_content().eq(&code_snippet));
+  assert!(output_summaries[0].original_content().eq(code_snippet));
 }
 
 #[test]
