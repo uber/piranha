@@ -15,8 +15,6 @@ package com.uber.piranha;
 
 class XPFlagCleanerPositiveCases {
 
-  private ExperimentInterface experimentation;
-
   public XPFlagCleanerPositiveCases(SomeExperiment exp) {
 
     System.out.println("Hello World");

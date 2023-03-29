@@ -15,8 +15,7 @@ use crate::{
   common_java_rules::{JavaRules, MATCH_ALL_PRIVATE_FIELD, MATCH_IDENTIFIER, MATCH_PRIVATE_FIELD},
   execute_piranha,
   models::{
-    default_configs::{default_code_snippet, default_path_to_codebase, JAVA},
-    language::PiranhaLanguage,
+    default_configs::{default_code_snippet, default_path_to_codebase},
     matches::Match,
     outgoing_edges::{OutgoingEdges, OutgoingEdgesBuilder},
     piranha_arguments::PiranhaArguments,
@@ -24,7 +23,7 @@ use crate::{
     rule::Rule,
     rule_graph::{RuleGraph, RuleGraphBuilder},
   },
-  piranha_arguments, piranha_rule,
+  piranha_rule,
 };
 use itertools::Itertools;
 use serde_json::json;
@@ -37,6 +36,7 @@ struct Step {
   code_snippet: Option<String>,
   summaries: Vec<PiranhaOutputSummary>,
   dry_run: bool,
+  piranha_arguments: PiranhaArguments,
 }
 
 impl Step {
@@ -48,18 +48,22 @@ impl Step {
   }
 
   fn execute(&mut self) {
-    self.summaries = execute_piranha(&self._as_piranha_argument());
+    self.update_piranha_argument();
+    self.summaries = execute_piranha(&self.piranha_arguments);
   }
 
-  fn _as_piranha_argument(&self) -> PiranhaArguments {
-    piranha_arguments! {
-        language = PiranhaLanguage::from(JAVA),
-        rule_graph = self.rule_graph(),
-        path_to_codebase = self.path_to_codebase.clone().unwrap_or(default_path_to_codebase()),
-        code_snippet = self.code_snippet.clone().unwrap_or(default_code_snippet()),
-        cleanup_comments = true,
-        dry_run = self.dry_run,
-    }
+  fn update_piranha_argument(&mut self) {
+    self.piranha_arguments.set_path_to_codebase(
+      self
+        .path_to_codebase
+        .clone()
+        .unwrap_or(default_path_to_codebase()),
+    );
+    self
+      .piranha_arguments
+      .set_code_snippet(self.code_snippet.clone().unwrap_or(default_code_snippet()));
+    self.piranha_arguments.set_dry_run(self.dry_run);
+    self.piranha_arguments.set_rule_graph(self.rule_graph());
   }
 
   fn get_matches(&self, rule_name: &str) -> Vec<Match> {
@@ -77,14 +81,18 @@ impl Step {
   }
 }
 
-pub fn delete_private_fields(summaries: &Vec<PiranhaOutputSummary>) {
+pub fn delete_unused_private_fields(
+  piranha_arguments: &PiranhaArguments, summaries: &Vec<PiranhaOutputSummary>,
+) {
   let java_rules = JavaRules::new();
   for summary in summaries {
     if summary.content().is_empty() {
       continue;
     }
-    let original_private_field_usages = get_private_field_usages(summary.original_content());
-    let modified_private_field_usages = get_private_field_usages(summary.content());
+    let original_private_field_usages =
+      get_private_field_usages(piranha_arguments, summary.original_content());
+    let modified_private_field_usages =
+      get_private_field_usages(piranha_arguments, summary.content());
 
     original_private_field_usages
       .iter()
@@ -103,6 +111,7 @@ pub fn delete_private_fields(summaries: &Vec<PiranhaOutputSummary>) {
             code_snippet: None,
             summaries: vec![],
             dry_run: false,
+            piranha_arguments: piranha_arguments.clone(),
           };
 
           step.execute();
@@ -111,7 +120,9 @@ pub fn delete_private_fields(summaries: &Vec<PiranhaOutputSummary>) {
   }
 }
 
-fn get_private_field_usages(code_snippet: &String) -> HashMap<String, u32> {
+fn get_private_field_usages(
+  piranha_arguments: &PiranhaArguments, code_snippet: &String,
+) -> HashMap<String, u32> {
   let java_rules = JavaRules::new();
   let mut step = Step {
     rules: vec![
@@ -136,6 +147,7 @@ fn get_private_field_usages(code_snippet: &String) -> HashMap<String, u32> {
     code_snippet: Some(code_snippet.to_string()),
     summaries: vec![],
     dry_run: true,
+    piranha_arguments: piranha_arguments.clone(),
   };
   step.execute();
 

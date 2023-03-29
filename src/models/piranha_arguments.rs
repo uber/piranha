@@ -11,7 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::edit::Edit;
+use crate::{models::edit::Edit, step::delete_unused_private_fields};
 
 use super::{
   default_configs::{
@@ -22,7 +22,8 @@ use super::{
     default_piranha_language, default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON,
     SWIFT, TSX, TYPESCRIPT,
   },
-  language::PiranhaLanguage,
+  language::{PiranhaLanguage, SupportedLanguage},
+  piranha_output::PiranhaOutputSummary,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
   source_code_unit::SourceCodeUnit,
 };
@@ -30,7 +31,7 @@ use crate::utilities::parse_key_val;
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
-use getset::{CopyGetters, Getters};
+use getset::{CopyGetters, Getters, Setters};
 use itertools::Itertools;
 use log::{debug, info, warn};
 use pyo3::{
@@ -43,19 +44,21 @@ use tree_sitter::InputEdit;
 use std::{collections::HashMap, path::Path};
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
-#[derive(Clone, Getters, CopyGetters, Debug, Parser, Builder)]
+#[derive(Clone, Getters, CopyGetters, Debug, Parser, Builder, Setters)]
 #[clap(name = "Piranha")]
 #[pyclass]
 #[builder(build_fn(name = "create"))]
 pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
+  #[set = "pub"]
   #[builder(default = "default_path_to_codebase()")]
   #[clap(short = 'c', long, default_value_t = default_path_to_codebase())]
   path_to_codebase: String,
 
   /// Code snippet to transform
   #[get = "pub"]
+  #[set = "pub"]
   #[builder(default = "default_code_snippet()")]
   #[clap(short = 't', long, default_value_t = default_code_snippet())]
   code_snippet: String,
@@ -70,6 +73,7 @@ pub struct PiranhaArguments {
   #[get = "pub"]
   #[builder(default = "default_path_to_configurations()")]
   #[clap(short = 'f', long)]
+  #[set = "pub"]
   path_to_configurations: String,
 
   /// Path to output summary json file
@@ -123,12 +127,14 @@ pub struct PiranhaArguments {
   #[get = "pub"]
   #[builder(default = "default_dry_run()")]
   #[clap(long, default_value_t = false)]
+  #[set = "pub"]
   dry_run: bool,
 
   // A graph that captures the flow amongst the rules
   #[get = "pub"]
   #[builder(default = "default_rule_graph()")]
   #[clap(skip)]
+  #[set = "pub"]
   rule_graph: RuleGraph,
 
   /// Allows syntax errors in the input source code
@@ -194,6 +200,18 @@ impl PiranhaArguments {
       global_tag_prefix = global_tag_prefix.unwrap_or_else(default_global_tag_prefix),
       delete_file_if_empty = delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty),
       path_to_output_summary = path_to_output_summary,
+    }
+  }
+
+  pub fn cleanup(&self, summaries: Vec<PiranhaOutputSummary>) {
+    match *self.language().supported_language() {
+      SupportedLanguage::Java => delete_unused_private_fields(self, &summaries),
+      SupportedLanguage::Kotlin => (),
+      SupportedLanguage::Go => (),
+      SupportedLanguage::Swift => (),
+      SupportedLanguage::Ts => (),
+      SupportedLanguage::Tsx => (),
+      SupportedLanguage::Python => (),
     }
   }
 }

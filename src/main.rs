@@ -17,7 +17,7 @@ use std::{fs, time::Instant};
 use log::{debug, info};
 use polyglot_piranha::{
   execute_piranha, models::piranha_arguments::PiranhaArguments,
-  models::piranha_output::PiranhaOutputSummary, step::delete_private_fields,
+  models::piranha_output::PiranhaOutputSummary,
 };
 
 fn main() {
@@ -35,7 +35,7 @@ fn main() {
     write_output_summary(&piranha_output_summaries, path);
   }
 
-  delete_private_fields(&piranha_output_summaries);
+  args.cleanup(piranha_output_summaries);
 
   info!("Time elapsed - {:?}", now.elapsed().as_secs());
 }

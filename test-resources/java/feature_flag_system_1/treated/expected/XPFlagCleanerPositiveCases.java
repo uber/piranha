@@ -55,7 +55,6 @@ class XPFlagCleanerPositiveCases {
     TestExperimentName[] treated();
   }
 
-  private XPTest experimentation;
 
   private boolean tBool = false;
 
