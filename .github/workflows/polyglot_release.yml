@@ -8,7 +8,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: 3.8
     - name: Build wheel with Maturin
       run: |
         pip install --upgrade maturin
@@ -18,29 +18,65 @@ jobs:
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-  
-  build_mac_os:
-    needs: build_ubuntu
-    runs-on: macos-latest
+  build_ubuntu_18:
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: 3.8
     - name: Build wheel with Maturin
       run: |
         pip install --upgrade maturin
         maturin build --release -o dist
-    - name: Build wheel with Maturin - universal2
-      env:
-        DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-        SDKROOT: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
-        MACOSX_DEPLOYMENT_TARGET: 10.9
-      run: |
-        rustup target add aarch64-apple-darwin
-        pip install --upgrade maturin
-        maturin build --release -o dist --universal2
+        maturin build --sdist -o dist
     - name: Pypi Release for ubuntu-latest
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+  macos_build_x86:
+    name: 'macos-x86'
+    runs-on: [macos-12]
+    strategy:
+      matrix:
+        arch: ['x86_64']
+    env:
+      # Polyglot depends on tree-sitter-python which tries to compile c++ files stdlibc++ which is depreciated in newer version of mac.
+      MACOSX_DEPLOYMENT_TARGET: 10.16
+      CXXFLAGS: -stdlib=libc++ -mmacosx-version-min=10.16
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Build wheel with Maturin
+        run: |
+          pip install --upgrade maturin
+          maturin build --release -o dist
+      - name: Pypi Release for macos-latest
+        run: |
+          pip install twine
+          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+  macos_build_arm:
+    name: 'macos-arm64'
+    runs-on: [macos-latest]
+    strategy:
+      matrix:
+        arch: ['arm64']
+    env:
+      # Polyglot depends on tree-sitter-python which tries to compile c++ files stdlibc++ which is depreciated in newer version of mac.
+      CXXFLAGS: -stdlib=libc++
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Build wheel with Maturin
+        run: |
+          rustup target add aarch64-apple-darwin
+          pip install --upgrade maturin
+          maturin build --release -o dist --universal2
+      - name: Pypi Release for macos-latest
+        run: |
+          pip install twine
+          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
