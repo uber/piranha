@@ -26,24 +26,24 @@ use pyo3::{prelude::pyclass, pymethods};
 pub struct PiranhaOutputSummary {
   /// Path to the file
   #[pyo3(get)]
-  #[get = "pub"]
+  #[get = "pub(crate)"]
   path: String,
-  /// Path to the file
+  /// Original content of the file after all the rewrites
   #[pyo3(get)]
-  #[get = "pub"]
+  #[get = "pub(crate)"]
   #[serde(skip)]
   original_content: String,
-  /// Content of the file after all the rewrites
+  /// Final content of the file after all the rewrites
   #[pyo3(get)]
-  #[get = "pub"]
+  #[get = "pub(crate)"]
   content: String,
   /// All the occurrences of "match-only" rules
   #[pyo3(get)]
-  #[get = "pub"]
+  #[get = "pub(crate)"]
   matches: Vec<(String, Match)>,
   /// All the applied edits
   #[pyo3(get)]
-  #[get = "pub"]
+  #[get = "pub(crate)"]
   rewrites: Vec<Edit>,
 }
 
