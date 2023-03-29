@@ -28,7 +28,7 @@ use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::Sou
 
 #[derive(Serialize, Debug, Clone, Getters, Deserialize)]
 #[pyclass]
-pub struct Match {
+pub(crate) struct Match {
   // Code snippet that matched
   #[get = "pub"]
   #[pyo3(get)]

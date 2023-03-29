@@ -100,10 +100,10 @@ class PiranhaOutputSummary:
     "path to the file"
 
     original_content: str
-    "Path to the file"
+    "Original content of the file before any rewrites"
 
     content: str
-    "content of the file after all the rewrites"
+    "Final content of the file after all the rewrites"
 
     matches: list[tuple[str, Match]]
     'All the occurrences of "match-only" rules'
