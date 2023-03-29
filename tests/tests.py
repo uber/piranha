@@ -12,11 +12,15 @@
 
 
 from pathlib import Path
-from polyglot_piranha import Constraint, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
+from polyglot_piranha import Constraint, execute_feature_flag_cleanup, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
 from os import listdir
 import re
+import logging 
 
+FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(logging.DEBUG)
 
 def test_piranha_rewrite():
     args = PiranhaArguments(
@@ -31,7 +35,7 @@ def test_piranha_rewrite():
         dry_run=True,
     )
 
-    output_summaries = execute_piranha(args)
+    output_summaries = execute_feature_flag_cleanup(args)
     
     assert len(output_summaries) == 2
     expected_paths = [

@@ -62,6 +62,9 @@ impl Step {
     self
       .piranha_arguments
       .set_code_snippet(self.code_snippet.clone().unwrap_or(default_code_snippet()));
+    if !self.dry_run {
+      self.piranha_arguments.set_dry_run(self.dry_run);
+    }
     self.piranha_arguments.set_dry_run(self.dry_run);
     self.piranha_arguments.set_rule_graph(self.rule_graph());
   }
