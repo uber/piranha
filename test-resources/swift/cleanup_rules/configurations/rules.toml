@@ -435,3 +435,53 @@ query = """(
 replace_node = "property_declaration"
 replace = ""
 is_seed_rule = false
+
+[[rules]]
+name = "delete_adhoc_declarations"
+query = """(
+    (property_declaration
+        name: (pattern
+            bound_identifier: (simple_identifier) @hvariable
+        )
+        value: (boolean_literal) @hvalue
+    )@property_declaration
+)"""
+replace_node = "property_declaration"
+replace = ""
+is_seed_rule = false
+
+# these should not have been declared in outer scope with a different value
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (property_declaration
+        name: (pattern
+            bound_identifier: (simple_identifier) @variable
+        )
+        value: (boolean_literal) @value
+    )
+    (#eq? @variable "@hvariable")
+    (#not-eq? @value "@hvalue")
+)"""]
+
+# these should not be reassigned with a different value 
+
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (assignment
+            target: (directly_assignable_expression
+                [   (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @var
+                        )
+                    )
+                    (simple_identifier) @var
+                ]
+            )
+            result: (boolean_literal) @val
+        )
+    (#eq? @var "@hvariable")
+    (#not-eq? @val "@hvalue")
+)"""]
