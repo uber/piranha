@@ -269,7 +269,7 @@ replace_node = "conjunction_expression"
 is_seed_rule = false
 
 # Before :
-#  abc() && false
+#  abc && false
 # After :
 #  false
 #
@@ -278,7 +278,11 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_something_and_false"
 query = """
 (
-(conjunction_expression (_) @lhs 
+(conjunction_expression [(simple_identifier)
+                          (parenthesized_expression (simple_identifier))
+                          (boolean_literal)
+                          (parenthesized_expression (boolean_literal))
+                        ] @lhs 
                         [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @conjunction_expression
 (#eq? @rhs "false")  
 )
@@ -288,7 +292,7 @@ replace_node = "conjunction_expression"
 is_seed_rule = false
 
 # Before :
-#  abc() || true
+#  abc || true
 # After :
 #  true
 #
@@ -297,11 +301,15 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_true"
 query = """
 (
-(disjunction_expression (_) @lhs 
+(disjunction_expression [(simple_identifier)
+                          (parenthesized_expression (simple_identifier))
+                          (boolean_literal)
+                          (parenthesized_expression (boolean_literal))
+                        ] @lhs 
                         [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
 (#eq? @rhs "true")  
 )"""
-replace = "@lhs"
+replace = "true"
 replace_node = "disjunction_expression"
 is_seed_rule = false
 

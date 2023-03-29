@@ -196,7 +196,7 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 # Before :
-#  abc() && false
+#  abc && false
 # After :
 #  false
 #
@@ -206,7 +206,14 @@ groups = ["boolean_expression_simplify"]
 query = """
 (
     (binary_expression
-        left : (_) @lhs
+        left : [
+            (identifier)
+            (parenthesized_expression (identifier))
+            (true)
+            (parenthesized_expression (true))
+            (false)
+            (parenthesized_expression (false))
+        ] @lhs
         operator : "&&"
         right: [(false) (parenthesized_expression (false))]
     )
@@ -217,7 +224,7 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 # Before :
-#  abc() || true
+#  abc || true
 # After :
 #  true
 #
@@ -227,12 +234,19 @@ name = "simplify_something_or_true"
 query = """
 (
     (binary_expression
-        left : (_) @lhs
+        left : [
+            (identifier)
+            (parenthesized_expression (identifier))
+            (true)
+            (parenthesized_expression (true))
+            (false)
+            (parenthesized_expression (false))
+        ] @lhs
         operator:"||"
         right: [(true) (parenthesized_expression (true))]
     )
 @binary_expression)"""
-replace = "@lhs"
+replace = "true"
 replace_node = "binary_expression"
 is_seed_rule = false
 

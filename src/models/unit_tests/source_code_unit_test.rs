@@ -128,7 +128,7 @@ fn test_apply_edit_negative() {
 #[test]
 fn test_apply_edit_comma_handling_via_grammar() {
   let source_code = "class Test {
-      @SuppressWarnings(\"NullAway\",\"FooBar\")
+      @SuppressWarnings({ \"NullAway\",\"FooBar\" })
       public void is_valid(@Nullable String s){
         return s != null && check(s);
       }
@@ -141,7 +141,7 @@ fn test_apply_edit_comma_handling_via_grammar() {
     SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
 
   let _ = source_code_unit.apply_edit(
-    &Edit::delete_range(source_code, range(37, 47, 2, 26, 2, 36)),
+    &Edit::delete_range(source_code, range(38, 47, 2, 26, 2, 36)),
     &mut parser,
   );
   assert!(eq_without_whitespace(
@@ -205,7 +205,7 @@ fn test_satisfies_constraints_positive() {
   };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
-      pub void foobar(){
+      public void foobar(){
         boolean isFlagTreated = true;
         isFlagTreated = true;
         if (isFlagTreated) {
@@ -270,7 +270,7 @@ fn test_satisfies_constraints_negative() {
   };
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
-      pub void foobar(){
+      public void foobar(){
         boolean isFlagTreated = true;
         isFlagTreated = false;
         if (isFlagTreated) {

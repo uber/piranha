@@ -128,11 +128,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun or_compounded_with_not(x: Int, extra_toggle: Boolean): Int {
-        if (extra_toggle) {
-            return 0
-        } else {
-            return 1
-        }
+        return 0
     }
 
     fun remove_else_if(extra_toggle: Boolean): Int {
