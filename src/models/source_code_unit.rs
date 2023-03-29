@@ -39,6 +39,10 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 pub(crate) struct SourceCodeUnit {
   // The tree representing the file
   ast: Tree,
+  // The original content of a file
+  #[get = "pub"]
+  #[set = "pub(crate)"]
+  original_content: String,
   // The content of a file
   #[get = "pub"]
   #[set = "pub(crate)"]
@@ -72,6 +76,7 @@ impl SourceCodeUnit {
     let ast = parser.parse(&code, None).expect("Could not parse code");
     let source_code_unit = Self {
       ast,
+      original_content: code.to_string(),
       code,
       substitutions: substitutions.clone(),
       path: path.to_path_buf(),
