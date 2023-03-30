@@ -67,8 +67,7 @@ generator = """(
         (#eq? @g_constructor_with_param_params "@m_constructor_with_param_params"))
         (((function_declaration
             .
-            body: (function_body)@g_constructor_without_param_body))
-        (#eq? @g_constructor_without_param_body "@m_constructor_without_param_body"))
+            body: (function_body)@g_constructor_without_param_body)))
     ]
 )@qdn"""
 
