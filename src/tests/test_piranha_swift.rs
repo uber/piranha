@@ -39,4 +39,6 @@ create_rewrite_tests! {
       "treated_complement" => "false"
     },
     cleanup_comments = true, delete_file_if_empty= false;
+    test_local_variable_inline_file: "variable_inline", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
 }
