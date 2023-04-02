@@ -233,3 +233,33 @@ class C20{
         }
     }
 }
+
+class C21{
+    var a = true
+    func f1(){
+        f.subscribe(
+            onNext: { x in 
+                var b = false
+                if b {
+                    doSomething()
+                }
+            }
+        )
+    }
+}
+
+class C22{
+    var a
+
+    init(){
+        if something{
+            var b = true
+            if b {
+                a = true
+                doSomething()
+            }
+        } else {
+            a = false
+        }
+    }
+}
