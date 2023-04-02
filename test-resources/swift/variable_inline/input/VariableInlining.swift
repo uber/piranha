@@ -62,173 +62,17 @@ class C6 {
 }
 
 class C7 {
-    func f7a(){
+    func f7(){
         var a = true
         if a {
             doSomething()
         }
     }
 
-    func f7b(){
+    func f8(){
         var a = true
         var b = true
         if b {
-            doSomething()
-        }
-    }
-}
-
-class C8{
-    var a = true
-
-    init(){}
-
-    func f8(){
-        a = true
-    }
-}
-
-class C9{
-    var a = true
-
-    init(){}
-
-    func f9(){
-        a = false
-    }
-}
-
-class C10{
-    var a = true
-
-    init(){}
-
-    func f10(){
-        self.a = true
-    }
-}
-
-class C11{
-    var a = true
-
-    init(){}
-
-    func f11(){
-        self.a = false
-    }
-}
-
-class C12{
-    var a = true
-    var b = false
-    func f12(){
-        if a {
-            doSomething()
-        }
-        if b {
-            doSomethingElse()
-        }
-    }
-}
-
-class C13{
-    var a = true
-    var b = false
-    func f13(){
-        if self.a {
-            doSomething()
-        }
-        if self.b {
-            doSomethingElse()
-        }
-    }
-}
-
-class C14{
-    var a = true
-
-    func f14(){
-        if a {
-            doSomething()
-        }
-    }
-}
-
-class C15{
-    var a = true
-
-    func f15(){
-        if self.a {
-            doSomething()
-        }
-    }
-}
-
-class C16{
-    var a = true
-
-    func f4(){
-        a = false
-    }
-
-    func f16(){
-        if a {
-            doSomething()
-        }
-    }
-}
-
-class C17{
-    var a = true
-
-    func f17a(){
-        self.a = false
-    }
-
-    func f17b(){
-        if self.a {
-            doSomething()
-        }
-    }
-}
-
-class C18{
-    var a = true
-
-    func f18a(){
-        a = true
-    }
-
-    func f18b(){
-        a = false
-    }
-}
-
-class C19{
-    var a
-    init(){
-        a = true
-        if a {
-            doSomething()
-        }
-    }
-
-    func f19(){
-        a = false
-    }
-}
-
-class C20{
-    var a
-    init(){
-        a = true
-        if a {
-            doSomething()
-        }
-    }
-
-    func f20(){
-        if a {
             doSomething()
         }
     }
