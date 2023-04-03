@@ -1,0 +1,53 @@
+# Copyright (c) 2022 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file contains rules to the specific feature flag API.
+
+# rule for deletion of variable initialisation in the function scope subject to the mentioned constraints
+[[rules]]
+name = "delete_variable_declaration"
+query = """(
+    (function_declaration
+        body: (function_body
+            (statements
+                (property_declaration
+                    name: (pattern
+                        bound_identifier: (simple_identifier) @hvariable
+                    )
+                    value: (boolean_literal) @hvalue
+                ) @property_declaration
+            )
+        )
+    )
+)"""
+replace_node = "property_declaration"
+replace = ""
+
+# skip the rule if the variable is assigned with some other value in the class scope
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (assignment
+        target: (directly_assignable_expression
+            [ (navigation_expression
+                target: (self_expression)
+                suffix: (navigation_suffix
+                    suffix: (simple_identifier) @var
+                )
+                )
+                (simple_identifier) @var
+            ]
+            )
+        result: (boolean_literal) @val
+    )
+    (#eq? @var "@hvariable")
+    (#not-eq? @val "@hvalue")
+)"""]
