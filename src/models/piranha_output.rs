@@ -11,8 +11,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::path::PathBuf;
-
+use getset::Getters;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
@@ -22,20 +21,29 @@ use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
 use pyo3::{prelude::pyclass, pymethods};
 
 /// A class to represent Piranha's output
-#[derive(Serialize, Debug, Clone, Default, Deserialize)]
+#[derive(Serialize, Debug, Clone, Default, Deserialize, Getters)]
 #[pyclass]
 pub struct PiranhaOutputSummary {
   /// Path to the file
   #[pyo3(get)]
+  #[get = "pub(crate)"]
   path: String,
-  /// Content of the file after all the rewrites
+  /// Original content of the file after all the rewrites
   #[pyo3(get)]
+  #[get = "pub(crate)"]
+  #[serde(skip)]
+  original_content: String,
+  /// Final content of the file after all the rewrites
+  #[pyo3(get)]
+  #[get = "pub(crate)"]
   content: String,
   /// All the occurrences of "match-only" rules
   #[pyo3(get)]
+  #[get = "pub(crate)"]
   matches: Vec<(String, Match)>,
   /// All the applied edits
   #[pyo3(get)]
+  #[get = "pub(crate)"]
   rewrites: Vec<Edit>,
 }
 
@@ -45,25 +53,10 @@ impl PiranhaOutputSummary {
   pub(crate) fn new(source_code_unit: &SourceCodeUnit) -> PiranhaOutputSummary {
     return PiranhaOutputSummary {
       path: String::from(source_code_unit.path().as_os_str().to_str().unwrap()),
+      original_content: source_code_unit.original_content().to_string(),
       content: source_code_unit.code().to_string(),
       matches: source_code_unit.matches().iter().cloned().collect_vec(),
       rewrites: source_code_unit.rewrites().iter().cloned().collect_vec(),
     };
-  }
-
-  pub(crate) fn matches(&self) -> &[(String, Match)] {
-    self.matches.as_ref()
-  }
-
-  pub(crate) fn rewrites(&self) -> &[Edit] {
-    self.rewrites.as_ref()
-  }
-
-  pub fn path(&self) -> PathBuf {
-    PathBuf::from(self.path.as_str())
-  }
-
-  pub fn content(&self) -> &str {
-    self.content.as_ref()
   }
 }
