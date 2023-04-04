@@ -38,12 +38,12 @@ class PiranhaArguments:
         rule_graph: Optional[RuleGraph]= None,
         path_to_codebase: Optional[str] = None,
         code_snippet: Optional[str] = None,
-        dry_run: Optional[bool] = None,
-        cleanup_comments: Optional[bool] = None,
-        cleanup_comments_buffer: Optional[int] = None,
-        number_of_ancestors_in_parent_scope: Optional[int] = None,
-        delete_file_if_empty : Optional[bool] = None,
-        delete_consecutive_new_lines : Optional[bool] = None,
+        dry_run: bool = False,
+        cleanup_comments: bool = False,
+        cleanup_comments_buffer: int = 2,
+        number_of_ancestors_in_parent_scope: int = None,
+        delete_file_if_empty : bool = True,
+        delete_consecutive_new_lines : bool = False,
         path_to_output: Optional[str] = None
  
     ):
