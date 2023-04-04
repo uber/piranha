@@ -12,4 +12,14 @@ enum TestEnum {
          return "Hi"
       }
    }
+
+   var v2: String{
+    switch self {
+      case .two:
+         return "world"
+      case .three, .four:
+         return "World!"
+      }
+   
+   }
 }
