@@ -23,9 +23,9 @@ import javax.inject.Inject;
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
-    SOME_FLAG,
+    SOME_FLAG, // Some Flag
     // Some stale enum
-    STALE_FLAG
+    STALE_FLAG // Some stale enum
   }
 
   enum AnotherTestExperimentName {
