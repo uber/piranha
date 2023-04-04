@@ -25,6 +25,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun conditional_with_else_contains_stale_flag() {
+        // Some comment
         println("Hi world")
     }
 

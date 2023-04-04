@@ -29,6 +29,7 @@ internal class XPFlagCleanerPositiveCases {
 
     fun conditional_with_else_contains_stale_flag() {
         if (experimentation.isStaleFeature().cachedValue) {
+            // Some comment
             println("Hello World")
         } else {
             println("Hi world")
