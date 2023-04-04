@@ -66,7 +66,7 @@ create_rewrite_tests! {
 
 create_match_tests! {
   JAVA,
-  test_java_match_only: "structural_find", 20;
+  test_java_match_only: "structural_find", 22;
 }
 
 #[test]
