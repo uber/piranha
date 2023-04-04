@@ -31,6 +31,7 @@ internal class XPFlagCleanerPositiveCases {
         if (experimentation.isStaleFeature().cachedValue) {
             println("Hello World")
         } else {
+            // Some comment
             println("Hi world")
         }
     }
