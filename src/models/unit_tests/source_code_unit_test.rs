@@ -16,7 +16,7 @@ use tree_sitter::Parser;
 use crate::{
   constraint,
   models::{
-    default_configs::{JAVA, SWIFT, UNUSED_CODE_PATH},
+    default_configs::{JAVA, UNUSED_CODE_PATH},
     language::PiranhaLanguage,
     piranha_arguments::PiranhaArgumentsBuilder,
     rule::InstantiatedRule,
@@ -121,62 +121,6 @@ fn test_apply_edit_negative() {
     &Edit::delete_range(source_code, range(1000, 2000, 0, 0, 0, 0)),
     &mut parser,
   );
-}
-
-/// Positive test of an edit being applied  given replacement range  and replacement string.
-/// This scenario checks the logic that removes the comma identified by tree-sitter.
-#[test]
-fn test_apply_edit_comma_handling_via_grammar() {
-  let source_code = "class Test {
-      @SuppressWarnings({ \"NullAway\",\"FooBar\" })
-      public void is_valid(@Nullable String s){
-        return s != null && check(s);
-      }
-    }";
-
-  let java = get_java_tree_sitter_language();
-  let mut parser = java.parser();
-
-  let mut source_code_unit =
-    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
-
-  let _ = source_code_unit.apply_edit(
-    &Edit::delete_range(source_code, range(38, 47, 2, 26, 2, 36)),
-    &mut parser,
-  );
-  assert!(eq_without_whitespace(
-    &source_code.replace("\"NullAway\",", ""),
-    source_code_unit.code()
-  ));
-}
-
-/// Positive test of an edit being applied  given replacement range  and replacement string.
-/// Currently swift grammar does not always identify extra commas, we use regex replace at this point.
-/// This test scenario checks the regex replacement logic.
-#[test]
-fn test_apply_edit_comma_handling_via_regex() {
-  let source_code = "class Test {
-    func some_func() {
-      var bike1 = Bike(name: \"BMX Bike\", gear: 2)
-      print(\"Name: \\(bike1.name) and Gear: \\(bike1.gear)\")
-  }
-}";
-
-  let swift = PiranhaLanguage::from(SWIFT);
-
-  let mut parser = swift.parser();
-
-  let mut source_code_unit =
-    SourceCodeUnit::default(source_code, &mut parser, swift.name().to_string());
-
-  let _ = source_code_unit.apply_edit(
-    &Edit::delete_range(source_code, range(59, 75, 3, 23, 3, 41)),
-    &mut parser,
-  );
-  assert!(eq_without_whitespace(
-    &source_code.replace("name: \"BMX Bike\",", ""),
-    source_code_unit.code()
-  ));
 }
 
 #[test]

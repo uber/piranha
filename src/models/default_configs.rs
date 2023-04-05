@@ -47,7 +47,7 @@ pub fn default_delete_file_if_empty() -> bool {
   true
 }
 
-pub fn default_cleanup_comments_buffer() -> usize {
+pub fn default_cleanup_comments_buffer() -> i32 {
   2
 }
 
