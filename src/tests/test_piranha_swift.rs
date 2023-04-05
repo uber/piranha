@@ -39,4 +39,9 @@ create_rewrite_tests! {
       "treated_complement" => "false"
     },
     cleanup_comments = true, delete_file_if_empty= false;
+  test_leading_comma: "leading_comma", 1,
+    substitutions = substitutions! {
+      "stale_flag" => "one"
+    },
+    cleanup_comments = true, delete_file_if_empty= false;
 }

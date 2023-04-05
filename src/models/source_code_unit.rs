@@ -336,13 +336,8 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
-    let mut edit: Edit = edit.clone();
-    // Check if the edit is a `Delete` operation then delete trailing comma
-    if edit.is_delete() {
-      edit = self.delete_trailing_comma(&edit);
-    }
     // Get the tree_sitter's input edit representation
-    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), &edit);
+    let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), edit);
     // Apply edit to the tree
     let number_of_errors = self._number_of_errors();
     self.ast.edit(&ts_edit);
@@ -351,12 +346,6 @@ impl SourceCodeUnit {
     // Panic if the number of errors increased after the edit
     if self._number_of_errors() > number_of_errors {
       self._panic_for_syntax_error();
-    }
-    // Check if the edit is a `Delete` operation then delete associated comment
-    if edit.is_delete() && *self.piranha_arguments().cleanup_comments() {
-      if let Some(deleted_comment) = self._delete_associated_comment(&edit, parser) {
-        return deleted_comment;
-      }
     }
     ts_edit
   }
@@ -374,59 +363,6 @@ impl SourceCodeUnit {
     traverse(self.root_node().walk(), Order::Post)
       .filter(|node| node.is_error() || node.is_missing())
       .count()
-  }
-
-  /// Deletes the trailing comma after the {deleted_range}
-  /// # Arguments
-  /// * `deleted_range` - the range of the deleted code
-  ///
-  /// # Returns
-  /// code range of the closest node
-  ///
-  /// Algorithm:
-  /// Get the node after the {deleted_range}'s end byte (heuristic 5 characters)
-  /// Traverse this node and get the node closest to the range {deleted_range}'s end byte
-  /// IF this closest node is a comma, extend the {new_delete_range} to include the comma.
-  fn delete_trailing_comma(&self, edit: &Edit) -> Edit {
-    let deleted_range: Range = edit.p_match().range();
-    let mut new_deleted_range = deleted_range;
-
-    // Get the node immediately after the to-be-deleted code
-    if let Some(parent_node) = self
-      .ast
-      .root_node()
-      .descendant_for_byte_range(deleted_range.end_byte, deleted_range.end_byte + 1)
-      .and_then(|n| n.parent())
-    {
-      // Traverse this `parent_node` to find the closest next node after the `replace_range`
-      if let Some(node_after_to_be_deleted_node) = traverse(parent_node.walk(), Order::Post)
-        .filter(|n| n.start_byte() >= deleted_range.end_byte)
-        .min_by(|a, b| {
-          (a.start_byte() - deleted_range.end_byte).cmp(&(b.start_byte() - deleted_range.end_byte))
-        })
-      {
-        // If the next closest node to the "to be deleted node" is a comma , extend the
-        // the deletion range to include the comma
-        if node_after_to_be_deleted_node
-          .utf8_text(self.code().as_bytes())
-          .unwrap()
-          .trim()
-          .eq(",")
-        {
-          new_deleted_range.end_byte = node_after_to_be_deleted_node.end_byte();
-          new_deleted_range.end_point = node_after_to_be_deleted_node.end_position();
-        }
-      }
-    }
-    return Edit::new(
-      Match::new(
-        self.code()[new_deleted_range.start_byte..new_deleted_range.end_byte].to_string(),
-        new_deleted_range,
-        edit.p_match().matches().clone(),
-      ),
-      edit.replacement_string().to_string(),
-      edit.matched_rule().to_string(),
-    );
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST
