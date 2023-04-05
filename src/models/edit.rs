@@ -11,10 +11,10 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
 use colored::Colorize;
-use getset::Getters;
+use getset::{Getters, MutGetters};
 use log::{debug, trace};
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::{Node, Range};
@@ -29,12 +29,13 @@ use crate::utilities::{
 };
 use pyo3::{prelude::pyclass, pymethods};
 
-#[derive(Serialize, Debug, Clone, Getters, Deserialize)]
+#[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
 pub(crate) struct Edit {
   // The match representing the target site of the edit
   #[pyo3(get)]
   #[get = "pub"]
+  #[get_mut]
   p_match: Match,
   // The string to replace the substring encompassed by the match
   #[pyo3(get)]
@@ -49,15 +50,22 @@ pub(crate) struct Edit {
 gen_py_str_methods!(Edit);
 
 impl Edit {
-  pub(crate) fn new(p_match: Match, replacement_string: String, matched_rule: String) -> Self {
-    Self {
+  pub(crate) fn new(
+    p_match: Match, replacement_string: String, matched_rule: String, code: &String,
+  ) -> Self {
+    let mut edit = Self {
       p_match,
       replacement_string,
       matched_rule,
+    };
+    if edit.is_delete() {
+      edit.p_match_mut().expand_to_associated_matches(code);
     }
+    edit
   }
-
+  #[cfg(test)]
   pub(crate) fn delete_range(code: &str, replacement_range: Range) -> Self {
+    use std::collections::HashMap;
     Self {
       p_match: Match::new(
         code[replacement_range.start_byte..replacement_range.end_byte].to_string(),
@@ -138,7 +146,12 @@ impl SourceCodeUnit {
       .first()
       .map(|p_match| {
         let replacement_string = rule.replace().instantiate(p_match.matches());
-        let edit = Edit::new(p_match.clone(), replacement_string, rule.name());
+        let edit = Edit::new(
+          p_match.clone(),
+          replacement_string,
+          rule.name(),
+          self.code(),
+        );
         trace!("Rewrite found : {:#?}", edit);
         edit
       });

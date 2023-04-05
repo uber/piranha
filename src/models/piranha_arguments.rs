@@ -11,8 +11,6 @@ Copyright (c) 2022 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::edit::Edit;
-
 use super::{
   default_configs::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
@@ -32,13 +30,12 @@ use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
 use itertools::Itertools;
-use log::{debug, info, warn};
+use log::{info, warn};
 use pyo3::{
   prelude::{pyclass, pymethods},
   types::PyDict,
 };
 use regex::Regex;
-use tree_sitter::InputEdit;
 
 use std::collections::HashMap;
 
@@ -111,7 +108,7 @@ pub struct PiranhaArguments {
   #[get = "pub"]
   #[builder(default = "default_cleanup_comments_buffer()")]
   #[clap(long, default_value_t = default_cleanup_comments_buffer())]
-  cleanup_comments_buffer: usize,
+  cleanup_comments_buffer: i32,
 
   /// Enables deletion of associated comments
   #[get = "pub"]
@@ -168,7 +165,7 @@ impl PiranhaArguments {
   fn py_new(
     language: String, substitutions: &PyDict, path_to_configurations: Option<String>,
     rule_graph: Option<RuleGraph>, path_to_codebase: Option<String>, code_snippet: Option<String>,
-    dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<usize>,
+    dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<i32>,
     number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
     global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
     path_to_output_summary: Option<String>,
@@ -335,45 +332,6 @@ mod piranha_arguments_test;
 
 // Implements instance methods related to applying the user options provided in  piranha arguments
 impl SourceCodeUnit {
-  /// Delete the comment associated to the deleted code element
-  ///
-  /// From `apply_edit` we call `_delete_associated_comment` and from `_delete_associated_comment` we recursively call `apply_edit`.
-  /// This ensures that can delete a series of comments.
-  ///
-  /// Let's say `apply_edit` deletes `int foo` in the below example.
-  /// ```ignore
-  /// // some
-  /// // comment
-  /// int foo;
-  /// ```
-  ///
-  /// becomes
-  ///
-  /// ```ignore
-  /// // some
-  /// // comment
-  /// ```
-  ///
-  /// now `_delete_associated_comment` is triggered, and now we produce
-  /// ```ignore
-  /// // some
-  /// ```
-  ///
-  /// Since `_delete_associated_comment` is effectively called recursively
-  ///
-  /// ```ignore
-  /// <all comments are deleted>
-  /// ```
-  pub(crate) fn _delete_associated_comment(
-    &mut self, edit: &Edit, parser: &mut tree_sitter::Parser,
-  ) -> Option<InputEdit> {
-    if let Some(comment_range) = self._get_nearest_comment_range(edit, 0) {
-      debug!("Deleting an associated comment");
-      return Some(self.apply_edit(&Edit::delete_range(self.code(), comment_range), parser));
-    }
-    None
-  }
-
   /// Replaces three consecutive newline characters with two
   pub(crate) fn perform_delete_consecutive_new_lines(&mut self) {
     if *self.piranha_arguments().delete_consecutive_new_lines() {
