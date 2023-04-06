@@ -160,6 +160,7 @@ impl PiranhaArguments {
   /// * global_tag_prefix (string): the prefix for global tags
   /// * delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
   /// * path_to_output_summary : Path to the file where the Piranha output summary should be persisted
+  /// * allow_dirty_ast : Allows syntax errors in the input source code
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
@@ -168,7 +169,7 @@ impl PiranhaArguments {
     dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<i32>,
     number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
     global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
-    path_to_output_summary: Option<String>,
+    path_to_output_summary: Option<String>, allow_dirty_ast: Option<bool>,
   ) -> Self {
     let subs = substitutions
       .iter()
@@ -191,6 +192,7 @@ impl PiranhaArguments {
       global_tag_prefix = global_tag_prefix.unwrap_or_else(default_global_tag_prefix),
       delete_file_if_empty = delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty),
       path_to_output_summary = path_to_output_summary,
+      allow_dirty_ast = allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast),
     }
   }
 }
