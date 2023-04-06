@@ -13,7 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use assert_cmd::prelude::{CommandCargoExt, OutputAssertExt};
 
-use std::{fs::File, path::Path, process::Command};
+use std::{collections::HashMap, fs::File, path::Path, process::Command};
 use tempdir::TempDir;
 
 use super::create_match_tests;
@@ -57,4 +57,4 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
   _ = temp_dir.close();
 }
 
-create_match_tests!(PYTHON, test_match_only: "structural_find", 3;);
+create_match_tests!(PYTHON, test_match_only: "structural_find", HashMap::from([("find_lists_with_str_literals", 3)]););

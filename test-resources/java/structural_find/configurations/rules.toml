@@ -34,3 +34,18 @@ query = """((
 (#eq? @name "isToggleEnabled")
 (#eq? @argument "STALE_FLAG")
 )"""
+
+
+[[rules]]
+name = "find_enum_constant"
+query = """
+    (
+    ((enum_constant name : (_) @n) @ec)       
+    (#eq? @n  "FOO")
+    )
+"""
+
+[[rules]]
+name = "find_method"
+query = "(method_declaration name: (_)@name ) @md"
+is_seed_rule = false
