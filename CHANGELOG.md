@@ -25,3 +25,12 @@ Version 0.3.0
 * Introduce code snippet mode 
 * Improvements for the command line interface 
 * Bug fixes
+
+
+Version 0.3.1
+-------------
+* Improve handling of leading (and trailing) commas and comments
+* Fix boolean simplification rules 
+* Add Enum scope for Java 
+* Add option to transform/analyze partially parsable code (`--alow-dirty-tree`)
+* Bug fixes
