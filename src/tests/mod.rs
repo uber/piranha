@@ -13,8 +13,11 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use crate::execute_piranha;
 use crate::models::piranha_arguments::PiranhaArguments;
+use crate::models::piranha_output::PiranhaOutputSummary;
 use crate::utilities::{eq_without_whitespace, read_file};
 
+use itertools::Itertools;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use tempdir::TempDir;
@@ -72,6 +75,21 @@ fn copy_folder_to_temp_dir(src: &Path) -> TempDir {
     }
   }
   temp_dir
+}
+
+fn assert_frequency_for_matches(
+  summaries: &Vec<PiranhaOutputSummary>, match_freq: &HashMap<&str, u32>,
+) {
+  let frequencies: HashMap<String, u32> = summaries
+    .iter()
+    .flat_map(|x| x.matches())
+    .into_group_map_by(|x| x.0.clone())
+    .into_iter()
+    .map(|(k, v)| (k, v.len() as u32))
+    .collect();
+  for (matched_rule, count) in match_freq.iter() {
+    assert_eq!(frequencies[*matched_rule], *count)
+  }
 }
 
 /// Checks if the file updates returned by piranha are as expected.
@@ -132,20 +150,22 @@ fn execute_piranha_and_check_result(
 /// # Arguments:
 /// * test_name: Name of the test (identifier)
 /// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input` and `configurations`
-/// * expected_number_of_matches: expression returning the expected number of matches
+/// * matches_frequency: The expected frequency for each match
 ///
 /// Usage:
 /// ```
 /// create_match_tests! {
 ///  "java",
-///  test_a1:  "relative/path_1", 2;
-///  test_a2:  "relative/path_2", 3;
+///  test_a1:  "relative/path_1", HashMap::from([("match_class", 2));
+///  test_a2:  "relative/path_2", HashMap::from([("match_class", 2), ("match_class_1", 1)])
+///  
+/// ;
 /// }
 /// ```
 macro_rules! create_match_tests {
   ($language: expr,
     $($test_name:ident: $path_to_test: expr,
-                        $expected_number_of_matches: expr
+                        $matches_frequency: expr
                         $(,$kw: ident = $value: expr)* ; )*) => {
     $(
     #[test]
@@ -163,10 +183,7 @@ macro_rules! create_match_tests {
         )*
       };
       let output_summaries = $crate::execute_piranha(&piranha_arguments);
-      assert_eq!(
-        output_summaries.iter().flat_map(|os| os.matches().iter()).count(),
-        $expected_number_of_matches
-      );
+      super::assert_frequency_for_matches(&output_summaries, &$matches_frequency);
     }
   )*
   };

@@ -77,10 +77,17 @@ generator = """
 [[scopes]]
 name = "Class"
 [[scopes.rules]]
-matcher = "(class_declaration name:(_) @n) @c"
-generator = """
-(
-((class_declaration name:(_) @z) @qc)
+matcher = """(
+  [
+    (class_declaration name:(_) @n) @c
+    (enum_declaration name:(_) @n) @c
+  ]
+)"""
+generator = """(
+  [
+    ((class_declaration name:(_) @z) @qc)
+    ((enum_declaration name:(_) @z) @qc)
+  ]
 (#eq? @z "@n")
 )
 """
