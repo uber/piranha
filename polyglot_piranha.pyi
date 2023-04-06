@@ -42,10 +42,11 @@ class PiranhaArguments:
         cleanup_comments: Optional[bool] = None,
         cleanup_comments_buffer: Optional[int] = None,
         number_of_ancestors_in_parent_scope: Optional[int] = None,
-        delete_file_if_empty : Optional[bool] = None,
         delete_consecutive_new_lines : Optional[bool] = None,
-        path_to_output: Optional[str] = None
- 
+        global_tag_prefix: Optional[str] = 'GLOBAL_TAG',
+        delete_file_if_empty : Optional[bool] = None,
+        path_to_output: Optional[str] = None,
+        allow_dirty_ast : Optional[bool] = None
     ):
         """
         Constructs `PiranhaArguments`
@@ -65,9 +66,11 @@ class PiranhaArguments:
                  cleanup_comments (bool) : Enables deletion of associated comments
                  cleanup_comments_buffer (int): The number of lines to consider for cleaning up the comments
                  number_of_ancestors_in_parent_scope (int): The number of ancestors considered when PARENT rules
-                 delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  delete_consecutive_new_lines (bool) : Replaces consecutive \ns  with a \n
+                 global_tag_prefix (str): the prefix for global tags
+                 delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  path_to_output (str): Path to the output json file
+                 allow_dirty_ast (bool) : Allows syntax errors in the input source code 
         """
         ...
 
