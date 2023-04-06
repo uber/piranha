@@ -150,23 +150,21 @@ fn execute_piranha_and_check_result(
 /// # Arguments:
 /// * test_name: Name of the test (identifier)
 /// * relative_path: relative path such that `test-resources/<language>/<relative_path>` leads to a directory containing the folders `input` and `configurations`
-/// * expected_number_of_matches: expression returning the expected number of matches
-/// * matches_frequency: The expected frequency of the matches
+/// * matches_frequency: The expected frequency for each match
 ///
 /// Usage:
 /// ```
 /// create_match_tests! {
 ///  "java",
-///  test_a1:  "relative/path_1", 2;
-///  test_a2:  "relative/path_2", 3
-///  HashMap::from([("match_class", 2)])
+///  test_a1:  "relative/path_1", HashMap::from([("match_class", 2));
+///  test_a2:  "relative/path_2", HashMap::from([("match_class", 2), ("match_class_1", 1)])
+///  
 /// ;
 /// }
 /// ```
 macro_rules! create_match_tests {
   ($language: expr,
     $($test_name:ident: $path_to_test: expr,
-                        $expected_number_of_matches: expr,
                         $matches_frequency: expr
                         $(,$kw: ident = $value: expr)* ; )*) => {
     $(
@@ -185,10 +183,6 @@ macro_rules! create_match_tests {
         )*
       };
       let output_summaries = $crate::execute_piranha(&piranha_arguments);
-      assert_eq!(
-        output_summaries.iter().flat_map(|os| os.matches().iter()).count(),
-        $expected_number_of_matches
-      );
       super::assert_frequency_for_matches(&output_summaries, &$matches_frequency);
     }
   )*

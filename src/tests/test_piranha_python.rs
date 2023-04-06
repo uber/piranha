@@ -57,4 +57,4 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
   _ = temp_dir.close();
 }
 
-create_match_tests!(PYTHON, test_match_only: "structural_find", 3, HashMap::from([("find_lists_with_str_literals", 3)]););
+create_match_tests!(PYTHON, test_match_only: "structural_find", HashMap::from([("find_lists_with_str_literals", 3)]););

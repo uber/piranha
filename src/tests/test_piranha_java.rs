@@ -66,7 +66,7 @@ create_rewrite_tests! {
 
 create_match_tests! {
   JAVA,
-  test_java_match_only: "structural_find", 22, HashMap::from([("find_enum_constant", 1), ("find_method", 1), ("replace_isToggleEnabled_with_boolean_literal", 20)]);
+  test_java_match_only: "structural_find", HashMap::from([("find_enum_constant", 1), ("find_method", 1), ("replace_isToggleEnabled_with_boolean_literal", 20)]);
 }
 
 #[test]

@@ -19,8 +19,8 @@ use crate::models::default_configs::GO;
 
 create_match_tests! {
   GO,
-  test_match_only_for_loop: "structural_find/go_stmt_for_loop", 1, HashMap::from([("find_go_stmt_for_loop", 1)]);
-  test_match_only_go_stmt_for_loop:"structural_find/for_loop", 4, HashMap::from([("find_for", 4)]);
+  test_match_only_for_loop: "structural_find/go_stmt_for_loop", HashMap::from([("find_go_stmt_for_loop", 1)]);
+  test_match_only_go_stmt_for_loop:"structural_find/for_loop", HashMap::from([("find_for", 4)]);
 }
 
 create_rewrite_tests! {

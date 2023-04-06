@@ -18,7 +18,7 @@ use crate::models::default_configs::TYPESCRIPT;
 
 create_match_tests! {
   TYPESCRIPT,
-  test_find_fors_within_functions_not_within_whiles:  "structural_find/find_fors_within_functions_not_within_whiles", 1, HashMap::from([("find_fors_within_functions_not_within_whiles", 1)]);
-  test_find_fors_within_functions:"structural_find/find_fors_within_functions", 2, HashMap::from([("find_fors_within_functions", 2)]);
-  test_find_fors: "structural_find/find_fors", 3, HashMap::from([("find_fors", 3)]);
+  test_find_fors_within_functions_not_within_whiles:  "structural_find/find_fors_within_functions_not_within_whiles", HashMap::from([("find_fors_within_functions_not_within_whiles", 1)]);
+  test_find_fors_within_functions:"structural_find/find_fors_within_functions", HashMap::from([("find_fors_within_functions", 2)]);
+  test_find_fors: "structural_find/find_fors", HashMap::from([("find_fors", 3)]);
 }
