@@ -32,5 +32,5 @@ Version 0.3.1
 * Improve handling of leading (and trailing) commas and comments
 * Fix boolean simplification rules 
 * Add Enum scope for Java 
-* Add option to transform/analyze about partially parsable code (`--alow-dirty-tree`)
+* Add option to transform/analyze partially parsable code (`--alow-dirty-tree`)
 * Bug fixes
