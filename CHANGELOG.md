@@ -34,3 +34,7 @@ Version 0.3.1
 * Add Enum scope for Java 
 * Add option to transform/analyze partially parsable code (`--alow-dirty-tree`)
 * Bug fixes
+
+Version 0.3.2
+-------------
+* Improved the Python interface for constructing PiranhaArguments
