@@ -55,7 +55,6 @@ def test_piranha_match_only():
     args = PiranhaArguments(
         path_to_configurations="test-resources/java/structural_find/configurations",
         language="java",
-        substitutions={},
         path_to_codebase="test-resources/java/structural_find/input",
         dry_run=True,
     )
@@ -127,9 +126,7 @@ import java.util.List;
 
     args = PiranhaArguments(
         path_to_codebase= "test-resources/java/insert_field_and_import/input",
-        path_to_configurations= "test-resources/java/insert_field_and_initializer/configurations",
         language="java",
-        substitutions={},
         rule_graph = rule_graph,
         dry_run=True,
     )

@@ -164,17 +164,22 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    language: String, substitutions: &PyDict, path_to_configurations: Option<String>,
+    language: String, substitutions: Option<&PyDict>, path_to_configurations: Option<String>,
     rule_graph: Option<RuleGraph>, path_to_codebase: Option<String>, code_snippet: Option<String>,
     dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<i32>,
     number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
     global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
     path_to_output_summary: Option<String>, allow_dirty_ast: Option<bool>,
   ) -> Self {
-    let subs = substitutions
-      .iter()
-      .map(|(k, v)| (k.to_string(), v.to_string()))
-      .collect_vec();
+    let subs = if substitutions.is_some() {
+      substitutions
+        .unwrap()
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect_vec()
+    } else {
+      vec![]
+    };
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     piranha_arguments! {
