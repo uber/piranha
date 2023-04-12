@@ -208,4 +208,9 @@ class SampleClass {
             return
         }
     }
+    
+    func checkTernary() {
+        var value = TestEnum.stale_flag_one.isEnabled || v2 ? 2 : 3
+        var value2 =  placeholder_false ? 2 : 3
+    }
 }
