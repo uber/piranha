@@ -448,7 +448,7 @@ query = """(
                 ) @property_declaration
             )
         )
-    )
+    ) @fdecl
 )"""
 replace_node = "property_declaration"
 replace = ""
@@ -470,7 +470,7 @@ queries = ["""(
             ]
             )
         result: (boolean_literal) @val
-    )
+    ) @asign1
     (#eq? @var "@hvariable")
     (#not-eq? @val "@hvalue")
 )"""]
@@ -515,7 +515,7 @@ queries = ["""(
                 ]
             )
             result: (boolean_literal) @val
-        )
+        ) @assign2
         (#eq? @var "@avariable")
         (#not-eq? @val "@avalue")
 )"""]
@@ -564,7 +564,7 @@ queries = ["""(
             ]
         )
         result: (boolean_literal) @val
-    )
+    ) @assign3
     (#eq? @var "@avariable")
     (#not-eq? @val "@avalue")
 )"""]
@@ -587,7 +587,7 @@ matcher = "(function_declaration) @fd"
 queries = ["""(
     (parameter
         name: (simple_identifier) @var
-    )
+    ) @param
     (#eq? @var "@identifier")
 )"""]
 
@@ -600,7 +600,7 @@ queries = ["""(
             bound_identifier: (simple_identifier) @variable
         )
         value: (boolean_literal) @value
-    )
+    ) @pdecl
     (#eq? @variable "@identifier")
 )"""]
 
@@ -613,7 +613,7 @@ queries = ["""(
         suffix: (navigation_suffix
             suffix: (simple_identifier) @variable
         )
-    )
+    ) @nav
     (#eq? @variable "@identifier")
 )"""]
 
