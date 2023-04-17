@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Uber Technologies, Inc.
+Copyright (c) 2023 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -39,6 +39,13 @@ create_rewrite_tests! {
       "treated_complement" => "false"
     },
     cleanup_comments = true, delete_file_if_empty= false;
-    test_local_variable_inline_file: "variable_inline", 1,
+
+  test_local_variable_inline_file: "variable_inline", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
+
+  test_leading_comma: "leading_comma", 1,
+    substitutions = substitutions! {
+      "stale_flag" => "one"
+    },
     cleanup_comments = true, delete_file_if_empty= false;
 }

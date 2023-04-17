@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Uber Technologies, Inc.
+ * Copyright (c) 2023 Uber Technologies, Inc.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -25,6 +25,7 @@ internal class XPFlagCleanerPositiveCases {
     }
 
     fun conditional_with_else_contains_stale_flag() {
+        // Some comment
         println("Hello World")
     }
 

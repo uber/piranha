@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Uber Technologies, Inc.
+// Copyright (c) 2023 Uber Technologies, Inc.
 // 
 // <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 // except in compliance with the License. You may obtain a copy of the License at
@@ -207,5 +207,10 @@ class SampleClass {
         guard placeholder_false && true else {
             return
         }
+    }
+    
+    func checkTernary() {
+        var value = TestEnum.stale_flag_one.isEnabled || v2 ? 2 : 3
+        var value2 =  placeholder_false ? 2 : 3
     }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Uber Technologies, Inc.
+Copyright (c) 2023 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -17,7 +17,7 @@ import java.lang.annotation.RetentionPolicy
 
 internal class XPFlagCleanerPositiveCases {
     enum class TestExperimentName {
-        SOME_FLAG,
+        SOME_FLAG
     }
 
     enum class AnotherTestExperimentName {

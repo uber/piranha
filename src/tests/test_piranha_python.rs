@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Uber Technologies, Inc.
+Copyright (c) 2023 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -13,7 +13,7 @@ Copyright (c) 2022 Uber Technologies, Inc.
 
 use assert_cmd::prelude::{CommandCargoExt, OutputAssertExt};
 
-use std::{fs::File, path::Path, process::Command};
+use std::{collections::HashMap, fs::File, path::Path, process::Command};
 use tempdir::TempDir;
 
 use super::create_match_tests;
@@ -29,7 +29,7 @@ use crate::{
 #[test]
 fn test_delete_modify_str_literal_from_list_via_cli() {
   let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
-  let temp_file = temp_dir.path().join("output.txt");
+  let temp_file = temp_dir.path().join("output.json");
   _ = File::create(temp_file.as_path());
 
   let mut cmd = Command::cargo_bin("polyglot_piranha").unwrap();
@@ -57,4 +57,4 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
   _ = temp_dir.close();
 }
 
-create_match_tests!(PYTHON, test_match_only: "structural_find", 3;);
+create_match_tests!(PYTHON, test_match_only: "structural_find", HashMap::from([("find_lists_with_str_literals", 3)]););

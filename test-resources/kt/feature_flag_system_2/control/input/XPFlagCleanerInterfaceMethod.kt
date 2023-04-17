@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Uber Technologies, Inc.
+ * Copyright (c) 2023 Uber Technologies, Inc.
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
@@ -31,6 +31,7 @@ internal class XPFlagCleanerPositiveCases {
         if (experimentation.isStaleFeature().cachedValue) {
             println("Hello World")
         } else {
+            // Some comment
             println("Hi world")
         }
     }

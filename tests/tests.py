@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Uber Technologies, Inc.
+# Copyright (c) 2023 Uber Technologies, Inc.
 #
 # <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 # except in compliance with the License. You may obtain a copy of the License at
@@ -55,12 +55,11 @@ def test_piranha_match_only():
     args = PiranhaArguments(
         path_to_configurations="test-resources/java/structural_find/configurations",
         language="java",
-        substitutions={},
         path_to_codebase="test-resources/java/structural_find/input",
         dry_run=True,
     )
     output_summaries = execute_piranha(args)
-    assert len(output_summaries[0].matches) == 20
+    assert sum([len(summary.matches) for summary in output_summaries]) == 22
     for summary in output_summaries:
         assert _is_readable(str(summary))
         for rule, match in summary.matches:
@@ -127,9 +126,7 @@ import java.util.List;
 
     args = PiranhaArguments(
         path_to_codebase= "test-resources/java/insert_field_and_import/input",
-        path_to_configurations= "test-resources/java/insert_field_and_initializer/configurations",
         language="java",
-        substitutions={},
         rule_graph = rule_graph,
         dry_run=True,
     )

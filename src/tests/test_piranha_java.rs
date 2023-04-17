@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Uber Technologies, Inc.
+Copyright (c) 2023 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -24,7 +24,7 @@ use crate::{
   piranha_rule,
   utilities::eq_without_whitespace,
 };
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 create_rewrite_tests! {
   JAVA,
@@ -66,7 +66,7 @@ create_rewrite_tests! {
 
 create_match_tests! {
   JAVA,
-  test_java_match_only: "structural_find", 20;
+  test_java_match_only: "structural_find", HashMap::from([("find_enum_constant", 1), ("find_method", 1), ("replace_isToggleEnabled_with_boolean_literal", 20)]);
 }
 
 #[test]
@@ -122,17 +122,17 @@ fn test_new_line_character_used_in_string_literal_code_snippet() {
   let path_to_scenario = PathBuf::from("test-resources")
     .join(JAVA)
     .join("new_line_character_used_in_string_literal");
-
+  let code_snippet = "package com.uber.piranha;
+  class SomeClass {
+    void someMethod(String s) {
+      assert (s.equals(\"Hello \\n World\"));
+    }
+  }";
   let piranha_arguments = piranha_arguments! {
     path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
     language = PiranhaLanguage::from(JAVA),
     dry_run = true,
-    code_snippet = "package com.uber.piranha;
-    class SomeClass {
-      void someMethod(String s) {
-        assert (s.equals(\"Hello \\n World\"));
-      }
-    }".to_string(),
+    code_snippet = code_snippet.to_string(),
   };
 
   let expected = "package com.uber.piranha;
@@ -147,6 +147,7 @@ fn test_new_line_character_used_in_string_literal_code_snippet() {
     output_summaries[0].content(),
     expected
   ));
+  assert!(output_summaries[0].original_content().eq(code_snippet));
 }
 
 #[test]

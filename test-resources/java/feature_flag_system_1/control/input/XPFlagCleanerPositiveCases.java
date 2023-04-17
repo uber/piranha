@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Uber Technologies, Inc.
+ * Copyright (c) 2023 Uber Technologies, Inc.
  *
  * <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -23,9 +23,9 @@ import javax.inject.Inject;
 class XPFlagCleanerPositiveCases {
 
   enum TestExperimentName {
-    SOME_FLAG,
+    SOME_FLAG, // Some Flag
     // Some stale enum
-    STALE_FLAG
+    STALE_FLAG // Some stale enum
   }
 
   enum AnotherTestExperimentName {

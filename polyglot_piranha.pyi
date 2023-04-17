@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Uber Technologies, Inc.
+# Copyright (c) 2023 Uber Technologies, Inc.
 #
 # <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 # except in compliance with the License. You may obtain a copy of the License at
@@ -33,8 +33,8 @@ class PiranhaArguments:
     def __init__(
         self,
         language: str,
-        substitutions: dict,
-        path_to_configurations: Optional[str],
+        substitutions: Optional[dict] = None,
+        path_to_configurations: Optional[str] = None,
         rule_graph: Optional[RuleGraph]= None,
         path_to_codebase: Optional[str] = None,
         code_snippet: Optional[str] = None,
@@ -42,10 +42,11 @@ class PiranhaArguments:
         cleanup_comments: Optional[bool] = None,
         cleanup_comments_buffer: Optional[int] = None,
         number_of_ancestors_in_parent_scope: Optional[int] = None,
-        delete_file_if_empty : Optional[bool] = None,
         delete_consecutive_new_lines : Optional[bool] = None,
-        path_to_output: Optional[str] = None
- 
+        global_tag_prefix: Optional[str] = 'GLOBAL_TAG',
+        delete_file_if_empty : Optional[bool] = None,
+        path_to_output: Optional[str] = None,
+        allow_dirty_ast : Optional[bool] = None
     ):
         """
         Constructs `PiranhaArguments`
@@ -54,9 +55,8 @@ class PiranhaArguments:
         ------------
             language: str
                 the target language
-            substitutions: dict
-                 Substitutions to instantiate the initial set of rules
             keyword arguments: _
+                 substitutions (dict) : Substitutions to instantiate the initial set of rules
                  path_to_configurations (str) : Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml`
                  rule_graph (RuleGraph) : The rule graph constructed via RuleGraph DSL
                  path_to_codebase (str) : Path to source code folder or file
@@ -65,9 +65,11 @@ class PiranhaArguments:
                  cleanup_comments (bool) : Enables deletion of associated comments
                  cleanup_comments_buffer (int): The number of lines to consider for cleaning up the comments
                  number_of_ancestors_in_parent_scope (int): The number of ancestors considered when PARENT rules
-                 delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  delete_consecutive_new_lines (bool) : Replaces consecutive \ns  with a \n
+                 global_tag_prefix (str): the prefix for global tags
+                 delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  path_to_output (str): Path to the output json file
+                 allow_dirty_ast (bool) : Allows syntax errors in the input source code 
         """
         ...
 
@@ -86,8 +88,11 @@ class PiranhaOutputSummary:
     path: str
     "path to the file"
 
+    original_content: str
+    "Original content of the file before any rewrites"
+
     content: str
-    "content of the file after all the rewrites"
+    "Final content of the file after all the rewrites"
 
     matches: list[tuple[str, Match]]
     'All the occurrences of "match-only" rules'

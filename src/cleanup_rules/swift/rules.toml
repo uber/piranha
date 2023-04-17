@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Uber Technologies, Inc.
+# Copyright (c) 2023 Uber Technologies, Inc.
 # 
 # <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 # except in compliance with the License. You may obtain a copy of the License at
@@ -409,6 +409,29 @@ is_seed_rule = false
 
 #
 # Before
+# var v = true ? x : y
+#
+# After
+# var v = x
+#
+[[rules]]
+name = "ternary_true"
+query = """(
+(ternary_expression
+    condition:[(boolean_literal) @true  
+            (tuple_expression 
+                value: (boolean_literal) @true)]
+    if_true:(_) @block_true
+    ) @ternary_block
+(#eq? @true "true")
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "@block_true"
+is_seed_rule = false
+
+#
+# Before
 #   guard false else {
 #       return f1()
 #   }
@@ -431,6 +454,30 @@ query = """(
 groups = ["guard_cleanup"]
 replace_node = "guard_block"
 replace = "@else_block"
+is_seed_rule = false
+
+
+
+#
+# var v = false ? x : y
+#
+# After
+# var v = y
+#
+[[rules]]
+name = "ternary_false"
+query = """(
+(ternary_expression
+    condition:[(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    if_false:(_) @block_false
+    ) @ternary_block
+(#eq? @false "false")
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "@block_false"
 is_seed_rule = false
 
 # delete variables declared in a function scope
@@ -616,6 +663,7 @@ queries = ["""(
     ) @nav
     (#eq? @variable "@identifier")
 )"""]
+
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
