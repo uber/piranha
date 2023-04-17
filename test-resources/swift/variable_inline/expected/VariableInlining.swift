@@ -8,6 +8,7 @@
 // License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
+
 class TestFooBar{
     func foobar(){
         
@@ -73,7 +74,6 @@ class C7 {
             doSomething()
         }
     }
-
     func f7b(){
         
         
@@ -226,7 +226,6 @@ class C19{
 class C20{
     
     init(){
-        
         if true {
             doSomething()
         }
