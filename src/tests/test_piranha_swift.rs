@@ -40,7 +40,19 @@ create_rewrite_tests! {
     },
     cleanup_comments = true, delete_file_if_empty= false;
 
-  test_local_variable_inline_file: "variable_inline", 1,
+  test_var_inline_negative_exists_another_var: "var_inline_negative_exists_another_var", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
+
+  test_var_inline_negative_reassigned: "var_inline_negative_reassigned", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
+
+  test_var_inline_positive_1: "var_inline_positive_1", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
+
+  test_variable_inline_positive_2: "variable_inline_positive_2", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
+
+  test_variable_inline_positive_reassigned: "variable_inline_positive_reassigned", 1,
     cleanup_comments = true, delete_file_if_empty= false;
 
   test_leading_comma: "leading_comma", 1,

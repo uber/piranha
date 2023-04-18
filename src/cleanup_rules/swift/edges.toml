@@ -24,7 +24,7 @@ from = "replace_expression_with_boolean_literal"
 to = ["boolean_literal_cleanup", "variable_inline_cleanup"]
 
 [[edges]]
-scope = "File"
+scope = "Parent"
 from = "variable_inline_cleanup"
 to = ["delete_variable_declaration"]
 
@@ -39,7 +39,7 @@ from = "boolean_expression_simplify"
 to = ["boolean_literal_cleanup"]
 
 [[edges]]
-scope = "File"
+scope = "Function"
 from = "statement_cleanup"
 to = ["if_cleanup"]
 

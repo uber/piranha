@@ -457,7 +457,6 @@ replace = "@else_block"
 is_seed_rule = false
 
 
-
 #
 # var v = false ? x : y
 #
@@ -484,18 +483,12 @@ is_seed_rule = false
 [[rules]]
 name = "delete_variable_declaration"
 query = """(
-    (function_declaration
-        body: (function_body
-            (statements
-                (property_declaration
+     (property_declaration
                     name: (pattern
                         bound_identifier: (simple_identifier) @hvariable
                     )
                     value: (boolean_literal) @hvalue
                 ) @property_declaration
-            )
-        )
-    ) @fdecl
 )"""
 replace_node = "property_declaration"
 replace = ""
@@ -503,7 +496,7 @@ is_seed_rule = false
 
 # skip the rule if the variable is assigned with some other value in the class scope
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+matcher = "(function_declaration) @cd"
 queries = ["""(
     (assignment
         target: (directly_assignable_expression
@@ -513,14 +506,23 @@ queries = ["""(
                     suffix: (simple_identifier) @var
                 )
                 )
-                (simple_identifier) @var
+                (simple_identifier) @c_var
             ]
             )
-        result: (boolean_literal) @val
+        result: (boolean_literal) @c_val
     ) @asign1
-    (#eq? @var "@hvariable")
-    (#not-eq? @val "@hvalue")
-)"""]
+    (#eq? @c_var "@hvariable")
+    (#not-eq? @c_val "@hvalue")
+    )""", """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @cc1_var
+            )
+            value: (_) @cc1_val
+        )@cc_property_declaration
+        (#eq? @cc1_var "@hvariable")
+        (#not-eq? @cc1_val "@hvalue")
+    )"""]
 
 # rule to delete assignments like a = true subject to the mentioned constraints
 [[rules]]
@@ -581,41 +583,6 @@ queries = ["""(
     (#not-eq? @val "@avalue")
 )"""]
 
-# skip the rule if the variable is declared with a different value in the class
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
-    (property_declaration
-        name: (pattern
-            bound_identifier: (simple_identifier) @var
-        )
-        value: (boolean_literal) @val
-    )@property_declaration
-    (#eq? @var "@avariable")
-    (#not-eq? @val "@avalue")
-)"""]
-
-# skip the rule if the variable is being assigned a different value in the class scope
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
-    (assignment
-        target: (directly_assignable_expression
-            [   (navigation_expression
-                    target: (self_expression)
-                    suffix: (navigation_suffix
-                        suffix: (simple_identifier) @var
-                    )
-                )
-                (simple_identifier) @var
-            ]
-        )
-        result: (boolean_literal) @val
-    ) @assign3
-    (#eq? @var "@avariable")
-    (#not-eq? @val "@avalue")
-)"""]
-
 # rule to replace the identifier with the value with the mentioned constraints
 [[rules]]
 name = "replace_identifier_with_value"
@@ -627,42 +594,10 @@ replace_node = "identifier"
 replace = "@hvalue"
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
-
+groups = ["replace_expression_with_boolean_literal"]
+# [[rules.constraints]]
 # skip the rule if the variable is one of the parameters of the function
-[[rules.constraints]]
-matcher = "(function_declaration) @fd"
-queries = ["""(
-    (parameter
-        name: (simple_identifier) @var
-    ) @param
-    (#eq? @var "@identifier")
-)"""]
-
-# skip the rule if there is a declaration of the same variable
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
-    (property_declaration
-        name: (pattern
-            bound_identifier: (simple_identifier) @variable
-        )
-        value: (boolean_literal) @value
-    ) @pdecl
-    (#eq? @variable "@identifier")
-)"""]
-
-# skip the rule if there is an assignment of the same variable
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
-    (navigation_expression
-        target: (self_expression)
-        suffix: (navigation_suffix
-            suffix: (simple_identifier) @variable
-        )
-    ) @nav
-    (#eq? @variable "@identifier")
-)"""]
+# We will implement this once we introduce - not rules.constraint.matcher
 
 
 # Dummy rule that acts as a junction for all boolean based cleanups

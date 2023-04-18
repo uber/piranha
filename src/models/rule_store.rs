@@ -79,7 +79,12 @@ impl RuleStore {
     self
       .rule_query_cache
       .entry(query_str.get_query())
-      .or_insert_with(|| self.language.create_query(query_str.get_query()))
+      .or_insert_with(|| {
+        trace!("Calling create_query");
+        let q = self.language.create_query(query_str.get_query());
+        trace!("Done create_query");
+        q
+      })
   }
 
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file

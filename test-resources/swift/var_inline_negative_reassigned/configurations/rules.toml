@@ -9,19 +9,17 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This file contains rules to the specific feature flag API.
+# Before 
+#   placeholder_true
+# After 
+#   true
+#
 [[rules]]
-name = "test_rule_var_inline"
+name = "test_rule_replace_false_placeholder"
 query = """(
-    (property_declaration
-        name: (pattern
-            bound_identifier: (simple_identifier) @var
-        )
-        value: (line_string_literal
-            text: (line_str_text) @val
-        )
-    ) @decl
-    (#eq? @val "foobar")
+(simple_identifier) @variable
+(#eq? @variable "placeholder_true")
 )"""
-replace_node = "decl"
-replace = ""
+replace_node = "variable"
+replace = "true"
+groups = ["replace_expression_with_boolean_literal"]
