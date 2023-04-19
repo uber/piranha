@@ -81,7 +81,7 @@ class XPFlagCleanerPositiveCases {
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) == true) {
       System.out.println("Hello World 1");
     } else {
-      System.out.println("Hi world 2");
+      System.out.println("Hi world 1");
     }
 
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) != false) {
