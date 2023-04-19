@@ -50,7 +50,8 @@ tempdir = "0.3"
 serde_json = "1.0.82"
 # TODO: Update after https://github.com/fwcd/tree-sitter-kotlin/pull/71 lands
 tree-sitter-kotlin = { git = "https://github.com/ketkarameya/tree-sitter-kotlin.git", rev = "a87ddd003368e068563f1cc478a1b2a3f9d73b60" }
-tree-sitter-java = "0.20.0"
+# TODO: Update after next version is released (https://github.com/tree-sitter/tree-sitter-java/issues/146)
+tree-sitter-java = { git = "https://github.com/tree-sitter/tree-sitter-java.git", rev = "c194ee5e6ede5f26cf4799feead4a8f165dcf14d" }
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
 tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "c92496b5273e4d3b094148fee51de371c94729bf" }
 tree-sitter-python = "0.20.2"

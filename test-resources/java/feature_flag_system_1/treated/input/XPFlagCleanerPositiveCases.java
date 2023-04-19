@@ -71,17 +71,35 @@ class XPFlagCleanerPositiveCases {
     if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
       System.out.println("Hello World");
     }
-    if (!experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
+    if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) == false) {
       System.out.println("Hi World");
     }
   }
 
   public void conditional_with_else_contains_stale_flag() {
 
-    if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) {
-      System.out.println("Hello World");
+    if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) == true) {
+      System.out.println("Hello World 1");
     } else {
-      System.out.println("Hi world");
+      System.out.println("Hi world 1");
+    }
+
+    if (experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG) != false) {
+      System.out.println("Hello World 2");
+    } else {
+      System.out.println("Hi world 2");
+    }
+
+    if ((experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) == true) {
+      System.out.println("Hello World 3");
+    } else {
+      System.out.println("Hi world 3");
+    }
+
+    if ((experimentation.isToggleEnabled(TestExperimentName.STALE_FLAG)) != true) {
+      System.out.println("Hello World 4");
+    } else {
+      System.out.println("Hi world 4");
     }
   }
 

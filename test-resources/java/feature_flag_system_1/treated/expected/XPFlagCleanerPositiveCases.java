@@ -66,7 +66,10 @@ class XPFlagCleanerPositiveCases {
 
   public void conditional_with_else_contains_stale_flag() {
 
-    System.out.println("Hello World");
+    System.out.println("Hello World 1");
+    System.out.println("Hello World 2");
+    System.out.println("Hello World 3");
+    System.out.println("Hi world 4");
   }
 
   public void complex_conditional_contains_stale_flag(boolean tBool) {
