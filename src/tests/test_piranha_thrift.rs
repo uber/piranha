@@ -11,48 +11,11 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use super::execute_piranha_and_check_result;
-use crate::{
-  constraint,
-  models::{
-    default_configs::THRIFT, language::PiranhaLanguage, piranha_arguments::piranha_arguments,
-    rule_graph::RuleGraphBuilder,
-  },
-  piranha_rule,
-};
+use crate::models::default_configs::THRIFT;
 
-#[test]
-fn test_consecutive_scope_level_rules() {
-  super::initialize();
-  let _path = std::path::PathBuf::from("test-resources").join(THRIFT);
-  let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
+use super::create_rewrite_tests;
 
-  let rules = vec![piranha_rule! {
-      name="Match Exception Definition",
-      query="(
-            (exception_definition (identifier) @exception_name) @exception_definition 
-            (#match? @exception_name \"Internal\")
-            )",
-          replace_node="exception_definition",
-      replace="@exception_definition (
-   rpc.code = \"INTERNAL\"
-)",
-      constraints = [
-      constraint! {
-        matcher = "(exception_definition) @c_e",
-        queries = ["(annotation_definition) @ad",]
-      }
-    ]
-
-  }];
-
-  let args = piranha_arguments! {
-    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(THRIFT),
-    rule_graph = RuleGraphBuilder::default()
-                .rules(rules)
-                .build(),
-  };
-
-  execute_piranha_and_check_result(&args, _path.join("expected").as_path(), 1, true)
+create_rewrite_tests! {
+    THRIFT,
+    test_feature_flag_system_1_treated: "match_exception_type", 1;
 }
