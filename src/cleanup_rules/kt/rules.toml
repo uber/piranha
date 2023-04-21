@@ -21,7 +21,7 @@ query = """(
 replace = "@litreal"
 replace_node = "pe"
 groups = ["boolean_expression_simplify"]
-
+is_seed_rule = false
 # Before : 
 # else if (true) { doSomething() }
 # After :
@@ -375,6 +375,14 @@ replace_node = "disjunction_expression"
 is_seed_rule = false
 
 
+# Before
+# (true) == true
+# x == (x)
+# x == x
+# After
+# true 
+# true
+# true
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_equality_true"
@@ -386,7 +394,10 @@ replace = "true"
 replace_node = "equality"
 is_seed_rule = false
 
-
+# Before
+# true == false
+# After
+# false
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_equality_false"
@@ -398,7 +409,10 @@ replace = "false"
 replace_node = "equality"
 is_seed_rule = false
 
-
+# Before
+# true != true
+# After
+# false
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_in_equality_false"
@@ -410,6 +424,11 @@ replace = "false"
 replace_node = "in_equality"
 is_seed_rule = false
 
+
+# Before
+# true != false
+# After
+# true
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_in_equality_true"
