@@ -22,7 +22,7 @@ internal class XPFlagCleanerPositiveCases {
     private var ftBool1 = experimentation.isStaleFeature().cachedValue
     private var ftBool2 = experimentation.isStaleFeature().cachedValue
     fun conditional_contains_stale_flag() {
-        if (experimentation.isStaleFeature().cachedValue) {
+        if ((experimentation.isStaleFeature().cachedValue) || true) {
             println("Hello World")
         }
     }
