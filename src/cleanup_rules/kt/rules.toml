@@ -18,7 +18,7 @@ name = "simplify_parenthesized_expression"
 query = """(
   (parenthesized_expression (boolean_literal) @literal) @pe
 )"""
-replace = "@litreal"
+replace = "@literal"
 replace_node = "pe"
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
