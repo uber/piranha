@@ -21,7 +21,7 @@ query = """(
 replace = "@litreal"
 replace_node = "pe"
 groups = ["boolean_expression_simplify"]
-
+is_seed_rule = false
 # Before : 
 # else if (true) { doSomething() }
 # After :
