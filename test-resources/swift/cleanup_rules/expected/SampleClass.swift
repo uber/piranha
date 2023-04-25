@@ -163,4 +163,56 @@ class SampleClass {
         var value = 2
         var value2 = 3
     }
+
+    func checkIfShortCircuitStatementsWithBooleanPrefix() {
+        if  let a1 = something1a{
+            doSomething1a()
+        }
+
+        if  let b1 = something2a(){
+            doSomething2a()
+        }
+
+        if  c1 == something3a(){
+            doSomething3a()
+        }
+
+        if  d1 == something4a(){
+            doSomething4a()
+        }
+
+        if  something5a(){
+            doSomething5a()
+        }
+
+        if  something6a{
+            doSomething6a()
+        }
+    }
+
+    func checkIfShortCircuitStatementsWithBooleanSuffix() {
+        if let a2 = something1{
+            doSomething1b()
+        }
+
+        if let b2 = something2(){
+            doSomething2b()
+        }
+
+        if c2 == something3(){
+            doSomething3b()
+        }
+
+        if d2 == something4(){
+            doSomething4b()
+        }
+
+        if something5a(){
+            doSomething5b()
+        }
+
+        if something6b{
+            doSomething6b()
+        }
+    }
 }
