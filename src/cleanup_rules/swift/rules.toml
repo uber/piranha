@@ -386,10 +386,10 @@ is_seed_rule = false
 
 # Before:
 # if true, anything { }
-# if true, someOptional { }
+# if anything, true { }
 # After: 
-# if someOptionalCall() { }
-# if someOptional { }
+# if anything { }
+# anything: [variable, function_call, variable_assignment, call_expression, equality check]
 [[rules]]
 name = "if_let_true_cleanup_literal_checks"
 query = """(
