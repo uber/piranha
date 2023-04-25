@@ -86,4 +86,3 @@ exception Unavailable {
 exception DeadlineExceeded {
 1: optional string message
 }
-
