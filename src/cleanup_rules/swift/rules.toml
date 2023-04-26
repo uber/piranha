@@ -582,37 +582,37 @@ is_seed_rule = false
 # skip the rule if the variable is declared with a different value in the class scope
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
-queries = ["""(
-    (property_declaration
-        name: (pattern
-            bound_identifier: (simple_identifier) @var
-        )
-        value: (boolean_literal) @val
-    )@property_declaration
-    (#eq? @var "@avariable")
-    (#not-eq? @val "@avalue")
-)"""]
+queries = [
+  """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @var
+            )
+            value: (boolean_literal) @val
+        )@property_declaration
+        (#eq? @var "@avariable")
+        (#not-eq? @val "@avalue")
+    )""",
 
-# skip the rule if the variable is being assigned a different value in the class scope
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
-    (assignment
-        target: (directly_assignable_expression
-            [   (navigation_expression
-                    target: (self_expression)
-                    suffix: (navigation_suffix
-                        suffix: (simple_identifier) @var
+  # skip the rule if the variable is being assigned a different value in the class scope
+  """(
+        (assignment
+            target: (directly_assignable_expression
+                [   (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @var
+                        )
                     )
-                )
-                (simple_identifier) @var
-            ]
+                    (simple_identifier) @var
+                ]
+            )
+            result: (boolean_literal) @val
         )
-        result: (boolean_literal) @val
-    )
-    (#eq? @var "@avariable")
-    (#not-eq? @val "@avalue")
-)"""]
+        (#eq? @var "@avariable")
+        (#not-eq? @val "@avalue")
+    )""",
+]
 
 # rule to replace the identifier with the value with the mentioned constraints
 [[rules]]
@@ -639,20 +639,19 @@ queries = ["""(
 # skip the rule if there is a declaration of the same variable
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
-queries = ["""(
-    (property_declaration
-        name: (pattern
-            bound_identifier: (simple_identifier) @variable
+queries = [
+  """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @variable
+            )
+            value: (boolean_literal) @value
         )
-        value: (boolean_literal) @value
-    )
-    (#eq? @variable "@identifier")
-)"""]
+        (#eq? @variable "@identifier")
+    )""",
 
-# skip the rule if there is an assignment of the same variable
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
+  # skip the rule if it is accessed in the self.x manner
+  """(
     (navigation_expression
         target: (self_expression)
         suffix: (navigation_suffix
@@ -660,7 +659,8 @@ queries = ["""(
         )
     )
     (#eq? @variable "@identifier")
-)"""]
+)""",
+]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
