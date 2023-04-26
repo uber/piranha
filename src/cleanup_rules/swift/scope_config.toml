@@ -41,6 +41,22 @@ generator = """(
     (#eq? @parameters "@params")
 )"""
 
+[[scopes]]
+name = "Constructor"
+[[scopes.rules]]
+matcher = """(
+    (init_declaration
+        (parameter)? @params
+        body: (function_body)
+    ) @function
+)"""
+generator = """(
+    (init_declaration)
+        (parameter)? @parameters
+        body: (function_body)
+    ) @func
+    (#eq? @parameters "@params")
+)"""
 
 [[scopes]]
 name = "File"
