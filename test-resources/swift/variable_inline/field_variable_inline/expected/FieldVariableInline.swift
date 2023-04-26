@@ -274,3 +274,23 @@ class C18{
     }
 
 }
+
+class C19{
+    var a = true
+
+    init(){
+        a = false
+    }
+}
+
+class C20{
+    var a
+
+    init(){
+        a = false
+    }
+
+    func f1(){
+        var a = true
+    }
+}
