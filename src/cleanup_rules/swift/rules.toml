@@ -614,6 +614,16 @@ queries = ["""(
     (#not-eq? @val "@avalue")
 )"""]
 
+# skip the rule if the variable is one of the parameters of some function
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (parameter
+        name: (simple_identifier) @c1var
+    )
+    (#eq? @c1var "@avariable")
+)"""]
+
 # rule to replace the identifier with the value with the mentioned constraints
 [[rules]]
 name = "replace_identifier_with_value"
@@ -626,14 +636,14 @@ replace = "@hvalue"
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
-# skip the rule if the variable is one of the parameters of the function
+# skip the rule if the variable is one of the parameters of some function
 [[rules.constraints]]
-matcher = "(function_declaration) @fd"
+matcher = "(class_declaration) @cd"
 queries = ["""(
     (parameter
-        name: (simple_identifier) @var
+        name: (simple_identifier) @c1var
     )
-    (#eq? @var "@identifier")
+    (#eq? @c1var "@identifier")
 )"""]
 
 # skip the rule if there is a declaration of the same variable
@@ -698,6 +708,16 @@ replace = "@hvalue"
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
+# skip the rule if the variable is one of the parameters of some function
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (parameter
+        name: (simple_identifier) @c1var
+    )
+    (#eq? @c1var "@identifier")
+)"""]
+
 # skip the rule if the variable declaration exists
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
@@ -732,6 +752,7 @@ queries = ["""(
         (#not-eq? @val "@hvalue")
 )"""]
 
+# rule to delete field initialisation: var a = true in class scope
 [[rules]]
 name = "delete_field_initialisation"
 query = """(
@@ -749,6 +770,16 @@ query = """(
 replace_node = "property_declaration"
 replace = ""
 is_seed_rule = false
+
+# skip the rule if the variable is one of the parameters of some function
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (parameter
+        name: (simple_identifier) @c1var
+    )
+    (#eq? @c1var "@hvariable")
+)"""]
 
 # skip the rule if variable is assigned a different value than the initial in some method
 [[rules.constraints]]
@@ -776,8 +807,7 @@ queries = ["""(
 [[rules]]
 name = "delete_field_initialisation_init"
 query = """(
-    (function_declaration
-        name: (_)? @function
+    (init_declaration
         body: (function_body
             (statements
                 (assignment
@@ -796,11 +826,20 @@ query = """(
             )
         )
     )
-    (#eq? @function "")
 )"""
 replace_node = "assignment"
 replace = ""
 is_seed_rule = false
+
+# skip the rule if the variable is one of the parameters of some function
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (parameter
+        name: (simple_identifier) @c1var
+    )
+    (#eq? @c1var "@hvariable")
+)"""]
 
 # skip the rule if the target field is assigned somewhere with a different value
 [[rules.constraints]]
@@ -823,19 +862,19 @@ queries = ["""(
         (#not-eq? @val "@hvalue")
 )"""]
 
-# skip the rule if the target variable is declared with some other value than the initial
-[[rules.constraints]]
-matcher = "(function_declaration) @fd"
-queries = ["""(
-    (property_declaration
-        name: (pattern
-            bound_identifier: (simple_identifier) @var
-        )
-        value: (boolean_literal)? @val
-    )@property_declaration
-    (#eq? @var "@hvariable")
-    (#not-eq? @val "@hvalue")
-)"""]
+# # skip the rule if the target variable is declared with some other value than the initial
+# [[rules.constraints]]
+# matcher = "(function_declaration) @fd"
+# queries = ["""(
+#     (property_declaration
+#         name: (pattern
+#             bound_identifier: (simple_identifier) @var
+#         )
+#         value: (boolean_literal) @val
+#     )@property_declaration
+#     (#eq? @var "@hvariable")
+#     (#not-eq? @val "@hvalue")
+# )"""]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 

@@ -42,11 +42,11 @@ from = "replace_expression_with_boolean_literal"
 to = ["boolean_literal_cleanup", "variable_inline_cleanup"]
 
 [[edges]]
-scope = "File"
+scope = "Class"
 from = "variable_inline_cleanup"
 to = [
-  "delete_field_initialisation_init",
   "delete_field_initialisation",
+  "delete_field_initialisation_init",
   "delete_variable_declaration",
 ]
 

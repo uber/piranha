@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Uber Technologies, Inc.
+# Copyright (c) 2023 Uber Technologies, Inc.
 # 
 # <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 # except in compliance with the License. You may obtain a copy of the License at
@@ -9,8 +9,6 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-#
-# For @stale_flag_name = stale_flag and @treated = true
 # Before 
 #   placeholder_false
 # After 
@@ -26,8 +24,6 @@ replace_node = "variable"
 replace = "false"
 groups = ["replace_expression_with_boolean_literal"]
 
-#
-# For @stale_flag_name = stale_flag and @treated = true
 # Before 
 #   placeholder_false
 # After 
