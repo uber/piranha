@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname, getmtime
-from polyglot_piranha import execute_piranha, PiranhaArguments
+from polyglot_piranha import Rule, RuleGraph, execute_piranha, PiranhaArguments, Constraint
 import logging
 from logging import info
 

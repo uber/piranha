@@ -11,6 +11,19 @@
 
 # The language specific rules in this file are applied after the API specific change has been performed.
 
+# Before: 
+# (true)
+# After 
+# true
+
+[[rules]]
+name = "simplify_parenthesized_expression"
+query = "(parenthesized_expression ([(true) (false) (identifier)] @expression)) @p_expr"
+replace = "@expression"
+replace_node = "p_expr"
+is_seed_rule = false
+groups = ["boolean_expression_simplify"]
+
 # Before : 
 #  if (true) { doSomething(); }
 # After :
@@ -27,7 +40,7 @@ name = "simplify_if_statement_true"
 query = """
 (
     (if_statement
-        condition : ((parenthesized_expression [(true) (parenthesized_expression (true))]))
+        condition : (condition (true))
         consequence : ((statement) @consequence))
 @if_statement)
 """
@@ -50,7 +63,7 @@ name = "simplify_if_statement_false"
 query = """
 (
     (if_statement
-        condition : (parenthesized_expression [(false) @i (parenthesized_expression (false))])
+        condition : (condition (false))
         consequence : ((statement) @consequence)
         alternative : ((_) @alternative) ?)
 @if_statement)"""
@@ -70,7 +83,7 @@ query = """
 (
     (unary_expression
         operator: "!"
-        operand: [(false) (parenthesized_expression (false))])
+        operand: (false))
 @unary_expression)
 """
 replace = "true"
@@ -89,7 +102,7 @@ query = """
 (
     (unary_expression
         operator: \"!\"
-        operand: [(true) (parenthesized_expression (true))])
+        operand: (true))
 @unary_expression)
 """
 replace = "false"
@@ -146,7 +159,7 @@ name = "simplify_true_and_something"
 query = """
 (
     (binary_expression
-        left: [(true) (parenthesized_expression (true))]
+        left: (true)
         operator:"&&"
         right : (_) @rhs) 
 ) @binary_expression
@@ -168,7 +181,7 @@ query = """
     (binary_expression
         left : (_) @lhs
         operator:"&&"
-        right: [(true) (parenthesized_expression (true))]
+        right: (true)
     )
 @binary_expression)"""
 replace = "@lhs"
@@ -186,7 +199,7 @@ name = "simplify_false_and_something"
 query = """
 (
     (binary_expression
-        left: [(false) (parenthesized_expression (false))]
+        left: (false)
         operator : "&&"
         right : (_) @rhs
     )
@@ -208,14 +221,11 @@ query = """
     (binary_expression
         left : [
             (identifier)
-            (parenthesized_expression (identifier))
             (true)
-            (parenthesized_expression (true))
             (false)
-            (parenthesized_expression (false))
         ] @lhs
         operator : "&&"
-        right: [(false) (parenthesized_expression (false))]
+        right: (false)
     )
 @binary_expression)
 """
@@ -236,14 +246,11 @@ query = """
     (binary_expression
         left : [
             (identifier)
-            (parenthesized_expression (identifier))
             (true)
-            (parenthesized_expression (true))
             (false)
-            (parenthesized_expression (false))
         ] @lhs
         operator:"||"
-        right: [(true) (parenthesized_expression (true))]
+        right: (true)
     )
 @binary_expression)"""
 replace = "true"
@@ -261,7 +268,7 @@ name = "simplify_true_or_something"
 query = """
 (
     (binary_expression
-        left : [(true) (parenthesized_expression (true))]
+        left : (true)
         operator:"||"
         right: (_) @rhs
     )
@@ -284,7 +291,7 @@ query = """(
     binary_expression
         left : (_) @lhs
         operator:"||"
-        right: [(false) (parenthesized_expression (false))]
+        right: (false)
     )
 @binary_expression)"""
 replace = "@lhs"
@@ -302,7 +309,7 @@ name = "simplify_false_or_something"
 query = """
 (
     (binary_expression
-        left : [(false) (parenthesized_expression (false))]
+        left : (false)
         operator:"||"
         right: (_) @rhs
     )
@@ -311,11 +318,113 @@ replace = "@rhs"
 replace_node = "binary_expression"
 is_seed_rule = false
 
+
+# Before: 
+#  (x) == x
+#  x == (x)
+#  x == x
+# After :
+#  true
+#  true
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_true"
+query = """
+(
+    (binary_expression
+        left : [(parenthesized_expression (_) @lhs) (_) @lhs]
+        operator:"=="
+        right: [(parenthesized_expression (_) @rhs) (_) @rhs]
+    )
+@binary_expression
+(#eq? @lhs @rhs)
+)"""
+replace = "true"
+replace_node = "binary_expression"
+is_seed_rule = false
+
+
+# Before: 
+#  false == true 
+#  true == false
+# After :
+#  false
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_false"
+query = """
+(
+    (binary_expression
+        left : [(false) @lhs (true) @lhs (string_literal) (decimal_integer_literal) @lhs (decimal_floating_point_literal) @lhs]
+        operator:"=="
+        right: [(false) @rhs (true) @rhs (string_literal) @rhs (decimal_integer_literal) @rhs (decimal_floating_point_literal) @rhs]
+    )
+@binary_expression
+(#not-eq? @lhs @rhs)
+)"""
+replace = "false"
+replace_node = "binary_expression"
+is_seed_rule = false
+
+
+# Before: 
+#  false != false 
+#  true != true
+# After :
+#  false
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_equals_false"
+query = """
+(
+    (binary_expression
+        left : [(false) @lhs (true) @lhs (string_literal) (decimal_integer_literal) @lhs (decimal_floating_point_literal) @lhs]
+        operator:"!="
+        right: [(false) @rhs (true) @rhs (string_literal) @rhs (decimal_integer_literal) @rhs (decimal_floating_point_literal) @rhs]
+    )
+@binary_expression
+(#eq? @lhs @rhs)
+)"""
+replace = "false"
+replace_node = "binary_expression"
+is_seed_rule = false
+
+
+# Before: 
+#  false != true 
+#  true != false
+# After :
+#  true
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_equals_true"
+query = """
+(
+    (binary_expression
+        left : [(false) @lhs (true) @lhs (string_literal) (decimal_integer_literal) @lhs (decimal_floating_point_literal) @lhs]
+        operator:"!="
+        right: [(false) @rhs (true) @rhs (string_literal) @rhs (decimal_integer_literal) @rhs (decimal_floating_point_literal) @rhs]
+    )
+@binary_expression
+(#not-eq? @lhs @rhs)
+)"""
+replace = "true"
+replace_node = "binary_expression"
+is_seed_rule = false
+
 # Before :
 #  {
 #    something();
 #    return 10;
-#    somethingMore();  
+#    somethingMore();
 #    return 100;
 #  } 
 # After :
@@ -344,7 +453,7 @@ groups = ["if_cleanup"]
 name = "simplify_ternary_operator_true"
 query = """
 (
-    (ternary_expression condition: [(true) (parenthesized_expression (true))]
+    (ternary_expression condition: (true)
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
@@ -362,7 +471,7 @@ groups = ["if_cleanup"]
 name = "simplify_ternary_operator_false"
 query = """
 (
-    (ternary_expression condition: [(false) (parenthesized_expression (false))]
+    (ternary_expression condition: (false)
         consequence: (_)* @consequence
         alternative: (_)* @alternative)
 @ternary_expression)"""
@@ -468,7 +577,7 @@ query = """
 ((field_declaration 
                 declarator: (variable_declarator 
                                     name: (_) @variable_name
-                                    value: [(true) (false) (parenthesized_expression (true)) (parenthesized_expression (false))] @init)) @field_declaration)
+                                    value: [(true) (false)] @init)) @field_declaration)
 )
 """
 replace = ""

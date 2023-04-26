@@ -383,6 +383,41 @@ replace_node = "if_else_block"
 replace = "@alternatives"
 is_seed_rule = false
 
+
+# Before:
+# if true, anything { }
+# if anything, true { }
+# After: 
+# if anything { }
+# anything: [ variable, function_call, variable_assignment (to a function's return value, optional variable),
+# equality check (with a function's return value, variable ]
+[[rules]]
+name = "if_let_true_cleanup_literal_checks"
+query = """(
+    [
+        (if_statement
+            condition: (boolean_literal) @boollc
+            (_)
+            .(statements)
+        )
+        (if_statement
+            (_)
+            condition: (boolean_literal) @boollc
+            .(statements)
+        )
+        (if_statement
+            condition: (boolean_literal) @boollc
+            bound_identifier: (simple_identifier)
+            (statements)
+        )
+    ] @ifstl
+    (#eq? @boollc "true")
+)"""
+replace_node = "boollc"
+replace = ""
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+
 #
 # Before
 #   guard true else {
@@ -409,6 +444,29 @@ is_seed_rule = false
 
 #
 # Before
+# var v = true ? x : y
+#
+# After
+# var v = x
+#
+[[rules]]
+name = "ternary_true"
+query = """(
+(ternary_expression
+    condition:[(boolean_literal) @true  
+            (tuple_expression 
+                value: (boolean_literal) @true)]
+    if_true:(_) @block_true
+    ) @ternary_block
+(#eq? @true "true")
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "@block_true"
+is_seed_rule = false
+
+#
+# Before
 #   guard false else {
 #       return f1()
 #   }
@@ -431,6 +489,28 @@ query = """(
 groups = ["guard_cleanup"]
 replace_node = "guard_block"
 replace = "@else_block"
+is_seed_rule = false
+
+#
+# var v = false ? x : y
+#
+# After
+# var v = y
+#
+[[rules]]
+name = "ternary_false"
+query = """(
+(ternary_expression
+    condition:[(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    if_false:(_) @block_false
+    ) @ternary_block
+(#eq? @false "false")
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "@block_false"
 is_seed_rule = false
 
 # Dummy rule that acts as a junction for all boolean based cleanups
