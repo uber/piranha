@@ -20,7 +20,7 @@ use tree_sitter::{Parser, Query};
 use crate::utilities::parse_toml;
 
 use super::{
-  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT},
+  default_configs::{default_language, GO, JAVA, KOTLIN, PYTHON, SWIFT, THRIFT, TSX, TYPESCRIPT},
   outgoing_edges::Edges,
   rule::Rules,
   scopes::{ScopeConfig, ScopeGenerator},
@@ -61,6 +61,7 @@ pub enum SupportedLanguage {
   Ts,
   Tsx,
   Python,
+  Thrift,
 }
 
 impl PiranhaLanguage {
@@ -201,6 +202,15 @@ impl std::str::FromStr for PiranhaLanguage {
         name: language.to_string(),
         supported_language: SupportedLanguage::Tsx,
         language: tree_sitter_typescript::language_tsx(),
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
+      }),
+      THRIFT => Ok(PiranhaLanguage {
+        name: language.to_string(),
+        supported_language: SupportedLanguage::Thrift,
+        language: tree_sitter_thrift::language(),
         rules: None,
         edges: None,
         scopes: vec![],
