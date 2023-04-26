@@ -44,4 +44,9 @@ create_rewrite_tests! {
       "stale_flag" => "one"
     },
     cleanup_comments = true, delete_file_if_empty= false;
+    test_raw_value_cleanup: "variable_raw_value_cleanup", 1,
+      substitutions = substitutions! {
+        "stale_flag" => "stale_flag"
+      },
+      cleanup_comments = true, delete_file_if_empty= false;
 }
