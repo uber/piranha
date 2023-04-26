@@ -383,6 +383,41 @@ replace_node = "if_else_block"
 replace = "@alternatives"
 is_seed_rule = false
 
+
+# Before:
+# if true, anything { }
+# if anything, true { }
+# After: 
+# if anything { }
+# anything: [ variable, function_call, variable_assignment (to a function's return value, optional variable),
+# equality check (with a function's return value, variable ]
+[[rules]]
+name = "if_let_true_cleanup_literal_checks"
+query = """(
+    [
+        (if_statement
+            condition: (boolean_literal) @boollc
+            (_)
+            .(statements)
+        )
+        (if_statement
+            (_)
+            condition: (boolean_literal) @boollc
+            .(statements)
+        )
+        (if_statement
+            condition: (boolean_literal) @boollc
+            bound_identifier: (simple_identifier)
+            (statements)
+        )
+    ] @ifstl
+    (#eq? @boollc "true")
+)"""
+replace_node = "boollc"
+replace = ""
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+
 #
 # Before
 #   guard true else {
