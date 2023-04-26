@@ -213,4 +213,56 @@ class SampleClass {
         var value = TestEnum.stale_flag_one.isEnabled || v2 ? 2 : 3
         var value2 =  placeholder_false ? 2 : 3
     }
+
+    func checkIfShortCircuitStatementsWithBooleanPrefix() {
+        if TestEnum.stale_flag_one.isEnabled, let a1 = something1a{
+            doSomething1a()
+        }
+
+        if TestEnum.stale_flag_one.isEnabled, let b1 = something2a(){
+            doSomething2a()
+        }
+
+        if TestEnum.stale_flag_one.isEnabled, c1 == something3a(){
+            doSomething3a()
+        }
+
+        if TestEnum.stale_flag_one.isEnabled, d1 == something4a(){
+            doSomething4a()
+        }
+
+        if TestEnum.stale_flag_one.isEnabled, something5a(){
+            doSomething5a()
+        }
+
+        if TestEnum.stale_flag_one.isEnabled, something6a{
+            doSomething6a()
+        }
+    }
+
+    func checkIfShortCircuitStatementsWithBooleanSuffix() {
+        if let a2 = something1, TestEnum.stale_flag_one.isEnabled{
+            doSomething1b()
+        }
+
+        if let b2 = something2(), TestEnum.stale_flag_one.isEnabled{
+            doSomething2b()
+        }
+
+        if c2 == something3(), TestEnum.stale_flag_one.isEnabled{
+            doSomething3b()
+        }
+
+        if d2 == something4(), TestEnum.stale_flag_one.isEnabled{
+            doSomething4b()
+        }
+
+        if something5a(), TestEnum.stale_flag_one.isEnabled{
+            doSomething5b()
+        }
+
+        if something6b, TestEnum.stale_flag_one.isEnabled{
+            doSomething6b()
+        }
+    }
 }
