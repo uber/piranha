@@ -37,6 +37,11 @@ to = [
 ]
 
 [[edges]]
+scope = "Class"
+from = "delete_adhoc_declarations"
+to = ["replace_identifier_with_value", "delete_parent_assignment"]
+
+[[edges]]
 scope = "Parent"
 from = "replace_expression_with_boolean_literal"
 to = ["boolean_literal_cleanup", "variable_inline_cleanup"]
@@ -45,6 +50,7 @@ to = ["boolean_literal_cleanup", "variable_inline_cleanup"]
 scope = "Parent"
 from = "variable_inline_cleanup"
 to = [
+  "delete_adhoc_declarations",
   "delete_field_initialisation",
   "delete_field_initialisation_init",
   "delete_variable_declaration",

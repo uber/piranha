@@ -48,4 +48,6 @@ create_rewrite_tests! {
     cleanup_comments = true, delete_file_if_empty= false;
   test_field_variable_inline_file: "variable_inline/field_variable_inline", 1,
     cleanup_comments = true, delete_file_if_empty= false;
+  test_adhoc_variable_inline_file: "variable_inline/adhoc_variable_inline", 1,
+    cleanup_comments = true, delete_file_if_empty= false;
 }
