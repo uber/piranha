@@ -517,22 +517,19 @@ is_seed_rule = false
 [[rules]]
 name = "delete_variable_declaration"
 query = """(
-    (function_declaration
-        body: (function_body
-            (statements
                 (property_declaration
                     name: (pattern
                         bound_identifier: (simple_identifier) @hvariable
                     )
                     value: (boolean_literal) @hvalue
                 ) @property_declaration
-            )
-        )
-    )
 )"""
 replace_node = "property_declaration"
 replace = ""
 is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(function_declaration) @cfd"
 
 # skip the rule if the variable is assigned with some other value in the class scope
 [[rules.constraints]]
