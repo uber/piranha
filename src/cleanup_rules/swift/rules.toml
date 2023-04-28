@@ -609,14 +609,13 @@ queries = [
         (#eq? @var "@avariable")
         (#not-eq? @val "@avalue")
     )""",
-
-  # skip the rule if the variable is one of the parameters of some function
-  """(
+    # skip the rule if the variable is one of the parameters of some function
+    """(
         (parameter
             name: (simple_identifier) @c1var
         )
         (#eq? @c1var "@avariable")
-    )""",
+    )"""
 ]
 
 # rule to replace the identifier with the value with the mentioned constraints
@@ -630,6 +629,7 @@ replace_node = "identifier"
 replace = "@hvalue"
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
+
 
 [[rules.constraints]]
 matcher = "(class_declaration) @cd"
@@ -848,7 +848,7 @@ queries = [
         )@property_declaration
         (#eq? @var "@hvariable")
         (#not-eq? @val "@hvalue")
-    )""",
+    )"""
 ]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
