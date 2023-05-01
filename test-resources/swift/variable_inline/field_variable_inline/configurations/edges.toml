@@ -10,6 +10,6 @@
 # limitations under the License.
 
 [[edges]]
-scope = "File"
+scope = "Parent"
 from = "replace_expression_with_boolean_literal"
 to = ["variable_inline_cleanup"]
