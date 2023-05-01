@@ -1,4 +1,4 @@
-class C21{
+class C1{
     func f1(){
         f.subscribe(
             onNext: { x in 
@@ -8,7 +8,7 @@ class C21{
     }
 }
 
-class C22{
+class C2{
     var a
 
     init(){

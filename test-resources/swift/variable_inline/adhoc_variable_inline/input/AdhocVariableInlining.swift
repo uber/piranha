@@ -1,5 +1,5 @@
-class C21{
-    var a = true
+class C1{
+    var a = placeholder_true
     func f1(){
         f.subscribe(
             onNext: { x in 
@@ -12,7 +12,7 @@ class C21{
     }
 }
 
-class C22{
+class C2{
     var a
 
     init(){
