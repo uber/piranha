@@ -19,6 +19,24 @@ from = "delete_variable_declaration"
 to = ["replace_identifier_with_value", "delete_parent_assignment"]
 
 [[edges]]
+scope = "Class"
+from = "delete_field_initialisation_init"
+to = [
+  "replace_self_identifier_with_value",
+  "replace_identifier_with_value",
+  "delete_field_declaration",
+]
+
+[[edges]]
+scope = "Class"
+from = "delete_field_initialisation"
+to = [
+  "replace_self_identifier_with_value",
+  "replace_identifier_with_value",
+  "delete_parent_assignment",
+]
+
+[[edges]]
 scope = "Parent"
 from = "replace_expression_with_boolean_literal"
 to = ["boolean_literal_cleanup", "variable_inline_cleanup"]
@@ -26,7 +44,11 @@ to = ["boolean_literal_cleanup", "variable_inline_cleanup"]
 [[edges]]
 scope = "Parent"
 from = "variable_inline_cleanup"
-to = ["delete_variable_declaration"]
+to = [
+  "delete_field_initialisation",
+  "delete_field_initialisation_init",
+  "delete_variable_declaration",
+]
 
 [[edges]]
 scope = "Parent"
