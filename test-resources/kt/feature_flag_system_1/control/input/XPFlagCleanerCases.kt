@@ -58,6 +58,24 @@ internal class XPFlagCleanerPositiveCases {
         } else {
             println("Hi world")
         }
+
+        if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG) == true) {
+            println("Hello World 1")
+        } else {
+            println("Hi world 1")
+        }
+
+        if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG) != true) {
+            println("Hello World 2")
+        } else {
+            println("Hi world 2")
+        }
+
+        if (experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG) != false) {
+            println("Hello World 3")
+        } else {
+            println("Hi world 3")
+        }
     }
 
     fun complex_conditional_contains_stale_flag() {

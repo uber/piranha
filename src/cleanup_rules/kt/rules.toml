@@ -374,6 +374,73 @@ replace = "@rhs"
 replace_node = "disjunction_expression"
 is_seed_rule = false
 
+
+# Before
+# (true) == true
+# x == (x)
+# x == x
+# After
+# true 
+# true
+# true
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equality_true"
+query = """(
+(equality_expression (_)@l1 "==" (_)@l2) @equality
+(#eq? @l1 @l2)
+)"""
+replace = "true"
+replace_node = "equality"
+is_seed_rule = false
+
+# Before
+# true == false
+# After
+# false
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equality_false"
+query = """(
+(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "==" [(boolean_literal) (integer_literal) (real_literal)]@l2) @equality
+(#not-eq? @l1 @l2)
+)"""
+replace = "false"
+replace_node = "equality"
+is_seed_rule = false
+
+# Before
+# true != true
+# After
+# false
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_inequality_false"
+query = """(
+(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "!=" [(boolean_literal) (integer_literal) (real_literal)] @l2) @inequality
+(#eq? @l1 @l2)
+)"""
+replace = "false"
+replace_node = "inequality"
+is_seed_rule = false
+
+
+# Before
+# true != false
+# After
+# true
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_inequality_true"
+query = """(
+(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "!=" [(boolean_literal) (integer_literal) (real_literal)] @l2) @inequality
+(#not-eq? @l1 @l2)
+)"""
+replace = "true"
+replace_node = "inequality"
+is_seed_rule = false
+
+
 # Before :
 #  {
 #    something();
