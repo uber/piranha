@@ -383,6 +383,41 @@ replace_node = "if_else_block"
 replace = "@alternatives"
 is_seed_rule = false
 
+
+# Before:
+# if true, anything { }
+# if anything, true { }
+# After: 
+# if anything { }
+# anything: [ variable, function_call, variable_assignment (to a function's return value, optional variable),
+# equality check (with a function's return value, variable ]
+[[rules]]
+name = "if_let_true_cleanup_literal_checks"
+query = """(
+    [
+        (if_statement
+            condition: (boolean_literal) @boollc
+            (_)
+            .(statements)
+        )
+        (if_statement
+            (_)
+            condition: (boolean_literal) @boollc
+            .(statements)
+        )
+        (if_statement
+            condition: (boolean_literal) @boollc
+            bound_identifier: (simple_identifier)
+            (statements)
+        )
+    ] @ifstl
+    (#eq? @boollc "true")
+)"""
+replace_node = "boollc"
+replace = ""
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+
 #
 # Before
 #   guard true else {
@@ -478,6 +513,346 @@ replace_node = "ternary_block"
 replace = "@block_false"
 is_seed_rule = false
 
+# delete variables declared in a function scope
+[[rules]]
+name = "delete_variable_declaration"
+query = """(
+                (property_declaration
+                    name: (pattern
+                        bound_identifier: (simple_identifier) @hvariable
+                    )
+                    value: (boolean_literal) @hvalue
+                ) @property_declaration
+)"""
+replace_node = "property_declaration"
+replace = ""
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(function_declaration) @cfd"
+
+# skip the rule if the variable is assigned with some other value in the class scope
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = ["""(
+    (assignment
+        target: (directly_assignable_expression
+            [ (navigation_expression
+                target: (self_expression)
+                suffix: (navigation_suffix
+                    suffix: (simple_identifier) @var
+                )
+                )
+                (simple_identifier) @var
+            ]
+            )
+        result: (boolean_literal) @val
+    )
+    (#eq? @var "@hvariable")
+    (#not-eq? @val "@hvalue")
+)"""]
+
+# rule to delete assignments like a = true subject to the mentioned constraints
+[[rules]]
+name = "delete_parent_assignment"
+query = """(
+    (assignment
+        target: (directly_assignable_expression
+            [ (navigation_expression
+                target: (self_expression)
+                suffix: (navigation_suffix
+                    suffix: (simple_identifier) @avariable
+                )
+                )
+                (simple_identifier) @avariable
+            ]
+            )
+        result: (boolean_literal) @avalue
+    ) @assignment
+    (#eq? @avariable "@hvariable")
+)"""
+replace_node = "assignment"
+replace = ""
+holes = ["hvariable", "hvalue"]
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  # skip the rule if the variable is declared with a different value in the class scope
+  """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @var
+            )
+            value: (boolean_literal) @val
+        )@property_declaration
+        (#eq? @var "@avariable")
+        (#not-eq? @val "@avalue")
+    )""",
+
+  # skip the rule if the variable is being assigned a different value in the class scope
+  """(
+        (assignment
+            target: (directly_assignable_expression
+                [   (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @var
+                        )
+                    )
+                    (simple_identifier) @var
+                ]
+            )
+            result: (boolean_literal) @val
+        )
+        (#eq? @var "@avariable")
+        (#not-eq? @val "@avalue")
+    )""",
+
+  # skip the rule if the variable is a parameter of a function
+  """(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@avariable")
+    )""",
+]
+
+# rule to replace the identifier with the value with the mentioned constraints
+[[rules]]
+name = "replace_identifier_with_value"
+query = """(
+    (simple_identifier) @identifier
+    (#eq? @identifier "@hvariable")
+)"""
+replace_node = "identifier"
+replace = "@hvalue"
+holes = ["hvariable", "hvalue"]
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  # skip the rule if the variable is one of the parameters of some function
+  """(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@identifier")
+    )""",
+  # skip the rule if there is a declaration of the same variable
+  """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @variable
+            )
+            value: (boolean_literal) @value
+        )
+        (#eq? @variable "@identifier")
+    )""",
+
+  # skip the rule if it is accessed in the self.x manner
+  """(
+        (navigation_expression
+            target: (self_expression)
+            suffix: (navigation_suffix
+                suffix: (simple_identifier) @variable
+            )
+        )
+        (#eq? @variable "@identifier")
+    )""",
+]
+
+# rule to delete declaration of variable in class scope
+[[rules]]
+name = "delete_field_declaration"
+query = """(
+            (property_declaration
+                name: (pattern
+                    bound_identifier: (simple_identifier) @avariable
+                )
+            ) @property_declaration
+    (#eq? @avariable "@hvariable")
+)"""
+replace_node = "property_declaration"
+replace = ""
+holes = ["hvariable"]
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(class_declaration) @ccd"
+
+# rule to replace field variable used as self.x subject to the mentioned constraints
+[[rules]]
+name = "replace_self_identifier_with_value"
+query = """(
+    (navigation_expression
+        target: (self_expression)
+        suffix: (navigation_suffix
+            suffix: (simple_identifier) @identifier
+        )
+    ) @rep
+    (#eq? @identifier "@hvariable")
+)"""
+replace_node = "rep"
+replace = "@hvalue"
+holes = ["hvariable", "hvalue"]
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  # skip the rule if the variable is one of the parameters of some function
+  """(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@identifier")
+    )""",
+  # skip the rule if the variable declaration exists
+  """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @variable
+            )
+            value: (boolean_literal) @value
+        )
+        (#eq? @variable "@identifier")
+    )""",
+  # skip the rule if the variable is assigned a different value in the class scope
+  """( 
+        (assignment
+            target: (directly_assignable_expression
+                [   (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @var
+                        )
+                    )
+                    (simple_identifier) @var
+                ]
+            )
+            result: (boolean_literal) @val
+        )
+        (#eq? @var "@hvariable")
+        (#not-eq? @val "@hvalue")
+    )""",
+]
+
+# rule to delete field initialisation: var a = true in class scope
+[[rules]]
+name = "delete_field_initialisation"
+query = """(
+            (property_declaration
+                name: (pattern
+                    bound_identifier: (simple_identifier) @hvariable
+                )
+                value: (boolean_literal) @hvalue
+            ) @property_declaration
+)"""
+replace_node = "property_declaration"
+replace = ""
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  # skip the rule if the variable is one of the parameters of some function
+  """(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@hvariable")
+    )""",
+  # skip the rule if variable is assigned a different value than the initial in some method
+  """(
+        (assignment
+            target: (directly_assignable_expression
+                [ (navigation_expression
+                    target: (self_expression)
+                    suffix: (navigation_suffix
+                        suffix: (simple_identifier) @var
+                    )
+                    )
+                    (simple_identifier) @var
+                ]
+            )
+            result: (boolean_literal) @val
+        )
+        (#eq? @var "@hvariable")
+        (#not-eq? @val "@hvalue")
+    )""",
+]
+
+
+# rule to delete field initialised in the init subject to the mentioned constraints
+[[rules]]
+name = "delete_field_initialisation_init"
+query = """(
+            (assignment
+                target: (directly_assignable_expression
+                    [ (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @hvariable
+                        )
+                        )
+                        (simple_identifier) @hvariable
+                    ]
+                    )
+                result: (boolean_literal) @hvalue
+            ) @assignment
+)"""
+replace_node = "assignment"
+replace = ""
+is_seed_rule = false
+
+[[rules.constraints]]
+matcher = "(init_declaration) @cid"
+
+
+[[rules.constraints]]
+matcher = "(class_declaration) @cd"
+queries = [
+  # skip the rule if the variable is one of the parameters of some function
+  """(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@hvariable")
+    )""",
+  # skip the rule if the target field is assigned somewhere with a different value
+  """( 
+        (assignment
+            target: (directly_assignable_expression
+                [   (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @var
+                        )
+                    )
+                    (simple_identifier) @var
+                ]
+            )
+            result: (boolean_literal) @val
+        )
+        (#eq? @var "@hvariable")
+        (#not-eq? @val "@hvalue")
+    )""",
+  # skip the rule if the target variable is declared with some other value
+  """(
+        (property_declaration
+            name: (pattern
+                bound_identifier: (simple_identifier) @var
+            )
+            value: (boolean_literal) @val
+        )@property_declaration
+        (#eq? @var "@hvariable")
+        (#not-eq? @val "@hvalue")
+    )""",
+]
+
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
 # A pattern here is - if there is an outgoing edge to B there is another to C.
@@ -489,4 +864,8 @@ is_seed_rule = false
 
 [[rules]]
 name = "statement_cleanup"
+is_seed_rule = false
+
+[[rules]]
+name = "variable_inline_cleanup"
 is_seed_rule = false
