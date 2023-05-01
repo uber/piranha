@@ -11,6 +11,17 @@
 
 # The language specific rules in this file are applied after the API specific change has been performed.
 
+# (true) -> true
+# (false) -> false
+[[rules]]
+name = "simplify_parenthesized_expression"
+query = """(
+  (parenthesized_expression (boolean_literal) @literal) @pe
+)"""
+replace = "@literal"
+replace_node = "pe"
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
 # Before : 
 # else if (true) { doSomething() }
 # After :
@@ -23,7 +34,7 @@ name = "simplify_ladder_if_true"
 query = """
 (
 (if_expression (_) (_) 
-               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+               (control_structure_body ((if_expression ((boolean_literal) @condition) 
                (control_structure_body (_) ) @consequence) @if_expression) )) @outer_if
 (#eq? @condition "true")
 )
@@ -44,7 +55,7 @@ name = "simplify_ladder_if_true_with_alternative"
 query = """
 (
 (if_expression (_) @x (_) @y
-               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+               (control_structure_body ((if_expression ((boolean_literal) @condition) 
                (control_structure_body (_))  @consequence 
                (control_structure_body (_) ) @alternative) @if_expression ) )) @outer_if
 (#eq? @condition "true")
@@ -65,7 +76,7 @@ name = "simplify_ladder_if_false_with_alternative"
 query = """
 (
 (if_expression (_) (_) 
-               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+               (control_structure_body ((if_expression ((boolean_literal) @condition)
                (control_structure_body) @consquent
                (_) @alternative) @if_expression) )) @outer_if
 (#eq? @condition "false")
@@ -85,7 +96,7 @@ name = "simplify_ladder_if_false"
 query = """
 (
 (if_expression (_) (_) 
-               (control_structure_body ((if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+               (control_structure_body ((if_expression ((boolean_literal) @condition) 
                (control_structure_body) @consquent)) ) @alternative) @if_expression
 (#eq? @condition "false")
 )
@@ -104,7 +115,7 @@ groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_if_true"
 query = """
 (
-(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+(if_expression ((boolean_literal) @condition) 
                (control_structure_body (_)* @consequence ) ) @if_expression
 (#eq? @condition "true")
 )
@@ -124,7 +135,7 @@ groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_if_true_with_alternative"
 query = """
 (
-(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+(if_expression ((boolean_literal) @condition) 
                (control_structure_body (_)* @consequence ) 
                (control_structure_body) @alternative) @if_expression
 (#eq? @condition "true")
@@ -148,7 +159,7 @@ groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_if_false_with_alternative"
 query = """
 (
-(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+(if_expression ((boolean_literal) @condition) 
                (control_structure_body) @consquent
                (control_structure_body (_)* @alternative) ) @if_expression
 (#eq? @condition "false")
@@ -166,7 +177,7 @@ groups = ["if_cleanup", "boolean_expression_simplify"]
 name = "simplify_if_false"
 query = """
 (
-(if_expression [((boolean_literal) @condition) (parenthesized_expression (boolean_literal) @condition)] 
+(if_expression ((boolean_literal) @condition) 
                (control_structure_body) @consquent) @if_expression
 (#eq? @condition "false")
 )"""
@@ -184,7 +195,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_not_false"
 query = """
 (
-(prefix_expression [((boolean_literal) @exp) (parenthesized_expression (boolean_literal) @exp)]) @prefix_expression
+(prefix_expression (boolean_literal) @exp) @prefix_expression
 (#eq? @exp "false")
 (#match @prefix_expression "!.*")  
 )
@@ -203,7 +214,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_not_true"
 query = """
 (
-(prefix_expression [((boolean_literal) @exp) (parenthesized_expression (boolean_literal) @exp)]) @prefix_expression
+(prefix_expression (boolean_literal) @exp) @prefix_expression
 (#eq? @exp "true")
 (#match @prefix_expression "!.*")  
 )
@@ -223,7 +234,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_true_and_something"
 query = """
 (
-(conjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+(conjunction_expression ((boolean_literal) @lhs)
                         (_) @rhs ) @conjunction_expression
 (#eq? @lhs "true")  
 )
@@ -242,8 +253,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_something_and_true"
 query = """
 (
-(conjunction_expression (_) @lhs 
-                    [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @conjunction_expression
+(conjunction_expression (_) @lhs (boolean_literal) @rhs) @conjunction_expression
 (#eq? @rhs "true")  
 )"""
 replace = "@lhs"
@@ -260,7 +270,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_false_and_something"
 query = """
 (
-(conjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+(conjunction_expression ((boolean_literal) @lhs)
                          (_) @rhs ) @conjunction_expression
 (#eq? @lhs "false")  
 )"""
@@ -279,11 +289,9 @@ name = "simplify_something_and_false"
 query = """
 (
 (conjunction_expression [(simple_identifier)
-                          (parenthesized_expression (simple_identifier))
                           (boolean_literal)
-                          (parenthesized_expression (boolean_literal))
                         ] @lhs 
-                        [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @conjunction_expression
+                        ((boolean_literal) @rhs) ) @conjunction_expression
 (#eq? @rhs "false")  
 )
 """
@@ -302,11 +310,9 @@ name = "simplify_something_or_true"
 query = """
 (
 (disjunction_expression [(simple_identifier)
-                          (parenthesized_expression (simple_identifier))
                           (boolean_literal)
-                          (parenthesized_expression (boolean_literal))
                         ] @lhs 
-                        [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
+                        ((boolean_literal) @rhs)  ) @disjunction_expression
 (#eq? @rhs "true")  
 )"""
 replace = "true"
@@ -323,7 +329,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_true_or_something"
 query = """
 (
-(disjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+(disjunction_expression ((boolean_literal) @lhs)
                          (_) @rhs ) @disjunction_expression
 (#eq? @lhs "true")  
 )
@@ -343,7 +349,7 @@ name = "simplify_something_or_false"
 query = """
 (
 (disjunction_expression (_) @lhs 
-                        [((boolean_literal) @rhs) (parenthesized_expression (boolean_literal) @rhs)] ) @disjunction_expression
+                        ((boolean_literal) @rhs)  ) @disjunction_expression
 (#eq? @rhs "false")  
 )"""
 replace = "@lhs"
@@ -360,7 +366,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_false_or_something"
 query = """
 (
-(disjunction_expression [((boolean_literal) @lhs) (parenthesized_expression (boolean_literal) @lhs)]
+(disjunction_expression ((boolean_literal) @lhs)
                          (_) @rhs ) @disjunction_expression
 (#eq? @lhs "false")  
 )"""
@@ -467,8 +473,7 @@ is_seed_rule = false
 [[rules]]
 name = "delete_local_var_property_declaration"
 query = """
-(property_declaration (variable_declaration (simple_identifier)@variable_name ) 
-                                 [(boolean_literal) @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+(property_declaration (variable_declaration (simple_identifier)@variable_name) (boolean_literal) @init) @property_declaration
 """
 replace = ""
 replace_node = "property_declaration"
@@ -496,8 +501,8 @@ queries = [
 [[rules]]
 name = "delete_field_property_declaration"
 query = """
-(property_declaration (variable_declaration (simple_identifier)@variable_name ) 
-                                 [(boolean_literal)  @init ( parenthesized_expression (boolean_literal) @init)]) @property_declaration
+(property_declaration (variable_declaration (simple_identifier)@variable_name) 
+                                 (boolean_literal)  @init) @property_declaration
 """
 replace = ""
 replace_node = "property_declaration"
@@ -538,7 +543,7 @@ matcher = "(function_declaration) @md"
 queries = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
-                                 [(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+                                 (boolean_literal)  @vdcl.init) @property_declaration
 (#eq? @vdcl.lhs "@l")
 )""",
 ]
@@ -563,7 +568,7 @@ matcher = "(class_declaration) @md"
 queries = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
-                                 [(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration
+                                 (boolean_literal)  @vdcl.init) @property_declaration
 (#eq? @vdcl.lhs "@l")
 )""",
 ]
