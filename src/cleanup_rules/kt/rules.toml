@@ -415,13 +415,13 @@ is_seed_rule = false
 # false
 [[rules]]
 groups = ["boolean_expression_simplify"]
-name = "simplify_in_equality_false"
+name = "simplify_inequality_false"
 query = """(
-(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "!=" [(boolean_literal) (integer_literal) (real_literal)] @l2) @in_equality
+(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "!=" [(boolean_literal) (integer_literal) (real_literal)] @l2) @inequality
 (#eq? @l1 @l2)
 )"""
 replace = "false"
-replace_node = "in_equality"
+replace_node = "inequality"
 is_seed_rule = false
 
 
@@ -431,13 +431,13 @@ is_seed_rule = false
 # true
 [[rules]]
 groups = ["boolean_expression_simplify"]
-name = "simplify_in_equality_true"
+name = "simplify_inequality_true"
 query = """(
-(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "!=" [(boolean_literal) (integer_literal) (real_literal)] @l2) @in_equality
+(equality_expression [(boolean_literal) (integer_literal) (real_literal)]@l1 "!=" [(boolean_literal) (integer_literal) (real_literal)] @l2) @inequality
 (#not-eq? @l1 @l2)
 )"""
 replace = "true"
-replace_node = "in_equality"
+replace_node = "inequality"
 is_seed_rule = false
 
 

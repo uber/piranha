@@ -66,39 +66,9 @@ def java_demo():
     assert old_mtime < new_mtime
 
 
-def thrift_demo():
-
-    file_path = join(find_Replace_dir, "thrift", "sample.thrift")
-    r1 = Rule(
-        name="Match Exception Definition",
-        query="""(
-        (exception_definition (identifier) @exception_name) @exception_definition 
-        (#match? @exception_name "Internal")
-        )""",
-        replace_node="exception_definition",
-        replace="""@exception_definition (
-   rpc.code = "INTERNAL"
-)
-        """,
-        constraints={
-            Constraint(matcher="(exception_definition) @c_e",
-                       queries=["(annotation_definition) @ad"])
-        }
-    )
-    args = PiranhaArguments(
-        language="thrift",
-        path_to_codebase=file_path,
-        rule_graph=RuleGraph(rules=[r1], edges=[]),
-        substitutions={}
-    )
-    output = execute_piranha(args)
-    print(output)
-
-
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
 logging.getLogger().setLevel(logging.INFO)
 swift_demo()
 java_demo()
-thrift_demo()
 print("Completed running the Find/Replace demos")
