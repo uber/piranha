@@ -610,7 +610,7 @@ queries = [
         (#not-eq? @val "@avalue")
     )""",
 
-  # skip the rule if the variable is one of the parameters of some function
+  # skip the rule if the variable is a parameter of a function
   """(
         (parameter
             name: (simple_identifier) @c1var
@@ -664,6 +664,7 @@ queries = [
     )""",
 ]
 
+# rule to delete declaration of variable in class scope
 [[rules]]
 name = "delete_field_declaration"
 query = """(
@@ -681,6 +682,7 @@ is_seed_rule = false
 
 [[rules.constraints]]
 matcher = "(class_declaration) @ccd"
+
 # rule to replace field variable used as self.x subject to the mentioned constraints
 [[rules]]
 name = "replace_self_identifier_with_value"
