@@ -610,7 +610,7 @@ queries = [
         (#not-eq? @val "@avalue")
     )""",
 
-  # skip the rule if the variable is one of the parameters of some function
+  # skip the rule if the variable is a parameter of a function
   """(
         (parameter
             name: (simple_identifier) @c1var
