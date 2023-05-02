@@ -42,6 +42,12 @@ internal class XPFlagCleanerPositiveCases {
 
     fun conditional_with_else_contains_stale_flag() {
         println("Hello World")
+        println("Hello World 1")
+
+        println("Hi world 2")
+
+        println("Hi world 3")
+
     }
 
     fun complex_conditional_contains_stale_flag() {
