@@ -216,7 +216,11 @@ class SampleClass {
 
     func checkIfShortCircuitStatementsWithBooleanPrefix() {
         if TestEnum.stale_flag_one.isEnabled, let a1 = something1a{
+            // some comment
+            // some other comment
             doSomething1a()
+            // another comment
+            doSomethingElse()
         }
 
         if TestEnum.stale_flag_one.isEnabled, let b1 = something2a(){
@@ -242,7 +246,11 @@ class SampleClass {
 
     func checkIfShortCircuitStatementsWithBooleanSuffix() {
         if let a2 = something1, TestEnum.stale_flag_one.isEnabled{
+            // some comment
+            // some other comment
             doSomething1b()
+            // another comment
+            doSomethingElse()
         }
 
         if let b2 = something2(), TestEnum.stale_flag_one.isEnabled{
