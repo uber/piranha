@@ -1,3 +1,8 @@
+Version 0.3.4
+-------------
+* Support variable / field inlining in Swift 
+* More optimized if-statement cleanups
+  
 Version 0.3.3
 -------------
 * Added equality simplification for Java 
