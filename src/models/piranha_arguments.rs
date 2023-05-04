@@ -304,7 +304,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 ///
 /// Usage:
 ///
-/// ```ignore
+/// ```
 /// piranha_arguments! {
 ///   path_to_codebase = "path/to/code/base".to_string(),
 ///   language = "Java".to_string(),
@@ -314,7 +314,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 ///
 /// expands to
 ///
-/// ```ignore
+/// ```
 /// PiranhaArgumentsBuilder::default()
 ///      .path_to_codebase("path/to/code/base".to_string())
 ///      .language("Java".to_string())
