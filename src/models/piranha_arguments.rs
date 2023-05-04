@@ -182,23 +182,30 @@ impl PiranhaArguments {
     };
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
-    piranha_arguments! {
-      path_to_codebase = path_to_codebase.unwrap_or_else(default_path_to_codebase),
-      path_to_configurations = path_to_configurations.unwrap_or_else(default_path_to_configurations),
-      rule_graph = rg,
-      code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
-      language = PiranhaLanguage::from(language.as_str()),
-      substitutions = subs,
-      dry_run = dry_run.unwrap_or_else(default_dry_run),
-      cleanup_comments = cleanup_comments.unwrap_or_else(default_cleanup_comments),
-      cleanup_comments_buffer = cleanup_comments_buffer.unwrap_or_else(default_cleanup_comments_buffer),
-      number_of_ancestors_in_parent_scope = number_of_ancestors_in_parent_scope.unwrap_or_else(default_number_of_ancestors_in_parent_scope),
-      delete_consecutive_new_lines = delete_consecutive_new_lines.unwrap_or_else(default_delete_consecutive_new_lines),
-      global_tag_prefix = global_tag_prefix.unwrap_or_else(default_global_tag_prefix),
-      delete_file_if_empty = delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty),
-      path_to_output_summary = path_to_output_summary,
-      allow_dirty_ast = allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast),
-    }
+    PiranhaArgumentsBuilder::default()
+      .path_to_codebase(path_to_codebase.unwrap_or_else(default_path_to_codebase))
+      .path_to_configurations(path_to_configurations.unwrap_or_else(default_path_to_configurations))
+      .rule_graph(rg)
+      .code_snippet(code_snippet.unwrap_or_else(default_code_snippet))
+      .language(PiranhaLanguage::from(language.as_str()))
+      .substitutions(subs)
+      .dry_run(dry_run.unwrap_or_else(default_dry_run))
+      .cleanup_comments(cleanup_comments.unwrap_or_else(default_cleanup_comments))
+      .cleanup_comments_buffer(
+        cleanup_comments_buffer.unwrap_or_else(default_cleanup_comments_buffer),
+      )
+      .number_of_ancestors_in_parent_scope(
+        number_of_ancestors_in_parent_scope
+          .unwrap_or_else(default_number_of_ancestors_in_parent_scope),
+      )
+      .delete_consecutive_new_lines(
+        delete_consecutive_new_lines.unwrap_or_else(default_delete_consecutive_new_lines),
+      )
+      .global_tag_prefix(global_tag_prefix.unwrap_or_else(default_global_tag_prefix))
+      .delete_file_if_empty(delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty))
+      .path_to_output_summary(path_to_output_summary)
+      .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
+      .build()
   }
 }
 
@@ -209,20 +216,20 @@ impl PiranhaArguments {
 
   pub fn from_cli() -> Self {
     let p = PiranhaArguments::parse();
-    piranha_arguments! {
-      path_to_codebase = p.path_to_codebase().to_string(),
-      substitutions = p.substitutions.clone(),
-      language = p.language().clone(),
-      path_to_configurations = p.path_to_configurations().to_string(),
-      path_to_output_summary = p.path_to_output_summary().clone(),
-      delete_file_if_empty = *p.delete_file_if_empty(),
-      delete_consecutive_new_lines = *p.delete_consecutive_new_lines(),
-      global_tag_prefix = p.global_tag_prefix().to_string(),
-      number_of_ancestors_in_parent_scope = *p.number_of_ancestors_in_parent_scope(),
-      cleanup_comments_buffer = *p.cleanup_comments_buffer(),
-      cleanup_comments = *p.cleanup_comments(),
-      dry_run = *p.dry_run(),
-    }
+    PiranhaArgumentsBuilder::default()
+      .path_to_codebase(p.path_to_codebase().to_string())
+      .substitutions(p.substitutions.clone())
+      .language(p.language().clone())
+      .path_to_configurations(p.path_to_configurations().to_string())
+      .path_to_output_summary(p.path_to_output_summary().clone())
+      .delete_file_if_empty(*p.delete_file_if_empty())
+      .delete_consecutive_new_lines(*p.delete_consecutive_new_lines())
+      .global_tag_prefix(p.global_tag_prefix().to_string())
+      .number_of_ancestors_in_parent_scope(*p.number_of_ancestors_in_parent_scope())
+      .cleanup_comments_buffer(*p.cleanup_comments_buffer())
+      .cleanup_comments(*p.cleanup_comments())
+      .dry_run(*p.dry_run())
+      .build()
   }
 
   pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
@@ -297,41 +304,6 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 
   built_in_rules.merge(&user_defined_rules)
 }
-
-#[macro_export]
-/// This macro can be used to construct a PiranhaArgument (via the builder).'
-/// Allows to use builder pattern more "dynamically"
-///
-/// Usage:
-///
-/// ```ignore
-/// piranha_arguments! {
-///   path_to_codebase = "path/to/code/base".to_string(),
-///   language = "Java".to_string(),
-///   path_to_configurations = "path/to/configurations".to_string(),
-/// }
-/// ```
-///
-/// expands to
-///
-/// ```ignore
-/// PiranhaArgumentsBuilder::default()
-///      .path_to_codebase("path/to/code/base".to_string())
-///      .language("Java".to_string())
-///      .path_to_configurations("path/to/configurations".to_string())
-///      .build()
-/// ```
-///
-macro_rules! piranha_arguments {
-    ($($kw: ident = $value: expr,)*) => {
-      $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
-      $(
-        .$kw($value)
-       )*
-      .build()
-    };
-}
-pub use piranha_arguments;
 
 #[cfg(test)]
 #[path = "unit_tests/piranha_arguments_test.rs"]

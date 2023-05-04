@@ -16,14 +16,16 @@ use crate::{
   tests::substitutions,
 };
 
+use super::PiranhaArgumentsBuilder;
+
 #[test]
 #[should_panic(expected = "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`")]
 fn piranha_argument_invalid_no_codebase_and_snippet() {
-  let _ = piranha_arguments! {
-    path_to_configurations = "some/path".to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    substitutions = substitutions! {"super_interface_name" => "SomeInterface"},
-  };
+  let _ = PiranhaArgumentsBuilder::default()
+    .path_to_configurations("some/path".to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
+    .build();
 }
 
 #[test]
@@ -31,11 +33,11 @@ fn piranha_argument_invalid_no_codebase_and_snippet() {
   expected = "Invalid Piranha arguments. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both."
 )]
 fn piranha_argument_invalid_both_codebase_and_snippet() {
-  let _ = piranha_arguments! {
-    path_to_configurations = "some/path".to_string(),
-    path_to_codebase = "dev/null".to_string(),
-    code_snippet = "class A { }".to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    substitutions = substitutions! {"super_interface_name" => "SomeInterface"},
-  };
+  let _ = PiranhaArgumentsBuilder::default()
+    .path_to_configurations("some/path".to_string())
+    .path_to_codebase("dev/null".to_string())
+    .code_snippet("class A { }".to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
+    .build();
 }
