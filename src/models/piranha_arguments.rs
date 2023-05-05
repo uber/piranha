@@ -15,20 +15,21 @@ use super::{
   default_configs::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
     default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
-    default_dry_run, default_global_tag_prefix, default_number_of_ancestors_in_parent_scope,
-    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
-    default_piranha_language, default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON,
-    SWIFT, TSX, TYPESCRIPT,
+    default_dry_run, default_exclude, default_global_tag_prefix, default_include,
+    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
+    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
+    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
   source_code_unit::SourceCodeUnit,
 };
-use crate::utilities::parse_key_val;
+use crate::utilities::{parse_glob_pattern, parse_key_val};
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
+use glob::Pattern;
 use itertools::Itertools;
 use log::{info, warn};
 use pyo3::{
@@ -48,8 +49,18 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
-  #[clap(short = 'c', long, default_value_t = default_path_to_codebase())]
+  #[clap(short = 'c', long, required = true)]
   path_to_codebase: String,
+
+  #[get = "pub"]
+  #[builder(default = "default_include()")]
+  #[clap(long, value_parser = parse_glob_pattern,num_args = 0.., required=false)]
+  include: Vec<Pattern>,
+
+  #[get = "pub"]
+  #[builder(default = "default_exclude()")]
+  #[clap(long, value_parser = parse_glob_pattern, num_args = 0.., required=false)]
+  exclude: Vec<Pattern>,
 
   /// Code snippet to transform
   #[get = "pub"]
@@ -164,12 +175,14 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    language: String, substitutions: Option<&PyDict>, path_to_configurations: Option<String>,
-    rule_graph: Option<RuleGraph>, path_to_codebase: Option<String>, code_snippet: Option<String>,
-    dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<i32>,
-    number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
-    global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
-    path_to_output_summary: Option<String>, allow_dirty_ast: Option<bool>,
+    language: String, path_to_codebase: String, include: Option<Vec<String>>,
+    exclude: Option<Vec<String>>, substitutions: Option<&PyDict>,
+    path_to_configurations: Option<String>, rule_graph: Option<RuleGraph>,
+    code_snippet: Option<String>, dry_run: Option<bool>, cleanup_comments: Option<bool>,
+    cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
+    delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
+    delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
+    allow_dirty_ast: Option<bool>,
   ) -> Self {
     let subs = if substitutions.is_some() {
       substitutions
@@ -183,7 +196,21 @@ impl PiranhaArguments {
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     PiranhaArgumentsBuilder::default()
-      .path_to_codebase(path_to_codebase.unwrap_or_else(default_path_to_codebase))
+      .path_to_codebase(path_to_codebase)
+      .include(
+        include
+          .unwrap_or_default()
+          .iter()
+          .map(|x| Pattern::new(x).unwrap())
+          .collect_vec(),
+      )
+      .exclude(
+        exclude
+          .unwrap_or_default()
+          .iter()
+          .map(|x| Pattern::new(x).unwrap())
+          .collect_vec(),
+      )
       .path_to_configurations(path_to_configurations.unwrap_or_else(default_path_to_configurations))
       .rule_graph(rg)
       .code_snippet(code_snippet.unwrap_or_else(default_code_snippet))

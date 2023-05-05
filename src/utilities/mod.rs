@@ -101,6 +101,12 @@ pub(crate) fn parse_key_val(
   Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
 
+pub(crate) fn parse_glob_pattern(
+  s: &str,
+) -> Result<Pattern, Box<dyn Error + Send + Sync + 'static>> {
+  Ok(Pattern::new(s)?)
+}
+
 /// Returns the file with the given name within the given directory.
 #[cfg(test)] // Rust analyzer FP
 pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
@@ -139,6 +145,7 @@ macro_rules! gen_py_str_methods {
 }
 
 pub(crate) use gen_py_str_methods;
+use glob::Pattern;
 
 use self::tree_sitter_utilities::TSQuery;
 

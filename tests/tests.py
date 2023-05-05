@@ -59,7 +59,7 @@ def test_piranha_match_only():
         dry_run=True,
     )
     output_summaries = execute_piranha(args)
-    assert sum([len(summary.matches) for summary in output_summaries]) == 22
+    assert sum([len(summary.matches) for summary in output_summaries]) == 47
     for summary in output_summaries:
         assert _is_readable(str(summary))
         for rule, match in summary.matches:
