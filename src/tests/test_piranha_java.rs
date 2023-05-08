@@ -74,8 +74,8 @@ create_match_tests! {
                   ("find_method", 1),
                   ("replace_isToggleEnabled_with_boolean_literal", 20)
                   ]),
-              include = vec![Pattern::new("*/include_folder/**/*").unwrap()],
-              exclude = vec![Pattern::new("*/but_not_this_folder/**/*").unwrap()];
+              include = vec![Pattern::new("*/folder_2/**/*").unwrap()],
+              exclude = vec![Pattern::new("*/folder_2_1/**/*").unwrap()];
 }
 
 #[test]

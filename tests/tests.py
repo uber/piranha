@@ -57,7 +57,7 @@ def test_piranha_match_only():
         language="java",
         path_to_codebase="test-resources/java/structural_find/input",
         dry_run=True,
-        exclude=["*/but_not_this_folder/**/*"]
+        exclude=["*/folder_2_1/**/*"]
     )
     output_summaries = execute_piranha(args)
     assert sum([len(summary.matches) for summary in output_summaries]) == 44
