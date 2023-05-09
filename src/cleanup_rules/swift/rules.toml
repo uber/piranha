@@ -397,18 +397,39 @@ query = """(
     [
         (if_statement
             condition: (boolean_literal) @boollc
-            (_)
-            .(statements)
-        )
-        (if_statement
-            (_)
-            condition: (boolean_literal) @boollc
-            .(statements)
-        )
-        (if_statement
-            condition: (boolean_literal) @boollc
             bound_identifier: (simple_identifier)
             (statements)
+        )
+        (if_statement
+            bound_identifier: (simple_identifier)
+            condition: (boolean_literal) @boollc
+            (statements)
+        )
+        (if_statement
+            condition: (boolean_literal) @boollc
+            condition: (equality_expression) @exprec
+            (statements)
+        )
+        (if_statement
+            condition: (equality_expression) @exprec
+            condition: (boolean_literal) @boollc
+            (statements) 
+        )
+        (if_statement
+            condition: (boolean_literal) @boollc
+            condition: [
+                (call_expression) 
+                (simple_identifier)
+            ]
+            (statements) 
+        )
+        (if_statement
+            condition: [
+                (call_expression)
+                (simple_identifier)
+            ]
+            condition: (boolean_literal) @boollc
+            (statements) 
         )
     ] @ifstl
     (#eq? @boollc "true")
