@@ -43,95 +43,52 @@ create_rewrite_tests! {
     cleanup_comments = true, delete_file_if_empty= false;
 }
 
-#[test]
-#[ignore] // Long running test
-fn test_cleanup_rules_file() {
-  super::initialize();
-  let _path = PathBuf::from("test-resources")
-    .join(SWIFT)
-    .join("cleanup_rules");
+fn execute_piranha_with_default_swift_args(scenario: &str, substitutions: Vec<(String, String)>) {
+  let _path = PathBuf::from("test-resources").join(SWIFT).join(scenario);
   let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
-
   let piranha_arguments = PiranhaArgumentsBuilder::default()
     .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
     .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
     .language(PiranhaLanguage::from(SWIFT))
     .cleanup_comments(true)
-    .substitutions(substitutions! {
+    .substitutions(substitutions)
+    .delete_file_if_empty(false)
+    .build();
+  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
+  temp_dir.close().unwrap();
+}
+
+#[test]
+#[ignore] // Long running test
+fn test_cleanup_rules_file() {
+  super::initialize();
+  execute_piranha_with_default_swift_args(
+    "cleanup_rules",
+    substitutions! {
       "stale_flag" => "stale_flag_one",
       "treated" => "true",
       "treated_complement" => "false"
-    })
-    .delete_file_if_empty(false)
-    .build();
-
-  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
-  // Delete temp_dir
-  temp_dir.close().unwrap();
+    },
+  );
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_local_variable_inline_file() {
   super::initialize();
-  let _path = PathBuf::from("test-resources")
-    .join(SWIFT)
-    .join("variable_inline/local_variable_inline");
-  let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
-
-  let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
-    .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
-    .language(PiranhaLanguage::from(SWIFT))
-    .cleanup_comments(true)
-    .delete_file_if_empty(false)
-    .build();
-
-  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
-  // Delete temp_dir
-  temp_dir.close().unwrap();
+  execute_piranha_with_default_swift_args("variable_inline/local_variable_inline", vec![]);
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_field_variable_inline_file() {
   super::initialize();
-  let _path = PathBuf::from("test-resources")
-    .join(SWIFT)
-    .join("variable_inline/field_variable_inline");
-  let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
-
-  let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
-    .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
-    .language(PiranhaLanguage::from(SWIFT))
-    .cleanup_comments(true)
-    .delete_file_if_empty(false)
-    .build();
-
-  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
-  // Delete temp_dir
-  temp_dir.close().unwrap();
+  execute_piranha_with_default_swift_args("variable_inline/field_variable_inline", vec![]);
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_adhoc_variable_inline_file() {
   super::initialize();
-  let _path = PathBuf::from("test-resources")
-    .join(SWIFT)
-    .join("variable_inline/adhoc_variable_inline");
-  let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
-
-  let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
-    .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
-    .language(PiranhaLanguage::from(SWIFT))
-    .cleanup_comments(true)
-    .delete_file_if_empty(false)
-    .build();
-
-  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
-  // Delete temp_dir
-  temp_dir.close().unwrap();
+  execute_piranha_with_default_swift_args("variable_inline/adhoc_variable_inline", vec![]);
 }

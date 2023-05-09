@@ -166,7 +166,11 @@ class SampleClass {
 
     func checkIfShortCircuitStatementsWithBooleanPrefix() {
         if  let a1 = something1a{
+            // some comment
+            // some other comment
             doSomething1a()
+            // another comment
+            doSomethingElse()
         }
 
         if  let b1 = something2a(){
@@ -192,7 +196,11 @@ class SampleClass {
 
     func checkIfShortCircuitStatementsWithBooleanSuffix() {
         if let a2 = something1{
+            // some comment
+            // some other comment
             doSomething1b()
+            // another comment
+            doSomethingElse()
         }
 
         if let b2 = something2(){
