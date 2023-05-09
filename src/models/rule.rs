@@ -106,7 +106,7 @@ impl Rule {
 ///
 /// Usage:
 ///
-/// ```ignore
+/// ```
 /// piranha_rule! {
 ///   name = "Some Rule".to_string(),
 ///   query= "(method_invocation name: (_) @name) @mi".to_string()
@@ -115,7 +115,7 @@ impl Rule {
 ///
 /// expands to
 ///
-/// ```ignore
+/// ```
 /// RuleBuilder::default()
 ///      .name("Some Rule".to_string())
 ///      .query("(method_invocation name: (_) @name) @mi".to_string)

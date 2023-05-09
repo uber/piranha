@@ -72,7 +72,7 @@ impl Constraint {
 ///
 /// Usage:
 ///
-/// ```ignore
+/// ```
 /// constraint! {
 ///   matcher = "(method_declaration) @md".to_string(),
 ///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
@@ -81,7 +81,7 @@ impl Constraint {
 ///
 /// expands to
 ///
-/// ```ignore
+/// ```
 /// ConstraintBuilder::default()
 ///      .matcher("(method_declaration) @md".to_string())
 ///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])

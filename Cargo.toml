@@ -28,6 +28,7 @@ path = "src/main.rs"
 name = "polyglot_piranha"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [build-dependencies]
 cc = "1.0.73"
