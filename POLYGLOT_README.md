@@ -173,8 +173,9 @@ Options:
   -c, --path-to-codebase <PATH_TO_CODEBASE>
           Path to source code folder or file
       --include [<INCLUDE>...]
-          
+          Paths to include (as glob patterns)
       --exclude [<EXCLUDE>...]
+          Paths to exclude (as glob patterns)
           
   -t, --code-snippet <CODE_SNIPPET>
           Code snippet to transform [default: ]

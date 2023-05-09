@@ -52,11 +52,13 @@ pub struct PiranhaArguments {
   #[clap(short = 'c', long, required = true)]
   path_to_codebase: String,
 
+  /// Paths to include (as glob patterns)
   #[get = "pub"]
   #[builder(default = "default_include()")]
-  #[clap(long, value_parser = parse_glob_pattern,num_args = 0.., required=false)]
+  #[clap(long, value_parser = parse_glob_pattern, num_args = 0.., required=false)]
   include: Vec<Pattern>,
 
+  /// Paths to exclude (as glob patterns)
   #[get = "pub"]
   #[builder(default = "default_exclude()")]
   #[clap(long, value_parser = parse_glob_pattern, num_args = 0.., required=false)]
@@ -71,7 +73,7 @@ pub struct PiranhaArguments {
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
-  #[clap(short = 's',value_parser = parse_key_val)]
+  #[clap(short = 's', value_parser = parse_key_val)]
   substitutions: Vec<(String, String)>,
 
   /// Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)

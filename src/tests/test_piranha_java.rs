@@ -73,6 +73,12 @@ create_match_tests! {
                   ("find_enum_constant", 1),
                   ("find_method", 1),
                   ("replace_isToggleEnabled_with_boolean_literal", 20)
+                  ]);
+  test_java_match_only_with_include_exclude: "structural_find_with_include_exclude",
+              HashMap::from([
+                  ("find_enum_constant", 1),
+                  ("find_method", 1),
+                  ("replace_isToggleEnabled_with_boolean_literal", 20)
                   ]),
               include = vec![Pattern::new("*/folder_2/**/*").unwrap()],
               exclude = vec![Pattern::new("*/folder_2_1/**/*").unwrap()];

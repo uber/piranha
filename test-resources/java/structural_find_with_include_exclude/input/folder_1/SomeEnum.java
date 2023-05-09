@@ -11,7 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
 */
-package com.uber.piranha;
+package folder_1;
 
 public enum SampleEnum {
     FOO,
