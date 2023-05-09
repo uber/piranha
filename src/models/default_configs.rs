@@ -13,6 +13,8 @@
 
 use std::collections::{HashMap, HashSet};
 
+use glob::Pattern;
+
 use super::{
   constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
   rule_graph::RuleGraph,
@@ -70,6 +72,14 @@ pub fn default_path_to_codebase() -> String {
 
 pub fn default_code_snippet() -> String {
   String::new()
+}
+
+pub fn default_include() -> Vec<Pattern> {
+  Vec::new()
+}
+
+pub fn default_exclude() -> Vec<Pattern> {
+  Vec::new()
 }
 
 pub fn default_path_to_configurations() -> String {

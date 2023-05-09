@@ -11,6 +11,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use glob::Pattern;
+
 use super::{
   copy_folder_to_temp_dir, create_match_tests, create_rewrite_tests,
   execute_piranha_and_check_result, initialize, substitutions,
@@ -66,7 +68,20 @@ create_rewrite_tests! {
 
 create_match_tests! {
   JAVA,
-  test_java_match_only: "structural_find", HashMap::from([("find_enum_constant", 1), ("find_method", 1), ("replace_isToggleEnabled_with_boolean_literal", 20)]);
+  test_java_match_only: "structural_find",
+              HashMap::from([
+                  ("find_enum_constant", 1),
+                  ("find_method", 1),
+                  ("replace_isToggleEnabled_with_boolean_literal", 20)
+                  ]);
+  test_java_match_only_with_include_exclude: "structural_find_with_include_exclude",
+              HashMap::from([
+                  ("find_enum_constant", 1),
+                  ("find_method", 1),
+                  ("replace_isToggleEnabled_with_boolean_literal", 20)
+                  ]),
+              include = vec![Pattern::new("*/folder_2/**/*").unwrap()],
+              exclude = vec![Pattern::new("*/folder_2_1/**/*").unwrap()];
 }
 
 #[test]

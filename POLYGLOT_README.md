@@ -165,13 +165,20 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 
 ```
 Polyglot Piranha
-A refactoring tool that eliminates dead code related to stale feature flags.
+A refactoring tool that eliminates dead code related to stale feature flags
 
 Usage: polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS> -l <LANGUAGE>
 
 Options:
   -c, --path-to-codebase <PATH_TO_CODEBASE>
           Path to source code folder or file
+      --include [<INCLUDE>...]
+          Paths to include (as glob patterns)
+      --exclude [<EXCLUDE>...]
+          Paths to exclude (as glob patterns)
+          
+  -t, --code-snippet <CODE_SNIPPET>
+          Code snippet to transform [default: ]
   -s <SUBSTITUTIONS>
           These substitutions instantiate the initial set of rules. Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
@@ -194,6 +201,8 @@ Options:
           Enables deletion of associated comments
       --dry-run
           Disables in-place rewriting of code
+      --allow-dirty-ast
+          Allows syntax errors in the input source code
   -h, --help
           Print help
 ```

@@ -53,13 +53,14 @@ def test_piranha_rewrite():
 
 def test_piranha_match_only():
     args = PiranhaArguments(
-        path_to_configurations="test-resources/java/structural_find/configurations",
+        path_to_configurations="test-resources/java/structural_find_with_include_exclude/configurations",
         language="java",
-        path_to_codebase="test-resources/java/structural_find/input",
+        path_to_codebase="test-resources/java/structural_find_with_include_exclude/input",
         dry_run=True,
+        exclude=["*/folder_2_1/**/*"]
     )
     output_summaries = execute_piranha(args)
-    assert sum([len(summary.matches) for summary in output_summaries]) == 22
+    assert sum([len(summary.matches) for summary in output_summaries]) == 44
     for summary in output_summaries:
         assert _is_readable(str(summary))
         for rule, match in summary.matches:

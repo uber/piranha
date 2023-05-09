@@ -141,7 +141,11 @@ impl Piranha {
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
 
-      for (path, content) in self.rule_store.get_relevant_files(&path_to_codebase) {
+      for (path, content) in self.rule_store.get_relevant_files(
+        &path_to_codebase,
+        piranha_args.include(),
+        piranha_args.exclude(),
+      ) {
         // Get the `SourceCodeUnit` for the file `path` from the cache `relevant_files`.
         // In case of miss, lazily insert a new `SourceCodeUnit`.
         let source_code_unit = self
