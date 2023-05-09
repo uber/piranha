@@ -79,3 +79,15 @@ query = """(
 replace_node = "variable"
 replace = "false"
 groups = ["replace_expression_with_boolean_literal"]
+
+[[rules]]
+name = "delete_enum_entry"
+query = """(
+(enum_entry
+    name: (simple_identifier) @enum_case)@enum_entry
+(#eq? @enum_case "@stale_flag")
+)"""
+replace_node = "enum_entry"
+replace = ""
+holes = ["stale_flag"]
+groups = ["enum_entry_cleanup"]
