@@ -14,7 +14,7 @@ Clone, and then install node dependencies.
 
 ```
 git clone https://github.com/uber/piranha.git 
-cd javascript
+cd legacy/javascript
 npm i
 ```
 
@@ -76,7 +76,7 @@ Consider the following properties file `config/properties.json`.
 }
 ```
 
-This specifies a list of flag APIs each of which return a boolean value. It is assumed that a method returns `true` iff the `flagType` specified in the properties file matches the flag behaviour specified at runtime. For example, if the flag behavior is `treated`, `isFlagTreated(flag)` will return `true` and `isToggleDisabled(flag)` will return `false`.
+This specifies a list of flag APIs each of which return a boolean value. It is assumed that a method returns `true` if the `flagType` specified in the properties file matches the flag behaviour specified at runtime. For example, if the flag behavior is `treated`, `isFlagTreated(flag)` will return `true` and `isToggleDisabled(flag)` will return `false`.
 
 The code in `examples/sample.js` contains the stale flag `featureFlag`
 
@@ -142,9 +142,9 @@ npm test
 
 See the suite of tests in `test/test_refactor.js` and `test/test_integration.js` for more detail on how Piranha works and what kind of refactoring it can handle. 
 
-### Running piranha as a command
+### Running Piranha as a command
 
-It can be convenient to run piranha as a shell command from any location. This can be done by creating an alias.
+It can be convenient to run Piranha as a shell command from any location. This can be done by creating an alias.
 
 From the `piranha/javascript` directory, run the following shell commands (for the bash shell).
 
