@@ -550,7 +550,7 @@ replace = ""
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(function_declaration) @cfd"
+matcher = "[(function_declaration) (init_declaration)] @cfd"
 
 # skip the rule if the variable is assigned with some other value in the class scope
 [[rules.constraints]]
