@@ -214,6 +214,62 @@ class SampleClass {
         var value2 =  placeholder_false ? 2 : 3
     }
 
+    func checkIfBooleanWithComments(){
+         if !TestEnum.stale_flag_one.isEnabled {
+            // to be deleted
+            toBeDeleted1()
+         }else{
+            // to be preserved
+            toBePreserved1()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled{
+            // to be deleted
+            toBeDeleted2() 
+         } else if a {
+            // to be preserved
+            toBePreserved2()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled{
+            // to be deleted
+            toBeDeleted3() 
+         } else if b {
+            // to be preserved
+            toBePreserved3a()
+         } else {
+            // to be preserved
+            toBePreserved3b()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled{
+            // to be preserved
+            toBePreserved4()
+         } else{
+            // to be deleted
+            toBeDeleted4()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled{
+            // to be preserved
+            toBePreserved5() 
+         } else if c {
+            // to be deleted
+            toBeDeleted5()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled{
+            // to be preserved
+            toBePreserved6() 
+         } else if d {
+            // to be preserved
+            toBeDeleted6a()
+         } else {
+            // to be preserved
+            toBeDeleted6b()
+         }
+    }
+
     func checkIfShortCircuitStatementsWithBooleanPrefix() {
         if TestEnum.stale_flag_one.isEnabled, let a1 = something1a{
             // some comment

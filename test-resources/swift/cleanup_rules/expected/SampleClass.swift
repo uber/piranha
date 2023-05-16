@@ -164,6 +164,34 @@ class SampleClass {
         var value2 = 3
     }
 
+    func checkIfBooleanWithComments(){
+        // to be preserved
+        toBePreserved1()
+                  
+        if a {
+            // to be preserved
+            toBePreserved2()
+        }
+
+        if b {
+            // to be preserved
+            toBePreserved3a()
+        } else {
+            // to be preserved
+            toBePreserved3b()
+        }
+
+        // to be preserved
+        toBePreserved4()
+                
+
+        // to be preserved
+        toBePreserved5() 
+                    
+        // to be preserved
+        toBePreserved6()
+    }
+
     func checkIfShortCircuitStatementsWithBooleanPrefix() {
         if  let a1 = something1a{
             // some comment
