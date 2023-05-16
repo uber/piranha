@@ -59,3 +59,15 @@ class C7 {
         doSomething()
     }
 }
+
+class C8 {
+    init(){
+        super.init(someParameter: someVar)
+    }
+}
+
+class C9 {
+    init(){
+        super.init(someParameter: someOtherVar)
+    }
+}
