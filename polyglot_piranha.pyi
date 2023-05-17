@@ -177,9 +177,9 @@ class Filter:
         Parameters
         ------------
             enclosing_node: str
-                Scope in which the filter query has to be applied
+                AST patterns that some ancestor node of the primary match should comply
             not_contains: list[str]
-                 The Tree-sitter queries that need to be applied in the `enclosing_node` scope
+                 AST patterns that should not match any subtree of node matching `enclosing_node` pattern
         """
         ...
 
@@ -199,7 +199,7 @@ class Rule:
     holes: set[str]
     "Holes that need to be filled, in order to instantiate a rule"
     filters: set[Filter]
-    "Additional filters for matching the rule"
+    "Filters to test before applying a rule"
 
     def __init__(
         self,
@@ -230,7 +230,7 @@ class Rule:
             holes: set[str]
                 Holes that need to be filled, in order to instantiate a rule
             filters: set[Filter]
-                Additional filters for matching the rule
+                Filters to test before applying a rule
         """
         ...
 
