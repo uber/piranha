@@ -17,7 +17,7 @@ query = """
 )
 """
 [[rules.constraints]]
-matcher = "(for_statement) @fs"
+enclosing_node = "(for_statement) @fs"
 
 
 [[rules]]

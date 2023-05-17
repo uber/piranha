@@ -29,17 +29,17 @@ use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::Sou
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
-use super::default_configs::{default_matcher, default_queries};
+use super::default_configs::{default_enclosing_node, default_queries};
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
 pub struct Filter {
   /// Scope in which the constraint query has to be applied
-  #[builder(default = "default_matcher()")]
+  #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[pyo3(get)]
-  matcher: TSQuery,
-  /// The Tree-sitter queries that need to be applied in the `matcher` scope
+  enclosing_node: TSQuery,
+  /// The Tree-sitter queries that need to be applied in the `enclosing_node` scope
   #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
@@ -50,9 +50,9 @@ pub struct Filter {
 #[pymethods]
 impl Filter {
   #[new]
-  fn py_new(matcher: String, queries: Option<Vec<String>>) -> Self {
+  fn py_new(enclosing_node: String, queries: Option<Vec<String>>) -> Self {
     FilterBuilder::default()
-      .matcher(TSQuery::new(matcher))
+      .enclosing_node(TSQuery::new(enclosing_node))
       .queries(
         queries
           .unwrap_or_default()
@@ -74,7 +74,7 @@ impl Filter {
 ///
 /// ```
 /// constraint! {
-///   matcher = "(method_declaration) @md".to_string(),
+///   enclosing_node = "(method_declaration) @md".to_string(),
 ///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
 /// }
 /// ```
@@ -83,15 +83,15 @@ impl Filter {
 ///
 /// ```
 /// FilterBuilder::default()
-///      .matcher("(method_declaration) @md".to_string())
+///      .enclosing_node("(method_declaration) @md".to_string())
 ///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
 ///      .build()
 /// ```
 ///
 macro_rules! constraint {
-  (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
+  (enclosing_node = $enclosing_node:expr, queries= [$($q:expr,)*]) => {
     $crate::models::filter::FilterBuilder::default()
-      .matcher($crate::utilities::tree_sitter_utilities::TSQuery::new($matcher.to_string()))
+      .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
       .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       .build().unwrap()
   };
@@ -103,7 +103,7 @@ impl Instantiate for Filter {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
-      matcher: self.matcher().instantiate(substitutions_for_holes),
+      enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
       queries: self
         .queries()
         .iter()
@@ -127,8 +127,8 @@ impl SourceCodeUnit {
   }
 
   /// Checks if the node satisfies the constraints.
-  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
-  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
+  /// Constraint has two parts (i) `constraint.enclosing_node` (ii) `constraint.query`.
+  /// This function traverses the ancestors of the given `node` until `constraint.enclosing_node` matches
   /// i.e. finds scope for constraint.
   /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
   fn _is_satisfied(
@@ -141,18 +141,18 @@ impl SourceCodeUnit {
     if node.child_count() > 0 {
       current_node = node.child(0).unwrap();
     }
-    // Get the scope_node of the constraint (`scope.matcher`)
-    let mut matched_matcher = false;
+    // Get the scope_node of the constraint (`scope.enclosing_node`)
+    let mut matched_enclosing_node = false;
     while let Some(parent) = current_node.parent() {
       let instantiated_constraint = constraint.instantiate(substitutions);
-      let matcher_query_str = instantiated_constraint.matcher();
+      let enclosing_node_query_str = instantiated_constraint.enclosing_node();
       if let Some(p_match) = get_match_for_query(
         &parent,
         self.code(),
-        rule_store.query(matcher_query_str),
+        rule_store.query(enclosing_node_query_str),
         false,
       ) {
-        matched_matcher = true;
+        matched_enclosing_node = true;
         let scope_node = get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
@@ -169,6 +169,6 @@ impl SourceCodeUnit {
       }
       current_node = parent;
     }
-    matched_matcher
+    matched_enclosing_node
   }
 }

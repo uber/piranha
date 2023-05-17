@@ -18,7 +18,7 @@ query = """
 )
 """
 [[rules.constraints]]
-matcher = """
+enclosing_node = """
 (
     (variable_declarator) @vd
 )

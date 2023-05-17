@@ -487,7 +487,7 @@ replace = ""
 replace_node = "enum_declaration"
 is_seed_rule = false
 [[rules.constraints]]
-matcher = "(enum_declaration) @ed"
+enclosing_node = "(enum_declaration) @ed"
 queries = ["(enum_constant) @ec"]
 
 
@@ -504,7 +504,7 @@ replace = ""
 replace_node = "program"
 is_seed_rule = false
 [[rules.constraints]]
-matcher = "(program) @c_program"
+enclosing_node = "(program) @c_program"
 queries = [
   "(enum_declaration) @c_enum_declaration",
   "(class_declaration) @c_class_declaration",
@@ -558,7 +558,7 @@ is_seed_rule = false
 # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.constraints]]
-matcher = "[(method_declaration) (constructor_declaration)] @md"
+enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 queries = ["""
 (
 ((assignment_expression
@@ -587,7 +587,7 @@ is_seed_rule = false
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = ["""(
 ((assignment_expression
                     left: (_) @a.lhs
@@ -618,7 +618,7 @@ holes = ["variable_name", "init"]
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.constraints]]
-matcher = "[(method_declaration) (constructor_declaration)] @md"
+enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 queries = ["""(
 ((local_variable_declaration 
                 declarator: (variable_declarator 
@@ -646,7 +646,7 @@ replace_node = "expression_statement"
 is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 [[rules.constraints]]
-matcher = "(method_declaration) @md"
+enclosing_node = "(method_declaration) @md"
 queries = [
   """(
 ((local_variable_declaration
@@ -659,7 +659,7 @@ queries = [
 [[rules.constraints]]
 # There should exist no field declaration named `@variable_name` and
 # there should be no assignments to @variable_name that are not same as `@init`.
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = ["""(
 ((assignment_expression
                     left: (_) @a.lhs
@@ -692,7 +692,7 @@ holes = ["variable_name", "init"]
 is_seed_rule = false
 [[rules.constraints]]
 # There should exist no local variable declaration named `@identifer`
-matcher = "[(method_declaration) (constructor_declaration)] @md"
+enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 queries = ["""(
 ((local_variable_declaration 
                 declarator: (variable_declarator 

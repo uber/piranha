@@ -12,7 +12,7 @@
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (source_file) @source_file
 """
 generator = """(source_file) @sf"""
@@ -20,7 +20,7 @@ generator = """(source_file) @sf"""
 [[scopes]]
 name = "Function-Method"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (
     (
         [

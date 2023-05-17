@@ -13,7 +13,7 @@
 [[scopes]]
 name = "Class"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (class_declaration name: (_) @cls_name) @class
 """
 generator = """(
@@ -24,7 +24,7 @@ generator = """(
 [[scopes]]
 name = "Function"
 [[scopes.rules]]
-matcher = """(
+enclosing_node = """(
     (function_declaration
         name: (simple_identifier)? @name
         (parameter)? @params
@@ -44,7 +44,7 @@ generator = """(
 [[scopes]]
 name = "Constructor"
 [[scopes.rules]]
-matcher = """(
+enclosing_node = """(
     (init_declaration
         (parameter)? @params
         body: (function_body)
@@ -61,7 +61,7 @@ generator = """(
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (source_file) @source_file
 """
 generator = """(source_file) @sf"""

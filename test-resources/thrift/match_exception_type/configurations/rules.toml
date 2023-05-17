@@ -10,5 +10,5 @@ replace = """@exception_definition (
 )
         """
 [[rules.constraints]]
-matcher = "(exception_definition) @c_e"
+enclosing_node = "(exception_definition) @c_e"
 queries = ["(annotation_definition) @ad"]

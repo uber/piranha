@@ -550,11 +550,11 @@ replace = ""
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "[(function_declaration) (init_declaration)] @cfd"
+enclosing_node = "[(function_declaration) (init_declaration)] @cfd"
 
 # skip the rule if the variable is assigned with some other value in the class scope
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = ["""(
     (assignment
         target: (directly_assignable_expression
@@ -598,7 +598,7 @@ holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = [
   # skip the rule if the variable is declared with a different value in the class scope
   """(
@@ -653,7 +653,7 @@ holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = [
   # skip the rule if the variable is one of the parameters of some function
   """(
@@ -702,7 +702,7 @@ holes = ["hvariable"]
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(class_declaration) @ccd"
+enclosing_node = "(class_declaration) @ccd"
 
 # rule to replace field variable used as self.x subject to the mentioned constraints
 [[rules]]
@@ -722,7 +722,7 @@ holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = [
   # skip the rule if the variable is one of the parameters of some function
   """(
@@ -777,7 +777,7 @@ replace = ""
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = [
   # skip the rule if the variable is one of the parameters of some function
   """(
@@ -830,11 +830,11 @@ replace = ""
 is_seed_rule = false
 
 [[rules.constraints]]
-matcher = "(init_declaration) @cid"
+enclosing_node = "(init_declaration) @cid"
 
 
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = [
   # skip the rule if the variable is one of the parameters of some function
   """(

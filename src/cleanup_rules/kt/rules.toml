@@ -478,7 +478,7 @@ replace = ""
 replace_node = "enum_declaration"
 is_seed_rule = false
 [[rules.constraints]]
-matcher = """(class_declaration (_) @nm
+enclosing_node = """(class_declaration (_) @nm
     (enum_class_body)) @ed"""
 queries = ["(enum_entry) @ee"]
 
@@ -491,7 +491,7 @@ replace = ""
 replace_node = "program"
 is_seed_rule = false
 [[rules.constraints]]
-matcher = "(source_file) @sf"
+enclosing_node = "(source_file) @sf"
 queries = [
   "(class_declaration) @cd",
   "(object_declaration) @od",
@@ -551,10 +551,10 @@ is_seed_rule = false
 # Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 # [[rules.constraints]]
-# matcher = "(function_declaration) @md"
+# enclosing_node =  "(function_declaration) @md"
 # queries = [] 
 [[rules.constraints]]
-matcher = "(function_declaration) @md"
+enclosing_node = "(function_declaration) @md"
 queries = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @assignment
@@ -577,7 +577,7 @@ is_seed_rule = false
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
 [[rules.constraints]]
-matcher = "(class_declaration) @cd"
+enclosing_node = "(class_declaration) @cd"
 queries = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @assignment
@@ -606,7 +606,7 @@ is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.constraints]]
-matcher = "(function_declaration) @md"
+enclosing_node = "(function_declaration) @md"
 queries = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
@@ -631,7 +631,7 @@ is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.constraints]]
-matcher = "(class_declaration) @md"
+enclosing_node = "(class_declaration) @md"
 queries = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
@@ -655,7 +655,7 @@ replace_node = "assignment"
 is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
 [[rules.constraints]]
-matcher = "(function_declaration) @md"
+enclosing_node = "(function_declaration) @md"
 queries = ["""(
 (property_declaration (variable_declaration (simple_identifier)@f_vdcl.lhs ) 
                                  (_)@f_vdcl.init) @property_declaration
@@ -664,7 +664,7 @@ queries = ["""(
 )"""]
 
 [[rules.constraints]]
-matcher = "(function_declaration) @md"
+enclosing_node = "(function_declaration) @md"
 queries = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @f_assignment
@@ -674,7 +674,7 @@ queries = [
 ]
 
 [[rules.constraints]]
-matcher = "(class_declaration) @md"
+enclosing_node = "(class_declaration) @md"
 queries = ["""(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
                                  (_)@vdcl.init ) @property_declaration
@@ -683,7 +683,7 @@ queries = ["""(
 )"""]
 
 [[rules.constraints]]
-matcher = "(class_declaration) @md"
+enclosing_node = "(class_declaration) @md"
 queries = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @c_assignment
@@ -710,7 +710,7 @@ replace_node = "identifier"
 is_seed_rule = false
 # [[rules.constraints]]
 # There should exist no local variable declaration named `@identifer`
-# matcher = "(function_declaration) @md"
+# enclosing_node =  "(function_declaration) @md"
 # queries = [
 #   """(
 # (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 

@@ -235,7 +235,7 @@ fn test_consecutive_scope_level_rules() {
         }",
       constraints = [
         constraint! {
-          matcher = "(class_declaration ) @c_cd",
+          enclosing_node =  "(class_declaration ) @c_cd",
           queries = ["(
             (class_declaration name:(_) @name ) @cd
             (#eq? @name \"InnerFooBar\")
@@ -255,7 +255,7 @@ fn test_consecutive_scope_level_rules() {
       is_seed_rule= false,
       constraints = [
         constraint! {
-          matcher = "(class_declaration ) @c_cd",
+          enclosing_node =  "(class_declaration ) @c_cd",
           queries = ["(
           (field_declaration (variable_declarator name:(_) @name )) @field
           (#eq? @name \"address\")

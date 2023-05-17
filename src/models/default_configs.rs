@@ -138,7 +138,7 @@ pub(crate) fn default_queries() -> Vec<TSQuery> {
   Vec::new()
 }
 
-pub(crate) fn default_matcher() -> TSQuery {
+pub(crate) fn default_enclosing_node() -> TSQuery {
   TSQuery::new(String::new())
 }
 

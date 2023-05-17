@@ -454,7 +454,7 @@ is_seed_rule = false
 # Note that the query is against a short_var_declaration while
 # the constraint is against an assigment_statement
 [[rules.constraints]]
-matcher = "(block) @block"
+enclosing_node = "(block) @block"
 queries = ["""
 (
     (assignment_statement
@@ -483,7 +483,7 @@ replace_node = "identifier"
 holes = ["variable_name", "value"]
 is_seed_rule = false
 [[rules.constraints]]
-matcher = "(block) @block"
+enclosing_node = "(block) @block"
 queries = ["""
 (
     [

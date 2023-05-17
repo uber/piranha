@@ -26,7 +26,7 @@ query = """
 )
 """
 [[rules.constraints]]
-matcher = """
+enclosing_node = """
 (
     (jsx_element
         open_tag: (jsx_opening_element
@@ -47,7 +47,7 @@ query = """
 )
 """
 [[rules.constraints]]
-matcher = """
+enclosing_node = """
 (
     (variable_declarator) @vd
 )

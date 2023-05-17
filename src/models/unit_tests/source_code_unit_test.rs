@@ -136,7 +136,7 @@ fn test_satisfies_constraints_positive() {
     replace_node= "variable_declaration",
     replace= "",
     constraints= [constraint!{
-      matcher= "(method_declaration) @md",
+      enclosing_node= "(method_declaration) @md",
       queries= ["(
         ((assignment_expression
                         left: (_) @a.lhs
@@ -202,7 +202,7 @@ fn test_satisfies_constraints_negative() {
     replace_node= "variable_declaration",
     replace= "",
     constraints= [constraint!{
-      matcher= "(method_declaration) @md",
+      enclosing_node= "(method_declaration) @md",
       queries= ["(
         ((assignment_expression
                         left: (_) @a.lhs

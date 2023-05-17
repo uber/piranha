@@ -80,7 +80,7 @@ fn test_get_edit_positive_recursive() {
     replace = "",
     constraints =[
         constraint! {
-          matcher= "(method_declaration) @md",
+          enclosing_node= "(method_declaration) @md",
           queries = [
             "(
               ((assignment_expression
@@ -140,7 +140,7 @@ fn test_get_edit_negative_recursive() {
     replace_node = "variable_declaration",
     replace = "",
     constraints =  [constraint! {
-          matcher= "(method_declaration) @md",
+          enclosing_node= "(method_declaration) @md",
           queries = [
             "(
               ((assignment_expression

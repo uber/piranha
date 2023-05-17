@@ -45,7 +45,7 @@ name = "Method"
 # (#eq? @tp "int a, int b, int c, int d, int e")
 # )
 #
-matcher = """
+enclosing_node = """
 (
   [(method_declaration 
             name : (_) @n
@@ -77,7 +77,7 @@ generator = """
 [[scopes]]
 name = "Class"
 [[scopes.rules]]
-matcher = """(
+enclosing_node = """(
   [
     (class_declaration name:(_) @n) @c
     (enum_declaration name:(_) @n) @c
@@ -96,7 +96,7 @@ generator = """(
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (program) @c_u
 """
 generator = "(program) @compilation_unit"

@@ -17,7 +17,7 @@ query = """
 )
 """
 [[rules.constraints]]
-matcher = "(function_declaration) @fs"
+enclosing_node = "(function_declaration) @fs"
 queries = ["""
 (
     (while_statement) @while_stmt
