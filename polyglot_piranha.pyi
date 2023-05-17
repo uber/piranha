@@ -177,7 +177,7 @@ class Filter:
         Parameters
         ------------
             enclosing_node: str
-                Scope in which the filter query has to be applied
+                AST patterns that some ancestor node of the primary match should comply
             not_contains: list[str]
                  AST patterns that should not match any subtree of node matching `enclosing_node` pattern
         """
