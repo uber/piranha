@@ -130,7 +130,7 @@ impl SourceCodeUnit {
   /// Checks if the node satisfies the filters.
   /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.query`.
   /// This function traverses the ancestors of the given `node` until `filter.enclosing_node` matches
-  /// i.e. finds scope for filter.
+  /// i.e. finds the enclosing node as specified in the filter.
   /// Within this scope it checks if the `filter.query` DOES NOT MATCH any sub-tree.
   fn _is_satisfied(
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
