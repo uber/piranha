@@ -80,7 +80,7 @@ pub struct Rule {
   #[pyo3(get)]
   filters: HashSet<Filter>,
 
-  /// Additional filters for matching the rule
+  /// Marks a rule as a seed rule
   #[builder(default = "default_is_seed_rule()")]
   #[serde(default = "default_is_seed_rule")]
   #[get = "pub"]
