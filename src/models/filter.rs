@@ -124,15 +124,15 @@ impl SourceCodeUnit {
     rule
       .filters()
       .iter()
-      .all(|filter| self._is_satisfied(filter.clone(), node, rule_store, &updated_substitutions))
+      .all(|filter| self._check(filter.clone(), node, rule_store, &updated_substitutions))
   }
 
   /// Checks if the node satisfies the filters.
-  /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.query`.
+  /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.not_contains`.
   /// This function traverses the ancestors of the given `node` until `filter.enclosing_node` matches
   /// i.e. finds scope for filter.
-  /// Within this scope it checks if the `filter.query` DOES NOT MATCH any sub-tree.
-  fn _is_satisfied(
+  /// Within this scope it checks if the `filter.not_contains` DOES NOT MATCH any sub-tree.
+  fn _check(
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
