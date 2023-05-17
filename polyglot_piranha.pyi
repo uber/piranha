@@ -230,7 +230,7 @@ class Rule:
             holes: set[str]
                 Holes that need to be filled, in order to instantiate a rule
             filters: set[Filter]
-                Additional filters for matching the rule
+                Filters to test before applying a rule
         """
         ...
 
