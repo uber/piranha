@@ -13,7 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
-  constraint::Filter, edit::Edit, matches::Match, outgoing_edges::OutgoingEdges,
+  edit::Edit, filter::Filter, matches::Match, outgoing_edges::OutgoingEdges,
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary, rule::Rule,
   rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };

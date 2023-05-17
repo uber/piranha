@@ -90,7 +90,7 @@ impl Filter {
 ///
 macro_rules! constraint {
   (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
-    $crate::models::constraint::FilterBuilder::default()
+    $crate::models::filter::FilterBuilder::default()
       .matcher($crate::utilities::tree_sitter_utilities::TSQuery::new($matcher.to_string()))
       .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       .build().unwrap()

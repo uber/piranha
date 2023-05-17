@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 use glob::Pattern;
 
 use super::{
-  constraint::Filter, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
+  filter::Filter, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
   rule_graph::RuleGraph,
 };
 use crate::utilities::tree_sitter_utilities::TSQuery;

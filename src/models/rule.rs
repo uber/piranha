@@ -22,11 +22,11 @@ use serde_derive::Deserialize;
 use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::{
-  constraint::Filter,
   default_configs::{
     default_constraints, default_groups, default_holes, default_is_seed_rule, default_query,
     default_replace, default_replace_node, default_rule_name,
   },
+  filter::Filter,
 };
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
