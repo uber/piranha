@@ -42,7 +42,7 @@ pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
   enclosing_node: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
-  generator: TSQuery, // a tree-sitter query matching the exact AST node
+  scope: TSQuery, // a tree-sitter query that will match the same node that matched `enclosing_node`
 }
 
 // Implements instance methods related to getting the scope
