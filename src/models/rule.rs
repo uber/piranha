@@ -73,7 +73,7 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   holes: HashSet<String>,
-  /// Additional filters for matching the rule
+  /// Filters to test before applying a rule
   #[builder(default = "default_filters()")]
   #[serde(default = "default_filters")]
   #[get = "pub"]
