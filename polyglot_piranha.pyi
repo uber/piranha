@@ -164,7 +164,7 @@ class Filter:
     enclosing_node: TSQuery
     "AST patterns that some ancestor node of the primary match should comply"
     not_contains: list[TSQuery]
-    "The Tree-sitter queries that need to be applied in the `enclosing_node` scope"
+    "AST patterns that should not match any subtree of node matching `enclosing_node` pattern"
 
     def __init__(
         self,
