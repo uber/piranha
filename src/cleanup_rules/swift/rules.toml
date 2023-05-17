@@ -806,7 +806,6 @@ not_contains = [
     )""",
 ]
 
-
 # rule to delete field initialised in the init subject to the mentioned filters
 [[rules]]
 name = "delete_field_initialisation_init"
@@ -873,6 +872,20 @@ not_contains = [
         (#not-eq? @val "@hvalue")
     )""",
 ]
+
+[[rules]]
+name = "delete_all_statements_after_return"
+query = """(
+    (  
+        (statements)* @st
+        (control_transfer_statement) @cts
+        (_)+ @extras
+    )
+)"""
+groups = ["if_cleanup"]
+replace_node = "extras"
+replace = ""
+is_seed_rule = false
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
