@@ -18,7 +18,7 @@ use super::{
   execute_piranha_and_check_result, initialize, substitutions,
 };
 use crate::{
-  constraint, edges, execute_piranha,
+  edges, execute_piranha, filter,
   models::{
     default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
     rule_graph::RuleGraphBuilder,
@@ -233,8 +233,8 @@ fn test_consecutive_scope_level_rules() {
             private String name;
         }  
         }",
-      constraints = [
-        constraint! {
+      filters = [
+        filter! {
           enclosing_node =  "(class_declaration ) @c_cd",
           queries = ["(
             (class_declaration name:(_) @name ) @cd
@@ -253,8 +253,8 @@ fn test_consecutive_scope_level_rules() {
       replace_node = "class_body",
       replace = "{\n private String address;\n @class_members \n}",
       is_seed_rule= false,
-      constraints = [
-        constraint! {
+      filters = [
+        filter! {
           enclosing_node =  "(class_declaration ) @c_cd",
           queries = ["(
           (field_declaration (variable_declarator name:(_) @name )) @field

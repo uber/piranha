@@ -122,7 +122,7 @@ pub(crate) fn default_groups() -> HashSet<String> {
   HashSet::new()
 }
 
-pub(crate) fn default_constraints() -> HashSet<Filter> {
+pub(crate) fn default_filters() -> HashSet<Filter> {
   HashSet::new()
 }
 

@@ -23,7 +23,7 @@ use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Insta
 
 use super::{
   default_configs::{
-    default_constraints, default_groups, default_holes, default_is_seed_rule, default_query,
+    default_filters, default_groups, default_holes, default_is_seed_rule, default_query,
     default_replace, default_replace_node, default_rule_name,
   },
   filter::Filter,
@@ -73,14 +73,14 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   holes: HashSet<String>,
-  /// Additional constraints for matching the rule
-  #[builder(default = "default_constraints()")]
-  #[serde(default = "default_constraints")]
+  /// Additional filters for matching the rule
+  #[builder(default = "default_filters()")]
+  #[serde(default = "default_filters")]
   #[get = "pub"]
   #[pyo3(get)]
-  constraints: HashSet<Filter>,
+  filters: HashSet<Filter>,
 
-  /// Additional constraints for matching the rule
+  /// Additional filters for matching the rule
   #[builder(default = "default_is_seed_rule()")]
   #[serde(default = "default_is_seed_rule")]
   #[get = "pub"]
@@ -130,7 +130,7 @@ macro_rules! piranha_rule {
                 $(, holes = [$($hole: expr)*])?
                 $(, is_seed_rule = $is_seed_rule:expr)?
                 $(, groups = [$($group_name: expr)*])?
-                $(, constraints = [$($constraint:tt)*])?
+                $(, filters = [$($filter:tt)*])?
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
@@ -139,7 +139,7 @@ macro_rules! piranha_rule {
     $(.replace($replace.to_string()))?
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
-    $(.constraints(std::collections::HashSet::from([$($constraint)*])))?
+    $(.filters(std::collections::HashSet::from([$($filter)*])))?
     .build().unwrap()
   };
 }
@@ -150,7 +150,7 @@ impl Rule {
   fn py_new(
     name: String, query: String, replace: Option<String>, replace_node: Option<String>,
     holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    constraints: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
+    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
     rule_builder.name(name).query(TSQuery::new(query));
@@ -170,8 +170,8 @@ impl Rule {
       rule_builder.groups(groups);
     }
 
-    if let Some(constraints) = constraints {
-      rule_builder.constraints(constraints);
+    if let Some(filters) = filters {
+      rule_builder.filters(filters);
     }
 
     if let Some(is_seed_rule) = is_seed_rule {
@@ -233,8 +233,8 @@ impl InstantiatedRule {
     self.rule().holes()
   }
 
-  pub fn constraints(&self) -> &HashSet<Filter> {
-    self.rule().constraints()
+  pub fn filters(&self) -> &HashSet<Filter> {
+    self.rule().filters()
   }
 }
 

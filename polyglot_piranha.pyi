@@ -158,28 +158,28 @@ class Point:
     row: int
     column: int
 
-class Constraint:
-    """ A class to capture Constraints of a Piranha Rule
+class Filter:
+    """ A class to capture filters of a Piranha Rule
     """
-    matcher: TSQuery
+    enclosing_node: TSQuery
     "Scope in which the constraint query has to be applied"
     queries: list[TSQuery]
-    "The Tree-sitter queries that need to be applied in the `matcher` scope"
+    "The Tree-sitter queries that need to be applied in the `enclosing_node` scope"
 
     def __init__(
         self,
-        matcher: str,
+        enclosing_node: str,
         queries: list[str] = []
     ):
         """
-        Constructs `Constraint`
+        Constructs `Filter`
 
         Parameters
         ------------
-            matcher: str
-                Scope in which the constraint query has to be applied
+            enclosing_node: str
+                Scope in which the filter query has to be applied
             queries: list[str]
-                 The Tree-sitter queries that need to be applied in the `matcher` scope
+                 The Tree-sitter queries that need to be applied in the `enclosing_node` scope
         """
         ...
 
@@ -198,8 +198,8 @@ class Rule:
     "Group(s) to which the rule belongs"
     holes: set[str]
     "Holes that need to be filled, in order to instantiate a rule"
-    constraints: set[Constraint]
-    "Additional constraints for matching the rule"
+    filters: set[Filter]
+    "Additional filters for matching the rule"
 
     def __init__(
         self,
@@ -209,7 +209,7 @@ class Rule:
         replace: Optional[str] = None,
         groups: set[str] = set(),
         holes: set[str] = set(),
-        constraints: set[Constraint] = set(),
+        filters: set[Filter] = set(),
         is_seed_rule: bool = True,
     ):
         """
@@ -229,8 +229,8 @@ class Rule:
                 Group(s) to which the rule belongs
             holes: set[str]
                 Holes that need to be filled, in order to instantiate a rule
-            constraints: set[Constraint]
-                Additional constraints for matching the rule
+            filters: set[Filter]
+                Additional filters for matching the rule
         """
         ...
 

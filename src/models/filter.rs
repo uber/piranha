@@ -34,7 +34,7 @@ use super::default_configs::{default_enclosing_node, default_queries};
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
 pub struct Filter {
-  /// Scope in which the constraint query has to be applied
+  /// Scope in which the filter query has to be applied
   #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[pyo3(get)]
@@ -67,13 +67,13 @@ impl Filter {
 }
 
 #[macro_export]
-/// This macro can be used to construct a Constraint (via the builder)'
+/// This macro can be used to construct a filter (via the builder)'
 /// Allows to use builder pattern more "dynamically"
 ///
 /// Usage:
 ///
 /// ```
-/// constraint! {
+/// filter! {
 ///   enclosing_node = "(method_declaration) @md".to_string(),
 ///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
 /// }
@@ -88,7 +88,7 @@ impl Filter {
 ///      .build()
 /// ```
 ///
-macro_rules! constraint {
+macro_rules! filter {
   (enclosing_node = $enclosing_node:expr, queries= [$($q:expr,)*]) => {
     $crate::models::filter::FilterBuilder::default()
       .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
@@ -97,7 +97,7 @@ macro_rules! constraint {
   };
 }
 
-pub use constraint;
+pub use filter;
 
 impl Instantiate for Filter {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
@@ -113,7 +113,7 @@ impl Instantiate for Filter {
   }
 }
 
-// Implements instance methods related to applying a constraint
+// Implements instance methods related to applying a filter
 impl SourceCodeUnit {
   pub(crate) fn is_satisfied(
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
@@ -121,31 +121,32 @@ impl SourceCodeUnit {
   ) -> bool {
     let mut updated_substitutions = self.piranha_arguments().input_substitutions();
     updated_substitutions.extend(substitutions.clone());
-    rule.constraints().iter().all(|constraint| {
-      self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)
-    })
+    rule
+      .filters()
+      .iter()
+      .all(|filter| self._is_satisfied(filter.clone(), node, rule_store, &updated_substitutions))
   }
 
-  /// Checks if the node satisfies the constraints.
-  /// Constraint has two parts (i) `constraint.enclosing_node` (ii) `constraint.query`.
-  /// This function traverses the ancestors of the given `node` until `constraint.enclosing_node` matches
-  /// i.e. finds scope for constraint.
-  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
+  /// Checks if the node satisfies the filters.
+  /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.query`.
+  /// This function traverses the ancestors of the given `node` until `filter.enclosing_node` matches
+  /// i.e. finds scope for filter.
+  /// Within this scope it checks if the `filter.query` DOES NOT MATCH any sub-tree.
   fn _is_satisfied(
-    &self, constraint: Filter, node: Node, rule_store: &mut RuleStore,
+    &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
     let mut current_node = node;
-    // This ensures that the below while loop considers the current node too when checking for constraints.
-    // It does not make sense to check for constraint if current node is a "leaf" node.
+    // This ensures that the below while loop considers the current node too when checking for filters.
+    // It does not make sense to check for filter if current node is a "leaf" node.
     if node.child_count() > 0 {
       current_node = node.child(0).unwrap();
     }
-    // Get the scope_node of the constraint (`scope.enclosing_node`)
+    // Get the scope_node of the filter (`scope.enclosing_node`)
     let mut matched_enclosing_node = false;
     while let Some(parent) = current_node.parent() {
-      let instantiated_constraint = constraint.instantiate(substitutions);
-      let enclosing_node_query_str = instantiated_constraint.enclosing_node();
+      let instantiated_filter = filter.instantiate(substitutions);
+      let enclosing_node_query_str = instantiated_filter.enclosing_node();
       if let Some(p_match) = get_match_for_query(
         &parent,
         self.code(),
@@ -158,7 +159,7 @@ impl SourceCodeUnit {
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        for query_with_holes in constraint.queries() {
+        for query_with_holes in filter.queries() {
           let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
 
           if get_match_for_query(&scope_node, self.code(), query, true).is_some() {
