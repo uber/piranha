@@ -39,7 +39,7 @@ pub struct Filter {
   #[get = "pub"]
   #[pyo3(get)]
   enclosing_node: TSQuery,
-  /// The Tree-sitter queries that need to be applied in the `enclosing_node` scope
+  /// AST patterns that should not match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
