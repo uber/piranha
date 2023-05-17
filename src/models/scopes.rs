@@ -42,7 +42,7 @@ pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
   enclosing_node: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
-  generator: TSQuery, // a tree-sitter query matching the exact AST node
+  scope: TSQuery, // a tree-sitter query that will match the same node that matched `enclosing_node`
 }
 
 // Implements instance methods related to getting the scope
@@ -73,7 +73,7 @@ impl SourceCodeUnit {
         ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return m.generator().instantiate(p_match.matches());
+          return m.scope().instantiate(p_match.matches());
         }
       }
       if let Some(parent) = changed_node.parent() {

@@ -15,7 +15,7 @@ name = "File"
 enclosing_node = """
 (source_file) @source_file
 """
-generator = """(source_file) @sf"""
+scope = """(source_file) @sf"""
 
 [[scopes]]
 name = "Function-Method"
@@ -36,7 +36,7 @@ enclosing_node = """
     ) @f_decl1
 )
 """
-generator = """
+scope = """
 (
     (
         [

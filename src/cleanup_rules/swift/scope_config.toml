@@ -16,7 +16,7 @@ name = "Class"
 enclosing_node = """
 (class_declaration name: (_) @cls_name) @class
 """
-generator = """(
+scope = """(
 (class_declaration name: (_) @name) @cs
 (#eq? @name "@cls_name")              
 )"""
@@ -31,7 +31,7 @@ enclosing_node = """(
         body: (function_body)
     ) @function
 )"""
-generator = """(
+scope = """(
     (function_declaration
         name: (simple_identifier)? @func_name
         (parameter)? @parameters
@@ -50,7 +50,7 @@ enclosing_node = """(
         body: (function_body)
     )
 )"""
-generator = """(
+scope = """(
     (init_declaration)
         (parameter)? @parameters
         body: (function_body)
@@ -64,4 +64,4 @@ name = "File"
 enclosing_node = """
 (source_file) @source_file
 """
-generator = """(source_file) @sf"""
+scope = """(source_file) @sf"""

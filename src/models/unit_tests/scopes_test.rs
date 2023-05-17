@@ -46,7 +46,7 @@ fn _get_class_scope() -> ScopeGenerator {
     .enclosing_node(TSQuery::new(
       "(class_declaration name:(_) @n) @c".to_string(),
     ))
-    .generator(TSQuery::new(
+    .scope(TSQuery::new(
       "(
       ((class_declaration name:(_) @z) @qc)
       (#eq? @z \"@n\")
@@ -75,7 +75,7 @@ fn _get_method_scope() -> ScopeGenerator {
     ]@xdn)"
         .to_string(),
     ))
-    .generator(TSQuery::new(
+    .scope(TSQuery::new(
       "(
       [(((method_declaration 
                 name : (_) @z

@@ -39,7 +39,7 @@ pub struct Filter {
   #[get = "pub"]
   #[pyo3(get)]
   enclosing_node: TSQuery,
-  /// The Tree-sitter queries that need to be applied in the `enclosing_node` scope
+  /// AST patterns that should not match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
@@ -130,7 +130,7 @@ impl SourceCodeUnit {
   /// Checks if the node satisfies the filters.
   /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.not_contains`.
   /// This function traverses the ancestors of the given `node` until `filter.enclosing_node` matches
-  /// i.e. finds scope for filter.
+  /// i.e. finds the enclosing node as specified in the filter.
   /// Within this scope it checks if the `filter.not_contains` DOES NOT MATCH any sub-tree.
   fn _check(
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
