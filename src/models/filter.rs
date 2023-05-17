@@ -34,7 +34,7 @@ use super::default_configs::{default_enclosing_node, default_queries};
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
 pub struct Filter {
-  /// Scope in which the filter query has to be applied
+  /// AST patterns that some ancestor node of the primary match should comply
   #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[pyo3(get)]
