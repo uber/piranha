@@ -24,7 +24,7 @@ def java_demo():
 
     args = PiranhaArguments(
         "java",
-        {
+        substitutions={
             "input_type_name": "ArrayList",
         },
         path_to_configurations=configuration_path,
@@ -56,7 +56,7 @@ def python_demo():
 
     args = PiranhaArguments(
         "py",
-        {
+        substitutions={
             "str_literal": "dependency2",
             "str_to_replace": "dependency1",
             "str_replacement": "dependency1_1"

@@ -21,7 +21,7 @@ def swift_demo():
 
     args = PiranhaArguments(
         "swift",
-        {
+        substitutions={
             "stale_flag_name": "test_second_experiment",
         },
         path_to_configurations=configuration_path,
@@ -52,7 +52,7 @@ def java_demo():
 
     args = PiranhaArguments(
         "java",
-        {
+        substitutions={
             "stale_flag_name": "STALE_FLAG",
         },
         path_to_configurations=configuration_path,
