@@ -22,7 +22,7 @@ use serde_derive::Deserialize;
 use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::{
-  constraint::Constraint,
+  constraint::Filter,
   default_configs::{
     default_constraints, default_groups, default_holes, default_is_seed_rule, default_query,
     default_replace, default_replace_node, default_rule_name,
@@ -78,7 +78,7 @@ pub struct Rule {
   #[serde(default = "default_constraints")]
   #[get = "pub"]
   #[pyo3(get)]
-  constraints: HashSet<Constraint>,
+  constraints: HashSet<Filter>,
 
   /// Additional constraints for matching the rule
   #[builder(default = "default_is_seed_rule()")]
@@ -150,7 +150,7 @@ impl Rule {
   fn py_new(
     name: String, query: String, replace: Option<String>, replace_node: Option<String>,
     holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    constraints: Option<HashSet<Constraint>>, is_seed_rule: Option<bool>,
+    constraints: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
     rule_builder.name(name).query(TSQuery::new(query));
@@ -233,7 +233,7 @@ impl InstantiatedRule {
     self.rule().holes()
   }
 
-  pub fn constraints(&self) -> &HashSet<Constraint> {
+  pub fn constraints(&self) -> &HashSet<Filter> {
     self.rule().constraints()
   }
 }

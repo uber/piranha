@@ -33,7 +33,7 @@ use super::default_configs::{default_matcher, default_queries};
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
-pub struct Constraint {
+pub struct Filter {
   /// Scope in which the constraint query has to be applied
   #[builder(default = "default_matcher()")]
   #[get = "pub"]
@@ -48,10 +48,10 @@ pub struct Constraint {
 }
 
 #[pymethods]
-impl Constraint {
+impl Filter {
   #[new]
   fn py_new(matcher: String, queries: Option<Vec<String>>) -> Self {
-    ConstraintBuilder::default()
+    FilterBuilder::default()
       .matcher(TSQuery::new(matcher))
       .queries(
         queries
@@ -82,7 +82,7 @@ impl Constraint {
 /// expands to
 ///
 /// ```
-/// ConstraintBuilder::default()
+/// FilterBuilder::default()
 ///      .matcher("(method_declaration) @md".to_string())
 ///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
 ///      .build()
@@ -90,7 +90,7 @@ impl Constraint {
 ///
 macro_rules! constraint {
   (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
-    $crate::models::constraint::ConstraintBuilder::default()
+    $crate::models::constraint::FilterBuilder::default()
       .matcher($crate::utilities::tree_sitter_utilities::TSQuery::new($matcher.to_string()))
       .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       .build().unwrap()
@@ -99,10 +99,10 @@ macro_rules! constraint {
 
 pub use constraint;
 
-impl Instantiate for Constraint {
+impl Instantiate for Filter {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Constraint {
-    Constraint {
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
+    Filter {
       matcher: self.matcher().instantiate(substitutions_for_holes),
       queries: self
         .queries()
@@ -132,7 +132,7 @@ impl SourceCodeUnit {
   /// i.e. finds scope for constraint.
   /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
   fn _is_satisfied(
-    &self, constraint: Constraint, node: Node, rule_store: &mut RuleStore,
+    &self, constraint: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
     let mut current_node = node;

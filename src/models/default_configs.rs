@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 use glob::Pattern;
 
 use super::{
-  constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
+  constraint::Filter, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
   rule_graph::RuleGraph,
 };
 use crate::utilities::tree_sitter_utilities::TSQuery;
@@ -122,7 +122,7 @@ pub(crate) fn default_groups() -> HashSet<String> {
   HashSet::new()
 }
 
-pub(crate) fn default_constraints() -> HashSet<Constraint> {
+pub(crate) fn default_constraints() -> HashSet<Filter> {
   HashSet::new()
 }
 
