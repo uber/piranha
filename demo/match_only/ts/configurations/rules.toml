@@ -37,7 +37,7 @@ query = """
 """
 [[rules.filters]]
 enclosing_node = "(function_declaration) @fs"
-queries = ["""
+not_contains = ["""
 (
     (while_statement) @while_stmt
 )

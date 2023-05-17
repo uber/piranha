@@ -236,7 +236,7 @@ fn test_consecutive_scope_level_rules() {
       filters = [
         filter! {
           enclosing_node =  "(class_declaration ) @c_cd",
-          queries = ["(
+          not_contains = ["(
             (class_declaration name:(_) @name ) @cd
             (#eq? @name \"InnerFooBar\")
             )",]
@@ -256,7 +256,7 @@ fn test_consecutive_scope_level_rules() {
       filters = [
         filter! {
           enclosing_node =  "(class_declaration ) @c_cd",
-          queries = ["(
+          not_contains = ["(
           (field_declaration (variable_declarator name:(_) @name )) @field
           (#eq? @name \"address\")
           )",]

@@ -81,7 +81,7 @@ fn test_get_edit_positive_recursive() {
     filters =[
         filter! {
           enclosing_node= "(method_declaration) @md",
-          queries = [
+          not_contains = [
             "(
               ((assignment_expression
                 left: (_) @a.lhs
@@ -141,7 +141,7 @@ fn test_get_edit_negative_recursive() {
     replace = "",
     filters =  [filter! {
           enclosing_node= "(method_declaration) @md",
-          queries = [
+          not_contains = [
             "(
               ((assignment_expression
                 left: (_) @a.lhs

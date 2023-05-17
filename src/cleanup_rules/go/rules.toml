@@ -455,7 +455,7 @@ is_seed_rule = false
 # the filter is against an assigment_statement
 [[rules.filters]]
 enclosing_node = "(block) @block"
-queries = ["""
+not_contains = ["""
 (
     (assignment_statement
         left: (expression_list
@@ -484,7 +484,7 @@ holes = ["variable_name", "value"]
 is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(block) @block"
-queries = ["""
+not_contains = ["""
 (
     [
         (short_var_declaration

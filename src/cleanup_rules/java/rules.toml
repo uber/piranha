@@ -488,7 +488,7 @@ replace_node = "enum_declaration"
 is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(enum_declaration) @ed"
-queries = ["(enum_constant) @ec"]
+not_contains = ["(enum_constant) @ec"]
 
 
 # This rule deltes all the content of the file if it contains 
@@ -505,7 +505,7 @@ replace_node = "program"
 is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(program) @c_program"
-queries = [
+not_contains = [
   "(enum_declaration) @c_enum_declaration",
   "(class_declaration) @c_class_declaration",
   "(interface_declaration) @c_interface_declaration",
@@ -559,7 +559,7 @@ is_seed_rule = false
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.filters]]
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
-queries = ["""
+not_contains = ["""
 (
 ((assignment_expression
                     left: (_) @a.lhs
@@ -588,7 +588,7 @@ is_seed_rule = false
 # assigned to a value other than @init, within the method body
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = ["""(
+not_contains = ["""(
 ((assignment_expression
                     left: (_) @a.lhs
                     right: (_) @a.rhs) @assignment)
@@ -619,7 +619,7 @@ holes = ["variable_name", "init"]
 # which is initialized to "@init".
 [[rules.filters]]
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
-queries = ["""(
+not_contains = ["""(
 ((local_variable_declaration 
                 declarator: (variable_declarator 
                                     name: (_) @vdcl.lhs
@@ -647,7 +647,7 @@ is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 [[rules.filters]]
 enclosing_node = "(method_declaration) @md"
-queries = [
+not_contains = [
   """(
 ((local_variable_declaration
                 declarator: (variable_declarator 
@@ -660,7 +660,7 @@ queries = [
 # There should exist no field declaration named `@variable_name` and
 # there should be no assignments to @variable_name that are not same as `@init`.
 enclosing_node = "(class_declaration) @cd"
-queries = ["""(
+not_contains = ["""(
 ((assignment_expression
                     left: (_) @a.lhs
                     right: (_) @a.rhs) @a)
@@ -693,7 +693,7 @@ is_seed_rule = false
 [[rules.filters]]
 # There should exist no local variable declaration named `@identifer`
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
-queries = ["""(
+not_contains = ["""(
 ((local_variable_declaration 
                 declarator: (variable_declarator 
                                     name: (_) @vdcl.lhs

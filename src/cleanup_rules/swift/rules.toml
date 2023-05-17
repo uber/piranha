@@ -555,7 +555,7 @@ enclosing_node = "[(function_declaration) (init_declaration)] @cfd"
 # skip the rule if the variable is assigned with some other value in the class scope
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = ["""(
+not_contains = ["""(
     (assignment
         target: (directly_assignable_expression
             [ (navigation_expression
@@ -599,7 +599,7 @@ is_seed_rule = false
 
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = [
+not_contains = [
   # skip the rule if the variable is declared with a different value in the class scope
   """(
         (property_declaration
@@ -654,7 +654,7 @@ is_seed_rule = false
 
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = [
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
@@ -723,7 +723,7 @@ is_seed_rule = false
 
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = [
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
@@ -778,7 +778,7 @@ is_seed_rule = false
 
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = [
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
@@ -835,7 +835,7 @@ enclosing_node = "(init_declaration) @cid"
 
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
-queries = [
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter

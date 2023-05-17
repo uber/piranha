@@ -163,13 +163,13 @@ class Filter:
     """
     enclosing_node: TSQuery
     "Scope in which the filter query has to be applied"
-    queries: list[TSQuery]
+    not_contains: list[TSQuery]
     "The Tree-sitter queries that need to be applied in the `enclosing_node` scope"
 
     def __init__(
         self,
         enclosing_node: str,
-        queries: list[str] = []
+        not_contains: list[str] = []
     ):
         """
         Constructs `Filter`
@@ -178,7 +178,7 @@ class Filter:
         ------------
             enclosing_node: str
                 Scope in which the filter query has to be applied
-            queries: list[str]
+            not_contains: list[str]
                  The Tree-sitter queries that need to be applied in the `enclosing_node` scope
         """
         ...

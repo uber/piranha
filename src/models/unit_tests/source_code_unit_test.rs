@@ -137,7 +137,7 @@ fn test_satisfies_filters_positive() {
     replace= "",
     filters= [filter!{
       enclosing_node= "(method_declaration) @md",
-      queries= ["(
+      not_contains= ["(
         ((assignment_expression
                         left: (_) @a.lhs
                         right: (_) @a.rhs) @assignment)
@@ -203,7 +203,7 @@ fn test_satisfies_filters_negative() {
     replace= "",
     filters= [filter!{
       enclosing_node= "(method_declaration) @md",
-      queries= ["(
+      not_contains= ["(
         ((assignment_expression
                         left: (_) @a.lhs
                         right: (_) @a.rhs) @assignment)

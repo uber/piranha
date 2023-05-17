@@ -86,7 +86,7 @@ def test_insert_field_add_import():
         filters= set([
             Filter(
                 enclosing_node= "(class_declaration ) @c_cd",
-                queries = ["""(
+                not_contains = ["""(
                     (field_declaration (variable_declarator name:(_) @name )) @field
                     (#eq? @name "names")
                 )"""]
@@ -104,7 +104,7 @@ import java.util.List;
         filters= set([
             Filter(
                 enclosing_node= "(program ) @prgrm",
-                queries = ["""
+                not_contains = ["""
                 (
                     (import_declaration (scoped_identifier) @type ) @import
                     (#eq? @type "java.util.List")

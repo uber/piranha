@@ -354,7 +354,7 @@ groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 ```
 This specifies a rule that matches against expressions like `exp.isTreated(SOME_FLAG_NAME)` and replaces it with `true` or `false`.
-The `query` property of the rule contains a [tree-sitter query](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) that is matched against the source code.
+The `query` property of the rule contains a [tree-sitter query](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-not_contains) that is matched against the source code.
 The node captured by the tag-name specified in the `replace_node` property is replaced with the pattern specified in the `replace` property.
 The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like [regex-replace](https://docs.microsoft.com/en-us/visualstudio/ide/using-regular-expressions-in-visual-studio?view=vs-2022)).
 
@@ -366,7 +366,7 @@ Setting the `is_seed_rule=False` ensures that the user defined rule is treated a
 
 A user can also define exclusion filters for a rule (`rules.filters`). These filters allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that occur inside static methods (For more details, refer to the `demo/match_only`).
 
-At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.filters.queries` (within `rules.filters.matcher`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
+At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.filters.not_contains` (within `rules.filters.matcher`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
 
 <h3> Parameterizing the behavior of the feature flag API </h3>
 

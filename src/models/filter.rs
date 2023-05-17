@@ -44,17 +44,17 @@ pub struct Filter {
   #[get = "pub"]
   #[serde(default)]
   #[pyo3(get)]
-  queries: Vec<TSQuery>,
+  not_contains: Vec<TSQuery>,
 }
 
 #[pymethods]
 impl Filter {
   #[new]
-  fn py_new(enclosing_node: String, queries: Option<Vec<String>>) -> Self {
+  fn py_new(enclosing_node: String, not_contains: Option<Vec<String>>) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node))
-      .queries(
-        queries
+      .not_contains(
+        not_contains
           .unwrap_or_default()
           .iter()
           .map(|x| TSQuery::new(x.to_string()))
@@ -75,7 +75,7 @@ impl Filter {
 /// ```
 /// filter! {
 ///   enclosing_node = "(method_declaration) @md".to_string(),
-///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
+///   not_contains=  ["(method_invocation name: (_) @name) @mi".to_string()]
 /// }
 /// ```
 ///
@@ -84,15 +84,15 @@ impl Filter {
 /// ```
 /// FilterBuilder::default()
 ///      .enclosing_node("(method_declaration) @md".to_string())
-///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
+///      .not_contains(vec!["(method_invocation name: (_) @name) @mi".to_string()])
 ///      .build()
 /// ```
 ///
 macro_rules! filter {
-  (enclosing_node = $enclosing_node:expr, queries= [$($q:expr,)*]) => {
+  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*]) => {
     $crate::models::filter::FilterBuilder::default()
       .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
-      .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
+      .not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       .build().unwrap()
   };
 }
@@ -104,8 +104,8 @@ impl Instantiate for Filter {
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
-      queries: self
-        .queries()
+      not_contains: self
+        .not_contains()
         .iter()
         .map(|x| x.instantiate(substitutions_for_holes))
         .collect_vec(),
@@ -159,7 +159,7 @@ impl SourceCodeUnit {
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        for query_with_holes in filter.queries() {
+        for query_with_holes in filter.not_contains() {
           let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
 
           if get_match_for_query(&scope_node, self.code(), query, true).is_some() {

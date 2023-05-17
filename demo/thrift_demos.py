@@ -22,7 +22,7 @@ def thrift_demo():
 )""",
         filters={
             filter(matcher="(exception_definition) @c_e",
-                   queries=["(annotation_definition) @ad"])
+                   not_contains=["(annotation_definition) @ad"])
         },
         holes={
             "input_exception_name", "rpc_code"
