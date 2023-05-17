@@ -162,7 +162,7 @@ class Filter:
     """ A class to capture filters of a Piranha Rule
     """
     enclosing_node: TSQuery
-    "Scope in which the constraint query has to be applied"
+    "Scope in which the filter query has to be applied"
     queries: list[TSQuery]
     "The Tree-sitter queries that need to be applied in the `enclosing_node` scope"
 

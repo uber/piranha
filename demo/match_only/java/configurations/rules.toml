@@ -34,7 +34,7 @@ query = """((
 )
 (#eq? @name "barFoo")
 ))"""
-[[rules.constraints]]
+[[rules.filters]]
 enclosing_node = "(method_declaration) @md"
 queries = ["""(
   (modifiers) @modifiers

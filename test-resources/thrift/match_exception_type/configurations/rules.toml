@@ -9,6 +9,6 @@ replace = """@exception_definition (
    rpc.code = "INTERNAL"
 )
         """
-[[rules.constraints]]
+[[rules.filters]]
 enclosing_node = "(exception_definition) @c_e"
 queries = ["(annotation_definition) @ad"]

@@ -17,7 +17,7 @@ query = """
     (#eq? @identifier "props")
 )
 """
-[[rules.constraints]]
+[[rules.filters]]
 enclosing_node = """
 (
     (jsx_element

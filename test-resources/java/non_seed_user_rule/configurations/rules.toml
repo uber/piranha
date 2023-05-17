@@ -29,7 +29,7 @@ query = "(package_declaration (_)@package_name) @package_declaration"
 replace_node = "package_declaration"
 replace = "@package_declaration\nimport java.util.Collections;\n"
 is_seed_rule = false
-[[rules.constraints]]
+[[rules.filters]]
 enclosing_node = "((program) @cu)"
 queries = [
   """(
