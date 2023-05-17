@@ -354,7 +354,7 @@ groups = [ "replace_expression_with_boolean_literal"]
 holes = ["treated", "stale_flag_name"]
 ```
 This specifies a rule that matches against expressions like `exp.isTreated(SOME_FLAG_NAME)` and replaces it with `true` or `false`.
-The `query` property of the rule contains a [tree-sitter query](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-not_contains) that is matched against the source code.
+The `query` property of the rule contains a [tree-sitter query](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) that is matched against the source code.
 The node captured by the tag-name specified in the `replace_node` property is replaced with the pattern specified in the `replace` property.
 The `replace` pattern can use the tags from the `query` to construct a replacement based on the match (like [regex-replace](https://docs.microsoft.com/en-us/visualstudio/ide/using-regular-expressions-in-visual-studio?view=vs-2022)).
 
