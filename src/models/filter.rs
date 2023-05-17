@@ -142,7 +142,7 @@ impl SourceCodeUnit {
     if node.child_count() > 0 {
       current_node = node.child(0).unwrap();
     }
-    // Get the scope_node of the filter (`scope.enclosing_node`)
+    // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
     let mut matched_enclosing_node = false;
     while let Some(parent) = current_node.parent() {
       let instantiated_filter = filter.instantiate(substitutions);
