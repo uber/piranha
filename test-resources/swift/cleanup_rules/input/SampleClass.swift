@@ -216,56 +216,56 @@ class SampleClass {
 
     func checkIfBooleanWithComments(){
          if !TestEnum.stale_flag_one.isEnabled {
-            // to be deleted
+            // to be deleted1
             toBeDeleted1()
          }else{
-            // to be preserved
+            // to be preserved1
             toBePreserved1()
          }
 
          if !TestEnum.stale_flag_one.isEnabled{
-            // to be deleted
+            // to be deleted2
             toBeDeleted2() 
          } else if a {
-            // to be preserved
+            // to be preserved2
             toBePreserved2()
          }
 
          if !TestEnum.stale_flag_one.isEnabled{
-            // to be deleted
+            // to be deleted3
             toBeDeleted3() 
          } else if b {
-            // to be preserved
+            // to be preserved3a
             toBePreserved3a()
          } else {
-            // to be preserved
+            // to be preserved3b
             toBePreserved3b()
          }
 
          if TestEnum.stale_flag_one.isEnabled{
-            // to be preserved
+            // to be preserved4
             toBePreserved4()
          } else{
-            // to be deleted
+            // to be deleted4
             toBeDeleted4()
          }
 
          if TestEnum.stale_flag_one.isEnabled{
-            // to be preserved
+            // to be preserved5
             toBePreserved5() 
          } else if c {
-            // to be deleted
+            // to be deleted5
             toBeDeleted5()
          }
 
          if TestEnum.stale_flag_one.isEnabled{
-            // to be preserved
+            // to be preserved6
             toBePreserved6() 
          } else if d {
-            // to be preserved
+            // to be deleted6a
             toBeDeleted6a()
          } else {
-            // to be preserved
+            // to be deleted6b
             toBeDeleted6b()
          }
     }
