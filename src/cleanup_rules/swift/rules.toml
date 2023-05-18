@@ -549,13 +549,13 @@ replace_node = "property_declaration"
 replace = ""
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "[(function_declaration) (init_declaration)] @cfd"
+[[rules.filters]]
+enclosing_node = "[(function_declaration) (init_declaration)] @cfd"
 
 # skip the rule if the variable is assigned with some other value in the class scope
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = ["""(
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = ["""(
     (assignment
         target: (directly_assignable_expression
             [ (navigation_expression
@@ -573,7 +573,7 @@ queries = ["""(
     (#not-eq? @val "@hvalue")
 )"""]
 
-# rule to delete assignments like a = true subject to the mentioned constraints
+# rule to delete assignments like a = true subject to the mentioned filters
 [[rules]]
 name = "delete_parent_assignment"
 query = """(
@@ -597,9 +597,9 @@ replace = ""
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = [
   # skip the rule if the variable is declared with a different value in the class scope
   """(
         (property_declaration
@@ -640,7 +640,7 @@ queries = [
     )""",
 ]
 
-# rule to replace the identifier with the value with the mentioned constraints
+# rule to replace the identifier with the value with the mentioned filters
 [[rules]]
 name = "replace_identifier_with_value"
 query = """(
@@ -652,9 +652,9 @@ replace = "@hvalue"
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
@@ -701,10 +701,10 @@ replace = ""
 holes = ["hvariable"]
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "(class_declaration) @ccd"
+[[rules.filters]]
+enclosing_node = "(class_declaration) @ccd"
 
-# rule to replace field variable used as self.x subject to the mentioned constraints
+# rule to replace field variable used as self.x subject to the mentioned filters
 [[rules]]
 name = "replace_self_identifier_with_value"
 query = """(
@@ -721,9 +721,9 @@ replace = "@hvalue"
 holes = ["hvariable", "hvalue"]
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
@@ -776,9 +776,9 @@ replace_node = "property_declaration"
 replace = ""
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
@@ -807,7 +807,7 @@ queries = [
 ]
 
 
-# rule to delete field initialised in the init subject to the mentioned constraints
+# rule to delete field initialised in the init subject to the mentioned filters
 [[rules]]
 name = "delete_field_initialisation_init"
 query = """(
@@ -829,13 +829,13 @@ replace_node = "assignment"
 replace = ""
 is_seed_rule = false
 
-[[rules.constraints]]
-matcher = "(init_declaration) @cid"
+[[rules.filters]]
+enclosing_node = "(init_declaration) @cid"
 
 
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
