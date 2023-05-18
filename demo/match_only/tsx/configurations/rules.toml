@@ -25,8 +25,8 @@ query = """
     (#eq? @identifier "props")
 )
 """
-[[rules.constraints]]
-matcher = """
+[[rules.filters]]
+enclosing_node = """
 (
     (jsx_element
         open_tag: (jsx_opening_element
@@ -46,13 +46,13 @@ query = """
     (#eq? @identifier "props")
 )
 """
-[[rules.constraints]]
-matcher = """
+[[rules.filters]]
+enclosing_node = """
 (
     (variable_declarator) @vd
 )
 """
-queries = ["""
+not_contains = ["""
 (
     (jsx_element
         open_tag: (jsx_opening_element

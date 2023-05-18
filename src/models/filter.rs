@@ -29,32 +29,32 @@ use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::Sou
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
-use super::default_configs::{default_matcher, default_queries};
+use super::default_configs::{default_enclosing_node, default_queries};
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
-pub struct Constraint {
-  /// Scope in which the constraint query has to be applied
-  #[builder(default = "default_matcher()")]
+pub struct Filter {
+  /// AST patterns that some ancestor node of the primary match should comply
+  #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[pyo3(get)]
-  matcher: TSQuery,
-  /// The Tree-sitter queries that need to be applied in the `matcher` scope
+  enclosing_node: TSQuery,
+  /// AST patterns that should not match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_queries()")]
   #[get = "pub"]
   #[serde(default)]
   #[pyo3(get)]
-  queries: Vec<TSQuery>,
+  not_contains: Vec<TSQuery>,
 }
 
 #[pymethods]
-impl Constraint {
+impl Filter {
   #[new]
-  fn py_new(matcher: String, queries: Option<Vec<String>>) -> Self {
-    ConstraintBuilder::default()
-      .matcher(TSQuery::new(matcher))
-      .queries(
-        queries
+  fn py_new(enclosing_node: String, not_contains: Option<Vec<String>>) -> Self {
+    FilterBuilder::default()
+      .enclosing_node(TSQuery::new(enclosing_node))
+      .not_contains(
+        not_contains
           .unwrap_or_default()
           .iter()
           .map(|x| TSQuery::new(x.to_string()))
@@ -67,45 +67,45 @@ impl Constraint {
 }
 
 #[macro_export]
-/// This macro can be used to construct a Constraint (via the builder)'
+/// This macro can be used to construct a filter (via the builder)'
 /// Allows to use builder pattern more "dynamically"
 ///
 /// Usage:
 ///
 /// ```
-/// constraint! {
-///   matcher = "(method_declaration) @md".to_string(),
-///   queries=  ["(method_invocation name: (_) @name) @mi".to_string()]
+/// filter! {
+///   enclosing_node = "(method_declaration) @md".to_string(),
+///   not_contains=  ["(method_invocation name: (_) @name) @mi".to_string()]
 /// }
 /// ```
 ///
 /// expands to
 ///
 /// ```
-/// ConstraintBuilder::default()
-///      .matcher("(method_declaration) @md".to_string())
-///      .queries(vec!["(method_invocation name: (_) @name) @mi".to_string()])
+/// FilterBuilder::default()
+///      .enclosing_node("(method_declaration) @md".to_string())
+///      .not_contains(vec!["(method_invocation name: (_) @name) @mi".to_string()])
 ///      .build()
 /// ```
 ///
-macro_rules! constraint {
-  (matcher = $matcher:expr, queries= [$($q:expr,)*]) => {
-    $crate::models::constraint::ConstraintBuilder::default()
-      .matcher($crate::utilities::tree_sitter_utilities::TSQuery::new($matcher.to_string()))
-      .queries(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
+macro_rules! filter {
+  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*]) => {
+    $crate::models::filter::FilterBuilder::default()
+      .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
+      .not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       .build().unwrap()
   };
 }
 
-pub use constraint;
+pub use filter;
 
-impl Instantiate for Constraint {
+impl Instantiate for Filter {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
-  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Constraint {
-    Constraint {
-      matcher: self.matcher().instantiate(substitutions_for_holes),
-      queries: self
-        .queries()
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
+    Filter {
+      enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
+      not_contains: self
+        .not_contains()
         .iter()
         .map(|x| x.instantiate(substitutions_for_holes))
         .collect_vec(),
@@ -113,7 +113,7 @@ impl Instantiate for Constraint {
   }
 }
 
-// Implements instance methods related to applying a constraint
+// Implements instance methods related to applying a filter
 impl SourceCodeUnit {
   pub(crate) fn is_satisfied(
     &self, node: Node, rule: &InstantiatedRule, substitutions: &HashMap<String, String>,
@@ -121,44 +121,45 @@ impl SourceCodeUnit {
   ) -> bool {
     let mut updated_substitutions = self.piranha_arguments().input_substitutions();
     updated_substitutions.extend(substitutions.clone());
-    rule.constraints().iter().all(|constraint| {
-      self._is_satisfied(constraint.clone(), node, rule_store, &updated_substitutions)
-    })
+    rule
+      .filters()
+      .iter()
+      .all(|filter| self._check(filter.clone(), node, rule_store, &updated_substitutions))
   }
 
-  /// Checks if the node satisfies the constraints.
-  /// Constraint has two parts (i) `constraint.matcher` (ii) `constraint.query`.
-  /// This function traverses the ancestors of the given `node` until `constraint.matcher` matches
-  /// i.e. finds scope for constraint.
-  /// Within this scope it checks if the `constraint.query` DOES NOT MATCH any sub-tree.
-  fn _is_satisfied(
-    &self, constraint: Constraint, node: Node, rule_store: &mut RuleStore,
+  /// Checks if the node satisfies the filters.
+  /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.not_contains`.
+  /// This function traverses the ancestors of the given `node` until `filter.enclosing_node` matches
+  /// i.e. finds the enclosing node as specified in the filter.
+  /// Within this scope it checks if the `filter.not_contains` DOES NOT MATCH any sub-tree.
+  fn _check(
+    &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
     let mut current_node = node;
-    // This ensures that the below while loop considers the current node too when checking for constraints.
-    // It does not make sense to check for constraint if current node is a "leaf" node.
+    // This ensures that the below while loop considers the current node too when checking for filters.
+    // It does not make sense to check for filter if current node is a "leaf" node.
     if node.child_count() > 0 {
       current_node = node.child(0).unwrap();
     }
-    // Get the scope_node of the constraint (`scope.matcher`)
-    let mut matched_matcher = false;
+    // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
+    let mut matched_enclosing_node = false;
     while let Some(parent) = current_node.parent() {
-      let instantiated_constraint = constraint.instantiate(substitutions);
-      let matcher_query_str = instantiated_constraint.matcher();
+      let instantiated_filter = filter.instantiate(substitutions);
+      let enclosing_node_query_str = instantiated_filter.enclosing_node();
       if let Some(p_match) = get_match_for_query(
         &parent,
         self.code(),
-        rule_store.query(matcher_query_str),
+        rule_store.query(enclosing_node_query_str),
         false,
       ) {
-        matched_matcher = true;
+        matched_enclosing_node = true;
         let scope_node = get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        for query_with_holes in constraint.queries() {
+        for query_with_holes in filter.not_contains() {
           let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
 
           if get_match_for_query(&scope_node, self.code(), query, true).is_some() {
@@ -169,6 +170,6 @@ impl SourceCodeUnit {
       }
       current_node = parent;
     }
-    matched_matcher
+    matched_enclosing_node
   }
 }

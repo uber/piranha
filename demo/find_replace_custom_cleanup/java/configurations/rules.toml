@@ -29,9 +29,9 @@ query = "(package_declaration (_)@package_name) @package_declaration"
 replace_node = "package_declaration"
 replace = "@package_declaration\nimport java.util.Collections;\n"
 groups = ["Cleanup Rule"]
-[[rules.constraints]]
-matcher = "((program) @cu)"
-queries = [
+[[rules.filters]]
+enclosing_node = "((program) @cu)"
+not_contains = [
   """(
 ((import_declaration (scoped_identifier (scoped_identifier) @type_qualifier (identifier)@type_name) @imported_type) @import)
 (#eq? @imported_type "java.util.Collections")
