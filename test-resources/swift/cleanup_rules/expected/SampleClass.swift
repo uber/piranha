@@ -165,30 +165,30 @@ class SampleClass {
     }
 
     func checkIfBooleanWithComments(){
-        // to be preserved
+        // to be preserved1
         toBePreserved1()
                   
         if a {
-            // to be preserved
+            // to be preserved2
             toBePreserved2()
         }
 
         if b {
-            // to be preserved
+            // to be preserved3a
             toBePreserved3a()
         } else {
-            // to be preserved
+            // to be preserved3b
             toBePreserved3b()
         }
 
-        // to be preserved
+        // to be preserved4
         toBePreserved4()
                 
 
-        // to be preserved
+        // to be preserved5
         toBePreserved5() 
                     
-        // to be preserved
+        // to be preserved6
         toBePreserved6()
     }
 
