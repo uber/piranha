@@ -11,7 +11,7 @@ def java_demo():
     info("Running the Match-only demo for Java")
     args = PiranhaArguments(
         "java",
-        {},
+        substitutions={},
         path_to_codebase=join(match_only_dir, "java"),
         path_to_configurations=join(match_only_dir, "java/configurations"),
     )
