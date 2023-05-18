@@ -17,11 +17,11 @@
 # Each language has a syntax to define methods, classes, functions, therefore capturing such scopees is language dependent. 
 # This file allows users to define these language dependent scopes. 
 # Each scope consists of a scope name and a list of scope rules. 
-# Each scope rule consists of a `matcher` and a `generator`. 
+# Each scope rule consists of a `enclosing_node` and a `scope`.
 
 # When Piranha encounters a "Method" or "Class" scope, it looks up these configurations to obtain the list of scope rules. 
 # It then applies each `scope.rules.matcher` to the ancestors of changed node in the previous edit.
-# Upon finding the match (it short-circuits), Piranha substitutes the tags in `scope.rules.generator` based on the tag matches obtained from 
+# Upon finding the match (it short-circuits), Piranha substitutes the tags in `scope.rulesscope` based on the tag matches obtained from
 # matching `scope.rules.matcher` to create a context specific rule for the changed node.
 
 [[scopes]]
@@ -35,7 +35,7 @@ name = "Method"
 #
 # To capture the signature of the enclosing method, Piranha will match the below rule against the method.
 # This will result in matches - { n: "foo", fp: "int a, int b, int c, int d, int e"} 
-# Substituting these matches in the `scopes.rules.generator` will result in : 
+# Substituting these matches in the `scopes.rulesscope` will result in :
 #
 #(((method_declaration 
 #           name : (_) @z
@@ -45,7 +45,7 @@ name = "Method"
 # (#eq? @tp "int a, int b, int c, int d, int e")
 # )
 #
-matcher = """
+enclosing_node = """
 (
   [(method_declaration 
             name : (_) @n
@@ -56,7 +56,7 @@ matcher = """
             
   ]          
             @xdn)"""
-generator = """
+scope = """
 (
   [(((method_declaration 
             name : (_) @z
@@ -73,17 +73,17 @@ generator = """
   ]
 )@qdn"""
 
-# Scope generators for Java Class.
+# Scope generator for Java Class.
 [[scopes]]
 name = "Class"
 [[scopes.rules]]
-matcher = """(
+enclosing_node = """(
   [
     (class_declaration name:(_) @n) @c
     (enum_declaration name:(_) @n) @c
   ]
 )"""
-generator = """(
+scope = """(
   [
     ((class_declaration name:(_) @z) @qc)
     ((enum_declaration name:(_) @z) @qc)
@@ -96,7 +96,7 @@ generator = """(
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (program) @c_u
 """
-generator = "(program) @compilation_unit"
+scope = "(program) @compilation_unit"

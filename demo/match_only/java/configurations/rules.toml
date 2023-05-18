@@ -34,9 +34,9 @@ query = """((
 )
 (#eq? @name "barFoo")
 ))"""
-[[rules.constraints]]
-matcher = "(method_declaration) @md"
-queries = ["""(
+[[rules.filters]]
+enclosing_node = "(method_declaration) @md"
+not_contains = ["""(
   (modifiers) @modifiers
   (#match? @modifiers ".*static.*")
   )"""]

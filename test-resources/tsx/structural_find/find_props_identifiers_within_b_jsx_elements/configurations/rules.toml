@@ -17,8 +17,8 @@ query = """
     (#eq? @identifier "props")
 )
 """
-[[rules.constraints]]
-matcher = """
+[[rules.filters]]
+enclosing_node = """
 (
     (jsx_element
         open_tag: (jsx_opening_element

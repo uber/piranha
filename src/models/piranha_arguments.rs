@@ -177,7 +177,7 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    language: String, path_to_codebase: String, include: Option<Vec<String>>,
+    language: String, path_to_codebase: Option<String>, include: Option<Vec<String>>,
     exclude: Option<Vec<String>>, substitutions: Option<&PyDict>,
     path_to_configurations: Option<String>, rule_graph: Option<RuleGraph>,
     code_snippet: Option<String>, dry_run: Option<bool>, cleanup_comments: Option<bool>,
@@ -198,7 +198,7 @@ impl PiranhaArguments {
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     PiranhaArgumentsBuilder::default()
-      .path_to_codebase(path_to_codebase)
+      .path_to_codebase(path_to_codebase.unwrap_or_else(default_path_to_codebase))
       .include(
         include
           .unwrap_or_default()

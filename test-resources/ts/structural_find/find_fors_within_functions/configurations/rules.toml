@@ -16,5 +16,5 @@ query = """
     (for_statement) @for_stmt
 )
 """
-[[rules.constraints]]
-matcher = "(function_declaration) @fs"
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fs"
