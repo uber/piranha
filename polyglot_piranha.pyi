@@ -33,7 +33,7 @@ class PiranhaArguments:
     def __init__(
         self,
         language: str,
-        path_to_codebase: str,
+        path_to_codebase: Optional[str] = None,
         include: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
         substitutions: Optional[dict] = None,
