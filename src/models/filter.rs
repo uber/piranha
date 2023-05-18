@@ -45,16 +45,31 @@ pub struct Filter {
   #[serde(default)]
   #[pyo3(get)]
   not_contains: Vec<TSQuery>,
+  /// AST patterns that should match any subtree of node matching `enclosing_node` pattern
+  #[builder(default = "default_queries()")]
+  #[get = "pub"]
+  #[serde(default)]
+  #[pyo3(get)]
+  contains: Vec<TSQuery>,
 }
 
 #[pymethods]
 impl Filter {
   #[new]
-  fn py_new(enclosing_node: String, not_contains: Option<Vec<String>>) -> Self {
+  fn py_new(
+    enclosing_node: String, not_contains: Option<Vec<String>>, contains: Option<Vec<String>>,
+  ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node))
       .not_contains(
         not_contains
+          .unwrap_or_default()
+          .iter()
+          .map(|x| TSQuery::new(x.to_string()))
+          .collect_vec(),
+      )
+      .contains(
+        contains
           .unwrap_or_default()
           .iter()
           .map(|x| TSQuery::new(x.to_string()))
@@ -89,10 +104,11 @@ impl Filter {
 /// ```
 ///
 macro_rules! filter {
-  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*]) => {
+  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*] $(, contains= [$($p:expr,)*])?) => {
     $crate::models::filter::FilterBuilder::default()
       .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
       .not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
+      $(.contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string()),)*]))?
       .build().unwrap()
   };
 }
@@ -106,6 +122,11 @@ impl Instantiate for Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
       not_contains: self
         .not_contains()
+        .iter()
+        .map(|x| x.instantiate(substitutions_for_holes))
+        .collect_vec(),
+      contains: self
+        .contains()
         .iter()
         .map(|x| x.instantiate(substitutions_for_holes))
         .collect_vec(),
@@ -169,6 +190,26 @@ impl SourceCodeUnit {
         break;
       }
       current_node = parent;
+    }
+
+    if matched_enclosing_node {
+      for query_with_holes in filter.contains() {
+        let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
+
+        let mut check_node = node;
+        let mut found_match = false;
+        while let Some(parent) = check_node.parent() {
+          if get_match_for_query(&check_node, self.code(), query, true).is_some() {
+            found_match = true;
+            break;
+          }
+          check_node = parent;
+        }
+
+        if !found_match {
+          return false;
+        }
+      }
     }
     matched_enclosing_node
   }
