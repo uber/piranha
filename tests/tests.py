@@ -8,9 +8,7 @@
 # License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-
+import sys
 from pathlib import Path
 from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
@@ -137,6 +135,68 @@ import java.util.List;
         "test-resources/java/insert_field_and_initializer/", output_summaries
     )
 
+def test_delete_method_from_interface():
+    delete_method = Rule (
+        name= "delete_method",
+        query=
+        """(
+            ((method_declaration 
+                name: (_) @id) @method)
+            (#eq? @id "foo")
+        )
+        """,
+        replace_node="method",
+        replace="",
+        filters= set([
+            Filter(
+                enclosing_node= "(class_declaration ) @c_cd",
+                contains = ["""(
+                    (super_interfaces (type_list (type_identifier) @it)
+                    (#eq? @it "FooBar"))
+                )""",],
+            )
+        ]),
+    )
+
+    # This is wrong, should check the arity for implements :|.
+    # Works in this example
+    delete_implements = Rule (
+        name= "delete_implements",
+        query=
+        """(
+            (class_declaration (super_interfaces 
+					(type_list (type_identifier) @it)) @list)
+            (#eq? @it "FooBar")
+        )
+        """,
+        replace_node="list",
+        replace="",
+    )
+
+    edge1 = OutgoingEdges(
+        "delete_method",
+        ["delete_implements"],
+        "File"
+    )
+
+    rule_graph = RuleGraph(
+        rules= [delete_method, delete_implements],
+        edges = [edge1]
+    )
+
+    args = PiranhaArguments(
+        path_to_codebase= "test-resources/java/delete_interface/input",
+        language="java",
+        rule_graph = rule_graph,
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    assert is_as_expected(
+        "test-resources/java/delete_interface/", output_summaries
+    )
+
+
 def is_as_expected(path_to_scenario, output_summary):
     expected_output = join(path_to_scenario, "expected")
     input_dir = join(path_to_scenario, "input")
@@ -175,3 +235,4 @@ def _is_readable(input_str: str) -> bool:
         bool: is human readable
     """
     return not any(re.findall(r"\<(.*) object at (.*)\>", input_str))
+
