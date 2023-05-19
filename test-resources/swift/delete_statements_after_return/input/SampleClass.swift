@@ -13,6 +13,14 @@ class C1 {
 
         // some function call
         doSomethingElse()
+        
+        // some declarations
+        var b = "declaration"
+        if b == "test"{
+            dummyFunctionCall()
+        } else {
+            anotherDummyFunctionCall()
+        }
     }
 
 
@@ -26,6 +34,11 @@ class C1 {
 
         // some function call
         doSomething()
+
+        var c = doSomethingElse()
+        
+        // some comment
+        var d = c ? 1 : 0
     }
 }
 
