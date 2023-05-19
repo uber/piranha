@@ -250,7 +250,8 @@ name = "if_always_true"
 query = """ (
 (if_statement
     condition: (boolean_literal) @condition_literal
-    .(statements) @if_block
+    ((comment)*
+    .(statements)) @if_block
     ) @if_else_block
 (#eq? @condition_literal "true")
 )"""
@@ -275,7 +276,8 @@ query = """ (
 (else)
 (if_statement
     condition: (boolean_literal) @condition_literal
-    .(statements) @if_block
+    ((comment)*
+    .(statements)) @if_block
     ) @if_else_block
 (#eq? @condition_literal "true")
 )"""
@@ -299,8 +301,11 @@ query = """(
 (if_statement
     bound_identifier: (_)?
     condition: (boolean_literal) @condition_literal
-    .(statements) @if_block
-    [(statements) (if_statement)]? @alternatives 
+    ((comment)*
+    .(statements)) @if_block
+    ((comment)*
+    [(statements)
+     (if_statement)])? @alternatives 
     ) @if_else_block
 (#eq? @condition_literal "false")
 )"""
@@ -333,8 +338,10 @@ query = """(
 (if_statement
     bound_identifier: (_)?
     condition: (boolean_literal) @condition_literal
+    (comment)*
     .(statements) @if_block
-    (statements)? @alternatives 
+    ((comment)*
+    (statements)?) @alternatives 
     ) @if_else_block
 (#eq? @condition_literal "false")
 )"""
@@ -373,6 +380,7 @@ query = """(
 (if_statement
     bound_identifier: (_)?
     condition: (boolean_literal) @condition_literal
+    (comment)*
     .(statements) @if_block
     (if_statement) @alternatives 
     ) @if_else_block
