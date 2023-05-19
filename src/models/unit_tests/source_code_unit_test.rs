@@ -201,6 +201,237 @@ fn test_satisfies_filters_contains_positive() {
 }
 
 #[test]
+fn test_satisfies_filters_bounds_positive() {
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    replace_node= "variable_declaration",
+    replace= "",
+    filters= [filter!{
+      enclosing_node= "(method_declaration) @md",
+      not_contains = [],
+      contains= ["(
+        ((if_statement
+          condition: (condition (identifier) @a.lhs)))
+        (#eq? @a.lhs \"@variable_name\")
+      )",],
+      at_least = 3
+    }]
+
+  };
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+      public void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = true;
+        if (isFlagTreated) {
+        // Do something;
+        }
+        // Do more things
+        if (isFlagTreated && something) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let node = source_code_unit.root_node();
+
+  let _matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
+
+  println!("{}", source_code_unit.original_content);
+  println!("{}", source_code_unit.code);
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(source_code_unit.is_satisfied(
+    *node,
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+
+#[test]
+fn test_satisfies_filters_at_most_negative() {
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    replace_node= "variable_declaration",
+    replace= "",
+    filters= [filter!{
+      enclosing_node= "(method_declaration) @md",
+      not_contains = [],
+      contains= ["(
+        ((if_statement
+          condition: (condition (identifier) @a.lhs)))
+        (#eq? @a.lhs \"@variable_name\")
+      )",],
+      at_least = 3
+    }]
+
+  };
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+      public void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = true;
+        if (isFlagTreated) {
+        // Do something;
+        }
+        // Do more things
+        if (isFlagTreated && something) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let node = source_code_unit.root_node();
+
+  let _matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
+
+  println!("{}", source_code_unit.original_content);
+  println!("{}", source_code_unit.code);
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(source_code_unit.is_satisfied(
+    *node,
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+
+#[test]
+fn test_satisfies_filters_at_least_negative() {
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          value: [(true) (false)] @init)) @variable_declaration)
+      )",
+    replace_node= "variable_declaration",
+    replace= "",
+    filters= [filter!{
+      enclosing_node= "(method_declaration) @md",
+      not_contains = [],
+      contains= ["(
+        ((if_statement
+          condition: (condition (identifier) @a.lhs)))
+        (#eq? @a.lhs \"@variable_name\")
+      )",],
+      at_least = 3
+    }]
+
+  };
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+      public void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = true;
+        if (isFlagTreated) {
+        // Do something;
+        }
+        // Do more things
+        if (isFlagTreated && something) {
+        // Do something;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let node = source_code_unit.root_node();
+
+  let _matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
+
+  println!("{}", source_code_unit.original_content);
+  println!("{}", source_code_unit.code);
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(source_code_unit.is_satisfied(
+    *node,
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  ));
+}
+
+#[test]
 fn test_satisfies_filters_not_contains_positive() {
   let _rule = piranha_rule! {
     name= "test",
