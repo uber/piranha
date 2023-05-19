@@ -124,26 +124,22 @@ fn test_apply_edit_negative() {
 }
 
 #[test]
-fn test_satisfies_filters_contains_positive() {
+fn test_satisfies_filters_contains_negative() {
   let _rule = piranha_rule! {
     name= "test",
     query= "(
       ((local_variable_declaration
                       declarator: (variable_declarator
                                           name: (_) @variable_name
-                                          value: [(true) (false)] @init)) @variable_declaration)
+                                          value: [(true)] @init)) @variable_declaration)
       )",
-    replace_node= "variable_declaration",
-    replace= "",
     filters= [filter!{
       enclosing_node= "(method_declaration) @md",
-      not_contains = [],
       contains= ["(
         ((if_statement
-          condition: (condition (identifier) @a.lhs)))
-        (#eq? @a.lhs \"@variable_name\")
-      )",],
-      at_least = 3
+          condition: (condition (identifier) @id)))
+        (#eq? @id \"@variable_name\")
+      )",]
     }]
 
   };
@@ -151,13 +147,8 @@ fn test_satisfies_filters_contains_positive() {
   let source_code = "class Test {
       public void foobar(){
         boolean isFlagTreated = true;
-        isFlagTreated = true;
         if (isFlagTreated) {
-        // Do something;
-        }
-        // Do more things
-        if (isFlagTreated && something) {
-        // Do something;
+          // Do something;
         }
        }
       }";
@@ -176,13 +167,6 @@ fn test_satisfies_filters_contains_positive() {
     PathBuf::new().as_path(),
     &piranha_args,
   );
-
-  let node = source_code_unit.root_node();
-
-  let _matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
-
-  println!("{}", source_code_unit.original_content);
-  println!("{}", source_code_unit.code);
 
   let node = &source_code_unit
     .root_node()

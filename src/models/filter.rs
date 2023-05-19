@@ -121,10 +121,10 @@ impl Filter {
 /// ```
 ///
 macro_rules! filter {
-  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*] $(, contains= [$($p:expr,)*])? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
+  (enclosing_node = $enclosing_node:expr $(, not_contains= [$($q:expr,)*])? $(, contains= [$($p:expr,)*])? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
-      .not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
+      $(.not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*]))?
       $(.contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string()),)*]))?
       $(.at_least($min))?
       $(.at_most($max))?
@@ -181,7 +181,6 @@ impl SourceCodeUnit {
     let mut current_node = node;
     // This ensures that the below while loop considers the current node too when checking for filters.
     // It does not make sense to check for filter if current node is a "leaf" node.
-    println!("{}", node.to_sexp());
     if node.child_count() > 0 {
       current_node = node.child(0).unwrap();
     }
@@ -216,8 +215,6 @@ impl SourceCodeUnit {
           let at_least = filter.at_least as usize;
           let at_most = filter.at_most as usize;
           if !(at_least <= matches.len() && matches.len() <= at_most) {
-            println!("Enclosing node is {}", scope_node.to_sexp());
-            println!("Enclosing node is");
             return false;
           }
         }
