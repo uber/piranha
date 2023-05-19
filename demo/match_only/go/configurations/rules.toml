@@ -16,8 +16,8 @@ query = """
     (go_statement) @go_stmt
 )
 """
-[[rules.constraints]]
-matcher = "(for_statement) @fs"
+[[rules.filters]]
+enclosing_node = "(for_statement) @fs"
 
 
 [[rules]]

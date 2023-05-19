@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 use crate::{
-  constraint,
+  filter,
   models::{default_configs::UNUSED_CODE_PATH, piranha_arguments::PiranhaArgumentsBuilder},
   utilities::eq_without_whitespace,
 };
@@ -78,10 +78,10 @@ fn test_get_edit_positive_recursive() {
      )",
     replace_node = "variable_declaration",
     replace = "",
-    constraints =[
-        constraint! {
-          matcher= "(method_declaration) @md",
-          queries = [
+    filters =[
+        filter! {
+          enclosing_node= "(method_declaration) @md",
+          not_contains = [
             "(
               ((assignment_expression
                 left: (_) @a.lhs
@@ -139,9 +139,9 @@ fn test_get_edit_negative_recursive() {
       )",
     replace_node = "variable_declaration",
     replace = "",
-    constraints =  [constraint! {
-          matcher= "(method_declaration) @md",
-          queries = [
+    filters =  [filter! {
+          enclosing_node= "(method_declaration) @md",
+          not_contains = [
             "(
               ((assignment_expression
                 left: (_) @a.lhs

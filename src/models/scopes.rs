@@ -40,9 +40,9 @@ pub(crate) struct ScopeGenerator {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
 pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
-  matcher: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
+  enclosing_node: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
-  generator: TSQuery, // a tree-sitter query matching the exact AST node
+  scope: TSQuery, // a tree-sitter query that will match the same node that matched `enclosing_node`
 }
 
 // Implements instance methods related to getting the scope
@@ -54,26 +54,26 @@ impl SourceCodeUnit {
   ) -> TSQuery {
     let root_node = self.root_node();
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
-    // Get the scope matchers for `scope_level` from the `scope_config.toml`.
-    let scope_matchers = rules_store.get_scope_query_generators(scope_level);
+    // Get the scope enclosing_nodes for `scope_level` from the `scope_config.toml`.
+    let scope_enclosing_nodes = rules_store.get_scope_query_generators(scope_level);
 
-    // Match the `scope_matcher.matcher` to the parent
+    // Match the `scope_enclosing_node.enclosing_node` to the parent
     loop {
       trace!(
         "Getting scope {} for node kind {}",
         scope_level,
         changed_node.kind()
       );
-      for m in &scope_matchers {
+      for m in &scope_enclosing_nodes {
         if let Some(p_match) = get_match_for_query(
           &changed_node,
           self.code(),
-          rules_store.query(m.matcher()),
+          rules_store.query(m.enclosing_node()),
           false,
         ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return m.generator().instantiate(p_match.matches());
+          return m.scope().instantiate(p_match.matches());
         }
       }
       if let Some(parent) = changed_node.parent() {

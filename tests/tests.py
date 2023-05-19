@@ -12,7 +12,7 @@
 
 
 from pathlib import Path
-from polyglot_piranha import Constraint, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
+from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
 from os import listdir
 import re
@@ -83,10 +83,10 @@ def test_insert_field_add_import():
         replace="""{
   private List<String> names;\n @class_members
 }""",
-        constraints= set([
-            Constraint(
-                matcher= "(class_declaration ) @c_cd",
-                queries = ["""(
+        filters= set([
+            Filter(
+                enclosing_node= "(class_declaration ) @c_cd",
+                not_contains = ["""(
                     (field_declaration (variable_declarator name:(_) @name )) @field
                     (#eq? @name "names")
                 )"""]
@@ -101,10 +101,10 @@ def test_insert_field_add_import():
         replace="""@pkg_dcl
 import java.util.List;
 """,
-        constraints= set([
-            Constraint(
-                matcher= "(program ) @prgrm",
-                queries = ["""
+        filters= set([
+            Filter(
+                enclosing_node= "(program ) @prgrm",
+                not_contains = ["""
                 (
                     (import_declaration (scoped_identifier) @type ) @import
                     (#eq? @type "java.util.List")

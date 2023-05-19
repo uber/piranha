@@ -298,7 +298,7 @@ impl SourceCodeUnit {
       replace_node_tag,
     );
 
-    // Return the first match that satisfies constraint of the rule
+    // Applies the filter and returns the first element
     for p_match in all_query_matches.iter_mut() {
       let matched_node = get_node_for_range(
         self.root_node(),

@@ -452,10 +452,10 @@ replace_node = "short_v_decl"
 is_seed_rule = false
 # Check if there is an assignment to @variable_name with a value other than @value
 # Note that the query is against a short_var_declaration while
-# the constraint is against an assigment_statement
-[[rules.constraints]]
-matcher = "(block) @block"
-queries = ["""
+# the filter is against an assigment_statement
+[[rules.filters]]
+enclosing_node = "(block) @block"
+not_contains = ["""
 (
     (assignment_statement
         left: (expression_list
@@ -482,9 +482,9 @@ replace = "@value"
 replace_node = "identifier"
 holes = ["variable_name", "value"]
 is_seed_rule = false
-[[rules.constraints]]
-matcher = "(block) @block"
-queries = ["""
+[[rules.filters]]
+enclosing_node = "(block) @block"
+not_contains = ["""
 (
     [
         (short_var_declaration

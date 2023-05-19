@@ -77,3 +77,17 @@ class C7 {
         }
     }
 }
+
+class C8 {
+    init(){
+        let a = placeholder_true
+        super.init(someParameter: a ? someVar : someOtherVar)
+    }
+}
+
+class C9 {
+    init(){
+        let a = placeholder_false
+        super.init(someParameter: a ? someVar : someOtherVar)
+    }
+}
