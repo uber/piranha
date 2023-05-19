@@ -240,7 +240,7 @@ impl PiranhaArguments {
 
 impl PiranhaArguments {
   pub fn get_language(&self) -> String {
-    self.language.name().to_string()
+    self.language.extension().to_string()
   }
 
   pub fn from_cli() -> Self {

@@ -202,7 +202,7 @@ impl Piranha {
     let temp_dir_path = temp_dir.path();
     let sample_file = temp_dir_path.join(format!(
       "sample.{}",
-      self.piranha_arguments.language().name()
+      self.piranha_arguments.language().extension()
     ));
     let mut file = File::create(sample_file).unwrap();
     file

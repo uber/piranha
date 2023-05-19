@@ -30,7 +30,7 @@ use super::{
 pub struct PiranhaLanguage {
   /// The extension of the language FIXME: - https://github.com/uber/piranha/issues/365
   #[get = "pub"]
-  name: String,
+  extension: String,
   /// the language (enum)
   #[get = "pub"]
   supported_language: SupportedLanguage,
@@ -88,7 +88,7 @@ impl PiranhaLanguage {
   pub(crate) fn can_parse(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
     de.path()
       .extension()
-      .and_then(|e| e.to_str().filter(|x| x.eq(&self.name())))
+      .and_then(|e| e.to_str().filter(|x| x.eq(&self.extension())))
       .is_some()
   }
 
@@ -120,7 +120,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/java/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/java/edges.toml"));
         Ok(Self {
-          name: language.to_string(),
+          extension: language.to_string(),
           supported_language: SupportedLanguage::Java,
           language: tree_sitter_java::language(),
           rules: Some(rules),
@@ -137,7 +137,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/go/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/go/edges.toml"));
         Ok(PiranhaLanguage {
-          name: language.to_string(),
+          extension: language.to_string(),
           supported_language: SupportedLanguage::Go,
           language: tree_sitter_go::language(),
           rules: Some(rules),
@@ -152,7 +152,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));
         Ok(PiranhaLanguage {
-          name: language.to_string(),
+          extension: language.to_string(),
           supported_language: SupportedLanguage::Kotlin,
           language: tree_sitter_kotlin::language(),
           rules: Some(rules),
@@ -164,7 +164,7 @@ impl std::str::FromStr for PiranhaLanguage {
         })
       }
       PYTHON => Ok(PiranhaLanguage {
-        name: language.to_string(),
+        extension: language.to_string(),
         supported_language: SupportedLanguage::Python,
         language: tree_sitter_python::language(),
         rules: None,
@@ -176,7 +176,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/swift/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/swift/edges.toml"));
         Ok(PiranhaLanguage {
-          name: language.to_string(),
+          extension: language.to_string(),
           supported_language: SupportedLanguage::Swift,
           language: tree_sitter_swift::language(),
           scopes: parse_toml::<ScopeConfig>(include_str!(
@@ -190,7 +190,7 @@ impl std::str::FromStr for PiranhaLanguage {
         })
       }
       TYPESCRIPT => Ok(PiranhaLanguage {
-        name: language.to_string(),
+        extension: language.to_string(),
         supported_language: SupportedLanguage::Ts,
         language: tree_sitter_typescript::language_typescript(),
         rules: None,
@@ -199,7 +199,7 @@ impl std::str::FromStr for PiranhaLanguage {
         comment_nodes: vec![],
       }),
       TSX => Ok(PiranhaLanguage {
-        name: language.to_string(),
+        extension: language.to_string(),
         supported_language: SupportedLanguage::Tsx,
         language: tree_sitter_typescript::language_tsx(),
         rules: None,
@@ -208,7 +208,7 @@ impl std::str::FromStr for PiranhaLanguage {
         comment_nodes: vec![],
       }),
       THRIFT => Ok(PiranhaLanguage {
-        name: language.to_string(),
+        extension: language.to_string(),
         supported_language: SupportedLanguage::Thrift,
         language: tree_sitter_thrift::language(),
         rules: None,
