@@ -78,8 +78,8 @@ replace_node = "function_declaration"
 replace = ""
 groups = ["delete_property_declaration"]
 holes = ["stale_flag_name", "namespace"]
-[[rules.constraints]]
-matcher = """(
+[[rules.filters]]
+enclosing_node = """(
 (class_declaration 
      (modifiers (annotation (constructor_invocation (_)@interface_annotation_name (value_arguments
                                                          (value_argument (_)@clhs (_)@crhs)))))) @cd

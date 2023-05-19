@@ -24,8 +24,8 @@ query = """
     (for_statement) @for_stmt
 )
 """
-[[rules.constraints]]
-matcher = "(function_declaration) @fs"
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fs"
 
 
 [[rules]]
@@ -35,9 +35,9 @@ query = """
     (for_statement) @for_stmt
 )
 """
-[[rules.constraints]]
-matcher = "(function_declaration) @fs"
-queries = ["""
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fs"
+not_contains = ["""
 (
     (while_statement) @while_stmt
 )

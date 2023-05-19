@@ -43,10 +43,10 @@ use {
 
 fn _get_class_scope() -> ScopeGenerator {
   let scope_query_generator_class: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
-    .matcher(TSQuery::new(
+    .enclosing_node(TSQuery::new(
       "(class_declaration name:(_) @n) @c".to_string(),
     ))
-    .generator(TSQuery::new(
+    .scope(TSQuery::new(
       "(
       ((class_declaration name:(_) @z) @qc)
       (#eq? @z \"@n\")
@@ -64,7 +64,7 @@ fn _get_class_scope() -> ScopeGenerator {
 
 fn _get_method_scope() -> ScopeGenerator {
   let scope_query_generator_method: ScopeQueryGenerator = ScopeQueryGeneratorBuilder::default()
-    .matcher(TSQuery::new(
+    .enclosing_node(TSQuery::new(
       "(
     [(method_declaration 
               name : (_) @n
@@ -75,7 +75,7 @@ fn _get_method_scope() -> ScopeGenerator {
     ]@xdn)"
         .to_string(),
     ))
-    .generator(TSQuery::new(
+    .scope(TSQuery::new(
       "(
       [(((method_declaration 
                 name : (_) @z

@@ -14,7 +14,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use tree_sitter::Parser;
 
 use crate::{
-  constraint,
+  filter,
   models::{
     default_configs::{JAVA, UNUSED_CODE_PATH},
     language::PiranhaLanguage,
@@ -124,7 +124,7 @@ fn test_apply_edit_negative() {
 }
 
 #[test]
-fn test_satisfies_constraints_positive() {
+fn test_satisfies_filters_positive() {
   let _rule = piranha_rule! {
     name= "test",
     query= "(
@@ -135,9 +135,9 @@ fn test_satisfies_constraints_positive() {
       )",
     replace_node= "variable_declaration",
     replace= "",
-    constraints= [constraint!{
-      matcher= "(method_declaration) @md",
-      queries= ["(
+    filters= [filter!{
+      enclosing_node= "(method_declaration) @md",
+      not_contains= ["(
         ((assignment_expression
                         left: (_) @a.lhs
                         right: (_) @a.rhs) @assignment)
@@ -190,7 +190,7 @@ fn test_satisfies_constraints_positive() {
 }
 
 #[test]
-fn test_satisfies_constraints_negative() {
+fn test_satisfies_filters_negative() {
   let _rule = piranha_rule! {
     name= "test",
     query= "(
@@ -201,9 +201,9 @@ fn test_satisfies_constraints_negative() {
       )",
     replace_node= "variable_declaration",
     replace= "",
-    constraints= [constraint!{
-      matcher= "(method_declaration) @md",
-      queries= ["(
+    filters= [filter!{
+      enclosing_node= "(method_declaration) @md",
+      not_contains= ["(
         ((assignment_expression
                         left: (_) @a.lhs
                         right: (_) @a.rhs) @assignment)

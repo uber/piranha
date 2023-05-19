@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname, getmtime
-from polyglot_piranha import Rule, RuleGraph, execute_piranha, PiranhaArguments, Constraint
+from polyglot_piranha import Rule, RuleGraph, execute_piranha, PiranhaArguments, Filter
 import logging
 from logging import info
 
@@ -20,9 +20,9 @@ def thrift_demo():
         replace="""@exception_definition(
     rpc.code = "@rpc_code"
 )""",
-        constraints={
-            Constraint(matcher="(exception_definition) @c_e",
-                       queries=["(annotation_definition) @ad"])
+        filters={
+            Filter(matcher="(exception_definition) @c_e",
+                   not_contains=["(annotation_definition) @ad"])
         },
         holes={
             "input_exception_name", "rpc_code"

@@ -18,7 +18,7 @@ def run_java_ff_demo():
 
     args = PiranhaArguments(
         "java",
-        {
+        substitutions={
             "stale_flag_name": "SAMPLE_STALE_FLAG",
             "treated": "true",
             "treated_complement": "false",
@@ -51,7 +51,7 @@ def run_kt_ff_demo():
 
     args = PiranhaArguments(
         "kt",
-        {
+        substitutions={
             "stale_flag_name": "SAMPLE_STALE_FLAG",
             "treated": "true",
             "treated_complement": "false",

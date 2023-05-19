@@ -11,7 +11,7 @@ def java_demo():
     info("Running the Match-only demo for Java")
     args = PiranhaArguments(
         "java",
-        {},
+        substitutions={},
         path_to_codebase=join(match_only_dir, "java"),
         path_to_configurations=join(match_only_dir, "java/configurations"),
     )
@@ -30,7 +30,7 @@ def go_demo():
 
     args = PiranhaArguments(
         "go",
-        {},
+        substitutions={},
         path_to_codebase=join(match_only_dir, "go"),
         path_to_configurations=join(match_only_dir, "go/configurations"),
     )
@@ -48,7 +48,7 @@ def ts_demo():
 
     args = PiranhaArguments(
         "ts",
-        {},
+        substitutions={},
         path_to_codebase=join(match_only_dir, "ts"),
         path_to_configurations=join(match_only_dir, "ts/configurations"),
     )
@@ -66,7 +66,7 @@ def tsx_demo():
     info("Running the Match-only demo for TypeScript with React")
     args = PiranhaArguments(
         "tsx",
-        {},
+        substitutions={},
         path_to_codebase=join(match_only_dir, "tsx"),
         path_to_configurations=join(match_only_dir, "tsx/configurations"),
     )

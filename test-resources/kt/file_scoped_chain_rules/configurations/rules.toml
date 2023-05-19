@@ -27,8 +27,8 @@ query = """
 """
 replace_node = "call_expr"
 replace = "@parameter_interfaceProvider.create(@cache_parameters)"
-[[rules.constraints]]
-matcher = """(
+[[rules.filters]]
+enclosing_node = """(
 (function_declaration (simple_identifier) @name) @md
 (#eq? @name "create")
 )"""

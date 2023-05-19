@@ -28,9 +28,9 @@ query = """(
 )"""
 replace_node = "class_body"
 replace = "{\n private List<String> names;\n @class_members \n}"
-[[rules.constraints]]
-matcher = "(class_declaration ) @c_cd"
-queries = ["""(
+[[rules.filters]]
+enclosing_node = "(class_declaration ) @c_cd"
+not_contains = ["""(
 (field_declaration (variable_declarator name:(_) @name )) @field
 (#eq? @name "names")
 )"""]
@@ -43,9 +43,9 @@ query = """
 replace_node = "pkg_dcl"
 replace = "@pkg_dcl \n import java.util.List;"
 is_seed_rule = false
-[[rules.constraints]]
-matcher = "(program ) @prgrm"
-queries = ["""(
+[[rules.filters]]
+enclosing_node = "(program ) @prgrm"
+not_contains = ["""(
 (import_declaration (scoped_identifier) @type ) @import
 (#eq? @type "java.util.List")
 )"""]
