@@ -124,7 +124,7 @@ fn test_apply_edit_negative() {
 }
 
 #[test]
-fn test_satisfies_filters_positive() {
+fn test_satisfies_filters_contains_positive() {
   let _rule = piranha_rule! {
     name= "test",
     query= "(
@@ -137,13 +137,13 @@ fn test_satisfies_filters_positive() {
     replace= "",
     filters= [filter!{
       enclosing_node= "(method_declaration) @md",
-      not_contains= ["(
-        ((assignment_expression
-                        left: (_) @a.lhs
-                        right: (_) @a.rhs) @assignment)
+      not_contains = [],
+      contains= ["(
+        ((if_statement
+          condition: (condition (identifier) @a.lhs)))
         (#eq? @a.lhs \"@variable_name\")
-        (#not-eq? @a.rhs \"@init\")
-      )",]
+      )",],
+      at_least = 3
     }]
 
   };
@@ -153,6 +153,10 @@ fn test_satisfies_filters_positive() {
         boolean isFlagTreated = true;
         isFlagTreated = true;
         if (isFlagTreated) {
+        // Do something;
+        }
+        // Do more things
+        if (isFlagTreated && something) {
         // Do something;
         }
        }
@@ -172,6 +176,13 @@ fn test_satisfies_filters_positive() {
     PathBuf::new().as_path(),
     &piranha_args,
   );
+
+  let node = source_code_unit.root_node();
+
+  let _matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
+
+  println!("{}", source_code_unit.original_content);
+  println!("{}", source_code_unit.code);
 
   let node = &source_code_unit
     .root_node()

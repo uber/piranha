@@ -22,7 +22,7 @@ use tree_sitter::Node;
 
 use crate::utilities::{
   gen_py_str_methods,
-  tree_sitter_utilities::{get_match_for_query, get_node_for_range},
+  tree_sitter_utilities::{get_all_matches_for_query, get_match_for_query, get_node_for_range},
 };
 
 use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
@@ -51,6 +51,20 @@ pub struct Filter {
   #[serde(default)]
   #[pyo3(get)]
   contains: Vec<TSQuery>,
+
+  /// Least number of matches we should find for the contains query
+  #[builder(default = "1")]
+  #[get = "pub"]
+  #[serde(default)]
+  #[pyo3(get)]
+  at_least: u32,
+
+  /// Most number of matches we should find for the contains query
+  #[builder(default = "u32::MAX")]
+  #[get = "pub"]
+  #[serde(default)]
+  #[pyo3(get)]
+  at_most: u32,
 }
 
 #[pymethods]
@@ -58,6 +72,7 @@ impl Filter {
   #[new]
   fn py_new(
     enclosing_node: String, not_contains: Option<Vec<String>>, contains: Option<Vec<String>>,
+    at_least: Option<u32>, at_most: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node))
@@ -75,6 +90,8 @@ impl Filter {
           .map(|x| TSQuery::new(x.to_string()))
           .collect_vec(),
       )
+      .at_least(at_least.unwrap_or(1))
+      .at_most(at_most.unwrap_or(u32::MAX))
       .build()
       .unwrap()
   }
@@ -104,11 +121,13 @@ impl Filter {
 /// ```
 ///
 macro_rules! filter {
-  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*] $(, contains= [$($p:expr,)*])?) => {
+  (enclosing_node = $enclosing_node:expr, not_contains= [$($q:expr,)*] $(, contains= [$($p:expr,)*])? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
       .not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*])
       $(.contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string()),)*]))?
+      $(.at_least($min))?
+      $(.at_most($max))?
       .build().unwrap()
   };
 }
@@ -130,6 +149,8 @@ impl Instantiate for Filter {
         .iter()
         .map(|x| x.instantiate(substitutions_for_holes))
         .collect_vec(),
+      at_least: self.at_least,
+      at_most: self.at_most,
     }
   }
 }
@@ -160,6 +181,7 @@ impl SourceCodeUnit {
     let mut current_node = node;
     // This ensures that the below while loop considers the current node too when checking for filters.
     // It does not make sense to check for filter if current node is a "leaf" node.
+    println!("{}", node.to_sexp());
     if node.child_count() > 0 {
       current_node = node.child(0).unwrap();
     }
@@ -187,29 +209,21 @@ impl SourceCodeUnit {
             return false;
           }
         }
+        for query_with_holes in filter.contains() {
+          let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
+          let matches =
+            get_all_matches_for_query(&scope_node, self.code().to_string(), query, true, None);
+          let at_least = filter.at_least as usize;
+          let at_most = filter.at_most as usize;
+          if !(at_least <= matches.len() && matches.len() <= at_most) {
+            println!("Enclosing node is {}", scope_node.to_sexp());
+            println!("Enclosing node is");
+            return false;
+          }
+        }
         break;
       }
       current_node = parent;
-    }
-
-    if matched_enclosing_node {
-      for query_with_holes in filter.contains() {
-        let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
-
-        let mut check_node = node;
-        let mut found_match = false;
-        while let Some(parent) = check_node.parent() {
-          if get_match_for_query(&check_node, self.code(), query, true).is_some() {
-            found_match = true;
-            break;
-          }
-          check_node = parent;
-        }
-
-        if !found_match {
-          return false;
-        }
-      }
     }
     matched_enclosing_node
   }
