@@ -127,7 +127,7 @@ fn test_apply_edit_negative() {
 /// Tests for contains, at_least, and at_most
 
 fn run_test_satisfies_filters(
-  filter: Filter, // Replace with the actual type of the filter
+  filter: Filter, // Replace with the filter to test 
   assertion: fn(bool) -> bool,
 ) {
   let _rule = piranha_rule! {
