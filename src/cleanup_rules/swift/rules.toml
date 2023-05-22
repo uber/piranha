@@ -558,12 +558,17 @@ replace = ""
 is_seed_rule = false
 
 [[rules.filters]]
-enclosing_node = "[(function_declaration) (init_declaration)] @cfd"
+enclosing_node = "(function_declaration) @cfd"
 
 # skip the rule if the variable is assigned with some other value in the class scope
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
 not_contains = ["""(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@hvariable")
+    )""", """(
     (assignment
         target: (directly_assignable_expression
             [ (navigation_expression
@@ -785,7 +790,7 @@ replace = ""
 is_seed_rule = false
 
 [[rules.filters]]
-enclosing_node = "(class_declaration) @cd"
+enclosing_node = "[(class_declaration) (init_declaration)] @cd"
 not_contains = [
   # skip the rule if the variable is one of the parameters of some function
   """(
@@ -814,8 +819,11 @@ not_contains = [
     )""",
 ]
 
+# also run the rule for the variables declared in init
+# [[rules.filters]]
+# enclosing_node = "(init_declaration) @cid"
 
-# rule to delete field initialised in the init subject to the mentioned filters
+# rule to delete field declared in a class and initialized in the init, subject to the mentioned filters
 [[rules]]
 name = "delete_field_initialisation_init"
 query = """(
