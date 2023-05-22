@@ -86,7 +86,7 @@ fn test_apply_edit_positive() {
   let mut parser = java.parser();
 
   let mut source_code_unit =
-    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
+    SourceCodeUnit::default(source_code, &mut parser, java.extension().to_string());
 
   let _ = source_code_unit.apply_edit(
     &Edit::delete_range(source_code, range(49, 78, 3, 9, 3, 38)),
@@ -115,7 +115,7 @@ fn test_apply_edit_negative() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let mut source_code_unit =
-    SourceCodeUnit::default(source_code, &mut parser, java.name().to_string());
+    SourceCodeUnit::default(source_code, &mut parser, java.extension().to_string());
 
   let _ = source_code_unit.apply_edit(
     &Edit::delete_range(source_code, range(1000, 2000, 0, 0, 0, 0)),
