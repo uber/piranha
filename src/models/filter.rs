@@ -29,7 +29,9 @@ use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::Sou
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
-use super::default_configs::{default_enclosing_node, default_queries};
+use super::default_configs::{
+  default_contains_at_least, default_contains_at_most, default_enclosing_node, default_queries,
+};
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
@@ -53,14 +55,14 @@ pub struct Filter {
   contains: Vec<TSQuery>,
 
   /// Least number of matches we should find for the contains query
-  #[builder(default = "1")]
+  #[builder(default = "default_contains_at_least()")]
   #[get = "pub"]
   #[serde(default)]
   #[pyo3(get)]
   at_least: u32,
 
   /// Most number of matches we should find for the contains query
-  #[builder(default = "u32::MAX")]
+  #[builder(default = "default_contains_at_most()")]
   #[get = "pub"]
   #[serde(default)]
   #[pyo3(get)]
@@ -99,15 +101,25 @@ impl Filter {
 }
 
 #[macro_export]
-/// This macro can be used to construct a filter (via the builder)'
-/// Allows to use builder pattern more "dynamically"
+/// This macro constructs a FilterBuilder for creating filter queries. It provides a more "dynamic" way to use the builder pattern.
+///
+/// 'enclosing_node' is a required parameter that specifies the node to be inspected.
+///
+/// 'not_contains' and 'contains' are optional parameters, accepting a list of queries that should not and should match
+/// within the 'enclosing_node' respectively.
+///
+/// 'at_least' and 'at_most' specify the inclusive range for the count of matches 'contains' queries should find within
+/// the 'enclosing_node'. These parameters provide control over the desired quantity of matches.
 ///
 /// Usage:
 ///
 /// ```
 /// filter! {
-///   enclosing_node = "(method_declaration) @md".to_string(),
-///   not_contains=  ["(method_invocation name: (_) @name) @mi".to_string()]
+///   enclosing_node = "(method_declaration) @md",
+///   not_contains= ["(method_invocation name: (_) @name)"],
+///   contains= ["(parameter_list)"],
+///   at_least = 1,
+///   at_most = 10
 /// }
 /// ```
 ///
@@ -115,9 +127,12 @@ impl Filter {
 ///
 /// ```
 /// FilterBuilder::default()
-///      .enclosing_node("(method_declaration) @md".to_string())
-///      .not_contains(vec!["(method_invocation name: (_) @name) @mi".to_string()])
-///      .build()
+///      .enclosing_node(TSQuery::new("(method_declaration) @md"))
+///      .not_contains(vec![TSQuery::new("(method_invocation name: (_) @name)")])
+///      .contains(vec![TSQuery::new("(parameter_list)")])
+///      .at_least(1)
+///      .at_most(10)
+///      .build().unwrap()
 /// ```
 ///
 macro_rules! filter {
@@ -169,11 +184,18 @@ impl SourceCodeUnit {
       .all(|filter| self._check(filter.clone(), node, rule_store, &updated_substitutions))
   }
 
-  /// Checks if the node satisfies the filters.
-  /// filter has two parts (i) `filter.enclosing_node` (ii) `filter.not_contains`.
-  /// This function traverses the ancestors of the given `node` until `filter.enclosing_node` matches
-  /// i.e. finds the enclosing node as specified in the filter.
-  /// Within this scope it checks if the `filter.not_contains` DOES NOT MATCH any sub-tree.
+  /// Determines if the given `node` meets the conditions specified by the `filter`.
+  ///
+  /// The `filter` is composed of:
+  /// (i) `enclosing_node`, the node to inspect,
+  /// (ii) `not_contains` and `contains`, optional sets of queries that should not and should match within the `enclosing_node`,
+  /// (iii) `at_least` and `at_most`, optional parameters indicating the acceptable range of matches for `contains` within the `enclosing_node`.
+  ///
+  /// The function identifies the `enclosing_node` by traversing the ancestors of the `node`. Within this node:
+  /// (i) if `not_contains` is provided, it ensures no sub-tree matches any of these queries,
+  /// (ii) if `contains` is provided, it ensures the number sub-trees matching `contains` fall within the specified range.
+  ///
+  /// If these conditions hold, the function returns true, indicating the `node` meets the `filter`'s criteria.
   fn _check(
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
@@ -202,6 +224,8 @@ impl SourceCodeUnit {
           p_match.range().end_byte,
         );
         for query_with_holes in filter.not_contains() {
+          // Instantiate the query and check if there's a match within the scope node
+          // If there is the filter is not satisfied
           let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
 
           if get_match_for_query(&scope_node, self.code(), query, true).is_some() {
@@ -209,11 +233,13 @@ impl SourceCodeUnit {
           }
         }
         for query_with_holes in filter.contains() {
+          // Instantiate the query and retrieve all matches within the scope node
           let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
           let matches =
             get_all_matches_for_query(&scope_node, self.code().to_string(), query, true, None);
           let at_least = filter.at_least as usize;
           let at_most = filter.at_most as usize;
+          // Validate if the count of matches falls within the expected range
           if !(at_least <= matches.len() && matches.len() <= at_most) {
             return false;
           }

@@ -127,7 +127,7 @@ fn test_apply_edit_negative() {
 /// Tests for contains, at_least, and at_most
 
 fn run_test_satisfies_filters(
-  filter: Filter, // Replace with the filter to test 
+  filter: Filter, // Replace with the filter to test
   assertion: fn(bool) -> bool,
 ) {
   let _rule = piranha_rule! {
@@ -242,6 +242,22 @@ fn test_satisfies_filters_at_most_negative() {
                     ((method_invocation) @method)
                 )",],
         at_most = 1
+    },
+    |result| !result,
+  );
+}
+
+#[test]
+fn test_satisfies_filters_at_most_0_negative() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        contains= ["(
+                    ((method_invocation name: (_) @name) @method)
+                    (#eq? @name equals)
+                )",],
+        at_least = 0,
+        at_most = 0
     },
     |result| !result,
   );

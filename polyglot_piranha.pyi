@@ -166,7 +166,8 @@ class Filter:
     not_contains: list[TSQuery]
     "AST patterns that SHOULD NOT match any subtree of node matching `enclosing_node` pattern"
     contains: list[TSQuery]
-    "AST patterns that SHOULD match at least one subtree of node matching `enclosing_node` pattern"
+    "AST patterns that SHOULD match subtrees of `enclosing_node`. " \
+    "Number of matches should be within the range of `at_least` and `at_most`."
     at_least: int
     "The minimum number of times the contains query should match in the enclosing node"
     at_most: int
@@ -177,7 +178,7 @@ class Filter:
         not_contains: list[str] = [],
         contains: list[str] = [],
         at_least: int = 1,
-        at_most: int = 1000
+        at_most: int = 4294967295 # u32::MAX
     ):
         """
         Constructs `Filter`

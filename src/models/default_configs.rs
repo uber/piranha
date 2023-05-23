@@ -138,6 +138,14 @@ pub(crate) fn default_queries() -> Vec<TSQuery> {
   Vec::new()
 }
 
+pub(crate) fn default_contains_at_least() -> u32 {
+  1
+}
+
+pub(crate) fn default_contains_at_most() -> u32 {
+  u32::MAX
+}
+
 pub(crate) fn default_enclosing_node() -> TSQuery {
   TSQuery::new(String::new())
 }
