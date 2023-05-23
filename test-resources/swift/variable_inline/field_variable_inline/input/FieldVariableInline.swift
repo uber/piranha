@@ -9,499 +9,431 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-class C1{
+class C1 {
+  var a = placeholder_true
 
-    var a = placeholder_true
+  init() {}
 
+  func f1() {
 
+    a = placeholder_true
 
+  }
+}
 
-    init(){}
+class C2 {
+  var a = placeholder_true
 
+  init() {}
 
+  func f2() {
+    a = placeholder_false
+  }
+}
 
+class C3 {
+  var a = placeholder_true
 
-    func f1(){
+  init() {}
 
-        a = placeholder_true
-
-    }
+  func f3() {
+    self.a = placeholder_true
+  }
 
 }
 
+class C4 {
 
+  var a = placeholder_true
 
+  init() {}
 
-class C2{
+  func f4() {
+    self.a = placeholder_false
+  }
+}
 
-    var a = placeholder_true
+class C5 {
 
+  var a = placeholder_true
 
+  var b = placeholder_false
 
+  func f5() {
 
-    init(){}
+    if a {
 
-
-
-
-    func f2(){
-
-        a = placeholder_false
+      doSomething()
 
     }
+
+    if b {
+
+      doSomethingElse()
+
+    }
+
+  }
 
 }
 
+class C6 {
 
+  var a = placeholder_true
 
+  var b = placeholder_false
 
-class C3{
+  func f6() {
 
-    var a = placeholder_true
+    if self.a {
 
-
-
-
-    init(){}
-
-
-
-
-    func f3(){
-
-        self.a = placeholder_true
+      doSomething()
 
     }
+
+    if self.b {
+
+      doSomethingElse()
+
+    }
+
+  }
 
 }
 
+class C7 {
 
+  var a = placeholder_true
 
+  func f7() {
 
-class C4{
+    if a {
 
-    var a = placeholder_true
-
-
-
-
-    init(){}
-
-
-
-
-    func f4(){
-
-        self.a = placeholder_false
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C8 {
 
+  var a = placeholder_true
 
+  func f8() {
 
-class C5{
+    if self.a {
 
-    var a = placeholder_true
-
-    var b = placeholder_false
-
-    func f5(){
-
-        if a {
-
-            doSomething()
-
-        }
-
-        if b {
-
-            doSomethingElse()
-
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C9 {
 
+  var a = placeholder_true
 
+  func f9a() {
 
-class C6{
+    a = placeholder_false
 
-    var a = placeholder_true
+  }
 
-    var b = placeholder_false
+  func f9b() {
 
-    func f6(){
+    if a {
 
-        if self.a {
-
-            doSomething()
-
-        }
-
-        if self.b {
-
-            doSomethingElse()
-
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C10 {
 
+  var a = placeholder_true
 
+  func f10a() {
 
-class C7{
+    self.a = placeholder_false
 
-    var a = placeholder_true
+  }
 
+  func f10b() {
 
+    if self.a {
 
-
-    func f7(){
-
-        if a {
-
-            doSomething()
-
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C11 {
 
+  var a = placeholder_true
 
+  func f11a() {
 
-class C8{
+    a = placeholder_true
 
-    var a = placeholder_true
+  }
 
+  func f11b() {
 
+    a = placeholder_false
 
-
-    func f8(){
-
-        if self.a {
-
-            doSomething()
-
-        }
-
-    }
+  }
 
 }
 
+class C12 {
 
+  var a
 
+  init() {
 
-class C9{
+    a = placeholder_true
 
-    var a = placeholder_true
+    if a {
 
-
-
-
-    func f9a(){
-
-        a = placeholder_false
+      doSomething()
 
     }
 
+  }
 
+  func f12() {
 
+    a = placeholder_false
 
-    func f9b(){
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
+  }
 
 }
 
+class C13 {
 
+  var a
 
+  init() {
 
-class C10{
+    a = placeholder_true
 
-    var a = placeholder_true
+    if a {
 
-
-
-
-    func f10a(){
-
-        self.a = placeholder_false
+      doSomething()
 
     }
 
+  }
 
+  func f13() {
 
+    if a {
 
-    func f10b(){
-
-        if self.a {
-
-            doSomething()
-
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C14 {
 
+  var a
 
+  init(a: Bool) {
 
-class C11{
+    a = placeholder_true
 
-    var a = placeholder_true
+    if a {
 
-
-
-
-    func f11a(){
-
-        a = placeholder_true
+      doSomething()
 
     }
 
+  }
 
+  func f14() {
 
+    if a {
 
-    func f11b(){
-
-        a = placeholder_false
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C15 {
 
+  var a
 
+  init() {
 
-class C12{
+    a = placeholder_true
 
-    var a
+    if a {
 
-    init(){
-
-        a = placeholder_true
-
-        if a {
-
-            doSomething()
-
-        }
+      doSomething()
 
     }
 
+  }
 
+  func f15(a: Bool) {
 
+    if a {
 
-    func f12(){
-
-        a = placeholder_false
+      doSomething()
 
     }
+
+  }
 
 }
 
+class C16 {
 
+  var a
 
+  init() {
 
-class C13{
+    self.a = placeholder_true
 
-    var a
+    if a {
 
-    init(){
-
-        a = placeholder_true
-
-        if a {
-
-            doSomething()
-
-        }
+      doSomething()
 
     }
 
-    func f13(){
+  }
 
-        if a {
+  func f16() {
 
-            doSomething()
+    if a {
 
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
-class C14{
+class C17 {
 
-    var a
+  var a
 
-    init(a: Bool){
+  init(a: Bool) {
 
-        a = placeholder_true
+    self.a = placeholder_true
 
-        if a {
+    if a {
 
-            doSomething()
-
-        }
+      doSomething()
 
     }
 
-    func f14(){
+  }
 
-        if a {
+  func f17() {
 
-            doSomething()
+    if a {
 
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
-class C15{
+class C18 {
 
-    var a
+  var a
 
-    init(){
+  init() {
 
-        a = placeholder_true
+    self.a = placeholder_true
 
-        if a {
+    if a {
 
-            doSomething()
-
-        }
+      doSomething()
 
     }
 
-    func f15(a: Bool){
+  }
 
-        if a {
+  func f18(a: Bool) {
 
-            doSomething()
+    if a {
 
-        }
+      doSomething()
 
     }
+
+  }
 
 }
 
-class C16{
+class C19 {
+  var a = true
 
-    var a
-
-    init(){
-
-        self.a = placeholder_true
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
-
-    func f16(){
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
-
+  init() {
+    a = false
+  }
 }
 
-class C17{
+class C20 {
+  var a
 
-    var a
+  init() {
+    a = false
+  }
 
-    init(a: Bool){
-
-        self.a = placeholder_true
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
-
-    func f17(){
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
-
-}
-
-class C18{
-
-    var a
-
-    init(){
-
-        self.a = placeholder_true
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
-
-    func f18(a: Bool){
-
-        if a {
-
-            doSomething()
-
-        }
-
-    }
-
-}
-
-class C19{
+  func f1() {
     var a = true
-
-    init(){
-        a = false
-    }
+  }
 }
 
-class C20{
-    var a
+// test for edge from variable_inline_cleanup to boolean_literal_cleanup
 
-    init(){
-        a = false
-    }
+class C21 {
+  init() {
+    let a = placeholder_true
+    super.init(someParameter: !a ? someVar : someOtherVar)
+  }
+}
 
-    func f1(){
-        var a = true
-    }
+class C22 {
+  init() {
+    let a = placeholder_false
+    super.init(someParameter: !a ? someVar : someOtherVar)
+  }
+}
+
+// test for edge from boolean_literal_cleanup to variable_inline_cleanup
+class C23 {
+  init() {
+    let a = !placeholder_true
+    super.init(someParameter: a ? someVar : someOtherVar)
+  }
+}
+
+class C24 {
+  init() {
+    let a = !placeholder_false
+    super.init(someParameter: a ? someVar : someOtherVar)
+  }
 }
