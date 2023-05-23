@@ -886,6 +886,7 @@ not_contains = [
     )""",
 ]
 
+# rule to delete unreachable code after return statement
 [[rules]]
 name = "delete_all_statements_after_return"
 query = """(
