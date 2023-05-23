@@ -886,6 +886,214 @@ not_contains = [
     )""",
 ]
 
+[[rules]]
+name = "de_parenthesize_literals"
+query = """(
+    (tuple_expression
+        [
+            (integer_literal)
+            (hex_literal)
+            (oct_literal)
+            (bin_literal)
+            (real_literal)
+            (boolean_literal)
+            (line_string_literal)
+            (regex_literal)
+        ] @tvalue
+    ) @texp
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "texp"
+replace = "@tvalue"
+is_seed_rule = false
+#
+# Before 
+# equality expression with same lhs and rhs for following:
+# integer_literal
+# hex_literal
+# oct_literal
+# bin_literal
+# real_literal
+# boolean_literal
+# _string_literal
+# regex_literal
+# After 
+#   true
+#
+[[rules]]
+name = "boolean_equality_expression_same_literals"
+query = """(
+    (equality_expression
+            lhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @left
+            rhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @right
+    ) @cond
+    (#eq? @left @right)
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "cond"
+replace = "true"
+is_seed_rule = false
+
+#
+# Before 
+# equality expression with different lhs and rhs for following:
+# integer_literal
+# hex_literal
+# oct_literal
+# bin_literal
+# real_literal
+# boolean_literal
+# _string_literal
+# regex_literal
+# After 
+#   false
+#
+[[rules]]
+name = "boolean_equality_expression_opposite_literals"
+query = """(
+    (equality_expression
+            lhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @left
+            rhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @right
+    ) @cond
+    (#not-eq? @left @right)
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "cond"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before 
+# inequality expression (infix expression with custom_operator = '!='') with same lhs and rhs for following:
+# integer_literal
+# hex_literal
+# oct_literal
+# bin_literal
+# real_literal
+# boolean_literal
+# _string_literal
+# regex_literal
+# After 
+#   false
+#
+[[rules]]
+name = "boolean_inequality_expression_same_literals"
+query = """(
+    (infix_expression
+            lhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @left
+            op: (custom_operator) @ops
+            rhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @right
+    ) @cond
+    (#eq? @ops "!=")
+    (#eq? @left @right)
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "cond"
+replace = "false"
+is_seed_rule = false
+
+#
+# Before 
+# inequality expression (infix expression with custom_operator = '!='') with different lhs and rhs for following:
+# integer_literal
+# hex_literal
+# oct_literal
+# bin_literal
+# real_literal
+# boolean_literal
+# _string_literal
+# regex_literal
+# After 
+#   true
+#
+[[rules]]
+name = "boolean_inequality_expression_opposite_literals"
+query = """(
+    (infix_expression
+            lhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @left
+            op: (custom_operator) @ops
+            rhs: [
+                (integer_literal)
+                (hex_literal)
+                (oct_literal)
+                (bin_literal)
+                (real_literal)
+                (boolean_literal)
+                (line_string_literal)
+                (regex_literal)
+            ] @right
+    ) @cond
+    (#eq? @ops "!=")
+    (#not-eq? @left @right)
+)"""
+groups = ["boolean_expression_simplify"]
+replace_node = "cond"
+replace = "true"
+is_seed_rule = false
+
 # rule to delete unreachable code after return statement
 [[rules]]
 name = "delete_all_statements_after_return"
