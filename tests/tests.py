@@ -216,6 +216,3 @@ def _is_readable(input_str: str) -> bool:
         bool: is human readable
     """
     return not any(re.findall(r"\<(.*) object at (.*)\>", input_str))
-
-
-test_delete_unused_field()
