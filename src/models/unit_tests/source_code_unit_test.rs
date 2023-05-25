@@ -249,7 +249,7 @@ fn test_satisfies_filters_at_most_negative() {
 
 #[test]
 fn test_satisfies_filters_at_most_0_negative() {
-  run_test_satisfies_filters(
+  let contains_0 = run_test_satisfies_filters(
     filter! {
         enclosing_node= "(method_declaration) @md",
         contains= "(
@@ -261,6 +261,17 @@ fn test_satisfies_filters_at_most_0_negative() {
     },
     |result| !result,
   );
+  let not_contains = run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        not_contains= ["(
+                    ((method_invocation name: (_) @name) @method)
+                    (#eq? @name equals)
+                )",]
+    },
+    |result| !result,
+  );
+  assert_eq!(contains_0, not_contains);
 }
 
 /// Tests for not contains
