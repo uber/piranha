@@ -190,7 +190,7 @@ impl SourceCodeUnit {
   /// Determines if the given `node` meets the conditions specified by the `filter`.
   ///
   /// The `filter` is composed of:
-  /// (i) `enclosing_node`, the node to inspect,
+  /// (i) `enclosing_node`, the node to inspect, optional. If not provided we check whether the contains or non_contains are satisfied in the current node.
   /// (ii) `not_contains` and `contains`, optional sets of queries that should not and should match within the `enclosing_node`,
   /// (iii) `at_least` and `at_most`, optional parameters indicating the acceptable range of matches for `contains` within the `enclosing_node`.
   ///
@@ -219,6 +219,7 @@ impl SourceCodeUnit {
     }
   }
 
+  /// This function checks for the contains
   fn _check_enclosing_node(
     &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
     initial: Node,
@@ -240,14 +241,11 @@ impl SourceCodeUnit {
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        if let Some(value) = self._filter_contains(&filter, rule_store, substitutions, &scope_node)
-        {
-          return value;
+        if !self._filter_contains(&filter, rule_store, substitutions, &scope_node) {
+          return false;
         }
-        if let Some(value) =
-          self._filter_not_contains(&filter, rule_store, substitutions, &scope_node)
-        {
-          return value;
+        if !self._filter_not_contains(&filter, rule_store, substitutions, &scope_node) {
+          return false;
         }
         break;
       }
@@ -259,7 +257,7 @@ impl SourceCodeUnit {
   fn _filter_contains(
     &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
     scope_node: &Node,
-  ) -> Option<bool> {
+  ) -> bool {
     for query_with_holes in filter.contains() {
       // Instantiate the query and retrieve all matches within the scope node
       let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
@@ -269,25 +267,25 @@ impl SourceCodeUnit {
       let at_most = filter.at_most as usize;
       // Validate if the count of matches falls within the expected range
       if !(at_least <= matches.len() && matches.len() <= at_most) {
-        return Some(false);
+        return false;
       }
     }
-    None
+    true
   }
 
   fn _filter_not_contains(
     &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
     scope_node: &Node,
-  ) -> Option<bool> {
+  ) -> bool {
     for query_with_holes in filter.not_contains() {
       // Instantiate the query and check if there's a match within the scope node
       // If there is the filter is not satisfied
       let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
 
       if get_match_for_query(scope_node, self.code(), query, true).is_some() {
-        return Some(false);
+        return false;
       }
     }
-    None
+    true
   }
 }
