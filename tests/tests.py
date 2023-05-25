@@ -150,10 +150,10 @@ def test_delete_unused_field():
         filters= set([
             Filter(
                 enclosing_node= "(class_declaration ) @c_cd",
-                contains = ["""(
+                contains = """(
                     (identifier) @name
                     (#eq? @name "@id_name")
-                )""",],
+                )""",
                 at_most= 1
             )
         ]),
@@ -172,7 +172,7 @@ def test_delete_unused_field():
     )
 
     output_summaries = execute_piranha(args)
-    print(output_summaries)
+    print(output_summaries[0].content)
     assert is_as_expected(
         "test-resources/java/delete_unused_field/", output_summaries
     )

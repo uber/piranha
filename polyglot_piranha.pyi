@@ -176,7 +176,7 @@ class Filter:
         self,
         enclosing_node: str = '',
         not_contains: list[str] = [],
-        contains: list[str] = [],
+        contains: str = '',
         at_least: int = 1,
         at_most: int = 4294967295 # u32::MAX
     ):

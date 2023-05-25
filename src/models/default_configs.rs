@@ -135,8 +135,12 @@ pub(crate) fn default_edges() -> Vec<OutgoingEdges> {
   vec![]
 }
 
-pub(crate) fn default_queries() -> Vec<TSQuery> {
+pub(crate) fn default_not_contains_queries() -> Vec<TSQuery> {
   Vec::new()
+}
+
+pub(crate) fn default_contains_query() -> TSQuery {
+  TSQuery::new(String::from(""))
 }
 
 pub(crate) fn default_contains_at_least() -> u32 {

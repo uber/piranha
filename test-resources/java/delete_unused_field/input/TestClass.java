@@ -15,10 +15,11 @@ package com.uber.piranha;
 
 class Test implements FooBar{
 
-  private String test_string;
+  private String testString;
+  private String anotherString;
 
-  public void foo(){
-    // Do something
+  public String foo(){
+    return anotherString;
   }
 
   public void bar() {

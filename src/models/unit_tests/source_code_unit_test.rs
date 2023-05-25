@@ -188,12 +188,12 @@ fn test_satisfies_filters_contains_positive() {
   run_test_satisfies_filters(
     filter! {
         enclosing_node= "(method_declaration) @md",
-        contains= ["(
+        contains= "(
                     ((method_invocation
                         arguments: (argument_list (
                             (identifier) @id))) @method)
                     (#eq? @id \"@variable_name\")
-                )",]
+                )"
     },
     |result| result,
   );
@@ -204,11 +204,11 @@ fn test_satisfies_filters_bounds_positive() {
   run_test_satisfies_filters(
     filter! {
         enclosing_node= "(method_declaration) @md",
-        contains= ["(
+        contains= "(
                     ((method_invocation
                         arguments: (argument_list (
                             (identifier) @id))) @method)
-                )",],
+                )",
         at_least = 2,
         at_most = 4
     },
@@ -221,12 +221,12 @@ fn test_satisfies_filters_at_least_negative() {
   run_test_satisfies_filters(
     filter! {
         enclosing_node= "(method_declaration) @md",
-        contains= ["(
+        contains= "(
                     ((method_invocation
                         arguments: (argument_list (
                             (identifier) @id))) @method)
                     (#eq? @id \"@variable_name\")
-                )",],
+                )",
         at_least = 2
     },
     |result| !result,
@@ -238,9 +238,9 @@ fn test_satisfies_filters_at_most_negative() {
   run_test_satisfies_filters(
     filter! {
         enclosing_node= "(method_declaration) @md",
-        contains= ["(
+        contains= "(
                     ((method_invocation) @method)
-                )",],
+                )",
         at_most = 1
     },
     |result| !result,
@@ -252,10 +252,10 @@ fn test_satisfies_filters_at_most_0_negative() {
   run_test_satisfies_filters(
     filter! {
         enclosing_node= "(method_declaration) @md",
-        contains= ["(
+        contains= "(
                     ((method_invocation name: (_) @name) @method)
                     (#eq? @name equals)
-                )",],
+                )",
         at_least = 0,
         at_most = 0
     },
