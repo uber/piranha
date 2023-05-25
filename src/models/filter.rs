@@ -39,32 +39,33 @@ pub struct Filter {
   /// AST patterns that some ancestor node of the primary match should comply
   #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
+  #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
   enclosing_node: TSQuery,
   /// AST patterns that should not match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_queries()")]
   #[get = "pub"]
-  #[serde(default)]
+  #[serde(default = "default_queries")]
   #[pyo3(get)]
   not_contains: Vec<TSQuery>,
   /// AST patterns that should match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_queries()")]
   #[get = "pub"]
-  #[serde(default)]
+  #[serde(default = "default_queries")]
   #[pyo3(get)]
   contains: Vec<TSQuery>,
 
   /// Least number of matches we should find for the contains query
   #[builder(default = "default_contains_at_least()")]
   #[get = "pub"]
-  #[serde(default)]
+  #[serde(default = "default_contains_at_least")]
   #[pyo3(get)]
   at_least: u32,
 
   /// Most number of matches we should find for the contains query
   #[builder(default = "default_contains_at_most()")]
   #[get = "pub"]
-  #[serde(default)]
+  #[serde(default = "default_contains_at_most")]
   #[pyo3(get)]
   at_most: u32,
 }
@@ -73,11 +74,11 @@ pub struct Filter {
 impl Filter {
   #[new]
   fn py_new(
-    enclosing_node: String, not_contains: Option<Vec<String>>, contains: Option<Vec<String>>,
-    at_least: Option<u32>, at_most: Option<u32>,
+    enclosing_node: Option<String>, not_contains: Option<Vec<String>>,
+    contains: Option<Vec<String>>, at_least: Option<u32>, at_most: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
-      .enclosing_node(TSQuery::new(enclosing_node))
+      .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
       .not_contains(
         not_contains
           .unwrap_or_default()
@@ -92,8 +93,8 @@ impl Filter {
           .map(|x| TSQuery::new(x.to_string()))
           .collect_vec(),
       )
-      .at_least(at_least.unwrap_or(1))
-      .at_most(at_most.unwrap_or(u32::MAX))
+      .at_least(at_least.unwrap_or(default_contains_at_least()))
+      .at_most(at_most.unwrap_or(default_contains_at_most()))
       .build()
       .unwrap()
   }
@@ -223,31 +224,54 @@ impl SourceCodeUnit {
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        for query_with_holes in filter.not_contains() {
-          // Instantiate the query and check if there's a match within the scope node
-          // If there is the filter is not satisfied
-          let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
-
-          if get_match_for_query(&scope_node, self.code(), query, true).is_some() {
-            return false;
-          }
+        if let Some(value) = self._filter_contains(&filter, rule_store, &substitutions, &scope_node)
+        {
+          return value;
         }
-        for query_with_holes in filter.contains() {
-          // Instantiate the query and retrieve all matches within the scope node
-          let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
-          let matches =
-            get_all_matches_for_query(&scope_node, self.code().to_string(), query, true, None);
-          let at_least = filter.at_least as usize;
-          let at_most = filter.at_most as usize;
-          // Validate if the count of matches falls within the expected range
-          if !(at_least <= matches.len() && matches.len() <= at_most) {
-            return false;
-          }
+        if let Some(value) =
+          self._filter_not_contains(filter, rule_store, &substitutions, &scope_node)
+        {
+          return value;
         }
         break;
       }
       current_node = parent;
     }
     matched_enclosing_node
+  }
+
+  fn _filter_not_contains(
+    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &&HashMap<String, String>,
+    scope_node: &Node,
+  ) -> Option<bool> {
+    for query_with_holes in filter.contains() {
+      // Instantiate the query and retrieve all matches within the scope node
+      let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
+      let matches =
+        get_all_matches_for_query(scope_node, self.code().to_string(), query, true, None);
+      let at_least = filter.at_least as usize;
+      let at_most = filter.at_most as usize;
+      // Validate if the count of matches falls within the expected range
+      if !(at_least <= matches.len() && matches.len() <= at_most) {
+        return Some(false);
+      }
+    }
+    None
+  }
+
+  fn _filter_contains(
+    &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &&HashMap<String, String>,
+    scope_node: &Node,
+  ) -> Option<bool> {
+    for query_with_holes in filter.not_contains() {
+      // Instantiate the query and check if there's a match within the scope node
+      // If there is the filter is not satisfied
+      let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
+
+      if get_match_for_query(scope_node, self.code(), query, true).is_some() {
+        return Some(false);
+      }
+    }
+    None
   }
 }
