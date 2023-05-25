@@ -15,16 +15,13 @@ package com.uber.piranha;
 
 class Test implements FooBar{
 
+  private String test_string;
+
   public void foo(){
-    boolean isFlagTreated = true;
-    if (isFlagTreated) {
-      x = anotherFunction(isFlagTreated);
-      y = anotherFunction();
-      x.equals(y);
-    }
+    // Do something
   }
 
   public void bar() {
-    // Do something
+    // Do something else
   }
 }

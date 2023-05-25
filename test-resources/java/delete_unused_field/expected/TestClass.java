@@ -13,11 +13,15 @@
  */
 package com.uber.piranha;
 
-class Test {
+class Test implements FooBar{
 
 
+
+  public void foo(){
+    // Do something
+  }
 
   public void bar() {
-    // Do something
+    // Do something else
   }
 }

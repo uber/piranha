@@ -134,65 +134,47 @@ import java.util.List;
         "test-resources/java/insert_field_and_initializer/", output_summaries
     )
 
-def test_delete_method_from_interface():
-    delete_method = Rule (
-        name= "delete_method",
+def test_delete_unused_field():
+
+    delete_unused_field = Rule (
+        name= "delete_unused_field",
         query=
         """(
-            ((method_declaration 
-                name: (_) @id) @method)
-            (#eq? @id "foo")
+        ((field_declaration
+            declarator: (_) @id_name) @decl)
+        (#match? @decl "^private")
         )
         """,
-        replace_node="method",
+        replace_node="decl",
         replace="",
         filters= set([
             Filter(
                 enclosing_node= "(class_declaration ) @c_cd",
                 contains = ["""(
-                    (super_interfaces (type_list (type_identifier) @it)
-                    (#eq? @it "FooBar"))
+                    (identifier) @name
+                    (#eq? @name "@id_name")
                 )""",],
+                at_most= 1
             )
         ]),
     )
 
-    # This is wrong, should check the arity for implements :|.
-    # Works in this example
-    delete_implements = Rule (
-        name= "delete_implements",
-        query=
-        """(
-            (class_declaration (super_interfaces 
-					(type_list (type_identifier) @it)) @list)
-            (#eq? @it "FooBar")
-        )
-        """,
-        replace_node="list",
-        replace="",
-    )
-
-    edge1 = OutgoingEdges(
-        "delete_method",
-        ["delete_implements"],
-        "File"
-    )
-
     rule_graph = RuleGraph(
-        rules= [delete_method, delete_implements],
-        edges = [edge1]
+        rules= [delete_unused_field],
+        edges = []
     )
 
     args = PiranhaArguments(
-        path_to_codebase= "test-resources/java/delete_interface/input",
+        path_to_codebase= "test-resources/java/delete_unused_field/input",
         language="java",
         rule_graph = rule_graph,
         dry_run=True,
     )
 
     output_summaries = execute_piranha(args)
+    print(output_summaries)
     assert is_as_expected(
-        "test-resources/java/delete_interface/", output_summaries
+        "test-resources/java/delete_unused_field/", output_summaries
     )
 
 
@@ -234,3 +216,6 @@ def _is_readable(input_str: str) -> bool:
         bool: is human readable
     """
     return not any(re.findall(r"\<(.*) object at (.*)\>", input_str))
+
+
+test_delete_unused_field()
