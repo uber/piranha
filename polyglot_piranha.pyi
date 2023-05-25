@@ -165,8 +165,8 @@ class Filter:
     "AST patterns that some ancestor node of the primary match should comply"
     not_contains: list[TSQuery]
     "AST patterns that SHOULD NOT match any subtree of node matching `enclosing_node` pattern"
-    contains: list[TSQuery]
-    "AST patterns that SHOULD match subtrees of `enclosing_node`. " \
+    contains: TSQuery
+    "AST pattern that SHOULD match subtrees of `enclosing_node`. " \
     "Number of matches should be within the range of `at_least` and `at_most`."
     at_least: int
     "The minimum number of times the contains query should match in the enclosing node"
