@@ -251,4 +251,82 @@ class SampleClass {
             doSomething6b()
         }
     }
+
+    func refactorBooleanLiteralEqualityExpressionInIfConditions(){
+
+        toBePreservedEquality1()
+
+        toBePreservedEquality2()
+
+        toBePreservedEquality3() 
+
+        toBePreservedEquality4()
+
+        toBePreservedEquality5()
+
+        toBePreservedEquality6()
+
+        toBePreservedEquality7()
+
+        if a {
+        toBePreservedEquality8()
+        }
+
+        if b {
+        toBePreservedEquality9a()
+        } else {
+        toBePreservedEquality9b()
+        }
+
+        toBePreservedEquality10()
+
+        if c {
+            toBePreservedEquality11()
+        }
+
+        if d {
+            toBePreservedEquality12a()
+        } else {
+        toBePreservedEquality12b()
+        }
+    }
+
+    func refactorBooleanLiteralInequalityExpressionInIfConditions(){
+
+        toBePreservedInequality1()
+
+        if a {
+            toBePreservedInequality2()
+         }
+
+        if b {
+            toBePreservedInequality3a()
+        } else {
+            toBePreservedInequality3b()
+        }
+
+        toBePreservedInequality4()
+
+        if c {
+            toBePreservedInequality5()
+        }
+
+        if d {
+            toBePreservedInequality6a()
+        } else {
+            toBePreservedInequality6b()
+        }
+
+        toBePreservedInequality7()
+
+        toBePreservedInequality8() 
+
+        toBePreservedInequality9() 
+
+        toBePreservedInequality10()
+
+        toBePreservedInequality11() 
+
+        toBePreservedInequality12() 
+    }
 }

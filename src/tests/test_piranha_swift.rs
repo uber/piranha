@@ -92,3 +92,10 @@ fn test_adhoc_variable_inline_file() {
   super::initialize();
   execute_piranha_with_default_swift_args("variable_inline/adhoc_variable_inline", vec![]);
 }
+
+#[test]
+#[ignore] // Long running test
+fn test_delete_everything_after_return() {
+  super::initialize();
+  execute_piranha_with_default_swift_args("delete_statements_after_return", vec![]);
+}

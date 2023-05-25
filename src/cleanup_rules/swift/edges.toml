@@ -62,9 +62,20 @@ to = ["boolean_literal_cleanup"]
 
 [[edges]]
 scope = "Parent"
+from = "replace_identifier_with_value"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "replace_self_identifier_with_value"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
 from = "boolean_literal_cleanup"
 to = [
   "variable_inline_cleanup",
+  "delete_all_statements_after_return",
   "boolean_expression_simplify",
   "statement_cleanup",
 ]

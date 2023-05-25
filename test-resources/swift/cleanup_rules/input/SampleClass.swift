@@ -329,4 +329,168 @@ class SampleClass {
             doSomething6b()
         }
     }
+
+    func refactorBooleanLiteralEqualityExpressionInIfConditions(){
+         if !TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled  {
+            toBePreservedEquality1()
+         }else{
+            toBeDeletedEquality1()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
+            toBePreservedEquality2() 
+         } else if a {
+            toBeDeletedEquality2()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
+            toBePreservedEquality3() 
+         } else if b {
+            toBeDeletedEquality3a()
+         } else {
+            toBeDeletedEquality3b()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
+            toBePreservedEquality4()
+         } else{
+            toBeDeletedEquality4()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
+            toBePreservedEquality5() 
+         } else if c {
+            toBeDeletedEquality5()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
+            toBePreservedEquality6() 
+         } else if d {
+            toBeDeletedEquality6a()
+         } else {
+            toBeDeletedEquality6b()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled  {
+            toBeDeletedEquality7()
+         }else{
+            toBePreservedEquality7()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedEquality8() 
+         } else if a {
+            toBePreservedEquality8()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedEquality9() 
+         } else if b {
+            toBePreservedEquality9a()
+         } else {
+            toBePreservedEquality9b()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedEquality10()
+         } else{
+            toBePreservedEquality10()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedEquality11() 
+         } else if c {
+            toBePreservedEquality11()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedEquality12() 
+         } else if d {
+            toBePreservedEquality12a()
+         } else {
+            toBePreservedEquality12b()
+         }
+    }
+
+    func refactorBooleanLiteralInequalityExpressionInIfConditions(){
+         if !TestEnum.stale_flag_one.isEnabled != !TestEnum.stale_flag_one.isEnabled  {
+            toBeDeletedInequality1()
+         }else{
+            toBePreservedInequality1()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled != (!TestEnum.stale_flag_one.isEnabled){
+            toBeDeletedInequality2() 
+         } else if a {
+            toBePreservedInequality2()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled != !TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedInequality3() 
+         } else if b {
+            toBePreservedInequality3a()
+         } else {
+            toBePreservedInequality3b()
+         }
+
+         if (TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled){
+            toBeDeletedInequality4()
+         } else{
+            toBePreservedInequality4()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedInequality5() 
+         } else if c {
+            toBePreservedInequality5()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
+            toBeDeletedInequality6() 
+         } else if d {
+            toBePreservedInequality6a()
+         } else {
+            toBePreservedInequality6b()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled  {
+            toBePreservedInequality7()
+         }else{
+            toBeDeletedInequality7()
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
+            toBePreservedInequality8() 
+         } else if a {
+            toBeDeletedInequality8() 
+         }
+
+         if !TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
+            toBePreservedInequality9() 
+         } else if b {
+            toBeDeletedInequality9a()
+         } else {
+            toBeDeletedInequality9b()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled != !TestEnum.stale_flag_one.isEnabled{
+            toBePreservedInequality10()
+         } else{
+            toBeDeletedInequality10()
+         }
+
+         if TestEnum.stale_flag_one.isEnabled != !TestEnum.stale_flag_one.isEnabled{
+            toBePreservedInequality11() 
+         } else if c {
+            toBeDeletedInequality11()
+         }
+
+         if (TestEnum.stale_flag_one.isEnabled) != !TestEnum.stale_flag_one.isEnabled{
+            toBePreservedInequality12() 
+         } else if d {
+            toBeDeletedInequality12a()
+         } else {
+            toBeDeletedInequality12b()
+         }
+    }
 }
