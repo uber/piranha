@@ -174,7 +174,7 @@ class Filter:
     "The maximum number of times the contains query should match in the enclosing node"
     def __init__(
         self,
-        enclosing_node: str,
+        enclosing_node: str = '',
         not_contains: list[str] = [],
         contains: list[str] = [],
         at_least: int = 1,

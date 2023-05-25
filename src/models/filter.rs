@@ -17,6 +17,7 @@ use derive_builder::Builder;
 use getset::Getters;
 use itertools::Itertools;
 use pyo3::prelude::{pyclass, pymethods};
+
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
@@ -31,6 +32,7 @@ use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::default_configs::{
   default_contains_at_least, default_contains_at_most, default_enclosing_node, default_queries,
+  DEFAULT_ENCLOSING_QUERY,
 };
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
@@ -201,14 +203,28 @@ impl SourceCodeUnit {
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
-    let mut current_node = node;
     // This ensures that the below while loop considers the current node too when checking for filters.
     // It does not make sense to check for filter if current node is a "leaf" node.
+    let mut initial_node = node;
     if node.child_count() > 0 {
-      current_node = node.child(0).unwrap();
+      initial_node = node.child(0).unwrap();
     }
-    // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
+
+    // No enclosing node is provided
+    if filter.enclosing_node().get_query().as_str() == DEFAULT_ENCLOSING_QUERY {
+      // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
+      panic!["Not implemented"]
+    } else {
+      self._check_enclosing_node(filter, rule_store, substitutions, initial_node)
+    }
+  }
+
+  fn _check_enclosing_node(
+    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
+    initial: Node,
+  ) -> bool {
     let mut matched_enclosing_node = false;
+    let mut current_node = initial;
     while let Some(parent) = current_node.parent() {
       let instantiated_filter = filter.instantiate(substitutions);
       let enclosing_node_query_str = instantiated_filter.enclosing_node();
@@ -224,12 +240,12 @@ impl SourceCodeUnit {
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        if let Some(value) = self._filter_contains(&filter, rule_store, &substitutions, &scope_node)
+        if let Some(value) = self._filter_contains(&filter, rule_store, substitutions, &scope_node)
         {
           return value;
         }
         if let Some(value) =
-          self._filter_not_contains(filter, rule_store, &substitutions, &scope_node)
+          self._filter_not_contains(&filter, rule_store, substitutions, &scope_node)
         {
           return value;
         }
@@ -240,8 +256,8 @@ impl SourceCodeUnit {
     matched_enclosing_node
   }
 
-  fn _filter_not_contains(
-    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &&HashMap<String, String>,
+  fn _filter_contains(
+    &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
     scope_node: &Node,
   ) -> Option<bool> {
     for query_with_holes in filter.contains() {
@@ -259,8 +275,8 @@ impl SourceCodeUnit {
     None
   }
 
-  fn _filter_contains(
-    &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &&HashMap<String, String>,
+  fn _filter_not_contains(
+    &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
     scope_node: &Node,
   ) -> Option<bool> {
     for query_with_holes in filter.not_contains() {
