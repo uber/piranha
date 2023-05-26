@@ -1,3 +1,11 @@
+Version 0.3.4
+-------------
+* Support richer constraints 
+* ability to `include` or `exclude` particular paths
+* Support variable / field inlining in Swift 
+* More optimized if-statement cleanups
+* Swift cleanup bug fixes
+  
 Version 0.3.3
 -------------
 * Added equality simplification for Java 
