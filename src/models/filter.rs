@@ -12,7 +12,6 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::HashMap;
-use std::fmt::Debug;
 
 use derive_builder::Builder;
 use getset::Getters;
