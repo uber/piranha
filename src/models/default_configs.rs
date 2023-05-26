@@ -152,7 +152,7 @@ pub(crate) fn default_contains_at_most() -> u32 {
 }
 
 pub(crate) fn default_enclosing_node() -> TSQuery {
-  TSQuery::new(String::from(DEFAULT_ENCLOSING_QUERY))
+  TSQuery::new(String::new())
 }
 
 pub(crate) fn default_rule_name() -> String {
