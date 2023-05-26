@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use derive_builder::Builder;
 use getset::Getters;
@@ -196,17 +197,28 @@ impl SourceCodeUnit {
     // This ensures that the below while loop considers the current node too when checking for filters.
     // It does not make sense to check for filter if current node is a "leaf" node.
     let mut initial_node = node;
-    if node.child_count() > 0 {
-      initial_node = node.child(0).unwrap();
-    }
 
     // No enclosing node is provided
     if filter.enclosing_node().get_query().as_str() == DEFAULT_ENCLOSING_QUERY {
       // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
-      panic!["Not implemented"]
+      self._check_current_node(filter, rule_store, initial_node)
     } else {
+      if node.child_count() > 0 {
+        initial_node = node.child(0).unwrap();
+      }
       self._check_enclosing_node(filter, rule_store, substitutions, initial_node)
     }
+  }
+
+  fn _check_current_node(&self, filter: Filter, rule_store: &mut RuleStore, node: Node) -> bool {
+    let empty_substitutions: HashMap<String, String> = HashMap::new();
+    if !self._filter_contains(&filter, rule_store, &empty_substitutions, &node) {
+      return false;
+    }
+    if !self._filter_not_contains(&filter, rule_store, &empty_substitutions, &node) {
+      return false;
+    }
+    true
   }
 
   /// This function checks for the contains

@@ -405,3 +405,36 @@ fn test_satisfies_filters_not_contains_negative() {
     &mut rule_store,
   ));
 }
+
+// Tests for contains with enclosing
+#[test]
+fn test_contains_no_enclosing() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "",
+        contains= "(
+                    (identifier) @name
+                    (#eq? @name \"@variable_name\")
+                )",
+        at_most = 1
+    },
+    |result| !result,
+  );
+}
+
+// Tests for contains with enclosing
+#[test]
+fn test_not_contains_no_enclosing() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "",
+        not_contains= ["(
+              ((assignment_expression
+                    left: (_) @a.lhs
+                    right: (_) @a.rhs) @assignment)
+               (#eq? @a.lhs \"@variable_name\")
+      )",]
+    },
+    |result| result,
+  );
+}
