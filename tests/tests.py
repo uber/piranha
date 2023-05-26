@@ -8,9 +8,6 @@
 # License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-
 from pathlib import Path
 from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
@@ -137,6 +134,50 @@ import java.util.List;
         "test-resources/java/insert_field_and_initializer/", output_summaries
     )
 
+def test_delete_unused_field():
+
+    delete_unused_field = Rule (
+        name= "delete_unused_field",
+        query=
+        """(
+        ((field_declaration
+            declarator: (_) @id_name) @decl)
+        (#match? @decl "^private")
+        )
+        """,
+        replace_node="decl",
+        replace="",
+        filters= set([
+            Filter(
+                enclosing_node= "(class_declaration ) @c_cd",
+                contains = """(
+                    (identifier) @name
+                    (#eq? @name "@id_name")
+                )""",
+                at_most= 1
+            )
+        ]),
+    )
+
+    rule_graph = RuleGraph(
+        rules= [delete_unused_field],
+        edges = []
+    )
+
+    args = PiranhaArguments(
+        path_to_codebase= "test-resources/java/delete_unused_field/input",
+        language="java",
+        rule_graph = rule_graph,
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    print(output_summaries[0].content)
+    assert is_as_expected(
+        "test-resources/java/delete_unused_field/", output_summaries
+    )
+
+
 def is_as_expected(path_to_scenario, output_summary):
     expected_output = join(path_to_scenario, "expected")
     input_dir = join(path_to_scenario, "input")
@@ -175,3 +216,4 @@ def _is_readable(input_str: str) -> bool:
         bool: is human readable
     """
     return not any(re.findall(r"\<(.*) object at (.*)\>", input_str))
+    

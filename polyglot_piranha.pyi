@@ -164,12 +164,21 @@ class Filter:
     enclosing_node: TSQuery
     "AST patterns that some ancestor node of the primary match should comply"
     not_contains: list[TSQuery]
-    "AST patterns that should not match any subtree of node matching `enclosing_node` pattern"
-
+    "AST patterns that SHOULD NOT match any subtree of node matching `enclosing_node` pattern"
+    contains: TSQuery
+    "AST pattern that SHOULD match subtrees of `enclosing_node`. " \
+    "Number of matches should be within the range of `at_least` and `at_most`."
+    at_least: int
+    "The minimum number of times the contains query should match in the enclosing node"
+    at_most: int
+    "The maximum number of times the contains query should match in the enclosing node"
     def __init__(
         self,
-        enclosing_node: str,
-        not_contains: list[str] = []
+        enclosing_node: str = '',
+        not_contains: list[str] = [],
+        contains: str = '',
+        at_least: int = 1,
+        at_most: int = 4294967295 # u32::MAX
     ):
         """
         Constructs `Filter`

@@ -17,6 +17,7 @@ use crate::{
   filter,
   models::{
     default_configs::{JAVA, UNUSED_CODE_PATH},
+    filter::Filter,
     language::PiranhaLanguage,
     piranha_arguments::PiranhaArgumentsBuilder,
     rule::InstantiatedRule,
@@ -123,8 +124,159 @@ fn test_apply_edit_negative() {
   );
 }
 
+/// Tests for contains, at_least, and at_most
+
+fn run_test_satisfies_filters(
+  filter: Filter, // Replace with the filter to test
+  assertion: fn(bool) -> bool,
+) {
+  let _rule = piranha_rule! {
+      name= "test",
+      query= "(
+            ((local_variable_declaration
+                            declarator: (variable_declarator
+                                            name: (_) @variable_name
+                                            value: [(true)] @init)) @variable_declaration)
+            )",
+      filters= [filter,]
+  };
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+        public void foobar(){
+            boolean isFlagTreated = true;
+            if (isFlagTreated) {
+              x = anotherFunction(isFlagTreated);
+              y = anotherFunction();
+              x.equals(y);
+            }
+        }
+        }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(50, 72)
+    .unwrap();
+
+  assert!(assertion(source_code_unit.is_satisfied(
+    *node,
+    &rule,
+    &HashMap::from([
+      ("variable_name".to_string(), "isFlagTreated".to_string()),
+      ("init".to_string(), "true".to_string())
+    ]),
+    &mut rule_store,
+  )));
+}
+
 #[test]
-fn test_satisfies_filters_positive() {
+fn test_satisfies_filters_contains_positive() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        contains= "(
+                    ((method_invocation
+                        arguments: (argument_list (
+                            (identifier) @id))) @method)
+                    (#eq? @id \"@variable_name\")
+                )"
+    },
+    |result| result,
+  );
+}
+
+#[test]
+fn test_satisfies_filters_bounds_positive() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        contains= "(
+                    ((method_invocation
+                        arguments: (argument_list (
+                            (identifier) @id))) @method)
+                )",
+        at_least = 2,
+        at_most = 4
+    },
+    |result| result,
+  );
+}
+
+#[test]
+fn test_satisfies_filters_at_least_negative() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        contains= "(
+                    ((method_invocation
+                        arguments: (argument_list (
+                            (identifier) @id))) @method)
+                    (#eq? @id \"@variable_name\")
+                )",
+        at_least = 2
+    },
+    |result| !result,
+  );
+}
+
+#[test]
+fn test_satisfies_filters_at_most_negative() {
+  run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        contains= "(
+                    ((method_invocation) @method)
+                )",
+        at_most = 1
+    },
+    |result| !result,
+  );
+}
+
+#[test]
+fn test_satisfies_filters_at_most_0_negative() {
+  let contains_0 = run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        contains= "(
+                    ((method_invocation name: (_) @name) @method)
+                    (#eq? @name equals)
+                )",
+        at_least = 0,
+        at_most = 0
+    },
+    |result| !result,
+  );
+  let not_contains = run_test_satisfies_filters(
+    filter! {
+        enclosing_node= "(method_declaration) @md",
+        not_contains= ["(
+                    ((method_invocation name: (_) @name) @method)
+                    (#eq? @name equals)
+                )",]
+    },
+    |result| !result,
+  );
+  assert_eq!(contains_0, not_contains);
+}
+
+/// Tests for not contains
+#[test]
+fn test_satisfies_filters_not_contains_positive() {
   let _rule = piranha_rule! {
     name= "test",
     query= "(
@@ -190,7 +342,7 @@ fn test_satisfies_filters_positive() {
 }
 
 #[test]
-fn test_satisfies_filters_negative() {
+fn test_satisfies_filters_not_contains_negative() {
   let _rule = piranha_rule! {
     name= "test",
     query= "(
