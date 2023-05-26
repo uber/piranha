@@ -8,11 +8,8 @@
 # License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
-
-
-
 from pathlib import Path
-from polyglot_piranha import Constraint, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
+from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
 from os import listdir
 import re
@@ -53,13 +50,14 @@ def test_piranha_rewrite():
 
 def test_piranha_match_only():
     args = PiranhaArguments(
-        path_to_configurations="test-resources/java/structural_find/configurations",
+        path_to_configurations="test-resources/java/structural_find_with_include_exclude/configurations",
         language="java",
-        path_to_codebase="test-resources/java/structural_find/input",
+        path_to_codebase="test-resources/java/structural_find_with_include_exclude/input",
         dry_run=True,
+        exclude=["*/folder_2_1/**/*"]
     )
     output_summaries = execute_piranha(args)
-    assert sum([len(summary.matches) for summary in output_summaries]) == 22
+    assert sum([len(summary.matches) for summary in output_summaries]) == 44
     for summary in output_summaries:
         assert _is_readable(str(summary))
         for rule, match in summary.matches:
@@ -82,10 +80,10 @@ def test_insert_field_add_import():
         replace="""{
   private List<String> names;\n @class_members
 }""",
-        constraints= set([
-            Constraint(
-                matcher= "(class_declaration ) @c_cd",
-                queries = ["""(
+        filters= set([
+            Filter(
+                enclosing_node= "(class_declaration ) @c_cd",
+                not_contains = ["""(
                     (field_declaration (variable_declarator name:(_) @name )) @field
                     (#eq? @name "names")
                 )"""]
@@ -100,10 +98,10 @@ def test_insert_field_add_import():
         replace="""@pkg_dcl
 import java.util.List;
 """,
-        constraints= set([
-            Constraint(
-                matcher= "(program ) @prgrm",
-                queries = ["""
+        filters= set([
+            Filter(
+                enclosing_node= "(program ) @prgrm",
+                not_contains = ["""
                 (
                     (import_declaration (scoped_identifier) @type ) @import
                     (#eq? @type "java.util.List")
@@ -135,6 +133,50 @@ import java.util.List;
     assert is_as_expected(
         "test-resources/java/insert_field_and_initializer/", output_summaries
     )
+
+def test_delete_unused_field():
+
+    delete_unused_field = Rule (
+        name= "delete_unused_field",
+        query=
+        """(
+        ((field_declaration
+            declarator: (_) @id_name) @decl)
+        (#match? @decl "^private")
+        )
+        """,
+        replace_node="decl",
+        replace="",
+        filters= set([
+            Filter(
+                enclosing_node= "(class_declaration ) @c_cd",
+                contains = """(
+                    (identifier) @name
+                    (#eq? @name "@id_name")
+                )""",
+                at_most= 1
+            )
+        ]),
+    )
+
+    rule_graph = RuleGraph(
+        rules= [delete_unused_field],
+        edges = []
+    )
+
+    args = PiranhaArguments(
+        path_to_codebase= "test-resources/java/delete_unused_field/input",
+        language="java",
+        rule_graph = rule_graph,
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    print(output_summaries[0].content)
+    assert is_as_expected(
+        "test-resources/java/delete_unused_field/", output_summaries
+    )
+
 
 def is_as_expected(path_to_scenario, output_summary):
     expected_output = join(path_to_scenario, "expected")
@@ -174,3 +216,4 @@ def _is_readable(input_str: str) -> bool:
         bool: is human readable
     """
     return not any(re.findall(r"\<(.*) object at (.*)\>", input_str))
+    

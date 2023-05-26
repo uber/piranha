@@ -13,7 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
-  constraint::Constraint, edit::Edit, matches::Match, outgoing_edges::OutgoingEdges,
+  edit::Edit, filter::Filter, matches::Match, outgoing_edges::OutgoingEdges,
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary, rule::Rule,
   rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
@@ -45,7 +45,7 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_class::<RuleGraph>()?;
   m.add_class::<Rule>()?;
   m.add_class::<OutgoingEdges>()?;
-  m.add_class::<Constraint>()?;
+  m.add_class::<Filter>()?;
   Ok(())
 }
 
@@ -141,7 +141,11 @@ impl Piranha {
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
 
-      for (path, content) in self.rule_store.get_relevant_files(&path_to_codebase) {
+      for (path, content) in self.rule_store.get_relevant_files(
+        &path_to_codebase,
+        piranha_args.include(),
+        piranha_args.exclude(),
+      ) {
         // Get the `SourceCodeUnit` for the file `path` from the cache `relevant_files`.
         // In case of miss, lazily insert a new `SourceCodeUnit`.
         let source_code_unit = self
@@ -198,7 +202,7 @@ impl Piranha {
     let temp_dir_path = temp_dir.path();
     let sample_file = temp_dir_path.join(format!(
       "sample.{}",
-      self.piranha_arguments.language().name()
+      self.piranha_arguments.language().extension()
     ));
     let mut file = File::create(sample_file).unwrap();
     file

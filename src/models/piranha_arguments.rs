@@ -15,20 +15,21 @@ use super::{
   default_configs::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
     default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
-    default_dry_run, default_global_tag_prefix, default_number_of_ancestors_in_parent_scope,
-    default_path_to_codebase, default_path_to_configurations, default_path_to_output_summaries,
-    default_piranha_language, default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON,
-    SWIFT, TSX, TYPESCRIPT,
+    default_dry_run, default_exclude, default_global_tag_prefix, default_include,
+    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
+    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
+    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
   source_code_unit::SourceCodeUnit,
 };
-use crate::utilities::parse_key_val;
+use crate::utilities::{parse_glob_pattern, parse_key_val};
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
+use glob::Pattern;
 use itertools::Itertools;
 use log::{info, warn};
 use pyo3::{
@@ -48,8 +49,20 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_path_to_codebase()")]
-  #[clap(short = 'c', long, default_value_t = default_path_to_codebase())]
+  #[clap(short = 'c', long, required = true)]
   path_to_codebase: String,
+
+  /// Paths to include (as glob patterns)
+  #[get = "pub"]
+  #[builder(default = "default_include()")]
+  #[clap(long, value_parser = parse_glob_pattern, num_args = 0.., required=false)]
+  include: Vec<Pattern>,
+
+  /// Paths to exclude (as glob patterns)
+  #[get = "pub"]
+  #[builder(default = "default_exclude()")]
+  #[clap(long, value_parser = parse_glob_pattern, num_args = 0.., required=false)]
+  exclude: Vec<Pattern>,
 
   /// Code snippet to transform
   #[get = "pub"]
@@ -60,7 +73,7 @@ pub struct PiranhaArguments {
   /// These substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
-  #[clap(short = 's',value_parser = parse_key_val)]
+  #[clap(short = 's', value_parser = parse_key_val)]
   substitutions: Vec<(String, String)>,
 
   /// Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
@@ -164,12 +177,14 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    language: String, substitutions: Option<&PyDict>, path_to_configurations: Option<String>,
-    rule_graph: Option<RuleGraph>, path_to_codebase: Option<String>, code_snippet: Option<String>,
-    dry_run: Option<bool>, cleanup_comments: Option<bool>, cleanup_comments_buffer: Option<i32>,
-    number_of_ancestors_in_parent_scope: Option<u8>, delete_consecutive_new_lines: Option<bool>,
-    global_tag_prefix: Option<String>, delete_file_if_empty: Option<bool>,
-    path_to_output_summary: Option<String>, allow_dirty_ast: Option<bool>,
+    language: String, path_to_codebase: Option<String>, include: Option<Vec<String>>,
+    exclude: Option<Vec<String>>, substitutions: Option<&PyDict>,
+    path_to_configurations: Option<String>, rule_graph: Option<RuleGraph>,
+    code_snippet: Option<String>, dry_run: Option<bool>, cleanup_comments: Option<bool>,
+    cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
+    delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
+    delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
+    allow_dirty_ast: Option<bool>,
   ) -> Self {
     let subs = if substitutions.is_some() {
       substitutions
@@ -182,47 +197,68 @@ impl PiranhaArguments {
     };
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
-    piranha_arguments! {
-      path_to_codebase = path_to_codebase.unwrap_or_else(default_path_to_codebase),
-      path_to_configurations = path_to_configurations.unwrap_or_else(default_path_to_configurations),
-      rule_graph = rg,
-      code_snippet = code_snippet.unwrap_or_else(default_code_snippet),
-      language = PiranhaLanguage::from(language.as_str()),
-      substitutions = subs,
-      dry_run = dry_run.unwrap_or_else(default_dry_run),
-      cleanup_comments = cleanup_comments.unwrap_or_else(default_cleanup_comments),
-      cleanup_comments_buffer = cleanup_comments_buffer.unwrap_or_else(default_cleanup_comments_buffer),
-      number_of_ancestors_in_parent_scope = number_of_ancestors_in_parent_scope.unwrap_or_else(default_number_of_ancestors_in_parent_scope),
-      delete_consecutive_new_lines = delete_consecutive_new_lines.unwrap_or_else(default_delete_consecutive_new_lines),
-      global_tag_prefix = global_tag_prefix.unwrap_or_else(default_global_tag_prefix),
-      delete_file_if_empty = delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty),
-      path_to_output_summary = path_to_output_summary,
-      allow_dirty_ast = allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast),
-    }
+    PiranhaArgumentsBuilder::default()
+      .path_to_codebase(path_to_codebase.unwrap_or_else(default_path_to_codebase))
+      .include(
+        include
+          .unwrap_or_default()
+          .iter()
+          .map(|x| Pattern::new(x).unwrap())
+          .collect_vec(),
+      )
+      .exclude(
+        exclude
+          .unwrap_or_default()
+          .iter()
+          .map(|x| Pattern::new(x).unwrap())
+          .collect_vec(),
+      )
+      .path_to_configurations(path_to_configurations.unwrap_or_else(default_path_to_configurations))
+      .rule_graph(rg)
+      .code_snippet(code_snippet.unwrap_or_else(default_code_snippet))
+      .language(PiranhaLanguage::from(language.as_str()))
+      .substitutions(subs)
+      .dry_run(dry_run.unwrap_or_else(default_dry_run))
+      .cleanup_comments(cleanup_comments.unwrap_or_else(default_cleanup_comments))
+      .cleanup_comments_buffer(
+        cleanup_comments_buffer.unwrap_or_else(default_cleanup_comments_buffer),
+      )
+      .number_of_ancestors_in_parent_scope(
+        number_of_ancestors_in_parent_scope
+          .unwrap_or_else(default_number_of_ancestors_in_parent_scope),
+      )
+      .delete_consecutive_new_lines(
+        delete_consecutive_new_lines.unwrap_or_else(default_delete_consecutive_new_lines),
+      )
+      .global_tag_prefix(global_tag_prefix.unwrap_or_else(default_global_tag_prefix))
+      .delete_file_if_empty(delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty))
+      .path_to_output_summary(path_to_output_summary)
+      .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
+      .build()
   }
 }
 
 impl PiranhaArguments {
   pub fn get_language(&self) -> String {
-    self.language.name().to_string()
+    self.language.extension().to_string()
   }
 
   pub fn from_cli() -> Self {
     let p = PiranhaArguments::parse();
-    piranha_arguments! {
-      path_to_codebase = p.path_to_codebase().to_string(),
-      substitutions = p.substitutions.clone(),
-      language = p.language().clone(),
-      path_to_configurations = p.path_to_configurations().to_string(),
-      path_to_output_summary = p.path_to_output_summary().clone(),
-      delete_file_if_empty = *p.delete_file_if_empty(),
-      delete_consecutive_new_lines = *p.delete_consecutive_new_lines(),
-      global_tag_prefix = p.global_tag_prefix().to_string(),
-      number_of_ancestors_in_parent_scope = *p.number_of_ancestors_in_parent_scope(),
-      cleanup_comments_buffer = *p.cleanup_comments_buffer(),
-      cleanup_comments = *p.cleanup_comments(),
-      dry_run = *p.dry_run(),
-    }
+    PiranhaArgumentsBuilder::default()
+      .path_to_codebase(p.path_to_codebase().to_string())
+      .substitutions(p.substitutions.clone())
+      .language(p.language().clone())
+      .path_to_configurations(p.path_to_configurations().to_string())
+      .path_to_output_summary(p.path_to_output_summary().clone())
+      .delete_file_if_empty(*p.delete_file_if_empty())
+      .delete_consecutive_new_lines(*p.delete_consecutive_new_lines())
+      .global_tag_prefix(p.global_tag_prefix().to_string())
+      .number_of_ancestors_in_parent_scope(*p.number_of_ancestors_in_parent_scope())
+      .cleanup_comments_buffer(*p.cleanup_comments_buffer())
+      .cleanup_comments(*p.cleanup_comments())
+      .dry_run(*p.dry_run())
+      .build()
   }
 
   pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
@@ -297,41 +333,6 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 
   built_in_rules.merge(&user_defined_rules)
 }
-
-#[macro_export]
-/// This macro can be used to construct a PiranhaArgument (via the builder).'
-/// Allows to use builder pattern more "dynamically"
-///
-/// Usage:
-///
-/// ```ignore
-/// piranha_arguments! {
-///   path_to_codebase = "path/to/code/base".to_string(),
-///   language = "Java".to_string(),
-///   path_to_configurations = "path/to/configurations".to_string(),
-/// }
-/// ```
-///
-/// expands to
-///
-/// ```ignore
-/// PiranhaArgumentsBuilder::default()
-///      .path_to_codebase("path/to/code/base".to_string())
-///      .language("Java".to_string())
-///      .path_to_configurations("path/to/configurations".to_string())
-///      .build()
-/// ```
-///
-macro_rules! piranha_arguments {
-    ($($kw: ident = $value: expr,)*) => {
-      $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
-      $(
-        .$kw($value)
-       )*
-      .build()
-    };
-}
-pub use piranha_arguments;
 
 #[cfg(test)]
 #[path = "unit_tests/piranha_arguments_test.rs"]

@@ -1,6 +1,6 @@
 from collections import Counter
 from os.path import join, dirname, getmtime
-from polyglot_piranha import Rule, RuleGraph, execute_piranha, PiranhaArguments, Constraint
+from polyglot_piranha import Rule, RuleGraph, execute_piranha, PiranhaArguments, Filter
 import logging
 from logging import info
 
@@ -21,7 +21,7 @@ def swift_demo():
 
     args = PiranhaArguments(
         "swift",
-        {
+        substitutions={
             "stale_flag_name": "test_second_experiment",
         },
         path_to_configurations=configuration_path,
@@ -52,7 +52,7 @@ def java_demo():
 
     args = PiranhaArguments(
         "java",
-        {
+        substitutions={
             "stale_flag_name": "STALE_FLAG",
         },
         path_to_configurations=configuration_path,

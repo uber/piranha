@@ -477,10 +477,10 @@ query = """
 replace = ""
 replace_node = "enum_declaration"
 is_seed_rule = false
-[[rules.constraints]]
-matcher = """(class_declaration (_) @nm
+[[rules.filters]]
+enclosing_node = """(class_declaration (_) @nm
     (enum_class_body)) @ed"""
-queries = ["(enum_entry) @ee"]
+not_contains = ["(enum_entry) @ee"]
 
 # Delete all file contents if 
 [[rules]]
@@ -490,9 +490,9 @@ query = """
 replace = ""
 replace_node = "program"
 is_seed_rule = false
-[[rules.constraints]]
-matcher = "(source_file) @sf"
-queries = [
+[[rules.filters]]
+enclosing_node = "(source_file) @sf"
+not_contains = [
   "(class_declaration) @cd",
   "(object_declaration) @od",
   "(function_declaration) @fd",
@@ -548,14 +548,14 @@ is_seed_rule = false
 
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
-# Please note that the tree-sitter queries in the constraint uses holes (i.e. `@variable_name` and `@init`).
+# Please note that the tree-sitter queries in the filter uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
-# [[rules.constraints]]
-# matcher = "(function_declaration) @md"
-# queries = [] 
-[[rules.constraints]]
-matcher = "(function_declaration) @md"
-queries = [
+# [[rules.filters]]
+# enclosing_node =  "(function_declaration) @md"
+# not_contains = []
+[[rules.filters]]
+enclosing_node = "(function_declaration) @md"
+not_contains = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @assignment
 (#eq? @a.lhs "@variable_name")
@@ -576,9 +576,9 @@ replace_node = "property_declaration"
 is_seed_rule = false
 # Check if there is no assignment where the variable @variable_name is 
 # assigned to a value other than @init, within the method body
-[[rules.constraints]]
-matcher = "(class_declaration) @cd"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @assignment
 (#eq? @a.lhs "@variable_name")
@@ -605,9 +605,9 @@ holes = ["variable_name", "init"]
 is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
-[[rules.constraints]]
-matcher = "(function_declaration) @md"
-queries = [
+[[rules.filters]]
+enclosing_node = "(function_declaration) @md"
+not_contains = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
                                  (boolean_literal)  @vdcl.init) @property_declaration
@@ -630,9 +630,9 @@ holes = ["variable_name", "init"]
 is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
-[[rules.constraints]]
-matcher = "(class_declaration) @md"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @md"
+not_contains = [
   """(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
                                  (boolean_literal)  @vdcl.init) @property_declaration
@@ -654,18 +654,18 @@ replace = ""
 replace_node = "assignment"
 is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"\
-[[rules.constraints]]
-matcher = "(function_declaration) @md"
-queries = ["""(
+[[rules.filters]]
+enclosing_node = "(function_declaration) @md"
+not_contains = ["""(
 (property_declaration (variable_declaration (simple_identifier)@f_vdcl.lhs ) 
                                  (_)@f_vdcl.init) @property_declaration
   (#eq? @f_vdcl.lhs "@variable_name")
   (#not-eq? @f_vdcl.init "@init")
 )"""]
 
-[[rules.constraints]]
-matcher = "(function_declaration) @md"
-queries = [
+[[rules.filters]]
+enclosing_node = "(function_declaration) @md"
+not_contains = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @f_assignment
   (#eq? @a.lhs "@variable_name")
@@ -673,18 +673,18 @@ queries = [
 )""",
 ]
 
-[[rules.constraints]]
-matcher = "(class_declaration) @md"
-queries = ["""(
+[[rules.filters]]
+enclosing_node = "(class_declaration) @md"
+not_contains = ["""(
 (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
                                  (_)@vdcl.init ) @property_declaration
 (#eq? @vdcl.lhs "@variable_name")
 (#not-eq? @vdcl.init "@init")
 )"""]
 
-[[rules.constraints]]
-matcher = "(class_declaration) @md"
-queries = [
+[[rules.filters]]
+enclosing_node = "(class_declaration) @md"
+not_contains = [
   """(
 (assignment (directly_assignable_expression (simple_identifier)@a.lhs) (_)@a.rhs)    @c_assignment
   (#eq? @a.lhs "@variable_name")
@@ -695,7 +695,7 @@ queries = [
 
 # Replace identifier with value if :
 # (i) There is no local variable declaration in the enclosing method with the name as the identifier 
-# TODO: Add field constraint
+# TODO: Add field filter
 [[rules]]
 holes = ["variable_name", "init"]
 name = "replace_identifier_with_value"
@@ -708,10 +708,10 @@ query = """
 replace = "@init"
 replace_node = "identifier"
 is_seed_rule = false
-# [[rules.constraints]]
+# [[rules.filters]]
 # There should exist no local variable declaration named `@identifer`
-# matcher = "(function_declaration) @md"
-# queries = [
+# enclosing_node =  "(function_declaration) @md"
+# not_contains = [
 #   """(
 # (property_declaration (variable_declaration (simple_identifier)@vdcl.lhs ) 
 #                                  [(boolean_literal)  @vdcl.init ( parenthesized_expression (boolean_literal) @vdcl.init)]) @property_declaration

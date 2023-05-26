@@ -176,14 +176,14 @@ macro_rules! create_match_tests {
       let _path= std::path::PathBuf::from("test-resources").join($language).join($path_to_test);
       let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
       let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-      let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
-        path_to_codebase = path_to_codebase,
-        path_to_configurations = path_to_configurations,
-        language= $crate::models::language::PiranhaLanguage::from($language),
+      let piranha_arguments =  $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
+        .path_to_codebase(path_to_codebase)
+        .path_to_configurations(path_to_configurations)
+        .language($crate::models::language::PiranhaLanguage::from($language))
         $(
-          $kw = $value,
+          .$kw($value)
         )*
-      };
+      .build();
       let output_summaries = $crate::execute_piranha(&piranha_arguments);
       super::assert_frequency_for_matches(&output_summaries, &$matches_frequency);
     }
@@ -219,14 +219,14 @@ macro_rules! create_rewrite_tests {
       let _path= std::path::PathBuf::from("test-resources").join($language).join($path_to_test);
       let temp_dir= super::copy_folder_to_temp_dir(&_path.join("input"));
 
-      let piranha_arguments =  $crate::models::piranha_arguments::piranha_arguments!{
-        path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-        path_to_configurations = _path.join("configurations").to_str().unwrap().to_string(),
-        language= $crate::models::language::PiranhaLanguage::from($language),
+      let piranha_arguments =  $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
+        .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+        .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
+        .language($crate::models::language::PiranhaLanguage::from($language))
         $(
-          $kw = $value,
+          .$kw($value)
         )*
-      };
+      .build();
 
       super::execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), $files_changed, true);
       // Delete temp_dir

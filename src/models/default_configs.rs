@@ -13,8 +13,10 @@
 
 use std::collections::{HashMap, HashSet};
 
+use glob::Pattern;
+
 use super::{
-  constraint::Constraint, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
+  filter::Filter, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
   rule_graph::RuleGraph,
 };
 use crate::utilities::tree_sitter_utilities::TSQuery;
@@ -31,6 +33,7 @@ pub const THRIFT: &str = "thrift";
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
 pub(crate) const UNUSED_CODE_PATH: &str = "/dev/null";
+pub(crate) const DEFAULT_ENCLOSING_QUERY: &str = "";
 
 pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
@@ -70,6 +73,14 @@ pub fn default_path_to_codebase() -> String {
 
 pub fn default_code_snippet() -> String {
   String::new()
+}
+
+pub fn default_include() -> Vec<Pattern> {
+  Vec::new()
+}
+
+pub fn default_exclude() -> Vec<Pattern> {
+  Vec::new()
 }
 
 pub fn default_path_to_configurations() -> String {
@@ -112,7 +123,7 @@ pub(crate) fn default_groups() -> HashSet<String> {
   HashSet::new()
 }
 
-pub(crate) fn default_constraints() -> HashSet<Constraint> {
+pub(crate) fn default_filters() -> HashSet<Filter> {
   HashSet::new()
 }
 
@@ -124,11 +135,23 @@ pub(crate) fn default_edges() -> Vec<OutgoingEdges> {
   vec![]
 }
 
-pub(crate) fn default_queries() -> Vec<TSQuery> {
+pub(crate) fn default_not_contains_queries() -> Vec<TSQuery> {
   Vec::new()
 }
 
-pub(crate) fn default_matcher() -> TSQuery {
+pub(crate) fn default_contains_query() -> TSQuery {
+  TSQuery::new(String::from(""))
+}
+
+pub(crate) fn default_contains_at_least() -> u32 {
+  1
+}
+
+pub(crate) fn default_contains_at_most() -> u32 {
+  u32::MAX
+}
+
+pub(crate) fn default_enclosing_node() -> TSQuery {
   TSQuery::new(String::new())
 }
 

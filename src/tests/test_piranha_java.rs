@@ -11,14 +11,16 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use glob::Pattern;
+
 use super::{
   copy_folder_to_temp_dir, create_match_tests, create_rewrite_tests,
   execute_piranha_and_check_result, initialize, substitutions,
 };
 use crate::{
-  constraint, edges, execute_piranha,
+  edges, execute_piranha, filter,
   models::{
-    default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::piranha_arguments,
+    default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
     rule_graph::RuleGraphBuilder,
   },
   piranha_rule,
@@ -66,7 +68,20 @@ create_rewrite_tests! {
 
 create_match_tests! {
   JAVA,
-  test_java_match_only: "structural_find", HashMap::from([("find_enum_constant", 1), ("find_method", 1), ("replace_isToggleEnabled_with_boolean_literal", 20)]);
+  test_java_match_only: "structural_find",
+              HashMap::from([
+                  ("find_enum_constant", 1),
+                  ("find_method", 1),
+                  ("replace_isToggleEnabled_with_boolean_literal", 20)
+                  ]);
+  test_java_match_only_with_include_exclude: "structural_find_with_include_exclude",
+              HashMap::from([
+                  ("find_enum_constant", 1),
+                  ("find_method", 1),
+                  ("replace_isToggleEnabled_with_boolean_literal", 20)
+                  ]),
+              include = vec![Pattern::new("*/folder_2/**/*").unwrap()],
+              exclude = vec![Pattern::new("*/folder_2_1/**/*").unwrap()];
 }
 
 #[test]
@@ -80,11 +95,11 @@ fn test_scenarios_find_and_propagate_panic() {
     .join("find_and_propagate");
   let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-  let piranha_arguments = piranha_arguments! {
-    path_to_codebase = path_to_codebase,
-    path_to_configurations = path_to_configurations,
-    language = PiranhaLanguage::from(JAVA),
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .language(PiranhaLanguage::from(JAVA))
+    .build();
 
   let _ = execute_piranha(&piranha_arguments);
 }
@@ -98,12 +113,12 @@ fn test_scenarios_find_and_propagate_invalid_substitutions_panic() {
     .join("find_and_propagate_invalid_substitutions");
   let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-  let piranha_arguments = piranha_arguments! {
-    path_to_codebase = path_to_codebase,
-    path_to_configurations = path_to_configurations,
-    language = PiranhaLanguage::from(JAVA),
-    substitutions = substitutions! {"super_interface_name" => "SomeInterface"},
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .language(PiranhaLanguage::from(JAVA))
+    .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
+    .build();
 
   let _ = execute_piranha(&piranha_arguments);
 }
@@ -128,12 +143,18 @@ fn test_new_line_character_used_in_string_literal_code_snippet() {
       assert (s.equals(\"Hello \\n World\"));
     }
   }";
-  let piranha_arguments = piranha_arguments! {
-    path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    dry_run = true,
-    code_snippet = code_snippet.to_string(),
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_configurations(
+      path_to_scenario
+        .join("configurations")
+        .to_str()
+        .unwrap()
+        .to_string(),
+    )
+    .language(PiranhaLanguage::from(JAVA))
+    .dry_run(true)
+    .code_snippet(code_snippet.to_string())
+    .build();
 
   let expected = "package com.uber.piranha;
   class SomeClass {
@@ -165,12 +186,18 @@ fn _helper_user_option_delete_consecutive_lines(
 
   let temp_dir = copy_folder_to_temp_dir(&path_to_scenario.join("input"));
 
-  let piranha_arguments = piranha_arguments! {
-    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    path_to_configurations = path_to_scenario.join("configurations").to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    delete_consecutive_new_lines = delete_consecutive_new_lines,
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .path_to_configurations(
+      path_to_scenario
+        .join("configurations")
+        .to_str()
+        .unwrap()
+        .to_string(),
+    )
+    .language(PiranhaLanguage::from(JAVA))
+    .delete_consecutive_new_lines(delete_consecutive_new_lines)
+    .build();
 
   execute_piranha_and_check_result(
     &piranha_arguments,
@@ -206,10 +233,10 @@ fn test_consecutive_scope_level_rules() {
             private String name;
         }  
         }",
-      constraints = [
-        constraint! {
-          matcher = "(class_declaration ) @c_cd",
-          queries = ["(
+      filters = [
+        filter! {
+          enclosing_node =  "(class_declaration ) @c_cd",
+          not_contains = ["(
             (class_declaration name:(_) @name ) @cd
             (#eq? @name \"InnerFooBar\")
             )",]
@@ -226,10 +253,10 @@ fn test_consecutive_scope_level_rules() {
       replace_node = "class_body",
       replace = "{\n private String address;\n @class_members \n}",
       is_seed_rule= false,
-      constraints = [
-        constraint! {
-          matcher = "(class_declaration ) @c_cd",
-          queries = ["(
+      filters = [
+        filter! {
+          enclosing_node =  "(class_declaration ) @c_cd",
+          not_contains = ["(
           (field_declaration (variable_declarator name:(_) @name )) @field
           (#eq? @name \"address\")
           )",]
@@ -244,14 +271,16 @@ fn test_consecutive_scope_level_rules() {
     scope = "Class"
   }];
 
-  let args = piranha_arguments! {
-    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    rule_graph = RuleGraphBuilder::default()
-                .rules(rules)
-                .edges(edges)
-                .build(),
-  };
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .rule_graph(
+      RuleGraphBuilder::default()
+        .rules(rules)
+        .edges(edges)
+        .build(),
+    )
+    .build();
 
   execute_piranha_and_check_result(&args, _path.join("expected").as_path(), 1, true)
 }
@@ -274,14 +303,12 @@ fn test_handle_syntactically_incorrect_tree() {
     replace = "@valuel"
   };
 
-  let piranha_arguments = piranha_arguments! {
-    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    rule_graph = RuleGraphBuilder::default()
-                .rules(vec![rule])
-                .build(),
-    allow_dirty_ast = true,
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .allow_dirty_ast(true)
+    .build();
 
   execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
   // Delete temp_dir
@@ -308,13 +335,11 @@ fn test_do_not_allow_syntactically_incorrect_tree() {
     replace = "@valuel"
   };
 
-  let piranha_arguments = piranha_arguments! {
-    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    rule_graph = RuleGraphBuilder::default()
-                .rules(vec![rule])
-                .build(),
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .build();
 
   execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
   // Delete temp_dir
@@ -342,13 +367,11 @@ fn test_handle_syntactically_incorrect_tree_panic() {
     replace = "@valuex"
   };
 
-  let piranha_arguments = piranha_arguments! {
-    path_to_codebase = temp_dir.path().to_str().unwrap().to_string(),
-    language = PiranhaLanguage::from(JAVA),
-    rule_graph = RuleGraphBuilder::default()
-                .rules(vec![rule])
-                .build(),
-  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .build();
 
   execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
   // Delete temp_dir

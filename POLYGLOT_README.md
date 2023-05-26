@@ -165,13 +165,20 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 
 ```
 Polyglot Piranha
-A refactoring tool that eliminates dead code related to stale feature flags.
+A refactoring tool that eliminates dead code related to stale feature flags
 
 Usage: polyglot_piranha [OPTIONS] --path-to-codebase <PATH_TO_CODEBASE> --path-to-configurations <PATH_TO_CONFIGURATIONS> -l <LANGUAGE>
 
 Options:
   -c, --path-to-codebase <PATH_TO_CODEBASE>
           Path to source code folder or file
+      --include [<INCLUDE>...]
+          Paths to include (as glob patterns)
+      --exclude [<EXCLUDE>...]
+          Paths to exclude (as glob patterns)
+          
+  -t, --code-snippet <CODE_SNIPPET>
+          Code snippet to transform [default: ]
   -s <SUBSTITUTIONS>
           These substitutions instantiate the initial set of rules. Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   -f, --path-to-configurations <PATH_TO_CONFIGURATIONS>
@@ -194,6 +201,8 @@ Options:
           Enables deletion of associated comments
       --dry-run
           Disables in-place rewriting of code
+      --allow-dirty-ast
+          Allows syntax errors in the input source code
   -h, --help
           Print help
 ```
@@ -355,9 +364,9 @@ Currently, Piranha provides deep clean-ups for edits that belong the groups - `r
 
 Setting the `is_seed_rule=False` ensures that the user defined rule is treated as a cleanup rule not as a seed rule (For more details refer to `demo/find_replace_custom_cleanup`).
 
-A user can also define exclusion filters for a rule (`rules.constraints`). These constraints allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that occur inside static methods (For more details, refer to the `demo/match_only`).
+A user can also define exclusion filters for a rule (`rules.filters`). These filters allow matching against the context of the primary match. For instance, we can write a rule that matches the expression `new ArrayList<>()` and exclude all instances that occur inside static methods (For more details, refer to the `demo/match_only`).
 
-At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.constraints.queries` (within `rules.constraints.matcher`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
+At a higher level, we can say that - Piranha first selects AST nodes matching `rules.query`, excluding those that match **any of** the `rules.filters.not_contains` (within `rules.filters.enclosing_node`). It then replaces the node identified as `rules.replace_node` with the formatted (using matched tags) content of `rules.replace`.
 
 <h3> Parameterizing the behavior of the feature flag API </h3>
 

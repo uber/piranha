@@ -19,7 +19,7 @@
 #
 # To capture the signature of the enclosing method, Piranha will match the below rule against the method.
 # This will result in matches - { n: "add", fp: "(int a, int b, int c, int d, int e): Int"} 
-# Substituting these matches in the `scopes.rules.generator` will result in : 
+# Substituting these matches in the `scopes.rulesscope` will result in :
 #
 #(((method_declaration 
 #           name : (_) @z
@@ -32,10 +32,10 @@
 [[scopes]]
 name = "Function"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 ((function_declaration (simple_identifier) @n  (function_value_parameters) @sign (function_body) @fb) @qd5)
 """
-generator = """(
+scope = """(
 ((function_declaration (simple_identifier) @z  (function_value_parameters) @g_sign (function_body) @g_fb) @g_qd5)
 (#eq? @z "@n")
 (#eq? @g_sign "@sign")                
@@ -45,8 +45,8 @@ generator = """(
 [[scopes]]
 name = "Class"
 [[scopes.rules]]
-matcher = "(class_declaration (type_identifier) @n) @c"
-generator = """
+enclosing_node = "(class_declaration (type_identifier) @n) @c"
+scope = """
 (
 ((class_declaration (type_identifier) @z) @qc)
 (#eq? @z "@n")
@@ -58,7 +58,7 @@ generator = """
 [[scopes]]
 name = "File"
 [[scopes.rules]]
-matcher = """
+enclosing_node = """
 (source_file) @s_f
 """
-generator = "(source_file) @source_file"
+scope = "(source_file) @source_file"

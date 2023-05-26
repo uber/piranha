@@ -31,6 +31,7 @@ use crate::{
 };
 
 use super::{language::PiranhaLanguage, rule::InstantiatedRule};
+use glob::Pattern;
 
 /// This maintains the state for Piranha.
 #[derive(Debug, Getters, Default)]
@@ -126,7 +127,9 @@ impl RuleStore {
   /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) contains the grep pattern.
   /// Note that `WalkDir` traverses the directory with parallelism.
   /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target.
-  pub(crate) fn get_relevant_files(&self, path_to_codebase: &str) -> HashMap<PathBuf, String> {
+  pub(crate) fn get_relevant_files(
+    &self, path_to_codebase: &str, include: &Vec<Pattern>, exclude: &Vec<Pattern>,
+  ) -> HashMap<PathBuf, String> {
     let _path_to_codebase = Path::new(path_to_codebase).to_path_buf();
 
     //If the path_to_codebase is a file, then execute piranha on it
@@ -136,14 +139,19 @@ impl RuleStore {
         read_file(&_path_to_codebase).unwrap(),
       )]);
     }
+
     let mut files: HashMap<PathBuf, String> = WalkDir::new(path_to_codebase)
-      // Walk over the entire code base
+      // walk over the entire code base
       .into_iter()
-      // Ignore errors
+      // ignore errors
       .filter_map(|e| e.ok())
-      // Filter files with the desired extension
+      // only retain the included paths (if any)
+      .filter(|f| include.is_empty() || include.iter().any(|p| p.matches_path(&f.path())))
+      // filter out all excluded paths (if any)
+      .filter(|f| exclude.is_empty() || exclude.iter().all(|p| !p.matches_path(&f.path())))
+      // filter files with the desired extension
       .filter(|de| self.language().can_parse(de))
-      // Read the file
+      // read the file
       .map(|f| (f.path(), read_file(&f.path()).unwrap()))
       .collect();
 

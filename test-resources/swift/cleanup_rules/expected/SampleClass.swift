@@ -164,9 +164,41 @@ class SampleClass {
         var value2 = 3
     }
 
+    func checkIfBooleanWithComments(){
+        // to be preserved1
+        toBePreserved1()
+                  
+        if a {
+            // to be preserved2
+            toBePreserved2()
+        }
+
+        if b {
+            // to be preserved3a
+            toBePreserved3a()
+        } else {
+            // to be preserved3b
+            toBePreserved3b()
+        }
+
+        // to be preserved4
+        toBePreserved4()
+                
+
+        // to be preserved5
+        toBePreserved5() 
+                    
+        // to be preserved6
+        toBePreserved6()
+    }
+
     func checkIfShortCircuitStatementsWithBooleanPrefix() {
         if  let a1 = something1a{
+            // some comment
+            // some other comment
             doSomething1a()
+            // another comment
+            doSomethingElse()
         }
 
         if  let b1 = something2a(){
@@ -192,7 +224,11 @@ class SampleClass {
 
     func checkIfShortCircuitStatementsWithBooleanSuffix() {
         if let a2 = something1{
+            // some comment
+            // some other comment
             doSomething1b()
+            // another comment
+            doSomethingElse()
         }
 
         if let b2 = something2(){
@@ -214,5 +250,83 @@ class SampleClass {
         if something6b{
             doSomething6b()
         }
+    }
+
+    func refactorBooleanLiteralEqualityExpressionInIfConditions(){
+
+        toBePreservedEquality1()
+
+        toBePreservedEquality2()
+
+        toBePreservedEquality3() 
+
+        toBePreservedEquality4()
+
+        toBePreservedEquality5()
+
+        toBePreservedEquality6()
+
+        toBePreservedEquality7()
+
+        if a {
+        toBePreservedEquality8()
+        }
+
+        if b {
+        toBePreservedEquality9a()
+        } else {
+        toBePreservedEquality9b()
+        }
+
+        toBePreservedEquality10()
+
+        if c {
+            toBePreservedEquality11()
+        }
+
+        if d {
+            toBePreservedEquality12a()
+        } else {
+        toBePreservedEquality12b()
+        }
+    }
+
+    func refactorBooleanLiteralInequalityExpressionInIfConditions(){
+
+        toBePreservedInequality1()
+
+        if a {
+            toBePreservedInequality2()
+         }
+
+        if b {
+            toBePreservedInequality3a()
+        } else {
+            toBePreservedInequality3b()
+        }
+
+        toBePreservedInequality4()
+
+        if c {
+            toBePreservedInequality5()
+        }
+
+        if d {
+            toBePreservedInequality6a()
+        } else {
+            toBePreservedInequality6b()
+        }
+
+        toBePreservedInequality7()
+
+        toBePreservedInequality8() 
+
+        toBePreservedInequality9() 
+
+        toBePreservedInequality10()
+
+        toBePreservedInequality11() 
+
+        toBePreservedInequality12() 
     }
 }
