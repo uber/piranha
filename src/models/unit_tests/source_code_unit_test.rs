@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use tree_sitter::Parser;
+use tree_sitter::{Parser, Point};
 
 use crate::{
   filter,
@@ -254,7 +254,7 @@ fn test_satisfies_filters_at_most_0_negative() {
         enclosing_node= "(method_declaration) @md",
         contains= "(
                     ((method_invocation name: (_) @name) @method)
-                    (#eq? @name equals)
+                    (#eq? @name \"equals\")
                 )",
         at_least = 0,
         at_most = 0
@@ -266,7 +266,7 @@ fn test_satisfies_filters_at_most_0_negative() {
         enclosing_node= "(method_declaration) @md",
         not_contains= ["(
                     ((method_invocation name: (_) @name) @method)
-                    (#eq? @name equals)
+                    (#eq? @name \"equals\")
                 )",]
     },
     |result| !result,
@@ -404,4 +404,88 @@ fn test_satisfies_filters_not_contains_negative() {
     ]),
     &mut rule_store,
   ));
+}
+
+// Tests for contains without providing an enclosing node
+fn run_test_satisfies_filters_without_enclosing(
+  filter: Filter, // Replace with the filter to test
+  assertion: fn(bool) -> bool,
+) {
+  let _rule = piranha_rule! {
+      name= "test",
+      query= "(
+            (method_declaration
+              name: (identifier) @method_name) @md
+            )",
+      filters= [filter,]
+  };
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+        public void foobar(){
+            boolean isFlagTreated = true;
+            if (isFlagTreated) {
+              x = anotherFunction(isFlagTreated);
+              y = foobar();
+              y = foobar();
+              x.equals(y);
+            }
+        }
+        }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let start = Point::new(1, 8);
+  let end = Point::new(9, 9);
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_point_range(start, end)
+    .unwrap();
+
+  assert!(assertion(source_code_unit.is_satisfied(
+    *node,
+    &rule,
+    &HashMap::from([("method_name".to_string(), "foobar".to_string()),]),
+    &mut rule_store,
+  )));
+}
+
+#[test]
+fn test_not_contains_no_enclosing_negative() {
+  run_test_satisfies_filters_without_enclosing(
+    filter! {,
+    not_contains= ["(
+                   (method_invocation
+                      name: (identifier) @inv) @md
+                   (#eq? @inv \"@method_name\")
+                      )",]},
+    |result| !result,
+  );
+}
+
+// Tests for contains with enclosing
+#[test]
+fn test_contains_no_enclosing_positive() {
+  run_test_satisfies_filters_without_enclosing(
+    filter! {,
+    contains= "(
+                   (method_invocation
+                      name: (identifier) @inv) @md
+                   (#eq? @inv \"@method_name\")
+                      )",
+    at_least =2},
+    |result| result,
+  );
 }

@@ -82,7 +82,6 @@ def test_insert_field_add_import():
 }""",
         filters= set([
             Filter(
-                enclosing_node= "(class_declaration ) @c_cd",
                 not_contains = ["""(
                     (field_declaration (variable_declarator name:(_) @name )) @field
                     (#eq? @name "names")

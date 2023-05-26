@@ -133,9 +133,9 @@ impl Filter {
 /// ```
 ///
 macro_rules! filter {
-  (enclosing_node = $enclosing_node:expr $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
+  ($(enclosing_node = $enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
-      .enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string()))
+      $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
       $(.not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*]))?
       $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
       $(.at_least($min))?
@@ -196,17 +196,30 @@ impl SourceCodeUnit {
     // This ensures that the below while loop considers the current node too when checking for filters.
     // It does not make sense to check for filter if current node is a "leaf" node.
     let mut initial_node = node;
-    if node.child_count() > 0 {
-      initial_node = node.child(0).unwrap();
-    }
 
     // No enclosing node is provided
     if filter.enclosing_node().get_query().as_str() == DEFAULT_ENCLOSING_QUERY {
       // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
-      panic!["Not implemented"]
+      self._check_current_node(filter, rule_store, substitutions, initial_node)
     } else {
+      if node.child_count() > 0 {
+        initial_node = node.child(0).unwrap();
+      }
       self._check_enclosing_node(filter, rule_store, substitutions, initial_node)
     }
+  }
+
+  fn _check_current_node(
+    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
+    node: Node,
+  ) -> bool {
+    if !self._filter_contains(&filter, rule_store, substitutions, &node) {
+      return false;
+    }
+    if !self._filter_not_contains(&filter, rule_store, substitutions, &node) {
+      return false;
+    }
+    true
   }
 
   /// This function checks for the contains
