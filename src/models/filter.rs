@@ -32,7 +32,7 @@ use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
 use super::default_configs::{
   default_contains_at_least, default_contains_at_most, default_contains_query,
-  default_enclosing_node, default_not_contains_queries, DEFAULT_ENCLOSING_QUERY,
+  default_enclosing_node, default_not_contains_queries, default_not_enclosing_node,
 };
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
@@ -44,6 +44,12 @@ pub struct Filter {
   #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
   enclosing_node: TSQuery,
+  /// AST patterns no ancestor node of the primary match should match
+  #[builder(default = "default_not_enclosing_node()")]
+  #[get = "pub"]
+  #[serde(default = "default_not_enclosing_node")]
+  #[pyo3(get)]
+  not_enclosing_node: TSQuery,
   /// AST patterns that should not match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_not_contains_queries()")]
   #[get = "pub"]
@@ -76,11 +82,13 @@ pub struct Filter {
 impl Filter {
   #[new]
   fn py_new(
-    enclosing_node: Option<String>, not_contains: Option<Vec<String>>, contains: Option<String>,
-    at_least: Option<u32>, at_most: Option<u32>,
+    enclosing_node: Option<String>, not_enclosing_node: Option<String>,
+    not_contains: Option<Vec<String>>, contains: Option<String>, at_least: Option<u32>,
+    at_most: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
+      .not_enclosing_node(TSQuery::new(not_enclosing_node.unwrap_or_default()))
       .not_contains(
         not_contains
           .unwrap_or_default()
@@ -133,9 +141,10 @@ impl Filter {
 /// ```
 ///
 macro_rules! filter {
-  ($(enclosing_node = $enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
+  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
+      $(.not_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($not_enclosing_node.to_string())))?
       $(.not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*]))?
       $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
       $(.at_least($min))?
@@ -151,6 +160,9 @@ impl Instantiate for Filter {
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
+      not_enclosing_node: self
+        .not_enclosing_node()
+        .instantiate(substitutions_for_holes),
       not_contains: self
         .not_contains()
         .iter()
@@ -193,68 +205,75 @@ impl SourceCodeUnit {
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
-    // This ensures that the below while loop considers the current node too when checking for filters.
-    // It does not make sense to check for filter if current node is a "leaf" node.
-    let mut initial_node = node;
 
-    // No enclosing node is provided
-    if filter.enclosing_node().get_query().as_str() == DEFAULT_ENCLOSING_QUERY {
-      // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
-      self._check_current_node(filter, rule_store, substitutions, initial_node)
-    } else {
-      if node.child_count() > 0 {
-        initial_node = node.child(0).unwrap();
+
+    let mut node_to_check = node;
+    let instantiated_filter = filter.instantiate(substitutions);
+
+    // If there is a not_enclosing_node is provided
+    let query = instantiated_filter.not_enclosing_node();
+    if !query.get_query().is_empty() {
+      // No ancestor should match with it
+      if self
+        ._get_ancestor(rule_store, node_to_check, &query)
+        .is_some()
+      {
+        return false;
       }
-      self._check_enclosing_node(filter, rule_store, substitutions, initial_node)
     }
-  }
+    // If an enclosing node is provided
+    let query = instantiated_filter.enclosing_node();
+    if !query.get_query().is_empty() {
+      // This ensures that the below while loop considers the current node too when checking for filters.
+      // It does not make sense to check for filter if current node is a "leaf" node.
+      if node.child_count() > 0 {
+        node_to_check = node.child(0).unwrap();
+      }
+      if let Some(result) = self._get_ancestor(rule_store, node_to_check, &query) {
+        node_to_check = result;
+      } else {
+        return false;
+      }
+    }
 
-  fn _check_current_node(
-    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
-    node: Node,
-  ) -> bool {
-    if !self._filter_contains(&filter, rule_store, substitutions, &node) {
+    if !self._filter_contains(
+      &instantiated_filter,
+      rule_store,
+      substitutions,
+      &node_to_check,
+    ) {
       return false;
     }
-    if !self._filter_not_contains(&filter, rule_store, substitutions, &node) {
+    if !self._filter_not_contains(
+      &instantiated_filter,
+      rule_store,
+      substitutions,
+      &node_to_check,
+    ) {
       return false;
     }
     true
   }
 
-  /// This function checks for the contains
-  fn _check_enclosing_node(
-    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
-    initial: Node,
-  ) -> bool {
-    let mut matched_enclosing_node = false;
+  /// This function checks if filters are satisfied in the enclosing node
+  fn _get_ancestor(
+    &self, rule_store: &mut RuleStore, initial: Node, query_str: &TSQuery,
+  ) -> Option<Node> {
     let mut current_node = initial;
     while let Some(parent) = current_node.parent() {
-      let instantiated_filter = filter.instantiate(substitutions);
-      let enclosing_node_query_str = instantiated_filter.enclosing_node();
-      if let Some(p_match) = get_match_for_query(
-        &parent,
-        self.code(),
-        rule_store.query(enclosing_node_query_str),
-        false,
-      ) {
-        matched_enclosing_node = true;
+      if let Some(p_match) =
+        get_match_for_query(&parent, self.code(), rule_store.query(query_str), false)
+      {
         let scope_node = get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        if !self._filter_contains(&filter, rule_store, substitutions, &scope_node) {
-          return false;
-        }
-        if !self._filter_not_contains(&filter, rule_store, substitutions, &scope_node) {
-          return false;
-        }
-        break;
+        return Some(scope_node);
       }
       current_node = parent;
     }
-    matched_enclosing_node
+    None
   }
 
   fn _filter_contains(
