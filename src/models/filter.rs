@@ -200,7 +200,7 @@ impl SourceCodeUnit {
     // No enclosing node is provided
     if filter.enclosing_node().get_query().as_str() == DEFAULT_ENCLOSING_QUERY {
       // Get the enclosing node matching the pattern specified in the filter (`filter.enclosing_node`)
-      self._check_current_node(filter, rule_store, initial_node)
+      self._check_current_node(filter, rule_store, substitutions, initial_node)
     } else {
       if node.child_count() > 0 {
         initial_node = node.child(0).unwrap();
@@ -209,12 +209,14 @@ impl SourceCodeUnit {
     }
   }
 
-  fn _check_current_node(&self, filter: Filter, rule_store: &mut RuleStore, node: Node) -> bool {
-    let empty_substitutions: HashMap<String, String> = HashMap::new();
-    if !self._filter_contains(&filter, rule_store, &empty_substitutions, &node) {
+  fn _check_current_node(
+    &self, filter: Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
+    node: Node,
+  ) -> bool {
+    if !self._filter_contains(&filter, rule_store, substitutions, &node) {
       return false;
     }
-    if !self._filter_not_contains(&filter, rule_store, &empty_substitutions, &node) {
+    if !self._filter_not_contains(&filter, rule_store, substitutions, &node) {
       return false;
     }
     true
