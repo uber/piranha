@@ -175,6 +175,7 @@ class Filter:
     def __init__(
         self,
         enclosing_node: Optional[str] = None,
+        not_enclosing_node: Optional[str] = None,
         not_contains: list[str] = [],
         contains: Optional[str] = None,
         at_least: int = 1,
