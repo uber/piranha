@@ -465,8 +465,7 @@ fn run_test_satisfies_filters_without_enclosing(
 #[test]
 fn test_not_contains_no_enclosing_negative() {
   run_test_satisfies_filters_without_enclosing(
-    filter! {
-    enclosing_node = "",
+    filter! {,
     not_contains= ["(
                    (method_invocation
                       name: (identifier) @inv) @md
@@ -480,8 +479,7 @@ fn test_not_contains_no_enclosing_negative() {
 #[test]
 fn test_contains_no_enclosing_positive() {
   run_test_satisfies_filters_without_enclosing(
-    filter! {
-    enclosing_node = "",
+    filter! {,
     contains= "(
                    (method_invocation
                       name: (identifier) @inv) @md
