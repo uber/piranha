@@ -38,7 +38,7 @@ use super::default_configs::{
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
 pub struct Filter {
-  /// AST patterns that some ancestor node of the primary match should comply
+  /// AST patterns that some ancestor node of the primary match should match
   #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[serde(default = "default_enclosing_node")]
@@ -62,14 +62,12 @@ pub struct Filter {
   #[serde(default = "default_contains_query")]
   #[pyo3(get)]
   contains: TSQuery,
-
   /// Least number of matches we should find for the contains query
   #[builder(default = "default_contains_at_least()")]
   #[get = "pub"]
   #[serde(default = "default_contains_at_least")]
   #[pyo3(get)]
   at_least: u32,
-
   /// Most number of matches we should find for the contains query
   #[builder(default = "default_contains_at_most()")]
   #[get = "pub"]
@@ -108,7 +106,10 @@ impl Filter {
 #[macro_export]
 /// This macro constructs a FilterBuilder for creating filter queries. It provides a more "dynamic" way to use the builder pattern.
 ///
-/// 'enclosing_node' is a required parameter that specifies the node to be inspected.
+/// 'enclosing_node' is an optional parameter that specifies the node to be inspected. If it is not provided
+/// piranha will check the filters against the matched node
+///
+/// 'not_enclosing_node' is an optional parameter that specifies the nodes that should not enclose the matched node
 ///
 /// 'not_contains' and 'contains' are optional parameters, accepting a list of queries that should not and should match
 /// within the 'enclosing_node' respectively.
@@ -121,6 +122,7 @@ impl Filter {
 /// ```
 /// filter! {
 ///   enclosing_node = "(method_declaration) @md",
+///   not_enclosing_node = "(while_statement) @wt",
 ///   not_contains= ["(method_invocation name: (_) @name)"],
 ///   contains= ["(parameter_list)"],
 ///   at_least = 1,
@@ -133,6 +135,7 @@ impl Filter {
 /// ```
 /// FilterBuilder::default()
 ///      .enclosing_node(TSQuery::new("(method_declaration) @md"))
+///      .not_enclosing_node(TSQuery::new("(while_statement) @wt"))
 ///      .not_contains(vec![TSQuery::new("(method_invocation name: (_) @name)")])
 ///      .contains(TSQuery::new("(parameter_list)"))
 ///      .at_least(1)
@@ -205,8 +208,6 @@ impl SourceCodeUnit {
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
     substitutions: &HashMap<String, String>,
   ) -> bool {
-
-
     let mut node_to_check = node;
     let instantiated_filter = filter.instantiate(substitutions);
 
@@ -215,7 +216,7 @@ impl SourceCodeUnit {
     if !query.get_query().is_empty() {
       // No ancestor should match with it
       if self
-        ._get_ancestor(rule_store, node_to_check, &query)
+        ._get_ancestor(rule_store, node_to_check, query)
         .is_some()
       {
         return false;
@@ -229,7 +230,7 @@ impl SourceCodeUnit {
       if node.child_count() > 0 {
         node_to_check = node.child(0).unwrap();
       }
-      if let Some(result) = self._get_ancestor(rule_store, node_to_check, &query) {
+      if let Some(result) = self._get_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
         return false;

@@ -520,9 +520,9 @@ fn run_test_satisfies_filters_not_enclosing_node(
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-      .path_to_codebase(UNUSED_CODE_PATH.to_string())
-      .language(java)
-      .build();
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
   let source_code_unit = SourceCodeUnit::new(
     &mut parser,
     source_code.to_string(),
@@ -534,8 +534,9 @@ fn run_test_satisfies_filters_not_enclosing_node(
   let start = Point::new(3, 10);
   let end = Point::new(3, 29);
   let node = &source_code_unit
-      .root_node().descendant_for_point_range(start, end)
-      .unwrap();
+    .root_node()
+    .descendant_for_point_range(start, end)
+    .unwrap();
 
   let map: HashMap<String, String> = HashMap::new();
   assert!(assertion(source_code_unit.is_satisfied(
@@ -545,7 +546,6 @@ fn run_test_satisfies_filters_not_enclosing_node(
     &mut rule_store,
   )));
 }
-
 
 #[test]
 fn test_satisfies_filter_not_enclosing_node_positive() {
