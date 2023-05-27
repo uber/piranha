@@ -256,8 +256,8 @@ impl SourceCodeUnit {
     true
   }
 
-  /// This function checks if filters are satisfied in the enclosing node
-  fn _get_ancestor(
+  /// This function checks if the query matches with any ancestor of node
+  fn _get_match_from_ancestor(
     &self, rule_store: &mut RuleStore, initial: Node, query_str: &TSQuery,
   ) -> Option<Node> {
     let mut current_node = initial;
