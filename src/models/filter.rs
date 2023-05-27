@@ -216,7 +216,7 @@ impl SourceCodeUnit {
     if !query.get_query().is_empty() {
       // No ancestor should match with it
       if self
-        ._get_ancestor(rule_store, node_to_check, query)
+        ._get_match_from_ancestor(rule_store, node_to_check, query)
         .is_some()
       {
         return false;
@@ -230,7 +230,7 @@ impl SourceCodeUnit {
       if node.child_count() > 0 {
         node_to_check = node.child(0).unwrap();
       }
-      if let Some(result) = self._get_ancestor(rule_store, node_to_check, query) {
+      if let Some(result) = self._get_match_from_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
         return false;
@@ -256,7 +256,7 @@ impl SourceCodeUnit {
     true
   }
 
-  /// This function checks if the query matches with any ancestor of node
+  /// This function checks if a query matches with any ancestor of intial
   fn _get_match_from_ancestor(
     &self, rule_store: &mut RuleStore, initial: Node, query_str: &TSQuery,
   ) -> Option<Node> {
