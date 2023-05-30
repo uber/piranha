@@ -131,7 +131,7 @@ fn test_apply_edit_negative() {
 fn run_test_satisfies_filters(
   filter: Filter, // Replace with the filter to test
   assertion: fn(bool) -> bool,
-) {
+) -> bool {
   let _rule = piranha_rule! {
       name= "test",
       query= "(
@@ -174,15 +174,17 @@ fn run_test_satisfies_filters(
     .descendant_for_byte_range(50, 72)
     .unwrap();
 
-  assert!(assertion(source_code_unit.is_satisfied(
+  let satisfied = source_code_unit.is_satisfied(
     *node,
     &rule,
     &HashMap::from([
       ("variable_name".to_string(), "isFlagTreated".to_string()),
-      ("init".to_string(), "true".to_string())
+      ("init".to_string(), "true".to_string()),
     ]),
     &mut rule_store,
-  )));
+  );
+  assert!(assertion(satisfied));
+  satisfied
 }
 
 #[test]
@@ -568,22 +570,29 @@ fn test_satisfies_filter_not_enclosing_node_negative() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(
+  expected = "Invalid Filter Argument. `at_least` or `at_most` is set, but `contains` is empty !!!"
+)]
 fn test_filter_bad_arg_at_least() {
   FilterBuilder::default().at_least(2).build();
 }
 
 #[test]
-#[should_panic]
+#[should_panic(
+  expected = "Invalid Filter Argument. `at_least` or `at_most` is set, but `contains` is empty !!!"
+)]
 fn test_filter_bad_arg_at_most() {
   FilterBuilder::default().at_least(5).build();
 }
 
 #[test]
-#[should_panic]
+#[should_panic(
+  expected = "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
+)]
 fn test_filter_bad_range() {
   FilterBuilder::default()
     .contains(TSQuery::new(String::from("(if_statement) @if_stmt")))
     .at_least(5)
-    .at_most(4).build();
+    .at_most(4)
+    .build();
 }

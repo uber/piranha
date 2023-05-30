@@ -331,7 +331,7 @@ impl SourceCodeUnit {
     let at_least = filter.at_least as usize;
     let at_most = filter.at_most as usize;
     // Validate if the count of matches falls within the expected range
-    return at_least <= matches.len() && matches.len() <= at_most;
+    at_least <= matches.len() && matches.len() <= at_most
   }
 
   /// Check if the not_contains filter is satisfied by ancestor or any of its descendants
