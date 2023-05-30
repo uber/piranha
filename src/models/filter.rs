@@ -301,7 +301,7 @@ impl SourceCodeUnit {
     &self, filter: &Filter, rule_store: &mut RuleStore, ancestor: &Node,
   ) -> bool {
     for ts_query in filter.not_contains() {
-      // Instantiate the query and check if there's a match within the scope node
+      // Check if there's a match within the scope node
       // If there is the filter is not satisfied
       let query = &rule_store.query(ts_query);
       if get_match_for_query(ancestor, self.code(), query, true).is_some() {
