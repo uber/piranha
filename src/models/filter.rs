@@ -117,7 +117,7 @@ impl FilterBuilder {
   fn _validate(&self) -> Result<Filter, String> {
     let _filter: Filter = self.create().unwrap();
 
-    if _filter.at_least() > _filter.at_most() {
+    if _filter.at_least > _filter.at_most {
       return Err(
         "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
           .to_string(),
@@ -125,8 +125,8 @@ impl FilterBuilder {
     }
 
     // If the user set `at_least` or `at_most`, then the contains query cannot be empty
-    if (*_filter.at_least() != default_contains_at_least()
-      || *_filter.at_most() != default_contains_at_most())
+    if (_filter.at_least != default_contains_at_least()
+      || _filter.at_most != default_contains_at_most())
       && _filter.contains().get_query().is_empty()
     {
       return Err(

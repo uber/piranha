@@ -13,6 +13,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use tree_sitter::{Parser, Point};
 
+use crate::models::filter::FilterBuilder;
+use crate::utilities::tree_sitter_utilities::TSQuery;
 use crate::{
   filter,
   models::{
@@ -563,4 +565,25 @@ fn test_satisfies_filter_not_enclosing_node_negative() {
     not_enclosing_node = "(while_statement ) @while"},
     |result| result,
   );
+}
+
+#[test]
+#[should_panic]
+fn test_filter_bad_arg_at_least() {
+  FilterBuilder::default().at_least(2).build();
+}
+
+#[test]
+#[should_panic]
+fn test_filter_bad_arg_at_most() {
+  FilterBuilder::default().at_least(5).build();
+}
+
+#[test]
+#[should_panic]
+fn test_filter_bad_range() {
+  FilterBuilder::default()
+    .contains(TSQuery::new(String::from("(if_statement) @if_stmt")))
+    .at_least(5)
+    .at_most(4).build();
 }
