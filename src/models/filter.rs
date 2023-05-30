@@ -110,7 +110,7 @@ impl FilterBuilder {
   pub fn build(&self) -> Filter {
     match &self._validate() {
       Ok(filter) => filter.clone(),
-      Err(e) => panic!("{}", e),
+      Err(e) => panic!("Invalid filter - {}", e),
     }
   }
 
