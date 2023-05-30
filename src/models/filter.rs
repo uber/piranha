@@ -265,7 +265,7 @@ impl SourceCodeUnit {
       if let Some(p_match) =
         get_match_for_query(&parent, self.code(), rule_store.query(query_str), false)
       {
-        let scope_node = get_node_for_range(
+        let matched_ancestor = get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
           p_match.range().end_byte,
