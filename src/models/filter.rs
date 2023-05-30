@@ -196,8 +196,9 @@ impl SourceCodeUnit {
   ///
   /// The `filter` is composed of:
   /// (i) `enclosing_node`, the node to inspect, optional. If not provided we check whether the contains or non_contains are satisfied in the current node.
-  /// (ii) `not_contains` and `contains`, optional queries that should not and should match within the `enclosing_node`,
-  /// (iii) `at_least` and `at_most`, optional parameters indicating the acceptable range of matches for `contains` within the `enclosing_node`.
+  /// (ii) `not_enclosing_node`, optionalquery that no ancestor of the primary match should match,
+  /// (iii) `not_contains` and `contains`, optional queries that should not and should match within the `enclosing_node`,
+  /// (iv) `at_least` and `at_most`, optional parameters indicating the acceptable range of matches for `contains` within the `enclosing_node`.
   ///
   /// The function identifies the `enclosing_node` by traversing the ancestors of the `node`. Within this node:
   /// (i) if `not_contains` is provided, it ensures no sub-tree matches any of these queries,
@@ -297,7 +298,7 @@ impl SourceCodeUnit {
     return at_least <= matches.len() && matches.len() <= at_most;
   }
 
-  /// Check if the not_contains filter is not satisfied by ancestor or any of its descendants
+  /// Check if the not_contains filter is satisfied by ancestor or any of its descendants
   fn _check_filter_not_contains(
     &self, filter: &Filter, rule_store: &mut RuleStore, ancestor: &Node,
   ) -> bool {
