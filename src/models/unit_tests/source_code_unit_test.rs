@@ -587,6 +587,17 @@ fn test_filter_bad_arg_at_most() {
 
 #[test]
 #[should_panic(
+  expected = "Invalid Filter Argument. `contains` and `not_contains` cannot be set at the same time !!! Please use two filters instead."
+)]
+fn test_filter_bad_arguments_contains_not_contains() {
+  FilterBuilder::default()
+    .contains(TSQuery::new(String::from("(if_statement) @if_stmt")))
+    .not_contains(vec![TSQuery::new(String::from("(for_statement) @for"))])
+    .build();
+}
+
+#[test]
+#[should_panic(
   expected = "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
 )]
 fn test_filter_bad_range() {

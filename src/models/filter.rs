@@ -117,6 +117,14 @@ impl FilterBuilder {
   fn _validate(&self) -> Result<Filter, String> {
     let _filter: Filter = self.create().unwrap();
 
+    // Only allow users to set either contains or not_contains, but not both
+    if !_filter.contains().get_query().is_empty() && !_filter.not_contains().is_empty() {
+      return Err(
+        "Invalid Filter Argument. `contains` and `not_contains` cannot be set at the same time !!! Please use two filters instead."
+          .to_string(),
+      );
+    }
+
     if _filter.at_least > _filter.at_most {
       return Err(
         "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
