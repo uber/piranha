@@ -211,25 +211,13 @@ impl SourceCodeUnit {
     let mut node_to_check = node;
     let instantiated_filter = filter.instantiate(substitutions);
 
-    // If there is a not_enclosing_node is provided
-    let query = instantiated_filter.not_enclosing_node();
-    if !query.get_query().is_empty() {
-      // No ancestor should match with it
-      if self
-        ._get_match_from_ancestor(rule_store, node_to_check, query)
-        .is_some()
-      {
-        return false;
-      }
+    // Check if no ancestor matches the query for not_enclosing_node
+    if !self._check_not_enclosing_node(rule_store, node_to_check, &instantiated_filter) {
+      return false;
     }
     // If an enclosing node is provided
     let query = instantiated_filter.enclosing_node();
     if !query.get_query().is_empty() {
-      // This ensures that the below while loop considers the current node too when checking for filters.
-      // It does not make sense to check for filter if current node is a "leaf" node.
-      if node.child_count() > 0 {
-        node_to_check = node.child(0).unwrap();
-      }
       if let Some(result) = self._match_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
@@ -237,72 +225,84 @@ impl SourceCodeUnit {
       }
     }
 
-    if !self._filter_contains(
-      &instantiated_filter,
-      rule_store,
-      substitutions,
-      &node_to_check,
-    ) {
-      return false;
-    }
-    if !self._filter_not_contains(
-      &instantiated_filter,
-      rule_store,
-      substitutions,
-      &node_to_check,
-    ) {
-      return false;
+    self._check_filter_not_contains(&instantiated_filter, rule_store, &node_to_check)
+      && self._check_filter_contains(&instantiated_filter, rule_store, &node_to_check)
+  }
+
+  fn _check_not_enclosing_node(
+    &self, rule_store: &mut RuleStore, node_to_check: Node, instantiated_filter: &Filter,
+  ) -> bool {
+    let query = instantiated_filter.not_enclosing_node();
+    if !query.get_query().is_empty() {
+      // No ancestor should match with it
+      if self
+        ._match_ancestor(rule_store, node_to_check, query)
+        .is_some()
+      {
+        return false;
+      }
     }
     true
   }
 
-  /// This function checks if a query matches with any ancestor of intial
-  fn _get_match_from_ancestor(
-    &self, rule_store: &mut RuleStore, initial: Node, query_str: &TSQuery,
+  /// Search for any ancestor of `node` (including itself) that matches `query_str`
+  fn _match_ancestor(
+    &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
   ) -> Option<Node> {
-    let mut current_node = initial;
+    let mut current_node = node;
+
+    // This ensures that the below while loop considers the current node too when checking for filters.
+    if current_node.child_count() > 0 {
+      current_node = current_node.child(0).unwrap();
+    }
+
     while let Some(parent) = current_node.parent() {
       if let Some(p_match) =
-        get_match_for_query(&parent, self.code(), rule_store.query(query_str), false)
+        get_match_for_query(&parent, self.code(), rule_store.query(ts_query), false)
       {
         let matched_ancestor = get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
           p_match.range().end_byte,
         );
-        return Some(scope_node);
+        return Some(matched_ancestor);
       }
       current_node = parent;
     }
-    return None
+    None
   }
 
-  fn _filter_contains(
-    &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
-    scope_node: &Node,
+  fn _check_filter_contains(
+    &self, filter: &Filter, rule_store: &mut RuleStore, scope_node: &Node,
   ) -> bool {
-    let query_with_holes = filter.contains();
-    if query_with_holes.get_query().is_empty() {
+    // If the query is empty
+    let ts_query = filter.contains();
+    if ts_query.get_query().is_empty() {
       return true;
     }
+
     // Instantiate the query and retrieve all matches within the scope node
-    let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
-    let matches = get_all_matches_for_query(scope_node, self.code().to_string(), query, true, None);
+    let contains_query = &rule_store.query(filter.contains());
+    let matches = get_all_matches_for_query(
+      scope_node,
+      self.code().to_string(),
+      contains_query,
+      true,
+      None,
+    );
     let at_least = filter.at_least as usize;
     let at_most = filter.at_most as usize;
     // Validate if the count of matches falls within the expected range
     at_least <= matches.len() && matches.len() <= at_most
   }
 
-  fn _filter_not_contains(
-    &self, filter: &Filter, rule_store: &mut RuleStore, substitutions: &HashMap<String, String>,
-    scope_node: &Node,
+  fn _check_filter_not_contains(
+    &self, filter: &Filter, rule_store: &mut RuleStore, scope_node: &Node,
   ) -> bool {
-    for query_with_holes in filter.not_contains() {
+    for ts_query in filter.not_contains() {
       // Instantiate the query and check if there's a match within the scope node
       // If there is the filter is not satisfied
-      let query = &rule_store.query(&query_with_holes.instantiate(substitutions));
-
+      let query = &rule_store.query(ts_query);
       if get_match_for_query(scope_node, self.code(), query, true).is_some() {
         return false;
       }
