@@ -1,3 +1,7 @@
+Version 0.3.5
+-------------
+* Support filters without `enclosing_node` (#482)
+
 Version 0.3.4
 -------------
 * Support richer constraints 
