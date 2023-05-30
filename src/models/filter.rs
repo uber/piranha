@@ -229,6 +229,7 @@ impl SourceCodeUnit {
       && self._check_filter_contains(&instantiated_filter, rule_store, &node_to_check)
   }
 
+  /// Check if the `node` does not have any ancestor that matches the `not_enclosing_node` query
   fn _check_not_enclosing_node(
     &self, rule_store: &mut RuleStore, node_to_check: Node, instantiated_filter: &Filter,
   ) -> bool {
