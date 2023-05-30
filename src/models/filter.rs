@@ -230,7 +230,7 @@ impl SourceCodeUnit {
       if node.child_count() > 0 {
         node_to_check = node.child(0).unwrap();
       }
-      if let Some(result) = self._get_match_from_ancestor(rule_store, node_to_check, query) {
+      if let Some(result) = self._match_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
         return false;
