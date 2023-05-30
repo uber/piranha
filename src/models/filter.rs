@@ -282,7 +282,7 @@ impl SourceCodeUnit {
       return true;
     }
 
-    //  Retrieve all matches within the scope node
+    // Retrieve all matches within the ancestor node
     let contains_query = &rule_store.query(filter.contains());
     let matches = get_all_matches_for_query(
       ancestor,
