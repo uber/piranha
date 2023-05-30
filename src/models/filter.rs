@@ -159,7 +159,7 @@ macro_rules! filter {
 pub use filter;
 
 impl Instantiate for Filter {
-  /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
+  /// Create a new query from `self` by updating the all queries (i.e., `enclosing_node`, `not_enclosing_node`, `contains`, `not_contains`) based on the substitutions.
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
@@ -250,7 +250,6 @@ impl SourceCodeUnit {
     &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
   ) -> Option<Node> {
     let mut current_node = node;
-
     // This ensures that the below while loop considers the current node too when checking for filters.
     if current_node.child_count() > 0 {
       current_node = current_node.child(0).unwrap();
@@ -272,8 +271,9 @@ impl SourceCodeUnit {
     None
   }
 
+  /// Check if the contains filter is satisfied by ancestor or any of its descendants
   fn _check_filter_contains(
-    &self, filter: &Filter, rule_store: &mut RuleStore, scope_node: &Node,
+    &self, filter: &Filter, rule_store: &mut RuleStore, ancestor: &Node,
   ) -> bool {
     // If the query is empty
     let ts_query = filter.contains();
@@ -284,7 +284,7 @@ impl SourceCodeUnit {
     // Instantiate the query and retrieve all matches within the scope node
     let contains_query = &rule_store.query(filter.contains());
     let matches = get_all_matches_for_query(
-      scope_node,
+      ancestor,
       self.code().to_string(),
       contains_query,
       true,
@@ -293,17 +293,18 @@ impl SourceCodeUnit {
     let at_least = filter.at_least as usize;
     let at_most = filter.at_most as usize;
     // Validate if the count of matches falls within the expected range
-    at_least <= matches.len() && matches.len() <= at_most
+    return at_least <= matches.len() && matches.len() <= at_most;
   }
 
+  /// Check if the not_contains filter is not satisfied by ancestor or any of its descendants
   fn _check_filter_not_contains(
-    &self, filter: &Filter, rule_store: &mut RuleStore, scope_node: &Node,
+    &self, filter: &Filter, rule_store: &mut RuleStore, ancestor: &Node,
   ) -> bool {
     for ts_query in filter.not_contains() {
       // Instantiate the query and check if there's a match within the scope node
       // If there is the filter is not satisfied
       let query = &rule_store.query(ts_query);
-      if get_match_for_query(scope_node, self.code(), query, true).is_some() {
+      if get_match_for_query(ancestor, self.code(), query, true).is_some() {
         return false;
       }
     }
