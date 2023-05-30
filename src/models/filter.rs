@@ -274,7 +274,7 @@ impl SourceCodeUnit {
       }
       current_node = parent;
     }
-    None
+    return None
   }
 
   fn _filter_contains(
