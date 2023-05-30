@@ -37,6 +37,7 @@ use super::default_configs::{
 
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
+#[builder(build_fn(name = "create"))]
 pub struct Filter {
   /// AST patterns that some ancestor node of the primary match should match
   #[builder(default = "default_enclosing_node()")]
@@ -98,9 +99,52 @@ impl Filter {
       .at_least(at_least.unwrap_or(default_contains_at_least()))
       .at_most(at_most.unwrap_or(default_contains_at_most()))
       .build()
-      .unwrap()
   }
   gen_py_str_methods!();
+}
+
+impl FilterBuilder {
+  /// Builds Filter from FilterBuilder
+  /// * create Filter from the builder
+  /// * validates new argument combinations
+  pub fn build(&self) -> Filter {
+    match &self._validate() {
+      Ok(filter) => filter.clone(),
+      Err(e) => panic!("Invalid filter - {}", e),
+    }
+  }
+
+  fn _validate(&self) -> Result<Filter, String> {
+    let _filter: Filter = self.create().unwrap();
+
+    // Only allow users to set either contains or not_contains, but not both
+    if !_filter.contains().get_query().is_empty() && !_filter.not_contains().is_empty() {
+      return Err(
+        "Invalid Filter Argument. `contains` and `not_contains` cannot be set at the same time !!! Please use two filters instead."
+          .to_string(),
+      );
+    }
+
+    if _filter.at_least > _filter.at_most {
+      return Err(
+        "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
+          .to_string(),
+      );
+    }
+
+    // If the user set `at_least` or `at_most`, then the contains query cannot be empty
+    if (_filter.at_least != default_contains_at_least()
+      || _filter.at_most != default_contains_at_most())
+      && _filter.contains().get_query().is_empty()
+    {
+      return Err(
+        "Invalid Filter Argument. `at_least` or `at_most` is set, but `contains` is empty !!!"
+          .to_string(),
+      );
+    }
+
+    Ok(_filter)
+  }
 }
 
 #[macro_export]
@@ -152,7 +196,7 @@ macro_rules! filter {
       $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
       $(.at_least($min))?
       $(.at_most($max))?
-      .build().unwrap()
+      .build()
   };
 }
 
@@ -295,7 +339,7 @@ impl SourceCodeUnit {
     let at_least = filter.at_least as usize;
     let at_most = filter.at_most as usize;
     // Validate if the count of matches falls within the expected range
-    return at_least <= matches.len() && matches.len() <= at_most;
+    at_least <= matches.len() && matches.len() <= at_most
   }
 
   /// Check if the not_contains filter is satisfied by ancestor or any of its descendants
