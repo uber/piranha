@@ -1,3 +1,8 @@
+Version 0.3.6
+-------------
+* Support richer constraints with `not_enclosing_node`
+* Added checks to make sure filter arguments are consistent
+
 Version 0.3.5
 -------------
 * Support filters without `enclosing_node` (#482)
