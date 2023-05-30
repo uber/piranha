@@ -44,7 +44,7 @@ pub struct Filter {
   #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
   enclosing_node: TSQuery,
-  /// AST patterns no ancestor node of the primary match should match
+  /// AST patterns NO ancestor node of the primary match should match
   #[builder(default = "default_not_enclosing_node()")]
   #[get = "pub"]
   #[serde(default = "default_not_enclosing_node")]
