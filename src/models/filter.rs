@@ -159,7 +159,7 @@ macro_rules! filter {
 pub use filter;
 
 impl Instantiate for Filter {
-  /// Create a new query from `self` by updating the all queries (i.e., `enclosing_node`, `not_enclosing_node`, `contains`, `not_contains`) based on the substitutions.
+  /// Create a new filter from `self` by updating the all queries (i.e., `enclosing_node`, `not_enclosing_node`, `contains`, `not_contains`) based on the substitutions.
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
