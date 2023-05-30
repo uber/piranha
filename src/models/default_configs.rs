@@ -33,7 +33,6 @@ pub const THRIFT: &str = "thrift";
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
 pub(crate) const UNUSED_CODE_PATH: &str = "/dev/null";
-pub(crate) const DEFAULT_ENCLOSING_QUERY: &str = "";
 
 pub fn default_number_of_ancestors_in_parent_scope() -> u8 {
   4
@@ -152,6 +151,10 @@ pub(crate) fn default_contains_at_most() -> u32 {
 }
 
 pub(crate) fn default_enclosing_node() -> TSQuery {
+  TSQuery::new(String::new())
+}
+
+pub(crate) fn default_not_enclosing_node() -> TSQuery {
   TSQuery::new(String::new())
 }
 

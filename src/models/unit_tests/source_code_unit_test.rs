@@ -489,3 +489,78 @@ fn test_contains_no_enclosing_positive() {
     |result| result,
   );
 }
+
+// Tests for not_enclosing_node
+fn run_test_satisfies_filters_not_enclosing_node(
+  filter: Filter, // Replace with the filter to test
+  assertion: fn(bool) -> bool,
+) {
+  let _rule = piranha_rule! {
+    name= "test",
+    query= "(
+      ((local_variable_declaration
+                      declarator: (variable_declarator
+                                          name: (_) @variable_name
+                                          )) @variable_declaration)
+      )",
+    replace_node= "variable_declaration",
+    replace= "",
+    filters= [filter,]
+  };
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+      public void foobar(){
+        if (isFlagTreated) {
+          int testNumber = 0;
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+
+  let start = Point::new(3, 10);
+  let end = Point::new(3, 29);
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_point_range(start, end)
+    .unwrap();
+
+  let map: HashMap<String, String> = HashMap::new();
+  assert!(assertion(source_code_unit.is_satisfied(
+    *node,
+    &rule,
+    &map,
+    &mut rule_store,
+  )));
+}
+
+#[test]
+fn test_satisfies_filter_not_enclosing_node_positive() {
+  run_test_satisfies_filters_not_enclosing_node(
+    filter! {,
+    not_enclosing_node = "(if_statement) @if_stmt"},
+    |result| !result,
+  );
+}
+
+#[test]
+fn test_satisfies_filter_not_enclosing_node_negative() {
+  run_test_satisfies_filters_not_enclosing_node(
+    filter! {,
+    not_enclosing_node = "(while_statement ) @while"},
+    |result| result,
+  );
+}
