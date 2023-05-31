@@ -470,6 +470,55 @@ not_contains = ["""
 )
 """]
 
+# Before: 
+# enabled, err = true, nil 
+
+# After: 
+# <>
+[[rules]]
+name = "delete_variable_declaration_with_nil"
+query = """
+(
+    (
+        (short_var_declaration
+            left: (expression_list
+                (identifier) @variable_name
+                (identifier) @err
+            )
+            right: (expression_list
+                ([
+                    (true)
+                    (false)
+                ]) @value
+                (nil) @nil
+            )
+        )
+    ) @short_v_decl
+)
+"""
+replace = ""
+replace_node = "short_v_decl"
+is_seed_rule = false
+# Check if there is an assignment to @variable_name with a value other than @value
+# Note that the query is against a short_var_declaration while
+# the filter is against an assigment_statement
+[[rules.filters]]
+enclosing_node = "(block) @block"
+not_contains = ["""
+(
+    (assignment_statement
+        left: (expression_list
+            (identifier) @a.lhs
+        )
+        right: (expression_list
+            (_) @a.rhs
+        )
+    ) @assignment
+    (#eq? @a.lhs "@variable_name")
+    (#not-eq? @a.rhs "@value")
+)
+"""]
+
 [[rules]]
 name = "replace_identifier_with_value"
 query = """
@@ -504,5 +553,47 @@ not_contains = ["""
         ) @assignment
     ]
     (#eq? @vn "@variable_name")
+)
+"""]
+
+# for @err = "err"
+# Before: 
+# err 
+# After :
+# nil
+[[rules]]
+name = "replace_identifier_with_nil"
+query = """
+(
+    (identifier) @identifier
+    (#eq? @identifier "@err")
+)
+"""
+replace = "nil"
+replace_node = "identifier"
+holes = ["err"]
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(block) @block"
+not_contains = ["""
+(
+    [
+        (short_var_declaration
+            left: (expression_list
+                (identifier) @vn
+            )
+        ) @assignment
+        (var_declaration
+            (var_spec
+                name: (identifier) @vn
+            )
+        ) @assignment
+        (assignment_statement
+            left: (expression_list
+                (identifier) @vn
+            )
+        ) @assignment
+    ]
+    (#eq? @vn "@err")
 )
 """]

@@ -61,6 +61,33 @@ func after_return1() string {
     return "enabled"
 }
 
+func after_return_nil_1() string {
+    enabled, err := exp.BoolValue("false"), nil
+    if enabled {
+        return "enabled"
+    }
+
+    if err == nil {
+        fmt.Println("Retain")
+    }
+
+    return "not enabled"
+}
+
+
+func after_return_nil_2() string {
+    enabled, err := exp.BoolValue("true"), nil
+    if !enabled {
+        return "enabled"
+    }
+
+    if err != nil {
+        fmt.Println("Retain")
+    }
+
+    return "not enabled"
+}
+
 func after_return2(a bool) string {
     if a {
         enabled := exp.BoolValue("false")
