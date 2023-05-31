@@ -1,3 +1,7 @@
+Version 0.3.7
+-------------
+* Support `enabled, err := foobar(), nil` scenario
+
 Version 0.3.6
 -------------
 * Support richer constraints with `not_enclosing_node`
