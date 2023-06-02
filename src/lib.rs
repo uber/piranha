@@ -19,6 +19,7 @@ use models::{
 };
 
 pub mod models;
+pub mod df;
 #[cfg(test)]
 mod tests;
 pub mod utilities;
