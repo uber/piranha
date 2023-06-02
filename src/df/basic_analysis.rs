@@ -11,11 +11,10 @@
  limitations under the License.
 */
 
-use std::collections::HashSet;
 use crate::df::df::{Direction, Sigma};
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
-
+use std::collections::HashSet;
 
 // This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
 // in compilers. Instead of tracking variable definitions, it tracks "tags" as they propagate
@@ -25,15 +24,15 @@ use crate::models::rule_graph::RuleGraph;
 // The result can then be used to check if the query contains any tag that was not reached.
 
 #[derive(Debug, Clone)]
-pub struct ReachingSigma {
+pub struct DefiniteAssignmentSigma {
   variables: HashSet<String>,
 }
 
-pub struct ForwardReachingDirection {
+pub struct ForwardDefiniteAssignment {
   graph: RuleGraph,
 }
 
-impl Sigma for ReachingSigma {
+impl Sigma for DefiniteAssignmentSigma {
   type Node = Rule;
   type LatticeValue = Vec<String>;
 
@@ -57,17 +56,17 @@ impl Sigma for ReachingSigma {
   }
 }
 
-
-impl Direction for ForwardReachingDirection {
+impl Direction for ForwardDefiniteAssignment {
   type Node = Rule;
-  type Sigma = ReachingSigma;
+  type Sigma = DefiniteAssignmentSigma;
 
   fn successors(&self, _rule: &Rule) -> Vec<Rule> {
     let result: Vec<String> = self
       .graph
       .graph()
       .get(_rule.name())
-      .map(|v| v.iter().map(|(k, _)| k.clone()).collect()).unwrap_or_default();
+      .map(|v| v.iter().map(|(k, _)| k.clone()).collect())
+      .unwrap_or_default();
 
     self
       .graph
@@ -78,16 +77,17 @@ impl Direction for ForwardReachingDirection {
       .collect()
   }
 
-  fn initial_value(&self) -> ReachingSigma {
-    ReachingSigma { variables: HashSet::new() }
+  fn initial_value(&self) -> DefiniteAssignmentSigma {
+    DefiniteAssignmentSigma {
+      variables: HashSet::new(),
+    }
   }
-
 
   // The `transfer` function takes a rule and the current set of reaching tags
   // (represented by `ReachingSigma`). It then computes the new set of reaching tags
   // after the rule is applied. This is done by inserting into the set all the tags
   // that are defined in the rule.
-  fn transfer(&self, _node: &Rule, _input: &ReachingSigma) -> ReachingSigma {
+  fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
     result.variables.insert(_node.name().to_string());
     result
