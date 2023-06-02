@@ -14,12 +14,12 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-/// Trait for states (sigma), which are mappings from variables to abstract values
+/// Trait for states (sigma), which store the states of the analysis at each program point
 pub trait Sigma {
   type Node;
   type LatticeValue;
 
-  /// Merges two sigma into a new one based on.
+  /// Merges two sigma into a new one.
   fn merge(&self, other: &Self) -> Self;
 
   /// Check if two sigmas are equal

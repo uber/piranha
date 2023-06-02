@@ -16,6 +16,14 @@ use crate::df::df::{Direction, Sigma};
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
 
+
+// This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
+// in compilers. Instead of tracking variable definitions, it tracks "tags" as they propagate
+// through a query, modeled as a directed graph of rules (`RuleGraph`).
+// The goal of the analysis is to find, for each point in the query,
+// the set of tags that could reach that point without any redefinitions.
+// The result can then be used to check if the query contains any tag that was not reached.
+
 #[derive(Debug, Clone)]
 pub struct ReachingSigma {
   variables: HashSet<String>,
@@ -29,6 +37,9 @@ impl Sigma for ReachingSigma {
   type Node = Rule;
   type LatticeValue = Vec<String>;
 
+  // The `merge` function computes the intersection of two sets of reaching tags.
+  // This is a conservative approach that ensures that a tag is considered "reaching"
+  // only if it can reach a point along all paths leading to that point.
   fn merge(&self, _other: &Self) -> Self {
     todo!()
   }
@@ -45,6 +56,7 @@ impl Sigma for ReachingSigma {
     todo!()
   }
 }
+
 
 impl Direction for ForwardReachingDirection {
   type Node = Rule;
@@ -70,10 +82,12 @@ impl Direction for ForwardReachingDirection {
     ReachingSigma { variables: HashSet::new() }
   }
 
-  fn transfer(&self, _node: &Rule, _input: &ReachingSigma) -> ReachingSigma {
-    // Get the variables that are defined in the rule
-    // Append them to input
 
+  // The `transfer` function takes a rule and the current set of reaching tags
+  // (represented by `ReachingSigma`). It then computes the new set of reaching tags
+  // after the rule is applied. This is done by inserting into the set all the tags
+  // that are defined in the rule.
+  fn transfer(&self, _node: &Rule, _input: &ReachingSigma) -> ReachingSigma {
     let mut result = _input.clone();
     result.variables.insert(_node.name().to_string());
     result
