@@ -27,10 +27,9 @@ use tree_sitter_tsq;
 
 // This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
 // in compilers. Instead of tracking variable definitions, it tracks "tags" as they propagate
-// through a query, modeled as a directed graph of rules (`RuleGraph`).
-// The goal of the analysis is to find, for each point in the query,
-// the set of tags that could reach that point without any redefinitions.
-// The result can then be used to check if the query contains any tag that was not reached.
+// through the graph. The goal of the analysis is to find, for each point in the graph,
+// the set of tags that will always reach that point. The result can then be used to check if the
+// query contains any variable tag that was not defined.
 
 #[derive(Debug, Clone)]
 pub struct DefiniteAssignmentSigma {
