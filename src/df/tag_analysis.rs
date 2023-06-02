@@ -107,6 +107,7 @@ impl Direction for ForwardDefiniteAssignment {
   }
 
   // Substitutions provided by the user are the entry point of all seed rules
+  // FIXME this needs to be updated
   fn entry_value() -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
