@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 
 use colored::Colorize;
 use derive_builder::Builder;
@@ -35,7 +36,7 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder, Eq)]
 #[pyclass]
 pub struct Rule {
   /// Name of the rule. (It is unique)
@@ -249,6 +250,12 @@ impl Instantiate for Rule {
       replace: updated_rule.replace().instantiate(substitutions_for_holes),
       ..updated_rule
     }
+  }
+}
+
+impl Hash for Rule {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.name().hash(state);
   }
 }
 

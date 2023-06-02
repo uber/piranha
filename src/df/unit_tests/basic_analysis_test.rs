@@ -11,5 +11,17 @@
  limitations under the License.
 */
 
-pub mod basic_analysis;
-pub mod df;
+use crate::df::basic_analysis::ForwardReachingDirection;
+use crate::df::df::DataflowAnalysis;
+use crate::models::rule::RuleBuilder;
+use crate::models::rule_graph::RuleGraphBuilder;
+
+#[test]
+fn test_forward_analysis() {
+
+  let graph = RuleGraphBuilder::default().build();
+  let rule = RuleBuilder::default().build().unwrap_or_default();
+  let forward = ForwardReachingDirection {graph};
+  let mut analysis = DataflowAnalysis::new(forward);
+  analysis.run_analysis(vec![], rule);
+}
