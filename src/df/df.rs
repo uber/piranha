@@ -72,12 +72,13 @@ impl<D: Direction> DataflowAnalysis<D> {
   // From https://cmu-program-analysis.github.io/2023/index.html
   pub fn run_analysis(&mut self, blocks: Vec<D::Node>, entry_point: D::Node) {
     let mut work_list = blocks.clone();
-    let mut sigmas = DfResults::<D::Node, D::Sigma>::new();
     blocks.iter().for_each(|block| {
-      let sigma = self.direction.initial_value();
-      sigmas.insert(block.clone(), sigma);
+      self.sigma_in.insert(block.clone(), self.direction.initial_value());
+      self.sigma_out.insert(block.clone(), self.direction.initial_value());
+
     });
-    sigmas.insert(entry_point, self.direction.entry_value());
+    self.sigma_in.insert(entry_point.clone(), self.direction.entry_value());
+    self.sigma_out.insert(entry_point, self.direction.entry_value());
 
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
