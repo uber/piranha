@@ -11,25 +11,19 @@
  limitations under the License.
 */
 
+use getset::Getters;
 use std::collections::HashMap;
 use std::hash::Hash;
 
 /// Trait for states (sigma), which store the states of the analysis at each program point
-pub trait Sigma {
+pub trait Sigma: Clone {
   type Node;
-  type LatticeValue;
 
   /// Merges two sigma into a new one (join operator).
   fn merge(&self, other: &Self) -> Self;
 
   /// Check if two sigmas are equal (this is used to terminate the analysis).
   fn is_equal(&self, other: &Self) -> bool;
-
-  /// Fetches the abstract value associated with a variable.
-  fn lookup(&self, var: &Self::Node) -> Option<&Self::LatticeValue>;
-
-  /// Sets the abstract value for a variable.
-  fn set(&mut self, var: Self::Node, value: Self::LatticeValue);
 }
 
 /// The direction of the analysis (forwards or backwards)
@@ -40,23 +34,27 @@ pub trait Direction {
   fn successors(&self, node: &Self::Node) -> Vec<Self::Node>;
 
   /// Initial abstract value for all other nodes.
-  fn initial_value(&self) -> Self::Sigma;
+  fn initial_value() -> Self::Sigma;
 
   /// Initial abstract value for the entry point (e.g., first rule).
-  fn entry_value(&self) -> Self::Sigma;
+  fn entry_value() -> Self::Sigma;
 
   /// Transforms the sigma based on the direction of the analysis.
   /// For now we don't consider instructions, since our analysis is straightforward.
-  fn transfer(&self, node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
+  fn transfer(node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
 }
 
 // The results of a dataflow analysis is a mapping from program points to states (sigma)
 pub type DfResults<N, S> = HashMap<N, S>;
 
 // Struct for a dataflow analysis
+#[derive(Debug, Getters)]
 pub struct DataflowAnalysis<D: Direction> {
   direction: D,
+
+  #[get = "pub"]
   sigma_in: DfResults<D::Node, D::Sigma>,
+  #[get = "pub"]
   sigma_out: DfResults<D::Node, D::Sigma>,
 }
 
@@ -73,18 +71,14 @@ impl<D: Direction> DataflowAnalysis<D> {
   pub fn run_analysis(&mut self, blocks: Vec<D::Node>, entry_point: D::Node) {
     let mut work_list = blocks.clone();
     blocks.iter().for_each(|block| {
-      self
-        .sigma_in
-        .insert(block.clone(), self.direction.initial_value());
+      self.sigma_in.insert(block.clone(), D::initial_value());
     });
-    self
-      .sigma_in
-      .insert(entry_point, self.direction.entry_value());
+    self.sigma_in.insert(entry_point, D::entry_value());
 
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
       if let Some(sigma_in) = self.sigma_in.get(&cur_node) {
-        let transferred_sigma = self.direction.transfer(&cur_node, sigma_in);
+        let transferred_sigma = D::transfer(&cur_node, sigma_in);
         self.sigma_out.insert(cur_node.clone(), transferred_sigma);
       }
 
@@ -94,6 +88,7 @@ impl<D: Direction> DataflowAnalysis<D> {
         let sigma_in = self.sigma_in.get(succ).unwrap();
         let new_sigma_in = sigma_in.merge(cur_sigma_out);
         if !sigma_in.is_equal(&new_sigma_in) {
+          self.sigma_in.insert(succ.clone(), new_sigma_in.clone());
           work_list.push(succ.clone());
         }
       });

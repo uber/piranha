@@ -12,7 +12,8 @@
 */
 
 use crate::df::df::DataflowAnalysis;
-use crate::df::tag_analysis::ForwardDefiniteAssignment;
+use crate::df::df::Direction;
+use crate::df::tag_analysis::{DefiniteAssignmentSigma, ForwardDefiniteAssignment};
 use crate::models::rule::RuleBuilder;
 use glob::Pattern;
 
@@ -25,6 +26,7 @@ use crate::{
   piranha_rule,
   utilities::eq_without_whitespace,
 };
+use std::collections::HashSet;
 use std::{collections::HashMap, path::PathBuf};
 
 #[test]
@@ -67,6 +69,58 @@ fn test_forward_analysis_simple() {
   let mut rules_post_order = rules.clone();
   rules_post_order.reverse();
   // The entry point of the rule graph
-  let entry_rule = rules.get(0).unwrap().clone();
-  analysis.run_analysis(rules_post_order, entry_rule);
+  let entry_rule = &rules[0];
+  analysis.run_analysis(rules_post_order, entry_rule.clone());
+
+  // Check the sigma in of the 2nd rule
+  let sigma = analysis.sigma_in().get(&rules[1]).unwrap().variables.clone();
+  let expected = vec!["@class_name", "@class_members", "@class_body", "@class_declaration"]
+    .into_iter()
+    .map(|s| s.to_string())
+    .collect::<HashSet<String>>();
+  assert_eq!(sigma, expected);
+}
+
+#[test]
+fn test_transfer_function() {
+  let rule = piranha_rule! {
+    name = "add_inner_class",
+    query = "(
+        (class_declaration name: (_)@class_name
+            body : (class_body ((_)*) @class_members) @class_body
+        ) @class_declaration
+        (#eq? @class_name_x \"@other_undefined_variable\")
+        (#eq? @class_name_1 \"@_undefined_variable\")
+        )"
+  };
+
+  let sigma = DefiniteAssignmentSigma {
+    variables: HashSet::new(),
+    is_top: false,
+  };
+
+  let new_sigma = ForwardDefiniteAssignment::transfer(&rule, &sigma);
+  assert_eq!(new_sigma.variables.len(), 4);
+}
+
+#[test]
+fn test_transfer_function_0() {
+  let rule = piranha_rule! {
+    name = "add_inner_class",
+    query = "(
+        (class_declaration name: (_)
+            body : (class_body ((_)*))
+        )
+        (#eq? @class_name_x \"@other_undefined_variable\")
+        (#eq? @class_name_1 \"@_undefined_variable\")
+        )"
+  };
+
+  let sigma = DefiniteAssignmentSigma {
+    variables: HashSet::new(),
+    is_top: false,
+  };
+
+  let new_sigma = ForwardDefiniteAssignment::transfer(&rule, &sigma);
+  assert_eq!(new_sigma.variables.len(), 0);
 }

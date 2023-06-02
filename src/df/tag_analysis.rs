@@ -12,10 +12,18 @@
 */
 
 use crate::df::df::{Direction, Sigma};
+use crate::df::utils::get_tags_from_matcher;
+use crate::models::filter::Filter;
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
+use crate::models::source_code_unit::SourceCodeUnit;
+use crate::utilities::tree_sitter_utilities::{get_all_matches_for_query, TSQuery};
 use clap::builder::Str;
-use std::collections::HashSet;
+use getset::Getters;
+use std::collections::{HashMap, HashSet};
+use std::string::String;
+use tree_sitter::{Parser, Query};
+use tree_sitter_tsq;
 
 // This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
 // in compilers. Instead of tracking variable definitions, it tracks "tags" as they propagate
@@ -25,7 +33,6 @@ use std::collections::HashSet;
 // The result can then be used to check if the query contains any tag that was not reached.
 
 #[derive(Debug, Clone)]
-
 pub struct DefiniteAssignmentSigma {
   variables: HashSet<String>,
   is_top: bool, // hack to prevent initializing variables with all elements for top
@@ -33,7 +40,6 @@ pub struct DefiniteAssignmentSigma {
 
 impl Sigma for DefiniteAssignmentSigma {
   type Node = Rule;
-  type LatticeValue = Vec<String>;
 
   // The `merge` function computes the intersection of two sets of reaching tags.
   // This is a conservative approach that ensures that a tag is considered "reaching"
@@ -59,14 +65,6 @@ impl Sigma for DefiniteAssignmentSigma {
 
   fn is_equal(&self, _other: &Self) -> bool {
     self.variables == _other.variables && self.is_top == _other.is_top
-  }
-
-  fn lookup(&self, _var: &Self::Node) -> Option<&Self::LatticeValue> {
-    todo!()
-  }
-
-  fn set(&mut self, _var: Self::Node, _value: Self::LatticeValue) {
-    todo!()
   }
 }
 
@@ -101,7 +99,7 @@ impl Direction for ForwardDefiniteAssignment {
   // Since the join operator or this analysis is intersection, the initial value
   // needs to be the set of all tags.
   // It feels weird separating to have the neet function (merge) outside this class
-  fn initial_value(&self) -> DefiniteAssignmentSigma {
+  fn initial_value() -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
       is_top: true,
@@ -109,7 +107,7 @@ impl Direction for ForwardDefiniteAssignment {
   }
 
   // Substitutions provided by the user are the entry point of all seed rules
-  fn entry_value(&self) -> DefiniteAssignmentSigma {
+  fn entry_value() -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
       is_top: false,
@@ -120,13 +118,15 @@ impl Direction for ForwardDefiniteAssignment {
   // (represented by `DefiniteAssignmentSigma`). It then computes the new set of reaching tags
   // after the rule is applied. This is done by inserting into the set all the tags
   // that are defined in the rule.
-  fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
+  fn transfer(_node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
-    result.variables.insert(_node.name().to_string());
+    let res = get_tags_from_matcher(&_node);
+    // insert res to result.variables
+    result.variables.extend(res.iter().cloned());
     result
   }
 }
 
 #[cfg(test)]
-#[path = "unit_tests/basic_analysis_test.rs"]
-mod basic_analysis_test;
+#[path = "unit_tests/tag_analysis_test.rs"]
+mod tag_analysis_test;
