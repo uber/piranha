@@ -76,15 +76,9 @@ impl<D: Direction> DataflowAnalysis<D> {
       self
         .sigma_in
         .insert(block.clone(), self.direction.initial_value());
-      self
-        .sigma_out
-        .insert(block.clone(), self.direction.initial_value());
     });
     self
       .sigma_in
-      .insert(entry_point.clone(), self.direction.entry_value());
-    self
-      .sigma_out
       .insert(entry_point, self.direction.entry_value());
 
     while !work_list.is_empty() {
