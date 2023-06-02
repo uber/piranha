@@ -98,6 +98,9 @@ impl Direction for ForwardDefiniteAssignment {
       .collect()
   }
 
+  // Since the join operator or this analysis is intersection, the initial value
+  // needs to be the set of all tags.
+  // It feels weird separating to have the neet function (merge) outside this class
   fn initial_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
