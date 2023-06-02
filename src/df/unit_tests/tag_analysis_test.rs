@@ -14,20 +14,9 @@
 use crate::df::df::DataflowAnalysis;
 use crate::df::df::Direction;
 use crate::df::tag_analysis::{DefiniteAssignmentSigma, ForwardDefiniteAssignment};
-use crate::models::rule::RuleBuilder;
-use glob::Pattern;
 
-use crate::{
-  edges, execute_piranha, filter,
-  models::{
-    default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
-    rule_graph::RuleGraphBuilder,
-  },
-  piranha_rule,
-  utilities::eq_without_whitespace,
-};
+use crate::{edges, models::rule_graph::RuleGraphBuilder, piranha_rule};
 use std::collections::HashSet;
-use std::{collections::HashMap, path::PathBuf};
 
 #[test]
 fn test_forward_analysis_simple() {
@@ -73,11 +62,21 @@ fn test_forward_analysis_simple() {
   analysis.run_analysis(rules_post_order, entry_rule.clone());
 
   // Check the sigma in of the 2nd rule
-  let sigma = analysis.sigma_in().get(&rules[1]).unwrap().variables.clone();
-  let expected = vec!["@class_name", "@class_members", "@class_body", "@class_declaration"]
-    .into_iter()
-    .map(|s| s.to_string())
-    .collect::<HashSet<String>>();
+  let sigma = analysis
+    .sigma_in()
+    .get(&rules[1])
+    .unwrap()
+    .variables
+    .clone();
+  let expected = vec![
+    "@class_name",
+    "@class_members",
+    "@class_body",
+    "@class_declaration",
+  ]
+  .into_iter()
+  .map(|s| s.to_string())
+  .collect::<HashSet<String>>();
   assert_eq!(sigma, expected);
 }
 

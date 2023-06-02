@@ -1,12 +1,10 @@
 use tree_sitter::{Node, Parser, Query};
 
-use crate::models::matches::Match;
 use crate::models::rule::Rule;
 use crate::utilities::tree_sitter_utilities::{
-  get_all_matches_for_query, get_match_for_query, get_node_for_range, TSQuery,
+  get_all_matches_for_query, get_match_for_query, get_node_for_range,
 };
 use std::string::String;
-use tree_sitter_tsq::language;
 
 pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
   let query_source_code = node.query().get_query();
@@ -41,7 +39,7 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
 
 /// Search for any ancestor of `node` (including itself) that matches `query_str`
 fn _check_not_enclosing_node(
-  source_code: &str, node: Node, query: &Query, parser: &Parser,
+  source_code: &str, node: Node, query: &Query, _parser: &Parser,
 ) -> bool {
   let mut current_node = node;
   // This ensures that the below while loop considers the current node too when checking for filters.

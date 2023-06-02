@@ -13,17 +13,12 @@
 
 use crate::df::df::{Direction, Sigma};
 use crate::df::utils::get_tags_from_matcher;
-use crate::models::filter::Filter;
+
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
-use crate::models::source_code_unit::SourceCodeUnit;
-use crate::utilities::tree_sitter_utilities::{get_all_matches_for_query, TSQuery};
-use clap::builder::Str;
-use getset::Getters;
-use std::collections::{HashMap, HashSet};
+
+use std::collections::HashSet;
 use std::string::String;
-use tree_sitter::{Parser, Query};
-use tree_sitter_tsq;
 
 // This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
 // in compilers. Instead of tracking variable definitions, it tracks "tags" as they propagate
