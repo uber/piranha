@@ -19,10 +19,10 @@ pub trait Sigma {
   type Node;
   type LatticeValue;
 
-  /// Merges two sigma into a new one.
+  /// Merges two sigma into a new one (join operator).
   fn merge(&self, other: &Self) -> Self;
 
-  /// Check if two sigmas are equal
+  /// Check if two sigmas are equal (this is used to terminate the analysis).
   fn is_equal(&self, other: &Self) -> bool;
 
   /// Fetches the abstract value associated with a variable.
@@ -37,7 +37,6 @@ pub trait Direction {
   type Node: Hash + Eq + Clone;
   type Sigma: Sigma<Node = Self::Node>;
 
-  /// Fetches the successors for a given node in the CFG (depends on the direction).
   fn successors(&self, node: &Self::Node) -> Vec<Self::Node>;
 
   /// Initial abstract value for all other nodes.
