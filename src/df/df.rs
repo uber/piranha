@@ -42,6 +42,9 @@ pub trait Direction {
   /// Initial abstract value for all other nodes.
   fn initial_value(&self) -> Self::Sigma;
 
+  /// Initial abstract value for the entry point (e.g., first rule).
+  fn entry_value(&self) -> Self::Sigma;
+
   /// Transforms the sigma based on the direction of the analysis.
   /// For now we don't consider instructions, since our analysis is straightforward.
   fn transfer(&self, node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
@@ -74,7 +77,7 @@ impl<D: Direction> DataflowAnalysis<D> {
       let sigma = self.direction.initial_value();
       sigmas.insert(block.clone(), sigma);
     });
-    sigmas.insert(entry_point, self.direction.initial_value());
+    sigmas.insert(entry_point, self.direction.entry_value());
 
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
