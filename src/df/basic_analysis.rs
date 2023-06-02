@@ -78,12 +78,12 @@ impl Direction for ForwardDefiniteAssignment {
   }
 
   fn initial_value(&self) -> DefiniteAssignmentSigma {
-    DefiniteAssignmentSigma {
-      variables: HashSet::new(),
-    }
+     // this should be the universal set
+    todo!()
   }
 
-  fn entry_value(&self) -> Self::Sigma {
+  fn entry_value(&self) -> DefiniteAssignmentSigma {
+    // this is the input to the rule graph
     todo!()
   }
 
@@ -94,7 +94,7 @@ impl Direction for ForwardDefiniteAssignment {
   fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
     result.variables.insert(_node.name().to_string());
-    result;
+    drop(result);
     todo!()
   }
 }
