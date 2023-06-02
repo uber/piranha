@@ -152,7 +152,6 @@ fn test_new_line_character_used_in_string_literal_code_snippet() {
         .to_string(),
     )
     .language(PiranhaLanguage::from(JAVA))
-    .dry_run(true)
     .code_snippet(code_snippet.to_string())
     .build();
 

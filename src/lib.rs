@@ -1,16 +1,15 @@
 /*
-Copyright (c) 2023 Uber Technologies, Inc.
+  Copyright (c) 2023 Uber Technologies, Inc.
 
- <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- except in compliance with the License. You may obtain a copy of the License at
- <p>http://www.apache.org/licenses/LICENSE-2.0
+  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+  except in compliance with the License. You may obtain a copy of the License at
+  <p>http://www.apache.org/licenses/LICENSE-2.0
 
- <p>Unless required by applicable law or agreed to in writing, software distributed under the
- License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing permissions and
- limitations under the License.
+  <p>Unless required by applicable law or agreed to in writing, software distributed under the
+  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+  express or implied. See the License for the specific language governing permissions and
+  limitations under the License.
 */
-
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
   edit::Edit, filter::Filter, matches::Match, outgoing_edges::OutgoingEdges,
@@ -63,11 +62,6 @@ pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutpu
   let mut piranha = Piranha::new(piranha_arguments);
   piranha.perform_cleanup();
 
-  let source_code_units = piranha.get_updated_files();
-
-  for scu in source_code_units.iter() {
-    scu.persist();
-  }
   let summaries = piranha
     .get_updated_files()
     .iter()
@@ -181,6 +175,12 @@ impl Piranha {
     // Delete the temp dir inside which the input code snippet was copied
     if let Some(t) = temp_dir {
       _ = t.close();
+    } else {
+      let source_code_units = self.get_updated_files();
+
+      for scu in source_code_units.iter() {
+        scu.persist();
+      }
     }
   }
 
