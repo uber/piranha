@@ -1,3 +1,8 @@
+Version 0.3.8
+-------------
+* Bug Fix related to code snippet mode #489
+* Added support for iOS string resource file format #490
+
 Version 0.3.7
 -------------
 * Support `enabled, err := foobar(), nil` scenario
