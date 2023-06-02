@@ -87,7 +87,6 @@ impl Direction for ForwardDefiniteAssignment {
     todo!()
   }
 
-
   // The `transfer` function takes a rule and the current set of reaching tags
   // (represented by `DefiniteAssignmentSigma`). It then computes the new set of reaching tags
   // after the rule is applied. This is done by inserting into the set all the tags

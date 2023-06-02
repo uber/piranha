@@ -73,12 +73,19 @@ impl<D: Direction> DataflowAnalysis<D> {
   pub fn run_analysis(&mut self, blocks: Vec<D::Node>, entry_point: D::Node) {
     let mut work_list = blocks.clone();
     blocks.iter().for_each(|block| {
-      self.sigma_in.insert(block.clone(), self.direction.initial_value());
-      self.sigma_out.insert(block.clone(), self.direction.initial_value());
-
+      self
+        .sigma_in
+        .insert(block.clone(), self.direction.initial_value());
+      self
+        .sigma_out
+        .insert(block.clone(), self.direction.initial_value());
     });
-    self.sigma_in.insert(entry_point.clone(), self.direction.entry_value());
-    self.sigma_out.insert(entry_point, self.direction.entry_value());
+    self
+      .sigma_in
+      .insert(entry_point.clone(), self.direction.entry_value());
+    self
+      .sigma_out
+      .insert(entry_point, self.direction.entry_value());
 
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
