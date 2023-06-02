@@ -11,16 +11,62 @@
  limitations under the License.
 */
 
-use crate::df::basic_analysis::ForwardDefiniteAssignment;
 use crate::df::df::DataflowAnalysis;
+use crate::df::tag_analysis::ForwardDefiniteAssignment;
 use crate::models::rule::RuleBuilder;
-use crate::models::rule_graph::RuleGraphBuilder;
+use glob::Pattern;
+
+use crate::{
+  edges, execute_piranha, filter,
+  models::{
+    default_configs::JAVA, language::PiranhaLanguage, piranha_arguments::PiranhaArgumentsBuilder,
+    rule_graph::RuleGraphBuilder,
+  },
+  piranha_rule,
+  utilities::eq_without_whitespace,
+};
+use std::{collections::HashMap, path::PathBuf};
 
 #[test]
-fn test_forward_analysis() {
-  let graph = RuleGraphBuilder::default().build();
-  let rule = RuleBuilder::default().build().unwrap_or_default();
+fn test_forward_analysis_simple() {
+  let rules = vec![
+    piranha_rule! {
+      name = "add_inner_class",
+      query = "(
+        (class_declaration name: (_)@class_name
+            body : (class_body ((_)*) @class_members)  @class_body
+        ) @class_declaration
+        (#eq? @class_name \"FooBar\")
+        )"
+    },
+    piranha_rule! {
+    name = "add_field_declaration",
+    query = "(
+        (class_declaration name: (_)@class_name
+            body : (class_body ((_)*) @class_members)  @class_body
+         ) @class_declaration
+        )"
+      },
+  ];
+
+  let edges = vec![edges! {
+    from = "add_inner_class",
+    to = ["add_field_declaration"],
+    scope = "Class"
+  }];
+
+  let graph = RuleGraphBuilder::default()
+    .rules(rules.clone())
+    .edges(edges)
+    .build();
+
   let forward = ForwardDefiniteAssignment { graph };
   let mut analysis = DataflowAnalysis::new(forward);
-  analysis.run_analysis(vec![], rule);
+
+  // Get the rules in post order for optimal performance of the analysis
+  let mut rules_post_order = rules.clone();
+  rules_post_order.reverse();
+  // The entry point of the rule graph
+  let entry_rule = rules.get(0).unwrap().clone();
+  analysis.run_analysis(rules_post_order, entry_rule);
 }

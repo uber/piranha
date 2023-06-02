@@ -14,6 +14,7 @@
 use crate::df::df::{Direction, Sigma};
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
+use clap::builder::Str;
 use std::collections::HashSet;
 
 // This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
@@ -24,12 +25,10 @@ use std::collections::HashSet;
 // The result can then be used to check if the query contains any tag that was not reached.
 
 #[derive(Debug, Clone)]
+
 pub struct DefiniteAssignmentSigma {
   variables: HashSet<String>,
-}
-
-pub struct ForwardDefiniteAssignment {
-  graph: RuleGraph,
+  is_top: bool, // hack to prevent initializing variables with all elements for top
 }
 
 impl Sigma for DefiniteAssignmentSigma {
@@ -40,11 +39,26 @@ impl Sigma for DefiniteAssignmentSigma {
   // This is a conservative approach that ensures that a tag is considered "reaching"
   // only if it can reach a point along all paths leading to that point.
   fn merge(&self, _other: &Self) -> Self {
-    todo!()
+    if self.is_top {
+      return _other.clone();
+    }
+    if _other.is_top {
+      return self.clone();
+    }
+    let new_variables: HashSet<String> = self
+      .variables
+      .iter()
+      .cloned()
+      .filter(|var| _other.variables.contains(var))
+      .collect();
+    DefiniteAssignmentSigma {
+      variables: new_variables,
+      is_top: false,
+    }
   }
 
   fn is_equal(&self, _other: &Self) -> bool {
-    todo!()
+    self.variables == _other.variables && self.is_top == _other.is_top
   }
 
   fn lookup(&self, _var: &Self::Node) -> Option<&Self::LatticeValue> {
@@ -56,35 +70,47 @@ impl Sigma for DefiniteAssignmentSigma {
   }
 }
 
+pub struct ForwardDefiniteAssignment {
+  graph: RuleGraph,
+}
+
 impl Direction for ForwardDefiniteAssignment {
   type Node = Rule;
   type Sigma = DefiniteAssignmentSigma;
 
   fn successors(&self, _rule: &Rule) -> Vec<Rule> {
-    let result: Vec<String> = self
+    // Get the rules and discard the edge type from the tuple
+    // (we don't care if it's a Parent, File, etc)
+    let child_rules: Vec<String> = self
       .graph
-      .graph()
-      .get(_rule.name())
-      .map(|v| v.iter().map(|(k, _)| k.clone()).collect())
-      .unwrap_or_default();
+      .get_neighbors(_rule.name())
+      .iter()
+      .map(|(_, v)| v.clone())
+      .collect();
 
+    // Get the actual rule objects that we are going to use in the analysis.
     self
       .graph
       .rules()
       .iter()
-      .filter(|r| result.contains(r.name()))
+      .filter(|r| child_rules.contains(r.name()))
       .cloned()
       .collect()
   }
 
   fn initial_value(&self) -> DefiniteAssignmentSigma {
-     // this should be the universal set
-    todo!()
+    DefiniteAssignmentSigma {
+      variables: HashSet::new(),
+      is_top: true,
+    }
   }
 
+  // Substitutions provided by the user are the entry point of all seed rules
   fn entry_value(&self) -> DefiniteAssignmentSigma {
-    // this is the input to the rule graph
-    todo!()
+    DefiniteAssignmentSigma {
+      variables: HashSet::new(),
+      is_top: false,
+    }
   }
 
   // The `transfer` function takes a rule and the current set of reaching tags
@@ -94,8 +120,7 @@ impl Direction for ForwardDefiniteAssignment {
   fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
     result.variables.insert(_node.name().to_string());
-    drop(result);
-    todo!()
+    result
   }
 }
 
