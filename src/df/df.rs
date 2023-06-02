@@ -2,24 +2,10 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 
-/// Trait for the abstract domain
-pub trait AbstractDomain {
-    type Concrete;
-    type Abstract;
-
-    /// Abstraction function that maps a concrete state to an abstract state.
-    fn alpha(&self, concrete: Self::Concrete) -> Self::Abstract;
-
-    /// Joins two abstract values into a new one.
-    fn join(&self, alpha1: Self::Abstract, alpha2: Self::Abstract) -> Self::Abstract;
-
-}
-
 /// Trait for states (sigma), which are mappings from variables to abstract values
 pub trait Sigma {
     type Node;
-    type Abstract;
-    type AbstractDomain: AbstractDomain<Abstract = Self::Abstract>;
+    type LatticeValue;
 
     /// Merges two sigma into a new one based on.
     fn merge(&self, other: &Self) -> Self;
@@ -28,16 +14,15 @@ pub trait Sigma {
     fn is_equal(&self, other: &Self) -> bool;
 
     /// Fetches the abstract value associated with a variable.
-    fn lookup(&self, var: &Self::Node) -> Option<&Self::Abstract>;
+    fn lookup(&self, var: &Self::Node) -> Option<&Self::LatticeValue>;
 
     /// Sets the abstract value for a variable.
-    fn set(&mut self, var: Self::Node, value: Self::Abstract);
+    fn set(&mut self, var: Self::Node, value: Self::LatticeValue);
 }
 
 /// The direction of the analysis (forwards or backwards)
 pub trait Direction {
     type Node : Hash + Eq + Clone;
-    type Abstract;
     type Sigma : Sigma<Node = Self::Node>;
 
     /// Fetches the successors for a given node in the CFG (depends on the direction).
@@ -56,19 +41,17 @@ pub trait Direction {
 pub type DfResults<N, S> = HashMap<N, S>;
 
 // Struct for a dataflow analysis
-pub struct DataflowAnalysis<D: Direction, A: AbstractDomain> {
+pub struct DataflowAnalysis<D: Direction> {
     direction: D,
-    domain: A,
     sigma_in: DfResults<D::Node, D::Sigma>,
     sigma_out: DfResults<D::Node, D::Sigma>,
 }
 
-impl<D: Direction, A: AbstractDomain> DataflowAnalysis<D, A> {
+impl<D: Direction> DataflowAnalysis<D> {
 
-    pub fn new(direction: D, domain: A) -> Self {
+    pub fn new(direction: D) -> Self {
         DataflowAnalysis {
             direction,
-            domain,
             sigma_in: DfResults::new(),
             sigma_out: DfResults::new(),
         }
