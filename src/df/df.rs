@@ -41,7 +41,7 @@ pub trait Direction {
 
   /// Transforms the sigma based on the direction of the analysis.
   /// For now we don't consider instructions, since our analysis is straightforward.
-  fn transfer(node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
+  fn transfer(&self, node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
 }
 
 // The results of a dataflow analysis is a mapping from program points to states (sigma)
@@ -78,7 +78,7 @@ impl<D: Direction> DataflowAnalysis<D> {
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
       if let Some(sigma_in) = self.sigma_in.get(&cur_node) {
-        let transferred_sigma = D::transfer(&cur_node, sigma_in);
+        let transferred_sigma = self.direction.transfer(&cur_node, sigma_in);
         self.sigma_out.insert(cur_node.clone(), transferred_sigma);
       }
 

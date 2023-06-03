@@ -46,8 +46,8 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
   let tsq = tree_sitter_query::language();
   let mut parser = Parser::new();
   parser
-      .set_language(tsq)
-      .expect("Could not set the language for the parser.");
+    .set_language(tsq)
+    .expect("Could not set the language for the parser.");
 
   let tree = parser.parse(query_source_code.clone(), None).unwrap();
 
@@ -61,6 +61,7 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
   let mut tags = vec![];
 
   // Regular expression to match substrings starting with "@"
+  // This is not the best way of doing it
   let re = Regex::new(r"@[\w.-]+").unwrap();
 
   // Function to process matches and extract tags
@@ -96,8 +97,6 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
 
   tags
 }
-
-
 
 /// Search for any ancestor of `node` (including itself) that matches `query_str`
 fn _check_not_enclosing_node(

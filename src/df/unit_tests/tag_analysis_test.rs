@@ -51,7 +51,7 @@ fn test_forward_analysis_simple() {
     .edges(edges)
     .build();
 
-  let forward = ForwardDefiniteAssignment { graph };
+  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
   let mut analysis = DataflowAnalysis::new(forward);
 
   // Get the rules in post order for optimal performance of the analysis
@@ -93,12 +93,21 @@ fn test_transfer_function() {
         )"
   };
 
+  let edges = vec![];
+
+  let graph = RuleGraphBuilder::default()
+    .rules(vec![rule.clone()])
+    .edges(edges)
+    .build();
+
+  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
+
   let sigma = DefiniteAssignmentSigma {
     variables: HashSet::new(),
     is_top: false,
   };
 
-  let new_sigma = ForwardDefiniteAssignment::transfer(&rule, &sigma);
+  let new_sigma = forward.transfer(&rule, &sigma);
   assert_eq!(new_sigma.variables.len(), 4);
 }
 
@@ -115,11 +124,20 @@ fn test_transfer_function_0() {
         )"
   };
 
+  let edges = vec![];
+
+  let graph = RuleGraphBuilder::default()
+    .rules(vec![rule.clone()])
+    .edges(edges)
+    .build();
+
+  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
+
   let sigma = DefiniteAssignmentSigma {
     variables: HashSet::new(),
     is_top: false,
   };
 
-  let new_sigma = ForwardDefiniteAssignment::transfer(&rule, &sigma);
+  let new_sigma = forward.transfer(&rule, &sigma);
   assert_eq!(new_sigma.variables.len(), 0);
 }

@@ -197,6 +197,9 @@ impl PiranhaArguments {
     };
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
+    let subs_map: HashMap<_, _> = subs.clone().into_iter().collect();
+    RuleGraphBuilder::default()._validate(&rg, &subs_map);
+
     PiranhaArgumentsBuilder::default()
       .path_to_codebase(path_to_codebase.unwrap_or_else(default_path_to_codebase))
       .include(
@@ -326,7 +329,8 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   let mut user_defined_rules: RuleGraph = _arg.rule_graph().clone();
   // In the scenario when rules/edges are passed as toml files
   if !_arg.path_to_configurations().is_empty() {
-    user_defined_rules = read_user_config_files(_arg.path_to_configurations())
+    user_defined_rules = read_user_config_files(_arg.path_to_configurations());
+    RuleGraphBuilder::default()._validate(&built_in_rules, &_arg.input_substitutions());
   }
 
   if user_defined_rules.graph().is_empty() {

@@ -20,6 +20,7 @@ use crate::{
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
+use std::collections::HashSet;
 use std::{collections::HashMap, path::Path};
 
 use super::{
@@ -28,7 +29,7 @@ use super::{
   rule::{InstantiatedRule, Rules},
 };
 use crate::df::tag_analysis::ForwardDefiniteAssignment;
-use crate::df::utils::get_tags_from_matcher;
+use crate::df::utils::{get_tags_from_matcher, get_tags_usage_from_matcher};
 use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -105,7 +106,12 @@ impl RuleGraphBuilder {
 
   // We need access to the initial set of substitutions to validate the rule graph
   pub fn _validate(&self, graph: &RuleGraph, substitutions: &HashMap<String, String>) {
-    let forward = ForwardDefiniteAssignment::new(graph.clone());
+    let holes = substitutions.keys().cloned().collect::<HashSet<String>>();
+    let holes = holes
+      .iter()
+      .map(|x| format!("@{}", x))
+      .collect::<HashSet<String>>();
+    let forward = ForwardDefiniteAssignment::new(graph.clone(), holes);
     let mut analysis = DataflowAnalysis::new(forward);
 
     // Get the rules in post order for optimal performance of the analysis
@@ -121,7 +127,7 @@ impl RuleGraphBuilder {
 
       for rule in graph.rules() {
         let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
-        let tags_in_predicates = get_tags_from_matcher(&rule, true);
+        let tags_in_predicates = get_tags_usage_from_matcher(&rule);
         // if theres any tag in the predicate that is not in sigma, then we have an error
         for tag in tags_in_predicates {
           if !defined_variables.contains(&tag) {

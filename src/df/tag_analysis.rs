@@ -66,11 +66,15 @@ impl Sigma for DefiniteAssignmentSigma {
 
 pub struct ForwardDefiniteAssignment {
   graph: RuleGraph,
+  initial_substitutions: HashSet<String>,
 }
 
 impl ForwardDefiniteAssignment {
-  pub fn new(graph: RuleGraph) -> Self {
-    ForwardDefiniteAssignment { graph }
+  pub fn new(graph: RuleGraph, initial_substitutions: HashSet<String>) -> Self {
+    ForwardDefiniteAssignment {
+      graph,
+      initial_substitutions,
+    }
   }
 }
 
@@ -108,12 +112,12 @@ impl Direction for ForwardDefiniteAssignment {
     }
   }
 
-  // Substitutions provided by the user are the entry point of all seed rules
-  // FIXME this needs to be updated
+  // We set the entry value to top. Since for Piranha the initial set of substitutions
+  // is shared by every node in the graph, we simply incorporate them into the transfer function.
   fn entry_value() -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
-      is_top: false,
+      is_top: true,
     }
   }
 
@@ -121,11 +125,15 @@ impl Direction for ForwardDefiniteAssignment {
   // (represented by `DefiniteAssignmentSigma`). It then computes the new set of reaching tags
   // after the rule is applied. This is done by inserting into the set all the tags
   // that are defined in the rule.
-  fn transfer(_node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
+  fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
+    result.is_top = false;
     let res = get_tags_from_matcher(&_node);
     // insert res to result.variables
     result.variables.extend(res.iter().cloned());
+    result
+      .variables
+      .extend(self.initial_substitutions.iter().cloned());
     result
   }
 }
