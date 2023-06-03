@@ -23,42 +23,49 @@ use std::collections::HashSet;
 fn test_graph_2edges() {
   let rules = vec![
     piranha_rule! {
-      name = "add_inner_class",
-      query = "(
-        (class_declaration name: (_) @first_class_name
-            body : (class_body ((_)*))
-        )
-        (#eq? @class_name \"FooBar\")
-        )"
-    },
-    piranha_rule! {
-    name = "add_field_declaration",
+    name = "detect_class_foo",
     query = "(
-        (class_declaration name: (_) @second_class_name
-            body : (class_body ((_)*))
-         )
-        (#eq? @second_class_name @first_class_name)
-        )"
-      },
-
+      (class_declaration
+          name: (identifier) @class_name
+      )
+      (#eq? @class_name \"Foo\")
+    )"
+  },
     piranha_rule! {
-    name = "remove_class",
+    name = "detect_method_bar_in_foo",
     query = "(
-        (class_declaration name: (_) @other_class_name
-            body : (class_body ((_)*))
-         )
-        (#eq? @other_class_name @first_class_name)
-        )"
-      },
+      (method_declaration
+          name: (identifier) @method_name
+          . (class_declaration
+                name: (_) @detected_class_name
+             )
+      )
+      (#eq? @detected_class_name @class_name)
+      (#eq? @method_name \"bar\")
+    )"
+  },
+    piranha_rule! {
+    name = "detect_baz_in_bar",
+    query = "(
+      (call_expression
+          function: (identifier) @function_name
+          . (method_declaration
+                name: (_) @detected_method_name
+             )
+      )
+      (#eq? @detected_method_name @method_name)
+      (#eq? @function_name \"baz\")
+    )"
+  },
   ];
 
   let edges = vec![edges! {
-    from = "add_inner_class",
-    to = ["add_field_declaration"],
+    from = "detect_class_foo",
+    to = ["detect_method_bar_in_foo"],
     scope = "Class"
   }, edges!(
-    from = "add_field_declaration",
-    to = ["remove_class"],
+    from = "detect_method_bar_in_foo",
+    to = ["detect_baz_in_bar"],
     scope = "Class"
   )];
 
@@ -85,8 +92,9 @@ fn test_graph_2edges() {
       .variables
       .clone();
   let expected = vec![
-    "@first_class_name",
-    "@second_class_name",
+    "@method_name",
+    "@class_name",
+    "@detected_class_name"
   ]
       .into_iter()
       .map(|s| s.to_string())
