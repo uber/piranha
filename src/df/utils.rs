@@ -51,8 +51,6 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
 
   let tree = parser.parse(query_source_code.clone(), None).unwrap();
 
-  let query = Query::new(tsq, "(predicate) @pred").unwrap();
-
   // Individual queries for capture, identifier, and string
   let capture_query = Query::new(tsq, "(capture) @cap").unwrap();
   let identifier_query = Query::new(tsq, "(identifier) @id").unwrap();
@@ -76,6 +74,7 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
     for m in matches {
       let range = m.range();
       let matched_node = get_node_for_range(tree.root_node(), range.start_byte, range.end_byte);
+      let query = Query::new(tsq, "(predicate) @pred").unwrap();
       if _check_enclosing_node(query_source_code.as_str(), matched_node, &query, &parser) {
         let mut tag = m.matched_string().clone();
         // Remove quotations if required
