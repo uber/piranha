@@ -123,7 +123,7 @@ impl Direction for ForwardDefiniteAssignment {
   // that are defined in the rule.
   fn transfer(_node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
-    let res = get_tags_from_matcher(&_node, false);
+    let res = get_tags_from_matcher(&_node);
     // insert res to result.variables
     result.variables.extend(res.iter().cloned());
     result
