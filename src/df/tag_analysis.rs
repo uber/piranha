@@ -105,7 +105,7 @@ impl Direction for ForwardDefiniteAssignment {
   // Since the join operator or this analysis is intersection, the initial value
   // needs to be the set of all tags.
   // It feels weird separating to have the neet function (merge) outside this class
-  fn initial_value(&self ) -> DefiniteAssignmentSigma {
+  fn initial_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
       is_top: true,
@@ -114,9 +114,9 @@ impl Direction for ForwardDefiniteAssignment {
 
   // We set the entry value to top. Since for Piranha the initial set of substitutions
   // is shared by every node in the graph, we simply incorporate them into the transfer function.
-  fn entry_value(&self ) -> DefiniteAssignmentSigma {
+  fn entry_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
-      variables:  self.initial_substitutions.iter().cloned().collect(),
+      variables: self.initial_substitutions.iter().cloned().collect(),
       is_top: false,
     }
   }
@@ -127,9 +127,6 @@ impl Direction for ForwardDefiniteAssignment {
   // that are defined in the rule.
   fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
-    if result.is_top {
-      return result;
-    }
     let res = get_tags_from_matcher(&_node);
     // insert res to result.variables
     result.variables.extend(res.iter().cloned());
