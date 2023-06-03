@@ -118,25 +118,28 @@ impl RuleGraphBuilder {
     let mut rules_post_order = graph.rules.clone();
     rules_post_order.reverse();
     // The entry point of the rule graph
-    if let Some(entry_rule) = rules_post_order.get(0) {
-      let entry_rule = entry_rule.clone();
-      analysis.run_analysis(rules_post_order, entry_rule);
+    // get all entry points by collecting all seed rules
+    let entry_rules = rules_post_order
+      .iter()
+      .filter(|x| *x.is_seed_rule())
+      .map(|x| x.clone())
+      .collect::<Vec<Rule>>();
+    analysis.run_analysis(rules_post_order, entry_rules);
 
-      // now validate whether the holes in the rule graph are filled by looking sigma in, for non
-      // capture nodes
+    // now validate whether the holes in the rule graph are filled by looking sigma in, for non
+    // capture nodes
 
-      for rule in graph.rules() {
-        let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
-        let tags_in_predicates = get_tags_usage_from_matcher(&rule);
-        // if theres any tag in the predicate that is not in sigma, then we have an error
-        for tag in tags_in_predicates {
-          if !defined_variables.contains(&tag) {
-            panic!(
-              "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
-              tag,
-              rule.name()
-            );
-          }
+    for rule in graph.rules() {
+      let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
+      let tags_in_predicates = get_tags_usage_from_matcher(&rule);
+      // if theres any tag in the predicate that is not in sigma, then we have an error
+      for tag in tags_in_predicates {
+        if !defined_variables.contains(&tag) {
+          panic!(
+            "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
+            tag,
+            rule.name()
+          );
         }
       }
     }

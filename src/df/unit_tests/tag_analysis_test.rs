@@ -59,7 +59,7 @@ fn test_forward_analysis_simple() {
   rules_post_order.reverse();
   // The entry point of the rule graph
   let entry_rule = &rules[0];
-  analysis.run_analysis(rules_post_order, entry_rule.clone());
+  analysis.run_analysis(rules_post_order, vec![entry_rule.clone()]);
 
   // Check the sigma in of the 2nd rule
   let sigma = analysis

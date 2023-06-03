@@ -34,10 +34,10 @@ pub trait Direction {
   fn successors(&self, node: &Self::Node) -> Vec<Self::Node>;
 
   /// Initial abstract value for all other nodes.
-  fn initial_value() -> Self::Sigma;
+  fn initial_value(&self) -> Self::Sigma;
 
   /// Initial abstract value for the entry point (e.g., first rule).
-  fn entry_value() -> Self::Sigma;
+  fn entry_value(&self) -> Self::Sigma;
 
   /// Transforms the sigma based on the direction of the analysis.
   /// For now we don't consider instructions, since our analysis is straightforward.
@@ -68,12 +68,14 @@ impl<D: Direction> DataflowAnalysis<D> {
   }
 
   // From https://cmu-program-analysis.github.io/2023/index.html
-  pub fn run_analysis(&mut self, blocks: Vec<D::Node>, entry_point: D::Node) {
+  pub fn run_analysis(&mut self, blocks: Vec<D::Node>, entry_points: Vec<D::Node>) {
     let mut work_list = blocks.clone();
     blocks.iter().for_each(|block| {
-      self.sigma_in.insert(block.clone(), D::initial_value());
+      self.sigma_in.insert(block.clone(), self.direction.initial_value());
     });
-    self.sigma_in.insert(entry_point, D::entry_value());
+    entry_points.iter().for_each(|entry| {
+      self.sigma_in.insert(entry.clone(), self.direction.entry_value());
+    });
 
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
