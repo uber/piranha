@@ -319,6 +319,8 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
     .rules(piranha_language.rules().clone().unwrap_or_default().rules)
     .build();
 
+  RuleGraphBuilder::default()._validate(&built_in_rules, &_arg.input_substitutions());
+
   // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
   // Get the user-defined rule graph (if any) via the Python/Rust API
   let mut user_defined_rules: RuleGraph = _arg.rule_graph().clone();

@@ -6,10 +6,10 @@ use crate::utilities::tree_sitter_utilities::{
 };
 use std::string::String;
 
-pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
+pub fn get_tags_from_matcher(node: &Rule, find_in_predicates: bool) -> Vec<String> {
   let query_source_code = node.query().get_query();
 
-  let tsq = tree_sitter_tsq::language();
+  let tsq = tree_sitter_query::language();
   let mut parser = Parser::new();
   parser
     .set_language(tsq)
@@ -30,8 +30,14 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
   for m in matches {
     let range = m.range();
     let matched_node = get_node_for_range(tree.root_node(), range.start_byte, range.end_byte);
-    if !_check_not_enclosing_node(query_source_code.as_str(), matched_node, &query, &parser) {
-      tags.push(m.matched_string().clone());
+    if find_in_predicates {
+      if _check_enclosing_node(query_source_code.as_str(), matched_node, &query, &parser) {
+        tags.push(m.matched_string().clone());
+      }
+    } else {
+      if _check_not_enclosing_node(query_source_code.as_str(), matched_node, &query, &parser) {
+        tags.push(m.matched_string().clone());
+      }
     }
   }
   tags
@@ -41,6 +47,22 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
 fn _check_not_enclosing_node(
   source_code: &str, node: Node, query: &Query, _parser: &Parser,
 ) -> bool {
+  let mut current_node = node;
+  // This ensures that the below while loop considers the current node too when checking for filters.
+  if current_node.child_count() > 0 {
+    current_node = current_node.child(0).unwrap();
+  }
+
+  while let Some(parent) = current_node.parent() {
+    if get_match_for_query(&parent, source_code, &query, false).is_some() {
+      return false;
+    }
+    current_node = parent;
+  }
+  return true;
+}
+
+fn _check_enclosing_node(source_code: &str, node: Node, query: &Query, _parser: &Parser) -> bool {
   let mut current_node = node;
   // This ensures that the below while loop considers the current node too when checking for filters.
   if current_node.child_count() > 0 {

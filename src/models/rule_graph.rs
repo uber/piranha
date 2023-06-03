@@ -16,6 +16,7 @@ use getset::{Getters, MutGetters};
 use itertools::Itertools;
 
 use crate::{
+  df::df::{DataflowAnalysis, Direction},
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
@@ -26,6 +27,8 @@ use super::{
   outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
 };
+use crate::df::tag_analysis::ForwardDefiniteAssignment;
+use crate::df::utils::get_tags_from_matcher;
 use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -98,6 +101,39 @@ impl RuleGraphBuilder {
       .graph(graph)
       .create()
       .unwrap()
+  }
+
+  // We need access to the initial set of substitutions to validate the rule graph
+  pub fn _validate(&self, graph: &RuleGraph, substitutions: &HashMap<String, String>) {
+    let forward = ForwardDefiniteAssignment::new(graph.clone());
+    let mut analysis = DataflowAnalysis::new(forward);
+
+    // Get the rules in post order for optimal performance of the analysis
+    let mut rules_post_order = graph.rules.clone();
+    rules_post_order.reverse();
+    // The entry point of the rule graph
+    if let Some(entry_rule) = rules_post_order.get(0) {
+      let entry_rule = entry_rule.clone();
+      analysis.run_analysis(rules_post_order, entry_rule);
+
+      // now validate whether the holes in the rule graph are filled by looking sigma in, for non
+      // capture nodes
+
+      for rule in graph.rules() {
+        let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
+        let tags_in_predicates = get_tags_from_matcher(&rule, true);
+        // if theres any tag in the predicate that is not in sigma, then we have an error
+        for tag in tags_in_predicates {
+          if !defined_variables.contains(&tag) {
+            panic!(
+              "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
+              tag,
+              rule.name()
+            );
+          }
+        }
+      }
+    }
   }
 }
 

@@ -17,6 +17,7 @@ use crate::df::utils::get_tags_from_matcher;
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
 
+use getset::Getters;
 use std::collections::HashSet;
 use std::string::String;
 
@@ -26,8 +27,9 @@ use std::string::String;
 // the set of tags that will always reach that point. The result can then be used to check if the
 // query contains any variable tag that was not defined.
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Getters)]
 pub struct DefiniteAssignmentSigma {
+  #[get = "pub"]
   variables: HashSet<String>,
   is_top: bool, // hack to prevent initializing variables with all elements for top
 }
@@ -64,6 +66,12 @@ impl Sigma for DefiniteAssignmentSigma {
 
 pub struct ForwardDefiniteAssignment {
   graph: RuleGraph,
+}
+
+impl ForwardDefiniteAssignment {
+  pub fn new(graph: RuleGraph) -> Self {
+    ForwardDefiniteAssignment { graph }
+  }
 }
 
 impl Direction for ForwardDefiniteAssignment {
@@ -115,7 +123,7 @@ impl Direction for ForwardDefiniteAssignment {
   // that are defined in the rule.
   fn transfer(_node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
-    let res = get_tags_from_matcher(&_node);
+    let res = get_tags_from_matcher(&_node, false);
     // insert res to result.variables
     result.variables.extend(res.iter().cloned());
     result
