@@ -71,10 +71,14 @@ impl<D: Direction> DataflowAnalysis<D> {
   pub fn run_analysis(&mut self, blocks: Vec<D::Node>, entry_points: Vec<D::Node>) {
     let mut work_list = blocks.clone();
     blocks.iter().for_each(|block| {
-      self.sigma_in.insert(block.clone(), self.direction.initial_value());
+      self
+        .sigma_in
+        .insert(block.clone(), self.direction.initial_value());
     });
     entry_points.iter().for_each(|entry| {
-      self.sigma_in.insert(entry.clone(), self.direction.entry_value());
+      self
+        .sigma_in
+        .insert(entry.clone(), self.direction.entry_value());
     });
 
     while !work_list.is_empty() {
@@ -90,7 +94,7 @@ impl<D: Direction> DataflowAnalysis<D> {
         let sigma_in = self.sigma_in.get(succ).unwrap();
         let new_sigma_in = sigma_in.merge(cur_sigma_out);
         if !sigma_in.is_equal(&new_sigma_in) {
-          self.sigma_in.insert(succ.clone(), new_sigma_in.clone());
+          self.sigma_in.insert(succ.clone(), new_sigma_in);
           work_list.push(succ.clone());
         }
       });

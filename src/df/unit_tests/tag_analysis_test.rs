@@ -18,22 +18,21 @@ use crate::df::tag_analysis::{DefiniteAssignmentSigma, ForwardDefiniteAssignment
 use crate::{edges, models::rule_graph::RuleGraphBuilder, piranha_rule};
 use std::collections::HashSet;
 
-
 #[test]
 fn test_graph_2edges() {
   let rules = vec![
     piranha_rule! {
-    name = "detect_class_foo",
-    query = "(
+      name = "detect_class_foo",
+      query = "(
       (class_declaration
           name: (identifier) @class_name
       )
       (#eq? @class_name \"Foo\")
     )"
-  },
+    },
     piranha_rule! {
-    name = "detect_method_bar_in_foo",
-    query = "(
+      name = "detect_method_bar_in_foo",
+      query = "(
       (method_declaration
           name: (identifier) @method_name
           . (class_declaration
@@ -43,10 +42,10 @@ fn test_graph_2edges() {
       (#eq? @detected_class_name @class_name)
       (#eq? @method_name \"bar\")
     )"
-  },
+    },
     piranha_rule! {
-    name = "detect_baz_in_bar",
-    query = "(
+      name = "detect_baz_in_bar",
+      query = "(
       (call_expression
           function: (identifier) @function_name
           . (method_declaration
@@ -56,23 +55,26 @@ fn test_graph_2edges() {
       (#eq? @detected_method_name @method_name)
       (#eq? @function_name \"baz\")
     )"
-  },
+    },
   ];
 
-  let edges = vec![edges! {
-    from = "detect_class_foo",
-    to = ["detect_method_bar_in_foo"],
-    scope = "Class"
-  }, edges!(
-    from = "detect_method_bar_in_foo",
-    to = ["detect_baz_in_bar"],
-    scope = "Class"
-  )];
+  let edges = vec![
+    edges! {
+      from = "detect_class_foo",
+      to = ["detect_method_bar_in_foo"],
+      scope = "Class"
+    },
+    edges!(
+      from = "detect_method_bar_in_foo",
+      to = ["detect_baz_in_bar"],
+      scope = "Class"
+    ),
+  ];
 
   let graph = RuleGraphBuilder::default()
-      .rules(rules.clone())
-      .edges(edges)
-      .build();
+    .rules(rules.clone())
+    .edges(edges)
+    .build();
 
   let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
   let mut analysis = DataflowAnalysis::new(forward);
@@ -86,22 +88,17 @@ fn test_graph_2edges() {
 
   // Check the sigma in of the 2nd rule
   let sigma = analysis
-      .sigma_in()
-      .get(&rules[2])
-      .unwrap()
-      .variables
-      .clone();
-  let expected = vec![
-    "@method_name",
-    "@class_name",
-    "@detected_class_name"
-  ]
-      .into_iter()
-      .map(|s| s.to_string())
-      .collect::<HashSet<String>>();
+    .sigma_in()
+    .get(&rules[2])
+    .unwrap()
+    .variables
+    .clone();
+  let expected = vec!["@method_name", "@class_name", "@detected_class_name"]
+    .into_iter()
+    .map(|s| s.to_string())
+    .collect::<HashSet<String>>();
   assert_eq!(sigma, expected);
 }
-
 
 #[test]
 fn test_forward_analysis_simple() {
@@ -189,7 +186,7 @@ fn test_transfer_function() {
 
   let sigma = DefiniteAssignmentSigma {
     variables: HashSet::new(),
-    is_top: false,
+    is_bottom: false,
   };
 
   let new_sigma = forward.transfer(&rule, &sigma);
@@ -220,7 +217,7 @@ fn test_transfer_function_0() {
 
   let sigma = DefiniteAssignmentSigma {
     variables: HashSet::new(),
-    is_top: false,
+    is_bottom: false,
   };
 
   let new_sigma = forward.transfer(&rule, &sigma);

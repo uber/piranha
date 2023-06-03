@@ -31,9 +31,12 @@ use std::string::String;
 pub struct DefiniteAssignmentSigma {
   #[get = "pub"]
   variables: HashSet<String>,
-  is_top: bool, // hack to prevent initializing variables with all elements for top
+  is_bottom: bool, // hack to prevent initializing variables with all elements for bottom
 }
 
+// The partial order x <= y is defined as x.contains(y)
+// Therefore \bot <= x, meaning \bot is the universal set
+// and x <= T, meaning \top is the empty set
 impl Sigma for DefiniteAssignmentSigma {
   type Node = Rule;
 
@@ -41,10 +44,10 @@ impl Sigma for DefiniteAssignmentSigma {
   // This is a conservative approach that ensures that a tag is considered "reaching"
   // only if it can reach a point along all paths leading to that point.
   fn merge(&self, _other: &Self) -> Self {
-    if self.is_top {
+    if self.is_bottom {
       return _other.clone();
     }
-    if _other.is_top {
+    if _other.is_bottom {
       return self.clone();
     }
     let new_variables: HashSet<String> = self
@@ -55,12 +58,12 @@ impl Sigma for DefiniteAssignmentSigma {
       .collect();
     DefiniteAssignmentSigma {
       variables: new_variables,
-      is_top: false,
+      is_bottom: false,
     }
   }
 
   fn is_equal(&self, _other: &Self) -> bool {
-    self.variables == _other.variables && self.is_top == _other.is_top
+    self.variables == _other.variables && self.is_bottom == _other.is_bottom
   }
 }
 
@@ -108,7 +111,7 @@ impl Direction for ForwardDefiniteAssignment {
   fn initial_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: HashSet::new(),
-      is_top: true,
+      is_bottom: true,
     }
   }
 
@@ -117,7 +120,7 @@ impl Direction for ForwardDefiniteAssignment {
   fn entry_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
       variables: self.initial_substitutions.iter().cloned().collect(),
-      is_top: false,
+      is_bottom: false,
     }
   }
 
@@ -127,7 +130,7 @@ impl Direction for ForwardDefiniteAssignment {
   // that are defined in the rule.
   fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
-    let res = get_tags_from_matcher(&_node);
+    let res = get_tags_from_matcher(_node);
     // insert res to result.variables
     result.variables.extend(res.iter().cloned());
     result

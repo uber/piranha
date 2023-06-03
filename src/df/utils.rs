@@ -1,3 +1,16 @@
+/*
+ Copyright (c) 2023 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
+
 use tree_sitter::{Node, Parser, Query};
 
 use crate::models::rule::Rule;
@@ -79,7 +92,7 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
         let mut tag = m.matched_string().clone();
         // Remove quotations if required
         if remove_quotations {
-          tag = tag.replace("\"", "");
+          tag = tag.replace('\"', "");
         }
         // Use regular expression to find substrings starting with "@"
         for cap in re.captures_iter(&tag) {
@@ -108,12 +121,12 @@ fn _check_not_enclosing_node(
   }
 
   while let Some(parent) = current_node.parent() {
-    if get_match_for_query(&parent, source_code, &query, false).is_some() {
+    if get_match_for_query(&parent, source_code, query, false).is_some() {
       return false;
     }
     current_node = parent;
   }
-  return true;
+  true
 }
 
 fn _check_enclosing_node(source_code: &str, node: Node, query: &Query, _parser: &Parser) -> bool {
@@ -124,10 +137,10 @@ fn _check_enclosing_node(source_code: &str, node: Node, query: &Query, _parser: 
   }
 
   while let Some(parent) = current_node.parent() {
-    if get_match_for_query(&parent, source_code, &query, false).is_some() {
+    if get_match_for_query(&parent, source_code, query, false).is_some() {
       return true;
     }
     current_node = parent;
   }
-  return false;
+  false
 }

@@ -65,7 +65,7 @@ getset = "0.1.2"
 pyo3 = "0.18.2"
 pyo3-log = "0.8.1"
 glob = "0.3.1"
-tree-sitter-query = { git = "https://github.com/nvim-treesitter/tree-sitter-query"}
+tree-sitter-query = { git = "https://github.com/nvim-treesitter/tree-sitter-query" }
 
 [features]
 extension-module = ["pyo3/extension-module"]
