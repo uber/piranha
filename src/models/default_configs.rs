@@ -29,6 +29,7 @@ pub const SWIFT: &str = "swift";
 pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 pub const THRIFT: &str = "thrift";
+pub const STRINGS: &str = "strings";
 
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
