@@ -1,3 +1,17 @@
+Version 0.3.8
+-------------
+* Bug Fix related to code snippet mode #489
+* Added support for iOS string resource file format #490
+
+Version 0.3.7
+-------------
+* Support `enabled, err := foobar(), nil` scenario
+
+Version 0.3.6
+-------------
+* Support richer constraints with `not_enclosing_node`
+* Added checks to make sure filter arguments are consistent
+
 Version 0.3.5
 -------------
 * Support filters without `enclosing_node` (#482)

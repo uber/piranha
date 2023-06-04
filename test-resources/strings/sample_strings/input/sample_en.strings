@@ -1,0 +1,11 @@
+/* Menu item to make the current document plain text */ 
+"Make Plain Text" = "Make Plain Text";  
+
+// Menu item to make the current document rich text 
+"Make Rich Text" = "Make Rich Text";
+
+/* Menu item to make the current document italic text */ 
+"Make Italic Text" = "Make Italic Text";  
+
+/* Menu item to make the current document rich text */
+"Make Rich Text" = "Make Rich Text";

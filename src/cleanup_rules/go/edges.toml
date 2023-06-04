@@ -38,7 +38,18 @@ to = ["if_cleanup"]
 [[edges]]
 scope = "Function-Method"
 from = "statement_cleanup"
-to = ["delete_variable_declaration"]
+to = ["delete_variable_declaration", "delete_variable_declaration_with_nil"]
+
+[[edges]]
+scope = "Function-Method"
+from = "delete_variable_declaration_with_nil"
+to = ["replace_identifier_with_value", "replace_identifier_with_nil"]
+
+[[edges]]
+scope = "Parent"
+from = "replace_identifier_with_nil"
+to = ["simplify_identity_equal", "simplify_identity_not_equal"]
+
 
 [[edges]]
 scope = "Function-Method"

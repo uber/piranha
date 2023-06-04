@@ -42,6 +42,15 @@ func after_return1() string {
     return "not enabled"
 }
 
+func after_return_nil_1() string {
+    fmt.Println("Retain")
+    return "not enabled"
+}
+
+func after_return_nil_2() string {
+    return "not enabled"
+}
+
 func after_return2(a bool) string {
     if a {
         fmt.Println("not enabled")
