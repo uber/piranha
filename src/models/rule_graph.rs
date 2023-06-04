@@ -125,13 +125,12 @@ impl RuleGraphBuilder {
       .collect::<Vec<Rule>>();
     analysis.run_analysis(rules_post_order, entry_rules);
 
-    // now validate whether the holes in the rule graph are filled by looking sigma in, for non
-    // capture nodes
-
+    // Now validate for each rule, that all the tags used in the predicate are defined in the sigma out
+    // Sigma out represents all the capture groups available to use in the rule's predicates
     for rule in graph.rules() {
       let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
       let tags_in_predicates = get_tags_usage_from_matcher(rule);
-      // if theres any tag in the predicate that is not in sigma, then we have an error
+      // If there's any tag in the predicate that is not sigma out, then we might be using an undefined variable
       for tag in tags_in_predicates {
         if !defined_variables.contains(&tag) {
           panic!(
