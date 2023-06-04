@@ -163,7 +163,7 @@ fn test_forward_analysis_simple() {
 }
 
 #[test]
-fn test_transfer_function() {
+fn test_flow_function() {
   let rule = piranha_rule! {
     name = "add_inner_class",
     query = "(
@@ -189,12 +189,12 @@ fn test_transfer_function() {
     is_bottom: false,
   };
 
-  let new_sigma = forward.transfer(&rule, &sigma);
+  let new_sigma = forward.flow(&rule, &sigma);
   assert_eq!(new_sigma.variables.len(), 4);
 }
 
 #[test]
-fn test_transfer_function_0() {
+fn test_flow_function_0() {
   let rule = piranha_rule! {
     name = "add_inner_class",
     query = "(
@@ -220,6 +220,6 @@ fn test_transfer_function_0() {
     is_bottom: false,
   };
 
-  let new_sigma = forward.transfer(&rule, &sigma);
+  let new_sigma = forward.flow(&rule, &sigma);
   assert_eq!(new_sigma.variables.len(), 0);
 }

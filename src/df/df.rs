@@ -20,7 +20,7 @@ pub trait Sigma: Clone {
   type Node;
 
   /// Merges two sigma into a new one (join operator).
-  fn merge(&self, other: &Self) -> Self;
+  fn join(&self, other: &Self) -> Self;
 
   /// Check if two sigmas are equal (this is used to terminate the analysis).
   fn is_equal(&self, other: &Self) -> bool;
@@ -41,7 +41,7 @@ pub trait Direction {
 
   /// Transforms the sigma based on the direction of the analysis.
   /// For now we don't consider instructions, since our analysis is straightforward.
-  fn transfer(&self, node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
+  fn flow(&self, node: &Self::Node, input: &Self::Sigma) -> Self::Sigma;
 }
 
 // The results of a dataflow analysis is a mapping from program points to states (sigma)
@@ -84,7 +84,7 @@ impl<D: Direction> DataflowAnalysis<D> {
     while !work_list.is_empty() {
       let cur_node = work_list.pop().unwrap();
       if let Some(sigma_in) = self.sigma_in.get(&cur_node) {
-        let transferred_sigma = self.direction.transfer(&cur_node, sigma_in);
+        let transferred_sigma = self.direction.flow(&cur_node, sigma_in);
         self.sigma_out.insert(cur_node.clone(), transferred_sigma);
       }
 
@@ -92,7 +92,7 @@ impl<D: Direction> DataflowAnalysis<D> {
       let successors = self.direction.successors(&cur_node);
       successors.iter().for_each(|succ| {
         let sigma_in = self.sigma_in.get(succ).unwrap();
-        let new_sigma_in = sigma_in.merge(cur_sigma_out);
+        let new_sigma_in = sigma_in.join(cur_sigma_out);
         if !sigma_in.is_equal(&new_sigma_in) {
           self.sigma_in.insert(succ.clone(), new_sigma_in);
           work_list.push(succ.clone());

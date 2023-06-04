@@ -43,7 +43,7 @@ impl Sigma for DefiniteAssignmentSigma {
   // The `merge` function computes the intersection of two sets of reaching tags.
   // This is a conservative approach that ensures that a tag is considered "reaching"
   // only if it can reach a point along all paths leading to that point.
-  fn merge(&self, _other: &Self) -> Self {
+  fn join(&self, _other: &Self) -> Self {
     if self.is_bottom {
       return _other.clone();
     }
@@ -128,7 +128,7 @@ impl Direction for ForwardDefiniteAssignment {
   // (represented by `DefiniteAssignmentSigma`). It then computes the new set of reaching tags
   // after the rule is applied. This is done by inserting into the set all the tags
   // that are defined in the rule.
-  fn transfer(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
+  fn flow(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
     let res = get_tags_from_matcher(_node);
     // insert res to result.variables
