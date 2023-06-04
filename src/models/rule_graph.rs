@@ -16,7 +16,7 @@ use getset::{Getters, MutGetters};
 use itertools::Itertools;
 
 use crate::{
-  df::df::{DataflowAnalysis},
+  df::df::DataflowAnalysis,
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
@@ -29,7 +29,7 @@ use super::{
   rule::{InstantiatedRule, Rules},
 };
 use crate::df::tag_analysis::ForwardDefiniteAssignment;
-use crate::df::utils::{get_tags_usage_from_matcher};
+use crate::df::utils::get_tags_usage_from_matcher;
 use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -121,7 +121,8 @@ impl RuleGraphBuilder {
     // get all entry points by collecting all seed rules
     let entry_rules = rules_post_order
       .iter()
-      .filter(|x| *x.is_seed_rule()).cloned()
+      .filter(|x| *x.is_seed_rule())
+      .cloned()
       .collect::<Vec<Rule>>();
     analysis.run_analysis(rules_post_order, entry_rules);
 
