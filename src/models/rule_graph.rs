@@ -11,20 +11,21 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use derive_builder::Builder;
-use getset::{Getters, MutGetters};
-use itertools::Itertools;
-
 use crate::{
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
+use colored::Colorize;
+use derive_builder::Builder;
+use getset::{Getters, MutGetters};
+use itertools::Itertools;
 use std::{collections::HashMap, path::Path};
 
 use super::{
   default_configs::{default_edges, default_rule_graph_map, default_rules},
   outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
+  Validator,
 };
 use pyo3::prelude::{pyclass, pymethods};
 
@@ -52,6 +53,15 @@ pub struct RuleGraph {
   #[get = "pub(crate)"]
   #[pyo3(get)]
   graph: HashMap<String, Vec<(String, String)>>,
+}
+
+impl Validator for RuleGraph {
+  fn validate(&self) -> Result<(), String> {
+    match self.rules().iter().try_for_each(|rule| rule.validate()) {
+      Ok(()) => Ok(()),
+      Err(e) => Err(format!("Incorrect Rule Graph - {}", e)),
+    }
+  }
 }
 
 #[pymethods]
@@ -92,12 +102,18 @@ impl RuleGraphBuilder {
       }
     }
 
-    RuleGraphBuilder::default()
+    let graph = RuleGraphBuilder::default()
       .edges(_rule_graph.edges().clone())
       .rules(_rule_graph.rules().clone())
       .graph(graph)
       .create()
-      .unwrap()
+      .unwrap();
+
+    if let Err(err) = graph.validate() {
+      panic!("{}", err.as_str().red());
+    }
+
+    graph
   }
 }
 

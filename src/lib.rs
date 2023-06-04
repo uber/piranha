@@ -26,7 +26,6 @@ use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 use itertools::Itertools;
 use log::{debug, info};
-use tree_sitter::Parser;
 
 use crate::models::rule_store::RuleStore;
 
@@ -111,11 +110,9 @@ impl Piranha {
   /// Performs cleanup related to stale flags
   fn perform_cleanup(&mut self) {
     // Setup the parser for the specific language
-    let mut parser = Parser::new();
     let piranha_args = &self.piranha_arguments;
-    parser
-      .set_language(*piranha_args.language().language())
-      .expect("Could not set the language for the parser.");
+
+    let mut parser = piranha_args.language().parser();
 
     let mut path_to_codebase = self.piranha_arguments.path_to_codebase().to_string();
 

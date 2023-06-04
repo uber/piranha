@@ -26,7 +26,9 @@ use crate::utilities::{
   tree_sitter_utilities::{get_all_matches_for_query, get_match_for_query, get_node_for_range},
 };
 
-use super::{rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit};
+use super::{
+  rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, Validator,
+};
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
 
@@ -103,6 +105,54 @@ impl Filter {
   gen_py_str_methods!();
 }
 
+impl Validator for Filter {
+  fn validate(&self) -> Result<(), String> {
+    // Only allow users to set either contains or not_contains, but not both
+    if *self.contains() != default_contains_query()
+      && *self.not_contains() != default_not_contains_queries()
+    {
+      return Err(
+        "Invalid Filter Argument. `contains` and `not_contains` cannot be set at the same time !!! Please use two filters instead."
+          .to_string(),
+      );
+    }
+
+    if self.at_least > self.at_most {
+      return Err(
+        "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
+          .to_string(),
+      );
+    }
+
+    // If the user set `at_least` or `at_most`, then the contains query cannot be empty
+    if (self.at_least != default_contains_at_least() || self.at_most != default_contains_at_most())
+      && self.contains().get_query().is_empty()
+    {
+      return Err(
+        "Invalid Filter Argument. `at_least` or `at_most` is set, but `contains` is empty !!!"
+          .to_string(),
+      );
+    }
+
+    if *self.enclosing_node() != default_enclosing_node() {
+      self.enclosing_node().validate()?
+    }
+
+    if *self.not_enclosing_node() != default_not_enclosing_node() {
+      self.not_enclosing_node().validate()?
+    }
+
+    if *self.contains() != default_contains_query() {
+      self.contains().validate()?
+    }
+
+    if *self.not_contains() != default_not_contains_queries() {
+      self.not_contains().iter().try_for_each(|x| x.validate())?
+    }
+    Ok(())
+  }
+}
+
 impl FilterBuilder {
   /// Builds Filter from FilterBuilder
   /// * create Filter from the builder
@@ -116,34 +166,7 @@ impl FilterBuilder {
 
   fn _validate(&self) -> Result<Filter, String> {
     let _filter: Filter = self.create().unwrap();
-
-    // Only allow users to set either contains or not_contains, but not both
-    if !_filter.contains().get_query().is_empty() && !_filter.not_contains().is_empty() {
-      return Err(
-        "Invalid Filter Argument. `contains` and `not_contains` cannot be set at the same time !!! Please use two filters instead."
-          .to_string(),
-      );
-    }
-
-    if _filter.at_least > _filter.at_most {
-      return Err(
-        "Invalid Filter Argument. `at_least` should be less than or equal to `at_most` !!!"
-          .to_string(),
-      );
-    }
-
-    // If the user set `at_least` or `at_most`, then the contains query cannot be empty
-    if (_filter.at_least != default_contains_at_least()
-      || _filter.at_most != default_contains_at_most())
-      && _filter.contains().get_query().is_empty()
-    {
-      return Err(
-        "Invalid Filter Argument. `at_least` or `at_most` is set, but `contains` is empty !!!"
-          .to_string(),
-      );
-    }
-
-    Ok(_filter)
+    _filter.validate().map(|_| _filter)
   }
 }
 
