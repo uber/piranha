@@ -304,6 +304,7 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
+/// Returns the (tree-sitter) parser for the tree-sitter query DSL
 pub(crate) fn get_ts_query_parser() -> Parser {
   let mut parser = Parser::new();
   parser
