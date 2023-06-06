@@ -1,0 +1,19 @@
+========================= Task =========================
+
+### Original Code ###
+
+{original_code}
+
+### Tree-sitter Representation of Original Code ###
+
+{original_code_tree}
+
+### Refactored Code ###
+
+{refactored_code}
+
+### Tree-sitter Representation of Refactored Code ###
+
+{refactored_code_tree}
+
+========================= Output =========================
