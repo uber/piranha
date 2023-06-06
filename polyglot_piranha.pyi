@@ -210,6 +210,8 @@ class Rule:
     "Holes that need to be filled, in order to instantiate a rule"
     filters: set[Filter]
     "Filters to test before applying a rule"
+    is_seed_rule: bool
+    "Marks a rule as a seed rule"
 
     def __init__(
         self,
@@ -241,6 +243,8 @@ class Rule:
                 Holes that need to be filled, in order to instantiate a rule
             filters: set[Filter]
                 Filters to test before applying a rule
+            is_seed_rule: bool
+                Marks a rule as a seed rule
         """
         ...
 
