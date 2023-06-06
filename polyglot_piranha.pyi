@@ -214,7 +214,7 @@ class Rule:
     def __init__(
         self,
         name: str,
-        query: str,
+        query: Optional[str] = None,
         replace_node: Optional[str] = None,
         replace: Optional[str] = None,
         groups: set[str] = set(),
