@@ -9,6 +9,8 @@ The TOML file should contain at least one rule with the following properties:
 
 Additionally, the rule can have optional properties such as "is_seed_rule", "groups", and "filters".
 Filters can have properties like "enclosing_node", "not_contains", "contains", "at_least", "at_most".
+When writing tree sitter queries, remember you can use the wildcard node (_) to match any node.
+Using is node is ideal unless the node type is strictly necessary for the query to work.
 
 
 Here's an example of a TOML file with a single rule, including explanations for each property:
@@ -35,6 +37,9 @@ replace_node = "your_capture_name"
 
 # Holes to be used in the rule. These are placeholders in your queries that will be instantiated at runtime (can be empty).
 holes = ["hole1", "hole2"]
+
+# Whether this rule should be triggered first, or only after other rules have been triggered
+is_seed_rule = true
 
 # Optional: Filters to apply for this rule
 [[rules.filters]]

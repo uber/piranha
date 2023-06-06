@@ -6,7 +6,7 @@
 
 ### Tree-sitter Representation of Original Code ###
 
-{original_code_tree}
+{original_tree}
 
 ### Refactored Code ###
 
@@ -14,6 +14,6 @@
 
 ### Tree-sitter Representation of Refactored Code ###
 
-{refactored_code_tree}
+{refactored_tree}
 
 ========================= Output =========================
