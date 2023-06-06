@@ -205,3 +205,7 @@ pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGra
     .edges(input_edges.edges)
     .build()
 }
+
+#[cfg(test)]
+#[path = "unit_tests/rule_graph_validation_test.rs"]
+mod rule_graph_validation_test;
