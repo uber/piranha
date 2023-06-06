@@ -149,12 +149,17 @@ macro_rules! piranha_rule {
 impl Rule {
   #[new]
   fn py_new(
-    name: String, query: String, replace: Option<String>, replace_node: Option<String>,
+    name: String, query: Option<String>, replace: Option<String>, replace_node: Option<String>,
     holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
     filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
-    rule_builder.name(name).query(TSQuery::new(query));
+
+    rule_builder.name(name);
+    if let Some(q) = query {
+      rule_builder.query(TSQuery::new(q));
+    }
+
     if let Some(replace) = replace {
       rule_builder.replace(replace);
     }
