@@ -14,6 +14,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use tree_sitter::{Parser, Point};
 
 use crate::models::filter::FilterBuilder;
+
+use crate::models::rule_graph::RuleGraphBuilder;
 use crate::utilities::tree_sitter_utilities::TSQuery;
 use crate::{
   filter,
@@ -605,5 +607,47 @@ fn test_filter_bad_range() {
     .contains(TSQuery::new(String::from("(if_statement) @if_stmt")))
     .at_least(5)
     .at_most(4)
+    .build();
+}
+
+#[test]
+#[should_panic(expected = "Cannot parse")]
+fn test_filter_syntactically_incorrect_contains() {
+  FilterBuilder::default()
+    .contains(TSQuery::new(String::from("(if_statement @if_stmt")))
+    .build();
+}
+
+#[test]
+#[should_panic(expected = "Cannot parse")]
+fn test_filter_syntactically_incorrect_not_contains() {
+  FilterBuilder::default()
+    .not_contains(vec![TSQuery::new(String::from("(if_statement @if_stmt"))])
+    .build();
+}
+
+#[test]
+#[should_panic(expected = "Cannot parse")]
+fn test_filter_syntactically_incorrect_enclosing_node() {
+  FilterBuilder::default()
+    .enclosing_node(TSQuery::new(String::from("(if_statement @if_stmt")))
+    .build();
+}
+
+#[test]
+#[should_panic(expected = "Cannot parse")]
+fn test_filter_syntactically_incorrect_not_enclosing_node() {
+  FilterBuilder::default()
+    .not_enclosing_node(TSQuery::new(String::from("(if_statement @if_stmt")))
+    .build();
+}
+
+#[test]
+#[should_panic(expected = "Cannot parse")]
+fn test_rule_graph_incorrect_query() {
+  RuleGraphBuilder::default()
+    .rules(vec![
+      piranha_rule! {name = "Test rule", query = "(if_statement"},
+    ])
     .build();
 }

@@ -27,6 +27,7 @@ use super::{
     default_replace, default_replace_node, default_rule_name,
   },
   filter::Filter,
+  Validator,
 };
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
@@ -182,6 +183,16 @@ impl Rule {
   }
 
   gen_py_str_methods!();
+}
+
+impl Validator for Rule {
+  fn validate(&self) -> Result<(), String> {
+    let validation = self
+      .query()
+      .validate()
+      .and_then(|_: ()| self.filters().iter().try_for_each(|f| f.validate()));
+    validation
+  }
 }
 
 pub use piranha_rule;
