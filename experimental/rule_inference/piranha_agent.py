@@ -60,7 +60,7 @@ class PiranhaAgent:
         The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
         If the rule transforms the source code into the target code, the rule is returned.
 
-        :return: str, Completion of the process (model's response message).
+        :return: str, string containing the rule in TOML format
         """
         source_tree = self.get_tree_from_code(self.source_code, self.language)
         target_tree = self.get_tree_from_code(self.target_code, self.language)
@@ -78,7 +78,7 @@ class PiranhaAgent:
         toml_blocks = re.findall(pattern, completion, re.DOTALL)
         if not toml_blocks:
             raise PiranhaAgentError(
-                "Could not create Piranha rules. The agent returned no TOML blocks."
+                "Could not create Piranha rule. The agent returned no TOML blocks."
             )
 
         toml_block = toml_blocks[0]
@@ -133,7 +133,7 @@ class PiranhaAgent:
 
     @staticmethod
     def normalize_code(code: str) -> str:
-        """Eliminating unnecessary spaces and newline characters from code.
+        """Eliminates unnecessary spaces and newline characters from code.
         This function is as preprocessing step before comparing the refactored code with the target code.
 
         :param code: str, Code to normalize.
