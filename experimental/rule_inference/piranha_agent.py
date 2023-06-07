@@ -10,6 +10,7 @@ from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
 from base_prompt import BasePrompt
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
+import re
 
 
 class PiranhaAgentError(Exception):
@@ -18,6 +19,12 @@ class PiranhaAgentError(Exception):
 
 @attr.s
 class PiranhaAgent:
+    """
+    This class defines an agent that uses OpenAI's chat models for inferring Piranha rules.
+    The agent takes pairs of source and target codes, finds a transformation rule between them,
+    and validates the rule's effectiveness by testing if the rule can refactor the source code into the target code.
+    """
+
     source_code = attr.ib(default="")
     target_code = attr.ib(default="")
     language = attr.ib(default="java")
@@ -48,7 +55,13 @@ class PiranhaAgent:
                 print(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
 
-    def infer_rules(self):
+    def infer_rules(self) -> Optional[str]:
+        """Implements the inference process of the Piranha Agent.
+        The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
+        If the rule transforms the source code into the target code, the rule is returned.
+
+        :return: str, Completion of the process (model's response message).
+        """
         source_tree = self.get_tree_from_code(self.source_code, self.language)
         target_tree = self.get_tree_from_code(self.target_code, self.language)
 
@@ -70,16 +83,33 @@ class PiranhaAgent:
 
         toml_block = toml_blocks[0]
         toml_dict = toml.loads(toml_block)
-        self.test_piranha(toml_dict)
+        piranha_summary = self.run_piranha(toml_dict)
+
+        if not piranha_summary:
+            raise PiranhaAgentError(
+                "Piranha did not generate any refactored code. Either the query or the filters are incorrect."
+            )
+
+        refactored_code = piranha_summary[0].content
+
+        if self.normalize_code(refactored_code) != self.normalize_code(
+            self.target_code
+        ):
+            raise PiranhaAgentError(
+                "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
+            )
 
         return completion
 
-    def test_piranha(self, toml_dict):
+    def run_piranha(self, toml_dict):
+        """Runs the inferred rule by applying it to the source code using the Piranha.
+
+        :param toml_dict: dict, Inferred rule in TOML format.
+        :return: list, Summaries of the results of the execution of Piranha.
+        """
         rules = toml_dict.get("rules", [])
         if not rules:
-            raise PiranhaAgentError(
-                "Could not create Piranha rules. The agent returned no TOML blocks."
-            )
+            raise PiranhaAgentError("TOML does not include any rule specifications.")
 
         toml_rule = rules[0]
         rule = Rule(
@@ -99,7 +129,26 @@ class PiranhaAgent:
         )
 
         output_summaries = execute_piranha(args)
-        # print(output_summaries[0].content)
+        return output_summaries
+
+    @staticmethod
+    def normalize_code(code: str) -> str:
+        """Eliminating unnecessary spaces and newline characters from code.
+        This function is as preprocessing step before comparing the refactored code with the target code.
+
+        :param code: str, Code to normalize.
+        :return: str, Normalized code.
+        """
+
+        # replace multiple spaces with a single space
+        code = re.sub(r"\s+", " ", code)
+        # replace multiple newlines with a single newline
+        code = re.sub(r"\n+", "\n", code)
+        # remove spaces before and after newlines
+        code = re.sub(r" ?\n ?", "\n", code)
+        # remove spaces at the beginning and end of the code
+        code = code.strip()
+        return code
 
 
 def main():
