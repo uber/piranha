@@ -15,7 +15,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use super::eq_without_whitespace;
 use crate::{
-  models::{edit::Edit, matches::Match},
+  models::{edit::Edit, matches::Match, Validator},
   utilities::MapOfVec,
 };
 use itertools::Itertools;
@@ -23,7 +23,8 @@ use log::debug;
 use pyo3::prelude::pyclass;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
-use tree_sitter::{InputEdit, Node, Point, Query, QueryCapture, QueryCursor, Range};
+use tree_sitter::{InputEdit, Node, Parser, Point, Query, QueryCapture, QueryCursor, Range};
+use tree_sitter_traversal::{traverse, Order};
 
 /// Applies the query upon the given node, and gets all the matches
 /// # Arguments
@@ -303,6 +304,22 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   }
 }
 
+/// Returns the (tree-sitter) parser for the tree-sitter query DSL
+pub(crate) fn get_ts_query_parser() -> Parser {
+  let mut parser = Parser::new();
+  parser
+    .set_language(tree_sitter_query::language())
+    .expect("Could not set the language for the parser.");
+  parser
+}
+
+/// Returns the number of errors in the AST
+pub(crate) fn number_of_errors(node: &Node) -> usize {
+  traverse(node.walk(), Order::Post)
+    .filter(|node| node.is_error() || node.is_missing())
+    .count()
+}
+
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
 pub struct TSQuery(String);
@@ -314,6 +331,17 @@ impl TSQuery {
 
   pub(crate) fn get_query(&self) -> String {
     self.0.to_string()
+  }
+}
+
+impl Validator for TSQuery {
+  fn validate(&self) -> Result<(), String> {
+    let mut parser = get_ts_query_parser();
+    parser
+      .parse(self.get_query(), None)
+      .filter(|x| number_of_errors(&x.root_node()) == 0)
+      .map(|_| Ok(()))
+      .unwrap_or(Err(format!("Cannot parse - {}", self.get_query())))
   }
 }
 

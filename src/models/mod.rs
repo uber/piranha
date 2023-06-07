@@ -24,3 +24,7 @@ pub(crate) mod rule_graph;
 pub(crate) mod rule_store;
 pub(crate) mod scopes;
 pub(crate) mod source_code_unit;
+
+pub(crate) trait Validator {
+  fn validate(&self) -> Result<(), String>;
+}

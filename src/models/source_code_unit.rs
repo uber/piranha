@@ -20,12 +20,12 @@ use itertools::Itertools;
 use log::{debug, error};
 
 use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
-use tree_sitter_traversal::{traverse, Order};
 
 use crate::{
   models::rule_graph::{GLOBAL, PARENT},
   utilities::tree_sitter_utilities::{
-    get_match_for_query, get_node_for_range, get_replace_range, get_tree_sitter_edit, TSQuery,
+    get_match_for_query, get_node_for_range, get_replace_range, get_tree_sitter_edit,
+    number_of_errors, TSQuery,
   },
 };
 
@@ -358,11 +358,9 @@ impl SourceCodeUnit {
     panic!("{}", msg);
   }
 
-  /// Returns the number of errors in the AST
+  /// Returns the number of errors in this source code unit
   fn _number_of_errors(&self) -> usize {
-    traverse(self.root_node().walk(), Order::Post)
-      .filter(|node| node.is_error() || node.is_missing())
-      .count()
+    number_of_errors(&self.root_node())
   }
 
   // Replaces the content of the current file with the new content and re-parses the AST

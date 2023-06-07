@@ -197,7 +197,7 @@ query = """
 (
 (prefix_expression (boolean_literal) @exp) @prefix_expression
 (#eq? @exp "false")
-(#match @prefix_expression "!.*")  
+(#match? @prefix_expression "!.*")  
 )
 """
 replace = "true"
@@ -216,7 +216,7 @@ query = """
 (
 (prefix_expression (boolean_literal) @exp) @prefix_expression
 (#eq? @exp "true")
-(#match @prefix_expression "!.*")  
+(#match? @prefix_expression "!.*")  
 )
 """
 replace = "false"

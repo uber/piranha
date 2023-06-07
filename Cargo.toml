@@ -61,6 +61,7 @@ tree-sitter-typescript = "0.20.1"
 tree-sitter-go = { git = "https://github.com/uber/tree-sitter-go.git", rev = "8f807196afab4a1a1256dbf62a011020c6fe7745" }
 tree-sitter-thrift = "0.5.0"
 tree-sitter-strings = { git = "https://github.com/ketkarameya/tree-sitter-strings.git" }
+tree-sitter-query = "0.1.0"
 derive_builder = "0.12.0"
 getset = "0.1.2"
 pyo3 = "0.19.0"

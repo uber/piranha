@@ -376,3 +376,21 @@ fn test_handle_syntactically_incorrect_tree_panic() {
   // Delete temp_dir
   temp_dir.close().unwrap();
 }
+
+#[test]
+#[should_panic(expected = "Cannot parse")]
+fn test_incorrect_rule() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("incorrect_rule");
+  let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+  let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .language(PiranhaLanguage::from(JAVA))
+    .build();
+
+  let _ = execute_piranha(&piranha_arguments);
+}

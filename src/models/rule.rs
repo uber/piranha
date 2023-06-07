@@ -28,6 +28,7 @@ use super::{
     default_replace, default_replace_node, default_rule_name,
   },
   filter::Filter,
+  Validator,
 };
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
@@ -149,12 +150,17 @@ macro_rules! piranha_rule {
 impl Rule {
   #[new]
   fn py_new(
-    name: String, query: String, replace: Option<String>, replace_node: Option<String>,
+    name: String, query: Option<String>, replace: Option<String>, replace_node: Option<String>,
     holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
     filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
-    rule_builder.name(name).query(TSQuery::new(query));
+
+    rule_builder.name(name);
+    if let Some(q) = query {
+      rule_builder.query(TSQuery::new(q));
+    }
+
     if let Some(replace) = replace {
       rule_builder.replace(replace);
     }
@@ -183,6 +189,16 @@ impl Rule {
   }
 
   gen_py_str_methods!();
+}
+
+impl Validator for Rule {
+  fn validate(&self) -> Result<(), String> {
+    let validation = self
+      .query()
+      .validate()
+      .and_then(|_: ()| self.filters().iter().try_for_each(|f| f.validate()));
+    validation
+  }
 }
 
 pub use piranha_rule;

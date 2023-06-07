@@ -13,7 +13,7 @@ from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaO
 from os.path import join, basename
 from os import listdir
 import re
-
+import pytest
 
 def test_piranha_rewrite():
     args = PiranhaArguments(
@@ -176,6 +176,23 @@ def test_delete_unused_field():
         "test-resources/java/delete_unused_field/", output_summaries
     )
 
+
+def test_incorrect_import():
+    delete_unused_field = Rule (
+        name= "delete_unused_field",
+        query=
+        """(
+        (import_declaration @import_decl
+        )
+        """,
+    )
+
+    
+    with pytest.raises(BaseException, match = "Incorrect Rule Graph - Cannot parse") as e:
+        rule_graph = RuleGraph(
+            rules= [delete_unused_field],
+            edges = []
+            )
 
 def is_as_expected(path_to_scenario, output_summary):
     expected_output = join(path_to_scenario, "expected")

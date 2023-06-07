@@ -11,22 +11,23 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use derive_builder::Builder;
-use getset::{Getters, MutGetters};
-use itertools::Itertools;
-
 use crate::{
   df::df::DataflowAnalysis,
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
-use std::collections::HashSet;
-use std::{collections::HashMap, path::Path};
+
+use colored::Colorize;
+use derive_builder::Builder;
+use getset::{Getters, MutGetters};
+use itertools::Itertools;
+use std::{collections::HashMap, collections::HashSet, path::Path};
 
 use super::{
   default_configs::{default_edges, default_rule_graph_map, default_rules},
   outgoing_edges::Edges,
   rule::{InstantiatedRule, Rules},
+  Validator,
 };
 use crate::df::tag_analysis::ForwardDefiniteAssignment;
 use crate::df::utils::get_tags_usage_from_matcher;
@@ -56,6 +57,15 @@ pub struct RuleGraph {
   #[get = "pub(crate)"]
   #[pyo3(get)]
   graph: HashMap<String, Vec<(String, String)>>,
+}
+
+impl Validator for RuleGraph {
+  fn validate(&self) -> Result<(), String> {
+    match self.rules().iter().try_for_each(|rule| rule.validate()) {
+      Ok(()) => Ok(()),
+      Err(e) => Err(format!("Incorrect Rule Graph - {}", e)),
+    }
+  }
 }
 
 #[pymethods]
@@ -96,12 +106,18 @@ impl RuleGraphBuilder {
       }
     }
 
-    RuleGraphBuilder::default()
+    let graph = RuleGraphBuilder::default()
       .edges(_rule_graph.edges().clone())
       .rules(_rule_graph.rules().clone())
       .graph(graph)
       .create()
-      .unwrap()
+      .unwrap();
+
+    if let Err(err) = graph.validate() {
+      panic!("{}", err.as_str().red());
+    }
+
+    graph
   }
 
   // We need access to the initial set of substitutions to validate the rule graph
@@ -233,3 +249,7 @@ pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGra
     .edges(input_edges.edges)
     .build()
 }
+
+#[cfg(test)]
+#[path = "unit_tests/rule_graph_validation_test.rs"]
+mod rule_graph_validation_test;
