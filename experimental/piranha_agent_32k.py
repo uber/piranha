@@ -71,6 +71,7 @@ def infer_rules(**kwargs):
 
     prompt = agent.format_messages(**kwargs)
     print(agent.get_completion(prompt))
+
 def main():
 
     arg_parser = argparse.ArgumentParser()
