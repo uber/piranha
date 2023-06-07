@@ -8,11 +8,22 @@ import argparse
 import re
 from typing import List, Any, Optional, Tuple
 import difflib
+import logging
+from logger_formatter import CustomFormatter
 from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
 from base_prompt import BasePrompt
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
 from rule_application import CodebaseRefactorer
+
+
+logger = logging.getLogger("PiranhaAgent")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
 
 
 class PiranhaAgentError(Exception):
@@ -30,7 +41,7 @@ class PiranhaAgent:
     source_code = attr.ib(default="")
     target_code = attr.ib(default="")
     language = attr.ib(default="java")
-    temperature = attr.ib(default=0.1)
+    temperature = attr.ib(default=0.2)
 
     @staticmethod
     def get_tree_from_code(code: str, language: str) -> str:
@@ -162,6 +173,7 @@ class PiranhaAgent:
 
 
 def main():
+    logger.info("Starting Piranha Agent")
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
         "-s",
@@ -212,8 +224,9 @@ def main():
     agent = PiranhaAgent(source_code, target_code)
 
     rule_name, rule = agent.infer_rules()
-    print(rule)
+    logger.info(f"Generated rule:\n{rule}")
 
+    print("?")
     os.makedirs(args.path_to_piranha_config, exist_ok=True)
     with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
         f.write(rule)
