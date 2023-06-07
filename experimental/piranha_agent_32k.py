@@ -67,7 +67,7 @@ def infer_rules(**kwargs):
     task_examples = ""
     for root, dirs, files in os.walk(path_to_examples_rules):
         for file in files:
-            if file.endswith(".toml"):
+            if file.endswith("rules.toml"):
                 with open(os.path.join(root, file), "r") as f:
                     file_name = os.path.join(root, file)
                     file_contents = f.read()

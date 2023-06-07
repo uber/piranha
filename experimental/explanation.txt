@@ -1,5 +1,14 @@
-Your task is to generate a Tree-sitter query and transformation string in a TOML file that refactors a given original code snippet into a refactored code snippet.
-You will be provided with the original code snippet, the refactored code snippet, and the Tree-sitter representations of both.
+Your task is to create refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
+Each rule will transform an original code snippet into a provided refactored version.
+You'll have the original and refactored snippets and their tree-sitter representations.
+
+The rule should be in Polyglot Piranha's domain-specific language (DSL). Explanations and examples of the DSL are below.
+
+Your rule should accurately capture the transformation from the original to the refactored code.
+It should be specific enough to avoid matching unrelated code patterns, but general enough to include code from captured groups where possible.
+
+========================= DSL Explanation =========================
+
 The TOML file should contain at least one rule with the following properties:
 
 - "query": Tree-sitter query to find the code pattern to refactor
@@ -9,61 +18,55 @@ The TOML file should contain at least one rule with the following properties:
 
 Additionally, the rule can have optional properties such as "is_seed_rule", "groups", and "filters".
 Filters can have properties like "enclosing_node", "not_contains", "contains", "at_least", "at_most".
-When writing tree sitter queries, remember you can use the wildcard node (_) to match any node.
-Using is node is ideal unless the node type is strictly necessary for the query to work.
+The filters are used to specify conditions for the rule to be applied.
 
-
-Here's an example of a TOML file with a single rule, including explanations for each property:
+========================= Output Format =========================
 
 <file_name_start> your_rules_file.toml <file_name_end>
 ```toml
-# Rule definition
+# Define your rule within this section
 [[rules]]
-# Name of the rule
+# Provide a unique name for your rule
 name = "your_rule_name"
 
-# Tree-sitter query to find the code pattern to refactor
-query = """
-(
-    (your_code_pattern) @your_capture_name
-)
+# Write a Tree-sitter query to identify the code pattern for refactoring
+query = """(
+    (method_invocation name: (_) @name
+                       arguments: (_) @args) @invk
+    (#eq? @name "some_string"))
 """
 
-# Replacement string or pattern for the refactored code
-replace = "your_replacement_pattern"
+# Specify the captured node from the query that will be replaced
+replace_node = "invk"
 
-# The captured node in the query that will be replaced
-replace_node = "your_capture_name"
+# Replacement string that will substitute `replace_node`
+replace = "X.other_string(@args)"
 
-# Holes to be used in the rule. These are placeholders in your queries that will be instantiated at runtime (can be empty).
+# Specify any placeholders in your queries that will be filled in at runtime
 holes = ["hole1", "hole2"]
 
-# Whether this rule should be triggered first, or only after other rules have been triggered
+# Specify if this rule should be triggered first. If it depends on other rules, set to false
 is_seed_rule = true
 
-# Optional: Filters to apply for this rule
+# If necessary, define filters for your rule
 [[rules.filters]]
-
-# Enclosing node condition for the rule to apply. This means that the match from the query should be enclosed by a parent containing the enclosing node.
+# This pattern should match any ancestor of the captured node (optional)
 enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
 
-# Conditions for the rule to be applied. This is CHECKED AGAINST ENCLOSING NODE:
-#    i. not_contains (set of queries that no children of enclosing node should match)
-#    ii. contains (single query that children of enclosing node should match)
-#       ii.a at_least (default = 1) (at least n children should match the contains query)
-#       ii.b at_most (default = u32::max) (at most n children should match the contains query)
-
+# Define patterns that should not be present within the enclosing_node (optional)
 not_contains = [
     """
     (your_not_contains_pattern) @your_capture_name
     """
 ]
+# Define a pattern that should be present within the enclosing_node (optional)
 contains =
     """
     (your_contains_pattern) @your_capture_name
     """
+# Define the minimum and maximum number of children that should match the 'contains' pattern (optional)
 at_least = 1
 at_most = 5
 ```
 
-I will now include examples of rules. You can use these as inspiration for your own rules.
+========================= Rule Examples =========================
