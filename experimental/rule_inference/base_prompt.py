@@ -38,7 +38,7 @@ class BasePrompt:
     # Write a Tree-sitter query to identify the code pattern for refactoring
     query = """(
         (method_invocation name: (_) @name
-                           arguments: (_) @args) @invk
+                           arguments: (argument_list) @args) @invk
         (#eq? @name "some_string"))
     """
     
@@ -46,7 +46,7 @@ class BasePrompt:
     replace_node = "invk"
     
     # Replacement string that will substitute `replace_node`
-    replace = "X.other_string(@args)"
+    replace = "X.other_string@args"
     
     # Specify any placeholders in your queries that will be filled in at runtime
     holes = ["hole1", "hole2"]
@@ -106,6 +106,8 @@ class BasePrompt:
     @staticmethod
     def generate_prompt(**kwargs):
         examples = BasePrompt._get_examples("../../src/cleanup_rules/java")
+        examples += BasePrompt._get_examples("../../src/cleanup_rules/kt")
+
         formatted = (
             BasePrompt.explanation
             + "\n"

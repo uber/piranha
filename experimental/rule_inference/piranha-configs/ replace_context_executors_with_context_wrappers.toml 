@@ -6,12 +6,12 @@ query = """
 (
     (method_invocation object: (identifier) @object
                        name: (identifier) @name
-                       arguments: (argument_list (decimal_integer_literal) @args)) @invocation
+                       arguments: (argument_list) @args) @invocation
     (#eq? @object "ContextExecutors")
-    (#eq? @name "newFixedThreadPool")
-)
+    (#eq? @name "newFixedThreadPool"))
 """
 
 replace_node = "invocation"
-replace = "ContextWrappers.wrap(Executors.newFixedThreadPool(@args))"
+replace = "ContextWrappers.wrap(Executors.newFixedThreadPool@args)"
+
 is_seed_rule = true
