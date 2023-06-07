@@ -12,6 +12,7 @@ from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
 from base_prompt import BasePrompt
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
+from rule_application import CodebaseRefactorer
 
 
 class PiranhaAgentError(Exception):
@@ -212,6 +213,12 @@ def main():
     os.makedirs(args.path_to_piranha_config, exist_ok=True)
     with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
         f.write(rule)
+
+    if args.path_to_codebase:
+        refactor = CodebaseRefactorer(
+            args.language, args.path_to_codebase, args.path_to_piranha_config
+        )
+        refactor.refactor_codebase()
 
 
 main()
