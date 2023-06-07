@@ -21,6 +21,7 @@ class PiranhaAgent:
     source_code = attr.ib(default="")
     target_code = attr.ib(default="")
     language = attr.ib(default="java")
+    temperature = attr.ib(default=0.2)
 
     @staticmethod
     def get_tree_from_code(code: str, language: str) -> str:
@@ -35,13 +36,13 @@ class PiranhaAgent:
                 response = openai.ChatCompletion.create(
                     model=model,
                     messages=messages,
-                    temperature=0.2,  # this is the degree of randomness of the model's output
+                    temperature=self.temperature,  # this is the degree of randomness of the model's output
                 )
                 return response.choices[0].message["content"]
             except (
-                    openai.error.RateLimitError,
-                    openai.error.Timeout,
-                    openai.error.APIError,
+                openai.error.RateLimitError,
+                openai.error.Timeout,
+                openai.error.APIError,
             ):
                 sleep_time = 10
                 print(f"Rate limit reached. Sleeping for {sleep_time}s.")
@@ -51,17 +52,21 @@ class PiranhaAgent:
         source_tree = self.get_tree_from_code(self.source_code, self.language)
         target_tree = self.get_tree_from_code(self.target_code, self.language)
 
-        messages = BasePrompt.generate_prompt(source_code = self.source_code,
-                                              target_code = self.target_code,
-                                              source_tree = source_tree,
-                                              target_tree = target_tree,)
+        messages = BasePrompt.generate_prompt(
+            source_code=self.source_code,
+            target_code=self.target_code,
+            source_tree=source_tree,
+            target_tree=target_tree,
+        )
         completion = self.get_completion(messages)
         # Define regex pattern for ```toml block
         pattern = r"```toml(.*?)```"
         # Extract all toml block contents
         toml_blocks = re.findall(pattern, completion, re.DOTALL)
         if not toml_blocks:
-            raise PiranhaAgentError("No TOML blocks found in the completion")
+            raise PiranhaAgentError(
+                "Could not create Piranha rules. The agent returned no TOML blocks."
+            )
 
         toml_block = toml_blocks[0]
         toml_dict = toml.loads(toml_block)
@@ -72,45 +77,64 @@ class PiranhaAgent:
     def test_piranha(self, toml_dict):
         rules = toml_dict.get("rules", [])
         if not rules:
-            raise PiranhaAgentError("No rules found in TOML")
+            raise PiranhaAgentError(
+                "Could not create Piranha rules. The agent returned no TOML blocks."
+            )
 
         toml_rule = rules[0]
-        rule = Rule (
-            name= toml_rule["name"],
-            query= toml_rule["query"],
-            replace_node= toml_rule["replace_node"],
-            replace= toml_rule["replace"],
+        rule = Rule(
+            name=toml_rule["name"],
+            query=toml_rule["query"],
+            replace_node=toml_rule["replace_node"],
+            replace=toml_rule["replace"],
         )
 
-        rule_graph = RuleGraph(
-            rules= [rule],
-            edges = []
-        )
+        rule_graph = RuleGraph(rules=[rule], edges=[])
 
         args = PiranhaArguments(
             code_snippet=self.source_code,
             language=self.language,
-            rule_graph = rule_graph,
+            rule_graph=rule_graph,
             dry_run=True,
         )
 
         output_summaries = execute_piranha(args)
-        print(output_summaries[0].content)
+        # print(output_summaries[0].content)
 
 
 def main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-s", "--source-file", type=str, required=True)
-    arg_parser.add_argument("-t", "--target-file", type=str, required=True)
-    arg_parser.add_argument("-l", "--language", type=str, default="java")
-
+    arg_parser.add_argument(
+        "-s",
+        "--source-file",
+        type=str,
+        required=True,
+        help="Path to the original source file containing the code before the transformation",
+    )
+    arg_parser.add_argument(
+        "-t",
+        "--target-file",
+        type=str,
+        required=True,
+        help="Path to the target source file containing the code after the transformation",
+    )
+    arg_parser.add_argument(
+        "-l",
+        "--language",
+        type=str,
+        default="java",
+        help="Language of the source and target code",
+    )
+    arg_parser.add_argument(
+        "-k", "--openai-api-key", type=str, required=True, help="OpenAI API key"
+    )
     args = arg_parser.parse_args()
     source_code = open(args.source_file, "r").read()
     target_code = open(args.target_file, "r").read()
 
-
+    openai.api_key = args.openai_api_key
     agent = PiranhaAgent(source_code, target_code)
-    agent.infer_rules()
+    print(agent.infer_rules())
 
 
 main()

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 class BasePrompt:
@@ -76,7 +77,7 @@ class BasePrompt:
     
     ========================= Rule Examples =========================
     '''
-    input_template = '''
+    input_template = """
     ========================= Task =========================
 
     ### Original Code ###
@@ -96,17 +97,17 @@ class BasePrompt:
     {target_tree}
     
     ========================= Output =========================
-    '''
+    """
 
     @staticmethod
     def generate_prompt(**kwargs):
         examples = BasePrompt._get_examples("../../src/cleanup_rules")
         formatted = (
-                BasePrompt.explanation
-                + "\n"
-                + examples
-                + "\n"
-                + BasePrompt.input_template.format(**kwargs)
+            BasePrompt.explanation
+            + "\n"
+            + examples
+            + "\n"
+            + BasePrompt.input_template.format(**kwargs)
         )
         return [{"role": "user", "content": formatted}]
 
@@ -116,16 +117,15 @@ class BasePrompt:
         for root, dirs, files in os.walk(path_to_examples_rules):
             for file in files:
                 if file.endswith("rules.toml"):
-                    with open(os.path.join(root, file), "r") as f:
-                        file_name = os.path.join(root, file)
-                        file_contents = f.read()
-                        file_contents = "\n".join(
-                            [
-                                line
-                                for line in file_contents.split("\n")
-                                if not line.startswith("#")
-                            ]
-                        )
-                        task_examples += f"<file_name_start> {file_name} <file_name_end>\n"
-                        task_examples += f"```toml {file_contents}```\n"
+                    file_name = os.path.join(root, file)
+                    file_contents = Path(file_name).read_text()
+                    file_contents = "\n".join(
+                        [
+                            line
+                            for line in file_contents.split("\n")
+                            if not line.startswith("#")
+                        ]
+                    )
+                    task_examples += f"<file_name_start> {file_name} <file_name_end>\n"
+                    task_examples += f"```toml {file_contents}```\n"
         return task_examples
