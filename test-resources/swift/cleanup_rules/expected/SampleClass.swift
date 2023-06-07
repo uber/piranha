@@ -329,4 +329,5 @@ class SampleClass {
 
         toBePreservedInequality12() 
     }
+    x = true
 }

@@ -129,4 +129,8 @@ class XPFlagCleanerPositiveCases {
       System.out.println("Hi world");
     }
   }
+
+  public boolean isEnabledFlag(X x){
+    return x.cond ? true : exp.isStaleFeature().getCachedValue();
+  }
 }
