@@ -23,11 +23,6 @@ repos:
         language: system
         entry: bash -c 'cargo fmt'
         types: [rust]
-      - id: cargo-clippy
-        name: cargo clippy
-        language: system
-        entry: bash -c 'cargo clippy --fix --allow-staged'
-        types: [rust]
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.3.1
@@ -55,4 +50,3 @@ repos:
     rev: 23.3.0
     hooks:
       - id: black
-        language_version: python3.7
