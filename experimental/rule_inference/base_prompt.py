@@ -81,19 +81,19 @@ class BasePrompt:
 
     ### Original Code ###
     
-    {original_code}
+    {source_code}
     
     ### Tree-sitter Representation of Original Code ###
     
-    {original_tree}
+    {source_tree}
     
     ### Refactored Code ###
     
-    {refactored_code}
+    {target_code}
     
     ### Tree-sitter Representation of Refactored Code ###
     
-    {refactored_tree}
+    {target_tree}
     
     ========================= Output =========================
     '''
