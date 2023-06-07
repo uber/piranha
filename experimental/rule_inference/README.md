@@ -66,6 +66,9 @@ To run a demo of PiranhaAgent, execute the following command:
 python3 piranha_agent.py --source-file demo/before.java --target-file demo/after.java -k <YOUR_KEY>
 ```
 
+After running this demo, the agent will print a TOML file containing a piranha rules that transforms
+the `before.java` file into the `after.java` file.
+
 ## How it works
 
 1. The script reads both the original and refactored source code files, generating the Tree-sitter representation for each.
