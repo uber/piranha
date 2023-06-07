@@ -5,7 +5,7 @@ class BasePrompt:
     explanation = '''
     Your task is to create refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
     Each rule will transform an original code snippet into a provided refactored version.
-    You'll have the original and refactored snippets and their tree-sitter representations.
+    As input you will receive the original and refactored snippets and their tree-sitter representations.
     
     The rule should be in Polyglot Piranha's domain-specific language (DSL). Explanations and examples of the DSL are below.
     
