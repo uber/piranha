@@ -11,13 +11,34 @@ The following are the prerequisites to use PiranhaAgent:
 - OpenAI Python library
 - Tree-sitter Python library
 - Tree-sitter-languages Python library
-## Install 
-<Instructions for installation >
 
-* Clone this repo 
-* cd ../experiment
-* Create venv , install requirements
-.... 
+
+## Install
+
+To get started with PiranhaAgent, follow these instructions:
+
+1. Clone this repository:
+```
+git clone https://github.com/uber/piranha.git
+```
+
+2. Create a Python virtual environment and activate it:
+
+```
+python3 -m venv .env
+source .env/bin/activate
+```
+
+3. Navigate into the directory:
+```
+cd experimental/rule_inference
+```
+4. Install the necessary requirements:
+```
+pip install -r requirements.txt
+```
+
+
 
 
 ## Usage
@@ -34,7 +55,7 @@ Here,
 
 - `<source_file>`: The path to the original source code file.
 - `<target_file>`: The path to the refactored source code file.
-- `<language>`: (Optional) This specifies the programming language of the source code files. The default language is 'java'.
+- `<language>`: (Optional) This specifies the programming language of the source code files. The default language is `java`.
 - `<openai_api_key>`: OpenAI Secret API Key
 
 ## How it works
