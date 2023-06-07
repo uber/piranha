@@ -113,7 +113,9 @@ class PiranhaAgent:
             self.target_code
         ):
             logger.error(
-                f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}"
+                f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}\n"
+                f"The rule produced the following refactored code:\n{refactored_code}\n\n"
+                f"... but the target code is:\n{self.target_code}"
             )
             raise PiranhaAgentError(
                 "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
@@ -229,7 +231,6 @@ def main():
     rule_name, rule = agent.infer_rules()
     logger.info(f"Generated rule:\n{rule}")
 
-    print("?")
     os.makedirs(args.path_to_piranha_config, exist_ok=True)
     with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
         f.write(rule)
