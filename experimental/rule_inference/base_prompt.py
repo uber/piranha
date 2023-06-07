@@ -28,7 +28,7 @@ class BasePrompt:
     
     ========================= Output Format =========================
     
-    <file_name_start> your_rules_file.toml <file_name_end>
+    <file_name_start> your_rule_name.toml <file_name_end>
     ```toml
     # Define your rule within this section
     [[rules]]
@@ -101,7 +101,7 @@ class BasePrompt:
 
     @staticmethod
     def generate_prompt(**kwargs):
-        examples = BasePrompt._get_examples("../../src/cleanup_rules")
+        examples = BasePrompt._get_examples("../../src/cleanup_rules/java")
         formatted = (
             BasePrompt.explanation
             + "\n"

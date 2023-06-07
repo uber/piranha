@@ -5,12 +5,13 @@ import openai
 import re
 import toml
 import argparse
-from typing import List, Any, Optional
+import re
+import os
+from typing import List, Any, Optional, Tuple
 from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
 from base_prompt import BasePrompt
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-import re
 
 
 class PiranhaAgentError(Exception):
@@ -28,7 +29,7 @@ class PiranhaAgent:
     source_code = attr.ib(default="")
     target_code = attr.ib(default="")
     language = attr.ib(default="java")
-    temperature = attr.ib(default=0.2)
+    temperature = attr.ib(default=0.1)
 
     @staticmethod
     def get_tree_from_code(code: str, language: str) -> str:
@@ -37,7 +38,7 @@ class PiranhaAgent:
         root_node: Node = tree.root_node
         return root_node.sexp()
 
-    def get_completion(self, messages, model="gpt-4-32k") -> Optional[str]:
+    def get_completion(self, messages, model="gpt-4") -> Optional[str]:
         while True:
             try:
                 response = openai.ChatCompletion.create(
@@ -55,7 +56,7 @@ class PiranhaAgent:
                 print(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
 
-    def infer_rules(self) -> Optional[str]:
+    def infer_rules(self) -> Optional[Tuple[str, str]]:
         """Implements the inference process of the Piranha Agent.
         The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
         If the rule transforms the source code into the target code, the rule is returned.
@@ -99,7 +100,11 @@ class PiranhaAgent:
                 "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
             )
 
-        return completion
+        pattern = r"<file_name_start>(.*?)<file_name_end>"
+        file_names = re.findall(pattern, completion, re.DOTALL)
+        file_name = file_names[0] if file_names else "rule.toml"
+
+        return file_name, toml_block
 
     def run_piranha(self, toml_dict):
         """Runs the inferred rule by applying it to the source code using the Piranha.
@@ -177,13 +182,36 @@ def main():
     arg_parser.add_argument(
         "-k", "--openai-api-key", type=str, required=True, help="OpenAI API key"
     )
+
+    arg_parser.add_argument(
+        "-p",
+        "--path-to-codebase",
+        type=str,
+        default="",
+        help="Code base where the rule should be applied after a successful inference",
+    )
+
+    arg_parser.add_argument(
+        "-c",
+        "--path-to-piranha-config",
+        type=str,
+        default="./piranha-configs/",
+        help="The directory where rule should be persisted",
+    )
+
     args = arg_parser.parse_args()
     source_code = open(args.source_file, "r").read()
     target_code = open(args.target_file, "r").read()
 
     openai.api_key = args.openai_api_key
     agent = PiranhaAgent(source_code, target_code)
-    print(agent.infer_rules())
+
+    rule_name, rule = agent.infer_rules()
+    print(rule)
+
+    os.makedirs(args.path_to_piranha_config, exist_ok=True)
+    with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
+        f.write(rule)
 
 
 main()
