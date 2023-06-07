@@ -474,7 +474,7 @@ is_seed_rule = false
 
 #
 # Before
-# var v = true ? x : y
+# var v = true ? x : x
 #
 # After
 # var v = x
