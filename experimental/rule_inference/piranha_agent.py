@@ -48,9 +48,9 @@ class PiranhaAgent:
                 )
                 return response.choices[0].message["content"]
             except (
-                    openai.error.RateLimitError,
-                    openai.error.Timeout,
-                    openai.error.APIError,
+                openai.error.RateLimitError,
+                openai.error.Timeout,
+                openai.error.APIError,
             ):
                 sleep_time = 10
                 print(f"Rate limit reached. Sleeping for {sleep_time}s.")
@@ -74,7 +74,7 @@ class PiranhaAgent:
             target_code=self.target_code,
             source_tree=source_tree,
             target_tree=target_tree,
-            diff=diff
+            diff=diff,
         )
         completion = self.get_completion(messages)
         # Define regex pattern for ```toml block
@@ -98,7 +98,7 @@ class PiranhaAgent:
         refactored_code = piranha_summary[0].content
 
         if self.normalize_code(refactored_code) != self.normalize_code(
-                self.target_code
+            self.target_code
         ):
             raise PiranhaAgentError(
                 "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
