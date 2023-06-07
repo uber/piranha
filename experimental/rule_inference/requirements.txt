@@ -3,3 +3,4 @@ tree-sitter-languages
 attrs
 openai
 polyglot-piranha
+toml

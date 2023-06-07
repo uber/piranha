@@ -3,16 +3,6 @@
 PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from examples. 
 It generates these rules in TOML format, which can be applied to refactor other parts of the codebase.
 
-## Requirements
-
-The following are the prerequisites to use PiranhaAgent:
-
-- Python 3.7 or higher
-- OpenAI Python library
-- Tree-sitter Python library
-- Tree-sitter-languages Python library
-
-
 ## Install
 
 To get started with PiranhaAgent, follow these instructions:
