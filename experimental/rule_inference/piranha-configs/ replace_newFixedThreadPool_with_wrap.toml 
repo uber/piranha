@@ -1,0 +1,15 @@
+
+[[rules]]
+name = "replace_newFixedThreadPool_with_wrap"
+query = """
+(
+    (method_invocation object: (identifier) @object
+                       name: (identifier) @name
+                       arguments: (argument_list (decimal_integer_literal) @arg)) @invocation
+    (#eq? @object "ContextExecutors")
+    (#eq? @name "newFixedThreadPool")
+)
+"""
+replace_node = "invocation"
+replace = "ContextWrappers.wrap(Executors.newFixedThreadPool(@arg))"
+is_seed_rule = true

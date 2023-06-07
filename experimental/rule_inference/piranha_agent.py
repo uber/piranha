@@ -112,6 +112,9 @@ class PiranhaAgent:
         if self.normalize_code(refactored_code) != self.normalize_code(
             self.target_code
         ):
+            logger.error(
+                f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}"
+            )
             raise PiranhaAgentError(
                 "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
             )
