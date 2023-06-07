@@ -1,6 +1,6 @@
 # PiranhaAgent
 
-PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from examples. 
+PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from code examples. 
 It generates these rules in TOML format, which can be applied to refactor other parts of the codebase.
 
 ## Install
