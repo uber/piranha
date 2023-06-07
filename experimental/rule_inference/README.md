@@ -11,6 +11,14 @@ The following are the prerequisites to use PiranhaAgent:
 - OpenAI Python library
 - Tree-sitter Python library
 - Tree-sitter-languages Python library
+## Install 
+<Instructions for installation >
+
+* Clone this repo 
+* cd ../experiment
+* Create venv , install requirements
+.... 
+
 
 ## Usage
 
