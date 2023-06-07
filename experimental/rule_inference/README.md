@@ -41,5 +41,5 @@ Here,
 - 'main.py': The main script to run PiranhaAgent.
 - 'base_prompt.py': Contains the prompt template, and helper functions build specific prompts.
 
-We also feed the model the cleanup rules as examples, which can be found in the [src/cleanup](/src/cleanup) directory.
+We also feed the model the cleanup rules as examples, which can be found in the [src/cleanup](./src/cleanup) directory.
 """
