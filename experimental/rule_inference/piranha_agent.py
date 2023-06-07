@@ -5,12 +5,13 @@ import openai
 import re
 import toml
 import argparse
+import re
+import difflib
 from typing import List, Any, Optional
 from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
 from base_prompt import BasePrompt
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-import re
 
 
 class PiranhaAgentError(Exception):
@@ -28,7 +29,7 @@ class PiranhaAgent:
     source_code = attr.ib(default="")
     target_code = attr.ib(default="")
     language = attr.ib(default="java")
-    temperature = attr.ib(default=0.2)
+    temperature = attr.ib(default=0)
 
     @staticmethod
     def get_tree_from_code(code: str, language: str) -> str:
@@ -64,12 +65,16 @@ class PiranhaAgent:
         """
         source_tree = self.get_tree_from_code(self.source_code, self.language)
         target_tree = self.get_tree_from_code(self.target_code, self.language)
+        # create diff between source and target code using difflib
+        diff = difflib.unified_diff(self.source_code, self.target_code)
+        diff = "\n".join(diff)
 
         messages = BasePrompt.generate_prompt(
             source_code=self.source_code,
             target_code=self.target_code,
             source_tree=source_tree,
             target_tree=target_tree,
+            diff=diff
         )
         completion = self.get_completion(messages)
         # Define regex pattern for ```toml block

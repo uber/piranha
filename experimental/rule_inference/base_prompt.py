@@ -84,13 +84,17 @@ class BasePrompt:
     
     {source_code}
     
-    ### Tree-sitter Representation of Original Code ###
-    
-    {source_tree}
-    
     ### Refactored Code ###
     
     {target_code}
+    
+    ### Diff ###
+    
+    {diff}
+    
+    ### Tree-sitter Representation of Original Code ###
+    
+    {source_tree}
     
     ### Tree-sitter Representation of Refactored Code ###
     
