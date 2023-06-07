@@ -4,14 +4,19 @@ name = "replace_context_executors_with_context_wrappers"
 
 query = """
 (
-    (method_invocation object: (identifier) @object
-                       name: (identifier) @name
-                       arguments: (argument_list) @args) @invocation
+    (assignment_expression
+        left: (identifier) @left
+        right: (method_invocation
+            object: (identifier) @object
+            name: (identifier) @name
+            arguments: (argument_list) @args
+        )
+    ) @assignment
     (#eq? @object "ContextExecutors")
-    (#eq? @name "newFixedThreadPool"))
+    (#eq? @name "newFixedThreadPool")
+)
 """
 
-replace_node = "invocation"
-replace = "ContextWrappers.wrap(Executors.newFixedThreadPool@args)"
-
+replace_node = "assignment"
+replace = "@left = ContextWrappers.wrap(Executors.newFixedThreadPool@args)"
 is_seed_rule = true

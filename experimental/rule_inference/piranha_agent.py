@@ -167,11 +167,11 @@ class PiranhaAgent:
         """
 
         # replace multiple spaces with a single space
-        code = re.sub(r"\s+", " ", code)
+        code = re.sub(r"\s+", "", code)
         # replace multiple newlines with a single newline
-        code = re.sub(r"\n+", "\n", code)
+        code = re.sub(r"\n+", "", code)
         # remove spaces before and after newlines
-        code = re.sub(r" ?\n ?", "\n", code)
+        code = re.sub(r" ?\n ?", "", code)
         # remove spaces at the beginning and end of the code
         code = code.strip()
         return code

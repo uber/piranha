@@ -46,7 +46,7 @@ class BasePrompt:
     replace_node = "invk"
     
     # Replacement string that will substitute `replace_node`
-    replace = "X.other_string@args"
+    replace = "X.other_string @args"
     
     # Specify any placeholders in your queries that will be filled in at runtime
     holes = ["hole1", "hole2"]
