@@ -47,7 +47,9 @@ let tree;
         const selectedLanguage = languageSelect.value;
 
         // Use baseURL variable to generate URL
-        const scriptUrl = `${baseURL}codemirror-5.65.13/mode/${selectedLanguage}/${selectedLanguage}.js`;
+        // if language is javascript turn ito to java
+        const langName = selectedLanguage === "java" ? "javascript" : selectedLanguage;
+        const scriptUrl = `${codeMirror}/mode/${langName}/${langName}.js`;
 
         loadScript(scriptUrl, function() {
             codeBefore.setOption('mode', selectedLanguage);
