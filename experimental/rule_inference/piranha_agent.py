@@ -78,7 +78,11 @@ class PiranhaAgent:
         source_tree = self.get_tree_from_code(self.source_code, self.language)
         target_tree = self.get_tree_from_code(self.target_code, self.language)
         # create diff between source and target code using difflib
-        diff = difflib.unified_diff(self.source_code, self.target_code)
+        diff = list(
+            difflib.unified_diff(
+                self.source_code.splitlines(), self.target_code.splitlines()
+            )
+        )
         diff = "\n".join(diff)
 
         messages = BasePrompt.generate_prompt(
