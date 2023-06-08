@@ -1,6 +1,6 @@
 # PiranhaAgent
 
-PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from code examples. 
+PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from code examples.
 It generates these rules in TOML format, which can be applied to refactor other parts of the codebase.
 
 ## Install
@@ -8,6 +8,7 @@ It generates these rules in TOML format, which can be applied to refactor other 
 To get started with PiranhaAgent, follow these instructions:
 
 1. Clone this repository:
+
 ```
 git clone https://github.com/uber/piranha.git
 ```
@@ -20,16 +21,16 @@ source .env/bin/activate
 ```
 
 3. Navigate into the directory:
+
 ```
 cd experimental/rule_inference
 ```
+
 4. Install the necessary requirements:
+
 ```
 pip install -r requirements.txt
 ```
-
-
-
 
 ## Usage (CLI)
 
