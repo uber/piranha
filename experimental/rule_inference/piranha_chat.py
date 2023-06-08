@@ -168,6 +168,7 @@ class PiranhaGPTChat:
     def get_completion(self, n_samples: int = 1) -> Optional[List[str]]:
         while True:
             try:
+                logger.debug("Attempting to get completion from GPT.")
                 response = openai.ChatCompletion.create(
                     model=self.model,
                     messages=self.messages,

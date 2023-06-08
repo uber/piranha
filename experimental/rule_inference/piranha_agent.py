@@ -100,7 +100,7 @@ class PiranhaAgent:
                 except PiranhaAgentError as e:
                     # prompt_generator.append_followup(messages, e.args[0])
                     logger.debug(
-                        f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again..."
+                        f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
                     )
                     chat.append_user_followup(str(e))
 

@@ -7,7 +7,7 @@ import logging
 from piranha_agent import PiranhaAgent
 
 
-logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger("Flask").setLevel(logging.DEBUG)
 app = Flask(__name__)
 
 
