@@ -471,6 +471,29 @@ replace_node = "guard_block"
 replace = ""
 is_seed_rule = false
 
+
+#
+# Before
+# var v = true ? x : x
+#
+# After
+# var v = x
+#
+[[rules]]
+name = "ternary_similar_consequent_alternative"
+query = """(
+(ternary_expression
+    if_true:(_) @block_true
+    if_false:(_) @block_false
+    ) @ternary_block
+(#eq? @block_true @block_false)
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "@block_true"
+is_seed_rule = false
+
+
 #
 # Before
 # var v = true ? x : y
