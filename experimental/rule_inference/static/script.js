@@ -17,13 +17,13 @@ let tree;
   const codeBefore = CodeMirror.fromTextArea(codeInputBefore, {
     lineNumbers: true,
     showCursorWhenSelecting: true,
-    mode: "java",
+    mode: "javascript",
   });
 
   const codeAfter = CodeMirror.fromTextArea(codeIntputAfter, {
     lineNumbers: true,
     showCursorWhenSelecting: true,
-    mode: "java",
+    mode: "javascript",
   });
 
   const queryEditor = CodeMirror.fromTextArea(queryInput, {
@@ -52,8 +52,8 @@ let tree;
     const scriptUrl = `${codeMirror}/mode/${langName}/${langName}.js`;
 
     loadScript(scriptUrl, function () {
-      codeBefore.setOption("mode", selectedLanguage);
-      codeAfter.setOption("mode", selectedLanguage);
+      codeBefore.setOption("mode", langName);
+      codeAfter.setOption("mode", langName);
     });
   }
 

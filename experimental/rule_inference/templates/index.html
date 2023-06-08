@@ -26,22 +26,8 @@
         <div class="col-lg-6" id="code-container">
           <h4>Code</h4>
           <select id="language-select">
-            <option value="bash">Bash</option>
-            <option value="c">C</option>
-            <option value="cpp">C++</option>
-            <option value="c_sharp">C#</option>
-            <option value="go">Go</option>
-            <option value="html">HTML</option>
-            <option value="java" selected="selected">Java</option>
-            <option value="javascript">JavaScript</option>
-            <option value="php">PHP</option>
             <option value="python">Python</option>
-            <option value="ruby">Ruby</option>
-            <option value="rust">Rust</option>
-            <option value="toml">TOML</option>
-            <option value="typescript">TypeScript</option>
-            <option value="yaml">YAML</option>
-            <option value="ql">QL</option>
+            <option value="java" selected="selected">Java</option>
           </select>
           <textarea id="code-input-before"></textarea>
         </div>
@@ -53,11 +39,11 @@
       </div>
 
       <div class="row">
+        <button id="submit-button" class="btn btn-primary">Infer</button>
         <div class="col-lg-12" id="query-container">
           <h4>Rule</h4>
           <textarea id="query-input"></textarea>
         </div>
-        <button id="submit-button" class="btn btn-primary">Submit</button>
       </div>
     </div>
     <script>
