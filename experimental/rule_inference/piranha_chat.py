@@ -136,6 +136,7 @@ class PiranhaGPTChat:
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
         examples = examples[: len(examples) // 2]
+
         formatted = (
             PiranhaGPTChat.explanation
             + "\n"
