@@ -2,8 +2,9 @@ import logging
 
 
 class CustomFormatter(logging.Formatter):
-    blue = "\033[36m"
+    blue = "\033[34m"
     yellow = "\033[33m"
+    green = "\033[32m"
     red = "\033[31m"
     bold_red = "\033[1m\033[31m"
     reset = "\033[0m"
@@ -12,7 +13,7 @@ class CustomFormatter(logging.Formatter):
     )
 
     FORMATS = {
-        logging.DEBUG: blue + format + reset,
+        logging.DEBUG: green + format + reset,
         logging.INFO: blue + format + reset,
         logging.WARNING: yellow + format + reset,
         logging.ERROR: red + format + reset,

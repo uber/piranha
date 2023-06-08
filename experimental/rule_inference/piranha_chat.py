@@ -1,8 +1,23 @@
+import logging
 import os
 from pathlib import Path
+from typing import List, Optional
+from logger_formatter import CustomFormatter
+import attr
+import openai
+import time
+
+logger = logging.getLogger("PiranhaAgent")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
 
 
-class BasePrompt:
+@attr.s
+class PiranhaGPTChat:
     explanation = '''
     Your task is to create refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
     Each rule will transform an original code snippet into a provided refactored version.
@@ -103,19 +118,74 @@ class BasePrompt:
     ========================= Output =========================
     """
 
-    @staticmethod
-    def generate_prompt(**kwargs):
-        examples = BasePrompt._get_examples("../../src/cleanup_rules/java")
-        examples += BasePrompt._get_examples("../../src/cleanup_rules/kt")
+    holes = attr.ib(type=dict)
+    messages = attr.ib(type=list, default=attr.Factory(list))
+    temperature = attr.ib(
+        type=float,
+        default=0.2,
+        validator=[
+            attr.validators.ge(0),
+            attr.validators.le(1),
+        ],
+    )
+    model = attr.ib(
+        default="gpt-4",
+        validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo"]),
+    )
+
+    def __attrs_post_init__(self):
+        examples = self._get_examples("../../src/cleanup_rules/java")
 
         formatted = (
-            BasePrompt.explanation
+            PiranhaGPTChat.explanation
             + "\n"
             + examples
             + "\n"
-            + BasePrompt.input_template.format(**kwargs)
+            + PiranhaGPTChat.input_template.format(**self.holes)
         )
-        return [{"role": "user", "content": formatted}]
+
+        self.messages.append({"role": "user", "content": formatted})
+
+    def append_system_message(self, system_message):
+        """Add a GPT response to the internal messages"""
+        self.messages.append({"role": "system", "content": system_message})
+
+    def append_user_followup(self, followup_message):
+        """Add a followup message from the user after GPT replies"""
+        self.messages.append({"role": "user", "content": followup_message})
+
+    def get_model_response(self):
+        latest_message = self.messages[-1]
+        if latest_message["role"] == "system":
+            return latest_message["content"]
+        else:
+            completions = self.get_completion(n_samples=1)
+            content = completions[0]
+            self.append_system_message(content)
+            return content
+
+    def get_completion(self, n_samples: int = 1) -> Optional[List[str]]:
+        while True:
+            try:
+                response = openai.ChatCompletion.create(
+                    model=self.model,
+                    messages=self.messages,
+                    temperature=self.temperature,  # this is the degree of randomness of the model's output
+                    n=n_samples,
+                )
+                return [
+                    response.choices[i].message.content
+                    for i in range(len(response.choices))
+                ]
+            except (
+                openai.error.RateLimitError,
+                openai.error.Timeout,
+                openai.error.APIError,
+            ) as e:
+                logger.error(e)
+                sleep_time = 10
+                print(f"Rate limit reached. Sleeping for {sleep_time}s.")
+                time.sleep(sleep_time)
 
     @staticmethod
     def _get_examples(path_to_examples_rules):

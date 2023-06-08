@@ -12,12 +12,12 @@ import logging
 from logger_formatter import CustomFormatter
 from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
-from base_prompt import BasePrompt
+from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
 from rule_application import CodebaseRefactorer
 
 
-logger = logging.getLogger("PiranhaAgent")
+logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
 
 ch = logging.StreamHandler()
@@ -38,35 +38,20 @@ class PiranhaAgent:
     and validates the rule's effectiveness by testing if the rule can refactor the source code into the target code.
     """
 
-    source_code = attr.ib(default="")
-    target_code = attr.ib(default="")
+    source_code = attr.ib(type=str)
+    target_code = attr.ib(type=str)
     language = attr.ib(default="java")
-    temperature = attr.ib(default=0.2)
+    language_mappings = {
+        "java": "java",
+        "kt": "kotlin",
+    }  # This is necessary because get_parser and piranha expect different naming conventions
 
-    @staticmethod
-    def get_tree_from_code(code: str, language: str) -> str:
-        parser = get_parser(language)
+    def get_tree_from_code(self, code: str) -> str:
+        tree_sitter_language = self.language_mappings.get(self.language, self.language)
+        parser = get_parser(tree_sitter_language)
         tree = parser.parse(bytes(code, "utf8"))
         root_node: Node = tree.root_node
         return root_node.sexp()
-
-    def get_completion(self, messages, model="gpt-4") -> Optional[str]:
-        while True:
-            try:
-                response = openai.ChatCompletion.create(
-                    model=model,
-                    messages=messages,
-                    temperature=self.temperature,  # this is the degree of randomness of the model's output
-                )
-                return response.choices[0].message["content"]
-            except (
-                openai.error.RateLimitError,
-                openai.error.Timeout,
-                openai.error.APIError,
-            ):
-                sleep_time = 10
-                print(f"Rate limit reached. Sleeping for {sleep_time}s.")
-                time.sleep(sleep_time)
 
     def infer_rules(self) -> Optional[Tuple[str, str]]:
         """Implements the inference process of the Piranha Agent.
@@ -75,9 +60,10 @@ class PiranhaAgent:
 
         :return: str, string containing the rule in TOML format
         """
-        source_tree = self.get_tree_from_code(self.source_code, self.language)
-        target_tree = self.get_tree_from_code(self.target_code, self.language)
-        # create diff between source and target code using difflib
+        source_tree = self.get_tree_from_code(self.source_code)
+        target_tree = self.get_tree_from_code(self.target_code)
+
+        # Create diff between source and target code using difflib
         diff = list(
             difflib.unified_diff(
                 self.source_code.splitlines(), self.target_code.splitlines()
@@ -85,50 +71,75 @@ class PiranhaAgent:
         )
         diff = "\n".join(diff)
 
-        messages = BasePrompt.generate_prompt(
-            source_code=self.source_code,
-            target_code=self.target_code,
-            source_tree=source_tree,
-            target_tree=target_tree,
-            diff=diff,
+        prompt_holes = {
+            "source_code": self.source_code,
+            "target_code": self.target_code,
+            "source_tree": source_tree,
+            "target_tree": target_tree,
+            "diff": diff,
+        }
+
+        # Number of Chat interactions to have with the model
+        n_samples = 1
+        chat_interactions = [
+            PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
+        ]
+        first_round = chat_interactions[0].get_completion(n_samples=n_samples)
+        for i, response in enumerate(first_round):
+            # Hack to prevent running the prompt multiple times (it's the same for all samples)
+            # It is cheaper just to sample OpenAI API
+            chat_interactions[i].append_system_message(response)
+
+        # For each completion try to transform the source code into the target code
+        max_rounds = 10
+        for i in range(max_rounds):
+            for chat in chat_interactions:
+                try:
+                    response = chat.get_model_response()
+                    file_name, toml_block = self.validate_rule(response)
+                    return file_name, toml_block
+                except PiranhaAgentError as e:
+                    # prompt_generator.append_followup(messages, e.args[0])
+                    logger.debug(
+                        f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again..."
+                    )
+                    chat.append_user_followup(str(e))
+
+        # Throw an error if no rule was found
+        raise PiranhaAgentError(
+            "GPT-4 failed to generate a rule. Try increasing the temperature."
         )
-        completion = self.get_completion(messages)
+
+    def validate_rule(self, completion):
         # Define regex pattern for ```toml block
         pattern = r"```toml(.*?)```"
         # Extract all toml block contents
         toml_blocks = re.findall(pattern, completion, re.DOTALL)
         if not toml_blocks:
             raise PiranhaAgentError(
-                "Could not create Piranha rule. The agent returned no TOML blocks."
+                "Could not create Piranha rule. There is no TOML block. "
+                "Please return create a rule to refactor the code."
             )
-
         toml_block = toml_blocks[0]
+        logger.debug(f"Generated rule: {toml_block}")
         toml_dict = toml.loads(toml_block)
         piranha_summary = self.run_piranha(toml_dict)
-
         if not piranha_summary:
             raise PiranhaAgentError(
                 "Piranha did not generate any refactored code. Either the query or the filters are incorrect."
             )
-
         refactored_code = piranha_summary[0].content
-
         if self.normalize_code(refactored_code) != self.normalize_code(
             self.target_code
         ):
-            logger.error(
+            raise PiranhaAgentError(
                 f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}\n"
                 f"The rule produced the following refactored code:\n{refactored_code}\n\n"
                 f"... but the target code is:\n{self.target_code}"
             )
-            raise PiranhaAgentError(
-                "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
-            )
-
         pattern = r"<file_name_start>(.*?)<file_name_end>"
         file_names = re.findall(pattern, completion, re.DOTALL)
         file_name = file_names[0] if file_names else "rule.toml"
-
         return file_name, toml_block
 
     def run_piranha(self, toml_dict):
@@ -150,7 +161,6 @@ class PiranhaAgent:
         )
 
         rule_graph = RuleGraph(rules=[rule], edges=[])
-
         args = PiranhaArguments(
             code_snippet=self.source_code,
             language=self.language,
@@ -158,7 +168,10 @@ class PiranhaAgent:
             dry_run=True,
         )
 
-        output_summaries = execute_piranha(args)
+        try:
+            output_summaries = execute_piranha(args)
+        except BaseException as e:
+            raise PiranhaAgentError(f"Piranha failed to execute: {e}")
         return output_summaries
 
     @staticmethod
@@ -230,13 +243,15 @@ def main():
     target_code = open(args.target_file, "r").read()
 
     openai.api_key = args.openai_api_key
-    agent = PiranhaAgent(source_code, target_code)
+    agent = PiranhaAgent(source_code, target_code, language=args.language)
 
     rule_name, rule = agent.infer_rules()
     logger.info(f"Generated rule:\n{rule}")
 
+    file_path = os.path.join(args.path_to_piranha_config, rule_name)
+    logger.info(f"Writing rule to {file_path}")
     os.makedirs(args.path_to_piranha_config, exist_ok=True)
-    with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
+    with open(file_path, "w") as f:
         f.write(rule)
 
     if args.path_to_codebase:
