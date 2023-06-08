@@ -47,7 +47,7 @@ Here,
 - `<target_file>`: The path to the refactored source code file.
 - `<openai_api_key>`: OpenAI Secret API Key
 - `<language>`: (Optional) This specifies the programming language of the source code files. The default language is `java`.
-- `<path-to-codebase>`: (Optional) Path to where the rule should be applied / tests
+- `<path-to-codebase>`: (Optional) Path to where the rule should be applied / tested
 - `<path-to-piranha-config>`: (Optional) Path to directory to where to persist the generated rules
 
 ## Demo
