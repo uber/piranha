@@ -4,3 +4,4 @@ attrs
 openai
 polyglot-piranha
 toml
+pytest

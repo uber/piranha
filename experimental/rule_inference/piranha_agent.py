@@ -6,12 +6,24 @@ import re
 import toml
 import argparse
 import re
+from typing import List, Any, Optional, Tuple
 import difflib
-from typing import List, Any, Optional
+import logging
+from logger_formatter import CustomFormatter
 from tree_sitter import Node
 from tree_sitter_languages import get_language, get_parser
 from base_prompt import BasePrompt
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
+from rule_application import CodebaseRefactorer
+
+
+logger = logging.getLogger("PiranhaAgent")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
 
 
 class PiranhaAgentError(Exception):
@@ -38,7 +50,7 @@ class PiranhaAgent:
         root_node: Node = tree.root_node
         return root_node.sexp()
 
-    def get_completion(self, messages, model="gpt-4-32k") -> Optional[str]:
+    def get_completion(self, messages, model="gpt-4") -> Optional[str]:
         while True:
             try:
                 response = openai.ChatCompletion.create(
@@ -56,7 +68,7 @@ class PiranhaAgent:
                 print(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
 
-    def infer_rules(self) -> Optional[str]:
+    def infer_rules(self) -> Optional[Tuple[str, str]]:
         """Implements the inference process of the Piranha Agent.
         The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
         If the rule transforms the source code into the target code, the rule is returned.
@@ -66,7 +78,11 @@ class PiranhaAgent:
         source_tree = self.get_tree_from_code(self.source_code, self.language)
         target_tree = self.get_tree_from_code(self.target_code, self.language)
         # create diff between source and target code using difflib
-        diff = difflib.unified_diff(self.source_code, self.target_code)
+        diff = list(
+            difflib.unified_diff(
+                self.source_code.splitlines(), self.target_code.splitlines()
+            )
+        )
         diff = "\n".join(diff)
 
         messages = BasePrompt.generate_prompt(
@@ -100,11 +116,20 @@ class PiranhaAgent:
         if self.normalize_code(refactored_code) != self.normalize_code(
             self.target_code
         ):
+            logger.error(
+                f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}\n"
+                f"The rule produced the following refactored code:\n{refactored_code}\n\n"
+                f"... but the target code is:\n{self.target_code}"
+            )
             raise PiranhaAgentError(
                 "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
             )
 
-        return completion
+        pattern = r"<file_name_start>(.*?)<file_name_end>"
+        file_names = re.findall(pattern, completion, re.DOTALL)
+        file_name = file_names[0] if file_names else "rule.toml"
+
+        return file_name, toml_block
 
     def run_piranha(self, toml_dict):
         """Runs the inferred rule by applying it to the source code using the Piranha.
@@ -146,17 +171,18 @@ class PiranhaAgent:
         """
 
         # replace multiple spaces with a single space
-        code = re.sub(r"\s+", " ", code)
+        code = re.sub(r"\s+", "", code)
         # replace multiple newlines with a single newline
-        code = re.sub(r"\n+", "\n", code)
+        code = re.sub(r"\n+", "", code)
         # remove spaces before and after newlines
-        code = re.sub(r" ?\n ?", "\n", code)
+        code = re.sub(r" ?\n ?", "", code)
         # remove spaces at the beginning and end of the code
         code = code.strip()
         return code
 
 
 def main():
+    logger.info("Starting Piranha Agent")
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument(
         "-s",
@@ -182,13 +208,42 @@ def main():
     arg_parser.add_argument(
         "-k", "--openai-api-key", type=str, required=True, help="OpenAI API key"
     )
+
+    arg_parser.add_argument(
+        "-p",
+        "--path-to-codebase",
+        type=str,
+        default="",
+        help="Code base where the rule should be applied after a successful inference",
+    )
+
+    arg_parser.add_argument(
+        "-c",
+        "--path-to-piranha-config",
+        type=str,
+        default="./piranha-configs/",
+        help="The directory where rule should be persisted",
+    )
+
     args = arg_parser.parse_args()
     source_code = open(args.source_file, "r").read()
     target_code = open(args.target_file, "r").read()
 
     openai.api_key = args.openai_api_key
     agent = PiranhaAgent(source_code, target_code)
-    print(agent.infer_rules())
+
+    rule_name, rule = agent.infer_rules()
+    logger.info(f"Generated rule:\n{rule}")
+
+    os.makedirs(args.path_to_piranha_config, exist_ok=True)
+    with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
+        f.write(rule)
+
+    if args.path_to_codebase:
+        refactor = CodebaseRefactorer(
+            args.language, args.path_to_codebase, args.path_to_piranha_config
+        )
+        refactor.refactor_codebase()
 
 
 main()

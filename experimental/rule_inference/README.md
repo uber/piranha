@@ -38,15 +38,17 @@ To make use of PiranhaAgent, please follow the steps below:
 1. Execute the main.py script with the appropriate command-line arguments. The required format for the command is:
 
 ```
-python piranha_agent.py -s <source_file> -t <target_file> -l <language> -k <openai_api_key>
+python piranha_agent.py -s <source_file> -t <target_file> -l <language> -k <openai_api_key> -p <path-to-code-base> -c <path-to-piranha-config>
 ```
 
 Here,
 
 - `<source_file>`: The path to the original source code file.
 - `<target_file>`: The path to the refactored source code file.
-- `<language>`: (Optional) This specifies the programming language of the source code files. The default language is `java`.
 - `<openai_api_key>`: OpenAI Secret API Key
+- `<language>`: (Optional) This specifies the programming language of the source code files. The default language is `java`.
+- `<path-to-codebase>`: (Optional) Path to where the rule should be applied / tested
+- `<path-to-piranha-config>`: (Optional) Path to directory to where to persist the generated rules
 
 ## Demo
 
