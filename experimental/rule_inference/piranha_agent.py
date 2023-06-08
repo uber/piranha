@@ -50,20 +50,27 @@ class PiranhaAgent:
         root_node: Node = tree.root_node
         return root_node.sexp()
 
-    def get_completion(self, messages, model="gpt-4") -> Optional[str]:
+    def get_completion(
+        self, messages: List, model: str = "gpt-4", n_samples: int = 1
+    ) -> Optional[List[str]]:
         while True:
             try:
                 response = openai.ChatCompletion.create(
                     model=model,
                     messages=messages,
                     temperature=self.temperature,  # this is the degree of randomness of the model's output
+                    n=n_samples,
                 )
-                return response.choices[0].message["content"]
+                return [
+                    response.choices[i].message.content
+                    for i in range(len(response.choices))
+                ]
             except (
                 openai.error.RateLimitError,
                 openai.error.Timeout,
                 openai.error.APIError,
-            ):
+            ) as e:
+                logger.error(e)
                 sleep_time = 10
                 print(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
@@ -92,7 +99,23 @@ class PiranhaAgent:
             target_tree=target_tree,
             diff=diff,
         )
-        completion = self.get_completion(messages)
+
+        completions = self.get_completion(messages, n_samples=15)
+
+        # For each completion try to transform the source code into the target code
+        for completion in completions:
+            try:
+                file_name, toml_block = self.validate_rule(completion)
+                return file_name, toml_block
+            except PiranhaAgentError:
+                logger.debug("GPT-4 failed to generate a rule: {e}. Trying again...")
+
+        # Throw an error if no rule was found
+        raise PiranhaAgentError(
+            "GPT-4 failed to generate a rule. Try increasing the temperature."
+        )
+
+    def validate_rule(self, completion):
         # Define regex pattern for ```toml block
         pattern = r"```toml(.*?)```"
         # Extract all toml block contents
@@ -101,22 +124,18 @@ class PiranhaAgent:
             raise PiranhaAgentError(
                 "Could not create Piranha rule. The agent returned no TOML blocks."
             )
-
         toml_block = toml_blocks[0]
         toml_dict = toml.loads(toml_block)
         piranha_summary = self.run_piranha(toml_dict)
-
         if not piranha_summary:
             raise PiranhaAgentError(
                 "Piranha did not generate any refactored code. Either the query or the filters are incorrect."
             )
-
         refactored_code = piranha_summary[0].content
-
         if self.normalize_code(refactored_code) != self.normalize_code(
             self.target_code
         ):
-            logger.error(
+            logger.debug(
                 f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}\n"
                 f"The rule produced the following refactored code:\n{refactored_code}\n\n"
                 f"... but the target code is:\n{self.target_code}"
@@ -124,11 +143,9 @@ class PiranhaAgent:
             raise PiranhaAgentError(
                 "Piranha failed to generate the correct refactored code. The generated rule is incorrect."
             )
-
         pattern = r"<file_name_start>(.*?)<file_name_end>"
         file_names = re.findall(pattern, completion, re.DOTALL)
         file_name = file_names[0] if file_names else "rule.toml"
-
         return file_name, toml_block
 
     def run_piranha(self, toml_dict):
@@ -235,6 +252,7 @@ def main():
     rule_name, rule = agent.infer_rules()
     logger.info(f"Generated rule:\n{rule}")
 
+    logger.info(f"Writing rule to {args.path_to_piranha_config}/{rule_name}")
     os.makedirs(args.path_to_piranha_config, exist_ok=True)
     with open(os.path.join(args.path_to_piranha_config, rule_name), "w") as f:
         f.write(rule)
