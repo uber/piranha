@@ -49,7 +49,7 @@ To run the playground
 
 ```
 export OPENAI_API_KEY=<YOUR_KEY>
-python -m local.py
+python -m local
 ```
 
 Here,
