@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 
 
-## Usage
+## Usage (CLI)
 
 To make use of PiranhaAgent, please follow the steps below:
 
@@ -39,6 +39,17 @@ To make use of PiranhaAgent, please follow the steps below:
 
 ```
 python main.py -s <source_file> -t <target_file> -l <language> -k <openai_api_key> -p <path-to-code-base> -c <path-to-piranha-config>
+```
+
+## Usage (Playground UI)
+
+To run the playground
+
+1. Execute the local.py script. You have to set an environment variable `OPENAI_API_KEY` with your OpenAI API key.
+
+```
+export OPENAI_API_KEY=<YOUR_KEY>
+python -m local.py
 ```
 
 Here,

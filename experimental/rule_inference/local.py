@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 import openai
 from flask import Flask, render_template
 import logging
-from experimental.rule_inference.piranha_agent import PiranhaAgent
+from piranha_agent import PiranhaAgent
 
 
 logging.getLogger().setLevel(logging.DEBUG)
