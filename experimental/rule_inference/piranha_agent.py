@@ -79,7 +79,7 @@ class PiranhaAgent:
         }
 
         # Number of Chat interactions to have with the model
-        n_samples = 1
+        n_samples = 5
         chat_interactions = [
             PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
         ]
@@ -90,7 +90,7 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
-        max_rounds = 10
+        max_rounds = 3
         for i in range(max_rounds):
             for chat in chat_interactions:
                 try:
@@ -132,7 +132,6 @@ class PiranhaAgent:
             self.target_code
         ):
             raise PiranhaAgentError(
-                f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}\n"
                 f"The rule produced the following refactored code:\n{refactored_code}\n\n"
                 f"... but the target code is:\n{self.target_code}"
             )
