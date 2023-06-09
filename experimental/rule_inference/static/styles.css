@@ -1,0 +1,77 @@
+body {
+  font-family: Arial, sans-serif;
+  overflow: scroll;
+}
+
+h3 {
+  background-color: #f8f9fa;
+  padding: 20px;
+  font-family: "Arial", sans-serif;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+#playground-container {
+  margin-top: 20px;
+}
+
+#playground-container .CodeMirror,
+#output-container-scroll {
+  height: auto;
+  max-height: 600px;
+  border: 1px solid #aaa;
+  margin-bottom: 20px;
+}
+
+#playground-container .CodeMirror-scroll {
+  height: auto;
+  max-height: 600px;
+}
+
+#playground-container h5,
+#playground-container select,
+#playground-container .field,
+#playground-container label {
+  display: inline-block;
+  margin: 10px 20px 10px 0;
+  vertical-align: middle;
+}
+
+#playground-container #logging-checkbox,
+#playground-container #equal-checkbox {
+  height: 15px;
+  vertical-align: middle;
+}
+
+#playground-container .CodeMirror div.CodeMirror-cursor {
+  border-left: 3px solid red;
+}
+
+#output-container {
+  padding: 0 10px;
+  margin: 0;
+}
+
+#output-container-scroll {
+  padding: 0;
+  position: relative;
+  margin-top: 0;
+  overflow: auto;
+}
+
+a.highlighted {
+  background-color: #ddd;
+  text-decoration: underline;
+}
+
+.query-error {
+  text-decoration: underline red dashed;
+  -webkit-text-decoration: underline red dashed;
+}
+
+#explanation-container textarea {
+  color: grey;
+}
+#explanation-container textarea:focus {
+  color: black;
+}

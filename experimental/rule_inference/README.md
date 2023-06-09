@@ -1,6 +1,6 @@
 # PiranhaAgent
 
-PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from code examples. 
+PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from code examples.
 It generates these rules in TOML format, which can be applied to refactor other parts of the codebase.
 
 ## Install
@@ -8,6 +8,7 @@ It generates these rules in TOML format, which can be applied to refactor other 
 To get started with PiranhaAgent, follow these instructions:
 
 1. Clone this repository:
+
 ```
 git clone https://github.com/uber/piranha.git
 ```
@@ -20,25 +21,36 @@ source .env/bin/activate
 ```
 
 3. Navigate into the directory:
+
 ```
 cd experimental/rule_inference
 ```
+
 4. Install the necessary requirements:
+
 ```
 pip install -r requirements.txt
 ```
 
-
-
-
-## Usage
+## Usage (CLI)
 
 To make use of PiranhaAgent, please follow the steps below:
 
 1. Execute the main.py script with the appropriate command-line arguments. The required format for the command is:
 
 ```
-python piranha_agent.py -s <source_file> -t <target_file> -l <language> -k <openai_api_key> -p <path-to-code-base> -c <path-to-piranha-config>
+python main.py -s <source_file> -t <target_file> -l <language> -k <openai_api_key> -p <path-to-code-base> -c <path-to-piranha-config>
+```
+
+## Usage (Playground UI)
+
+To run the playground
+
+1. Execute the local.py script. You have to set an environment variable `OPENAI_API_KEY` with your OpenAI API key.
+
+```
+export OPENAI_API_KEY=<YOUR_KEY>
+python -m local
 ```
 
 Here,
@@ -67,10 +79,5 @@ the `before.java` file into the `after.java` file.
 2. A prompt is formulated using the task explanation, examples, and input template.
 3. This prompt is fed to the GPT-4 model, which generates a TOML file encapsulating the refactoring rules.
 4. The generated TOML file is output to the console.
-
-## Files
-
-- `main.py`: The main script to run PiranhaAgent.
-- `base_prompt.py`: Contains the prompt template, and helper functions build specific prompts.
 
 We also feed the model the cleanup rules as examples, which can be found in the [src/cleanup_rules](../../src/cleanup_rules) directory.

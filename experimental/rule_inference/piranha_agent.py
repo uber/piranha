@@ -10,11 +10,10 @@ from typing import List, Any, Optional, Tuple
 import difflib
 import logging
 from logger_formatter import CustomFormatter
-from tree_sitter import Node
+from tree_sitter import Node, TreeCursor
 from tree_sitter_languages import get_language, get_parser
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-from rule_application import CodebaseRefactorer
 
 
 logger = logging.getLogger("PiranhaChat")
@@ -41,17 +40,35 @@ class PiranhaAgent:
     source_code = attr.ib(type=str)
     target_code = attr.ib(type=str)
     language = attr.ib(default="java")
+    hints = attr.ib(default="")
     language_mappings = {
         "java": "java",
         "kt": "kotlin",
     }  # This is necessary because get_parser and piranha expect different naming conventions
+
+    def to_sexp(self, node: Node, depth, prefix=""):
+        indent = " " * depth
+        cursor: TreeCursor = node.walk()
+        s_exp = indent + f"{prefix}({node.type} "
+
+        next_child = cursor.goto_first_child()
+        while next_child:
+            child_node: Node = cursor.node
+            if child_node.is_named:
+                s_exp += "\n"
+                prefix = ""
+                if cursor.current_field_name():
+                    prefix = f"{cursor.current_field_name()}: "
+                s_exp += self.to_sexp(cursor.node, depth + 1, prefix)
+            next_child = cursor.goto_next_sibling()
+        return s_exp + ")"
 
     def get_tree_from_code(self, code: str) -> str:
         tree_sitter_language = self.language_mappings.get(self.language, self.language)
         parser = get_parser(tree_sitter_language)
         tree = parser.parse(bytes(code, "utf8"))
         root_node: Node = tree.root_node
-        return root_node.sexp()
+        return self.to_sexp(root_node, 0)
 
     def infer_rules(self) -> Optional[Tuple[str, str]]:
         """Implements the inference process of the Piranha Agent.
@@ -61,7 +78,6 @@ class PiranhaAgent:
         :return: str, string containing the rule in TOML format
         """
         source_tree = self.get_tree_from_code(self.source_code)
-        target_tree = self.get_tree_from_code(self.target_code)
 
         # Create diff between source and target code using difflib
         diff = list(
@@ -73,14 +89,13 @@ class PiranhaAgent:
 
         prompt_holes = {
             "source_code": self.source_code,
-            "target_code": self.target_code,
             "source_tree": source_tree,
-            "target_tree": target_tree,
             "diff": diff,
+            "hints": self.hints,
         }
 
         # Number of Chat interactions to have with the model
-        n_samples = 1
+        n_samples = 5
         chat_interactions = [
             PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
         ]
@@ -91,9 +106,9 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
-        max_rounds = 10
-        for i in range(max_rounds):
-            for chat in chat_interactions:
+        max_rounds = 5
+        for chat in chat_interactions:
+            for i in range(max_rounds):
                 try:
                     response = chat.get_model_response()
                     file_name, toml_block = self.validate_rule(response)
@@ -101,7 +116,7 @@ class PiranhaAgent:
                 except PiranhaAgentError as e:
                     # prompt_generator.append_followup(messages, e.args[0])
                     logger.debug(
-                        f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again..."
+                        f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
                     )
                     chat.append_user_followup(str(e))
 
@@ -133,7 +148,6 @@ class PiranhaAgent:
             self.target_code
         ):
             raise PiranhaAgentError(
-                f"GPT generated a bad rule. Run again to get a new sample. Generated rule: {toml_block}\n"
                 f"The rule produced the following refactored code:\n{refactored_code}\n\n"
                 f"... but the target code is:\n{self.target_code}"
             )
@@ -151,27 +165,25 @@ class PiranhaAgent:
         rules = toml_dict.get("rules", [])
         if not rules:
             raise PiranhaAgentError("TOML does not include any rule specifications.")
-
-        toml_rule = rules[0]
-        rule = Rule(
-            name=toml_rule["name"],
-            query=toml_rule["query"],
-            replace_node=toml_rule["replace_node"],
-            replace=toml_rule["replace"],
-        )
-
-        rule_graph = RuleGraph(rules=[rule], edges=[])
-        args = PiranhaArguments(
-            code_snippet=self.source_code,
-            language=self.language,
-            rule_graph=rule_graph,
-            dry_run=True,
-        )
-
         try:
+            toml_rule = rules[0]
+            rule = Rule(
+                name=toml_rule["name"],
+                query=toml_rule["query"],
+                replace_node=toml_rule["replace_node"],
+                replace=toml_rule["replace"],
+            )
+
+            rule_graph = RuleGraph(rules=[rule], edges=[])
+            args = PiranhaArguments(
+                code_snippet=self.source_code,
+                language=self.language,
+                rule_graph=rule_graph,
+                dry_run=True,
+            )
             output_summaries = execute_piranha(args)
         except BaseException as e:
-            raise PiranhaAgentError(f"Piranha failed to execute: {e}")
+            raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
         return output_summaries
 
     @staticmethod
@@ -192,73 +204,3 @@ class PiranhaAgent:
         # remove spaces at the beginning and end of the code
         code = code.strip()
         return code
-
-
-def main():
-    logger.info("Starting Piranha Agent")
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument(
-        "-s",
-        "--source-file",
-        type=str,
-        required=True,
-        help="Path to the original source file containing the code before the transformation",
-    )
-    arg_parser.add_argument(
-        "-t",
-        "--target-file",
-        type=str,
-        required=True,
-        help="Path to the target source file containing the code after the transformation",
-    )
-    arg_parser.add_argument(
-        "-l",
-        "--language",
-        type=str,
-        default="java",
-        help="Language of the source and target code",
-    )
-    arg_parser.add_argument(
-        "-k", "--openai-api-key", type=str, required=True, help="OpenAI API key"
-    )
-
-    arg_parser.add_argument(
-        "-p",
-        "--path-to-codebase",
-        type=str,
-        default="",
-        help="Code base where the rule should be applied after a successful inference",
-    )
-
-    arg_parser.add_argument(
-        "-c",
-        "--path-to-piranha-config",
-        type=str,
-        default="./piranha-configs/",
-        help="The directory where rule should be persisted",
-    )
-
-    args = arg_parser.parse_args()
-    source_code = open(args.source_file, "r").read()
-    target_code = open(args.target_file, "r").read()
-
-    openai.api_key = args.openai_api_key
-    agent = PiranhaAgent(source_code, target_code, language=args.language)
-
-    rule_name, rule = agent.infer_rules()
-    logger.info(f"Generated rule:\n{rule}")
-
-    file_path = os.path.join(args.path_to_piranha_config, rule_name)
-    logger.info(f"Writing rule to {file_path}")
-    os.makedirs(args.path_to_piranha_config, exist_ok=True)
-    with open(file_path, "w") as f:
-        f.write(rule)
-
-    if args.path_to_codebase:
-        refactor = CodebaseRefactorer(
-            args.language, args.path_to_codebase, args.path_to_piranha_config
-        )
-        refactor.refactor_codebase()
-
-
-main()
