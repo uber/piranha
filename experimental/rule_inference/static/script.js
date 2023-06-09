@@ -57,31 +57,45 @@ let tree;
     });
   }
 
-  document
-    .getElementById("submit-button")
-    .addEventListener("click", async function () {
-      const sourceCode = codeBefore.getValue();
-      const targetCode = codeAfter.getValue();
-      const language = languageSelect.value;
 
-      const response = await fetch("/api/infer_piranha", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          source_code: sourceCode,
-          target_code: targetCode,
-          language: language,
-        }),
-      });
+  document.getElementById("submit-button").addEventListener("click", async function () {
+    const sourceCode = codeBefore.getValue();
+    const targetCode = codeAfter.getValue();
+    const language = languageSelect.value;
 
-      if (response.ok) {
-        const data = await response.json();
-        const toml = data[1]; // Get the second item from the response array
-        queryEditor.setValue(toml); // Set the TOML in the queryEditor
-      } else {
-        console.error("Error:", response.status, response.statusText);
-      }
+    // Change the button to show that processing is happening
+    const button = document.getElementById('submit-button');
+    const buttonText = document.getElementById('button-text');
+    const spinner = document.getElementById('spinner');
+
+    button.disabled = true; // Disable button
+    spinner.style.display = 'inline-block'; // Show spinner
+    buttonText.textContent = 'Processing...'; // Change button text
+
+    const response = await fetch("/api/infer_piranha", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        target_code: targetCode,
+        language: language,
+      }),
     });
+
+    // Revert the button to its original state
+    button.disabled = false; // Enable button
+    spinner.style.display = 'none'; // Hide spinner
+    buttonText.textContent = 'Infer'; // Reset button text
+
+    if (response.ok) {
+      const data = await response.json();
+      const toml = data[1];
+      document.getElementById('query-container').style.display = 'block';
+      queryEditor.setValue(toml);
+    } else {
+      console.error("Error:", response.status, response.statusText);
+    }
+  });
 })();

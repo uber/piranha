@@ -24,7 +24,7 @@
     <div id="playground-container" class="container">
       <div class="row">
         <div class="col-lg-6" id="code-container">
-          <h4>Code</h4>
+          <h4>Before</h4>
           <select id="language-select">
             <option value="python">Python</option>
             <option value="java" selected="selected">Java</option>
@@ -33,18 +33,24 @@
         </div>
 
         <div class="col-lg-6" id="tree-container">
-          <h4>Code After</h4>
+          <h4>After</h4>
           <textarea id="code-input-after"></textarea>
         </div>
       </div>
 
-      <div class="row">
-        <button id="submit-button" class="btn btn-primary">Infer</button>
-        <div class="col-lg-12" id="query-container">
+      <div class="row justify-content-center">
+        <div class="col-auto">
+          <button id="submit-button" class="btn btn-primary">
+            <span id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+            <span id="button-text">Infer</span>
+          </button>
+        </div>
+        <div class="col-lg-12" id="query-container" style="display: none;">
           <h4>Rule</h4>
           <textarea id="query-input"></textarea>
         </div>
       </div>
+
     </div>
     <script>
       var codeMirror =

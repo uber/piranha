@@ -149,24 +149,22 @@ class PiranhaAgent:
         rules = toml_dict.get("rules", [])
         if not rules:
             raise PiranhaAgentError("TOML does not include any rule specifications.")
-
-        toml_rule = rules[0]
-        rule = Rule(
-            name=toml_rule["name"],
-            query=toml_rule["query"],
-            replace_node=toml_rule["replace_node"],
-            replace=toml_rule["replace"],
-        )
-
-        rule_graph = RuleGraph(rules=[rule], edges=[])
-        args = PiranhaArguments(
-            code_snippet=self.source_code,
-            language=self.language,
-            rule_graph=rule_graph,
-            dry_run=True,
-        )
-
         try:
+            toml_rule = rules[0]
+            rule = Rule(
+                name=toml_rule["name"],
+                query=toml_rule["query"],
+                replace_node=toml_rule["replace_node"],
+                replace=toml_rule["replace"],
+            )
+
+            rule_graph = RuleGraph(rules=[rule], edges=[])
+            args = PiranhaArguments(
+                code_snippet=self.source_code,
+                language=self.language,
+                rule_graph=rule_graph,
+                dry_run=True,
+            )
             output_summaries = execute_piranha(args)
         except BaseException as e:
             raise PiranhaAgentError(f"Piranha failed to execute: {e}")
