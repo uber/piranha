@@ -10,7 +10,7 @@ let tree;
   const codeIntputAfter = document.getElementById("code-input-after");
   const languageSelect = document.getElementById("language-select");
   const queryInput = document.getElementById("query-input");
-
+  const explanation_input= document.getElementById('explanation-input');
   languageSelect.addEventListener("change", handleLanguageChange);
   handleLanguageChange();
 
@@ -30,6 +30,11 @@ let tree;
     lineNumbers: true,
     showCursorWhenSelecting: true,
     mode: "toml",
+  });
+
+  const explanationEditor = CodeMirror.fromTextArea(explanation_input, {
+    lineNumbers: true,
+    lineWrapping: true,
   });
 
   // Function to dynamically load script
@@ -61,6 +66,7 @@ let tree;
   document.getElementById("submit-button").addEventListener("click", async function () {
     const sourceCode = codeBefore.getValue();
     const targetCode = codeAfter.getValue();
+    const userExplanation = explanationEditor.getValue();
     const language = languageSelect.value;
 
     // Change the button to show that processing is happening
@@ -81,6 +87,7 @@ let tree;
         source_code: sourceCode,
         target_code: targetCode,
         language: language,
+        hints: userExplanation,
       }),
     });
 
