@@ -69,6 +69,7 @@ fn test_get_all_matches_for_query_positive() {
     &query,
     true,
     Some("method_invocation".to_string()),
+    None,
   );
   assert_eq!(matches.len(), 2);
 }
@@ -121,6 +122,7 @@ fn test_get_all_matches_for_query_negative() {
     &query,
     true,
     Some("method_invocation".to_string()),
+    None,
   );
   assert!(matches.is_empty());
 }

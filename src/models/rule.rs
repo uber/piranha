@@ -24,7 +24,7 @@ use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Insta
 use super::{
   default_configs::{
     default_filters, default_groups, default_holes, default_is_seed_rule, default_query,
-    default_replace, default_replace_node, default_rule_name,
+    default_replace, default_replace_idx, default_replace_node, default_rule_name,
   },
   filter::Filter,
   Validator,
@@ -50,6 +50,12 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   query: TSQuery,
+  /// The tag corresponding to the node to be replaced
+  #[builder(default = "default_replace_idx()")]
+  #[serde(default = "default_replace_idx")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  replace_idx: u8,
   /// The tag corresponding to the node to be replaced
   #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
@@ -127,6 +133,7 @@ macro_rules! piranha_rule {
   (name = $name:expr
                 $(, query =$query: expr)?
                 $(, replace_node = $replace_node:expr)?
+                $(, replace_idx = $replace_idx:expr)?
                 $(, replace = $replace:expr)?
                 $(, holes = [$($hole: expr)*])?
                 $(, is_seed_rule = $is_seed_rule:expr)?
@@ -137,6 +144,7 @@ macro_rules! piranha_rule {
     .name($name.to_string())
     $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
+    $(.replace_idx($replace_idx.to_string()))?
     $(.replace($replace.to_string()))?
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
@@ -149,8 +157,8 @@ macro_rules! piranha_rule {
 impl Rule {
   #[new]
   fn py_new(
-    name: String, query: Option<String>, replace: Option<String>, replace_node: Option<String>,
-    holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
+    name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
+    replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
     filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
@@ -162,6 +170,10 @@ impl Rule {
 
     if let Some(replace) = replace {
       rule_builder.replace(replace);
+    }
+
+    if let Some(replace_idx) = replace_idx {
+      rule_builder.replace_idx(replace_idx);
     }
 
     if let Some(replace_node) = replace_node {
@@ -241,8 +253,18 @@ impl InstantiatedRule {
     self.rule().query().clone()
   }
 
-  pub fn replace_node(&self) -> String {
-    self.rule().replace_node().to_string()
+  pub fn replace_node(&self) -> Option<String> {
+    if *self.rule().replace_node() != default_replace_node() {
+      return Some(self.rule().replace_node().to_string());
+    }
+    None
+  }
+
+  pub fn replace_idx(&self) -> Option<u8> {
+    if *self.rule().replace_idx() != default_replace_idx() {
+      return Some(*self.rule().replace_idx());
+    }
+    None
   }
 
   pub fn holes(&self) -> &HashSet<String> {

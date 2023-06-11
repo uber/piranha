@@ -107,6 +107,10 @@ pub fn default_replace_node() -> String {
   String::new()
 }
 
+pub fn default_replace_idx() -> u8 {
+  u8::MAX
+}
+
 pub fn default_replace() -> String {
   String::new()
 }

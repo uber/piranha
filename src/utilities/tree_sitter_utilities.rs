@@ -41,7 +41,7 @@ pub(crate) fn get_match_for_query(
   node: &Node, source_code: &str, query: &Query, recursive: bool,
 ) -> Option<Match> {
   if let Some(m) =
-    get_all_matches_for_query(node, source_code.to_string(), query, recursive, None).first()
+    get_all_matches_for_query(node, source_code.to_string(), query, recursive, None, None).first()
   {
     return Some(m.clone());
   }
@@ -59,6 +59,7 @@ pub(crate) fn get_match_for_query(
 /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
 pub(crate) fn get_all_matches_for_query(
   node: &Node, source_code: String, query: &Query, recursive: bool, replace_node: Option<String>,
+  replace_node_idx: Option<u8>,
 ) -> Vec<Match> {
   let query_capture_groups = _get_query_capture_groups(node, &source_code, query);
   // In the below code, we get the code snippet corresponding to each tag for each QueryMatch.
@@ -84,6 +85,13 @@ pub(crate) fn get_all_matches_for_query(
       if let Some(replace_node_name) = &replace_node {
         if let Some(r) = get_range_for_replace_node(query, &query_matches, replace_node_name) {
           replace_node_range = r;
+        }
+      } else if let Some(r) = &replace_node_idx {
+        if let Some(n) = node
+          .descendant_for_byte_range(captured_node_range.start_byte, captured_node_range.end_byte)
+        {
+          println!("{}", r);
+          replace_node_range = n.named_child(*r as usize).unwrap().range();
         }
       }
       let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
