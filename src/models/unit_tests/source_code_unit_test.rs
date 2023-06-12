@@ -408,6 +408,75 @@ fn test_satisfies_filters_not_contains_negative() {
   ));
 }
 
+#[test]
+fn test_satisfies_filters_child_count() {
+  let rule_positive = piranha_rule! {
+    name= "test",
+    query= "(
+      (method_invocation 
+          name: (_) @name
+          arguments: (argument_list)@args) @mi 
+      (#eq? @name \"someOtherFunction\")
+      )",
+    replace_node= "args",
+    replace= "()",
+    filters= [filter!{
+      , child_count = 3
+    }]
+  };
+  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new());
+
+  let rule_neg = piranha_rule! {
+    name= "test",
+    query= "(
+      (method_invocation 
+          name: (_) @name
+          arguments: (argument_list)@args) @mi 
+      (#eq? @name \"someOtherFunction\")
+      )",
+    replace_node= "args",
+    replace= "()",
+    filters= [filter!{
+      , child_count = 2
+    }]
+  };
+  let rule_neg = InstantiatedRule::new(&rule_neg, &HashMap::new());
+
+  let source_code = "class Test {
+      public void foobar(){
+        boolean isFlagTreated = true;
+        isFlagTreated = false;
+        if (isFlagTreated) {
+          someOtherFunction(1, 2, 3);
+        }
+       }
+      }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_arguments = &PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    piranha_arguments,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(167, 175)
+    .unwrap();
+
+  assert!(source_code_unit.is_satisfied(*node, &rule_positive, &HashMap::new(), &mut rule_store,));
+
+  assert!(!source_code_unit.is_satisfied(*node, &rule_neg, &HashMap::new(), &mut rule_store,));
+}
+
 // Tests for contains without providing an enclosing node
 fn run_test_satisfies_filters_without_enclosing(
   filter: Filter, // Replace with the filter to test
