@@ -27,7 +27,8 @@ use crate::utilities::{
 };
 
 use super::{
-  rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, Validator,
+  default_configs::default_child_count, rule::InstantiatedRule, rule_store::RuleStore,
+  source_code_unit::SourceCodeUnit, Validator,
 };
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
@@ -77,6 +78,13 @@ pub struct Filter {
   #[serde(default = "default_contains_at_most")]
   #[pyo3(get)]
   at_most: u32,
+
+  // number of named children under the primary matched node
+  #[builder(default = "default_contains_at_most()")]
+  #[get = "pub"]
+  #[serde(default = "default_contains_at_most")]
+  #[pyo3(get)]
+  child_count: u32,
 }
 
 #[pymethods]
@@ -85,7 +93,7 @@ impl Filter {
   fn py_new(
     enclosing_node: Option<String>, not_enclosing_node: Option<String>,
     not_contains: Option<Vec<String>>, contains: Option<String>, at_least: Option<u32>,
-    at_most: Option<u32>,
+    at_most: Option<u32>, child_count: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
@@ -100,6 +108,7 @@ impl Filter {
       .contains(TSQuery::new(contains.unwrap_or_default()))
       .at_least(at_least.unwrap_or(default_contains_at_least()))
       .at_most(at_most.unwrap_or(default_contains_at_most()))
+      .child_count(child_count.unwrap_or(default_child_count()))
       .build()
   }
   gen_py_str_methods!();
@@ -149,6 +158,16 @@ impl Validator for Filter {
     if *self.not_contains() != default_not_contains_queries() {
       self.not_contains().iter().try_for_each(|x| x.validate())?
     }
+
+    if *self.child_count() != default_child_count()
+      && (*self.enclosing_node() != default_enclosing_node()
+        || *self.not_enclosing_node() != default_not_enclosing_node()
+        || *self.contains() != default_contains_query()
+        || *self.not_contains() != default_not_contains_queries())
+    {
+      return Err("The child count operator is not compatible with (not) enclosing node and (not) contains operator".to_string());
+    }
+
     Ok(())
   }
 }
@@ -211,7 +230,7 @@ impl FilterBuilder {
 /// ```
 ///
 macro_rules! filter {
-  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
+  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
       $(.not_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($not_enclosing_node.to_string())))?
@@ -219,6 +238,7 @@ macro_rules! filter {
       $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
       $(.at_least($min))?
       $(.at_most($max))?
+      $(.child_count($nChildren))?
       .build()
   };
 }
@@ -241,6 +261,7 @@ impl Instantiate for Filter {
       contains: self.contains().instantiate(substitutions_for_holes),
       at_least: self.at_least,
       at_most: self.at_most,
+      child_count: self.child_count,
     }
   }
 }
@@ -278,6 +299,10 @@ impl SourceCodeUnit {
   ) -> bool {
     let mut node_to_check = node;
     let instantiated_filter = filter.instantiate(substitutions);
+
+    if *filter.child_count() != default_child_count() {
+      return node.named_child_count() == (*filter.child_count() as usize);
+    }
 
     // Check if no ancestor matches the query for not_enclosing_node
     if !self._check_not_enclosing_node(rule_store, node_to_check, &instantiated_filter) {
