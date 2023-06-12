@@ -279,7 +279,7 @@ impl InstantiatedRule {
 impl Instantiate for Rule {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
   /// This functions assumes that each hole in the rule can be substituted.
-  /// i.e. It assumes that `substitutions_for_holes` is exaustive and complete
+  /// i.e. It assumes that `substitutions_for_holes` is exhaustive and complete
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
     let updated_rule = self.clone();
     Rule {

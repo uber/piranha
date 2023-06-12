@@ -64,6 +64,8 @@ create_rewrite_tests! {
   test_user_option_delete_if_empty: "user_option_delete_if_empty", 1;
   test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty =false;
   test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
+  test_java_delete_method_invocation_argument: "delete_method_invocation_argument", 1;
+  test_java_delete_method_invocation_argument_no_op: "delete_method_invocation_argument_no_op", 0;
 }
 
 create_match_tests! {
@@ -82,6 +84,24 @@ create_match_tests! {
                   ]),
               include = vec![Pattern::new("*/folder_2/**/*").unwrap()],
               exclude = vec![Pattern::new("*/folder_2_1/**/*").unwrap()];
+}
+
+#[test]
+#[should_panic(expected = "Could not fetch range or node for replace_node")]
+fn test_delete_method_invocation_argument_invalid() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("delete_method_invocation_argument_invalid");
+  let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+  let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_codebase(path_to_codebase)
+    .path_to_configurations(path_to_configurations)
+    .language(PiranhaLanguage::from(JAVA))
+    .build();
+
+  let _ = execute_piranha(&piranha_arguments);
 }
 
 #[test]

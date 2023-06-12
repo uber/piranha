@@ -80,24 +80,23 @@ pub(crate) fn get_all_matches_for_query(
     // If `recursive` it allows matches to the subtree of self (Node)
     // Else it ensure that the query perfectly matches the node (`self`).
     if recursive || range_matches_self {
-      let mut replace_node_range = captured_node_range;
-
+      let mut final_replace_node_range = captured_node_range;
       if let Some(replace_node_name) = &replace_node {
-        if let Some(r) = get_range_for_replace_node(query, &query_matches, replace_node_name) {
-          replace_node_range = r;
-        }
-      } else if let Some(r) = &replace_node_idx {
-        if let Some(n) = node
-          .descendant_for_byte_range(captured_node_range.start_byte, captured_node_range.end_byte)
+        if let Some(r) =
+          get_range_for_replace_node(query, &query_matches, replace_node_name, replace_node_idx)
         {
-          println!("{}", r);
-          replace_node_range = n.named_child(*r as usize).unwrap().range();
+          final_replace_node_range = r;
+        } else {
+          continue;
         }
       }
+
       let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
+
       output.push(Match::new(
-        source_code[replace_node_range.start_byte..replace_node_range.end_byte].to_string(),
-        replace_node_range,
+        source_code[final_replace_node_range.start_byte..final_replace_node_range.end_byte]
+          .to_string(),
+        final_replace_node_range,
         code_snippet_by_tag,
       ));
     }
@@ -181,6 +180,7 @@ fn accumulate_repeated_tags(
 // This function gets the range of the ast corresponding to the `replace_node` tag of the query.
 fn get_range_for_replace_node(
   query: &Query, query_matches: &[Vec<tree_sitter::QueryCapture>], replace_node_name: &String,
+  replace_node_idx: Option<u8>,
 ) -> Option<Range> {
   let tag_names_by_index: HashMap<usize, &String> =
     query.capture_names().iter().enumerate().collect();
@@ -193,12 +193,24 @@ fn get_range_for_replace_node(
         if tag_names_by_index[&(capture.index as usize)].eq(tag_name)
           && tag_name.eq(replace_node_name)
         {
+          if let Some(child_index) = replace_node_idx {
+            let c_usize = child_index as usize;
+            if c_usize >= capture.node.named_child_count() {
+              return None;
+            }
+            return Some(capture.node.named_child(c_usize).unwrap().range());
+          }
+
           return Some(capture.node.range());
         }
       }
     }
   }
-  None
+  panic!(
+    "Could not fetch range or node for replace_node {}. Context: {:?}",
+    replace_node_name,
+    query.capture_names()
+  );
 }
 
 /// Replaces the given byte range (`replace_range`) with the `replacement`.
