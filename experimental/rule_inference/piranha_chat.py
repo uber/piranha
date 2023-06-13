@@ -28,7 +28,7 @@ The rule should be in Polyglot Piranha's domain-specific language (DSL). Explana
 Your rule should accurately capture the transformation from the original to the refactored code.
 It should be specific enough to avoid matching unrelated code patterns, but general enough to include code from captured groups where possible.
 
-========================= Polyglot Piranha Explanation =========================
+========================= Piranha Rule Explanation =========================
 
 The TOML file should contain at least one rule with the following properties:
 
@@ -50,9 +50,7 @@ The filters are used to specify conditions for the rule to be applied.
 # Provide a unique name for your rule
 name = "your_rule_name"
 
-# Write a Tree-sitter query to identify the code pattern for refactoring
-# Be very careful when specifying field names like "name" and "arguments".
-# If you do not see them in the tree representation they do not exist, if you add them the query will not parse.
+# Write a Tree-sitter query to identify the code pattern for refactoring. The outer most node should always be captured.
 query = """(
     (method_invocation name: (_) @name
                        arguments: (argument_list) @args) @invk
@@ -66,6 +64,7 @@ replace_node = "invk"
 replace = "X.other_string @args"
 
 # Specify any placeholders in your queries that will be filled in at runtime
+# In our case hole1 is used in the query, but not defined. Therefore it is a hole.
 holes = ["hole1"]
 
 # Specify if this rule should be triggered first. If it depends on other rules, set to false
@@ -73,24 +72,130 @@ is_seed_rule = true
 
 # If necessary, define filters for your rule
 [[rules.filters]]
+
 # This pattern should match any ancestor of the captured node (optional)
 enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
 
 # Define patterns that should not be present within the enclosing_node (optional)
+# Always use a list, even if you only have one pattern.
 not_contains = [
-    """
-    (your_not_contains_pattern) @your_capture_name
-    """
+    """(
+    (identifier) @id
+    (#eq? @id "x"))
+    """,
 ]
 # Define a pattern that should be present within the enclosing_node (optional)
 contains =
-    """
-    (your_contains_pattern) @your_capture_name
+    """(
+    (identifier) @other_id
+    (#eq? @other_id "y"))
     """
 # Define the minimum and maximum number of children that should match the 'contains' pattern (optional)
 at_least = 1
 at_most = 5
 ```
+
+========================= Common anti-patterns =========================
+
+=== Infinite loops ===
+
+Piranha rules are applied until fixedpoint. Meaning one should be very careful when substituting nodes to make sure 
+the query stops matching once the cleanup is done. This can be achieved by using the "not_contains" filter or with (
+#eq? ...) expressions in the query.
+
+Example 1:
+
+replace_node = "program"
+replace = "X @program" 
+
+... is generally a bad idea, because the query will keep matching the same node over and over again. To avoid you 
+ NEED to specify a filter or constraint the query. That will stop the rule from matching the same node again.
+
+Example 2:
+query = """
+(
+    (class_declaration
+        name: (identifier) @class_name
+    ) @class_declaration
+)
+"""
+replace_node = "class_name"
+replace = "B"
+
+... is also a bad idea. Since the query does not constraint the class name to be "A", the rule will match any class name.
+Moreover, it will run into an infinite loop, because the rule will keep matching the same node over and over again.
+
+=== Overly long matches ===
+
+Sometimes queries can be significantly simplified by matching large subtrees. Making small queries is generally preferable
+to matching a large subtree. 
+
+Example 1:
+
+query = """
+(
+    (import_declaration
+        (scoped_identifier
+            scope: (scoped_identifier
+                scope: (scoped_identifier
+                    scope: (scoped_identifier
+                        scope: (scoped_identifier
+                            scope: (scoped_identifier
+                                scope: (identifier) @scope1
+                                name: (identifier) @name1)
+                            name: (identifier) @name2)
+                        name: (identifier) @name3)
+                    name: (identifier) @name4)
+                name: (identifier) @name5)
+            name: (identifier) @name6)
+    ) @import_decl
+    (#eq? @scope1 "com")
+    (#eq? @name1 "uber")
+    (#eq? @name2 "common")
+    (#eq? @name3 "context")
+    (#eq? @name4 "concurrent")
+    (#eq? @name5 "MoreContextExecutors")
+    (#eq? @name6 "directExecutor")
+)
+"""
+... is too complex. It can be simplified to 
+
+query = """(
+    (import_declaration (_) @name) @import_decl
+    (#eq? @name "com.uber.common.context.concurrent.MoreContextExecutors.directExecutor"))
+"""
+
+
+=== Not considering unnamed nodes ===
+
+Tree-sitter produces parse trees rather than abstract syntax trees. This means that nodes in tree sitter
+can contain children corresponding to punctuation, whitespace, and other tokens. This should be taken into account
+when constructing the replacement string.
+
+Example 1:
+
+query = """(
+    (method_invocation name: (_) @name
+                       arguments: (argument_list) @args) @invk
+    (#eq? @name @hole1))
+"""
+
+replace_node = "invk"
+replace = "X.other_string(@args)"
+... is wrong, because @args already contains the parentheses.
+
+=== Forgetting parenthesis ===
+
+If queries are not surrounded by parenthesis, tree-sitter will interpreter them as independent queries.
+
+Example 1:
+
+query = """
+    (method_invocation name: (identifier) @name
+                       arguments: (argument_list) @args) @invk
+    (#eq? @name "directExecutor")
+"""
+... is a bad rule because the query is not surrounded by parenthesis.
 
 ========================= Rule Examples =========================
     '''
@@ -105,6 +210,10 @@ at_most = 5
 
 {source_tree}
 
+=== Tree-sitter representation (target code) ===
+
+{target_tree}
+
 === Diff === 
 
 {diff}
@@ -113,6 +222,7 @@ at_most = 5
 
 {hints}
 ========================= Output =========================
+
     """
 
     holes = attr.ib(type=dict)
@@ -132,7 +242,6 @@ at_most = 5
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
-        examples = examples[: len(examples) // 2]
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -155,6 +264,7 @@ at_most = 5
     def get_model_response(self):
         latest_message = self.messages[-1]
         if latest_message["role"] == "system":
+            print(f"System: {latest_message['content']}\n")
             return latest_message["content"]
         else:
             completions = self.get_completion(n_samples=1)
