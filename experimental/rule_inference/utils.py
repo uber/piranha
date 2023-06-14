@@ -34,12 +34,12 @@ def find_smallest_node(node: Node, line: str):
 
 
 def get_deleted_lines_and_corresponding_nodes(
-    patch: Tuple[int, int, str], tree: Tree
+    patch: Tuple[int, int, int, int, str], tree: Tree
 ) -> Dict[str, Node]:
     """
     Return the affected nodes from the patch based on the provided tree and corresponding lines.
     """
-    start_l, size, diff_content = patch
+    start_l, size, _, _, diff_content = patch
 
     affected_nodes = {}
     line_n = start_l
@@ -68,7 +68,53 @@ def get_deleted_lines_and_corresponding_nodes(
     return affected_nodes
 
 
-def get_patches_content(multiple_diffs: str) -> List[Tuple[int, int, str]]:
+def get_replacement_pair(
+    patch: Tuple[int, int, int, int, str], source_tree: Tree, target_tree: Tree
+) -> Tuple[Node, List[Node]]:
+    # Same as above except we also get the +
+    start_l, size, start_l_a, size_a, diff_content = patch
+    nodes_after = []
+    node_before = None
+    line_n = start_l
+    line_n_a = start_l_a
+
+    for line in diff_content.splitlines():
+        if line.startswith("-"):
+            # get col number by counting the number of spaces
+            # before the first non-space character
+            col_n = len(line) - len(line[1:].lstrip(" ")) - 1
+
+            # Get the node associated with this line
+            start = (line_n - 1, col_n)
+            end = (line_n - 1, len(line) - 1)
+            node_before = source_tree.root_node.descendant_for_point_range(start, end)
+
+            # find the smallest node that contains the whole line, recursively
+            node_before = find_smallest_node(node_before, line[1:].strip())
+            line_n += 1
+
+        elif line.startswith("+"):
+            # get col number by counting the number of spaces
+            # before the first non-space character
+            col_n = len(line) - len(line[1:].lstrip(" ")) - 1
+
+            # Get the node associated with this line
+            start = (line_n - 1, col_n)
+            end = (line_n - 1, len(line) - 1)
+            node_after = target_tree.root_node.descendant_for_point_range(start, end)
+
+            # find the smallest node that contains the whole line, recursively
+            node_after = find_smallest_node(node_after, line[1:].strip())
+            nodes_after.append(node_after)
+            line_n_a += 1
+        else:
+            line_n += 1
+            line_n_a += 1
+
+    return node_before, nodes_after
+
+
+def get_patches_content(multiple_diffs: str) -> List[Tuple[int, int, int, int, str]]:
     """
     Extract patches content from the multiple diffs string.
     """
@@ -81,10 +127,12 @@ def get_patches_content(multiple_diffs: str) -> List[Tuple[int, int, str]]:
     for file_diff in multiple_diffs_sep:
         for match in pattern.finditer(file_diff):
             start_l = int(match.group("before").split(",")[0])
-            size = int(match.group("before").split(",")[0])
+            size = int(match.group("before").split(",")[1])
+            start_l_a = int(match.group("before").split(",")[0])
+            size_a = int(match.group("before").split(",")[1])
             diff_content = match.group("diff_content")
 
-            patch_content.append((start_l, size, diff_content))
+            patch_content.append((start_l, size, start_l_a, size_a, diff_content))
 
     return patch_content
 
@@ -129,7 +177,7 @@ def to_sexp_with_str(node: Node, depth, prefix=""):
     return s_exp + ")"
 
 
-def to_source(node: Node, depth):
+def to_source(node: Node, depth=0):
     cursor: TreeCursor = node.walk()
     s_exp = ""
     next_child = cursor.goto_first_child()
@@ -138,6 +186,6 @@ def to_source(node: Node, depth):
         return s_exp
 
     while next_child:
-        s_exp += to_source(cursor.node, depth + 1) + "\n"
+        s_exp += to_source(cursor.node, depth + 1)
         next_child = cursor.goto_next_sibling()
     return s_exp

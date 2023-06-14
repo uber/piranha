@@ -14,10 +14,12 @@ import logging
 from logger_formatter import CustomFormatter
 from tree_sitter import Node, TreeCursor
 from tree_sitter_languages import get_language, get_parser
+from static_inference import create_rule
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
 from utils import *
 from multiprocessing import Pool
+from static_inference import QueryWriter
 
 
 logger = logging.getLogger("PiranhaChat")
@@ -78,13 +80,17 @@ class PiranhaAgent:
         patches = get_patches_content(diff)
 
         # Append to the diff the information about the deleted lines for each patch
-        diff += "\n=== Deleted Lines and Nodes ===\n\n"
+        diff += "\n=== Draft queries to represent deleted nodes ===\n\n"
         for patch in patches:
             deleted_lines_and_nodes = get_deleted_lines_and_corresponding_nodes(
                 patch, source_tree
             )
             for line, node in deleted_lines_and_nodes.items():
-                diff += f"\n{line} -----> {node.sexp()}"
+                q = QueryWriter()
+                diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
+
+            node, after_lst = get_replacement_pair(patch, source_tree, target_tree)
+            create_rule(node, after_lst)
 
         prompt_holes = {
             "source_code": self.source_code,
@@ -139,7 +145,7 @@ class PiranhaAgent:
                 raise PiranhaAgentError(
                     "Piranha in infinite loop. Please add a filter or constraint the query. "
                     "Remember you can only constraint queries with #eq, #not-eq, #match. "
-                    "Otherwise you need to use a filter with contains or not_contains."
+                    "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
                 )
 
     def validate_rule(self, completion):
@@ -150,7 +156,7 @@ class PiranhaAgent:
         if not toml_blocks:
             raise PiranhaAgentError(
                 "Could not create Piranha rule. There is no TOML block. "
-                "Please return create a rule to refactor the code."
+                "Please create a rule to refactor the code."
             )
 
         try:
@@ -172,7 +178,7 @@ class PiranhaAgent:
             self.target_code
         ):
             raise PiranhaAgentError(
-                f"The rule produced the following wrong code!!! "
+                f"The rule produced wrong code!!! "
                 f"Expected:\n{self.target_code}\n\n but got:\n{refactored_code}\n\n"
             )
         pattern = r"<file_name_start>(.*?)<file_name_end>"
