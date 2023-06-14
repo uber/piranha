@@ -87,10 +87,13 @@ def get_replacement_pair(
             # Get the node associated with this line
             start = (line_n - 1, col_n)
             end = (line_n - 1, len(line) - 1)
-            node_before = source_tree.root_node.descendant_for_point_range(start, end)
 
             # find the smallest node that contains the whole line, recursively
-            node_before = find_smallest_node(node_before, line[1:].strip())
+            if line[1:].strip() != "":
+                node_before = source_tree.root_node.descendant_for_point_range(
+                    start, end
+                )
+                node_before = find_smallest_node(node_before, line[1:].strip())
             line_n += 1
 
         elif line.startswith("+"):

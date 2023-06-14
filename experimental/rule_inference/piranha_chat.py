@@ -229,19 +229,20 @@ query = """
     messages = attr.ib(type=list, default=attr.Factory(list))
     temperature = attr.ib(
         type=float,
-        default=0.2,
+        default=0.3,
         validator=[
             attr.validators.ge(0),
             attr.validators.le(1),
         ],
     )
     model = attr.ib(
-        default="gpt-4",
-        validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo"]),
+        default="gpt-3.5-turbo-16k",
+        validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo-16k"]),
     )
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
+        examples += self._get_examples("../../src/cleanup_rules/kt")
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -255,7 +256,7 @@ query = """
 
     def append_system_message(self, system_message):
         """Add a GPT response to the internal messages"""
-        self.messages.append({"role": "system", "content": system_message})
+        self.messages.append({"role": "assistant", "content": system_message})
 
     def append_user_followup(self, followup_message):
         """Add a followup message from the user after GPT replies"""
@@ -263,7 +264,7 @@ query = """
 
     def get_model_response(self):
         latest_message = self.messages[-1]
-        if latest_message["role"] == "system":
+        if latest_message["role"] == "assistant":
             print(f"System: {latest_message['content']}\n")
             return latest_message["content"]
         else:

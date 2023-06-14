@@ -78,6 +78,10 @@ def find_mappings(diff_hunk: str):
     pass
 
 
+# given a mapping , create rule always works
+# all targets connect to a source
+# the idea is then replace the source with targets if they are different,
+# then you will always end up with the correct result, right?
 def create_rule(node_before: Node, node_afters):
     """
     1. If it's an insertion.
@@ -106,3 +110,5 @@ def create_rule(node_before: Node, node_afters):
     print(query)
     print(qw.outer_most_node)
     print(replace_str)
+
+def naive
