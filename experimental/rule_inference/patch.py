@@ -6,6 +6,8 @@ import difflib
 import re
 import attr
 
+from node_utils import NodeUtils
+
 
 @attr.s
 class Patch:
@@ -25,15 +27,10 @@ class Patch:
 
     @staticmethod
     def extract_smallest_node(node: Node, line: str):
-        if node.text.decode("utf8") == line:
-            return node
-        else:
-            for child in node.children:
-                if line in child.text.decode("utf8"):
-                    return Patch.extract_smallest_node(child, line)
-        if line in node.text.decode("utf8"):
-            return node
-        return None
+        for child in node.children:
+            if line in child.text.decode("utf8"):
+                return Patch.extract_smallest_node(child, line)
+        return node
 
     def _extract_line_info(
         self, line: str, line_n: int, tree: Tree

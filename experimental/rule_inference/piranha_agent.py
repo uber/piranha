@@ -13,14 +13,14 @@ import difflib
 import logging
 from logger_formatter import CustomFormatter
 from tree_sitter_languages import get_language, get_parser
-from static_inference import create_rule
+from static_inference import create_rule, find_mappings
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
 from patch import Patch
 from multiprocessing import Pool
 from static_inference import QueryWriter
 from tree_sitter import Language, Parser, Tree, Node, TreeCursor
-from node_writer import NodeWriter
+from node_utils import NodeUtils
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -68,8 +68,8 @@ class PiranhaAgent:
         source_tree = self.get_tree_from_code(self.source_code)
         target_tree = self.get_tree_from_code(self.target_code)
 
-        source_tree_sexpr = NodeWriter.generate_sexpr(source_tree.root_node, 0)
-        target_tree_sexpr = NodeWriter.generate_sexpr(target_tree.root_node, 0)
+        source_tree_sexpr = NodeUtils.generate_sexpr(source_tree.root_node, 0)
+        target_tree_sexpr = NodeUtils.generate_sexpr(target_tree.root_node, 0)
         # Create diff between source and target code using difflib
         diff = list(
             difflib.unified_diff(
@@ -89,6 +89,14 @@ class PiranhaAgent:
                 q = QueryWriter()
                 diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
 
+            mappings = find_mappings(
+                list(nodes_before.values()), list(nodes_after.values())
+            )
+            diff += "\n\n\n=== Draft rules that you can use as baseline ===\n\n"
+            for node_id, replacements in mappings.items():
+                node_it = filter(lambda x: x.id == node_id, nodes_before.values())
+                diff += create_rule(next(node_it), replacements)
+
         prompt_holes = {
             "source_code": self.source_code,
             "source_tree": source_tree_sexpr,
@@ -98,7 +106,7 @@ class PiranhaAgent:
         }
 
         # Number of Chat interactions to have with the model
-        n_samples = 15
+        n_samples = 5
         chat_interactions = [
             PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
         ]
@@ -109,7 +117,7 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
-        max_rounds = 10
+        max_rounds = 5
         for chat in chat_interactions:
             for i in range(max_rounds):
                 try:

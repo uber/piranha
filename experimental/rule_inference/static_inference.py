@@ -1,6 +1,7 @@
 from tree_sitter import Node, TreeCursor
-from typing import List
+from typing import List, Dict
 from patch import Patch
+from node_utils import NodeUtils
 import attr
 
 
@@ -60,29 +61,52 @@ class QueryWriter:
         return s_exp + f") @tag{self.count}"
 
 
-def find_mappings(diff_hunk: str):
-    """
-    Use comments to come up with a mapping from source to target nodes.
-    The nodes cannot be overlapping.
-    Given a diff hunk, find exactly which source nodes were changed, select those.
-    Find what they are replaced with.
-    For example:
-        (single edits)
-        x.doSomething().else(someMethod()) ------> x.doSomething().else(Wrap(someMethod()), someMethod()))
-        Change = someMethod() -----> replaced by Wrap(someMethod()), someMethod())
+# Basic mapping. Matches nodes orderly.
+def find_mappings(
+    nodes_before: List[Node], nodes_after: List[Node]
+) -> Dict[int, List[Node]]:
+    nodes_before = NodeUtils.get_smallest_nonoverlapping_set(nodes_before)
+    nodes_after = NodeUtils.get_smallest_nonoverlapping_set(nodes_after)
 
-        (multiple edits two cases):
-        same edit: Change   (e.g. call(someMethod(), someMethod()) ---> call(Wrap(someMethod()), Wrap(someMethod())))
-        different edits: List[Change]   (write individual query for each, and then combine with the smallest common ancestor)
-    """
-    pass
+    # compute mapping by search for isomorphic nodes
+
+    mapping = {}
+    for before, after in zip(nodes_before, nodes_after):
+        mapping[before.id] = [after]
+
+    if len(nodes_before) > len(nodes_after):
+        for node_before in nodes_before[len(nodes_after) :]:
+            mapping[node_before.id] = []
+
+    if len(nodes_before) < len(nodes_after):
+        for node_after in nodes_after[len(nodes_before) :]:
+            mapping[nodes_before[-1].id].append(node_after)
+
+    return mapping
+
+
+def find_nodes_to_change(node_before: Node, node_after: Node):
+    diverging_nodes = []
+    if node_before.type == node_after.type:
+        # Check if there's only one and only one diverging node
+        # If there's more than one, then we can't do anything
+        for child_before, child_after in zip(node_before.children, node_after.children):
+            if NodeUtils.convert_to_source(child_before) != NodeUtils.convert_to_source(
+                child_after
+            ):
+                diverging_nodes.append((child_before, child_after))
+
+    if len(diverging_nodes) == 1:
+        return find_nodes_to_change(*diverging_nodes[0])
+
+    return node_before, [node_after]
 
 
 # given a mapping , create rule always works
 # all targets connect to a source
 # the idea is then replace the source with targets if they are different,
 # then you will always end up with the correct result, right?
-def create_rule(node_before: Node, node_afters):
+def create_rule(node_before: Node, node_afters: List[Node]) -> str:
     """
     1. If it's an insertion.
         i. create a rule that inserts with a not contains filter to prevent recursive application
@@ -94,19 +118,39 @@ def create_rule(node_before: Node, node_afters):
         iii. for each capture group in the matcher, check if it's possible to replace any substring of the target with the capture group
         iv. make sure the outermost left node is not the in replacement string, otherwise ifninite recursion. prevent this with a not_contains filter
     """
+
+    # For replacements (---- +++++)
+
+    if len(node_afters) == 1:
+        # Find whether we need to replace the entire node or just a part of it
+        node_before, node_afters = find_nodes_to_change(node_before, node_afters[0])
+
     qw = QueryWriter()
     query = qw.write([node_before])
 
-    replace_str = "\\n".join([to_source(node_after) for node_after in node_afters])
+    replace_str = "\\n".join(
+        [NodeUtils.convert_to_source(node_after) for node_after in node_afters]
+    )
 
     # Prioritize the longest strings first
     for capture_group, node in sorted(
         qw.capture_groups.items(), key=lambda x: -len(x[1].text)
     ):
-        text_repr = to_source(node)
+        text_repr = NodeUtils.convert_to_source(node)
         if text_repr in replace_str:
             replace_str = replace_str.replace(text_repr, f"{capture_group}")
 
-    print(query)
-    print(qw.outer_most_node)
-    print(replace_str)
+    rule = f'''query = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
+
+    # Check if the outermost node is in the replacement string
+    # If so then we need to add a not_contains filter to prevent infinite recursion
+    if qw.outer_most_node in replace_str:
+        # Idea for a filter. The parent of node_before should not contain the outer_most_node
+        # This is not a perfect filter, but it should work for most cases
+        enclosing_node = f"({node_afters[0].type}) @parent"
+        qw = QueryWriter(count=qw.count + 1)
+        query = qw.write([node_afters[0]])
+        not_contains = f"{query}"
+        rule += f'''\n\nenclosing_node = "{enclosing_node}"\n\nnot_contains = """[{not_contains}]"""'''
+
+    return rule
