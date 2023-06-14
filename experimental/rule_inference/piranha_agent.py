@@ -12,15 +12,15 @@ from typing import List, Any, Optional, Tuple
 import difflib
 import logging
 from logger_formatter import CustomFormatter
-from tree_sitter import Node, TreeCursor
 from tree_sitter_languages import get_language, get_parser
 from static_inference import create_rule
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-from utils import *
+from patch import Patch
 from multiprocessing import Pool
 from static_inference import QueryWriter
-
+from tree_sitter import Language, Parser, Tree, Node, TreeCursor
+from node_writer import NodeWriter
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -68,8 +68,8 @@ class PiranhaAgent:
         source_tree = self.get_tree_from_code(self.source_code)
         target_tree = self.get_tree_from_code(self.target_code)
 
-        source_tree_sexp = to_sexp(source_tree.root_node, 0)
-        target_tree_sexp = to_sexp(target_tree.root_node, 0)
+        source_tree_sexpr = NodeWriter.generate_sexpr(source_tree.root_node, 0)
+        target_tree_sexpr = NodeWriter.generate_sexpr(target_tree.root_node, 0)
         # Create diff between source and target code using difflib
         diff = list(
             difflib.unified_diff(
@@ -77,25 +77,22 @@ class PiranhaAgent:
             )
         )
         diff = "\n".join(diff)
-        patches = get_patches_content(diff)
+        patches: List[Patch] = Patch.from_diffs(diff)
 
         # Append to the diff the information about the deleted lines for each patch
         diff += "\n=== Draft queries to represent deleted nodes ===\n\n"
         for patch in patches:
-            deleted_lines_and_nodes = get_deleted_lines_and_corresponding_nodes(
-                patch, source_tree
+            nodes_before, nodes_after = patch.get_nodes_from_patch(
+                source_tree, target_tree
             )
-            for line, node in deleted_lines_and_nodes.items():
+            for line, node in nodes_before.items():
                 q = QueryWriter()
                 diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
 
-            node, after_lst = get_replacement_pair(patch, source_tree, target_tree)
-            create_rule(node, after_lst)
-
         prompt_holes = {
             "source_code": self.source_code,
-            "source_tree": source_tree_sexp,
-            "target_tree": target_tree_sexp,
+            "source_tree": source_tree_sexpr,
+            "target_tree": target_tree_sexpr,
             "diff": diff,
             "hints": self.hints,
         }

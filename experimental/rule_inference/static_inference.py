@@ -1,6 +1,6 @@
 from tree_sitter import Node, TreeCursor
 from typing import List
-from utils import to_source
+from patch import Patch
 import attr
 
 
@@ -110,5 +110,3 @@ def create_rule(node_before: Node, node_afters):
     print(query)
     print(qw.outer_most_node)
     print(replace_str)
-
-def naive

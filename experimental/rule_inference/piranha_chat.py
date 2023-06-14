@@ -236,13 +236,12 @@ query = """
         ],
     )
     model = attr.ib(
-        default="gpt-3.5-turbo-16k",
+        default="gpt-4",
         validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo-16k"]),
     )
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
-        examples += self._get_examples("../../src/cleanup_rules/kt")
 
         formatted = (
             PiranhaGPTChat.explanation

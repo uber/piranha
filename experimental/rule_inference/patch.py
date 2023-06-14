@@ -1,0 +1,100 @@
+from pathlib import Path
+from typing import List, Tuple, Dict
+from tree_sitter import Language, Parser, Tree, Node, TreeCursor
+from tree_sitter_languages import get_language, get_parser
+import difflib
+import re
+import attr
+
+
+@attr.s
+class Patch:
+    start_line: int = attr.ib()
+    line_count: int = attr.ib()
+    start_line_after: int = attr.ib()
+    line_count_after: int = attr.ib()
+    diff_content: str = attr.ib()
+
+    @staticmethod
+    def split_patches(file_patch: str) -> List[str]:
+        delimiter = re.compile("@@ -[0-9,]+ \+[0-9,]+ @@.*\n")
+        patches = delimiter.split(file_patch)[1:]
+        delimiters = delimiter.findall(file_patch)
+        patches = list(map(lambda x, y: y + x, patches, delimiters))
+        return patches
+
+    @staticmethod
+    def extract_smallest_node(node: Node, line: str):
+        if node.text.decode("utf8") == line:
+            return node
+        else:
+            for child in node.children:
+                if line in child.text.decode("utf8"):
+                    return Patch.extract_smallest_node(child, line)
+        if line in node.text.decode("utf8"):
+            return node
+        return None
+
+    def _extract_line_info(
+        self, line: str, line_n: int, tree: Tree
+    ) -> Tuple[Node, int]:
+        """Extract relevant information from a given line in a diff."""
+        col_n = len(line) - len(line.lstrip(" ")) - 1
+        start = (line_n - 1, col_n)
+        end = (line_n - 1, len(line) - 1)
+        node = tree.root_node.descendant_for_point_range(start, end)
+        node = self.extract_smallest_node(node, line[1:].strip())
+        return node, line_n + 1
+
+    def get_nodes_from_patch(
+        self, source_tree: Tree, target_tree: Tree
+    ) -> Tuple[Dict[str, Node], Dict[str, Node]]:
+        nodes_after = {}
+        nodes_before = {}
+        line_number_before = self.start_line
+        line_number_after = self.start_line_after
+
+        for line in self.diff_content.splitlines():
+            if line.startswith("-") and line[1:].strip() != "":
+                node_before, line_number_before = self._extract_line_info(
+                    line, line_number_before, source_tree
+                )
+                nodes_before[line] = node_before
+
+            elif line.startswith("+") and line[1:].strip() != "":
+                node_after, line_number_after = self._extract_line_info(
+                    line, line_number_after, target_tree
+                )
+                nodes_after[line] = node_after
+            else:
+                line_number_before += 1
+                line_number_after += 1
+
+        return nodes_before, nodes_after
+
+    @classmethod
+    def from_diffs(cls, multiple_diffs: str) -> List["Patch"]:
+        diff_segments = cls.split_patches(multiple_diffs)
+        pattern = re.compile(
+            r"@@ -(?P<before>[0-9,]+) \+(?P<after>[0-9,]+) @@\n\n(?P<diff_content>(.|\n)*)"
+        )
+        patches = []
+
+        for file_diff in diff_segments:
+            for match in pattern.finditer(file_diff):
+                start_line = int(match.group("before").split(",")[0])
+                line_count = int(match.group("before").split(",")[1])
+                start_line_after = int(match.group("before").split(",")[0])
+                line_count_after = int(match.group("before").split(",")[1])
+                diff_content = match.group("diff_content")
+
+                patch = cls(
+                    start_line,
+                    line_count,
+                    start_line_after,
+                    line_count_after,
+                    diff_content,
+                )
+                patches.append(patch)
+
+        return patches
