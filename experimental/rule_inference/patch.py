@@ -57,13 +57,13 @@ class Patch:
                 node_before, line_number_before = self._extract_line_info(
                     line, line_number_before, source_tree
                 )
-                nodes_before[line] = node_before
+                nodes_before[line[1:]] = node_before
 
             elif line.startswith("+") and line[1:].strip() != "":
                 node_after, line_number_after = self._extract_line_info(
                     line, line_number_after, target_tree
                 )
-                nodes_after[line] = node_after
+                nodes_after[line[1:]] = node_after
             else:
                 if nodes_before != {} or nodes_after != {}:
                     node_pairs.append((nodes_before, nodes_after))
@@ -72,11 +72,20 @@ class Patch:
                 line_number_before += 1
                 line_number_after += 1
 
+        if nodes_before != {} or nodes_after != {}:
+            node_pairs.append((nodes_before, nodes_after))
         return node_pairs
 
     @classmethod
     def from_diffs(cls, multiple_diffs: str) -> List["Patch"]:
+        def extract_nums(num_str):
+            nums = num_str.split(",")
+            if len(nums) == 1:
+                nums.append("0")
+            return map(int, nums)
+
         diff_segments = cls.split_patches(multiple_diffs)
+        print(multiple_diffs)
         pattern = re.compile(
             r"@@ -(?P<before>[0-9,]+) \+(?P<after>[0-9,]+) @@\n\n(?P<diff_content>(.|\n)*)"
         )
@@ -84,10 +93,8 @@ class Patch:
 
         for file_diff in diff_segments:
             for match in pattern.finditer(file_diff):
-                start_line = int(match.group("before").split(",")[0])
-                line_count = int(match.group("before").split(",")[1])
-                start_line_after = int(match.group("after").split(",")[0])
-                line_count_after = int(match.group("after").split(",")[1])
+                start_line, line_count = extract_nums(match.group("before"))
+                start_line_after, line_count_after = extract_nums(match.group("after"))
                 diff_content = match.group("diff_content")
 
                 patch = cls(

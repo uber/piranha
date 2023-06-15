@@ -89,9 +89,7 @@ class PiranhaAgent:
                     q = QueryWriter()
                     diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
 
-                inference_engine = Inference(
-                    nodes_before.values(), nodes_after.values()
-                )
+                inference_engine = Inference(nodes_before, nodes_after)
                 diff += "\n\n=== Draft query for the change ===\n\n"
                 diff += "\n\n".join(inference_engine.static_infer())
 

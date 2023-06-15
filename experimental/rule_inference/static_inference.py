@@ -3,6 +3,7 @@ from tree_sitter import Node, TreeCursor
 from typing import List, Dict
 from patch import Patch
 from node_utils import NodeUtils
+import re
 
 
 @attr.s
@@ -65,48 +66,58 @@ class QueryWriter:
 
 @attr.s
 class Inference:
-    nodes_before = attr.ib(type=List[Node])
-    nodes_after = attr.ib(type=List[Node])
+    lines_before = attr.ib(type=Dict[str, Node])
+    lines_after = attr.ib(type=Dict[str, Node])
+    _nodes_before = attr.ib(type=List[Node], init=False)
+    _nodes_after = attr.ib(type=List[Node], init=False)
+
     """
     This class holds the functions for inferring and creating rules for node replacements
     """
+
+    def __attrs_post_init__(self):
+        self._nodes_before = NodeUtils.get_smallest_nonoverlapping_set(
+            list(self.lines_before.values())
+        )
+        self._nodes_after = NodeUtils.get_smallest_nonoverlapping_set(
+            list(self.lines_after.values())
+        )
 
     def static_infer(self) -> List[str]:
         rules = []
         mappings = self.find_mappings()
 
-        if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
+        if len(self._nodes_after) > 0 and len(self._nodes_before) > 0:
             for node_id, replacements in mappings.items():
-                node_it = filter(lambda x: x.id == node_id, self.nodes_before)
+                node_it = filter(lambda x: x.id == node_id, self._nodes_before)
                 rules += [self.create_replacement(next(node_it), replacements)]
-        elif len(self.nodes_after) > 0:
-            # We don't support additions for now.
+        elif len(self._nodes_after) > 0:
+            # We don't support additions for now. TODO
             pass
-        elif len(self.nodes_before) > 0:
-            rules += [
-                self.create_deletion(nodes_before) for nodes_before in self.nodes_before
-            ]
+        elif len(self._nodes_before) > 0:
+            for node_id, _ in mappings.items():
+                node_it = filter(lambda x: x.id == node_id, self._nodes_before)
+                rules += [self.create_deletion(next(node_it))]
         return rules
 
     def find_mappings(self) -> Dict[int, List[Node]]:
         """
         Basic mapping. Matches nodes in an orderly manner.
         """
-        nodes_before = NodeUtils.get_smallest_nonoverlapping_set(self.nodes_before)
-        nodes_after = NodeUtils.get_smallest_nonoverlapping_set(self.nodes_after)
 
         # compute mapping by search for isomorphic nodes
         mapping = {
-            before.id: [after] for before, after in zip(nodes_before, nodes_after)
+            before.id: [after]
+            for before, after in zip(self._nodes_before, self._nodes_after)
         }
 
-        if len(nodes_before) > len(nodes_after):
-            for node_before in nodes_before[len(nodes_after) :]:
+        if len(self._nodes_before) > len(self._nodes_after):
+            for node_before in self._nodes_before[len(self._nodes_after) :]:
                 mapping[node_before.id] = []
 
-        if len(nodes_before) < len(nodes_after):
-            for node_after in nodes_after[len(nodes_before) :]:
-                mapping[nodes_before[-1].id].append(node_after)
+        if len(self._nodes_before) < len(self._nodes_after):
+            for node_after in self._nodes_after[len(self._nodes_before) :]:
+                mapping[self._nodes_before[-1].id].append(node_after)
 
         return mapping
 
@@ -179,6 +190,70 @@ class Inference:
         """
         qw = QueryWriter()
         query = qw.write([node_before])
+
+        # we have to check if we're deleting more than the actual line to be deleted.
+        # heuristically join all lines and see if node.to_source() is a substring of it
+        content_to_delete = NodeUtils.normalize_code("".join(self.lines_before.keys()))
+
+        source = NodeUtils.normalize_code(NodeUtils.convert_to_source(node_before))
+        if source != content_to_delete:
+            # some nodes cannot be deleted because they are not part of the content to delete
+            # we need to find them and add them to the query
+            missing_nodes_front = []
+            missing_nodes_back = []
+
+            # find where the content to delete starts in the source, where and where it ends?
+            # should be ordered because all edits are sequential
+            children = node_before.children
+            while True:
+                content = "".join(
+                    [NodeUtils.convert_to_source(child) for child in children[1:]]
+                )
+
+                if content_to_delete in content:
+                    missing_nodes_front.append(children[0])
+                    children = children[1:]
+                    continue
+
+                content = "".join(
+                    [NodeUtils.convert_to_source(child) for child in children[:-1]]
+                )
+
+                if content_to_delete in content:
+                    missing_nodes_back.append(children[-1])
+                    children = children[:-1]
+                    continue
+
+                break
+
+            # get the tags corresponding to the missing nodes
+            missing_nodes_back.reverse()
+            front = ""
+            for node in missing_nodes_front:
+                front += next(
+                    filter(
+                        lambda x: qw.capture_groups[x] == node, qw.capture_groups.keys()
+                    ),
+                    NodeUtils.convert_to_source(node),
+                )
+            back = ""
+            for node in missing_nodes_back:
+                front += next(
+                    filter(
+                        lambda x: qw.capture_groups[x] == node, qw.capture_groups.keys()
+                    ),
+                    NodeUtils.convert_to_source(node),
+                )
+
+            rule = f'''[[rules]]\n\n
+                        query = """{query}"""\n\n
+                        replace_node = "{qw.outer_most_node}"\n\n
+                        replace = "{front}{back}"'''
+
+            return rule
+
+        # if it is we are in big trouble. we dont want to delete more than the line
+        # so we do a replacement of kind. replace_node = node, and replace="substring not part of all joined lines?"
 
         rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = ""'''
         return rule

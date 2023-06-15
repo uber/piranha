@@ -1,6 +1,6 @@
 from tree_sitter import TreeCursor, Node
 from typing import List
-import attr
+import re
 
 
 class NodeUtils:
@@ -54,3 +54,22 @@ class NodeUtils:
                 if node.start_point > smallest_non_overlapping_set[-1].end_point:
                     smallest_non_overlapping_set.append(node)
         return smallest_non_overlapping_set
+
+    @staticmethod
+    def normalize_code(code: str) -> str:
+        """Eliminates unnecessary spaces and newline characters from code.
+        This function is as preprocessing step before comparing the refactored code with the target code.
+
+        :param code: str, Code to normalize.
+        :return: str, Normalized code.
+        """
+
+        # replace multiple spaces with a single space
+        code = re.sub(r"\s+", "", code)
+        # replace multiple newlines with a single newline
+        code = re.sub(r"\n+", "", code)
+        # remove spaces before and after newlines
+        code = re.sub(r" ?\n ?", "", code)
+        # remove spaces at the beginning and end of the code
+        code = code.strip()
+        return code
