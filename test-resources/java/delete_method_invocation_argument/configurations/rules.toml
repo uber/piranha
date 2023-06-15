@@ -5,5 +5,7 @@ query = """(
  (#eq? @name "add")
 )"""
 replace_node = "args"
-replace_idx = 2
+replace_idx = 1
 replace = ""
+[[rules.filters]]
+child_count = 3
