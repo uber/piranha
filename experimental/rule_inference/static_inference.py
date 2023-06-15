@@ -63,6 +63,15 @@ class QueryWriter:
         self.outer_most_node = f"@tag{self.count}"
         return s_exp + f") @tag{self.count}"
 
+    def replace_with_tags(self, replace_str: str) -> str:
+        for capture_group, node in sorted(
+            self.capture_groups.items(), key=lambda x: -len(x[1].text)
+        ):
+            text_repr = NodeUtils.convert_to_source(node)
+            if text_repr in replace_str:
+                replace_str = replace_str.replace(text_repr, f"{capture_group}")
+        return replace_str
+
 
 @attr.s
 class Inference:
@@ -162,14 +171,9 @@ class Inference:
         )
 
         # Prioritize the longest strings first
-        for capture_group, node in sorted(
-            qw.capture_groups.items(), key=lambda x: -len(x[1].text)
-        ):
-            text_repr = NodeUtils.convert_to_source(node)
-            if text_repr in replace_str:
-                replace_str = replace_str.replace(text_repr, f"{capture_group}")
+        replace_str = qw.replace_with_tags(replace_str)
 
-        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
+        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node[1:]}"\n\nreplace = "{replace_str}"'''
 
         # Check if the outermost node is in the replacement string
         # If so then we need to add a not_contains filter to prevent infinite recursion
@@ -192,70 +196,18 @@ class Inference:
         query = qw.write([node_before])
 
         # we have to check if we're deleting more than the actual line to be deleted.
-        # heuristically join all lines and see if node.to_source() is a substring of it
         content_to_delete = NodeUtils.normalize_code("".join(self.lines_before.keys()))
-
         source = NodeUtils.normalize_code(NodeUtils.convert_to_source(node_before))
-        if source != content_to_delete:
-            # some nodes cannot be deleted because they are not part of the content to delete
-            # we need to find them and add them to the query
-            missing_nodes_front = []
-            missing_nodes_back = []
 
-            # find where the content to delete starts in the source, where and where it ends?
-            # should be ordered because all edits are sequential
-            children = node_before.children
-            while True:
-                content = "".join(
-                    [NodeUtils.convert_to_source(child) for child in children[1:]]
-                )
+        # if content_to_delete not in source, replace is source (all content is kept)
+        # if content_to_delete in source, replace is the remaining part after removing content_to_delete
+        replace_str = source.replace(content_to_delete, "")
 
-                if content_to_delete in content:
-                    missing_nodes_front.append(children[0])
-                    children = children[1:]
-                    continue
+        # Prioritize the longest strings first
+        replace_str = qw.replace_with_tags(replace_str)
 
-                content = "".join(
-                    [NodeUtils.convert_to_source(child) for child in children[:-1]]
-                )
+        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node[1:]}"\n\nreplace = "{replace_str}"'''
 
-                if content_to_delete in content:
-                    missing_nodes_back.append(children[-1])
-                    children = children[:-1]
-                    continue
-
-                break
-
-            # get the tags corresponding to the missing nodes
-            missing_nodes_back.reverse()
-            front = ""
-            for node in missing_nodes_front:
-                front += next(
-                    filter(
-                        lambda x: qw.capture_groups[x] == node, qw.capture_groups.keys()
-                    ),
-                    NodeUtils.convert_to_source(node),
-                )
-            back = ""
-            for node in missing_nodes_back:
-                front += next(
-                    filter(
-                        lambda x: qw.capture_groups[x] == node, qw.capture_groups.keys()
-                    ),
-                    NodeUtils.convert_to_source(node),
-                )
-
-            rule = f'''[[rules]]\n\n
-                        query = """{query}"""\n\n
-                        replace_node = "{qw.outer_most_node}"\n\n
-                        replace = "{front}{back}"'''
-
-            return rule
-
-        # if it is we are in big trouble. we dont want to delete more than the line
-        # so we do a replacement of kind. replace_node = node, and replace="substring not part of all joined lines?"
-
-        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = ""'''
         return rule
 
     def create_addition(self, anchor_node, node_after):
