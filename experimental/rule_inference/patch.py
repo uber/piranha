@@ -81,8 +81,8 @@ class Patch:
             for match in pattern.finditer(file_diff):
                 start_line = int(match.group("before").split(",")[0])
                 line_count = int(match.group("before").split(",")[1])
-                start_line_after = int(match.group("before").split(",")[0])
-                line_count_after = int(match.group("before").split(",")[1])
+                start_line_after = int(match.group("after").split(",")[0])
+                line_count_after = int(match.group("after").split(",")[1])
                 diff_content = match.group("diff_content")
 
                 patch = cls(

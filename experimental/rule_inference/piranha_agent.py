@@ -106,7 +106,7 @@ class PiranhaAgent:
         }
 
         # Number of Chat interactions to have with the model
-        n_samples = 5
+        n_samples = 15
         chat_interactions = [
             PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
         ]
@@ -117,7 +117,7 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
-        max_rounds = 5
+        max_rounds = 10
         for chat in chat_interactions:
             for i in range(max_rounds):
                 try:

@@ -90,7 +90,9 @@ def find_nodes_to_change(node_before: Node, node_after: Node):
     if node_before.type == node_after.type:
         # Check if there's only one and only one diverging node
         # If there's more than one, then we can't do anything
-        for child_before, child_after in zip(node_before.children, node_after.children):
+        for child_before, child_after in zip(
+            node_before.named_children, node_after.named_children
+        ):
             if NodeUtils.convert_to_source(child_before) != NodeUtils.convert_to_source(
                 child_after
             ):
@@ -140,17 +142,17 @@ def create_rule(node_before: Node, node_afters: List[Node]) -> str:
         if text_repr in replace_str:
             replace_str = replace_str.replace(text_repr, f"{capture_group}")
 
-    rule = f'''query = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
+    rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
 
     # Check if the outermost node is in the replacement string
     # If so then we need to add a not_contains filter to prevent infinite recursion
     if qw.outer_most_node in replace_str:
         # Idea for a filter. The parent of node_before should not contain the outer_most_node
         # This is not a perfect filter, but it should work for most cases
-        enclosing_node = f"({node_afters[0].type}) @parent"
+        enclosing_node = f"({node_before.parent.type}) @parent"
         qw = QueryWriter(count=qw.count + 1)
         query = qw.write([node_afters[0]])
         not_contains = f"{query}"
-        rule += f'''\n\nenclosing_node = "{enclosing_node}"\n\nnot_contains = """[{not_contains}]"""'''
+        rule += f'''\n\n[[rules.filters]]\n\nenclosing_node = "{enclosing_node}"\n\nnot_contains = [\n"""{not_contains}\n"""]'''
 
     return rule

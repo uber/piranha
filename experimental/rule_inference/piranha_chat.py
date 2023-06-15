@@ -161,7 +161,8 @@ query = """
 ... is too complex. It can be simplified to 
 
 query = """(
-    (import_declaration (_) @name) @import_decl
+    (import_declaration 
+        (_) @name) @import_decl
     (#eq? @name "com.uber.common.context.concurrent.MoreContextExecutors.directExecutor"))
 """
 
@@ -221,7 +222,7 @@ query = """
 === Additional requirements === 
 
 {hints}
-========================= Output =========================
+========================= Please improve my rule =========================
 
     """
 
@@ -243,13 +244,7 @@ query = """
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
 
-        formatted = (
-            PiranhaGPTChat.explanation
-            + "\n"
-            + examples
-            + "\n"
-            + PiranhaGPTChat.input_template.format(**self.holes)
-        )
+        formatted = "\n" + PiranhaGPTChat.input_template.format(**self.holes)
 
         self.messages.append({"role": "user", "content": formatted})
 
