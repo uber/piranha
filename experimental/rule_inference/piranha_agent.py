@@ -13,7 +13,7 @@ import difflib
 import logging
 from logger_formatter import CustomFormatter
 from tree_sitter_languages import get_language, get_parser
-from static_inference import create_rule, find_mappings
+from static_inference import Inference
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
 from patch import Patch
@@ -80,22 +80,20 @@ class PiranhaAgent:
         patches: List[Patch] = Patch.from_diffs(diff)
 
         # Append to the diff the information about the deleted lines for each patch
-        diff += "\n=== Draft queries to represent deleted nodes ===\n\n"
         for patch in patches:
-            nodes_before, nodes_after = patch.get_nodes_from_patch(
-                source_tree, target_tree
-            )
-            for line, node in nodes_before.items():
-                q = QueryWriter()
-                diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
+            node_pairs = patch.get_nodes_from_patch(source_tree, target_tree)
+            for nodes_before, nodes_after in node_pairs:
+                diff += "\n=== Draft queries to represent deleted nodes ===\n\n"
 
-            mappings = find_mappings(
-                list(nodes_before.values()), list(nodes_after.values())
-            )
-            diff += "\n\n\n=== Draft rules that you can use as baseline ===\n\n"
-            for node_id, replacements in mappings.items():
-                node_it = filter(lambda x: x.id == node_id, nodes_before.values())
-                diff += create_rule(next(node_it), replacements)
+                for line, node in nodes_before.items():
+                    q = QueryWriter()
+                    diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
+
+                inference_engine = Inference(
+                    nodes_before.values(), nodes_after.values()
+                )
+                diff += "\n\n=== Draft query for the change ===\n\n"
+                diff += "\n\n".join(inference_engine.static_infer())
 
         prompt_holes = {
             "source_code": self.source_code,

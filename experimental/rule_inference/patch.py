@@ -36,7 +36,7 @@ class Patch:
         self, line: str, line_n: int, tree: Tree
     ) -> Tuple[Node, int]:
         """Extract relevant information from a given line in a diff."""
-        col_n = len(line) - len(line.lstrip(" ")) - 1
+        col_n = len(line) - len(line.lstrip(" "))
         start = (line_n - 1, col_n)
         end = (line_n - 1, len(line) - 1)
         node = tree.root_node.descendant_for_point_range(start, end)
@@ -45,7 +45,8 @@ class Patch:
 
     def get_nodes_from_patch(
         self, source_tree: Tree, target_tree: Tree
-    ) -> Tuple[Dict[str, Node], Dict[str, Node]]:
+    ) -> List[Tuple[Dict[str, Node], Dict[str, Node]]]:
+        node_pairs = []
         nodes_after = {}
         nodes_before = {}
         line_number_before = self.start_line
@@ -64,10 +65,14 @@ class Patch:
                 )
                 nodes_after[line] = node_after
             else:
+                if nodes_before != {} or nodes_after != {}:
+                    node_pairs.append((nodes_before, nodes_after))
+                nodes_before = {}
+                nodes_after = {}
                 line_number_before += 1
                 line_number_after += 1
 
-        return nodes_before, nodes_after
+        return node_pairs
 
     @classmethod
     def from_diffs(cls, multiple_diffs: str) -> List["Patch"]:

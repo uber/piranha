@@ -244,7 +244,13 @@ query = """
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
 
-        formatted = "\n" + PiranhaGPTChat.input_template.format(**self.holes)
+        formatted = (
+            PiranhaGPTChat.explanation
+            + "\n"
+            + examples
+            + "\n"
+            + PiranhaGPTChat.input_template.format(**self.holes)
+        )
 
         self.messages.append({"role": "user", "content": formatted})
 
