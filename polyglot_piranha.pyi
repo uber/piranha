@@ -172,8 +172,10 @@ class Filter:
     "The minimum number of times the contains query should match in the enclosing node"
     at_most: int
     "The maximum number of times the contains query should match in the enclosing node"
-    number_of_children: int
+    child_count: int
     "Number of named children under the primary matched node"
+    sibling_count: int
+    "Number of named siblings of the primary matched node"
     def __init__(
         self,
         enclosing_node: Optional[str] = None,
@@ -182,7 +184,8 @@ class Filter:
         contains: Optional[str] = None,
         at_least: int = 1,
         at_most: int = 4294967295, # u32::MAX
-        number_of_children: int = 4294967295 # u32::MAX
+        child_count: int = 4294967295, # u32::MAX
+        sibling_count: int = 4294967295 # u32::MAX
     ):
         """
         Constructs `Filter`
