@@ -8,4 +8,4 @@ replace_node = "args"
 replace_idx = 1
 replace = ""
 [[rules.filters]]
-child_count = 3
+sibling_count = 3
