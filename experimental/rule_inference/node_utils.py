@@ -32,9 +32,9 @@ class NodeUtils:
             return s_exp
 
         while has_next_child:
-            s_exp += NodeUtils.convert_to_source(cursor.node, depth + 1)
+            s_exp += NodeUtils.convert_to_source(cursor.node, depth + 1) + " "
             has_next_child = cursor.goto_next_sibling()
-        return s_exp
+        return s_exp.strip()
 
     @staticmethod
     def get_smallest_nonoverlapping_set(nodes: List[Node]):
@@ -44,7 +44,10 @@ class NodeUtils:
         :return:
         """
         # sort the nodes by their start position
-        nodes = sorted(nodes, key=lambda x: x.start_point)
+        # if the start positions are equal, sort by end position in reverse order
+        nodes = sorted(
+            nodes, key=lambda x: (x.start_point, tuple(map(lambda n: -n, x.end_point)))
+        )
         # get the smallest non overlapping set of nodes
         smallest_non_overlapping_set = []
         for node in nodes:
@@ -73,3 +76,15 @@ class NodeUtils:
         # remove spaces at the beginning and end of the code
         code = code.strip()
         return code
+
+    @staticmethod
+    def contains(node: Node, other: Node) -> bool:
+        """Checks if the given node contains the other node.
+
+        :param node: Node, Node to check if it contains the other node.
+        :param other: Node, Node to check if it is contained by the other node.
+        :return: bool, True if the given node contains the other node, False otherwise.
+        """
+        return (
+            node.start_point <= other.start_point and node.end_point >= other.end_point
+        )

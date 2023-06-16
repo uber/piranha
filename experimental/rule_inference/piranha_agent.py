@@ -91,6 +91,7 @@ class PiranhaAgent:
 
                 inference_engine = Inference(nodes_before, nodes_after)
                 diff += "\n\n=== Draft query for the change ===\n\n"
+                # FIXME. Imagine you're replace if else with the block inside. Changes are not some lines apart...
                 diff += "\n\n".join(inference_engine.static_infer())
 
         prompt_holes = {
@@ -161,7 +162,7 @@ class PiranhaAgent:
             )
 
         try:
-            toml_block = toml_blocks[0]
+            toml_block = toml_blocks[0].replace("parenthesized_expression", "condition")
             logger.debug(f"Generated rule: {toml_block}")
             toml_dict = toml.loads(toml_block)
         except Exception as e:

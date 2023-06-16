@@ -77,7 +77,9 @@ class QueryWriter:
 class Inference:
     lines_before = attr.ib(type=Dict[str, Node])
     lines_after = attr.ib(type=Dict[str, Node])
-    _nodes_before = attr.ib(type=List[Node], init=False)
+    _nodes_before = attr.ib(
+        type=List[Node], init=False
+    )  # this nodes are independent from each other. they do not overlap by definition.
     _nodes_after = attr.ib(type=List[Node], init=False)
 
     """
@@ -85,12 +87,23 @@ class Inference:
     """
 
     def __attrs_post_init__(self):
-        self._nodes_before = NodeUtils.get_smallest_nonoverlapping_set(
-            list(self.lines_before.values())
+        def _initialize_node_list(lines_to_nodes: Dict[str, Node]):
+            nodes = list(lines_to_nodes.values())
+            non_overlapping_nodes = NodeUtils.get_smallest_nonoverlapping_set(nodes)
+            lines = {}
+            for line, node in lines_to_nodes.items():
+                # from the list of node_before check which one contains the line.
+                for non_overlapping_node in non_overlapping_nodes:
+                    if NodeUtils.contains(non_overlapping_node, node):
+                        lines[line] = node
+                        break
+
+            return non_overlapping_nodes, lines
+
+        self._nodes_before, self._lines_before = _initialize_node_list(
+            self.lines_before
         )
-        self._nodes_after = NodeUtils.get_smallest_nonoverlapping_set(
-            list(self.lines_after.values())
-        )
+        self._nodes_after, self._lines_after = _initialize_node_list(self.lines_after)
 
     def static_infer(self) -> List[str]:
         rules = []
@@ -163,17 +176,33 @@ class Inference:
                 node_before, node_afters[0]
             )
 
+        content_to_delete = NodeUtils.normalize_code(
+            "".join(
+                [
+                    line
+                    for line in self.lines_before.keys()
+                    if self.lines_before[line] == node_before
+                ]
+            )
+        )  # get the lines associated with this node!
+        source = NodeUtils.normalize_code(NodeUtils.convert_to_source(node_before))
+
         qw = QueryWriter()
         query = qw.write([node_before])
 
-        replace_str = "\\n".join(
-            [NodeUtils.convert_to_source(node_after) for node_after in node_afters]
+        replace_str = source.replace(
+            content_to_delete,
+            "\\n".join(
+                [
+                    line for line in self.lines_after.keys()
+                ]  # we don't want to covert to source because of spaces
+            ),
         )
 
         # Prioritize the longest strings first
         replace_str = qw.replace_with_tags(replace_str)
 
-        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node[1:]}"\n\nreplace = "{replace_str}"'''
+        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
 
         # Check if the outermost node is in the replacement string
         # If so then we need to add a not_contains filter to prevent infinite recursion
@@ -196,8 +225,12 @@ class Inference:
         query = qw.write([node_before])
 
         # we have to check if we're deleting more than the actual line to be deleted.
-        content_to_delete = NodeUtils.normalize_code("".join(self.lines_before.keys()))
-        source = NodeUtils.normalize_code(NodeUtils.convert_to_source(node_before))
+        content_to_delete = NodeUtils.normalize_code(
+            "".join(self.lines_before.keys())
+        )  # this is always right
+        source = NodeUtils.normalize_code(
+            NodeUtils.convert_to_source(node_before)
+        )  # FIXME this concatenates all the lines together no spacing :|
 
         # if content_to_delete not in source, replace is source (all content is kept)
         # if content_to_delete in source, replace is the remaining part after removing content_to_delete
@@ -206,7 +239,7 @@ class Inference:
         # Prioritize the longest strings first
         replace_str = qw.replace_with_tags(replace_str)
 
-        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node[1:]}"\n\nreplace = "{replace_str}"'''
+        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
 
         return rule
 
