@@ -155,6 +155,10 @@ pub(crate) fn default_child_count() -> u32 {
   u32::MAX
 }
 
+pub(crate) fn default_sibling_count() -> u32 {
+  u32::MAX
+}
+
 pub(crate) fn default_enclosing_node() -> TSQuery {
   TSQuery::new(String::new())
 }
