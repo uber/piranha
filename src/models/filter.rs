@@ -27,8 +27,8 @@ use crate::utilities::{
 };
 
 use super::{
-  default_configs::default_child_count, rule::InstantiatedRule, rule_store::RuleStore,
-  source_code_unit::SourceCodeUnit, Validator,
+  default_configs::default_child_count, default_configs::default_sibling_count,
+  rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, Validator,
 };
 
 use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
@@ -80,11 +80,18 @@ pub struct Filter {
   at_most: u32,
 
   // number of named children under the primary matched node
-  #[builder(default = "default_contains_at_most()")]
+  #[builder(default = "default_child_count()")]
   #[get = "pub"]
-  #[serde(default = "default_contains_at_most")]
+  #[serde(default = "default_child_count")]
   #[pyo3(get)]
   child_count: u32,
+
+  // number of named siblings of the primary matched node (inclusive)
+  #[builder(default = "default_sibling_count()")]
+  #[get = "pub"]
+  #[serde(default = "default_sibling_count")]
+  #[pyo3(get)]
+  sibling_count: u32,
 }
 
 #[pymethods]
@@ -93,7 +100,7 @@ impl Filter {
   fn py_new(
     enclosing_node: Option<String>, not_enclosing_node: Option<String>,
     not_contains: Option<Vec<String>>, contains: Option<String>, at_least: Option<u32>,
-    at_most: Option<u32>, child_count: Option<u32>,
+    at_most: Option<u32>, child_count: Option<u32>, sibling_count: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
@@ -109,6 +116,7 @@ impl Filter {
       .at_least(at_least.unwrap_or(default_contains_at_least()))
       .at_most(at_most.unwrap_or(default_contains_at_most()))
       .child_count(child_count.unwrap_or(default_child_count()))
+      .sibling_count(sibling_count.unwrap_or(default_sibling_count()))
       .build()
   }
   gen_py_str_methods!();
@@ -159,13 +167,14 @@ impl Validator for Filter {
       self.not_contains().iter().try_for_each(|x| x.validate())?
     }
 
-    if *self.child_count() != default_child_count()
+    if (*self.child_count() != default_child_count()
+      || *self.sibling_count() != default_sibling_count())
       && (*self.enclosing_node() != default_enclosing_node()
         || *self.not_enclosing_node() != default_not_enclosing_node()
         || *self.contains() != default_contains_query()
         || *self.not_contains() != default_not_contains_queries())
     {
-      return Err("The child count operator is not compatible with (not) enclosing node and (not) contains operator".to_string());
+      return Err("The child/sibling count operator is not compatible with (not) enclosing node and (not) contains operator".to_string());
     }
 
     Ok(())
@@ -230,7 +239,7 @@ impl FilterBuilder {
 /// ```
 ///
 macro_rules! filter {
-  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)?) => {
+  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)? $(, sibling_count=$nSibling:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
       $(.not_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($not_enclosing_node.to_string())))?
@@ -239,6 +248,7 @@ macro_rules! filter {
       $(.at_least($min))?
       $(.at_most($max))?
       $(.child_count($nChildren))?
+      $(.sibling_count($nSibling))?
       .build()
   };
 }
@@ -262,6 +272,7 @@ impl Instantiate for Filter {
       at_least: self.at_least,
       at_most: self.at_most,
       child_count: self.child_count,
+      sibling_count: self.sibling_count,
     }
   }
 }
@@ -302,6 +313,10 @@ impl SourceCodeUnit {
 
     if *filter.child_count() != default_child_count() {
       return node.named_child_count() == (*filter.child_count() as usize);
+    }
+
+    if *filter.sibling_count() != default_sibling_count() {
+      return node.parent().unwrap().named_child_count() == (*filter.sibling_count() as usize);
     }
 
     // Check if no ancestor matches the query for not_enclosing_node

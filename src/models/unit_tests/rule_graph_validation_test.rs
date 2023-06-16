@@ -99,11 +99,22 @@ fn test_rule_graph_incorrect_query() {
 
 #[test]
 #[should_panic(
-  expected = "The child count operator is not compatible with (not) enclosing node and (not) contains operator"
+  expected = "The child/sibling count operator is not compatible with (not) enclosing node and (not) contains operator"
 )]
 fn test_filter_bad_arg_contains_n_children() {
   FilterBuilder::default()
     .enclosing_node(TSQuery::new("(method_declaration) @i".to_string()))
     .child_count(2)
+    .build();
+}
+
+#[test]
+#[should_panic(
+  expected = "The child/sibling count operator is not compatible with (not) enclosing node and (not) contains operator"
+)]
+fn test_filter_bad_arg_contains_n_sibling() {
+  FilterBuilder::default()
+    .enclosing_node(TSQuery::new("(method_declaration) @i".to_string()))
+    .sibling_count(2)
     .build();
 }
