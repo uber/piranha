@@ -41,6 +41,10 @@ class Patch:
         end = (line_n - 1, len(line) - 1)
         node = tree.root_node.descendant_for_point_range(start, end)
         node = self.extract_smallest_node(node, line[1:].strip())
+        if not node.is_named:
+            node = (
+                node.parent
+            )  # We never want to be dealing with unnamed nodes. The granularity of our changes are at source level.
         return node, line_n + 1
 
     def get_nodes_from_patch(

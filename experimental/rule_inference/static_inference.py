@@ -176,28 +176,33 @@ class Inference:
                 node_before, node_afters[0]
             )
 
-        content_to_delete = NodeUtils.normalize_code(
-            "".join(
-                [
-                    line
-                    for line in self.lines_before.keys()
-                    if self.lines_before[line] == node_before
-                ]
+            content_to_delete = NodeUtils.convert_to_source(node_before)
+            lines_affected = NodeUtils.convert_to_source(node_afters[0])
+
+        else:
+            lines_affected = (
+                "\\n".join(
+                    [
+                        line for line in self.lines_after.keys()
+                    ]  # we don't want to covert to source because of spaces
+                ),
             )
-        )  # get the lines associated with this node!
-        source = NodeUtils.normalize_code(NodeUtils.convert_to_source(node_before))
+
+            content_to_delete = NodeUtils.normalize_code(
+                "".join(
+                    [
+                        line
+                        for line in self.lines_before.keys()
+                        if self.lines_before[line] == node_before
+                    ]
+                )
+            )  # get the lines associated with this node!
+        source = NodeUtils.convert_to_source(node_before)
 
         qw = QueryWriter()
         query = qw.write([node_before])
 
-        replace_str = source.replace(
-            content_to_delete,
-            "\\n".join(
-                [
-                    line for line in self.lines_after.keys()
-                ]  # we don't want to covert to source because of spaces
-            ),
-        )
+        replace_str = source.replace(content_to_delete, lines_affected)
 
         # Prioritize the longest strings first
         replace_str = qw.replace_with_tags(replace_str)
