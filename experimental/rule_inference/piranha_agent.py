@@ -21,6 +21,7 @@ from multiprocessing import Pool
 from static_inference import QueryWriter
 from tree_sitter import Language, Parser, Tree, Node, TreeCursor
 from node_utils import NodeUtils
+from comment_finder import CommentFinder
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -89,10 +90,14 @@ class PiranhaAgent:
                     q = QueryWriter()
                     diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
 
-                inference_engine = Inference(nodes_before, nodes_after)
-                diff += "\n\n=== Draft query for the change ===\n\n"
-                # FIXME. Imagine you're replace if else with the block inside. Changes are not some lines apart...
-                diff += "\n\n".join(inference_engine.static_infer())
+
+        finder = CommentFinder(source_tree, target_tree)
+        pairs = finder.find_replacement_pairs()
+        for nodes_before, nodes_after in pairs.values():
+            diff += "\n\n=== Draft query for the change ===\n\n"
+            inference_engine = Inference(nodes_before, nodes_after)
+            diff += inference_engine.static_infer()
+
 
         prompt_holes = {
             "source_code": self.source_code,

@@ -65,7 +65,7 @@ class QueryWriter:
 
     def replace_with_tags(self, replace_str: str) -> str:
         for capture_group, node in sorted(
-            self.capture_groups.items(), key=lambda x: -len(x[1].text)
+                self.capture_groups.items(), key=lambda x: -len(x[1].text)
         ):
             text_repr = NodeUtils.convert_to_source(node)
             if text_repr in replace_str:
@@ -75,73 +75,17 @@ class QueryWriter:
 
 @attr.s
 class Inference:
-    lines_before = attr.ib(type=Dict[str, Node])
-    lines_after = attr.ib(type=Dict[str, Node])
-    _nodes_before = attr.ib(
-        type=List[Node], init=False
-    )  # this nodes are independent from each other. they do not overlap by definition.
-    _nodes_after = attr.ib(type=List[Node], init=False)
+    nodes_before = attr.ib(type=List[Node])
+    nodes_after = attr.ib(type=List[Node])
 
-    """
-    This class holds the functions for inferring and creating rules for node replacements
-    """
-
-    def __attrs_post_init__(self):
-        def _initialize_node_list(lines_to_nodes: Dict[str, Node]):
-            nodes = list(lines_to_nodes.values())
-            non_overlapping_nodes = NodeUtils.get_smallest_nonoverlapping_set(nodes)
-            lines = {}
-            for line, node in lines_to_nodes.items():
-                # from the list of node_before check which one contains the line.
-                for non_overlapping_node in non_overlapping_nodes:
-                    if NodeUtils.contains(non_overlapping_node, node):
-                        lines[line] = node
-                        break
-
-            return non_overlapping_nodes, lines
-
-        self._nodes_before, self._lines_before = _initialize_node_list(
-            self.lines_before
-        )
-        self._nodes_after, self._lines_after = _initialize_node_list(self.lines_after)
-
-    def static_infer(self) -> List[str]:
-        rules = []
-        mappings = self.find_mappings()
-
-        if len(self._nodes_after) > 0 and len(self._nodes_before) > 0:
-            for node_id, replacements in mappings.items():
-                node_it = filter(lambda x: x.id == node_id, self._nodes_before)
-                rules += [self.create_replacement(next(node_it), replacements)]
-        elif len(self._nodes_after) > 0:
+    def static_infer(self) -> str:
+        if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
+            return self.create_replacement()
+        elif len(self.nodes_after) > 0:
             # We don't support additions for now. TODO
             pass
-        elif len(self._nodes_before) > 0:
-            for node_id, _ in mappings.items():
-                node_it = filter(lambda x: x.id == node_id, self._nodes_before)
-                rules += [self.create_deletion(next(node_it))]
-        return rules
-
-    def find_mappings(self) -> Dict[int, List[Node]]:
-        """
-        Basic mapping. Matches nodes in an orderly manner.
-        """
-
-        # compute mapping by search for isomorphic nodes
-        mapping = {
-            before.id: [after]
-            for before, after in zip(self._nodes_before, self._nodes_after)
-        }
-
-        if len(self._nodes_before) > len(self._nodes_after):
-            for node_before in self._nodes_before[len(self._nodes_after) :]:
-                mapping[node_before.id] = []
-
-        if len(self._nodes_before) < len(self._nodes_after):
-            for node_after in self._nodes_after[len(self._nodes_before) :]:
-                mapping[self._nodes_before[-1].id].append(node_after)
-
-        return mapping
+        elif len(self.nodes_before) > 0:
+            return self.create_deletion()
 
     def find_nodes_to_change(self, node_before: Node, node_after: Node):
         """
@@ -157,96 +101,69 @@ class Inference:
                     node_before.named_children, node_after.named_children
                 )
                 if NodeUtils.convert_to_source(child_before)
-                != NodeUtils.convert_to_source(child_after)
+                   != NodeUtils.convert_to_source(child_after)
             ]
 
         if len(diverging_nodes) == 1:
             return self.find_nodes_to_change(*diverging_nodes[0])
 
-        return node_before, [node_after]
+        return node_before, node_after
 
-    def create_replacement(self, node_before: Node, node_afters: List[Node]) -> str:
+    def create_replacement(self) -> str:
         """
         Create a rule based on the node before and after.
         """
         # For replacements (---- +++++)
-        if len(node_afters) == 1:
-            # Find whether we need to replace the entire node or just a part of it
-            node_before, node_afters = self.find_nodes_to_change(
-                node_before, node_afters[0]
+        if len(self.nodes_before) == 1:
+            if len(self.nodes_after) == 1:
+                self.nodes_before[0], self.nodes_after[0] = self.find_nodes_to_change(
+                    self.nodes_before[0], self.nodes_after[0]
+                )
+            qw = QueryWriter()
+            query = qw.write([self.nodes_before[0]])
+            lines_affected = " ".join(
+                [NodeUtils.convert_to_source(node) for node in self.nodes_after]
             )
+            replacement_str = qw.replace_with_tags(lines_affected)
 
-            content_to_delete = NodeUtils.convert_to_source(node_before)
-            lines_affected = NodeUtils.convert_to_source(node_afters[0])
+            rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
+            return rule
 
         else:
-            lines_affected = (
-                "\\n".join(
-                    [
-                        line for line in self.lines_after.keys()
-                    ]  # we don't want to covert to source because of spaces
-                ),
+            # find the smallest common acesotr of _nodes_before
+            ancestor = NodeUtils.find_lowest_common_ancestor(self.nodes_before)
+            replacement_str = NodeUtils.convert_to_source(
+                ancestor, exclude=self.nodes_before
             )
 
-            content_to_delete = NodeUtils.normalize_code(
-                "".join(
-                    [
-                        line
-                        for line in self.lines_before.keys()
-                        if self.lines_before[line] == node_before
-                    ]
-                )
-            )  # get the lines associated with this node!
-        source = NodeUtils.convert_to_source(node_before)
+            replacement_str = replacement_str.replace(
+                "{placeholder}", "", len(self.nodes_before) - 1
+            )
 
-        qw = QueryWriter()
-        query = qw.write([node_before])
+            lines_affected = " ".join(
+                [NodeUtils.convert_to_source(node) for node in self.nodes_after]
+            )
+            replacement_str = replacement_str.replace(
+                "{placeholder}", lines_affected, 1
+            )
 
-        replace_str = source.replace(content_to_delete, lines_affected)
+            qw = QueryWriter()
+            query = qw.write([ancestor])
+            replacement_str = qw.replace_with_tags(replacement_str)
 
-        # Prioritize the longest strings first
-        replace_str = qw.replace_with_tags(replace_str)
+            rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
+            return rule
 
-        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
+    def create_deletion(self) -> str:
+        if len(self.nodes_before) == 1:
+            node_before = self.nodes_before[0]
+            qw = QueryWriter()
+            query = qw.write([node_before])
+            replace_str = ""
+            rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
+            return rule
 
-        # Check if the outermost node is in the replacement string
-        # If so then we need to add a not_contains filter to prevent infinite recursion
-        if qw.outer_most_node in replace_str:
-            # Idea for a filter. The parent of node_before should not contain the outer_most_node
-            # This is not a perfect filter, but it should work for most cases
-            enclosing_node = f"({node_before.parent.type}) @parent"
-            qw = QueryWriter(count=qw.count + 1)
-            query = qw.write([node_afters[0]])
-            not_contains = f"{query}"
-            rule += f'''\n\n[[rules.filters]]\n\nenclosing_node = "{enclosing_node}"\n\nnot_contains = [\n"""{not_contains}\n"""]'''
+        pass
 
-        return rule
-
-    def create_deletion(self, node_before: Node) -> str:
-        """
-        Simply delete the node
-        """
-        qw = QueryWriter()
-        query = qw.write([node_before])
-
-        # we have to check if we're deleting more than the actual line to be deleted.
-        content_to_delete = NodeUtils.normalize_code(
-            "".join(self.lines_before.keys())
-        )  # this is always right
-        source = NodeUtils.normalize_code(
-            NodeUtils.convert_to_source(node_before)
-        )  # FIXME this concatenates all the lines together no spacing :|
-
-        # if content_to_delete not in source, replace is source (all content is kept)
-        # if content_to_delete in source, replace is the remaining part after removing content_to_delete
-        replace_str = source.replace(content_to_delete, "")
-
-        # Prioritize the longest strings first
-        replace_str = qw.replace_with_tags(replace_str)
-
-        rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
-
-        return rule
-
-    def create_addition(self, anchor_node, node_after):
+    def create_addition(self) -> str:
         pass
