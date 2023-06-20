@@ -23,6 +23,7 @@ class CommentFinder:
     target_tree = attr.ib(type=Tree)
     replacement_source = attr.ib(type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list)))
     replacement_target = attr.ib(type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list)))
+    edges = attr.ib(type=Dict[str, List[str]], default=attr.Factory(lambda: defaultdict(list)))
 
     def find_replacement_pairs(self) -> Dict[str, Tuple[List[Node], List[Node]]]:
         """
@@ -55,9 +56,15 @@ class CommentFinder:
             node = stack.pop()
 
             if node.type == "line_comment":
+                prev_comment = comment
                 comment = node.text.decode("utf8")
-                if "end" in comment:
+                if "->" in comment:
+                    x, y = comment.split("->")
+                    self.edges[x[2:].strip()].append(y.strip())
+                    comment = prev_comment
+                elif "end" in comment:
                     comment = None
+
             elif comment:
                 replacement_dict[comment].append(node)
             for child in reversed(node.children):

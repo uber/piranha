@@ -99,6 +99,8 @@ class PiranhaAgent:
             diff += inference_engine.static_infer()
 
 
+        print(finder.edges)
+
         prompt_holes = {
             "source_code": self.source_code,
             "source_tree": source_tree_sexpr,
@@ -138,22 +140,23 @@ class PiranhaAgent:
         )
 
     def validate_rule_wrapper(self, chat):
-        with Pool(processes=1) as pool:
-            completion = chat.get_model_response()
-            result = pool.apply_async(self.validate_rule, (completion,))
-            try:
-                file_name, toml_block = result.get(
-                    timeout=5
-                )  # Add a timeout of 5 seconds
-                if file_name and toml_block:
-                    return file_name, toml_block
+        #with Pool(processes=1) as pool:
+        completion = chat.get_model_response()
+        #result = pool.apply_async(self.validate_rule, (completion,))
+        try:
+            file_name, toml_block = self.validate_rule(completion)
+            #file_name, toml_block = result.get(
+            #    timeout=5
+            #)  # Add a timeout of 5 seconds
+            if file_name and toml_block:
+                return file_name, toml_block
 
-            except multiprocessing.context.TimeoutError:
-                raise PiranhaAgentError(
-                    "Piranha in infinite loop. Please add a filter or constraint the query. "
-                    "Remember you can only constraint queries with #eq, #not-eq, #match. "
-                    "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
-                )
+        except multiprocessing.context.TimeoutError:
+            raise PiranhaAgentError(
+                "Piranha in infinite loop. Please add a filter or constraint the query. "
+                "Remember you can only constraint queries with #eq, #not-eq, #match. "
+                "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
+            )
 
     def validate_rule(self, completion):
         # Define regex pattern for ```toml block

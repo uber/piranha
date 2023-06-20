@@ -19,9 +19,11 @@ logger.addHandler(ch)
 @attr.s
 class PiranhaGPTChat:
     explanation = '''
-Your task is to create refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
+Your task is to improve refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
 Each rule will transform an original code snippet into a provided refactored version.
-As input you will receive the original and refactored snippets and their tree-sitter representations.
+As input you will receive the original and refactored snippets and corresponding rules inferred statically.
+Your task is to make the rules more human like. You should make sure you do not change the semantics of the code.
+If you decide to do so you should explain why you think the semantics are preserved.
 
 The rule should be in Polyglot Piranha's domain-specific language (DSL). Explanations and examples of the DSL are below.
 
