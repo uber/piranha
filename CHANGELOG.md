@@ -1,3 +1,9 @@
+Version 0.3.9
+-------------
+* Rule graph validation #493
+* Bug fix #497 #499
+* Kotlin dependency update
+
 Version 0.3.8
 -------------
 * Bug Fix related to code snippet mode #489

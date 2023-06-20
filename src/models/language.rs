@@ -163,7 +163,7 @@ impl std::str::FromStr for PiranhaLanguage {
           scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/kt/scope_config.toml"))
             .scopes()
             .to_vec(),
-          comment_nodes: vec!["comment".to_string()],
+          comment_nodes: vec!["comment".to_string(), "line_comment".to_string()],
         })
       }
       PYTHON => Ok(PiranhaLanguage {
