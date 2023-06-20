@@ -9,7 +9,7 @@ from typing import List, Dict, Deque, Tuple
 import attr
 from tree_sitter import Tree, Node
 
-from experimental.rule_inference.node_utils import NodeUtils
+from rule_inference.node_utils import NodeUtils
 
 
 @attr.s
