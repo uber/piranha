@@ -87,8 +87,6 @@ class PiranhaAgent:
             inference_engine = Inference(nodes_before, nodes_after)
             rules += "\n\n" + inference_engine.static_infer()
 
-        print(finder.edges)
-
         prompt_holes = {
             "source_code": self.source_code,
             "source_tree": source_tree_sexpr,

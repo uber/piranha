@@ -274,7 +274,6 @@ query = """
     def get_model_response(self):
         latest_message = self.messages[-1]
         if latest_message["role"] == "assistant":
-            print(f"System: {latest_message['content']}\n")
             return latest_message["content"]
         else:
             completions = self.get_completion(n_samples=1)
@@ -286,7 +285,6 @@ query = """
         while True:
             try:
                 logger.debug("Attempting to get completion from GPT.")
-                print(f"{self.messages[-1]['content']}\n")
                 response = openai.ChatCompletion.create(
                     model=self.model,
                     messages=self.messages,
@@ -304,7 +302,7 @@ query = """
             ) as e:
                 logger.error(e)
                 sleep_time = 10
-                print(f"Rate limit reached. Sleeping for {sleep_time}s.")
+                logger.error(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
 
     @staticmethod

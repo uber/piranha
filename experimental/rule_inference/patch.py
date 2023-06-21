@@ -85,7 +85,6 @@ class Patch:
             return map(int, nums)
 
         diff_segments = cls.split_patches(multiple_diffs)
-        print(multiple_diffs)
         pattern = re.compile(
             r"@@ -(?P<before>[0-9,]+) \+(?P<after>[0-9,]+) @@\n\n(?P<diff_content>(.|\n)*)"
         )
