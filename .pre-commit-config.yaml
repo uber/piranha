@@ -50,8 +50,3 @@ repos:
       - id: autopep8
         files: demo/
         exclude: only_lists.py
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    files: experimental/
-    rev: "v2.1.0"
-    hooks:
-      - id: prettier
