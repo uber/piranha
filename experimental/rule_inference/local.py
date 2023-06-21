@@ -1,4 +1,5 @@
 import os
+import time
 
 import attr
 from flask import Flask, request, jsonify, session
@@ -62,6 +63,23 @@ def infer_from_example(data):
     }
 
     return jsonify({"message": f"Received source code: {data.source_code}"}), 200
+
+
+# New event listener
+@socketio.on("improve_piranha")
+def improve_rules(data):
+    if "last_inference_result" not in session:
+        return jsonify({"message": "No previous inference result"}), 400
+
+    improved_rules = session["last_inference_result"]
+
+    room = session.get("room")
+    join_room(room)
+
+    time.sleep(1)
+
+    socketio.emit("infer_result", improved_rules, room=room)
+    return jsonify({"message": "Received rules and requirements"}), 200
 
 
 @app.route("/api/process_folder", methods=["POST"])
