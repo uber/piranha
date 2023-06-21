@@ -9,7 +9,7 @@ from typing import List, Dict, Deque, Tuple
 import attr
 from tree_sitter import Tree, Node
 
-from rule_inference.node_utils import NodeUtils
+from experimental.rule_inference.node_utils import NodeUtils
 
 
 @attr.s
@@ -21,9 +21,15 @@ class CommentFinder:
 
     source_tree = attr.ib(type=Tree)
     target_tree = attr.ib(type=Tree)
-    replacement_source = attr.ib(type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list)))
-    replacement_target = attr.ib(type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list)))
-    edges = attr.ib(type=Dict[str, List[str]], default=attr.Factory(lambda: defaultdict(list)))
+    replacement_source = attr.ib(
+        type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list))
+    )
+    replacement_target = attr.ib(
+        type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list))
+    )
+    edges = attr.ib(
+        type=Dict[str, List[str]], default=attr.Factory(lambda: defaultdict(list))
+    )
 
     def find_replacement_pairs(self) -> Dict[str, Tuple[List[Node], List[Node]]]:
         """

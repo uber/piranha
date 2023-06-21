@@ -40,7 +40,7 @@
 
       <div class="row">
         <div class="col-lg-12" id="explanation-container">
-          <h5>Explanation of your change</h5>
+          <h5>Explanation of your change (optional)</h5>
           <textarea id="explanation-input"></textarea>
         </div>
       </div>
@@ -57,6 +57,21 @@
           <textarea id="query-input"></textarea>
         </div>
       </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-12 text-center" id="path-container">
+                <h5>Refactor your codebase (warning: applying the rule will change your files!)</h5>
+                <div class="input-group">
+                    <input type="text" id="folder-input" class="form-control" placeholder="Enter the folder path here" />
+                    <div class="input-group-append">
+                        <button id="submit-folder-button" class="btn btn-primary">Apply rules</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
 
     </div>
     <script>

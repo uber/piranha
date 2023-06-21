@@ -65,7 +65,7 @@ class QueryWriter:
 
     def replace_with_tags(self, replace_str: str) -> str:
         for capture_group, node in sorted(
-                self.capture_groups.items(), key=lambda x: -len(x[1].text)
+            self.capture_groups.items(), key=lambda x: -len(x[1].text)
         ):
             text_repr = NodeUtils.convert_to_source(node)
             if text_repr in replace_str:
@@ -77,6 +77,13 @@ class QueryWriter:
 class Inference:
     nodes_before = attr.ib(type=List[Node])
     nodes_after = attr.ib(type=List[Node])
+    name = attr.ib(init=False)
+
+    _counter = 0
+
+    def __attrs_post_init__(self):
+        type(self)._counter += 1
+        self.name = f"rule_{type(self)._counter}"
 
     def static_infer(self) -> str:
         if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
@@ -101,7 +108,7 @@ class Inference:
                     node_before.named_children, node_after.named_children
                 )
                 if NodeUtils.convert_to_source(child_before)
-                   != NodeUtils.convert_to_source(child_after)
+                != NodeUtils.convert_to_source(child_after)
             ]
 
         if len(diverging_nodes) == 1:
@@ -126,7 +133,7 @@ class Inference:
             )
             replacement_str = qw.replace_with_tags(lines_affected)
 
-            rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
+            rule = f'''[[rules]]\n\nname = \"{self.name}\"\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
             return rule
 
         else:
@@ -151,7 +158,7 @@ class Inference:
             query = qw.write([ancestor])
             replacement_str = qw.replace_with_tags(replacement_str)
 
-            rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
+            rule = f'''[[rules]]\n\nname = \"{self.name}\"\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
             return rule
 
     def create_deletion(self) -> str:
@@ -160,7 +167,7 @@ class Inference:
             qw = QueryWriter()
             query = qw.write([node_before])
             replace_str = ""
-            rule = f'''[[rules]]\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
+            rule = f'''[[rules]]\n\nname = \"{self.name}\"\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
             return rule
 
         pass

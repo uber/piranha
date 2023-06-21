@@ -78,26 +78,14 @@ class PiranhaAgent:
             )
         )
         diff = "\n".join(diff)
-        patches: List[Patch] = Patch.from_diffs(diff)
+        # diff = self.append_diff_information(diff, source_tree, target_tree)
 
-        # Append to the diff the information about the deleted lines for each patch
-        for patch in patches:
-            node_pairs = patch.get_nodes_from_patch(source_tree, target_tree)
-            for nodes_before, nodes_after in node_pairs:
-                diff += "\n=== Draft queries to represent deleted nodes ===\n\n"
-
-                for line, node in nodes_before.items():
-                    q = QueryWriter()
-                    diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
-
-
+        rules = ""
         finder = CommentFinder(source_tree, target_tree)
         pairs = finder.find_replacement_pairs()
         for nodes_before, nodes_after in pairs.values():
-            diff += "\n\n=== Draft query for the change ===\n\n"
             inference_engine = Inference(nodes_before, nodes_after)
-            diff += inference_engine.static_infer()
-
+            rules += "\n\n" + inference_engine.static_infer()
 
         print(finder.edges)
 
@@ -106,6 +94,7 @@ class PiranhaAgent:
             "source_tree": source_tree_sexpr,
             "target_tree": target_tree_sexpr,
             "diff": diff,
+            "rules": rules,
             "hints": self.hints,
         }
 
@@ -139,15 +128,27 @@ class PiranhaAgent:
             "GPT-4 failed to generate a rule. Try increasing the temperature."
         )
 
+    def append_diff_information(self, diff, source_tree, target_tree):
+        patches: List[Patch] = Patch.from_diffs(diff)
+        # Append to the diff the information about the deleted lines for each patch
+        diff += "\n=== Draft queries to represent deleted lines ===\n\n"
+        for patch in patches:
+            node_pairs = patch.get_nodes_from_patch(source_tree, target_tree)
+            for nodes_before, nodes_after in node_pairs:
+                for line, node in nodes_before.items():
+                    q = QueryWriter()
+                    diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
+        return diff
+
     def validate_rule_wrapper(self, chat):
-        #with Pool(processes=1) as pool:
+        # with Pool(processes=1) as pool:
         completion = chat.get_model_response()
-        #result = pool.apply_async(self.validate_rule, (completion,))
+        # result = pool.apply_async(self.validate_rule, (completion,))
         try:
             file_name, toml_block = self.validate_rule(completion)
-            #file_name, toml_block = result.get(
+            # file_name, toml_block = result.get(
             #    timeout=5
-            #)  # Add a timeout of 5 seconds
+            # )  # Add a timeout of 5 seconds
             if file_name and toml_block:
                 return file_name, toml_block
 
@@ -173,6 +174,7 @@ class PiranhaAgent:
             toml_block = toml_blocks[0].replace("parenthesized_expression", "condition")
             logger.debug(f"Generated rule: {toml_block}")
             toml_dict = toml.loads(toml_block)
+            return "rule.toml", toml_block
         except Exception as e:
             raise PiranhaAgentError(
                 f"Could not create Piranha rule. The TOML block is not valid. {e}"

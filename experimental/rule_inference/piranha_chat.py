@@ -20,19 +20,21 @@ logger.addHandler(ch)
 class PiranhaGPTChat:
     explanation = '''
 Your task is to improve refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
-Each rule will transform an original code snippet into a provided refactored version.
-As input you will receive the original and refactored snippets and corresponding rules inferred statically.
-Your task is to make the rules more human like. You should make sure you do not change the semantics of the code.
-If you decide to do so you should explain why you think the semantics are preserved.
+The rules are expressed in a domain-specific language (DSL) specific to Polyglot Piranha. Examples and explanations of the DSL will be provided below.
 
-The rule should be in Polyglot Piranha's domain-specific language (DSL). Explanations and examples of the DSL are below.
+You will be provided with the original and refactored code snippets, along with statically inferred rules verified by an algorithm. 
+However, these rules may appear unnatural since they were automatically generated. Your goal is to make them resemble rules written by humans, 
+incorporating meaningful variable names and simpler matchers. Whenever possible, simplify lengthy s-expressions. Note however, you should
+keep capture groups in the "replace" string if they are meaningful (such as variable names, method names, etc.).
 
-Your rule should accurately capture the transformation from the original to the refactored code.
-It should be specific enough to avoid matching unrelated code patterns, but general enough to include code from captured groups where possible.
+You should not alter the semantics of the rules without a specific request. 
+However, if the user asks you to add filters or extra constraints, you should accommodate their needs. 
+In such cases, please ensure that you explain your change and provide a justification for any changes made.
+Additionally, always strive to simplify the rules as much as possible.
 
 ========================= Piranha Rule Explanation =========================
 
-The TOML file should contain at least one rule with the following properties:
+Rules are represented in TOML. Each rule should contain at least one rule with the following properties:
 
 - "query": Tree-sitter query to find the code pattern to refactor
 - "replace_node": The captured node in the query that will be replaced
@@ -97,7 +99,7 @@ at_least = 1
 at_most = 5
 ```
 
-========================= Common anti-patterns =========================
+========================= Mistakes to avoid =========================
 
 === Infinite loops ===
 
@@ -127,7 +129,7 @@ replace = "B"
 ... is also a bad idea. Since the query does not constraint the class name to be "A", the rule will match any class name.
 Moreover, it will run into an infinite loop, because the rule will keep matching the same node over and over again.
 
-=== Overly long matches ===
+=== Overly long matches in imports===
 
 Sometimes queries can be significantly simplified by matching large subtrees. Making small queries is generally preferable
 to matching a large subtree. 
@@ -160,7 +162,7 @@ query = """
     (#eq? @name6 "directExecutor")
 )
 """
-... is too complex. It can be simplified to 
+... is bad! It can be simplified to:
 
 query = """(
     (import_declaration 
@@ -168,6 +170,7 @@ query = """(
     (#eq? @name "com.uber.common.context.concurrent.MoreContextExecutors.directExecutor"))
 """
 
+Always use the simplest query possible.
 
 === Not considering unnamed nodes ===
 
@@ -221,10 +224,14 @@ query = """
 
 {diff}
 
+=== Rules to improve === 
+
+{rules}
+
 === Additional requirements === 
 
 {hints}
-========================= Please improve my rule =========================
+========================= Please simplify the rules =========================
 
     """
 

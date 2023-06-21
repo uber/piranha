@@ -63,6 +63,24 @@ let tree;
   }
 
 
+  document.getElementById("submit-folder-button").addEventListener("click", async function () {
+    const folderPath = document.getElementById("folder-input").value; // Get the value of the folder path input
+
+    const response = await fetch("/api/process_folder", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        folder_path: folderPath, // Include the folder path in the request body
+      }),
+    });
+
+    // handle response...
+  });
+
+
+
   document.getElementById("submit-button").addEventListener("click", async function () {
     const sourceCode = codeBefore.getValue();
     const targetCode = codeAfter.getValue();

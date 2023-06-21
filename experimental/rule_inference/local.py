@@ -31,5 +31,17 @@ def infer_from_example():
     return jsonify(rule_name, rule), 200
 
 
+@app.route("/api/process_folder", methods=["POST"])
+def process_folder():
+    data = request.get_json()
+    folder_path = data.get("folder_path", "")
+
+    # Use the folder_path variable to process the folder.
+    # Note: This assumes your server has the appropriate permissions to access and read the directory.
+
+    # Let's just return a message for this example
+    return jsonify({"message": f"Received folder path: {folder_path}"}), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True)
