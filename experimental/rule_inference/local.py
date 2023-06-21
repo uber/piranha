@@ -6,6 +6,8 @@ from flask import Flask, request, jsonify, session
 import openai
 from flask import Flask, render_template
 import logging
+
+from rule_application import CodebaseRefactorer
 from piranha_agent import PiranhaAgent
 from flask_socketio import SocketIO, join_room
 
@@ -25,13 +27,31 @@ class InferData:
 
 
 @attr.s
-class FolderData:
+class ImproveData:
+    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
+    requirements = attr.ib(validator=attr.validators.instance_of(str))
+    rules = attr.ib(validator=attr.validators.instance_of(str))
+
+
+@attr.s
+class RefactorData:
+    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
     folder_path = attr.ib(validator=attr.validators.instance_of(str))
+    rules = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@socketio.on("refactor_codebase")
+def process_folder(data):
+    data = RefactorData(**data)
+    folder_path = data.folder_path
+
+    refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
+    refactorer.refactor_codebase(False)
 
 
 @socketio.on("infer_piranha")
@@ -62,37 +82,18 @@ def infer_from_example(data):
         "rule": rule,
     }
 
-    return jsonify({"message": f"Received source code: {data.source_code}"}), 200
-
 
 # New event listener
 @socketio.on("improve_piranha")
 def improve_rules(data):
-    if "last_inference_result" not in session:
-        return jsonify({"message": "No previous inference result"}), 400
-
-    improved_rules = session["last_inference_result"]
+    data = ImproveData(**data)
 
     room = session.get("room")
     join_room(room)
 
     time.sleep(1)
 
-    socketio.emit("infer_result", improved_rules, room=room)
-    return jsonify({"message": "Received rules and requirements"}), 200
-
-
-@app.route("/api/process_folder", methods=["POST"])
-def process_folder():
-    data = request.get_json()
-    data = FolderData(**data)
-    folder_path = data.folder_path
-
-    # Use the folder_path variable to process the folder.
-    # Note: This assumes your server has the appropriate permissions to access and read the directory.
-
-    # Let's just return a message for this example
-    return jsonify({"message": f"Received folder path: {folder_path}"}), 200
+    socketio.emit("infer_result", {"rule_name": "", "rule": data.rules}, room=room)
 
 
 if __name__ == "__main__":

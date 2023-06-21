@@ -26,7 +26,7 @@ class NodeUtils:
         return s_exp + ")"
 
     @staticmethod
-    def convert_to_source(node, depth=0, exclude=None):
+    def convert_to_source(node: Node, depth=0, exclude=None):
         if exclude is None:
             exclude = []
         for to_exclude in exclude:
@@ -40,10 +40,9 @@ class NodeUtils:
             s_exp += node.text.decode("utf8")
             return s_exp
 
-        while has_next_child:
-            nxt = NodeUtils.convert_to_source(cursor.node, depth + 1, exclude)
+        for child in node.children:
+            nxt = NodeUtils.convert_to_source(child, depth + 1, exclude)
             s_exp += nxt + " "
-            has_next_child = cursor.goto_next_sibling()
         return s_exp.strip()
 
     @staticmethod
@@ -64,7 +63,7 @@ class NodeUtils:
             if not smallest_non_overlapping_set:
                 smallest_non_overlapping_set.append(node)
             else:
-                if node.start_point > smallest_non_overlapping_set[-1].end_point:
+                if node.start_point >= smallest_non_overlapping_set[-1].end_point:
                     smallest_non_overlapping_set.append(node)
         return smallest_non_overlapping_set
 
@@ -75,7 +74,9 @@ class NodeUtils:
         Until a fixed point is reached where no more nodes can be removed.
         """
         while True:
-            new_nodes = [node for node in nodes if all(child in nodes for child in node.children)]
+            new_nodes = [
+                node for node in nodes if all(child in nodes for child in node.children)
+            ]
             if len(new_nodes) == len(nodes):
                 break
             nodes = new_nodes

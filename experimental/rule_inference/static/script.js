@@ -54,24 +54,6 @@
     });
   }
 
-  document
-    .getElementById("submit-folder-button")
-    .addEventListener("click", async function () {
-      const folderPath = document.getElementById("folder-input").value; // Get the value of the folder path input
-
-      const response = await fetch("/api/process_folder", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          folder_path: folderPath, // Include the folder path in the request body
-        }),
-      });
-
-      // handle response...
-    });
-
   function displayImprovementButton(disabled, textContent) {
     const button = document.getElementById("submit-button-improvement");
     const buttonText = document.getElementById("button-text-improvement");
@@ -86,6 +68,29 @@
     buttonText.textContent = textContent; // Change button text
     return button;
   }
+
+  // First, we need to establish a socket connection.
+  const socket = io.connect("http://127.0.0.1:5000");
+
+  document
+    .getElementById("submit-folder-button")
+    .addEventListener("click", async function () {
+      const folderPath = document.getElementById("folder-input").value; // Get the value of the folder path input
+
+      const rules = queryEditor.getValue();
+      const language = languageSelect.value;
+
+      // Update the interface
+
+      // Emit the 'improve_piranha' event.
+      socket.emit("refactor_codebase", {
+        rules: rules,
+        folder_path: folderPath,
+        language: language,
+      });
+
+      // handle response...
+    });
 
   // To start the inference, we can emit the 'infer_piranha' event.
   document
@@ -104,13 +109,10 @@
         hints: "",
       });
 
-      hideSubmitButton();
+      document.getElementById("submit-button").style.display = "none"; // Remove the original button
       const button = displayImprovementButton(true, "Processing...");
       button.style.display = "block";
     });
-
-  // First, we need to establish a socket connection.
-  const socket = io.connect("http://127.0.0.1:5000");
 
   // Attach event listener for improve rule
   document
@@ -131,11 +133,6 @@
       });
     });
 
-  function hideSubmitButton() {
-    const button = document.getElementById("submit-button");
-    button.style.display = "none"; // Reset button text
-  }
-
   // We can listen for the 'infer_result' event and react when it happens.
   socket.on("infer_result", function (data) {
     // This is where you could update your interface with the data.
@@ -143,6 +140,7 @@
 
     document.getElementById("query-container").style.display = "block";
     document.getElementById("explanation-container").style.display = "block";
+    document.getElementById("path-container").style.display = "block";
 
     queryEditor.setValue(toml);
     if (requirementsEditor.getValue() === "") {
