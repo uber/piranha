@@ -92,10 +92,12 @@
 
     button.disabled = false; // Enable button
     spinner.style.display = "none"; // Hide spinner
-    buttonText.textContent = "Generate rule"; // Reset button text
+    button.style.display = "none"; // Reset button text
+
 
     explanationContainer.removeAttribute("hidden");
     pathContainer.removeAttribute("hidden");
+    requirementsEditor.setValue("");
   });
 
   socket.on("infer_progress", function (data) {

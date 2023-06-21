@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Query Playground</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <h3 class="text-center">Piranha Inference Playground</h3>
+    <div id="playground-container" class="container">
+        <div class="row">
+            <div class="col-lg-2">
+                <select class="form-select" id="language-select">
+                    <option value="java" selected="selected">Java</option>
+                </select>
+            </div>
+        </div>
+      <div class="row">
+        <div class="col-lg-6" id="code-container">
+          <h5>Code before</h5>
+            <textarea id="code-input-before"></textarea>
+        </div>
+
+        <div class="col-lg-6" id="tree-container">
+          <h5>Code after</h5>
+          <textarea id="code-input-after"></textarea>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-auto">
+          <button id="submit-button" class="btn btn-primary">
+            <span
+              id="spinner"
+              class="spinner-border spinner-border-sm"
+              role="status"
+              aria-hidden="true"
+              style="display: none"
+            ></span>
+            <span id="button-text">Generate rule</span>
+          </button>
+        </div>
+        <div class="col-lg-12" id="query-container" style="display: none">
+          <h4>Rules</h4>
+          <textarea id="query-input"></textarea>
+        </div>
+      </div>
+
+        <div class="row justify-content-center" id="explanation-container" hidden>
+            <div class="col-lg-12">
+                <h5>Any changes you would like to make?</h5>
+                <textarea id="explanation-input"></textarea>
+            </div>
+            <div class="col-auto">
+                <button id="submit-button-improvement" class="btn btn-primary">
+            <span
+                    id="spinner2"
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                    style="display: none"
+            ></span>
+                    <span id="button-text2">Improve rule</span>
+                </button>
+            </div>
+        </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-12 text-center" id="path-container" hidden>
+          <h5>
+            Refactor your codebase (warning: applying the rule graph will change your
+            files!)
+          </h5>
+          <div class="input-group">
+            <input
+              type="text"
+              id="folder-input"
+              class="form-control"
+              placeholder="Enter the folder path here"
+            />
+            <div class="input-group-append">
+              <button id="submit-folder-button" class="btn btn-primary">
+                Apply rules
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      var codeMirror =
+        "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0";
+    </script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.45.0//mode/toml/toml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
+
+
+
+(async () => {
+  const codeInputBefore = document.getElementById("code-input-before");
+  const codeIntputAfter = document.getElementById("code-input-after");
+  const languageSelect = document.getElementById("language-select");
+  const queryInput = document.getElementById("query-input");
+  const pathContainer = document.getElementById("path-container");
+  const explanationContainer = document.getElementById("explanation-container");
+  const explanation_input = document.getElementById("explanation-input");
+  languageSelect.addEventListener("change", handleLanguageChange);
+  handleLanguageChange();
+
+  const codeBefore = CodeMirror.fromTextArea(codeInputBefore, {
+    lineNumbers: true,
+    showCursorWhenSelecting: true,
+    mode: "javascript",
+  });
+
+  const codeAfter = CodeMirror.fromTextArea(codeIntputAfter, {
+    lineNumbers: true,
+    showCursorWhenSelecting: true,
+    mode: "javascript",
+  });
+
+  const queryEditor = CodeMirror.fromTextArea(queryInput, {
+    lineNumbers: true,
+    showCursorWhenSelecting: true,
+    mode: "toml",
+  });
+
+  const requirementsEditor = CodeMirror.fromTextArea(explanation_input, {
+    lineNumbers: true,
+    lineWrapping: true,
+  });
+
+  // Function to dynamically load script
+  function loadScript(url, callback) {
+    const script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = url;
+    script.onload = callback;
+    document.body.appendChild(script);
+  }
+
+  // Event listener for language change
+  function handleLanguageChange() {
+    const selectedLanguage = languageSelect.value;
+
+    // Use baseURL variable to generate URL
+    // if language is javascript turn ito to java
+    const langName =
+      selectedLanguage === "java" ? "javascript" : selectedLanguage;
+    const scriptUrl = `${codeMirror}/mode/${langName}/${langName}.js`;
+
+    loadScript(scriptUrl, function () {
+      codeBefore.setOption("mode", langName);
+      codeAfter.setOption("mode", langName);
+    });
+  }
+
+  document
+    .getElementById("submit-folder-button")
+    .addEventListener("click", async function () {
+      const folderPath = document.getElementById("folder-input").value; // Get the value of the folder path input
+
+      const response = await fetch("/api/process_folder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          folder_path: folderPath, // Include the folder path in the request body
+        }),
+      });
+
+      // handle response...
+    });
+
+  // First, we need to establish a socket connection.
+  const socket = io.connect("http://127.0.0.1:5000");
+
+  // We can listen for the 'infer_result' event and react when it happens.
+  socket.on("infer_result", function (data) {
+    // This is where you could update your interface with the data.
+    const toml = data.rule;
+    document.getElementById("query-container").style.display = "block";
+    queryEditor.setValue(toml);
+
+    // Change the button to show that processing is happening
+    const button = document.getElementById("submit-button");
+    const buttonText = document.getElementById("button-text");
+    const spinner = document.getElementById("spinner");
+
+    button.disabled = false; // Enable button
+    spinner.style.display = "none"; // Hide spinner
+    button.style.display = "none"; // Reset button text
+
+
+    explanationContainer.removeAttribute("hidden");
+    pathContainer.removeAttribute("hidden");
+    requirementsEditor.setValue("");
+  });
+
+  socket.on("infer_progress", function (data) {
+    // This is where you could update your interface with the data.
+    const toml = data.rule;
+    document.getElementById("query-container").style.display = "block";
+    queryEditor.setValue(toml);
+  });
+
+  // To start the inference, we can emit the 'infer_piranha' event.
+  document
+    .getElementById("submit-button")
+    .addEventListener("click", async function () {
+      const sourceCode = codeBefore.getValue();
+      const targetCode = codeAfter.getValue();
+      const language = languageSelect.value;
+
+      // We don't need to worry about disabling the button or showing a spinner,
+      // since we can now update the interface in real-time as the inference happens.
+      socket.emit("infer_piranha", {
+        source_code: sourceCode,
+        target_code: targetCode,
+        language: language,
+        hints: "",
+      });
+
+      // Change the button to show that processing is happening
+      const button = document.getElementById("submit-button");
+      const buttonText = document.getElementById("button-text");
+      const spinner = document.getElementById("spinner");
+
+      button.disabled = true; // Disable button
+      spinner.style.display = "inline-block"; // Show spinner
+      buttonText.textContent = "Processing..."; // Change button text
+    });
+})();
+
+
+import os
+
+import attr
+from flask import Flask, request, jsonify, session
+import openai
+from flask import Flask, render_template
+import logging
+from piranha_agent import PiranhaAgent
+from flask_socketio import SocketIO, join_room
+
+logger = logging.getLogger("Flask")
+logger.setLevel(logging.DEBUG)
+app = Flask(__name__)
+socketio = SocketIO(app)
+
+
+# Define data validation classes
+@attr.s
+class InferData:
+    source_code = attr.ib(validator=attr.validators.instance_of(str))
+    target_code = attr.ib(validator=attr.validators.instance_of(str))
+    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
+    hints = attr.ib(validator=attr.validators.instance_of(str))
+
+
+@attr.s
+class FolderData:
+    folder_path = attr.ib(validator=attr.validators.instance_of(str))
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@socketio.on("infer_piranha")
+def infer_from_example(data):
+    # Validate the data
+    data = InferData(**data)
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    agent = PiranhaAgent(
+        data.source_code,
+        data.target_code,
+        language=data.language,
+        hints=data.hints,
+    )
+
+    room = session.get("room")
+    join_room(room)
+
+    rule_name, rule = agent.infer_rules(
+        lambda intermediate_result: socketio.emit(
+            "infer_progress",
+            {"rule": intermediate_result},
+            room=room,
+        )
+    )
+    socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
+    session["last_inference_result"] = {
+        "rule_name": rule_name,
+        "rule": rule,
+    }
+
+    return jsonify({"message": f"Received source code: {data.source_code}"}), 200
+
+
+@app.route("/api/process_folder", methods=["POST"])
+def process_folder():
+    data = request.get_json()
+    data = FolderData(**data)
+    folder_path = data.folder_path
+
+    # Use the folder_path variable to process the folder.
+    # Note: This assumes your server has the appropriate permissions to access and read the directory.
+
+    # Let's just return a message for this example
+    return jsonify({"message": f"Received folder path: {folder_path}"}), 200
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
