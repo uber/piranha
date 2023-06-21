@@ -75,3 +75,20 @@ a.highlighted {
 #explanation-container textarea:focus {
   color: black;
 }
+
+#path-container {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+}
+
+.input-group-append .btn {
+  margin-left: 10px;
+}
+
+#submit-folder-button:hover {
+  background-color: #0069d9;
+}
