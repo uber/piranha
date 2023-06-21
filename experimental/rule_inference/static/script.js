@@ -100,6 +100,13 @@ let tree;
     buttonText.textContent = "Infer"; // Reset button text
   });
 
+  socket.on("infer_progress", function (data) {
+    // This is where you could update your interface with the data.
+    const toml = data.rule;
+    document.getElementById("query-container").style.display = "block";
+    queryEditor.setValue(toml);
+  });
+
   // To start the inference, we can emit the 'infer_piranha' event.
   document
     .getElementById("submit-button")

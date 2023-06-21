@@ -59,7 +59,7 @@ class PiranhaAgent:
         tree = parser.parse(bytes(code, "utf8"))
         return tree
 
-    def infer_rules(self) -> Optional[Tuple[str, str]]:
+    def infer_rules(self, callback=None) -> Optional[Tuple[str, str]]:
         """Implements the inference process of the Piranha Agent.
         The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
         If the rule transforms the source code into the target code, the rule is returned.
@@ -85,7 +85,10 @@ class PiranhaAgent:
         pairs = finder.find_replacement_pairs()
         for nodes_before, nodes_after in pairs.values():
             inference_engine = Inference(nodes_before, nodes_after)
-            rules += "\n\n" + inference_engine.static_infer()
+            rules += inference_engine.static_infer() + "\n\n"
+
+        if callback:
+            callback(rules)
 
         prompt_holes = {
             "source_code": self.source_code,
@@ -169,7 +172,9 @@ class PiranhaAgent:
             )
 
         try:
-            toml_block = toml_blocks[0].replace("parenthesized_expression", "condition")
+            toml_block = (
+                toml_blocks[0].replace("parenthesized_expression", "condition").strip()
+            )
             logger.debug(f"Generated rule: {toml_block}")
             toml_dict = toml.loads(toml_block)
             return "rule.toml", toml_block

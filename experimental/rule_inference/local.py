@@ -48,7 +48,13 @@ def infer_from_example(data):
     room = session.get("room")
     join_room(room)
 
-    rule_name, rule = agent.infer_rules()
+    rule_name, rule = agent.infer_rules(
+        lambda intermediate_result: socketio.emit(
+            "infer_progress",
+            {"rule": intermediate_result},
+            room=room,
+        )
+    )
     socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
     session["last_inference_result"] = {
         "rule_name": rule_name,
