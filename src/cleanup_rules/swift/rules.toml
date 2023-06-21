@@ -1131,6 +1131,8 @@ groups = ["if_cleanup"]
 replace_node = "extras"
 replace = ""
 is_seed_rule = false
+[[rules.filters]]
+not_contains = ["(directive) @d"]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
