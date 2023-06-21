@@ -1,15 +1,10 @@
-/* ########## THIS CODE COMES FROM THE TREE SITTER PLAYGROUND  ##########
-   ########## https://github.com/tree-sitter/tree-sitter/      ##########
-
- */
-
-let tree;
-
 (async () => {
   const codeInputBefore = document.getElementById("code-input-before");
   const codeIntputAfter = document.getElementById("code-input-after");
   const languageSelect = document.getElementById("language-select");
   const queryInput = document.getElementById("query-input");
+  const pathContainer = document.getElementById("path-container");
+  const explanationContainer = document.getElementById("explanation-container");
   const explanation_input = document.getElementById("explanation-input");
   languageSelect.addEventListener("change", handleLanguageChange);
   handleLanguageChange();
@@ -32,7 +27,7 @@ let tree;
     mode: "toml",
   });
 
-  const explanationEditor = CodeMirror.fromTextArea(explanation_input, {
+  const requirementsEditor = CodeMirror.fromTextArea(explanation_input, {
     lineNumbers: true,
     lineWrapping: true,
   });
@@ -97,7 +92,10 @@ let tree;
 
     button.disabled = false; // Enable button
     spinner.style.display = "none"; // Hide spinner
-    buttonText.textContent = "Infer"; // Reset button text
+    buttonText.textContent = "Generate rule"; // Reset button text
+
+    explanationContainer.removeAttribute("hidden");
+    pathContainer.removeAttribute("hidden");
   });
 
   socket.on("infer_progress", function (data) {
@@ -113,7 +111,6 @@ let tree;
     .addEventListener("click", async function () {
       const sourceCode = codeBefore.getValue();
       const targetCode = codeAfter.getValue();
-      const userExplanation = explanationEditor.getValue();
       const language = languageSelect.value;
 
       // We don't need to worry about disabling the button or showing a spinner,
@@ -122,7 +119,7 @@ let tree;
         source_code: sourceCode,
         target_code: targetCode,
         language: language,
-        hints: userExplanation,
+        hints: "",
       });
 
       // Change the button to show that processing is happening
