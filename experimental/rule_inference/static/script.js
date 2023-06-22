@@ -1,35 +1,46 @@
 (async () => {
-  const codeInputBefore = document.getElementById("code-input-before");
-  const codeIntputAfter = document.getElementById("code-input-after");
-  const languageSelect = document.getElementById("language-select");
-  const queryInput = document.getElementById("query-input");
-  const explanationInput = document.getElementById("explanation-input");
-  languageSelect.addEventListener("change", handleLanguageChange);
+  const elements = {
+    codeInputBefore: document.getElementById("code-input-before"),
+    codeIntputAfter: document.getElementById("code-input-after"),
+    languageSelect: document.getElementById("language-select"),
+    queryInput: document.getElementById("query-input"),
+    explanationInput: document.getElementById("explanation-input"),
+    submitFolderButton: document.getElementById("submit-folder-button"),
+    submitButton: document.getElementById("submit-button"),
+    submitButtonImprovement: document.getElementById(
+      "submit-button-improvement",
+    ),
+  };
+
+  elements.languageSelect.addEventListener("change", handleLanguageChange);
   handleLanguageChange();
 
-  const codeBefore = CodeMirror.fromTextArea(codeInputBefore, {
-    lineNumbers: true,
-    showCursorWhenSelecting: true,
-    mode: "javascript",
-  });
+  const editors = {
+    codeBefore: CodeMirror.fromTextArea(
+      elements.codeInputBefore,
+      editorOptions("javascript"),
+    ),
+    codeAfter: CodeMirror.fromTextArea(
+      elements.codeIntputAfter,
+      editorOptions("javascript"),
+    ),
+    queryEditor: CodeMirror.fromTextArea(
+      elements.queryInput,
+      editorOptions("toml"),
+    ),
+    requirementsEditor: CodeMirror.fromTextArea(elements.explanationInput, {
+      lineWrapping: true,
+    }),
+  };
 
-  const codeAfter = CodeMirror.fromTextArea(codeIntputAfter, {
-    lineNumbers: true,
-    showCursorWhenSelecting: true,
-    mode: "javascript",
-  });
+  function editorOptions(mode) {
+    return {
+      lineNumbers: true,
+      showCursorWhenSelecting: true,
+      mode: mode,
+    };
+  }
 
-  const queryEditor = CodeMirror.fromTextArea(queryInput, {
-    lineNumbers: true,
-    showCursorWhenSelecting: true,
-    mode: "toml",
-  });
-
-  const requirementsEditor = CodeMirror.fromTextArea(explanationInput, {
-    lineWrapping: true,
-  });
-
-  // Function to dynamically load script
   function loadScript(url, callback) {
     const script = document.createElement("script");
     script.type = "text/javascript";
@@ -38,19 +49,15 @@
     document.body.appendChild(script);
   }
 
-  // Event listener for language change
   function handleLanguageChange() {
-    const selectedLanguage = languageSelect.value;
-
-    // Use baseURL variable to generate URL
-    // if language is javascript turn ito to java
+    const selectedLanguage = elements.languageSelect.value;
     const langName =
       selectedLanguage === "java" ? "javascript" : selectedLanguage;
     const scriptUrl = `${codeMirror}/mode/${langName}/${langName}.js`;
 
     loadScript(scriptUrl, function () {
-      codeBefore.setOption("mode", langName);
-      codeAfter.setOption("mode", langName);
+      editors.codeBefore.setOption("mode", langName);
+      editors.codeAfter.setOption("mode", langName);
     });
   }
 
@@ -59,102 +66,79 @@
     const buttonText = document.getElementById("button-text-improvement");
     const spinner = document.getElementById("spinner-improvement");
 
-    button.disabled = disabled; // Disable button
-    if (disabled === false) {
-      spinner.style.display = "none";
-    } else {
-      spinner.style.display = "inline-block";
-    }
-    buttonText.textContent = textContent; // Change button text
+    button.disabled = disabled;
+    spinner.style.display = disabled ? "inline-block" : "none";
+    buttonText.textContent = textContent;
     return button;
   }
 
-  // First, we need to establish a socket connection.
   const socket = io.connect("http://127.0.0.1:5000");
 
-  document
-    .getElementById("submit-folder-button")
-    .addEventListener("click", async function () {
-      const folderPath = document.getElementById("folder-input").value; // Get the value of the folder path input
+  elements.submitFolderButton.addEventListener("click", async function () {
+    emitRefactorEvent();
+  });
 
-      const rules = queryEditor.getValue();
-      const language = languageSelect.value;
+  elements.submitButton.addEventListener("click", async function () {
+    emitInferEvent();
+  });
 
-      // Update the interface
+  elements.submitButtonImprovement.addEventListener("click", async function () {
+    emitImproveEvent();
+  });
 
-      // Emit the 'improve_piranha' event.
-      socket.emit("refactor_codebase", {
-        rules: rules,
-        folder_path: folderPath,
-        language: language,
-      });
-
-      // handle response...
+  function emitRefactorEvent() {
+    const folderPath = document.getElementById("folder-input").value;
+    const rules = editors.queryEditor.getValue();
+    const language = elements.languageSelect.value;
+    socket.emit("refactor_codebase", {
+      rules: rules,
+      folder_path: folderPath,
+      language: language,
     });
+  }
 
-  // To start the inference, we can emit the 'infer_piranha' event.
-  document
-    .getElementById("submit-button")
-    .addEventListener("click", async function () {
-      const sourceCode = codeBefore.getValue();
-      const targetCode = codeAfter.getValue();
-      const language = languageSelect.value;
-
-      // We don't need to worry about disabling the button or showing a spinner,
-      // since we can now update the interface in real-time as the inference happens.
-      socket.emit("infer_piranha", {
-        source_code: sourceCode,
-        target_code: targetCode,
-        language: language,
-        hints: "",
-      });
-
-      document.getElementById("submit-button").style.display = "none"; // Remove the original button
-      const button = displayImprovementButton(true, "Processing...");
-      button.style.display = "block";
+  function emitInferEvent() {
+    const sourceCode = editors.codeBefore.getValue();
+    const targetCode = editors.codeAfter.getValue();
+    const language = elements.languageSelect.value;
+    socket.emit("infer_piranha", {
+      source_code: sourceCode,
+      target_code: targetCode,
+      language: language,
     });
+    elements.submitButton.style.display = "none";
+    const button = displayImprovementButton(true, "Processing...");
+    button.style.display = "block";
+  }
 
-  // Attach event listener for improve rule
-  document
-    .getElementById("submit-button-improvement")
-    .addEventListener("click", async function () {
-      const requirements = requirementsEditor.getValue();
-      const rules = queryEditor.getValue();
-      const language = languageSelect.value;
-
-      // Update the interface
-      const button = displayImprovementButton(true, "Improving...");
-
-      // Emit the 'improve_piranha' event.
-      socket.emit("improve_piranha", {
-        rules: rules,
-        requirements: requirements,
-        language: language,
-      });
+  function emitImproveEvent() {
+    const requirements = editors.requirementsEditor.getValue();
+    const rules = editors.queryEditor.getValue();
+    const language = elements.languageSelect.value;
+    const button = displayImprovementButton(true, "Improving...");
+    socket.emit("improve_piranha", {
+      rules: rules,
+      requirements: requirements,
+      language: language,
     });
+  }
 
-  // We can listen for the 'infer_result' event and react when it happens.
   socket.on("infer_result", function (data) {
-    // This is where you could update your interface with the data.
-    const toml = data.rule;
-
-    document.getElementById("query-container").style.display = "block";
-    document.getElementById("explanation-container").style.display = "block";
-    document.getElementById("path-container").style.display = "block";
-
-    queryEditor.setValue(toml);
-    if (requirementsEditor.getValue() === "") {
-      requirementsEditor.setValue(" ");
-    }
-
-    // Change the button to show that processing is happening
-    const button = displayImprovementButton(false, "Improve rule");
+    updateInterface(data.rule);
+    displayImprovementButton(false, "Improve rule");
   });
 
   socket.on("infer_progress", function (data) {
-    // This is where you could update your interface with the data.
-    const toml = data.rule;
-    document.getElementById("query-container").style.display = "block";
-    queryEditor.setValue(toml);
+    updateInterface(data.rule);
   });
+
+  function updateInterface(rule) {
+    document.getElementById("query-container").style.display = "block";
+    document.getElementById("explanation-container").style.display = "block";
+    document.getElementById("path-container").style.display = "block";
+    editors.queryEditor.setValue(rule);
+    if (editors.requirementsEditor.getValue() === "") {
+      editors.requirementsEditor.setValue(" ");
+    }
+  }
 })();

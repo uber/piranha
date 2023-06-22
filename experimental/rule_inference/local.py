@@ -1,29 +1,29 @@
 import os
 import time
-
-import attr
-from flask import Flask, request, jsonify, session
-import openai
-from flask import Flask, render_template
 import logging
+import attr
+import openai
+
+from flask import Flask, render_template, session
+from flask_socketio import SocketIO, join_room
 
 from rule_application import CodebaseRefactorer
 from piranha_agent import PiranhaAgent
-from flask_socketio import SocketIO, join_room
 
+# Configure logging
 logger = logging.getLogger("Flask")
-logger.setLevel(logging.DEBUG)
+
+# Create Flask app and SocketIO app
 app = Flask(__name__)
 socketio = SocketIO(app)
 
 
-# Define data validation classes
+# Data validation classes
 @attr.s
 class InferData:
     source_code = attr.ib(validator=attr.validators.instance_of(str))
     target_code = attr.ib(validator=attr.validators.instance_of(str))
     language = attr.ib(validator=attr.validators.in_(["python", "java"]))
-    hints = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @attr.s
@@ -58,12 +58,11 @@ def process_folder(data):
 def infer_from_example(data):
     # Validate the data
     data = InferData(**data)
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     agent = PiranhaAgent(
         data.source_code,
         data.target_code,
         language=data.language,
-        hints=data.hints,
+        hints="",
     )
 
     room = session.get("room")
@@ -77,24 +76,18 @@ def infer_from_example(data):
         )
     )
     socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
-    session["last_inference_result"] = {
-        "rule_name": rule_name,
-        "rule": rule,
-    }
 
 
 # New event listener
 @socketio.on("improve_piranha")
 def improve_rules(data):
     data = ImproveData(**data)
-
     room = session.get("room")
     join_room(room)
-
     time.sleep(1)
-
     socketio.emit("infer_result", {"rule_name": "", "rule": data.rules}, room=room)
 
 
 if __name__ == "__main__":
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     app.run(debug=True)
