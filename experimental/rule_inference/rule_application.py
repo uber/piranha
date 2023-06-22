@@ -18,7 +18,7 @@ class CodebaseRefactorer:
 
     language = attr.ib(type=str)
     path_to_codebase = attr.ib(type=str)
-    path_to_rules = attr.ib(type=str)
+    rules = attr.ib(type=str)
     include_paths = attr.ib(type=List[str], default=None)
     exclude_paths = attr.ib(type=List[str], default=None)
 
@@ -28,8 +28,7 @@ class CodebaseRefactorer:
         Returns a list of piranha summaries
         """
         # Load the rules from the .toml file
-        with open(self.path_to_rules, "r") as file:
-            toml_dict = toml.load(file)
+        toml_dict = toml.loads(self.rules)
 
         rules = toml_dict.get("rules", [])
         if not rules:

@@ -5,7 +5,7 @@
     languageSelect: document.getElementById("language-select"),
     queryInput: document.getElementById("query-input"),
     explanationInput: document.getElementById("explanation-input"),
-    submitFolderButton: document.getElementById("submit-folder-button"),
+    submitFolderButton: document.getElementById("submit-button-folder"),
     submitButton: document.getElementById("submit-button"),
     submitButtonImprovement: document.getElementById(
       "submit-button-improvement",
@@ -61,10 +61,11 @@
     });
   }
 
-  function displayImprovementButton(disabled, textContent) {
-    const button = document.getElementById("submit-button-improvement");
-    const buttonText = document.getElementById("button-text-improvement");
-    const spinner = document.getElementById("spinner-improvement");
+  function displayButton(disabled, textContent, name) {
+    // Change the button ending in -name
+    const button = document.getElementById("submit-button-" + name);
+    const buttonText = document.getElementById("button-text-" + name);
+    const spinner = document.getElementById("spinner-" + name);
 
     button.disabled = disabled;
     spinner.style.display = disabled ? "inline-block" : "none";
@@ -95,6 +96,7 @@
       folder_path: folderPath,
       language: language,
     });
+    displayButton(true, "Processing...", "folder");
   }
 
   function emitInferEvent() {
@@ -107,7 +109,7 @@
       language: language,
     });
     elements.submitButton.style.display = "none";
-    const button = displayImprovementButton(true, "Processing...");
+    const button = displayButton(true, "Processing...", "improvement");
     button.style.display = "block";
   }
 
@@ -115,7 +117,7 @@
     const requirements = editors.requirementsEditor.getValue();
     const rules = editors.queryEditor.getValue();
     const language = elements.languageSelect.value;
-    const button = displayImprovementButton(true, "Improving...");
+    displayButton(true, "Improving...", "improvement");
     socket.emit("improve_piranha", {
       rules: rules,
       requirements: requirements,
@@ -125,7 +127,7 @@
 
   socket.on("infer_result", function (data) {
     updateInterface(data.rule);
-    displayImprovementButton(false, "Improve rule");
+    displayButton(false, "Improve rule", "improvement");
   });
 
   socket.on("infer_progress", function (data) {
