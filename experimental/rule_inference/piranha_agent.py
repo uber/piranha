@@ -7,7 +7,6 @@ import difflib
 import logging
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from tree_sitter_languages import get_parser
-
 from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
 from static_inference import Inference
 from piranha_chat import PiranhaGPTChat
@@ -181,7 +180,6 @@ class PiranhaAgent:
             )
             logger.debug(f"Generated rule: {toml_block}")
             toml_dict = toml.loads(toml_block)
-            return "rule.toml", toml_block
         except Exception as e:
             raise PiranhaAgentError(
                 f"Could not create Piranha rule. The TOML block is not valid. {e}"
@@ -215,40 +213,11 @@ class PiranhaAgent:
         if not rules:
             raise PiranhaAgentError("TOML does not include any rule specifications.")
         try:
-            toml_rule = rules[0]
-
-            # get rules.filters
-            filters = toml_rule.get("filters", None)
-            filters_lst = set()
-            if filters:
-                filters = filters[0]
-                # get enclosing node
-                enclosing_node = filters.get("enclosing_node", "")
-                # get not contains which is a list of strings
-                not_contains = filters.get("not_contains", [])
-                # create a filter
-                filter = Filter(
-                    enclosing_node=enclosing_node,
-                    not_contains=not_contains,
-                )
-
-                filters_lst.add(filter)
-
-            # Add a check to prevent recursion
-
-            rule = Rule(
-                name=toml_rule["name"],
-                query=toml_rule["query"],
-                replace_node=toml_rule["replace_node"],
-                replace=toml_rule["replace"],
-                filters=filters_lst,
-            )
-
-            rule_graph = RuleGraph(rules=[rule], edges=[])
+            raw_graph = RawRuleGraph.from_toml(toml_dict)
             args = PiranhaArguments(
                 code_snippet=self.source_code,
                 language=self.language,
-                rule_graph=rule_graph,
+                rule_graph=raw_graph,
                 dry_run=True,
             )
 

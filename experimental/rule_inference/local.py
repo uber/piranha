@@ -23,19 +23,19 @@ socketio = SocketIO(app)
 class InferData:
     source_code = attr.ib(validator=attr.validators.instance_of(str))
     target_code = attr.ib(validator=attr.validators.instance_of(str))
-    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
 
 
 @attr.s
 class ImproveData:
-    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
     requirements = attr.ib(validator=attr.validators.instance_of(str))
     rules = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @attr.s
 class RefactorData:
-    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
     folder_path = attr.ib(validator=attr.validators.instance_of(str))
     rules = attr.ib(validator=attr.validators.instance_of(str))
 

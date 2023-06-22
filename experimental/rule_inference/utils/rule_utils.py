@@ -1,6 +1,6 @@
 import json
 from typing import List, Dict
-from polyglot_piranha import Rule, RuleGraph, OutgoingEdges
+from polyglot_piranha import Rule, RuleGraph, OutgoingEdges, Filter
 
 
 class RawRule:
@@ -50,8 +50,49 @@ class RawRuleGraph:
             ]
         )
 
+    @staticmethod
+    def from_toml(toml_dict) -> RuleGraph:
+        rules = []
+        for toml_rule in toml_dict["rules"]:
+            filters = toml_rule.get("filters", None)
+            filters_lst = set()
+            if filters:
+                filters = filters[0]
+                # get enclosing node
+                enclosing_node = filters.get("enclosing_node", "")
+                # get not contains which is a list of strings
+                not_contains = filters.get("not_contains", [])
+                # create a filter
+                filter = Filter(
+                    enclosing_node=enclosing_node,
+                    not_contains=not_contains,
+                )
+
+                filters_lst.add(filter)
+
+            # Add a check to prevent recursion
+
+            rule = Rule(
+                name=toml_rule["name"],
+                query=toml_rule["query"],
+                replace_node=toml_rule["replace_node"],
+                replace=toml_rule["replace"],
+                filters=filters_lst,
+            )
+
+            rules.append(rule)
+
+        edges = []
+        for edge in toml_dict.get("edges", []):
+            edges.append(OutgoingEdges(edge["from"], edge["to"], edge["scope"]))
+
+        return RuleGraph(rules=rules, edges=edges)
+
     def get_graph(self):
         return RuleGraph(
             [rule.wrapped for rule in self.rules],
-            [OutgoingEdges(*edge) for edge in self.edges.items()],
+            [
+                OutgoingEdges(edge["from"], edge["to"], edge["scope"])
+                for edge in self.edges.items()
+            ],
         )

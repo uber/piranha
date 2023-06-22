@@ -45,9 +45,8 @@ Additionally, the rule can have optional properties such as "is_seed_rule", "gro
 Filters can have properties like "enclosing_node", "not_contains", "contains", "at_least", "at_most".
 The filters are used to specify conditions for the rule to be applied.
        
-========================= Output Format =========================
+========================= Rule Format =========================
 
-<file_name_start> your_rule_name.toml <file_name_end>
 ```toml
 # Define your rule within this section
 [[rules]]
@@ -97,6 +96,45 @@ contains =
 # Define the minimum and maximum number of children that should match the 'contains' pattern (optional)
 at_least = 1
 at_most = 5
+```
+
+========================= Edge Explanation =========================
+
+Edges allow rules to depend on each other, thus establishing a hierarchy or sequence of application among rules. 
+For instance, if a rule is defined to match a method invocation, another rule could be drafted to match a method declaration. 
+In this case, the method name identified from the declaration could be utilized within the invocation.
+
+An edge essentially describes the direction of dependency between two or more rules. It signifies that a particular rule 
+('from') is based on, or derives information from, one or more other rules ('to').
+
+Edges are also represented in the TOML format, and their structure is typically not modified unless there's a need to 
+change the dependencies between rules. Your main task, unless otherwise specified, is to ensure that the 'from' and 'to' 
+components of the edge correctly correspond to the names of your improved rules.
+
+========================= Edge Format =========================
+
+[[edges]]
+
+# Scope of the rule - usually "Global"
+scope = "Global"
+
+# Name of the rule that depends on other rules (your rule name)
+from = "your_rule_name"
+
+# List of rules that your rule depends on (could be one or multiple)
+to = ["other_rule_name", "another_rule_name"]
+
+========================= Expected output format =========================
+
+Your output should be a single TOML file containing the improved rules and edges:
+
+```toml
+[[rules]] # For each rule
+...
+
+[[edges]] # For each edge
+...
+
 ```
 
 ========================= Mistakes to avoid =========================
@@ -224,14 +262,14 @@ query = """
 
 {diff}
 
-=== Rules to improve === 
+=== Rules and edges to improve === 
 
 {rules}
 
 === Additional requirements === 
 
 {hints}
-========================= Please simplify the rules =========================
+========================= Please simplify the rules and edges =========================
 
     """
 
@@ -310,7 +348,7 @@ query = """
         task_examples = ""
         for root, dirs, files in os.walk(path_to_examples_rules):
             for file in files:
-                if file.endswith("rules.toml"):
+                if file.endswith("rules.toml") or file.endswith("edges.toml"):
                     file_name = os.path.join(root, file)
                     file_contents = Path(file_name).read_text()
                     file_contents = "\n".join(
