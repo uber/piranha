@@ -43,11 +43,21 @@ use super::default_configs::{
 #[builder(build_fn(name = "create"))]
 pub struct Filter {
   /// AST patterns that some ancestor node of the primary match should match
+  /// In case of multiple ancestors matching the AST pattern it will consider the innermost ancestor that matches.
   #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
   enclosing_node: TSQuery,
+
+  /// AST patterns that some ancestor node of the primary match should match
+  /// In case of multiple ancestors matching the AST pattern it will consider the outermost ancestor that matches.
+  #[builder(default = "default_enclosing_node()")]
+  #[get = "pub"]
+  #[serde(default = "default_enclosing_node")]
+  #[pyo3(get)]
+  outermost_enclosing_node: TSQuery,
+
   /// AST patterns NO ancestor node of the primary match should match
   #[builder(default = "default_not_enclosing_node()")]
   #[get = "pub"]
@@ -98,12 +108,14 @@ pub struct Filter {
 impl Filter {
   #[new]
   fn py_new(
-    enclosing_node: Option<String>, not_enclosing_node: Option<String>,
-    not_contains: Option<Vec<String>>, contains: Option<String>, at_least: Option<u32>,
-    at_most: Option<u32>, child_count: Option<u32>, sibling_count: Option<u32>,
+    enclosing_node: Option<String>, outermost_enclosing_node: Option<String>,
+    not_enclosing_node: Option<String>, not_contains: Option<Vec<String>>,
+    contains: Option<String>, at_least: Option<u32>, at_most: Option<u32>,
+    child_count: Option<u32>, sibling_count: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
+      .outermost_enclosing_node(TSQuery::new(outermost_enclosing_node.unwrap_or_default()))
       .not_enclosing_node(TSQuery::new(not_enclosing_node.unwrap_or_default()))
       .not_contains(
         not_contains
@@ -155,6 +167,10 @@ impl Validator for Filter {
       self.enclosing_node().validate()?
     }
 
+    if *self.outermost_enclosing_node() != default_enclosing_node() {
+      self.outermost_enclosing_node().validate()?
+    }
+
     if *self.not_enclosing_node() != default_not_enclosing_node() {
       self.not_enclosing_node().validate()?
     }
@@ -171,6 +187,7 @@ impl Validator for Filter {
       || *self.sibling_count() != default_sibling_count())
       && (*self.enclosing_node() != default_enclosing_node()
         || *self.not_enclosing_node() != default_not_enclosing_node()
+        || *self.outermost_enclosing_node() != default_enclosing_node()
         || *self.contains() != default_contains_query()
         || *self.not_contains() != default_not_contains_queries())
     {
@@ -239,9 +256,10 @@ impl FilterBuilder {
 /// ```
 ///
 macro_rules! filter {
-  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)? $(, sibling_count=$nSibling:expr)?) => {
+  ($(enclosing_node = $enclosing_node:expr)? $(, outermost_enclosing_node=$outermost_enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)? $(, sibling_count=$nSibling:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
+      $(.outermost_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($outermost_enclosing_node.to_string())))?
       $(.not_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($not_enclosing_node.to_string())))?
       $(.not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*]))?
       $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
@@ -260,6 +278,7 @@ impl Instantiate for Filter {
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
+      outermost_enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
       not_enclosing_node: self
         .not_enclosing_node()
         .instantiate(substitutions_for_holes),
