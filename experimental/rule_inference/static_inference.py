@@ -1,9 +1,9 @@
 import attr
+from polyglot_piranha import Rule
 from tree_sitter import Node, TreeCursor
-from typing import List, Dict
-from patch import Patch
-from node_utils import NodeUtils
-import re
+from typing import List
+from experimental.rule_inference.utils.node_utils import NodeUtils
+from experimental.rule_inference.utils.rule_utils import RawRule
 
 
 @attr.s
@@ -85,7 +85,7 @@ class Inference:
         type(self)._counter += 1
         self.name = f"rule_{type(self)._counter}"
 
-    def static_infer(self) -> str:
+    def static_infer(self) -> RawRule:
         if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
             return self.create_replacement()
         elif len(self.nodes_after) > 0:
@@ -116,7 +116,7 @@ class Inference:
 
         return node_before, node_after
 
-    def create_replacement(self) -> str:
+    def create_replacement(self) -> RawRule:
         """
         Create a rule based on the node before and after.
         """
@@ -133,8 +133,12 @@ class Inference:
             )
             replacement_str = qw.replace_with_tags(lines_affected)
 
-            rule = f'''[[rules]]\n\nname = \"{self.name}\"\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
-            return rule
+            return RawRule(
+                name=self.name,
+                query=query,
+                replace_node=qw.outer_most_node,
+                replace=replacement_str,
+            )
 
         else:
             # find the smallest common acesotr of _nodes_before
@@ -158,17 +162,24 @@ class Inference:
             query = qw.write([ancestor])
             replacement_str = qw.replace_with_tags(replacement_str)
 
-            rule = f'''[[rules]]\n\nname = \"{self.name}\"\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replacement_str}"'''
-            return rule
+            return RawRule(
+                name=self.name,
+                query=query,
+                replace_node=qw.outer_most_node,
+                replace=replacement_str,
+            )
 
-    def create_deletion(self) -> str:
+    def create_deletion(self) -> RawRule:
         if len(self.nodes_before) == 1:
             node_before = self.nodes_before[0]
             qw = QueryWriter()
             query = qw.write([node_before])
-            replace_str = ""
-            rule = f'''[[rules]]\n\nname = \"{self.name}\"\n\nquery = """{query}"""\n\nreplace_node = "{qw.outer_most_node}"\n\nreplace = "{replace_str}"'''
-            return rule
+            return RawRule(
+                name=self.name,
+                query=query,
+                replace_node=qw.outer_most_node,
+                replace="",
+            )
 
         pass
 

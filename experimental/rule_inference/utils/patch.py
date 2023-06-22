@@ -1,12 +1,7 @@
-from pathlib import Path
 from typing import List, Tuple, Dict
-from tree_sitter import Language, Parser, Tree, Node, TreeCursor
-from tree_sitter_languages import get_language, get_parser
-import difflib
+from tree_sitter import Tree, Node
 import re
 import attr
-
-from node_utils import NodeUtils
 
 
 @attr.s

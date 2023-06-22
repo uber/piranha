@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 from typing import List, Optional
-from logger_formatter import CustomFormatter
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 import attr
 import openai
 import time

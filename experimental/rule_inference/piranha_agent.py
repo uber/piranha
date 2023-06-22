@@ -1,26 +1,21 @@
 import multiprocessing
-import os
-import time
 import attr
-import openai
-import re
 import toml
-import argparse
-import asyncio
 import re
-from typing import List, Any, Optional, Tuple
+from typing import List, Optional, Tuple
 import difflib
 import logging
-from logger_formatter import CustomFormatter
-from tree_sitter_languages import get_language, get_parser
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+from tree_sitter_languages import get_parser
+
+from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
 from static_inference import Inference
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-from patch import Patch
-from multiprocessing import Pool
+from experimental.rule_inference.utils.patch import Patch
 from static_inference import QueryWriter
-from tree_sitter import Language, Parser, Tree, Node, TreeCursor
-from node_utils import NodeUtils
+from tree_sitter import Tree
+from experimental.rule_inference.utils.node_utils import NodeUtils
 from comment_finder import CommentFinder
 
 logger = logging.getLogger("PiranhaChat")
@@ -80,12 +75,21 @@ class PiranhaAgent:
         diff = "\n".join(diff)
         # diff = self.append_diff_information(diff, source_tree, target_tree)
 
-        rules = ""
+        rules = {}
         finder = CommentFinder(source_tree, target_tree)
         pairs = finder.find_replacement_pairs()
-        for nodes_before, nodes_after in pairs.values():
+        for comment_name, (nodes_before, nodes_after) in pairs.items():
             inference_engine = Inference(nodes_before, nodes_after)
-            rules += inference_engine.static_infer() + "\n\n"
+            rule = inference_engine.static_infer()
+            rules[comment_name] = rule
+
+        # build a dict using finder.edges but with the rule names from rule_names
+        edges = {
+            rules[from_name].name: [rules[to_name].name for to_name in to_names]
+            for from_name, to_names in finder.edges.items()
+        }
+        graph = RawRuleGraph(list(rules.values()), edges)
+        rules = graph.to_toml()
 
         if callback:
             callback(rules)
