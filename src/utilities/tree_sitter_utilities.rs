@@ -80,12 +80,12 @@ pub(crate) fn get_all_matches_for_query(
     // If `recursive` it allows matches to the subtree of self (Node)
     // Else it ensure that the query perfectly matches the node (`self`).
     if recursive || range_matches_self {
-      let mut final_replace_node_range = captured_node_range;
+      let mut replace_node_range = captured_node_range;
       if let Some(replace_node_name) = &replace_node {
         if let Some(r) =
           get_range_for_replace_node(query, &query_matches, replace_node_name, replace_node_idx)
         {
-          final_replace_node_range = r;
+          replace_node_range = r;
         } else {
           continue;
         }
@@ -94,9 +94,8 @@ pub(crate) fn get_all_matches_for_query(
       let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
 
       output.push(Match::new(
-        source_code[final_replace_node_range.start_byte..final_replace_node_range.end_byte]
-          .to_string(),
-        final_replace_node_range,
+        source_code[replace_node_range.start_byte..replace_node_range.end_byte].to_string(),
+        replace_node_range,
         code_snippet_by_tag,
       ));
     }
