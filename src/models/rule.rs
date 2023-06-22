@@ -51,17 +51,17 @@ pub struct Rule {
   #[pyo3(get)]
   query: TSQuery,
   /// The tag corresponding to the node to be replaced
-  #[builder(default = "default_replace_idx()")]
-  #[serde(default = "default_replace_idx")]
-  #[get = "pub"]
-  #[pyo3(get)]
-  replace_idx: u8,
-  /// The tag corresponding to the node to be replaced
   #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
   #[get = "pub"]
   #[pyo3(get)]
   replace_node: String,
+  /// The i'th child of node corresponding to the replace_node tag will be replaced
+  #[builder(default = "default_replace_idx()")]
+  #[serde(default = "default_replace_idx")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  replace_idx: u8,
   /// Replacement pattern
   #[builder(default = "default_replace()")]
   #[serde(default = "default_replace")]

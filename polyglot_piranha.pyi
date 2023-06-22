@@ -208,6 +208,8 @@ class Rule:
     "Tree-sitter query as string"
     replace_node: str
     "The tag corresponding to the node to be replaced"
+    replace_node_idx: str
+    "The i'th child of node corresponding to the replace_node tag will be replaced"
     replace: str
     "Replacement pattern"
     groups: set[str]
