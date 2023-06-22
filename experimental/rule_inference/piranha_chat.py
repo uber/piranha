@@ -19,18 +19,22 @@ logger.addHandler(ch)
 @attr.s
 class PiranhaGPTChat:
     explanation = '''
-Your task is to create refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
-Each rule will transform an original code snippet into a provided refactored version.
-As input you will receive the original and refactored snippets and their tree-sitter representations.
+Your task is to improve refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
+The rules are expressed in a domain-specific language (DSL) specific to Polyglot Piranha. Examples and explanations of the DSL will be provided below.
 
-The rule should be in Polyglot Piranha's domain-specific language (DSL). Explanations and examples of the DSL are below.
+You will be provided with the original and refactored code snippets, along with statically inferred rules verified by an algorithm. 
+However, these rules may appear unnatural since they were automatically generated. Your goal is to make them resemble rules written by humans, 
+incorporating meaningful variable names and simpler matchers. Whenever possible, simplify lengthy s-expressions. Note however, you should
+keep capture groups in the "replace" string if they are meaningful (such as variable names, method names, etc.).
 
-Your rule should accurately capture the transformation from the original to the refactored code.
-It should be specific enough to avoid matching unrelated code patterns, but general enough to include code from captured groups where possible.
+You should not alter the semantics of the rules without a specific request. 
+However, if the user asks you to add filters or extra constraints, you should accommodate their needs. 
+In such cases, please ensure that you explain your change and provide a justification for any changes made.
+Additionally, always strive to simplify the rules as much as possible.
 
-========================= Polyglot Piranha Explanation =========================
+========================= Piranha Rule Explanation =========================
 
-The TOML file should contain at least one rule with the following properties:
+Rules are represented in TOML. Each rule should contain at least one rule with the following properties:
 
 - "query": Tree-sitter query to find the code pattern to refactor
 - "replace_node": The captured node in the query that will be replaced
@@ -50,9 +54,7 @@ The filters are used to specify conditions for the rule to be applied.
 # Provide a unique name for your rule
 name = "your_rule_name"
 
-# Write a Tree-sitter query to identify the code pattern for refactoring
-# Be very careful when specifying field names like "name" and "arguments".
-# If you do not see them in the tree representation they do not exist, if you add them the query will not parse.
+# Write a Tree-sitter query to identify the code pattern for refactoring. The outer most node should always be captured.
 query = """(
     (method_invocation name: (_) @name
                        arguments: (argument_list) @args) @invk
@@ -66,6 +68,7 @@ replace_node = "invk"
 replace = "X.other_string @args"
 
 # Specify any placeholders in your queries that will be filled in at runtime
+# In our case hole1 is used in the query, but not defined. Therefore it is a hole.
 holes = ["hole1"]
 
 # Specify if this rule should be triggered first. If it depends on other rules, set to false
@@ -73,24 +76,132 @@ is_seed_rule = true
 
 # If necessary, define filters for your rule
 [[rules.filters]]
+
 # This pattern should match any ancestor of the captured node (optional)
 enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
 
 # Define patterns that should not be present within the enclosing_node (optional)
+# Always use a list, even if you only have one pattern.
 not_contains = [
-    """
-    (your_not_contains_pattern) @your_capture_name
-    """
+    """(
+    (identifier) @id
+    (#eq? @id "x"))
+    """,
 ]
 # Define a pattern that should be present within the enclosing_node (optional)
 contains =
-    """
-    (your_contains_pattern) @your_capture_name
+    """(
+    (identifier) @other_id
+    (#eq? @other_id "y"))
     """
 # Define the minimum and maximum number of children that should match the 'contains' pattern (optional)
 at_least = 1
 at_most = 5
 ```
+
+========================= Mistakes to avoid =========================
+
+=== Infinite loops ===
+
+Piranha rules are applied until fixedpoint. Meaning one should be very careful when substituting nodes to make sure 
+the query stops matching once the cleanup is done. This can be achieved by using the "not_contains" filter or with (
+#eq? ...) expressions in the query.
+
+Example 1:
+
+replace_node = "program"
+replace = "X @program" 
+
+... is generally a bad idea, because the query will keep matching the same node over and over again. To avoid you 
+ NEED to specify a filter or constraint the query. That will stop the rule from matching the same node again.
+
+Example 2:
+query = """
+(
+    (class_declaration
+        name: (identifier) @class_name
+    ) @class_declaration
+)
+"""
+replace_node = "class_name"
+replace = "B"
+
+... is also a bad idea. Since the query does not constraint the class name to be "A", the rule will match any class name.
+Moreover, it will run into an infinite loop, because the rule will keep matching the same node over and over again.
+
+=== Overly long matches in imports===
+
+Sometimes queries can be significantly simplified by matching large subtrees. Making small queries is generally preferable
+to matching a large subtree. 
+
+Example 1:
+
+query = """
+(
+    (import_declaration
+        (scoped_identifier
+            scope: (scoped_identifier
+                scope: (scoped_identifier
+                    scope: (scoped_identifier
+                        scope: (scoped_identifier
+                            scope: (scoped_identifier
+                                scope: (identifier) @scope1
+                                name: (identifier) @name1)
+                            name: (identifier) @name2)
+                        name: (identifier) @name3)
+                    name: (identifier) @name4)
+                name: (identifier) @name5)
+            name: (identifier) @name6)
+    ) @import_decl
+    (#eq? @scope1 "com")
+    (#eq? @name1 "uber")
+    (#eq? @name2 "common")
+    (#eq? @name3 "context")
+    (#eq? @name4 "concurrent")
+    (#eq? @name5 "MoreContextExecutors")
+    (#eq? @name6 "directExecutor")
+)
+"""
+... is bad! It can be simplified to:
+
+query = """(
+    (import_declaration 
+        (_) @name) @import_decl
+    (#eq? @name "com.uber.common.context.concurrent.MoreContextExecutors.directExecutor"))
+"""
+
+Always use the simplest query possible.
+
+=== Not considering unnamed nodes ===
+
+Tree-sitter produces parse trees rather than abstract syntax trees. This means that nodes in tree sitter
+can contain children corresponding to punctuation, whitespace, and other tokens. This should be taken into account
+when constructing the replacement string.
+
+Example 1:
+
+query = """(
+    (method_invocation name: (_) @name
+                       arguments: (argument_list) @args) @invk
+    (#eq? @name @hole1))
+"""
+
+replace_node = "invk"
+replace = "X.other_string(@args)"
+... is wrong, because @args already contains the parentheses.
+
+=== Forgetting parenthesis ===
+
+If queries are not surrounded by parenthesis, tree-sitter will interpreter them as independent queries.
+
+Example 1:
+
+query = """
+    (method_invocation name: (identifier) @name
+                       arguments: (argument_list) @args) @invk
+    (#eq? @name "directExecutor")
+"""
+... is a bad rule because the query is not surrounded by parenthesis.
 
 ========================= Rule Examples =========================
     '''
@@ -105,21 +216,30 @@ at_most = 5
 
 {source_tree}
 
+=== Tree-sitter representation (target code) ===
+
+{target_tree}
+
 === Diff === 
 
 {diff}
 
+=== Rules to improve === 
+
+{rules}
+
 === Additional requirements === 
 
 {hints}
-========================= Output =========================
+========================= Please simplify the rules =========================
+
     """
 
     holes = attr.ib(type=dict)
     messages = attr.ib(type=list, default=attr.Factory(list))
     temperature = attr.ib(
         type=float,
-        default=0.2,
+        default=0.3,
         validator=[
             attr.validators.ge(0),
             attr.validators.le(1),
@@ -127,12 +247,11 @@ at_most = 5
     )
     model = attr.ib(
         default="gpt-4",
-        validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo"]),
+        validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo-16k"]),
     )
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
-        examples = examples[: len(examples) // 2]
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -146,7 +265,7 @@ at_most = 5
 
     def append_system_message(self, system_message):
         """Add a GPT response to the internal messages"""
-        self.messages.append({"role": "system", "content": system_message})
+        self.messages.append({"role": "assistant", "content": system_message})
 
     def append_user_followup(self, followup_message):
         """Add a followup message from the user after GPT replies"""
@@ -154,7 +273,7 @@ at_most = 5
 
     def get_model_response(self):
         latest_message = self.messages[-1]
-        if latest_message["role"] == "system":
+        if latest_message["role"] == "assistant":
             return latest_message["content"]
         else:
             completions = self.get_completion(n_samples=1)
@@ -166,7 +285,6 @@ at_most = 5
         while True:
             try:
                 logger.debug("Attempting to get completion from GPT.")
-                print(f"{self.messages[-1]['content']}\n")
                 response = openai.ChatCompletion.create(
                     model=self.model,
                     messages=self.messages,
@@ -184,7 +302,7 @@ at_most = 5
             ) as e:
                 logger.error(e)
                 sleep_time = 10
-                print(f"Rate limit reached. Sleeping for {sleep_time}s.")
+                logger.error(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
 
     @staticmethod

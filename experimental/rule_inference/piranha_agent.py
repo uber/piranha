@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 import time
 import attr
@@ -5,16 +6,22 @@ import openai
 import re
 import toml
 import argparse
+import asyncio
 import re
 from typing import List, Any, Optional, Tuple
 import difflib
 import logging
 from logger_formatter import CustomFormatter
-from tree_sitter import Node, TreeCursor
 from tree_sitter_languages import get_language, get_parser
+from static_inference import Inference
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-
+from patch import Patch
+from multiprocessing import Pool
+from static_inference import QueryWriter
+from tree_sitter import Language, Parser, Tree, Node, TreeCursor
+from node_utils import NodeUtils
+from comment_finder import CommentFinder
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -46,31 +53,13 @@ class PiranhaAgent:
         "kt": "kotlin",
     }  # This is necessary because get_parser and piranha expect different naming conventions
 
-    def to_sexp(self, node: Node, depth, prefix=""):
-        indent = " " * depth
-        cursor: TreeCursor = node.walk()
-        s_exp = indent + f"{prefix}({node.type} "
-
-        next_child = cursor.goto_first_child()
-        while next_child:
-            child_node: Node = cursor.node
-            if child_node.is_named:
-                s_exp += "\n"
-                prefix = ""
-                if cursor.current_field_name():
-                    prefix = f"{cursor.current_field_name()}: "
-                s_exp += self.to_sexp(cursor.node, depth + 1, prefix)
-            next_child = cursor.goto_next_sibling()
-        return s_exp + ")"
-
-    def get_tree_from_code(self, code: str) -> str:
+    def get_tree_from_code(self, code: str) -> Tree:
         tree_sitter_language = self.language_mappings.get(self.language, self.language)
         parser = get_parser(tree_sitter_language)
         tree = parser.parse(bytes(code, "utf8"))
-        root_node: Node = tree.root_node
-        return self.to_sexp(root_node, 0)
+        return tree
 
-    def infer_rules(self) -> Optional[Tuple[str, str]]:
+    def infer_rules(self, callback=None) -> Optional[Tuple[str, str]]:
         """Implements the inference process of the Piranha Agent.
         The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
         If the rule transforms the source code into the target code, the rule is returned.
@@ -78,7 +67,10 @@ class PiranhaAgent:
         :return: str, string containing the rule in TOML format
         """
         source_tree = self.get_tree_from_code(self.source_code)
+        target_tree = self.get_tree_from_code(self.target_code)
 
+        source_tree_sexpr = NodeUtils.generate_sexpr(source_tree.root_node, 0)
+        target_tree_sexpr = NodeUtils.generate_sexpr(target_tree.root_node, 0)
         # Create diff between source and target code using difflib
         diff = list(
             difflib.unified_diff(
@@ -86,16 +78,29 @@ class PiranhaAgent:
             )
         )
         diff = "\n".join(diff)
+        # diff = self.append_diff_information(diff, source_tree, target_tree)
+
+        rules = ""
+        finder = CommentFinder(source_tree, target_tree)
+        pairs = finder.find_replacement_pairs()
+        for nodes_before, nodes_after in pairs.values():
+            inference_engine = Inference(nodes_before, nodes_after)
+            rules += inference_engine.static_infer() + "\n\n"
+
+        if callback:
+            callback(rules)
 
         prompt_holes = {
             "source_code": self.source_code,
-            "source_tree": source_tree,
+            "source_tree": source_tree_sexpr,
+            "target_tree": target_tree_sexpr,
             "diff": diff,
+            "rules": rules,
             "hints": self.hints,
         }
 
         # Number of Chat interactions to have with the model
-        n_samples = 5
+        n_samples = 15
         chat_interactions = [
             PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
         ]
@@ -106,12 +111,11 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
-        max_rounds = 5
+        max_rounds = 10
         for chat in chat_interactions:
             for i in range(max_rounds):
                 try:
-                    response = chat.get_model_response()
-                    file_name, toml_block = self.validate_rule(response)
+                    file_name, toml_block = self.validate_rule_wrapper(chat)
                     return file_name, toml_block
                 except PiranhaAgentError as e:
                     # prompt_generator.append_followup(messages, e.args[0])
@@ -125,6 +129,37 @@ class PiranhaAgent:
             "GPT-4 failed to generate a rule. Try increasing the temperature."
         )
 
+    def append_diff_information(self, diff, source_tree, target_tree):
+        patches: List[Patch] = Patch.from_diffs(diff)
+        # Append to the diff the information about the deleted lines for each patch
+        diff += "\n=== Draft queries to represent deleted lines ===\n\n"
+        for patch in patches:
+            node_pairs = patch.get_nodes_from_patch(source_tree, target_tree)
+            for nodes_before, nodes_after in node_pairs:
+                for line, node in nodes_before.items():
+                    q = QueryWriter()
+                    diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
+        return diff
+
+    def validate_rule_wrapper(self, chat):
+        # with Pool(processes=1) as pool:
+        completion = chat.get_model_response()
+        # result = pool.apply_async(self.validate_rule, (completion,))
+        try:
+            file_name, toml_block = self.validate_rule(completion)
+            # file_name, toml_block = result.get(
+            #    timeout=5
+            # )  # Add a timeout of 5 seconds
+            if file_name and toml_block:
+                return file_name, toml_block
+
+        except multiprocessing.context.TimeoutError:
+            raise PiranhaAgentError(
+                "Piranha in infinite loop. Please add a filter or constraint the query. "
+                "Remember you can only constraint queries with #eq, #not-eq, #match. "
+                "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
+            )
+
     def validate_rule(self, completion):
         # Define regex pattern for ```toml block
         pattern = r"```toml(.*?)```"
@@ -133,11 +168,21 @@ class PiranhaAgent:
         if not toml_blocks:
             raise PiranhaAgentError(
                 "Could not create Piranha rule. There is no TOML block. "
-                "Please return create a rule to refactor the code."
+                "Please create a rule to refactor the code."
             )
-        toml_block = toml_blocks[0]
-        logger.debug(f"Generated rule: {toml_block}")
-        toml_dict = toml.loads(toml_block)
+
+        try:
+            toml_block = (
+                toml_blocks[0].replace("parenthesized_expression", "condition").strip()
+            )
+            logger.debug(f"Generated rule: {toml_block}")
+            toml_dict = toml.loads(toml_block)
+            return "rule.toml", toml_block
+        except Exception as e:
+            raise PiranhaAgentError(
+                f"Could not create Piranha rule. The TOML block is not valid. {e}"
+            )
+
         piranha_summary = self.run_piranha(toml_dict)
         if not piranha_summary:
             raise PiranhaAgentError(
@@ -148,8 +193,8 @@ class PiranhaAgent:
             self.target_code
         ):
             raise PiranhaAgentError(
-                f"The rule produced the following refactored code:\n{refactored_code}\n\n"
-                f"... but the target code is:\n{self.target_code}"
+                f"The rule produced wrong code!!! "
+                f"Expected:\n{self.target_code}\n\n but got:\n{refactored_code}\n\n"
             )
         pattern = r"<file_name_start>(.*?)<file_name_end>"
         file_names = re.findall(pattern, completion, re.DOTALL)
@@ -167,11 +212,32 @@ class PiranhaAgent:
             raise PiranhaAgentError("TOML does not include any rule specifications.")
         try:
             toml_rule = rules[0]
+
+            # get rules.filters
+            filters = toml_rule.get("filters", None)
+            filters_lst = set()
+            if filters:
+                filters = filters[0]
+                # get enclosing node
+                enclosing_node = filters.get("enclosing_node", "")
+                # get not contains which is a list of strings
+                not_contains = filters.get("not_contains", [])
+                # create a filter
+                filter = Filter(
+                    enclosing_node=enclosing_node,
+                    not_contains=not_contains,
+                )
+
+                filters_lst.add(filter)
+
+            # Add a check to prevent recursion
+
             rule = Rule(
                 name=toml_rule["name"],
                 query=toml_rule["query"],
                 replace_node=toml_rule["replace_node"],
                 replace=toml_rule["replace"],
+                filters=filters_lst,
             )
 
             rule_graph = RuleGraph(rules=[rule], edges=[])
@@ -181,8 +247,15 @@ class PiranhaAgent:
                 rule_graph=rule_graph,
                 dry_run=True,
             )
+
             output_summaries = execute_piranha(args)
+
         except BaseException as e:
+            if "QueryError" in str(e):
+                raise PiranhaAgentError(
+                    f"Piranha failed to execute. The query is not valid. {e}. Make sure you are not re-using capture "
+                    f"groups in contains and not_contains. You cannot reuse the same @tags you used in the query."
+                )
             raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
         return output_summaries
 

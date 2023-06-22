@@ -204,6 +204,7 @@ impl SourceCodeUnit {
     // Perform the parent edits, while queueing the Method and Class level edits.
     // let file_level_scope_names = [METHOD, CLASS];
     loop {
+      debug!("Current Rule: {current_rule}");
       // Get all the (next) rules that could be after applying the current rule (`rule`).
       let next_rules_by_scope = self
         .piranha_arguments
