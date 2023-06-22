@@ -1,0 +1,7 @@
+[[rules]]
+name = "delete 3rd argument"
+query = """(
+ (method_invocation name: (_) @name  (argument_list) @args) @method_invocation
+ (#eq? @name "add")
+)"""
+replace_node = "rgs"

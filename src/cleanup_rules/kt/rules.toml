@@ -488,7 +488,7 @@ name = "delete_file_with_no_declarations"
 query = """
 (source_file) @source_file"""
 replace = ""
-replace_node = "program"
+replace_node = "source_file"
 is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(source_file) @sf"
