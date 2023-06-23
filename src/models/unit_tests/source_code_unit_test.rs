@@ -666,10 +666,12 @@ fn test_satisfies_outermost_enclosing_node() {
       Test t = new Test();
       t.foobar();
     }
-    class Test {
-      private void foobar(){
-        System.out.println();
-       }
+    class MiddleClass {
+      class Test {
+        private void foobar(){
+          System.out.println();
+         }
+        }
       }
     }";
 

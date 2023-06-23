@@ -392,15 +392,13 @@ impl SourceCodeUnit {
     &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
   ) -> Option<Node> {
     let mut matched_ancestor = self._match_ancestor(rule_store, node, ts_query);
-    matched_ancestor?;
     loop {
-      if let Some(parent) = matched_ancestor.unwrap().parent() {
-        if let Some(m) = self._match_ancestor(rule_store, parent, ts_query) {
-          if m.range() != matched_ancestor.unwrap().range() {
-            matched_ancestor = Some(m);
-            continue;
-          }
-        }
+      if let Some(outer_matched_ancestor) = matched_ancestor
+        .and_then(|m| m.parent().filter(|p| p.range() != m.range()))
+        .and_then(|parent| self._match_ancestor(rule_store, parent, ts_query))
+      {
+        matched_ancestor = Some(outer_matched_ancestor);
+        continue;
       }
       return matched_ancestor;
     }
