@@ -631,3 +631,71 @@ fn test_contains_no_enclosing_positive() {
     |result| result,
   );
 }
+
+#[test]
+fn test_satisfies_outermost_enclosing_node() {
+  let rule_positive = piranha_rule! {
+    name= "test",
+    query= "(
+      (method_declaration name: (_) @name) @md
+      (#eq? @name \"foobar\")
+      )",
+    filters= [filter!{
+      , outermost_enclosing_node = "(class_declaration) @cd"
+      , contains = "((method_invocation name: (_) @mname) @mi (#eq? @mname \"foobar\"))"
+    }]
+  };
+  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new());
+
+  let rule_negative = piranha_rule! {
+    name= "test",
+    query= "(
+      (method_declaration name: (_) @name) @md
+      (#eq? @name \"foobar\")
+      )",
+    filters= [filter!{
+      , outermost_enclosing_node = "(class_declaration) @cd"
+      , not_contains = ["((method_invocation name: (_) @mname) @mi (#eq? @mname \"foobar\"))",]
+    }]
+  };
+  let rule_negative = InstantiatedRule::new(&rule_negative, &HashMap::new());
+
+  let source_code = "class OuterClass {
+
+    void someMethod() {
+      Test t = new Test();
+      t.foobar();
+    }
+    class MiddleClass {
+      class Test {
+        private void foobar(){
+          System.out.println();
+         }
+        }
+      }
+    }";
+
+  let mut rule_store = RuleStore::default();
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let piranha_arguments = &PiranhaArgumentsBuilder::default()
+    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .language(java)
+    .build();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    piranha_arguments,
+  );
+
+  let node = &source_code_unit
+    .root_node()
+    .descendant_for_byte_range(119, 178)
+    .unwrap();
+
+  assert!(!source_code_unit.is_satisfied(*node, &rule_negative, &HashMap::new(), &mut rule_store,));
+
+  assert!(source_code_unit.is_satisfied(*node, &rule_positive, &HashMap::new(), &mut rule_store,));
+}
