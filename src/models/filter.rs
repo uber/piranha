@@ -16,7 +16,7 @@ use std::collections::HashMap;
 use derive_builder::Builder;
 use getset::Getters;
 use itertools::Itertools;
-use log::debug;
+
 use pyo3::prelude::{pyclass, pymethods};
 
 use serde_derive::Deserialize;
