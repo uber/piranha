@@ -82,7 +82,7 @@ fn copy_folder_to_temp_dir(src: &Path) -> TempDir {
 }
 
 fn assert_frequency_for_matches(
-  summaries: &Vec<PiranhaOutputSummary>, match_freq: &HashMap<&str, u32>,
+  summaries: &[PiranhaOutputSummary], match_freq: &HashMap<&str, u32>,
 ) {
   let frequencies: HashMap<String, u32> = summaries
     .iter()

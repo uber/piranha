@@ -90,7 +90,7 @@ impl Match {
 
   /// Merge the associated matches of the given match into the current match.
   /// It basically extends the range to include the first and last associated match of the given match.
-  pub(crate) fn expand_to_associated_matches(&mut self, code: &String) {
+  pub(crate) fn expand_to_associated_matches(&mut self, code: &str) {
     let (start_range, end_range) = self.get_first_and_last_associated_ranges();
     if start_range.start_byte < self.range.start_byte {
       self.range.start_byte = start_range.start_byte;

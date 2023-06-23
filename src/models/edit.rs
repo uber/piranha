@@ -51,7 +51,7 @@ gen_py_str_methods!(Edit);
 
 impl Edit {
   pub(crate) fn new(
-    p_match: Match, replacement_string: String, matched_rule: String, code: &String,
+    p_match: Match, replacement_string: String, matched_rule: String, code: &str,
   ) -> Self {
     let mut edit = Self {
       p_match,
