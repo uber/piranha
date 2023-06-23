@@ -46,6 +46,7 @@ class PiranhaAgent:
         "java": "java",
         "kt": "kotlin",
     }  # This is necessary because get_parser and piranha expect different naming conventions
+    chat = attr.ib(default=None)
 
     def get_tree_from_code(self, code: str) -> Tree:
         tree_sitter_language = self.language_mappings.get(self.language, self.language)
@@ -114,22 +115,23 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
+        return self.iterate_inference(chat_interactions)
+
+    def iterate_inference(self, chat_interactions):
         max_rounds = 10
         for chat in chat_interactions:
             for i in range(max_rounds):
                 try:
                     file_name, toml_block = self.validate_rule_wrapper(chat)
+                    self.chat = chat
                     return file_name, toml_block
                 except PiranhaAgentError as e:
-                    # prompt_generator.append_followup(messages, e.args[0])
                     logger.debug(
                         f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
                     )
                     chat.append_user_followup(str(e))
-
-        # Throw an error if no rule was found
         raise PiranhaAgentError(
-            "GPT-4 failed to generate a rule. Try increasing the temperature."
+            f"Failed to generate a rule after {max_rounds} rounds of interaction with GPT-4."
         )
 
     def append_diff_information(self, diff, source_tree, target_tree):
@@ -226,11 +228,30 @@ class PiranhaAgent:
         except BaseException as e:
             if "QueryError" in str(e):
                 raise PiranhaAgentError(
-                    f"Piranha failed to execute. The query is not valid. {e}. Make sure you are not re-using capture "
-                    f"groups in contains and not_contains. You cannot reuse the same @tags you used in the query."
+                    f"Piranha failed to execute. The query is not valid. {e}. "
+                    f"DO NOT USE NODES THAT YOU CANNOT SEE IN THE TREE REPRESENTATION (IMPORT_DECL) IS JAVA NOT KOTLIN!"
                 )
             raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
         return output_summaries
+
+    def improve_rule(self, desc: str, rule: str):
+        """Improves the rule by adding a filter to it.
+
+        :param desc: str, Description of what you would like to do.
+        :param rule: str, Rule to improve.
+        :return: str, Improved rule.
+        """
+
+        # Clone self.chat 15 times, and then call improve rule on each of them
+        # Then, return the best rule
+        import copy
+
+        self.chat.append_user_followup(
+            f"Can you further refine my rules? Here's what I would like to do: {desc}\n"
+            f"Here's the rule:\n {rule}"
+        )
+        chats = [copy.deepcopy(self.chat) for _ in range(15)]
+        return self.iterate_inference(chats)
 
     @staticmethod
     def normalize_code(code: str) -> str:

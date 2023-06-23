@@ -61,7 +61,7 @@ class CommentFinder:
         while stack:
             node = stack.pop()
 
-            if node.type == "line_comment":
+            if "comment" in node.type:
                 prev_comment = comment
                 comment = node.text.decode("utf8")
                 if "->" in comment:

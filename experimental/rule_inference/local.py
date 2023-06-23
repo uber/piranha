@@ -48,10 +48,9 @@ def home():
 @socketio.on("refactor_codebase")
 def process_folder(data):
     data = RefactorData(**data)
-    folder_path = data.folder_path
-
     refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
     refactorer.refactor_codebase(False)
+    socketio.emit("refactor_progress", {"progress": 100})
 
 
 @socketio.on("infer_piranha")
@@ -75,17 +74,18 @@ def infer_from_example(data):
             room=room,
         )
     )
+    session["agent"] = agent
     socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
 
 
-# New event listener
 @socketio.on("improve_piranha")
 def improve_rules(data):
     data = ImproveData(**data)
     room = session.get("room")
     join_room(room)
-    time.sleep(1)
-    socketio.emit("infer_result", {"rule_name": "", "rule": data.rules}, room=room)
+
+    rule_name, rule = session["agent"].improve_rule(data.requirements, data.rules)
+    socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
 
 
 if __name__ == "__main__":

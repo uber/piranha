@@ -111,7 +111,10 @@ class Inference:
                 != NodeUtils.convert_to_source(child_after)
             ]
 
-        if len(diverging_nodes) == 1:
+        if (
+            len(diverging_nodes) == 1
+            and node_before.child_count == node_after.child_count
+        ):
             return self.find_nodes_to_change(*diverging_nodes[0])
 
         return node_before, node_after

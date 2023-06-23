@@ -134,6 +134,10 @@
     updateInterface(data.rule);
   });
 
+  socket.on("refactor_progress", function (data) {
+    displayButton(false, "Apply Rules", "folder");
+  });
+
   function updateInterface(rule) {
     document.getElementById("query-container").style.display = "block";
     document.getElementById("explanation-container").style.display = "block";

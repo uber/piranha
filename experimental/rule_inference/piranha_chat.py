@@ -25,7 +25,8 @@ The rules are expressed in a domain-specific language (DSL) specific to Polyglot
 You will be provided with the original and refactored code snippets, along with statically inferred rules verified by an algorithm. 
 However, these rules may appear unnatural since they were automatically generated. Your goal is to make them resemble rules written by humans, 
 incorporating meaningful variable names and simpler matchers. Whenever possible, simplify lengthy s-expressions. Note however, you should
-keep capture groups in the "replace" string if they are meaningful (such as variable names, method names, etc.).
+keep capture groups in the "replace" string if they are meaningful (such as variable names, method names, etc.). You have to make sure you 
+ONLY use nodes that you observe in the TASK! Beware tree-sitter queries are language dependent. DO NOT use any other nodes.
 
 You should not alter the semantics of the rules without a specific request. 
 However, if the user asks you to add filters or extra constraints, you should accommodate their needs. 
@@ -54,6 +55,7 @@ The filters are used to specify conditions for the rule to be applied.
 name = "your_rule_name"
 
 # Write a Tree-sitter query to identify the code pattern for refactoring. The outer most node should always be captured.
+# The tree-sitter query depends on the language. The nodes you see here are for Java. You need to only use nodes in the TASK!
 query = """(
     (method_invocation name: (_) @name
                        arguments: (argument_list) @args) @invk
@@ -134,112 +136,7 @@ Your output should be a single TOML file containing the improved rules and edges
 
 [[edges]] # For each edge
 ...
-
 ```
-
-========================= Mistakes to avoid =========================
-
-=== Infinite loops ===
-
-Piranha rules are applied until fixedpoint. Meaning one should be very careful when substituting nodes to make sure 
-the query stops matching once the cleanup is done. This can be achieved by using the "not_contains" filter or with (
-#eq? ...) expressions in the query.
-
-Example 1:
-
-replace_node = "program"
-replace = "X @program" 
-
-... is generally a bad idea, because the query will keep matching the same node over and over again. To avoid you 
- NEED to specify a filter or constraint the query. That will stop the rule from matching the same node again.
-
-Example 2:
-query = """
-(
-    (class_declaration
-        name: (identifier) @class_name
-    ) @class_declaration
-)
-"""
-replace_node = "class_name"
-replace = "B"
-
-... is also a bad idea. Since the query does not constraint the class name to be "A", the rule will match any class name.
-Moreover, it will run into an infinite loop, because the rule will keep matching the same node over and over again.
-
-=== Overly long matches in imports===
-
-Sometimes queries can be significantly simplified by matching large subtrees. Making small queries is generally preferable
-to matching a large subtree. 
-
-Example 1:
-
-query = """
-(
-    (import_declaration
-        (scoped_identifier
-            scope: (scoped_identifier
-                scope: (scoped_identifier
-                    scope: (scoped_identifier
-                        scope: (scoped_identifier
-                            scope: (scoped_identifier
-                                scope: (identifier) @scope1
-                                name: (identifier) @name1)
-                            name: (identifier) @name2)
-                        name: (identifier) @name3)
-                    name: (identifier) @name4)
-                name: (identifier) @name5)
-            name: (identifier) @name6)
-    ) @import_decl
-    (#eq? @scope1 "com")
-    (#eq? @name1 "uber")
-    (#eq? @name2 "common")
-    (#eq? @name3 "context")
-    (#eq? @name4 "concurrent")
-    (#eq? @name5 "MoreContextExecutors")
-    (#eq? @name6 "directExecutor")
-)
-"""
-... is bad! It can be simplified to:
-
-query = """(
-    (import_declaration 
-        (_) @name) @import_decl
-    (#eq? @name "com.uber.common.context.concurrent.MoreContextExecutors.directExecutor"))
-"""
-
-Always use the simplest query possible.
-
-=== Not considering unnamed nodes ===
-
-Tree-sitter produces parse trees rather than abstract syntax trees. This means that nodes in tree sitter
-can contain children corresponding to punctuation, whitespace, and other tokens. This should be taken into account
-when constructing the replacement string.
-
-Example 1:
-
-query = """(
-    (method_invocation name: (_) @name
-                       arguments: (argument_list) @args) @invk
-    (#eq? @name @hole1))
-"""
-
-replace_node = "invk"
-replace = "X.other_string(@args)"
-... is wrong, because @args already contains the parentheses.
-
-=== Forgetting parenthesis ===
-
-If queries are not surrounded by parenthesis, tree-sitter will interpreter them as independent queries.
-
-Example 1:
-
-query = """
-    (method_invocation name: (identifier) @name
-                       arguments: (argument_list) @args) @invk
-    (#eq? @name "directExecutor")
-"""
-... is a bad rule because the query is not surrounded by parenthesis.
 
 ========================= Rule Examples =========================
     '''
@@ -271,6 +168,9 @@ query = """
 {hints}
 ========================= Please simplify the rules and edges =========================
 
+Remember, the goal is to simplify the rules and edges as much as possible while still achieving the same result.
+You should only use nodes you see in the tree-sitter representation of the source code!!
+
     """
 
     holes = attr.ib(type=dict)
@@ -284,12 +184,15 @@ query = """
         ],
     )
     model = attr.ib(
-        default="gpt-4",
+        default="gpt-4-32k",
         validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo-16k"]),
     )
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
+        examples = self._get_examples("../../src/cleanup_rules/go")
+        examples = self._get_examples("../../src/cleanup_rules/swift")
+        examples = self._get_examples("../../src/cleanup_rules/kt")
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -322,6 +225,7 @@ query = """
     def get_completion(self, n_samples: int = 1) -> Optional[List[str]]:
         while True:
             try:
+                logger.debug(self.messages[-1]["content"])
                 logger.debug("Attempting to get completion from GPT.")
                 response = openai.ChatCompletion.create(
                     model=self.model,

@@ -106,3 +106,5 @@ Each transformation snippet begins with the identifier (like `// 1`) and ends wi
 This way of representing transformations helps to create clear, concise, and human-friendly refactoring rules, making it easier to manage and understand your transformations.
 
 Make sure to follow these conventions when inputting your code for refactoring. Happy coding!
+
+**Note: The code before and after must be syntactically correct, and it should parse. Moreover, after applying the rules to code before, the refactored code should match the code after. (spaces are ignored).**

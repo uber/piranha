@@ -1,0 +1,112 @@
+### This rule is used to simplify the companion object
+
+### Input
+
+# class Model {
+# //1
+# private companion object {
+#  @JvmField
+#   val UUID_MISSING = "UUID is missing"
+# }
+# //end
+#}
+
+### Output
+
+# class Model {
+# //1
+# companion object {
+#  private const val UUID_MISSING = "UUID is missing"
+# }
+# //end
+# }
+
+[[rules]]
+name = "simplify_companion_object"
+query = """
+(
+    (companion_object
+        (modifiers (visibility_modifier) @visibility_modifier) @companion_object
+        (class_body
+            (property_declaration
+                (modifiers (annotation (user_type (type_identifier) @annotation_type)) @annotation_modifiers)
+                (variable_declaration (simple_identifier) @variable_name)
+                (line_string_literal) @value)
+        )
+    )
+    (#eq? @annotation_type "JvmField")
+) @companion_object
+"""
+replace_node = "@companion_object"
+replace = "companion object { @visibility_modifier const val @variable_name = @value }"
+is_seed_rule = true
+
+
+### Input
+
+#import org.mockito.Mockito
+#
+#
+#class Model:
+#  @Test
+#  fun test():
+#    Mockito.when(x, y, z)
+#
+
+
+### Output
+
+#import org.mockito.kotlin.whenever;
+#
+#
+#class Model {
+#  @Test
+#  fun test() {
+#    whenever(x, y, z)
+#  }
+#}
+#
+
+[[rules]]
+name = "replace_import_mockito"
+query = """
+(
+  (import_header
+    (identifier
+      (simple_identifier) @org
+      (simple_identifier) @mockito
+      (simple_identifier) @mockito_class
+    )
+  ) @import
+  (#eq? @org "org")
+  (#eq? @mockito "mockito")
+  (#eq? @mockito_class "Mockito")
+)
+"""
+replace_node = "@import"
+replace = "import @org . @mockito . kotlin . whenever;"
+
+[[rules]]
+name = "replace_mockito_when_call"
+query = """
+(
+  (call_expression
+    (navigation_expression
+      (simple_identifier) @mockito_class
+      (navigation_suffix
+        (simple_identifier) @when_method
+      )
+    ) @call
+  )
+  (#eq? @mockito_class "Mockito")
+  (#eq? @when_method "when")
+)
+"""
+replace_node = "@call"
+replace = "whenever"
+is_seed_rule = true
+
+[[edges]]
+scope = "File"
+from = "replace_mockito_when_call"
+to = ["replace_import_mockito"]
