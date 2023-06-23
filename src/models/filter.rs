@@ -358,7 +358,6 @@ impl SourceCodeUnit {
     // If an outermost enclosing node is provided
     let query = instantiated_filter.outermost_enclosing_node();
     if !query.get_query().is_empty() {
-      debug!("here");
       if let Some(result) = self._match_outermost_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
