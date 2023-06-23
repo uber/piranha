@@ -448,6 +448,7 @@ impl SourceCodeUnit {
       contains_query,
       true,
       None,
+      None,
     );
     let at_least = filter.at_least as usize;
     let at_most = filter.at_most as usize;

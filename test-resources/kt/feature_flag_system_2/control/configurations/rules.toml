@@ -128,7 +128,7 @@ query = """
                                                                        (simple_identifier) @arg_method_receiver
                                                                     (navigation_suffix (_)@arg_method_name)
                                                                       )
-                                                              )))))@ce
+                                                              )))))@expression_statement
 (#eq? @arg_method_name "@m_name")
 (#eq? @outer_call_name "put")
 (#not-match? @arg_method_receiver "^[A-Z]+.*")

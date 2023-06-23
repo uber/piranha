@@ -115,6 +115,6 @@ query = """
 (#match? @list "\\\\[\\\\s*,?\\\\]")
 )
 """
-replace_node = "@assignment"
+replace_node = "assignment"
 replace = ""
 is_seed_rule = false
