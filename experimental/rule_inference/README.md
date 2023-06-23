@@ -1,6 +1,6 @@
 # PiranhaAgent
 
-PiranhaAgent uses OpenAI's GPT-4 model to infer piranha rules from code examples.
+PiranhaAgent uses a static inference algorithm and OpenAI's GPT-4 model to generate human-like piranha rules from code examples.
 It generates these rules in TOML format, which can be applied to refactor other parts of the codebase.
 
 ## Install
@@ -32,16 +32,6 @@ cd experimental/rule_inference
 pip install -r requirements.txt
 ```
 
-## Usage (CLI)
-
-To make use of PiranhaAgent, please follow the steps below:
-
-1. Execute the main.py script with the appropriate command-line arguments. The required format for the command is:
-
-```
-python main.py -s <source_file> -t <target_file> -l <language> -k <openai_api_key> -p <path-to-code-base> -c <path-to-piranha-config>
-```
-
 ## Usage (Playground UI)
 
 To run the playground
@@ -53,31 +43,68 @@ export OPENAI_API_KEY=<YOUR_KEY>
 python -m local
 ```
 
-Here,
+To define your transformation rules, you will need to provide pairs of code snippets: 'before' and 'after' transformation. Each piece of code that needs transformation should be marked by unique identifiers surrounded by comments (like `// 1`, `// 2`, etc.). These identifiers serve two purposes:
 
-- `<source_file>`: The path to the original source code file.
-- `<target_file>`: The path to the refactored source code file.
-- `<openai_api_key>`: OpenAI Secret API Key
-- `<language>`: (Optional) This specifies the programming language of the source code files. The default language is `java`.
-- `<path-to-codebase>`: (Optional) Path to where the rule should be applied / tested
-- `<path-to-piranha-config>`: (Optional) Path to directory to where to persist the generated rules
+1. They denote which part of the code should be transformed.
+2. They define the transformation sequence, or cascading, i.e., which transformations should follow which.
 
-## Demo
+### Example
 
-To run a demo of PiranhaAgent, execute the following command:
+Consider the following code snippet:
 
+#### Code before refactoring:
+
+```java
+class SomeClass {
+  // 1 -> 2
+
+  // 1
+  void someMethod(String arg) {
+
+  }
+  // end
+
+  void otherMethod() {
+    String x;
+    // 2
+   	someMethod(x);
+    // end
+  }
+}
 ```
-python3 piranha_agent.py --source-file demo/before.java --target-file demo/after.java -k <YOUR_KEY>
+
+#### Code after refactoring:
+
+```java
+class SomeClass {
+  // 1 -> 2
+
+  // 1
+  public String someMethod() {
+
+  }
+  // end
+
+  void otherMethod() {
+    String x;
+    // 2
+    x = someMethod();
+    // end
+  }
+}
 ```
 
-After running this demo, the agent will print a TOML file containing a piranha rules that transforms
-the `before.java` file into the `after.java` file.
+In this example, there are two transformation points, marked by the identifiers `// 1` and `// 2`.
 
-## How it works
+- `// 1` shows the transformation from `void someMethod(String arg)` to `public String someMethod()`.
+- `// 2` shows the transformation from `someMethod(x)` to `x = someMethod()`.
 
-1. The script reads both the original and refactored source code files, generating the Tree-sitter representation for each.
-2. A prompt is formulated using the task explanation, examples, and input template.
-3. This prompt is fed to the GPT-4 model, which generates a TOML file encapsulating the refactoring rules.
-4. The generated TOML file is output to the console.
+The arrow notation `// 1 -> 2` indicates the transformation cascade, i.e., transformation `// 2` should be applied after transformation `// 1`.
 
-We also feed the model the cleanup rules as examples, which can be found in the [src/cleanup_rules](../../src/cleanup_rules) directory.
+Each transformation snippet begins with the identifier (like `// 1`) and ends with a `// end` comment.
+
+This way of representing transformations helps to create clear, concise, and human-friendly refactoring rules, making it easier to manage and understand your transformations.
+
+Make sure to follow these conventions when inputting your code for refactoring. Happy coding!
+
+**Note: The code before and after must be syntactically correct, and it should parse. Moreover, after applying the rules to code before, the refactored code should match the code after. (spaces are ignored).**

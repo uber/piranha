@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 import os
 import toml
@@ -8,11 +10,11 @@ from rule_inference.rule_application import CodebaseRefactorer
 def refactorer():
     language = "java"
     path_to_codebase = "./tests/test_resources/test_codebase"
-    path_to_rules = "./tests/test_resources/test_rules.toml"
+    rules = Path("./tests/test_resources/test_rules.toml").read_text()
     include_paths = ["./tests/test_resources/test_codebase/to_include"]
     exclude_paths = ["./tests/test_resources/test_codebase/to_exclude"]
     return CodebaseRefactorer(
-        language, path_to_codebase, path_to_rules, include_paths, exclude_paths
+        language, path_to_codebase, rules, include_paths, exclude_paths
     )
 
 

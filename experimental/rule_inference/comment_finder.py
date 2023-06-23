@@ -9,7 +9,7 @@ from typing import List, Dict, Deque, Tuple
 import attr
 from tree_sitter import Tree, Node
 
-from experimental.rule_inference.node_utils import NodeUtils
+from experimental.rule_inference.utils.node_utils import NodeUtils
 
 
 @attr.s
@@ -49,6 +49,43 @@ class CommentFinder:
         return matching_pairs
 
     def find_replacement_pair(self, tree: Tree):
+        """
+        Traverses the AST to find nodes of type comment. Each comment will be associated with a number, and
+        it tells us when we should start collecting nodes for the replacement pair. When we find // 1 end, we stop collecting.
+        """
+
+        root = tree.root_node
+        stack: Deque = deque([root])
+        comment = None
+        replacement_dict = defaultdict(list)
+        while stack:
+            node = stack.pop()
+
+            if "comment" in node.type:
+                prev_comment = comment
+                comment = node.text.decode("utf8")
+                if "->" in comment:
+                    x, y = comment.split("->")
+                    self.edges[x[2:].strip()].append(y.strip())
+                    comment = prev_comment
+                elif "end" in comment:
+                    comment = None
+                else:
+                    comment = comment[2:].strip()
+
+            elif comment:
+                replacement_dict[comment].append(node)
+            for child in reversed(node.children):
+                stack.append(child)
+
+        for comment, nodes in replacement_dict.items():
+            nodes = NodeUtils.remove_partial_nodes(nodes)
+            nodes = NodeUtils.get_smallest_nonoverlapping_set(nodes)
+            replacement_dict[comment] = nodes
+
+        return replacement_dict
+
+    def find_edges(self, tree: Tree):
         """
         Traverses the AST to find nodes of type comment. Each comment will be associated with a number, and
         it tells us when we should start collecting nodes for the replacement pair. When we find // 1 end, we stop collecting.
