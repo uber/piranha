@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use derive_builder::Builder;
 use getset::Getters;
 use itertools::Itertools;
+use log::debug;
 use pyo3::prelude::{pyclass, pymethods};
 
 use serde_derive::Deserialize;
@@ -278,7 +279,9 @@ impl Instantiate for Filter {
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
-      outermost_enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
+      outermost_enclosing_node: self
+        .outermost_enclosing_node()
+        .instantiate(substitutions_for_holes),
       not_enclosing_node: self
         .not_enclosing_node()
         .instantiate(substitutions_for_holes),
@@ -314,7 +317,7 @@ impl SourceCodeUnit {
   ///
   /// The `filter` is composed of:
   /// (i) `enclosing_node`, the node to inspect, optional. If not provided we check whether the contains or non_contains are satisfied in the current node.
-  /// (ii) `not_enclosing_node`, optionalquery that no ancestor of the primary match should match,
+  /// (ii) `not_enclosing_node`, optional query that no ancestor of the primary match should match,
   /// (iii) `not_contains` and `contains`, optional queries that should not and should match within the `enclosing_node`,
   /// (iv) `at_least` and `at_most`, optional parameters indicating the acceptable range of matches for `contains` within the `enclosing_node`.
   ///
@@ -352,6 +355,17 @@ impl SourceCodeUnit {
       }
     }
 
+    // If an outermost enclosing node is provided
+    let query = instantiated_filter.outermost_enclosing_node();
+    if !query.get_query().is_empty() {
+      debug!("here");
+      if let Some(result) = self._match_outermost_ancestor(rule_store, node_to_check, query) {
+        node_to_check = result;
+      } else {
+        return false;
+      }
+    }
+
     self._check_filter_not_contains(&instantiated_filter, rule_store, &node_to_check)
       && self._check_filter_contains(&instantiated_filter, rule_store, &node_to_check)
   }
@@ -373,7 +387,26 @@ impl SourceCodeUnit {
     true
   }
 
-  /// Search for any ancestor of `node` (including itself) that matches `query_str`
+  /// Search for outermost ancestor of `node` (including itself) that matches `query_str`
+  fn _match_outermost_ancestor(
+    &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
+  ) -> Option<Node> {
+    let mut matched_ancestor = self._match_ancestor(rule_store, node, ts_query);
+    matched_ancestor?;
+    loop {
+      if let Some(parent) = matched_ancestor.unwrap().parent() {
+        if let Some(m) = self._match_ancestor(rule_store, parent, ts_query) {
+          if m.range() != matched_ancestor.unwrap().range() {
+            matched_ancestor = Some(m);
+            continue;
+          }
+        }
+      }
+      return matched_ancestor;
+    }
+  }
+
+  /// Search for innermost ancestor of `node` (including itself) that matches `query_str`
   fn _match_ancestor(
     &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
   ) -> Option<Node> {

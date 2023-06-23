@@ -41,9 +41,6 @@ create_rewrite_tests! {
       "stale_flag" => "one"
     },
     cleanup_comments = true, delete_file_if_empty= false;
-
-  test_cleanup_with_derivatives: "cleanup_with_derivatives", 1,
-    cleanup_comments = true, delete_file_if_empty= false;
 }
 
 fn execute_piranha_with_default_swift_args(scenario: &str, substitutions: Vec<(String, String)>) {
@@ -73,6 +70,13 @@ fn test_cleanup_rules_file() {
       "treated_complement" => "false"
     },
   );
+}
+
+#[test]
+#[ignore] // Long running test
+fn test_cleanup_with_derivatives() {
+  super::initialize();
+  execute_piranha_with_default_swift_args("cleanup_with_derivatives", vec![]);
 }
 
 #[test]
