@@ -1,0 +1,9 @@
+[[rules]]
+name = "test_rule_replace_false_placeholder"
+query = """(
+(simple_identifier) @variable
+(#eq? @variable "placeholder_false")
+)"""
+replace_node = "variable"
+replace = "false"
+groups = ["replace_expression_with_boolean_literal"]

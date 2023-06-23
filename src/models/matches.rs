@@ -285,17 +285,19 @@ impl SourceCodeUnit {
   ) -> Vec<Match> {
     let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
-    let replace_node_tag = if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
-      None
-    } else {
-      Some(rule.replace_node())
-    };
+    let (replace_node_tag, replace_node_idx) =
+      if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
+        (None, None)
+      } else {
+        (rule.replace_node(), rule.replace_idx())
+      };
     let mut all_query_matches = get_all_matches_for_query(
       &node,
       self.code().to_string(),
       rule_store.query(&rule.query()),
       recursive,
       replace_node_tag,
+      replace_node_idx,
     );
 
     // Applies the filter and returns the first element

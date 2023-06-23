@@ -1,3 +1,8 @@
+Version 0.3.10
+-------------
+* Add support for replace node index
+* Bug fix for iOS cleanup 
+  
 Version 0.3.9
 -------------
 * Rule graph validation #493
