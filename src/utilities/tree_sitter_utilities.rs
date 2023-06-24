@@ -356,11 +356,43 @@ impl TSQuery {
 impl Validator for TSQuery {
   fn validate(&self) -> Result<(), String> {
     let mut parser = get_ts_query_parser();
-    parser
+    let tree = parser
       .parse(self.get_query(), None)
-      .filter(|x| number_of_errors(&x.root_node()) == 0)
-      .map(|_| Ok(()))
-      .unwrap_or(Err(format!("Cannot parse - {}", self.get_query())))
+      .filter(|x| number_of_errors(&x.root_node()) == 0);
+
+    if tree.is_none() {
+      return Err(format!("Cannot parse - {}", self.get_query()));
+    }
+
+    let mut first_child_node: Node;
+
+    let _tree = tree.unwrap();
+    if let Some(n) = _tree.root_node().named_child(0) {
+      first_child_node = n;
+    } else {
+      return Ok(());
+    }
+
+    loop {
+      let kind = first_child_node.kind();
+      if kind == "named_node" || kind == "list" {
+        break;
+      }
+      if kind == "grouping" {
+        if let Some(c) = first_child_node.named_child(0) {
+          first_child_node = c;
+          continue;
+        } else {
+          return Err(
+            "The first node of the query should be a group, named node or a list".to_string(),
+          );
+        }
+      }
+      return Err(
+        "The first node of the query should be a group, named node or a list".to_string(),
+      );
+    }
+    Ok(())
   }
 }
 
