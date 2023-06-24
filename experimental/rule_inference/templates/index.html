@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -23,51 +23,69 @@
     <h3 class="text-center">Piranha Inference Playground</h3>
     <div id="playground-container" class="container">
       <div class="row">
-        <div class="col-lg-6" id="code-container">
-          <h5>Before</h5>
-          <select id="language-select">
-            <option value="python">Python</option>
+        <div class="col-lg-2">
+          <select class="form-select" id="language-select">
             <option value="java" selected="selected">Java</option>
+            <option value="kt">Kotlin</option>
           </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6" id="code-container">
+          <h5>Code before</h5>
           <textarea id="code-input-before"></textarea>
         </div>
 
         <div class="col-lg-6" id="tree-container">
-          <h5>After</h5>
+          <h5>Code after</h5>
           <textarea id="code-input-after"></textarea>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-lg-12" id="explanation-container">
-          <h5>Explanation of your change (optional)</h5>
-          <textarea id="explanation-input"></textarea>
         </div>
       </div>
 
       <div class="row justify-content-center">
         <div class="col-auto">
           <button id="submit-button" class="btn btn-primary">
+            <span>Generate rule</span>
+          </button>
+        </div>
+        <div class="col-lg-12" id="query-container" style="display: none">
+          <h5>Rules</h5>
+          <textarea id="query-input"></textarea>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-12" id="explanation-container" style="display: none">
+          <h5>Any changes you would like to make?</h5>
+          <textarea id="explanation-input"></textarea>
+        </div>
+        <div class="col-auto">
+          <button
+            id="submit-button-improvement"
+            class="btn btn-primary"
+            style="display: none"
+          >
             <span
-              id="spinner"
+              id="spinner-improvement"
               class="spinner-border spinner-border-sm"
               role="status"
               aria-hidden="true"
               style="display: none"
             ></span>
-            <span id="button-text">Infer</span>
+            <span id="button-text-improvement">Improve rule</span>
           </button>
         </div>
-        <div class="col-lg-12" id="query-container" style="display: none">
-          <h4>Rule</h4>
-          <textarea id="query-input"></textarea>
-        </div>
       </div>
+
       <div class="row justify-content-center">
-        <div class="col-lg-12 text-center" id="path-container">
+        <div
+          class="col-lg-12 text-center"
+          id="path-container"
+          style="display: none"
+        >
           <h5>
-            Refactor your codebase (warning: applying the rule will change your
-            files!)
+            Refactor your codebase (warning: applying the rule graph will change
+            your files!)
           </h5>
           <div class="input-group">
             <input
@@ -77,8 +95,15 @@
               placeholder="Enter the folder path here"
             />
             <div class="input-group-append">
-              <button id="submit-folder-button" class="btn btn-primary">
-                Apply rules
+              <button id="submit-button-folder" class="btn btn-primary">
+                <span
+                  id="spinner-folder"
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                  style="display: none"
+                ></span>
+                <span id="button-text-folder">Apply rules</span>
               </button>
             </div>
           </div>

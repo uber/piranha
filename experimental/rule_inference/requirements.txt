@@ -6,3 +6,4 @@ polyglot-piranha
 toml
 pytest
 flask
+flask-socketio

@@ -1,26 +1,20 @@
 import multiprocessing
-import os
-import time
 import attr
-import openai
-import re
 import toml
-import argparse
-import asyncio
 import re
-from typing import List, Any, Optional, Tuple
+from typing import List, Optional, Tuple
 import difflib
 import logging
-from logger_formatter import CustomFormatter
-from tree_sitter_languages import get_language, get_parser
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+from tree_sitter_languages import get_parser
+from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
 from static_inference import Inference
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-from patch import Patch
-from multiprocessing import Pool
+from experimental.rule_inference.utils.patch import Patch
 from static_inference import QueryWriter
-from tree_sitter import Language, Parser, Tree, Node, TreeCursor
-from node_utils import NodeUtils
+from tree_sitter import Tree
+from experimental.rule_inference.utils.node_utils import NodeUtils
 from comment_finder import CommentFinder
 
 logger = logging.getLogger("PiranhaChat")
@@ -52,6 +46,7 @@ class PiranhaAgent:
         "java": "java",
         "kt": "kotlin",
     }  # This is necessary because get_parser and piranha expect different naming conventions
+    chat = attr.ib(default=None)
 
     def get_tree_from_code(self, code: str) -> Tree:
         tree_sitter_language = self.language_mappings.get(self.language, self.language)
@@ -80,12 +75,21 @@ class PiranhaAgent:
         diff = "\n".join(diff)
         # diff = self.append_diff_information(diff, source_tree, target_tree)
 
-        rules = ""
+        rules = {}
         finder = CommentFinder(source_tree, target_tree)
         pairs = finder.find_replacement_pairs()
-        for nodes_before, nodes_after in pairs.values():
+        for comment_name, (nodes_before, nodes_after) in pairs.items():
             inference_engine = Inference(nodes_before, nodes_after)
-            rules += inference_engine.static_infer() + "\n\n"
+            rule = inference_engine.static_infer()
+            rules[comment_name] = rule
+
+        # build a dict using finder.edges but with the rule names from rule_names
+        edges = {
+            rules[from_name].name: [rules[to_name].name for to_name in to_names]
+            for from_name, to_names in finder.edges.items()
+        }
+        graph = RawRuleGraph(list(rules.values()), edges)
+        rules = graph.to_toml()
 
         if callback:
             callback(rules)
@@ -111,22 +115,23 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
 
         # For each completion try to transform the source code into the target code
+        return self.iterate_inference(chat_interactions)
+
+    def iterate_inference(self, chat_interactions):
         max_rounds = 10
         for chat in chat_interactions:
             for i in range(max_rounds):
                 try:
                     file_name, toml_block = self.validate_rule_wrapper(chat)
+                    self.chat = chat
                     return file_name, toml_block
                 except PiranhaAgentError as e:
-                    # prompt_generator.append_followup(messages, e.args[0])
                     logger.debug(
                         f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
                     )
                     chat.append_user_followup(str(e))
-
-        # Throw an error if no rule was found
         raise PiranhaAgentError(
-            "GPT-4 failed to generate a rule. Try increasing the temperature."
+            f"Failed to generate a rule after {max_rounds} rounds of interaction with GPT-4."
         )
 
     def append_diff_information(self, diff, source_tree, target_tree):
@@ -177,7 +182,6 @@ class PiranhaAgent:
             )
             logger.debug(f"Generated rule: {toml_block}")
             toml_dict = toml.loads(toml_block)
-            return "rule.toml", toml_block
         except Exception as e:
             raise PiranhaAgentError(
                 f"Could not create Piranha rule. The TOML block is not valid. {e}"
@@ -211,40 +215,11 @@ class PiranhaAgent:
         if not rules:
             raise PiranhaAgentError("TOML does not include any rule specifications.")
         try:
-            toml_rule = rules[0]
-
-            # get rules.filters
-            filters = toml_rule.get("filters", None)
-            filters_lst = set()
-            if filters:
-                filters = filters[0]
-                # get enclosing node
-                enclosing_node = filters.get("enclosing_node", "")
-                # get not contains which is a list of strings
-                not_contains = filters.get("not_contains", [])
-                # create a filter
-                filter = Filter(
-                    enclosing_node=enclosing_node,
-                    not_contains=not_contains,
-                )
-
-                filters_lst.add(filter)
-
-            # Add a check to prevent recursion
-
-            rule = Rule(
-                name=toml_rule["name"],
-                query=toml_rule["query"],
-                replace_node=toml_rule["replace_node"],
-                replace=toml_rule["replace"],
-                filters=filters_lst,
-            )
-
-            rule_graph = RuleGraph(rules=[rule], edges=[])
+            raw_graph = RawRuleGraph.from_toml(toml_dict)
             args = PiranhaArguments(
                 code_snippet=self.source_code,
                 language=self.language,
-                rule_graph=rule_graph,
+                rule_graph=raw_graph,
                 dry_run=True,
             )
 
@@ -253,11 +228,30 @@ class PiranhaAgent:
         except BaseException as e:
             if "QueryError" in str(e):
                 raise PiranhaAgentError(
-                    f"Piranha failed to execute. The query is not valid. {e}. Make sure you are not re-using capture "
-                    f"groups in contains and not_contains. You cannot reuse the same @tags you used in the query."
+                    f"Piranha failed to execute. The query is not valid. {e}. "
+                    f"DO NOT USE NODES THAT YOU CANNOT SEE IN THE TREE REPRESENTATION (IMPORT_DECL) IS JAVA NOT KOTLIN!"
                 )
             raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
         return output_summaries
+
+    def improve_rule(self, desc: str, rule: str):
+        """Improves the rule by adding a filter to it.
+
+        :param desc: str, Description of what you would like to do.
+        :param rule: str, Rule to improve.
+        :return: str, Improved rule.
+        """
+
+        # Clone self.chat 15 times, and then call improve rule on each of them
+        # Then, return the best rule
+        import copy
+
+        self.chat.append_user_followup(
+            f"Can you further refine my rules? Here's what I would like to do: {desc}\n"
+            f"Here's the rule:\n {rule}"
+        )
+        chats = [copy.deepcopy(self.chat) for _ in range(15)]
+        return self.iterate_inference(chats)
 
     @staticmethod
     def normalize_code(code: str) -> str:

@@ -1,31 +1,43 @@
 import os
-
-import attr
-from flask import Flask, request, jsonify, session
-import openai
-from flask import Flask, render_template
+import time
 import logging
-from piranha_agent import PiranhaAgent
+import attr
+import openai
+
+from flask import Flask, render_template, session
 from flask_socketio import SocketIO, join_room
 
+from rule_application import CodebaseRefactorer
+from piranha_agent import PiranhaAgent
+
+# Configure logging
 logger = logging.getLogger("Flask")
-logger.setLevel(logging.DEBUG)
+
+# Create Flask app and SocketIO app
 app = Flask(__name__)
 socketio = SocketIO(app)
 
 
-# Define data validation classes
+# Data validation classes
 @attr.s
 class InferData:
     source_code = attr.ib(validator=attr.validators.instance_of(str))
     target_code = attr.ib(validator=attr.validators.instance_of(str))
-    language = attr.ib(validator=attr.validators.in_(["python", "java"]))
-    hints = attr.ib(validator=attr.validators.instance_of(str))
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
 
 
 @attr.s
-class FolderData:
+class ImproveData:
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
+    requirements = attr.ib(validator=attr.validators.instance_of(str))
+    rules = attr.ib(validator=attr.validators.instance_of(str))
+
+
+@attr.s
+class RefactorData:
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
     folder_path = attr.ib(validator=attr.validators.instance_of(str))
+    rules = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @app.route("/")
@@ -33,16 +45,23 @@ def home():
     return render_template("index.html")
 
 
+@socketio.on("refactor_codebase")
+def process_folder(data):
+    data = RefactorData(**data)
+    refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
+    refactorer.refactor_codebase(False)
+    socketio.emit("refactor_progress", {"progress": 100})
+
+
 @socketio.on("infer_piranha")
 def infer_from_example(data):
     # Validate the data
     data = InferData(**data)
-    openai.api_key = os.getenv("OPENAI_API_KEY")
     agent = PiranhaAgent(
         data.source_code,
         data.target_code,
         language=data.language,
-        hints=data.hints,
+        hints="",
     )
 
     room = session.get("room")
@@ -55,27 +74,20 @@ def infer_from_example(data):
             room=room,
         )
     )
+    session["agent"] = agent
     socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
-    session["last_inference_result"] = {
-        "rule_name": rule_name,
-        "rule": rule,
-    }
-
-    return jsonify({"message": f"Received source code: {data.source_code}"}), 200
 
 
-@app.route("/api/process_folder", methods=["POST"])
-def process_folder():
-    data = request.get_json()
-    data = FolderData(**data)
-    folder_path = data.folder_path
+@socketio.on("improve_piranha")
+def improve_rules(data):
+    data = ImproveData(**data)
+    room = session.get("room")
+    join_room(room)
 
-    # Use the folder_path variable to process the folder.
-    # Note: This assumes your server has the appropriate permissions to access and read the directory.
-
-    # Let's just return a message for this example
-    return jsonify({"message": f"Received folder path: {folder_path}"}), 200
+    rule_name, rule = session["agent"].improve_rule(data.requirements, data.rules)
+    socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
 
 
 if __name__ == "__main__":
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     app.run(debug=True)
