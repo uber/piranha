@@ -186,15 +186,11 @@ impl PiranhaArguments {
     delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
     allow_dirty_ast: Option<bool>,
   ) -> Self {
-    let subs = if substitutions.is_some() {
-      substitutions
-        .unwrap()
-        .iter()
+    let subs = substitutions.map_or(vec![], |s| {
+      s.iter()
         .map(|(k, v)| (k.to_string(), v.to_string()))
         .collect_vec()
-    } else {
-      vec![]
-    };
+    });
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     PiranhaArgumentsBuilder::default()
