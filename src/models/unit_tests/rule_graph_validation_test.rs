@@ -125,7 +125,7 @@ fn test_df_warnings() {
   let rule_graph = RuleGraphBuilder::default()
     .rules(vec![
       piranha_rule! {name = "Test rule", query = "(local_variable_declaration
-	                                                  (variable_declarator name: (_) @name ) @i)"},
+                                                      (variable_declarator name: (_) @name ) @i)"},
       piranha_rule! {name = "Other rule", query = "((local_variable_declaration
                                                       type: (_) @other_type
                                                       (variable_declarator name: (_) @other_name ) @other_i)
