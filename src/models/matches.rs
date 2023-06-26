@@ -90,7 +90,7 @@ impl Match {
 
   /// Merge the associated matches of the given match into the current match.
   /// It basically extends the range to include the first and last associated match of the given match.
-  pub(crate) fn expand_to_associated_matches(&mut self, code: &String) {
+  pub(crate) fn expand_to_associated_matches(&mut self, code: &str) {
     let (start_range, end_range) = self.get_first_and_last_associated_ranges();
     if start_range.start_byte < self.range.start_byte {
       self.range.start_byte = start_range.start_byte;
@@ -285,17 +285,19 @@ impl SourceCodeUnit {
   ) -> Vec<Match> {
     let mut output: Vec<Match> = vec![];
     // Get all matches for the query in the given scope `node`.
-    let replace_node_tag = if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
-      None
-    } else {
-      Some(rule.replace_node())
-    };
+    let (replace_node_tag, replace_node_idx) =
+      if rule.rule().is_match_only_rule() || rule.rule().is_dummy_rule() {
+        (None, None)
+      } else {
+        (rule.replace_node(), rule.replace_idx())
+      };
     let mut all_query_matches = get_all_matches_for_query(
       &node,
       self.code().to_string(),
       rule_store.query(&rule.query()),
       recursive,
       replace_node_tag,
+      replace_node_idx,
     );
 
     // Applies the filter and returns the first element

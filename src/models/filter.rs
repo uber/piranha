@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use derive_builder::Builder;
 use getset::Getters;
 use itertools::Itertools;
+
 use pyo3::prelude::{pyclass, pymethods};
 
 use serde_derive::Deserialize;
@@ -27,6 +28,7 @@ use crate::utilities::{
 };
 
 use super::{
+  default_configs::default_child_count, default_configs::default_sibling_count,
   rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, Validator,
 };
 
@@ -42,11 +44,21 @@ use super::default_configs::{
 #[builder(build_fn(name = "create"))]
 pub struct Filter {
   /// AST patterns that some ancestor node of the primary match should match
+  /// In case of multiple ancestors matching the AST pattern it will consider the innermost ancestor that matches.
   #[builder(default = "default_enclosing_node()")]
   #[get = "pub"]
   #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
   enclosing_node: TSQuery,
+
+  /// AST patterns that some ancestor node of the primary match should match
+  /// In case of multiple ancestors matching the AST pattern it will consider the outermost ancestor that matches.
+  #[builder(default = "default_enclosing_node()")]
+  #[get = "pub"]
+  #[serde(default = "default_enclosing_node")]
+  #[pyo3(get)]
+  outermost_enclosing_node: TSQuery,
+
   /// AST patterns NO ancestor node of the primary match should match
   #[builder(default = "default_not_enclosing_node()")]
   #[get = "pub"]
@@ -77,18 +89,34 @@ pub struct Filter {
   #[serde(default = "default_contains_at_most")]
   #[pyo3(get)]
   at_most: u32,
+
+  // number of named children under the primary matched node
+  #[builder(default = "default_child_count()")]
+  #[get = "pub"]
+  #[serde(default = "default_child_count")]
+  #[pyo3(get)]
+  child_count: u32,
+
+  // number of named siblings of the primary matched node (inclusive)
+  #[builder(default = "default_sibling_count()")]
+  #[get = "pub"]
+  #[serde(default = "default_sibling_count")]
+  #[pyo3(get)]
+  sibling_count: u32,
 }
 
 #[pymethods]
 impl Filter {
   #[new]
   fn py_new(
-    enclosing_node: Option<String>, not_enclosing_node: Option<String>,
-    not_contains: Option<Vec<String>>, contains: Option<String>, at_least: Option<u32>,
-    at_most: Option<u32>,
+    enclosing_node: Option<String>, outermost_enclosing_node: Option<String>,
+    not_enclosing_node: Option<String>, not_contains: Option<Vec<String>>,
+    contains: Option<String>, at_least: Option<u32>, at_most: Option<u32>,
+    child_count: Option<u32>, sibling_count: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
+      .outermost_enclosing_node(TSQuery::new(outermost_enclosing_node.unwrap_or_default()))
       .not_enclosing_node(TSQuery::new(not_enclosing_node.unwrap_or_default()))
       .not_contains(
         not_contains
@@ -100,6 +128,8 @@ impl Filter {
       .contains(TSQuery::new(contains.unwrap_or_default()))
       .at_least(at_least.unwrap_or(default_contains_at_least()))
       .at_most(at_most.unwrap_or(default_contains_at_most()))
+      .child_count(child_count.unwrap_or(default_child_count()))
+      .sibling_count(sibling_count.unwrap_or(default_sibling_count()))
       .build()
   }
   gen_py_str_methods!();
@@ -138,6 +168,10 @@ impl Validator for Filter {
       self.enclosing_node().validate()?
     }
 
+    if *self.outermost_enclosing_node() != default_enclosing_node() {
+      self.outermost_enclosing_node().validate()?
+    }
+
     if *self.not_enclosing_node() != default_not_enclosing_node() {
       self.not_enclosing_node().validate()?
     }
@@ -149,6 +183,18 @@ impl Validator for Filter {
     if *self.not_contains() != default_not_contains_queries() {
       self.not_contains().iter().try_for_each(|x| x.validate())?
     }
+
+    if (*self.child_count() != default_child_count()
+      || *self.sibling_count() != default_sibling_count())
+      && (*self.enclosing_node() != default_enclosing_node()
+        || *self.not_enclosing_node() != default_not_enclosing_node()
+        || *self.outermost_enclosing_node() != default_enclosing_node()
+        || *self.contains() != default_contains_query()
+        || *self.not_contains() != default_not_contains_queries())
+    {
+      return Err("The child/sibling count operator is not compatible with (not) enclosing node and (not) contains operator".to_string());
+    }
+
     Ok(())
   }
 }
@@ -211,14 +257,17 @@ impl FilterBuilder {
 /// ```
 ///
 macro_rules! filter {
-  ($(enclosing_node = $enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)?) => {
+  ($(enclosing_node = $enclosing_node:expr)? $(, outermost_enclosing_node=$outermost_enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)? $(, sibling_count=$nSibling:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
       $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
+      $(.outermost_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($outermost_enclosing_node.to_string())))?
       $(.not_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($not_enclosing_node.to_string())))?
       $(.not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*]))?
       $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
       $(.at_least($min))?
       $(.at_most($max))?
+      $(.child_count($nChildren))?
+      $(.sibling_count($nSibling))?
       .build()
   };
 }
@@ -230,6 +279,9 @@ impl Instantiate for Filter {
   fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
     Filter {
       enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
+      outermost_enclosing_node: self
+        .outermost_enclosing_node()
+        .instantiate(substitutions_for_holes),
       not_enclosing_node: self
         .not_enclosing_node()
         .instantiate(substitutions_for_holes),
@@ -241,6 +293,8 @@ impl Instantiate for Filter {
       contains: self.contains().instantiate(substitutions_for_holes),
       at_least: self.at_least,
       at_most: self.at_most,
+      child_count: self.child_count,
+      sibling_count: self.sibling_count,
     }
   }
 }
@@ -263,7 +317,7 @@ impl SourceCodeUnit {
   ///
   /// The `filter` is composed of:
   /// (i) `enclosing_node`, the node to inspect, optional. If not provided we check whether the contains or non_contains are satisfied in the current node.
-  /// (ii) `not_enclosing_node`, optionalquery that no ancestor of the primary match should match,
+  /// (ii) `not_enclosing_node`, optional query that no ancestor of the primary match should match,
   /// (iii) `not_contains` and `contains`, optional queries that should not and should match within the `enclosing_node`,
   /// (iv) `at_least` and `at_most`, optional parameters indicating the acceptable range of matches for `contains` within the `enclosing_node`.
   ///
@@ -279,6 +333,14 @@ impl SourceCodeUnit {
     let mut node_to_check = node;
     let instantiated_filter = filter.instantiate(substitutions);
 
+    if *filter.child_count() != default_child_count() {
+      return node.named_child_count() == (*filter.child_count() as usize);
+    }
+
+    if *filter.sibling_count() != default_sibling_count() {
+      return node.parent().unwrap().named_child_count() == (*filter.sibling_count() as usize);
+    }
+
     // Check if no ancestor matches the query for not_enclosing_node
     if !self._check_not_enclosing_node(rule_store, node_to_check, &instantiated_filter) {
       return false;
@@ -287,6 +349,16 @@ impl SourceCodeUnit {
     let query = instantiated_filter.enclosing_node();
     if !query.get_query().is_empty() {
       if let Some(result) = self._match_ancestor(rule_store, node_to_check, query) {
+        node_to_check = result;
+      } else {
+        return false;
+      }
+    }
+
+    // If an outermost enclosing node is provided
+    let query = instantiated_filter.outermost_enclosing_node();
+    if !query.get_query().is_empty() {
+      if let Some(result) = self._match_outermost_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
         return false;
@@ -314,7 +386,24 @@ impl SourceCodeUnit {
     true
   }
 
-  /// Search for any ancestor of `node` (including itself) that matches `query_str`
+  /// Search for outermost ancestor of `node` (including itself) that matches `query_str`
+  fn _match_outermost_ancestor(
+    &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
+  ) -> Option<Node> {
+    let mut matched_ancestor = self._match_ancestor(rule_store, node, ts_query);
+    loop {
+      if let Some(outer_matched_ancestor) = matched_ancestor
+        .and_then(|m| m.parent().filter(|p| p.range() != m.range()))
+        .and_then(|parent| self._match_ancestor(rule_store, parent, ts_query))
+      {
+        matched_ancestor = Some(outer_matched_ancestor);
+        continue;
+      }
+      return matched_ancestor;
+    }
+  }
+
+  /// Search for innermost ancestor of `node` (including itself) that matches `query_str`
   fn _match_ancestor(
     &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
   ) -> Option<Node> {
@@ -357,6 +446,7 @@ impl SourceCodeUnit {
       self.code().to_string(),
       contains_query,
       true,
+      None,
       None,
     );
     let at_least = filter.at_least as usize;

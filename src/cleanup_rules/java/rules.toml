@@ -443,6 +443,27 @@ replace = ""
 replace_node = "post"
 is_seed_rule = false
 
+
+# Before :
+#  condition ? abc() : abc();
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_ternary_similar_consequent_alternative"
+query = """
+(
+    (ternary_expression condition: (_)
+        consequence: (_)* @consequence
+        alternative: (_)* @alternative)
+@ternary_expression
+(#eq? @consequence @alternative)
+)"""
+replace = "@consequence"
+replace_node = "ternary_expression"
+is_seed_rule = false
+
 # Before :
 #  true ? abc() : def();
 # After :

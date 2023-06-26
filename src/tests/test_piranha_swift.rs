@@ -74,6 +74,13 @@ fn test_cleanup_rules_file() {
 
 #[test]
 #[ignore] // Long running test
+fn test_cleanup_with_derivatives() {
+  super::initialize();
+  execute_piranha_with_default_swift_args("cleanup_with_derivatives", vec![]);
+}
+
+#[test]
+#[ignore] // Long running test
 fn test_local_variable_inline_file() {
   super::initialize();
   execute_piranha_with_default_swift_args("variable_inline/local_variable_inline", vec![]);

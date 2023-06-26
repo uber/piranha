@@ -85,4 +85,8 @@ class XPFlagCleanerPositiveCases {
       System.out.println("Hi world");
     }
   }
+
+    public boolean isEnabledFlag(X x){
+      return true;
+  }
 }

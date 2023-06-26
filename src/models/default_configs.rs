@@ -107,6 +107,10 @@ pub fn default_replace_node() -> String {
   String::new()
 }
 
+pub fn default_replace_idx() -> u8 {
+  u8::MAX
+}
+
 pub fn default_replace() -> String {
   String::new()
 }
@@ -148,6 +152,14 @@ pub(crate) fn default_contains_at_least() -> u32 {
 }
 
 pub(crate) fn default_contains_at_most() -> u32 {
+  u32::MAX
+}
+
+pub(crate) fn default_child_count() -> u32 {
+  u32::MAX
+}
+
+pub(crate) fn default_sibling_count() -> u32 {
   u32::MAX
 }
 

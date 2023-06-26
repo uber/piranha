@@ -492,5 +492,7 @@ class SampleClass {
          } else {
             toBeDeletedInequality12b()
          }
+
+         x = condition() ? TestEnum.stale_flag_one.isEnabled : true
     }
 }
