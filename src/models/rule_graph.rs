@@ -200,13 +200,12 @@ impl RuleGraph {
     next_rules
   }
 
-
   pub fn analyze(&self, substitutions: &HashMap<String, String>) {
     let holes = substitutions.keys().cloned().collect::<HashSet<String>>();
     let holes = holes
-        .iter()
-        .map(|x| format!("@{}", x))
-        .collect::<HashSet<String>>();
+      .iter()
+      .map(|x| format!("@{}", x))
+      .collect::<HashSet<String>>();
     let forward = ForwardDefiniteAssignment::new(self.clone(), holes);
     let mut analysis = DataflowAnalysis::new(forward);
 
@@ -216,10 +215,10 @@ impl RuleGraph {
     // The entry point of the rule graph
     // get all entry points by collecting all seed rules
     let entry_rules = rules_post_order
-        .iter()
-        .filter(|x| *x.is_seed_rule())
-        .cloned()
-        .collect::<Vec<Rule>>();
+      .iter()
+      .filter(|x| *x.is_seed_rule())
+      .cloned()
+      .collect::<Vec<Rule>>();
     analysis.run_analysis(rules_post_order, entry_rules);
 
     // Now validate for each rule, that all the tags used in the predicate are defined in the sigma out
@@ -230,16 +229,18 @@ impl RuleGraph {
       // If there's any tag in the predicate that is not sigma out, then we might be using an undefined variable
       for tag in tags_in_predicates {
         if !defined_variables.contains(&tag) {
-          println!("{}", format!(
-            "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
-            tag,
-            rule.name()
-          ));
+          println!(
+            "{}",
+            format!(
+              "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
+              tag,
+              rule.name()
+            )
+          );
         }
       }
     }
   }
-
 }
 
 pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {

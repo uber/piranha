@@ -10,12 +10,12 @@ Copyright (c) 2023 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use std::collections::HashMap;
 use crate::models::filter::FilterBuilder;
+use std::collections::HashMap;
 
 use crate::models::rule_graph::RuleGraphBuilder;
-use crate::{edges, piranha_rule};
 use crate::utilities::tree_sitter_utilities::TSQuery;
+use crate::{edges, piranha_rule};
 
 #[test]
 #[should_panic(

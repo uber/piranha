@@ -40,7 +40,7 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
     &node_match_query,
     true,
     None,
-    None
+    None,
   );
   let mut tags = vec![];
   for m in matches {
@@ -84,7 +84,7 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
       query,
       true,
       None,
-      None
+      None,
     );
     for m in matches {
       let range = m.range();
