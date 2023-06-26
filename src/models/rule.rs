@@ -147,6 +147,7 @@ macro_rules! piranha_rule {
     $(.replace_node($replace_node.to_string()))?
     $(.replace_idx($replace_idx.to_string()))?
     $(.replace($replace.to_string()))?
+    $(.is_seed_rule($is_seed_rule))?
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.filters(std::collections::HashSet::from([$($filter)*])))?
