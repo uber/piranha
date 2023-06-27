@@ -7,3 +7,4 @@ toml
 pytest
 flask
 flask-socketio
+comby

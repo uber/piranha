@@ -54,21 +54,22 @@ class RawRuleGraph:
     def from_toml(toml_dict) -> RuleGraph:
         rules = []
         for toml_rule in toml_dict["rules"]:
-            filters = toml_rule.get("filters", None)
+            filters = toml_rule.get("filters", [])
             filters_lst = set()
-            if filters:
-                filters = filters[0]
-                # get enclosing node
-                enclosing_node = filters.get("enclosing_node", "")
-                # get not contains which is a list of strings
-                not_contains = filters.get("not_contains", [])
-                # create a filter
-                filter = Filter(
+            for f in filters:
+                enclosing_node = f.get("enclosing_node", None)
+                not_enclosing_node = f.get("not_enclosing_node", None)
+                not_contains = f.get("not_contains", [])
+                contains = f.get("contains", None)
+
+                piranha_filter = Filter(
                     enclosing_node=enclosing_node,
+                    not_enclosing_node=not_enclosing_node,
                     not_contains=not_contains,
+                    contains=contains,
                 )
 
-                filters_lst.add(filter)
+                filters_lst.add(piranha_filter)
 
             # Add a check to prevent recursion
 

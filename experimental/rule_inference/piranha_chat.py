@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 import attr
 import openai
@@ -173,6 +173,27 @@ You should only use nodes you see in the tree-sitter representation of the sourc
 
     """
 
+    improve_prompt = """Can you to further refine the rules? Here is the request:
+    
+{desc}
+    
+========================= Current rule =========================
+         
+{rule}
+
+========================= Notes =========================
+
+If you think adding a filter would help, you should do it.
+Remember piranha only supports two types of filters: enclosing_node and not_enclosing_node.
+Furthermore, enclosing_node filters can be further refined with contains and not_contains.
+
+=== Potential filters for enclosing node ===
+
+{enclosing_node_filters}
+
+Improve the rules and return a single toml block.
+"""
+
     holes = attr.ib(type=dict)
     messages = attr.ib(type=list, default=attr.Factory(list))
     temperature = attr.ib(
@@ -211,6 +232,25 @@ You should only use nodes you see in the tree-sitter representation of the sourc
     def append_user_followup(self, followup_message):
         """Add a followup message from the user after GPT replies"""
         self.messages.append({"role": "user", "content": followup_message})
+
+    def append_improve_request(
+        self, desc: str, rule: str, enclosing_node_filters: List[str]
+    ):
+        """Add a followup message from the user after GPT replies"""
+        filters = (
+            "I'm going to list code snippets and corresponding filter you can use for them. "
+            "You may use them as is or modify them as you see fit.\n\n"
+        )
+
+        for sexp in enclosing_node_filters:
+            filters += f'enclosing_node = """{sexp}"""\n\n'
+
+        request = self.improve_prompt.format(
+            desc=desc,
+            rule=rule,
+            enclosing_node_filters=filters,
+        )
+        self.messages.append({"role": "user", "content": request})
 
     def get_model_response(self):
         latest_message = self.messages[-1]

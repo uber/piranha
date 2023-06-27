@@ -61,7 +61,6 @@ def infer_from_example(data):
         data.source_code,
         data.target_code,
         language=data.language,
-        hints="",
     )
 
     room = session.get("room")

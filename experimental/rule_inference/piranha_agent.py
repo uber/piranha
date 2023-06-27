@@ -6,14 +6,14 @@ from typing import List, Optional, Tuple
 import difflib
 import logging
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
-from tree_sitter_languages import get_parser
+from tree_sitter_languages import get_parser, get_language
 from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
 from static_inference import Inference
 from piranha_chat import PiranhaGPTChat
 from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
 from experimental.rule_inference.utils.patch import Patch
 from static_inference import QueryWriter
-from tree_sitter import Tree
+from tree_sitter import Tree, Node
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from comment_finder import CommentFinder
 
@@ -42,16 +42,24 @@ class PiranhaAgent:
     target_code = attr.ib(type=str)
     language = attr.ib(default="java")
     hints = attr.ib(default="")
+    chat = attr.ib(default=None)
+    tree_sitter_language = attr.ib(default=None)
+    tree_sitter_parser = attr.ib(default=None)
     language_mappings = {
         "java": "java",
         "kt": "kotlin",
     }  # This is necessary because get_parser and piranha expect different naming conventions
-    chat = attr.ib(default=None)
+
+    def __attrs_post_init__(self):
+        self.tree_sitter_language = get_language(
+            self.language_mappings.get(self.language, self.language)
+        )
+        self.parser = get_parser(
+            self.language_mappings.get(self.language, self.language)
+        )
 
     def get_tree_from_code(self, code: str) -> Tree:
-        tree_sitter_language = self.language_mappings.get(self.language, self.language)
-        parser = get_parser(tree_sitter_language)
-        tree = parser.parse(bytes(code, "utf8"))
+        tree = self.parser.parse(bytes(code, "utf8"))
         return tree
 
     def infer_rules(self, callback=None) -> Optional[Tuple[str, str]]:
@@ -63,17 +71,6 @@ class PiranhaAgent:
         """
         source_tree = self.get_tree_from_code(self.source_code)
         target_tree = self.get_tree_from_code(self.target_code)
-
-        source_tree_sexpr = NodeUtils.generate_sexpr(source_tree.root_node, 0)
-        target_tree_sexpr = NodeUtils.generate_sexpr(target_tree.root_node, 0)
-        # Create diff between source and target code using difflib
-        diff = list(
-            difflib.unified_diff(
-                self.source_code.splitlines(), self.target_code.splitlines()
-            )
-        )
-        diff = "\n".join(diff)
-        # diff = self.append_diff_information(diff, source_tree, target_tree)
 
         rules = {}
         finder = CommentFinder(source_tree, target_tree)
@@ -94,6 +91,48 @@ class PiranhaAgent:
         if callback:
             callback(rules)
 
+        chat_interactions = self.create_chats(rules)
+
+        # For each completion try to transform the source code into the target code
+        return self.iterate_inference(chat_interactions)
+
+    def remove_comments_from_code(self, code: str) -> str:
+        """Removes all comments from the given code using Piranha."""
+        rule = Rule(
+            name="remove_comments",
+            query="(line_comment) @comment",
+            replace_node="comment",
+            replace="",
+        )
+        graph = RuleGraph(rules=[rule], edges=[])
+        args = PiranhaArguments(
+            code_snippet=code,
+            language=self.language,
+            rule_graph=graph,
+            dry_run=True,
+        )
+        output_summaries = execute_piranha(args)
+        return output_summaries[0].content
+
+    def create_chats(self, rules):
+        # Remove all comments from source and target code using Piranha
+        self.source_code = self.remove_comments_from_code(self.source_code)
+        self.target_code = self.remove_comments_from_code(self.target_code)
+
+        source_tree = self.get_tree_from_code(self.source_code)
+        target_tree = self.get_tree_from_code(self.target_code)
+
+        source_tree_sexpr = NodeUtils.generate_sexpr(source_tree.root_node, 0)
+        target_tree_sexpr = NodeUtils.generate_sexpr(target_tree.root_node, 0)
+        # Create diff between source and target code using difflib
+        diff = list(
+            difflib.unified_diff(
+                self.source_code.splitlines(), self.target_code.splitlines()
+            )
+        )
+        diff = "\n".join(diff)
+        # diff = self.append_diff_information(diff, source_tree, target_tree)
+        # Cleanup source
         prompt_holes = {
             "source_code": self.source_code,
             "source_tree": source_tree_sexpr,
@@ -102,7 +141,6 @@ class PiranhaAgent:
             "rules": rules,
             "hints": self.hints,
         }
-
         # Number of Chat interactions to have with the model
         n_samples = 15
         chat_interactions = [
@@ -113,9 +151,7 @@ class PiranhaAgent:
             # Hack to prevent running the prompt multiple times (it's the same for all samples)
             # It is cheaper just to sample OpenAI API
             chat_interactions[i].append_system_message(response)
-
-        # For each completion try to transform the source code into the target code
-        return self.iterate_inference(chat_interactions)
+        return chat_interactions
 
     def iterate_inference(self, chat_interactions):
         max_rounds = 10
@@ -142,8 +178,8 @@ class PiranhaAgent:
             node_pairs = patch.get_nodes_from_patch(source_tree, target_tree)
             for nodes_before, nodes_after in node_pairs:
                 for line, node in nodes_before.items():
-                    q = QueryWriter()
-                    diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write([node])}"
+                    q = QueryWriter([node])
+                    diff += f"\n\n--------\n\nDelete Line: {line} \n\nCorresponding query:\n{q.write()}"
         return diff
 
     def validate_rule_wrapper(self, chat):
@@ -228,8 +264,9 @@ class PiranhaAgent:
         except BaseException as e:
             if "QueryError" in str(e):
                 raise PiranhaAgentError(
-                    f"Piranha failed to execute. The query is not valid. {e}. "
-                    f"DO NOT USE NODES THAT YOU CANNOT SEE IN THE TREE REPRESENTATION (IMPORT_DECL) IS JAVA NOT KOTLIN!"
+                    f"Piranha failed to execute. The query is not valid. {e}."
+                    f"Do not use nodes you cannot see in the tree representation."
+                    f"Make sure you parenthesis are balanced."
                 )
             raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
         return output_summaries
@@ -237,19 +274,36 @@ class PiranhaAgent:
     def improve_rule(self, desc: str, rule: str):
         """Improves the rule by adding a filter to it.
 
+        Clone chat 15 times, and then call improve rule on each of them
+        Then, return the best rule
+
         :param desc: str, Description of what you would like to do.
         :param rule: str, Rule to improve.
         :return: str, Improved rule.
         """
 
-        # Clone self.chat 15 times, and then call improve rule on each of them
-        # Then, return the best rule
         import copy
 
-        self.chat.append_user_followup(
-            f"Can you further refine my rules? Here's what I would like to do: {desc}\n"
-            f"Here's the rule:\n {rule}"
-        )
+        # Parser the rule with toml
+        toml_dict = toml.loads(rule)
+        for rule in toml_dict.get("rules"):
+            query = rule.get("query")
+            source_tree = self.get_tree_from_code(self.source_code)
+            tree_sitter_q = self.tree_sitter_language.query(query)
+
+            captures = tree_sitter_q.captures(source_tree.root_node)
+            captured_nodes = NodeUtils.get_smallest_nonoverlapping_set(
+                [c[0] for c in captures]
+            )
+            enclosing_nodes = []
+            # Get the nodes that can be used as enclosing node for the rules
+            for node in captured_nodes:
+                while node:
+                    enclosing_nodes.append(node.sexp())
+                    node = node.parent
+
+            self.chat.append_improve_request(desc, toml.dumps(rule), enclosing_nodes)
+
         chats = [copy.deepcopy(self.chat) for _ in range(15)]
         return self.iterate_inference(chats)
 

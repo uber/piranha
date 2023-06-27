@@ -4,7 +4,7 @@ replacement pairs, as well as removing partial nodes from the pairs.
 """
 
 from collections import defaultdict, deque
-from typing import List, Dict, Deque, Tuple
+from typing import List, Dict, Deque, Tuple, Set
 
 import attr
 from tree_sitter import Tree, Node
@@ -28,7 +28,7 @@ class CommentFinder:
         type=Dict[str, List[Tree]], default=attr.Factory(lambda: defaultdict(list))
     )
     edges = attr.ib(
-        type=Dict[str, List[str]], default=attr.Factory(lambda: defaultdict(list))
+        type=Dict[str, Set[str]], default=attr.Factory(lambda: defaultdict(set))
     )
 
     def find_replacement_pairs(self) -> Dict[str, Tuple[List[Node], List[Node]]]:
@@ -66,7 +66,7 @@ class CommentFinder:
                 comment = node.text.decode("utf8")
                 if "->" in comment:
                     x, y = comment.split("->")
-                    self.edges[x[2:].strip()].append(y.strip())
+                    self.edges[x[2:].strip()].add(y.strip())
                     comment = prev_comment
                 elif "end" in comment:
                     comment = None
@@ -103,7 +103,7 @@ class CommentFinder:
                 comment = node.text.decode("utf8")
                 if "->" in comment:
                     x, y = comment.split("->")
-                    self.edges[x[2:].strip()].append(y.strip())
+                    self.edges[x[2:].strip()].add(y.strip())
                     comment = prev_comment
                 elif "end" in comment:
                     comment = None
