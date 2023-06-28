@@ -1,14 +1,15 @@
+import logging
 import os
 import time
-import logging
+
 import attr
 import openai
-
+import toml
 from flask import Flask, render_template, session
 from flask_socketio import SocketIO, join_room
-
-from rule_application import CodebaseRefactorer
 from piranha_agent import PiranhaAgent
+from rule_application import CodebaseRefactorer
+from utils.pretty_toml import PrettyTOML
 
 # Configure logging
 logger = logging.getLogger("Flask")
@@ -18,7 +19,13 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 
-# Data validation classes
+def valid_toml(instance, attribute, value):
+    try:
+        toml.loads(value)
+    except toml.TomlDecodeError as e:
+        raise ValueError("Invalid TOML data") from e
+
+
 @attr.s
 class InferData:
     source_code = attr.ib(validator=attr.validators.instance_of(str))
@@ -30,7 +37,10 @@ class InferData:
 class ImproveData:
     language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
     requirements = attr.ib(validator=attr.validators.instance_of(str))
-    rules = attr.ib(validator=attr.validators.instance_of(str))
+    rules = attr.ib(validator=valid_toml)
+
+    def __attrs_post_init__(self):
+        self.rules = toml.dumps(toml.loads(self.rules), encoder=PrettyTOML())
 
 
 @attr.s
@@ -61,6 +71,7 @@ def infer_from_example(data):
         data.source_code,
         data.target_code,
         language=data.language,
+        hints="",
     )
 
     room = session.get("room")

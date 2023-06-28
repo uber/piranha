@@ -1,6 +1,7 @@
 import json
-from typing import List, Dict
-from polyglot_piranha import Rule, RuleGraph, OutgoingEdges, Filter
+from typing import Dict, List
+
+from polyglot_piranha import Filter, OutgoingEdges, Rule, RuleGraph
 
 
 class RawRule:

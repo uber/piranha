@@ -4,10 +4,10 @@ replacement pairs, as well as removing partial nodes from the pairs.
 """
 
 from collections import defaultdict, deque
-from typing import List, Dict, Deque, Tuple, Set
+from typing import Deque, Dict, List, Set, Tuple
 
 import attr
-from tree_sitter import Tree, Node
+from tree_sitter import Node, Tree
 
 from experimental.rule_inference.utils.node_utils import NodeUtils
 

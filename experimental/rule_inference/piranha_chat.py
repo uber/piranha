@@ -1,11 +1,13 @@
 import logging
 import os
+import time
 from pathlib import Path
 from typing import List, Optional, Tuple
-from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+
 import attr
 import openai
-import time
+
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 
 logger = logging.getLogger("PiranhaAgent")
 logger.setLevel(logging.DEBUG)
@@ -173,7 +175,7 @@ You should only use nodes you see in the tree-sitter representation of the sourc
 
     """
 
-    improve_prompt = """Can you to further refine the rules? Here is the request:
+    add_filter_prompt = '''Can you to further refine this rules Here is the request:
     
 {desc}
     
@@ -183,16 +185,47 @@ You should only use nodes you see in the tree-sitter representation of the sourc
 
 ========================= Notes =========================
 
-If you think adding a filter would help, you should do it.
-Remember piranha only supports two types of filters: enclosing_node and not_enclosing_node.
-Furthermore, enclosing_node filters can be further refined with contains and not_contains.
-
 === Potential filters for enclosing node ===
 
 {enclosing_node_filters}
 
-Improve the rules and return a single toml block.
-"""
+========================= Task =========================
+
+Improve the rule by adding a filter. Remember for enclosing_node, you can use any s-expression that you have seen above.
+You are free to add as many filters as you want, and further constraint the nodes with #eq, #not-eq, and #match. However,
+you CANNOT add more nodes to the query. If you need to further constraint the enclosing node filter with contains or 
+not_contains please make sure you output a correct s-expression. For not_enclosing_node, you can use any s-expression, 
+as long as it is syntactically correct. Please output a single TOML file containing JUST the improved rule.
+
+Example for Java:
+
+```toml
+
+[[rules]]
+....
+
+[[rules.filters]] # filter 1
+enclosing_node = """(class_declaration) @class"""
+contains = """(
+    (identifier) @id (#eq? @id "x")
+)"""
+at_least = 1
+at_most = 1
+
+[[rules.filters]] # filter 2
+not_enclosing = """(method_invocation) @invk"""
+
+[[rules.filters]] # filter 3
+enclosing_node = """(class_declaration) @class"""
+not_contains = ["""(
+(method_declaration
+    (modifiers) @modifiers
+    name: (identifier) @name) @decl
+    (#eq? @name "x")
+)
+"""]
+```
+'''
 
     holes = attr.ib(type=dict)
     messages = attr.ib(type=list, default=attr.Factory(list))
@@ -211,9 +244,7 @@ Improve the rules and return a single toml block.
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
-        examples = self._get_examples("../../src/cleanup_rules/go")
-        examples = self._get_examples("../../src/cleanup_rules/swift")
-        examples = self._get_examples("../../src/cleanup_rules/kt")
+        examples += self._get_examples("../../src/cleanup_rules/kt")
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -233,25 +264,6 @@ Improve the rules and return a single toml block.
         """Add a followup message from the user after GPT replies"""
         self.messages.append({"role": "user", "content": followup_message})
 
-    def append_improve_request(
-        self, desc: str, rule: str, enclosing_node_filters: List[str]
-    ):
-        """Add a followup message from the user after GPT replies"""
-        filters = (
-            "I'm going to list code snippets and corresponding filter you can use for them. "
-            "You may use them as is or modify them as you see fit.\n\n"
-        )
-
-        for sexp in enclosing_node_filters:
-            filters += f'enclosing_node = """{sexp}"""\n\n'
-
-        request = self.improve_prompt.format(
-            desc=desc,
-            rule=rule,
-            enclosing_node_filters=filters,
-        )
-        self.messages.append({"role": "user", "content": request})
-
     def get_model_response(self):
         latest_message = self.messages[-1]
         if latest_message["role"] == "assistant":
@@ -261,6 +273,19 @@ Improve the rules and return a single toml block.
             content = completions[0]
             self.append_system_message(content)
             return content
+
+    def append_improve_request(self, desc, rule, enclosing_node_filters):
+        """Add a followup message from the user after GPT replies"""
+        self.messages.append(
+            {
+                "role": "user",
+                "content": PiranhaGPTChat.add_filter_prompt.format(
+                    desc=desc,
+                    rule=rule,
+                    enclosing_node_filters=enclosing_node_filters,
+                ),
+            }
+        )
 
     def get_completion(self, n_samples: int = 1) -> Optional[List[str]]:
         while True:

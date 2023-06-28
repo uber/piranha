@@ -1,10 +1,12 @@
+from typing import List
+
 import attr
+from comby import Comby
 from polyglot_piranha import Rule
 from tree_sitter import Node, TreeCursor
-from typing import List
+
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.rule_utils import RawRule
-from comby import Comby
 
 
 @attr.s
@@ -58,24 +60,23 @@ class QueryWriter:
             next_child = cursor.goto_next_sibling()
 
         self.count += 1
-        self.capture_groups[f"@tag{self.count}"] = node
+        node_name = f"@tag{self.count}n"
+        self.capture_groups[node_name] = node
 
         # if the node is an identifier, add it to eq constraints
         if node.child_count == 0:
-            self.query_ctrs.append(
-                f"(#eq? @tag{self.count} \"{node.text.decode('utf8')}\")"
-            )
+            self.query_ctrs.append(f"(#eq? {node_name} \"{node.text.decode('utf8')}\")")
 
-        self.outer_most_node = f"@tag{self.count}"
-        return s_exp + f") @tag{self.count}"
+        self.outer_most_node = node_name
+        return s_exp + f") {node_name}"
 
     def simplify_query(self, capture_group):
         """Simplify a query removing all the children of capture_group and replacing it with a wildcard node
         This should be replaced with piranha at some point"""
 
         comby = Comby()
-        match = f"(:[_]) {capture_group}"
-        rewrite = f"(_) {capture_group}"
+        match = f"(:[[node_name]] :[_]) {capture_group}"
+        rewrite = f"(:[[node_name]]) {capture_group}"
         self.query_str = comby.rewrite(self.query_str, match, rewrite)
 
         # Now for every child of capture_group, we need to remove equality checks from the query
@@ -85,13 +86,14 @@ class QueryWriter:
             to_remove = next(
                 key for key, value in self.capture_groups.items() if value == first
             )
-            match = f"(:[_] {to_remove} :[_])"
+            match = f"(#eq? {to_remove} :[_])"
             self.query_str = comby.rewrite(self.query_str, match, "")
             self.capture_groups.pop(to_remove, None)
             for child in first.named_children:
                 stack.append(child)
 
     def replace_with_tags(self, replace_str: str) -> str:
+        """This logic is wrong"""
         for capture_group, node in sorted(
             self.capture_groups.items(), key=lambda x: -len(x[1].text)
         ):

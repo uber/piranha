@@ -1,13 +1,9 @@
+from typing import List
+
 import attr
 import toml
-from typing import List
-from polyglot_piranha import (
-    Rule,
-    PiranhaArguments,
-    RuleGraph,
-    execute_piranha,
-    PiranhaOutputSummary,
-)
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
 
 
 @attr.s

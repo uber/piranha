@@ -1,21 +1,27 @@
+import copy
+import difflib
+import json
+import logging
 import multiprocessing
-import attr
-import toml
 import re
 from typing import List, Optional, Tuple
-import difflib
-import logging
-from experimental.rule_inference.utils.logger_formatter import CustomFormatter
-from tree_sitter_languages import get_parser, get_language
-from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
-from static_inference import Inference
-from piranha_chat import PiranhaGPTChat
-from polyglot_piranha import Rule, PiranhaArguments, RuleGraph, Filter, execute_piranha
-from experimental.rule_inference.utils.patch import Patch
-from static_inference import QueryWriter
-from tree_sitter import Tree, Node
-from experimental.rule_inference.utils.node_utils import NodeUtils
+
+import attr
+import toml
 from comment_finder import CommentFinder
+from controller import Controller
+from polyglot_piranha import (Filter, PiranhaArguments, Rule, RuleGraph,
+                              execute_piranha)
+from static_inference import Inference, QueryWriter
+from tree_sitter import Node, Tree
+from tree_sitter_languages import get_language, get_parser
+from utils.pretty_toml import PrettyTOML
+
+from experimental.rule_inference.piranha_chat import PiranhaGPTChat
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+from experimental.rule_inference.utils.node_utils import NodeUtils
+from experimental.rule_inference.utils.patch import Patch
+from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -154,9 +160,10 @@ class PiranhaAgent:
         return chat_interactions
 
     def iterate_inference(self, chat_interactions):
+        """BFS for a rule that transforms the source code into the target code."""
         max_rounds = 10
-        for chat in chat_interactions:
-            for i in range(max_rounds):
+        for i in range(max_rounds):
+            for chat in chat_interactions:
                 try:
                     file_name, toml_block = self.validate_rule_wrapper(chat)
                     self.chat = chat
@@ -220,13 +227,13 @@ class PiranhaAgent:
             toml_dict = toml.loads(toml_block)
         except Exception as e:
             raise PiranhaAgentError(
-                f"Could not create Piranha rule. The TOML block is not valid. {e}"
+                f"Could not create Piranha rule. The TOML block is not valid: {e}. "
             )
 
         piranha_summary = self.run_piranha(toml_dict)
         if not piranha_summary:
             raise PiranhaAgentError(
-                "Piranha did not generate any refactored code. Either the query or the filters are incorrect."
+                "Piranha did not generate any refactored code. Either the query or the filters are incorrect. "
             )
         refactored_code = piranha_summary[0].content
         if self.normalize_code(refactored_code) != self.normalize_code(
@@ -264,48 +271,75 @@ class PiranhaAgent:
         except BaseException as e:
             if "QueryError" in str(e):
                 raise PiranhaAgentError(
-                    f"Piranha failed to execute. The query is not valid. {e}."
-                    f"Do not use nodes you cannot see in the tree representation."
+                    f"One of the provided queries is not valid {e}. "
+                    f"Do not use nodes you cannot see in the tree representation. "
                     f"Make sure you parenthesis are balanced."
                 )
             raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
         return output_summaries
 
-    def improve_rule(self, desc: str, rule: str):
+    def improve_rule(self, task: str, rules: str):
         """Improves the rule by adding a filter to it.
 
-        Clone chat 15 times, and then call improve rule on each of them
-        Then, return the best rule
-
         :param desc: str, Description of what you would like to do.
-        :param rule: str, Rule to improve.
+        :param rule: str, Rules to improve.
         :return: str, Improved rule.
         """
+        max_rounds = 15
+        rules = toml.loads(rules)
+        chat = copy.deepcopy(self.chat)
+        for _ in range(max_rounds):
+            try:
+                controller = Controller(chat)
+                updated_rules = []
+                for rule in rules.get("rules", []):
+                    rule_str = toml.dumps(rule, encoder=PrettyTOML())
+                    should_improve = controller.should_improve_rule(task, rule_str)
+                    if should_improve:
+                        option = controller.get_option_for_improvement(rule_str)
+                        if option == "add filter":
+                            rule = self.add_filter(task, rule, chat)
+                            updated_rules.append(rule)
+                            continue
+                    updated_rules.append(rule)
+                rule_block = "\n".join(
+                    [toml.dumps(rule, encoder=PrettyTOML()) for rule in updated_rules]
+                )
+                return self.validate_rule(
+                    f"<file_name_start>rules.toml<file_name_end> ```toml\n{rule_block}\n```"
+                )
+            except Exception as e:
+                logger.debug(
+                    f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
+                )
+                chat.append_user_followup(str(e))
 
-        import copy
+    def add_filter(self, desc, rule, chat):
+        """Adds a filter to the rule that encloses the nodes of the rule."""
 
-        # Parser the rule with toml
-        toml_dict = toml.loads(rule)
-        for rule in toml_dict.get("rules"):
-            query = rule.get("query")
-            source_tree = self.get_tree_from_code(self.source_code)
-            tree_sitter_q = self.tree_sitter_language.query(query)
-
-            captures = tree_sitter_q.captures(source_tree.root_node)
-            captured_nodes = NodeUtils.get_smallest_nonoverlapping_set(
-                [c[0] for c in captures]
-            )
-            enclosing_nodes = []
-            # Get the nodes that can be used as enclosing node for the rules
-            for node in captured_nodes:
-                while node:
-                    enclosing_nodes.append(node.sexp())
-                    node = node.parent
-
-            self.chat.append_improve_request(desc, toml.dumps(rule), enclosing_nodes)
-
-        chats = [copy.deepcopy(self.chat) for _ in range(15)]
-        return self.iterate_inference(chats)
+        query = rule.get("query")
+        source_tree = self.get_tree_from_code(self.source_code)
+        tree_sitter_q = self.tree_sitter_language.query(query)
+        captures = tree_sitter_q.captures(source_tree.root_node)
+        captured_nodes = NodeUtils.get_smallest_nonoverlapping_set(
+            [c[0] for c in captures]
+        )
+        enclosing_nodes = []
+        # Get the nodes that can be used as enclosing node for the rules
+        for node in captured_nodes:
+            while node:
+                enclosing_nodes.append(node.sexp())
+                node = node.parent
+        chat.append_improve_request(
+            desc,
+            toml.dumps(rule, encoder=PrettyTOML()),
+            enclosing_nodes,
+        )
+        completion = chat.get_completion()[0]
+        pattern = r"```toml(.*?)```"
+        # Extract all toml block contents
+        toml_blocks = re.findall(pattern, completion, re.DOTALL)
+        return toml.loads(toml_blocks[0])
 
     @staticmethod
     def normalize_code(code: str) -> str:

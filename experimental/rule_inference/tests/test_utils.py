@@ -1,9 +1,10 @@
+import difflib
 from pathlib import Path
 from typing import List, Tuple
-from tree_sitter_languages import get_parser
-from rule_inference.utils import get_patches_content, get_nodes_from_patch
-import difflib
+
 import pytest
+from rule_inference.utils import get_nodes_from_patch, get_patches_content
+from tree_sitter_languages import get_parser
 
 
 @pytest.fixture
