@@ -2,8 +2,14 @@ from typing import List
 
 import attr
 import toml
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
+from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+from polyglot_piranha import (
+    PiranhaArguments,
+    PiranhaOutputSummary,
+    Rule,
+    RuleGraph,
+    execute_piranha,
+)
 
 
 @attr.s
@@ -25,13 +31,9 @@ class CodebaseRefactorer:
         """
         # Load the rules from the .toml file
         toml_dict = toml.loads(self.rules)
-
-        rules = toml_dict.get("rules", [])
-        if not rules:
-            raise Exception("TOML does not include any rule specifications.")
+        rule_graph = RawRuleGraph.from_toml(toml_dict)
 
         # Create the Piranha rule graph
-        rule_graph = self.create_rule_graph(rules)
 
         # Create the PiranhaArguments object
         args = PiranhaArguments(
@@ -39,6 +41,7 @@ class CodebaseRefactorer:
             path_to_codebase=self.path_to_codebase,
             rule_graph=rule_graph,
             dry_run=dry_run,
+            substitutions=toml_dict.get("substitutions", {})[0],
         )
 
         # Execute the refactoring

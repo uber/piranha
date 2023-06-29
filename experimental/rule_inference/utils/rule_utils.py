@@ -45,7 +45,7 @@ class RawRuleGraph:
         return "\n".join(
             [
                 "[[edges]]",
-                f'scope = "Global"',
+                f'scope = "File"',
                 f'from = "{source}"',
                 f"to = {json.dumps(destinations)}",
             ]
@@ -80,6 +80,7 @@ class RawRuleGraph:
                 replace_node=toml_rule["replace_node"],
                 replace=toml_rule["replace"],
                 filters=filters_lst,
+                holes=set(toml_rule.get("holes", [])),
             )
 
             rules.append(rule)

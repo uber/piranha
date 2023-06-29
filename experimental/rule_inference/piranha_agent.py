@@ -158,6 +158,12 @@ class PiranhaAgent:
             chat_interactions[i].append_system_message(response)
         return chat_interactions
 
+    def get_explanation(self, rules):
+        self.chat.append_explanation_request(rules)
+        response = self.chat.get_model_response()
+        response = re.sub(r"```md(.*)```", r"\1", response)
+        return response
+
     def iterate_inference(self, chat_interactions):
         """BFS for a rule that transforms the source code into the target code."""
         max_rounds = 10
@@ -304,9 +310,11 @@ class PiranhaAgent:
                 rule_block = "\n".join(
                     [toml.dumps(rule, encoder=PrettyTOML()) for rule in updated_rules]
                 )
-                return self.validate_rule(
+                validation = self.validate_rule(
                     f"<file_name_start>rules.toml<file_name_end> ```toml\n{rule_block}\n```"
                 )
+                self.chat = chat
+                return validation
             except Exception as e:
                 logger.debug(
                     f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
@@ -334,7 +342,7 @@ class PiranhaAgent:
             toml.dumps(rule, encoder=PrettyTOML()),
             enclosing_nodes,
         )
-        completion = chat.get_completion()[0]
+        completion = chat.get_model_response()
         pattern = r"```toml(.*?)```"
         # Extract all toml block contents
         toml_blocks = re.findall(pattern, completion, re.DOTALL)

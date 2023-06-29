@@ -227,6 +227,23 @@ not_contains = ["""(
 ```
 '''
 
+    explanation_request_prompt = """
+Can you explain the latest set of rules:\n{rules}\n. Do not include the edges, only the rules!!
+Please structure your response using the markdown format. This will be parsed automatically:\n
+
+========================= Output format =========================
+
+#### `<your_rule_name1>`\n
+- <Your detailed explanation>
+- <Include multiple bullet points if necessary>
+
+
+#### `<your_rule_name2>`\n
+- <Your detailed explanation>
+- <Include multiple bullet points if necessary>
+
+"""
+
     holes = attr.ib(type=dict)
     messages = attr.ib(type=list, default=attr.Factory(list))
     temperature = attr.ib(
@@ -238,13 +255,13 @@ not_contains = ["""(
         ],
     )
     model = attr.ib(
-        default="gpt-4-32k",
+        default="gpt-4",
         validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo-16k"]),
     )
 
     def __attrs_post_init__(self):
         examples = self._get_examples("../../src/cleanup_rules/java")
-        examples += self._get_examples("../../src/cleanup_rules/kt")
+        # examples += self._get_examples("../../src/cleanup_rules/kt")
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -283,6 +300,16 @@ not_contains = ["""(
                     desc=desc,
                     rule=rule,
                     enclosing_node_filters=enclosing_node_filters,
+                ),
+            }
+        )
+
+    def append_explanation_request(self, rules):
+        self.messages.append(
+            {
+                "role": "user",
+                "content": PiranhaGPTChat.explanation_request_prompt.format(
+                    rules=rules
                 ),
             }
         )

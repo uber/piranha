@@ -4,6 +4,7 @@
     codeIntputAfter: document.getElementById("code-input-after"),
     languageSelect: document.getElementById("language-select"),
     queryInput: document.getElementById("query-input"),
+    gptExplanation: document.getElementById("gpt-rule-explanation"),
     explanationInput: document.getElementById("explanation-input"),
     submitFolderButton: document.getElementById("submit-button-folder"),
     submitButton: document.getElementById("submit-button"),
@@ -126,11 +127,26 @@
   }
 
   socket.on("infer_result", function (data) {
+    var converter = new showdown.Converter();
+    var markdown = converter.makeHtml(data.gpt_output);
+    console.log(data)
+
+    // update the explanation div
+    document.getElementById('explanation').innerHTML = markdown;
+
     updateInterface(data.rule);
     displayButton(false, "Improve rule", "improvement");
   });
 
+
   socket.on("infer_progress", function (data) {
+    var converter = new showdown.Converter();
+    var markdown = converter.makeHtml(data.gpt_output);
+    console.log(data)
+
+    // update the explanation div
+    document.getElementById('explanation').innerHTML = markdown;
+
     updateInterface(data.rule);
   });
 
@@ -140,6 +156,7 @@
 
   function updateInterface(rule) {
     document.getElementById("query-container").style.display = "block";
+    document.getElementById("gpt-rule-explanation-container").style.display = "block";
     document.getElementById("explanation-container").style.display = "block";
     document.getElementById("path-container").style.display = "block";
     editors.queryEditor.setValue(rule);

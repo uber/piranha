@@ -81,12 +81,20 @@ def infer_from_example(data):
     rule_name, rule = agent.infer_rules(
         lambda intermediate_result: socketio.emit(
             "infer_progress",
-            {"rule": intermediate_result},
+            {"rule": intermediate_result, "gpt_output": ""},
             room=room,
         )
     )
     session["agent"] = agent
-    socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
+    socketio.emit(
+        "infer_result",
+        {
+            "rule_name": rule_name,
+            "rule": rule,
+            "gpt_output": agent.get_explanation(rule),
+        },
+        room=room,
+    )
 
 
 @socketio.on("improve_piranha")
@@ -95,8 +103,17 @@ def improve_rules(data):
     room = session.get("room")
     join_room(room)
 
-    rule_name, rule = session["agent"].improve_rule(data.requirements, data.rules)
-    socketio.emit("infer_result", {"rule_name": rule_name, "rule": rule}, room=room)
+    agent = session.get("agent")
+    rule_name, rule = agent.improve_rule(data.requirements, data.rules)
+    socketio.emit(
+        "infer_result",
+        {
+            "rule_name": rule_name,
+            "rule": rule,
+            "gpt_output": agent.get_explanation(rule),
+        },
+        room=room,
+    )
 
 
 if __name__ == "__main__":
