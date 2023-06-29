@@ -81,6 +81,7 @@ class RawRuleGraph:
                 replace=toml_rule["replace"],
                 filters=filters_lst,
                 holes=set(toml_rule.get("holes", [])),
+                is_seed_rule=toml_rule.get("is_seed_rule", True),
             )
 
             rules.append(rule)
