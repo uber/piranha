@@ -1,0 +1,42 @@
+[[rules]]
+name = "replace_direct_executor_import"
+query = """
+(
+    (import_declaration
+        (scoped_identifier
+            scope: (scoped_identifier
+                scope: (_) @package_scope
+                name: (identifier) @class_name)
+            name: (identifier) @method_name)
+    ) @import_declaration
+    (#eq? @class_name "MoreContextExecutors")
+    (#eq? @method_name "@directExecutor")
+)
+"""
+replace_node = "@import_declaration"
+replace = "import com.google.common.util.concurrent.MoreExecutors;\nimport @package_scope.ContextWrappers;"
+holes = ["directExecutor"]
+
+[[rules]]
+name = "replace_direct_executor_call"
+query = """
+(
+    (method_invocation
+        name: (identifier) @method_name
+        arguments: (argument_list) @arguments
+    ) @method_invocation
+    (#eq? @method_name "@directExecutor")
+)
+"""
+replace_node = "@method_invocation"
+replace = "ContextWrappers.wrap(MoreExecutors.executorDirect@arguments)"
+holes = ["directExecutor"]
+is_seed_rule = false
+
+[[edges]]
+scope = "File"
+from = "replace_direct_executor_import"
+to = ["replace_direct_executor_call"]
+
+[[substitutions]]
+directExecutor = "directExecutor"

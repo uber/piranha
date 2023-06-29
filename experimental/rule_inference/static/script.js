@@ -97,7 +97,7 @@
       folder_path: folderPath,
       language: language,
     });
-    displayButton(true, "Processing...", "folder");
+    // displayButton(true, "Processing...", "folder");
   }
 
   function emitInferEvent() {

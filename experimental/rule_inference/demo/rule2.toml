@@ -1,0 +1,39 @@
+[[rules]]
+name = "replace_import_statement"
+query = """
+(
+    (import_declaration
+        (scoped_identifier
+            scope: (scoped_identifier) @scope
+            name: (identifier) @name)
+    ) @import_decl
+    (#eq? @name "@MoreContextExecutors")
+)
+"""
+replace_node = "@import_decl"
+replace = "import com.google.common.util.concurrent.MoreExecutors; import @scope.ContextWrappers;"
+holes = ["MoreContextExecutors"]
+
+[[rules]]
+name = "replace_method_invocation"
+query = """
+(
+    (method_invocation
+        object: (identifier) @object
+        name: (identifier) @name
+        arguments: (argument_list) @args
+    ) @method_invk
+    (#eq? @object "MoreContextExecutors")
+)
+"""
+replace_node = "@method_invk"
+replace = "ContextWrappers.wrap(MoreExecutors.@name @args)"
+is_seed_rule = false
+
+[[edges]]
+scope = "File"
+from = "replace_import_statement"
+to = ["replace_method_invocation"]
+
+[[substitutions]]
+MoreContextExecutors = "MoreContextExecutors"
