@@ -2,10 +2,20 @@ from typing import List
 
 import attr
 import toml
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
+from polyglot_piranha import (
+    PiranhaArguments,
+    PiranhaOutputSummary,
+    Rule,
+    RuleGraph,
+    execute_piranha,
+)
 
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+import logging
+
+FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(logging.DEBUG)
 
 
 @attr.s

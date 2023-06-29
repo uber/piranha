@@ -1,6 +1,7 @@
 import json
 from typing import Dict, List
 
+from comby import Comby
 from polyglot_piranha import Filter, OutgoingEdges, Rule, RuleGraph
 
 
@@ -54,6 +55,10 @@ class RawRuleGraph:
     @staticmethod
     def from_toml(toml_dict) -> RuleGraph:
         rules = []
+
+        # find all rules with an in-degree of 0
+        # these are the seed rules
+
         for toml_rule in toml_dict["rules"]:
             filters = toml_rule.get("filters", [])
             filters_lst = set()
@@ -71,8 +76,6 @@ class RawRuleGraph:
                 )
 
                 filters_lst.add(piranha_filter)
-
-            # Add a check to prevent recursion
 
             rule = Rule(
                 name=toml_rule["name"],
