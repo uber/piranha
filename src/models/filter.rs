@@ -276,21 +276,21 @@ pub use filter;
 
 impl Instantiate for Filter {
   /// Create a new filter from `self` by updating the all queries (i.e., `enclosing_node`, `not_enclosing_node`, `contains`, `not_contains`) based on the substitutions.
-  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Filter {
+  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>, int_substitutions: &HashMap<String, u8>) -> Filter {
     Filter {
-      enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes),
+      enclosing_node: self.enclosing_node().instantiate(substitutions_for_holes, int_substitutions),
       outermost_enclosing_node: self
         .outermost_enclosing_node()
-        .instantiate(substitutions_for_holes),
+        .instantiate(substitutions_for_holes, int_substitutions),
       not_enclosing_node: self
         .not_enclosing_node()
-        .instantiate(substitutions_for_holes),
+        .instantiate(substitutions_for_holes, int_substitutions),
       not_contains: self
         .not_contains()
         .iter()
-        .map(|x| x.instantiate(substitutions_for_holes))
+        .map(|x| x.instantiate(substitutions_for_holes, int_substitutions))
         .collect_vec(),
-      contains: self.contains().instantiate(substitutions_for_holes),
+      contains: self.contains().instantiate(substitutions_for_holes, int_substitutions),
       at_least: self.at_least,
       at_most: self.at_most,
       child_count: self.child_count,
@@ -310,7 +310,7 @@ impl SourceCodeUnit {
     rule
       .filters()
       .iter()
-      .all(|filter| self._check(filter.clone(), node, rule_store, &updated_substitutions))
+      .all(|filter| self._check(filter.clone(), node, rule_store, &updated_substitutions, &HashMap::new()))
   }
 
   /// Determines if the given `node` meets the conditions specified by the `filter`.
@@ -328,10 +328,10 @@ impl SourceCodeUnit {
   /// If these conditions hold, the function returns true, indicating the `node` meets the `filter`'s criteria.
   fn _check(
     &self, filter: Filter, node: Node, rule_store: &mut RuleStore,
-    substitutions: &HashMap<String, String>,
+    substitutions: &HashMap<String, String>,  int_substitutions: &HashMap<String, u8>
   ) -> bool {
     let mut node_to_check = node;
-    let instantiated_filter = filter.instantiate(substitutions);
+    let instantiated_filter = filter.instantiate(substitutions, int_substitutions);
 
     if *filter.child_count() != default_child_count() {
       return node.named_child_count() == (*filter.child_count() as usize);

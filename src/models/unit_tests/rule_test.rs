@@ -48,7 +48,7 @@ fn test_rule_try_instantiate_positive() {
     (String::from("variable_name"), String::from("foobar")),
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
-  let instantiated_rule = InstantiatedRule::new(&rule, &substitutions);
+  let instantiated_rule = InstantiatedRule::new(&rule, &substitutions, &HashMap::new());
   assert!(eq_without_whitespace(
     instantiated_rule.query().get_query().as_str(),
     "(((assignment_expression left: (_) @a.lhs right: (_) @a.rhs) @abc) (#eq? @a.lhs \"foobar\"))"
@@ -69,7 +69,7 @@ fn test_rule_try_instantiate_negative() {
   let substitutions: HashMap<String, String> = HashMap::from([
     (String::from("@a.lhs"), String::from("something")), // Should not substitute, since it `a.lhs` is not in `rule.holes`
   ]);
-  let _ = InstantiatedRule::new(&rule, &substitutions);
+  let _ = InstantiatedRule::new(&rule, &substitutions, &HashMap::new());
 }
 
 /// Positive tests for `rule.get_edit` method for given rule and input source code.
@@ -100,7 +100,7 @@ fn test_get_edit_positive_recursive() {
         }
     ]
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(),&HashMap::new());
   let source_code = "class Test {
           public void foobar(){
             boolean isFlagTreated = true;
@@ -170,7 +170,7 @@ fn test_get_edit_negative_recursive() {
           }
         }";
 
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
   let mut rule_store = RuleStore::default();
 
   let args = PiranhaArgumentsBuilder::default()
@@ -207,7 +207,7 @@ fn test_get_edit_for_context_positive() {
   replace_node = "binary_expression",
   replace = ""
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
 
   let source_code = "class A {
           boolean f = something && true;
@@ -247,7 +247,7 @@ fn test_get_edit_for_context_negative() {
   replace_node = "binary_expression",
   replace = ""
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
   let source_code = "class A {
           boolean f = true;
           boolean x = something && true;
@@ -290,7 +290,7 @@ fn run_test_satisfies_filters_not_enclosing_node(
     replace= "",
     filters= [filter,]
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
   let source_code = "class Test {
       public void foobar(){
         if (isFlagTreated) {

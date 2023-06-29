@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use std::fmt;
+use std::{fmt, collections::HashMap};
 
 use colored::Colorize;
 use getset::{Getters, MutGetters};
@@ -65,7 +65,6 @@ impl Edit {
   }
   #[cfg(test)]
   pub(crate) fn delete_range(code: &str, replacement_range: Range) -> Self {
-    use std::collections::HashMap;
     Self {
       p_match: Match::new(
         code[replacement_range.start_byte..replacement_range.end_byte].to_string(),
@@ -145,7 +144,7 @@ impl SourceCodeUnit {
       .get_matches(rule, rule_store, node, recursive)
       .first()
       .map(|p_match| {
-        let replacement_string = rule.replace().instantiate(p_match.matches());
+        let replacement_string = rule.replace().instantiate(p_match.matches(), &HashMap::new());
         let edit = Edit::new(
           p_match.clone(),
           replacement_string,

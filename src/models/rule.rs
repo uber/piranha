@@ -24,7 +24,8 @@ use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Insta
 use super::{
   default_configs::{
     default_filters, default_groups, default_holes, default_is_seed_rule, default_query,
-    default_replace, default_replace_idx, default_replace_node, default_rule_name,
+    default_replace, default_replace_idx, default_replace_idx_of, default_replace_node,
+    default_rule_name,
   },
   filter::Filter,
   Validator,
@@ -62,6 +63,12 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   replace_idx: u8,
+  /// The ith (i is the int value corresponding to the tag provided) child of node corresponding to the replace_node tag will be replaced
+  #[builder(default = "default_replace_idx_of()")]
+  #[serde(default = "default_replace_idx_of")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  replace_idx_of: String,
   /// Replacement pattern
   #[builder(default = "default_replace()")]
   #[serde(default = "default_replace")]
@@ -134,6 +141,7 @@ macro_rules! piranha_rule {
                 $(, query =$query: expr)?
                 $(, replace_node = $replace_node:expr)?
                 $(, replace_idx = $replace_idx:expr)?
+                $(, replace_idx_of = $replace_idx_of:expr)?
                 $(, replace = $replace:expr)?
                 $(, holes = [$($hole: expr)*])?
                 $(, is_seed_rule = $is_seed_rule:expr)?
@@ -145,6 +153,7 @@ macro_rules! piranha_rule {
     $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace_idx($replace_idx.to_string()))?
+    $(.replace_idx_of($replace_idx_of.to_string()))?
     $(.replace($replace.to_string()))?
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
@@ -158,8 +167,8 @@ impl Rule {
   #[new]
   fn py_new(
     name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
-    replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
+    replace_idx_of: Option<String>, replace_node: Option<String>, holes: Option<HashSet<String>>,
+    groups: Option<HashSet<String>>, filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
 
@@ -174,6 +183,10 @@ impl Rule {
 
     if let Some(replace_idx) = replace_idx {
       rule_builder.replace_idx(replace_idx);
+    }
+
+    if let Some(replace_idx_of) = replace_idx_of {
+      rule_builder.replace_idx_of(replace_idx_of);
     }
 
     if let Some(replace_node) = replace_node {
@@ -223,7 +236,9 @@ pub(crate) struct InstantiatedRule {
 }
 
 impl InstantiatedRule {
-  pub(crate) fn new(rule: &Rule, substitutions: &HashMap<String, String>) -> Self {
+  pub(crate) fn new(
+    rule: &Rule, substitutions: &HashMap<String, String>, int_substitutions: &HashMap<String, u8>,
+  ) -> Self {
     let substitutions_for_holes: HashMap<String, String> = rule
       .holes()
       .iter()
@@ -236,7 +251,7 @@ impl InstantiatedRule {
       panic!("{}", format!( "Could not instantiate the rule {rule:?} with substitutions {substitutions_for_holes:?}").red());
     }
     InstantiatedRule {
-      rule: rule.instantiate(&substitutions_for_holes),
+      rule: rule.instantiate(&substitutions_for_holes, int_substitutions),
       substitutions: substitutions_for_holes,
     }
   }
@@ -280,11 +295,25 @@ impl Instantiate for Rule {
   /// Create a new query from `self` by updating the `query` and `replace` based on the substitutions.
   /// This functions assumes that each hole in the rule can be substituted.
   /// i.e. It assumes that `substitutions_for_holes` is exhaustive and complete
-  fn instantiate(&self, substitutions_for_holes: &HashMap<String, String>) -> Rule {
+  fn instantiate(
+    &self, substitutions_for_holes: &HashMap<String, String>,
+    int_substitutions: &HashMap<String, u8>,
+  ) -> Rule {
     let updated_rule = self.clone();
     Rule {
-      query: updated_rule.query().instantiate(substitutions_for_holes),
-      replace: updated_rule.replace().instantiate(substitutions_for_holes),
+      query: updated_rule
+        .query()
+        .instantiate(substitutions_for_holes, int_substitutions),
+      replace: updated_rule
+        .replace()
+        .instantiate(substitutions_for_holes, int_substitutions),
+      replace_idx: if *updated_rule.replace_idx_of() != default_replace_idx_of() {
+        *int_substitutions
+          .get(updated_rule.replace_idx_of())
+          .unwrap()
+      } else {
+        default_replace_idx()
+      },
       ..updated_rule
     }
   }

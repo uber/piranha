@@ -55,7 +55,11 @@ impl RuleStore {
 
     for rule in args.rule_graph().rules().clone() {
       if *rule.is_seed_rule() {
-        rule_store.add_to_global_rules(&InstantiatedRule::new(&rule, &args.input_substitutions()));
+        rule_store.add_to_global_rules(&InstantiatedRule::new(
+          &rule,
+          &args.input_substitutions(),
+          &args.input_int_substitutions(),
+        ));
       }
     }
     trace!("Rule Store {}", format!("{rule_store:#?}"));

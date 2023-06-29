@@ -183,7 +183,7 @@ impl RuleGraph {
         // Group the next rules based on the scope
         next_rules.collect(
           String::from(&scope),
-          InstantiatedRule::new(to_rule_name, tag_matches),
+          InstantiatedRule::new(to_rule_name, tag_matches, &HashMap::new()),
         );
       }
     }

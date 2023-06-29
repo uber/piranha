@@ -44,7 +44,8 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
     .arg("--dry-run")
     .args(["-s", "str_literal=dependency2"])
     .args(["-s", "str_to_replace=dependency1"])
-    .args(["-s", "str_replacement=dependency1_1"]);
+    .args(["-s", "str_replacement=dependency1_1"])
+    .args(["-i", "foo=1"]);
 
   cmd.assert().success();
   let content = read_file(&temp_file).unwrap();

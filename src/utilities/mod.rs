@@ -101,6 +101,18 @@ pub(crate) fn parse_key_val(
   Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
 }
 
+/// Parse a single key-value pair
+/// I have literally copy pasted this method from here
+/// https://github.com/clap-rs/clap/blob/master/examples/typed-derive.rs#L48
+pub(crate) fn parse_key_val_int(
+  s: &str,
+) -> Result<(String, u8), Box<dyn Error + Send + Sync + 'static>> {
+  let pos = s
+    .find('=')
+    .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{s}`"))?;
+  Ok((s[..pos].parse()?, s[pos + 1..].parse()?))
+}
+
 pub(crate) fn parse_glob_pattern(
   s: &str,
 ) -> Result<Pattern, Box<dyn Error + Send + Sync + 'static>> {
@@ -157,11 +169,11 @@ pub(crate) trait Instantiate {
   ///
   /// * `input_string` : the string to be transformed
   /// * `substitutions` : a map between tree-sitter tag and the replacement string
-  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self;
+  fn instantiate(&self, substitutions: &HashMap<String, String>, int_substitutions_for_holes: &HashMap<String, u8>) -> Self;
 }
 
 impl Instantiate for String {
-  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self {
+  fn instantiate(&self, substitutions: &HashMap<String, String>, _: &HashMap<String, u8>) -> Self {
     let mut output = self.to_string();
     for (tag, substitute) in substitutions {
       // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
@@ -173,12 +185,12 @@ impl Instantiate for String {
 }
 
 impl Instantiate for TSQuery {
-  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self {
+  fn instantiate(&self, substitutions: &HashMap<String, String>, int_substitutions: &HashMap<String, u8>) -> Self {
     let substitutions = substitutions
       .iter()
       .map(|(k, v)| (k.to_string(), v.replace('\n', "\\n")))
       .collect();
-    TSQuery::new(self.get_query().instantiate(&substitutions))
+    TSQuery::new(self.get_query().instantiate(&substitutions, int_substitutions))
   }
 }
 

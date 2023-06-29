@@ -5,7 +5,7 @@ query = """(
  (#eq? @name "add")
 )"""
 replace_node = "args"
-replace_idx = 1
+replace_idx = "one"
 replace = ""
 [[rules.filters]]
 sibling_count = 3
