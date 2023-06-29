@@ -17,7 +17,7 @@ logger = logging.getLogger("Flask")
 
 # Create Flask app and SocketIO app
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
 
 
 def valid_toml(instance, attribute, value):
