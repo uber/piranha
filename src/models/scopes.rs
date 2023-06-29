@@ -11,6 +11,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use std::collections::HashMap;
+
 use derive_builder::Builder;
 use getset::Getters;
 use log::trace;
@@ -73,7 +75,7 @@ impl SourceCodeUnit {
         ) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return m.scope().instantiate(p_match.matches());
+          return m.scope().instantiate(p_match.matches(), &HashMap::new());
         }
       }
       if let Some(parent) = changed_node.parent() {

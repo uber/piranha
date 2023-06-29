@@ -140,7 +140,7 @@ fn run_test_satisfies_filters(
             )",
       filters= [filter,]
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
   let source_code = "class Test {
         public void foobar(){
             boolean isFlagTreated = true;
@@ -301,7 +301,7 @@ fn test_satisfies_filters_not_contains_positive() {
     }]
 
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(),&HashMap::new());
   let source_code = "class Test {
       public void foobar(){
         boolean isFlagTreated = true;
@@ -366,7 +366,7 @@ fn test_satisfies_filters_not_contains_negative() {
       )",]
     }]
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
   let source_code = "class Test {
       public void foobar(){
         boolean isFlagTreated = true;
@@ -424,7 +424,7 @@ fn test_satisfies_filters_child_count() {
       , child_count = 3
     }]
   };
-  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new());
+  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new(), &HashMap::new());
 
   let rule_neg = piranha_rule! {
     name= "test",
@@ -440,7 +440,7 @@ fn test_satisfies_filters_child_count() {
       , child_count = 2
     }]
   };
-  let rule_neg = InstantiatedRule::new(&rule_neg, &HashMap::new());
+  let rule_neg = InstantiatedRule::new(&rule_neg, &HashMap::new(), &HashMap::new());
 
   let source_code = "class Test {
       public void foobar(){
@@ -494,7 +494,7 @@ fn test_satisfies_filters_sibling_count() {
       , sibling_count = 3
     }]
   };
-  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new());
+  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new(), &HashMap::new());
 
   let rule_neg = piranha_rule! {
     name= "test",
@@ -511,7 +511,7 @@ fn test_satisfies_filters_sibling_count() {
       , sibling_count = 2
     }]
   };
-  let rule_neg = InstantiatedRule::new(&rule_neg, &HashMap::new());
+  let rule_neg = InstantiatedRule::new(&rule_neg, &HashMap::new(),&HashMap::new());
 
   let source_code = "class Test {
       public void foobar(){
@@ -561,7 +561,7 @@ fn run_test_satisfies_filters_without_enclosing(
             )",
       filters= [filter,]
   };
-  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new(), &HashMap::new());
   let source_code = "class Test {
         public void foobar(){
             boolean isFlagTreated = true;
@@ -645,7 +645,7 @@ fn test_satisfies_outermost_enclosing_node() {
       , contains = "((method_invocation name: (_) @mname) @mi (#eq? @mname \"foobar\"))"
     }]
   };
-  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new());
+  let rule_positive = InstantiatedRule::new(&rule_positive, &HashMap::new(), &HashMap::new());
 
   let rule_negative = piranha_rule! {
     name= "test",
@@ -658,7 +658,7 @@ fn test_satisfies_outermost_enclosing_node() {
       , not_contains = ["((method_invocation name: (_) @mname) @mi (#eq? @mname \"foobar\"))",]
     }]
   };
-  let rule_negative = InstantiatedRule::new(&rule_negative, &HashMap::new());
+  let rule_negative = InstantiatedRule::new(&rule_negative, &HashMap::new(), &HashMap::new());
 
   let source_code = "class OuterClass {
 

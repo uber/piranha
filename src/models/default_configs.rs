@@ -47,6 +47,10 @@ pub fn default_substitutions() -> Vec<(String, String)> {
   vec![]
 }
 
+pub fn default_substitutions_int() -> Vec<(String, u8)> {
+  vec![]
+}
+
 pub fn default_delete_file_if_empty() -> bool {
   true
 }
@@ -109,6 +113,10 @@ pub fn default_replace_node() -> String {
 
 pub fn default_replace_idx() -> u8 {
   u8::MAX
+}
+
+pub fn default_replace_idx_of() -> String {
+  String::new()
 }
 
 pub fn default_replace() -> String {

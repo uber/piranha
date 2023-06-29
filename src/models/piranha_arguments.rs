@@ -18,13 +18,13 @@ use super::{
     default_dry_run, default_exclude, default_global_tag_prefix, default_include,
     default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
     default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
-    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
+    default_rule_graph, default_substitutions, default_substitutions_int, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
   source_code_unit::SourceCodeUnit,
 };
-use crate::utilities::{parse_glob_pattern, parse_key_val};
+use crate::utilities::{parse_glob_pattern, parse_key_val, parse_key_val_int};
 use clap::builder::TypedValueParser;
 use clap::Parser;
 use derive_builder::Builder;
@@ -70,11 +70,17 @@ pub struct PiranhaArguments {
   #[clap(short = 't', long, default_value_t = default_code_snippet())]
   code_snippet: String,
 
-  /// These substitutions instantiate the initial set of rules.
+  /// These string substitutions instantiate the initial set of rules.
   /// Usage : -s stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
   #[builder(default = "default_substitutions()")]
   #[clap(short = 's', value_parser = parse_key_val)]
   substitutions: Vec<(String, String)>,
+
+  /// These integer substitutions instantiate the initial set of rules.
+  /// Usage : -i stale_flag_name=SOME_FLAG -s namespace=SOME_NS1
+  #[builder(default = "default_substitutions_int()")]
+  #[clap(short = 'i', value_parser = parse_key_val_int)]
+  substitutions_int: Vec<(String, u8)>,
 
   /// Directory containing the configuration files -  `rules.toml` and  `edges.toml` (optional)
   #[get = "pub"]
@@ -178,7 +184,7 @@ impl PiranhaArguments {
   #[new]
   fn py_new(
     language: String, path_to_codebase: Option<String>, include: Option<Vec<String>>,
-    exclude: Option<Vec<String>>, substitutions: Option<&PyDict>,
+    exclude: Option<Vec<String>>, substitutions: Option<&PyDict>, substitutions_int: Option<&PyDict>,
     path_to_configurations: Option<String>, rule_graph: Option<RuleGraph>,
     code_snippet: Option<String>, dry_run: Option<bool>, cleanup_comments: Option<bool>,
     cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
@@ -189,6 +195,12 @@ impl PiranhaArguments {
     let subs = substitutions.map_or(vec![], |s| {
       s.iter()
         .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect_vec()
+    });
+
+    let subs_int: Vec<(String, u8)> = substitutions_int.map_or(vec![], |s| {
+      s.iter()
+        .map(|(k, v)| (k.to_string(), v.to_string().parse().unwrap()))
         .collect_vec()
     });
 
@@ -214,6 +226,7 @@ impl PiranhaArguments {
       .code_snippet(code_snippet.unwrap_or_else(default_code_snippet))
       .language(PiranhaLanguage::from(language.as_str()))
       .substitutions(subs)
+      .substitutions_int(subs_int)
       .dry_run(dry_run.unwrap_or_else(default_dry_run))
       .cleanup_comments(cleanup_comments.unwrap_or_else(default_cleanup_comments))
       .cleanup_comments_buffer(
@@ -244,6 +257,7 @@ impl PiranhaArguments {
     PiranhaArgumentsBuilder::default()
       .path_to_codebase(p.path_to_codebase().to_string())
       .substitutions(p.substitutions.clone())
+      .substitutions_int(p.substitutions_int.clone())
       .language(p.language().clone())
       .path_to_configurations(p.path_to_configurations().to_string())
       .path_to_output_summary(p.path_to_output_summary().clone())
@@ -259,6 +273,10 @@ impl PiranhaArguments {
 
   pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {
     self.substitutions.iter().cloned().collect()
+  }
+
+  pub(crate) fn input_int_substitutions(&self) -> HashMap<String, u8> {
+    self.substitutions_int.iter().cloned().collect()
   }
 }
 

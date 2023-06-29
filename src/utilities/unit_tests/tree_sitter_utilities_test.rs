@@ -135,7 +135,7 @@ fn test_instantiate() {
   ]);
   assert_eq!(
     TSQuery("@variable_name foo bar @init".to_string())
-      .instantiate(&substitutions)
+      .instantiate(&substitutions, &HashMap::new())
       .0,
     "isFlagTreated foo bar true"
   )
