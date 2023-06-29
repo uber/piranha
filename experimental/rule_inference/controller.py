@@ -3,8 +3,9 @@ from typing import Any, Dict
 
 import attr
 import toml
-from piranha_chat import PiranhaGPTChat
-from utils.pretty_toml import PrettyTOML
+
+from experimental.rule_inference.piranha_chat import PiranhaGPTChat
+from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 
 # Define the option constants
 ANSWER_OPTIONS = ["yes", "no"]
@@ -13,8 +14,7 @@ JSON_FILE_FORMAT = '{{"reasoning": "<your reasoning>", "answer": "{options}"}}'
 
 
 class ControllerError(Exception):
-    """Custom Exception class for handling Controller specific errors.
-    """
+    """Custom Exception class for handling Controller specific errors."""
 
 
 @attr.s
@@ -36,10 +36,10 @@ class Controller:
         :rtype: str
         """
         self.chat.append_user_followup(task_description)
-        completion = self.chat.get_model_response()
 
         while True:
             try:
+                completion = self.chat.get_model_response()
                 completion = json.loads(completion)
                 answer = completion.get("answer")
                 if answer not in options:

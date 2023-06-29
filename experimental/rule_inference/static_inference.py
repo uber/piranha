@@ -2,7 +2,6 @@ from typing import List
 
 import attr
 from comby import Comby
-from polyglot_piranha import Rule
 from tree_sitter import Node, TreeCursor
 
 from experimental.rule_inference.utils.node_utils import NodeUtils
@@ -122,8 +121,7 @@ class Inference:
         if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
             return self.create_replacement()
         elif len(self.nodes_after) > 0:
-            # We don't support additions for now. TODO
-            pass
+            raise self.create_addition()
         elif len(self.nodes_before) > 0:
             return self.create_deletion()
 
@@ -177,7 +175,7 @@ class Inference:
             )
 
         else:
-            # find the smallest common acesotr of _nodes_before
+            # find the smallest common ancestor of _nodes_before
             ancestor = NodeUtils.find_lowest_common_ancestor(self.nodes_before)
             replacement_str = NodeUtils.convert_to_source(
                 ancestor, exclude=self.nodes_before
@@ -217,7 +215,7 @@ class Inference:
                 replace="",
             )
 
-        pass
+        raise NotImplementedError
 
     def create_addition(self) -> str:
-        pass
+        raise NotImplementedError

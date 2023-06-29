@@ -7,9 +7,10 @@ import openai
 import toml
 from flask import Flask, render_template, session
 from flask_socketio import SocketIO, join_room
-from piranha_agent import PiranhaAgent
-from rule_application import CodebaseRefactorer
 from utils.pretty_toml import PrettyTOML
+
+from experimental.rule_inference.piranha_agent import PiranhaAgent
+from experimental.rule_inference.rule_application import CodebaseRefactorer
 
 # Configure logging
 logger = logging.getLogger("Flask")

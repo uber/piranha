@@ -82,7 +82,7 @@ def test_should_improve_rule():
 
 def test_get_option_for_improvement():
     rule = "Test rule"
-    correct_answer = "yes"
+    correct_answer = "add filter"
     valid_json_correct_answer = json.dumps(
         {"reasoning": "Test reasoning", "answer": correct_answer}
     )

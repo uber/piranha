@@ -8,20 +8,19 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from comment_finder import CommentFinder
-from controller import Controller
-from polyglot_piranha import (Filter, PiranhaArguments, Rule, RuleGraph,
-                              execute_piranha)
-from static_inference import Inference, QueryWriter
-from tree_sitter import Node, Tree
+from polyglot_piranha import PiranhaArguments, Rule, RuleGraph, execute_piranha
+from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
-from utils.pretty_toml import PrettyTOML
 
+from experimental.rule_inference.comment_finder import CommentFinder
+from experimental.rule_inference.controller import Controller
 from experimental.rule_inference.piranha_chat import PiranhaGPTChat
+from experimental.rule_inference.static_inference import Inference, QueryWriter
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.patch import Patch
-from experimental.rule_inference.utils.rule_utils import RawRule, RawRuleGraph
+from experimental.rule_inference.utils.pretty_toml import PrettyTOML
+from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -80,7 +79,7 @@ class PiranhaAgent:
 
         rules = {}
         finder = CommentFinder(source_tree, target_tree)
-        pairs = finder.find_replacement_pairs()
+        pairs = finder.process_trees()
         for comment_name, (nodes_before, nodes_after) in pairs.items():
             inference_engine = Inference(nodes_before, nodes_after)
             rule = inference_engine.static_infer()
