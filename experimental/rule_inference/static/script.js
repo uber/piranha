@@ -193,7 +193,7 @@
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
       button.classList.add("btn-primary");
-      button.textContent = "Apply rule to \"code before\"";
+      button.textContent = "Apply rule to before";
     }, 3000);
 
     return button;
