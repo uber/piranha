@@ -7,8 +7,13 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
+from polyglot_piranha import (
+    PiranhaArguments,
+    PiranhaOutputSummary,
+    Rule,
+    RuleGraph,
+    execute_piranha,
+)
 from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
 
@@ -31,14 +36,23 @@ logger.addHandler(ch)
 
 
 def test_piranha_timeout(source_code: str, language: str, raw_graph: RawRuleGraph):
+    # Prepare arguments for Piranha execution
     args = PiranhaArguments(
         code_snippet=source_code,
         language=language,
         rule_graph=raw_graph.to_graph(),
         dry_run=True,
     )
-    execute_piranha(args)
-    return True
+
+    # Execute Piranha
+    piranha_results = execute_piranha(args)
+
+    # Check if the execution returns results, if yes then return the content of the first result
+    # Otherwise, return an empty list
+    if piranha_results:
+        return piranha_results[0].content
+    else:
+        return []
 
 
 def run_piranha_with_timeout(
@@ -62,16 +76,7 @@ def run_piranha_with_timeout(
             test_piranha_timeout,
             (source_code, language, raw_graph),
         )
-        async_result.get(timeout=timeout)
-
-    # This is a hack because PiranhaOutputSummary is not serializable
-    args = PiranhaArguments(
-        code_snippet=source_code,
-        language=language,
-        rule_graph=raw_graph.to_graph(),
-        dry_run=True,
-    )
-    return execute_piranha(args)
+        return async_result.get(timeout=timeout)
 
 
 class PiranhaAgentError(Exception):
@@ -266,12 +271,11 @@ class PiranhaAgent:
                 f"Could not create Piranha rule. The TOML block is not valid: {e}. "
             )
 
-        piranha_summary = self.run_piranha(toml_dict)
-        if not piranha_summary:
+        refactored_code = self.run_piranha(toml_dict)
+        if not refactored_code:
             raise PiranhaAgentError(
                 "Piranha did not generate any refactored code. Either the query or the filters are incorrect. "
             )
-        refactored_code = piranha_summary[0].content
         if self.normalize_code(refactored_code) != self.normalize_code(
             self.target_code
         ):

@@ -106,6 +106,9 @@
       rules: rules,
       language: language,
     });
+
+    let button = document.getElementById("test-button");
+    button.disabled = true;
   }
   function emitRefactorEvent() {
     const folderPath = document.getElementById("folder-input").value;
@@ -177,7 +180,7 @@
     console.log(data);
     // Here you may want to handle the test result
     let button = document.getElementById("test-button");
-
+    button.disabled = false;
     // Add appropriate CSS class based on the test result
     button.classList.remove("btn-success", "btn-danger");
     if (data.test_result === "Success") {
