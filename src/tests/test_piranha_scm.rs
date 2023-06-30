@@ -11,7 +11,17 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::default_configs::TS_SCHEME;
+use std::path::PathBuf;
+
+use crate::{
+  execute_piranha,
+  models::{
+    default_configs::TS_SCHEME, language::PiranhaLanguage,
+    piranha_arguments::PiranhaArgumentsBuilder,
+  },
+  tests::initialize,
+  utilities::eq_without_whitespace,
+};
 
 use super::create_rewrite_tests;
 
@@ -19,4 +29,33 @@ create_rewrite_tests! {
   TS_SCHEME,
   test_simple_rename: "simple_rename", 1;
 
+}
+
+#[test]
+fn test_simple_rename_code_snippet() {
+  initialize();
+  let path_to_scenario = PathBuf::from("test-resources")
+    .join(TS_SCHEME)
+    .join("simple_rename");
+  let code_snippet = "(method_declaration name: (_) @name) @md";
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .path_to_configurations(
+      path_to_scenario
+        .join("configurations")
+        .to_str()
+        .unwrap()
+        .to_string(),
+    )
+    .language(PiranhaLanguage::from(TS_SCHEME))
+    .code_snippet(code_snippet.to_string())
+    .build();
+
+  let expected = "(method_declaration name: (_) @method_name) @md";
+  let output_summaries = execute_piranha(&piranha_arguments);
+  assert!(output_summaries.len() == 1);
+  assert!(eq_without_whitespace(
+    output_summaries[0].content(),
+    expected
+  ));
+  assert!(output_summaries[0].original_content().eq(code_snippet));
 }
