@@ -3,7 +3,6 @@ from typing import Any, Dict
 
 import attr
 import toml
-
 from experimental.rule_inference.piranha_chat import PiranhaGPTChat
 from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 
