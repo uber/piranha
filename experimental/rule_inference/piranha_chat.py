@@ -107,7 +107,7 @@ contains =
 # Define the minimum and maximum number of children that should match the 'contains' pattern (optional)
 at_least = 1
 at_most = 5
-``
+```
 
 ========================= Edge Explanation =========================
 
@@ -200,7 +200,7 @@ You should only use nodes you see in the tree-sitter representation of the sourc
     """
 
     add_filter_prompt = '''
-Can you to further refine this rules Here is the request:
+Can you to further refine the following rule? Here is the request:
     
 {desc}
     
