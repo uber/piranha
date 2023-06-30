@@ -255,7 +255,7 @@ Please structure your response using the markdown format. This will be parsed au
         ],
     )
     model = attr.ib(
-        default="gpt-4",
+        default="gpt-4-32k",
         validator=attr.validators.in_(["gpt-4", "gpt-4-32k", "gpt-3.5-turbo-16k"]),
     )
 

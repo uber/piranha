@@ -100,7 +100,7 @@ class QueryWriter:
                 continue
             text_repr = NodeUtils.convert_to_source(node)
             if text_repr in replace_str:
-                self.simplify_query(capture_group)
+                # self.simplify_query(capture_group)
                 replace_str = replace_str.replace(text_repr, f"{capture_group}")
         return replace_str
 

@@ -13,10 +13,6 @@ from polyglot_piranha import (
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 import logging
 
-FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
-logging.basicConfig(format=FORMAT)
-logging.getLogger().setLevel(logging.DEBUG)
-
 
 @attr.s
 class CodebaseRefactorer:
@@ -36,6 +32,13 @@ class CodebaseRefactorer:
         Returns a list of piranha summaries
         """
         # Load the rules from the .toml file
+
+        FORMAT = (
+            "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+        )
+        logging.basicConfig(format=FORMAT)
+        logging.getLogger().setLevel(logging.DEBUG)
+
         toml_dict = toml.loads(self.rules)
         rule_graph = RawRuleGraph.from_toml(toml_dict)
 
@@ -45,9 +48,9 @@ class CodebaseRefactorer:
         args = PiranhaArguments(
             language=self.language,
             path_to_codebase=self.path_to_codebase,
-            rule_graph=rule_graph,
+            rule_graph=rule_graph.to_graph(),
             dry_run=dry_run,
-            substitutions=toml_dict.get("substitutions", {})[0],
+            substitutions=toml_dict.get("substitutions", [{}])[0],
         )
 
         # Execute the refactoring

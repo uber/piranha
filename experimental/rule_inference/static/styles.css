@@ -92,3 +92,7 @@ a.highlighted {
 #submit-folder-button:hover {
   background-color: #0069d9;
 }
+
+.custom-container {
+  max-width: 80%; /* Adjust this value to your liking */
+}

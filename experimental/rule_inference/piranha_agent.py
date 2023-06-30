@@ -264,10 +264,11 @@ class PiranhaAgent:
             raise PiranhaAgentError("TOML does not include any rule specifications.")
         try:
             raw_graph = RawRuleGraph.from_toml(toml_dict)
+            logger.debug(f"Raw graph: {raw_graph.to_toml()}")
             args = PiranhaArguments(
                 code_snippet=self.source_code,
                 language=self.language,
-                rule_graph=raw_graph,
+                rule_graph=raw_graph.to_graph(),
                 dry_run=True,
             )
 

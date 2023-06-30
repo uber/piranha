@@ -103,7 +103,7 @@ def improve_rules(data):
     room = session.get("room")
     join_room(room)
 
-    agent = session.get("agent")
+    agent: PiranhaAgent = session.get("agent")
     rule_name, rule = agent.improve_rule(data.requirements, data.rules)
     socketio.emit(
         "infer_result",
