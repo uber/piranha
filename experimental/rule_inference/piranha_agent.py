@@ -1,6 +1,5 @@
 import copy
 import difflib
-import json
 import logging
 import multiprocessing
 import re
@@ -8,7 +7,8 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from polyglot_piranha import PiranhaArguments, Rule, RuleGraph, execute_piranha
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
 from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
 
@@ -18,7 +18,6 @@ from experimental.rule_inference.piranha_chat import PiranhaGPTChat
 from experimental.rule_inference.static_inference import Inference, QueryWriter
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.node_utils import NodeUtils
-from experimental.rule_inference.utils.patch import Patch
 from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
@@ -29,6 +28,50 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
+
+
+def test_piranha_timeout(source_code: str, language: str, raw_graph: RawRuleGraph):
+    args = PiranhaArguments(
+        code_snippet=source_code,
+        language=language,
+        rule_graph=raw_graph.to_graph(),
+        dry_run=True,
+    )
+    execute_piranha(args)
+    return True
+
+
+def run_piranha_with_timeout(
+    source_code: str,
+    language: str,
+    raw_graph: RawRuleGraph,
+    timeout: Optional[int] = 10,
+) -> Optional[List[PiranhaOutputSummary]]:
+    """
+    Run piranha with a timeout.
+
+    :param raw_graph: RawRuleGraph object representing the rule graph
+    :param language: Language of the source code
+    :param source_code: Actual code snippet
+    :param timeout: Timeout value in seconds
+
+    :return: Result from execute_piranha function if it completes within timeout, else None
+    """
+    with multiprocessing.Pool(processes=1) as pool:
+        async_result = pool.apply_async(
+            test_piranha_timeout,
+            (source_code, language, raw_graph),
+        )
+        async_result.get(timeout=timeout)
+
+    # This is a hack because PiranhaOutputSummary is not serializable
+    args = PiranhaArguments(
+        code_snippet=source_code,
+        language=language,
+        rule_graph=raw_graph.to_graph(),
+        dry_run=True,
+    )
+    return execute_piranha(args)
 
 
 class PiranhaAgentError(Exception):
@@ -51,6 +94,7 @@ class PiranhaAgent:
     tree_sitter_language = attr.ib(default=None)
     tree_sitter_parser = attr.ib(default=None)
     explanation = attr.ib(default=None)
+    rules = attr.ib(default=None)
     language_mappings = {
         "java": "java",
         "kt": "kotlin",
@@ -68,7 +112,7 @@ class PiranhaAgent:
         tree = self.parser.parse(bytes(code, "utf8"))
         return tree
 
-    def infer_rules(self, callback=None) -> Optional[Tuple[str, str]]:
+    def infer_rules_init(self) -> str:
         """Implements the inference process of the Piranha Agent.
         The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
         If the rule transforms the source code into the target code, the rule is returned.
@@ -96,12 +140,11 @@ class PiranhaAgent:
             {"from": k, "to": v, "scope": "File"} for k, v in edges.items() if v != []
         ]
         graph = RawRuleGraph(list(rules.values()), edges)
-        rules = graph.to_toml()
+        self.rules = graph.to_toml()
+        return self.rules
 
-        if callback:
-            callback(rules)
-
-        chat_interactions = self.create_chats(rules)
+    def infer_rules(self) -> Optional[Tuple[str, str]]:
+        chat_interactions = self.create_chats(self.rules)
 
         # For each completion try to transform the source code into the target code
         return self.iterate_inference(chat_interactions)
@@ -187,24 +230,9 @@ class PiranhaAgent:
             f"Failed to generate a rule after {max_rounds} rounds of interaction with GPT-4."
         )
 
-    def validate_rule_wrapper(self, chat) -> Tuple[str, str, str]:
-        # with Pool(processes=1) as pool:
+    def validate_rule_wrapper(self, chat):
         completion = chat.get_model_response()
-        # result = pool.apply_async(self.validate_rule, (completion,))
-        try:
-            file_name, toml_block, explanation = self.validate_rule(completion)
-            # file_name, toml_block = result.get(
-            #    timeout=5
-            # )  # Add a timeout of 5 seconds
-            if file_name and toml_block:
-                return file_name, toml_block, explanation
-
-        except multiprocessing.context.TimeoutError:
-            raise PiranhaAgentError(
-                "Piranha in infinite loop. Please add a filter or constraint the query. "
-                "Remember you can only constraint queries with #eq, #not-eq, #match. "
-                "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
-            )
+        return self.validate_rule(completion)
 
     def validate_rule(self, completion) -> Tuple[str, str, str]:
         # Define regex pattern for ```toml block
@@ -268,15 +296,17 @@ class PiranhaAgent:
         try:
             raw_graph = RawRuleGraph.from_toml(toml_dict)
             logger.debug(f"Raw graph: {raw_graph.to_toml()}")
-            args = PiranhaArguments(
-                code_snippet=self.source_code,
-                language=self.language,
-                rule_graph=raw_graph.to_graph(),
-                dry_run=True,
+
+            return run_piranha_with_timeout(
+                self.source_code, self.language, raw_graph, timeout=5
             )
 
-            output_summaries = execute_piranha(args)
-
+        except multiprocessing.context.TimeoutError:
+            raise PiranhaAgentError(
+                "Piranha in infinite loop. Please add a filter or constraint the query. "
+                "Remember you can only constraint queries with #eq, #not-eq, #match. "
+                "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
+            )
         except BaseException as e:
             if "QueryError" in str(e):
                 raise PiranhaAgentError(

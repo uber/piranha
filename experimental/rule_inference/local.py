@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import os
 import time
 
@@ -78,13 +79,15 @@ def infer_from_example(data):
     room = session.get("room")
     join_room(room)
 
-    rule_name, rule = agent.infer_rules(
-        lambda intermediate_result: socketio.emit(
-            "infer_progress",
-            {"rule": intermediate_result, "gpt_output": ""},
-            room=room,
-        )
+    first_it = agent.infer_rules_init()
+    socketio.emit(
+        "infer_progress",
+        {"rule": first_it, "gpt_output": ""},
+        room=room,
     )
+
+    rule_name, rule = agent.infer_rules()
+
     session["agent"] = agent
     socketio.emit(
         "infer_result",
@@ -133,11 +136,9 @@ def test_rule(data):
         hints="",
     )
 
-    completion = f"```toml{rules}```\n```md```"
-
     try:
-        test_result = agent.validate_rule(completion)
-        # Emit the result back to the client
+        completion = f"```toml{rules}```\n```md```"
+        agent.validate_rule(completion)
         socketio.emit(
             "test_result",
             {
