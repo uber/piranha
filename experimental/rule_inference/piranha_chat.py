@@ -277,7 +277,7 @@ Not surrounding the query with parenthesis (...):
 enclosing_node = "(identifier) @name) (#eq? @name \"x\")"
 
 is wrong!! it should be:
-enclosing_node = """((identifier) @name) (#eq? @name "x")"""
+enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
 
 ```
 '''

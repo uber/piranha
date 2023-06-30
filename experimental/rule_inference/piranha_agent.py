@@ -40,14 +40,15 @@ def test_piranha_timeout(source_code: str, language: str, raw_graph: RawRuleGrap
     )
 
     # Execute Piranha
-    piranha_results = execute_piranha(args)
-
-    # Check if the execution returns results, if yes then return the content of the first result
-    # Otherwise, return an empty list
-    if piranha_results:
-        return piranha_results[0].content
-    else:
-        return []
+    try:
+        piranha_results = execute_piranha(args)
+        # Check if the execution returns results, if yes then return the content of the first result
+        # Otherwise, return an empty list
+        if piranha_results:
+            return piranha_results[0].content, True
+        return "", True
+    except BaseException as e:
+        return str(e), False
 
 
 def run_piranha_with_timeout(
@@ -55,7 +56,7 @@ def run_piranha_with_timeout(
     language: str,
     raw_graph: RawRuleGraph,
     timeout: Optional[int] = 10,
-) -> Optional[List[PiranhaOutputSummary]]:
+) -> Tuple[str, bool]:
     """
     Run piranha with a timeout.
 
@@ -283,7 +284,7 @@ class PiranhaAgent:
         file_name = file_names[0] if file_names else "rule.toml"
         return file_name, toml_block, explanation[0]
 
-    def run_piranha(self, toml_dict):
+    def run_piranha(self, toml_dict) -> str:
         """Runs the inferred rule by applying it to the source code using the Piranha.
 
         :param toml_dict: dict, Inferred rule in TOML format.
@@ -296,9 +297,19 @@ class PiranhaAgent:
             raw_graph = RawRuleGraph.from_toml(toml_dict)
             logger.debug(f"Raw graph: {raw_graph.to_toml()}")
 
-            return run_piranha_with_timeout(
+            res, success = run_piranha_with_timeout(
                 self.source_code, self.language, raw_graph, timeout=5
             )
+
+            if not success:
+                if "QueryError" in res:
+                    raise PiranhaAgentError(
+                        f"One of the provided queries is not valid {res}. "
+                        f"Do not use nodes you cannot see in the tree representation. "
+                        f"Make sure you parenthesis are balanced."
+                    )
+                raise PiranhaAgentError(f"Piranha failed to execute: {res}.")
+            return res
 
         except multiprocessing.context.TimeoutError:
             raise PiranhaAgentError(
@@ -306,15 +317,6 @@ class PiranhaAgent:
                 "Remember you can only constraint queries with #eq, #not-eq, #match. "
                 "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
             )
-        except BaseException as e:
-            if "QueryError" in str(e):
-                raise PiranhaAgentError(
-                    f"One of the provided queries is not valid {e}. "
-                    f"Do not use nodes you cannot see in the tree representation. "
-                    f"Make sure you parenthesis are balanced."
-                )
-            raise PiranhaAgentError(f"Piranha failed to execute: {e}.")
-        return output_summaries
 
     def improve_rule(self, task: str, rules: str):
         """Improves the rule by adding a filter to it.

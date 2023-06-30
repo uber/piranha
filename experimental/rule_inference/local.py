@@ -128,28 +128,24 @@ def test_rule(data):
     rules = data.get("rules", "")
     source_code = data.get("source_code", "")
 
-    # Here, you can use your existing implementation to test the rule
-    # Assuming you have a function 'test_rules' in the 'PiranhaAgent' class
-
     try:
-        refactored_code = run_piranha_with_timeout(
+        refactored_code, success = run_piranha_with_timeout(
             source_code, language, RawRuleGraph.from_toml(toml.loads(rules)), 5
         )
-        socketio.emit(
-            "test_result",
-            {
-                "test_result": "Success",
-                "refactored_code": refactored_code,
-            },
-        )
-    except Exception as e:
-        socketio.emit(
-            "test_result",
-            {
-                "test_result": "Error",
-                "refactored_code": str(e),
-            },
-        )
+        test_result = "Success" if success else "Error"
+
+    except multiprocessing.context.TimeoutError as e:
+        test_result = "Error"
+        refactored_code = "Piranha is in an infinite loop."
+
+    # Emit the result
+    socketio.emit(
+        "test_result",
+        {
+            "test_result": test_result,
+            "refactored_code": refactored_code,
+        },
+    )
 
 
 if __name__ == "__main__":
