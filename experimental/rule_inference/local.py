@@ -91,7 +91,7 @@ def infer_from_example(data):
         {
             "rule_name": rule_name,
             "rule": rule,
-            "gpt_output": agent.get_explanation(rule),
+            "gpt_output": agent.get_explanation(),
         },
         room=room,
     )
@@ -110,7 +110,7 @@ def improve_rules(data):
         {
             "rule_name": rule_name,
             "rule": rule,
-            "gpt_output": agent.get_explanation(rule),
+            "gpt_output": agent.get_explanation(),
         },
         room=room,
     )

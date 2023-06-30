@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List, Set
-import attr
 
+import attr
 from polyglot_piranha import Filter, OutgoingEdges, Rule, RuleGraph
 
 
@@ -131,20 +131,17 @@ class RawRuleGraph:
         rules_str = "\n\n".join(rule.to_toml() for rule in self.rules)
         edges_str = "\n\n"
         if self.edges:
-            edges_str = "\n\n".join(
-                self.edge_to_toml(source, destinations)
-                for source, destinations in self.edges.items()
-            )
+            edges_str = "\n\n".join(self.edge_to_toml(edge) for edge in self.edges)
         return f"{rules_str}\n{edges_str}"
 
     @staticmethod
-    def edge_to_toml(source, destinations):
+    def edge_to_toml(edge_dict) -> str:
         return "\n".join(
             [
                 "[[edges]]",
-                f'scope = "File"',
-                f'from = "{source}"',
-                f"to = {json.dumps(destinations)}",
+                f'scope = "{edge_dict["scope"]}"',
+                f'from = "{edge_dict["from"]}"',
+                f"to = {json.dumps(edge_dict['to'])}",
             ]
         )
 

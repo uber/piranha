@@ -21,7 +21,7 @@ class QueryWriter:
     query_ctrs = attr.ib(factory=list)
     outer_most_node = attr.ib(default=None)
 
-    def write(self):
+    def write(self, simplify=False):
         """
         Get textual representation of the sequence.
         Find for each named child of source_node, can we replace it with its respective target group.
@@ -30,14 +30,16 @@ class QueryWriter:
         if self.query_str:
             return self.query_str
 
-        node_queries = [self.write_query(node) for node in self.seq_nodes]
+        node_queries = [
+            self.write_query(node, simplify=simplify) for node in self.seq_nodes
+        ]
 
         self.query_str = ".".join(node_queries) + "\n" + "\n".join(self.query_ctrs)
         self.query_str = f"({self.query_str})"
 
         return self.query_str
 
-    def write_query(self, node: Node, depth=0, prefix=""):
+    def write_query(self, node: Node, depth=0, prefix="", simplify=False):
         """
         Write a query for a given node, considering its depth and prefix.
         """
@@ -55,7 +57,17 @@ class QueryWriter:
                     if cursor.current_field_name()
                     else ""
                 )
-                s_exp += self.write_query(cursor.node, depth + 1, prefix)
+                if simplify:
+                    s_exp += (
+                        " " * (depth + 1) + f"({child_node.type}) @tag{self.count}n"
+                    )
+                    self.count += 1
+                    if child_node.child_count == 0:
+                        self.query_ctrs.append(
+                            f"(#eq? @tag{self.count}n \"{child_node.text.decode('utf8')}\")"
+                        )
+                else:
+                    s_exp += self.write_query(cursor.node, depth + 1, prefix, simplify)
             next_child = cursor.goto_next_sibling()
 
         self.count += 1
@@ -170,7 +182,7 @@ class Inference:
             return RawRule(
                 name=self.name,
                 query=qw.query_str,
-                replace_node=qw.outer_most_node,
+                replace_node=qw.outer_most_node[1:],
                 replace=replacement_str,
             )
 
@@ -199,7 +211,7 @@ class Inference:
             return RawRule(
                 name=self.name,
                 query=qw.query_str,
-                replace_node=qw.outer_most_node,
+                replace_node=qw.outer_most_node[1:],
                 replace=replacement_str,
             )
 
@@ -211,7 +223,7 @@ class Inference:
             return RawRule(
                 name=self.name,
                 query=query,
-                replace_node=qw.outer_most_node,
+                replace_node=qw.outer_most_node[1:],
                 replace="",
             )
 

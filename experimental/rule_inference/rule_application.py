@@ -1,17 +1,12 @@
+import logging
 from typing import List
 
 import attr
 import toml
-from polyglot_piranha import (
-    PiranhaArguments,
-    PiranhaOutputSummary,
-    Rule,
-    RuleGraph,
-    execute_piranha,
-)
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
 
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
-import logging
 
 
 @attr.s

@@ -25,15 +25,20 @@ Your task is to improve refactoring rules for Polyglot Piranha, a tool that uses
 The rules are expressed in a domain-specific language (DSL) specific to Polyglot Piranha. Examples and explanations of the DSL will be provided below.
 
 You will be provided with the original and refactored code snippets, along with statically inferred rules verified by an algorithm. 
-However, these rules may appear unnatural since they were automatically generated. Your goal is to make them resemble rules written by humans, 
-incorporating meaningful variable names and simpler matchers. Whenever possible, simplify lengthy s-expressions. Note however, you should
-keep capture groups in the "replace" string if they are meaningful (such as variable names, method names, etc.). You have to make sure you 
-ONLY use nodes that you observe in the TASK! Beware tree-sitter queries are language dependent. DO NOT use any other nodes.
+However, these rules may appear unnatural since they were automatically generated. Your goal is to make them resemble rules written by humans
 
-You should not alter the semantics of the rules without a specific request. 
-However, if the user asks you to add filters or extra constraints, you should accommodate their needs. 
-In such cases, please ensure that you explain your change and provide a justification for any changes made.
-Additionally, always strive to simplify the rules as much as possible.
+Key requirements:
+    - The semantics of the rules should remain unchanged unless a specific request to alter them is made.
+    - Strive to simplify the rules as much as possible. Always simplify lengthy s-expressions.
+    - Explain each rule individually. Explain the rule in a way that a human can understand it.
+
+Please structure your response using toml and markdown format. Refer to the expected output format below, as it will be parsed automatically.
+
+========================= Piranha Rule Graph =========================
+
+Piranha is language to express cascading program transformation. 
+Each node in graph represents a transformation rule that identifies and modify specific code snippets. 
+The edges between rules specify when, and where each rule should be applied.
 
 ========================= Piranha Rule Explanation =========================
 
@@ -43,10 +48,11 @@ Rules are represented in TOML. Each rule should contain at least one rule with t
 - "replace_node": The captured node in the query that will be replaced
 - "replace_string": Replacement string or pattern for the refactored code
 - "holes": Placeholders in your queries that will be instantiated at runtime
+- "is_seed_rule": Specifies whether this rule is an entry point for the rule graph.
 
-Additionally, the rule can have optional properties such as "is_seed_rule", "groups", and "filters".
-Filters can have properties like "enclosing_node", "not_contains", "contains", "at_least", "at_most".
-The filters are used to specify conditions for the rule to be applied.
+
+Additionally, the rule can have optional filters. Filters can have properties like "enclosing_node", 
+"not_contains", "contains", "at_least", "at_most". The filters are used to specify conditions for the rule to be applied.
        
 ========================= Rule Format =========================
 
@@ -65,6 +71,7 @@ query = """(
 """
 
 # Specify the captured node from the query that will be replaced
+# Never add @ before the node name! Otherwise it will NOT compile!
 replace_node = "invk"
 
 # Replacement string that will substitute `replace_node`
@@ -100,7 +107,7 @@ contains =
 # Define the minimum and maximum number of children that should match the 'contains' pattern (optional)
 at_least = 1
 at_most = 5
-```
+``
 
 ========================= Edge Explanation =========================
 
@@ -130,7 +137,9 @@ to = ["other_rule_name", "another_rule_name"]
 
 ========================= Expected output format =========================
 
-Your output should be a single TOML file containing the improved rules and edges:
+Your output should be a single TOML file containing the improved rules and edges, as well as an explanation in Markdown format.
+
+Rule Graph
 
 ```toml
 [[rules]] # For each rule
@@ -138,6 +147,21 @@ Your output should be a single TOML file containing the improved rules and edges
 
 [[edges]] # For each edge
 ...
+```
+
+
+Explanation 
+
+```md
+#### `<your_rule_name1>`\n
+- <Your detailed explanation>
+- <Include multiple bullet points if necessary>
+
+
+#### `<your_rule_name2>`\n
+- <Your detailed explanation>
+- <Include multiple bullet points if necessary>
+
 ```
 
 ========================= Rule Examples =========================
@@ -175,7 +199,8 @@ You should only use nodes you see in the tree-sitter representation of the sourc
 
     """
 
-    add_filter_prompt = '''Can you to further refine this rules Here is the request:
+    add_filter_prompt = '''
+Can you to further refine this rules Here is the request:
     
 {desc}
     
@@ -183,21 +208,25 @@ You should only use nodes you see in the tree-sitter representation of the sourc
          
 {rule}
 
-========================= Notes =========================
-
-=== Potential filters for enclosing node ===
-
-{enclosing_node_filters}
-
 ========================= Task =========================
 
-Improve the rule by adding a filter. Remember for enclosing_node, you can use any s-expression that you have seen above.
-You are free to add as many filters as you want, and further constraint the nodes with #eq, #not-eq, and #match. However,
-you CANNOT add more nodes to the query. If you need to further constraint the enclosing node filter with contains or 
-not_contains please make sure you output a correct s-expression. For not_enclosing_node, you can use any s-expression, 
-as long as it is syntactically correct. Please output a single TOML file containing JUST the improved rule.
+Improve the rule by incorporating a filter. You are permitted to add only two types of filters: enclosing_node and contains. 
+You should also include an explanation for the new rule.
 
-Example for Java:
+You're allowed to add any number of filters and further restrict the nodes using #eq, #not-eq, and #match. 
+
+
+Key requirements:
+    - Structure your response using TOML and Markdown formatting for automatic parsing.
+    - You can ONLY chose filters from the list below. You may refine them but they should not deviate from the list.
+    - Be sure to use unique names for your capture groups to avoid overlapping with existing ones from the query!
+    - Make sure all the nodes are named. Every captured node should have a unique name, including the outermost node.
+    - Always surround enclosing_node and contains with parenthesis (...), including the #eq, #not-eq, and #match operators.
+
+
+========================= Expected output format =========================
+
+Rules
 
 ```toml
 
@@ -213,36 +242,45 @@ at_least = 1
 at_most = 1
 
 [[rules.filters]] # filter 2
-not_enclosing = """(method_invocation) @invk"""
+enclosing_node = """(method_invocation) @invk"""
 
 [[rules.filters]] # filter 3
 enclosing_node = """(class_declaration) @class"""
-not_contains = ["""(
+contains = """(
 (method_declaration
     (modifiers) @modifiers
     name: (identifier) @name) @decl
     (#eq? @name "x")
 )
-"""]
 ```
-'''
 
-    explanation_request_prompt = """
-Can you explain the latest set of rules:\n{rules}\n. Do not include the edges, only the rules!!
-Please structure your response using the markdown format. This will be parsed automatically:\n
+Explanation
 
-========================= Output format =========================
-
+```md
 #### `<your_rule_name1>`\n
 - <Your detailed explanation>
 - <Include multiple bullet points if necessary>
+```
+
+========================= List of Filters =========================
+
+=== Potential filters for enclosing node ===
+
+{enclosing_node_filters}
 
 
-#### `<your_rule_name2>`\n
-- <Your detailed explanation>
-- <Include multiple bullet points if necessary>
+"""]
 
-"""
+========================= Errors to avoid =========================
+
+Not surrounding the query with parenthesis (...):
+enclosing_node = "(identifier) @name) (#eq? @name \"x\")"
+
+is wrong!! it should be:
+enclosing_node = """((identifier) @name) (#eq? @name "x")"""
+
+```
+'''
 
     holes = attr.ib(type=dict)
     messages = attr.ib(type=list, default=attr.Factory(list))
@@ -291,25 +329,16 @@ Please structure your response using the markdown format. This will be parsed au
             self.append_system_message(content)
             return content
 
-    def append_improve_request(self, desc, rule, enclosing_node_filters):
+    def append_improve_request(self, desc, rule, enclosing_nodes):
         """Add a followup message from the user after GPT replies"""
+
         self.messages.append(
             {
                 "role": "user",
                 "content": PiranhaGPTChat.add_filter_prompt.format(
                     desc=desc,
                     rule=rule,
-                    enclosing_node_filters=enclosing_node_filters,
-                ),
-            }
-        )
-
-    def append_explanation_request(self, rules):
-        self.messages.append(
-            {
-                "role": "user",
-                "content": PiranhaGPTChat.explanation_request_prompt.format(
-                    rules=rules
+                    enclosing_node_filters=enclosing_nodes,
                 ),
             }
         )
