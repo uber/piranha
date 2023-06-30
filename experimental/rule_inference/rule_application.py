@@ -1,13 +1,12 @@
+import logging
+from typing import List
+
 import attr
 import toml
-from typing import List
-from polyglot_piranha import (
-    Rule,
-    PiranhaArguments,
-    RuleGraph,
-    execute_piranha,
-    PiranhaOutputSummary,
-)
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
+
+from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
 
 @attr.s
@@ -28,21 +27,25 @@ class CodebaseRefactorer:
         Returns a list of piranha summaries
         """
         # Load the rules from the .toml file
-        toml_dict = toml.loads(self.rules)
 
-        rules = toml_dict.get("rules", [])
-        if not rules:
-            raise Exception("TOML does not include any rule specifications.")
+        FORMAT = (
+            "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+        )
+        logging.basicConfig(format=FORMAT)
+        logging.getLogger().setLevel(logging.DEBUG)
+
+        toml_dict = toml.loads(self.rules)
+        rule_graph = RawRuleGraph.from_toml(toml_dict)
 
         # Create the Piranha rule graph
-        rule_graph = self.create_rule_graph(rules)
 
         # Create the PiranhaArguments object
         args = PiranhaArguments(
             language=self.language,
             path_to_codebase=self.path_to_codebase,
-            rule_graph=rule_graph,
+            rule_graph=rule_graph.to_graph(),
             dry_run=dry_run,
+            substitutions=toml_dict.get("substitutions", [{}])[0],
         )
 
         # Execute the refactoring

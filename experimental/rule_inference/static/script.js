@@ -4,12 +4,14 @@
     codeIntputAfter: document.getElementById("code-input-after"),
     languageSelect: document.getElementById("language-select"),
     queryInput: document.getElementById("query-input"),
+    gptExplanation: document.getElementById("gpt-rule-explanation"),
     explanationInput: document.getElementById("explanation-input"),
     submitFolderButton: document.getElementById("submit-button-folder"),
     submitButton: document.getElementById("submit-button"),
     submitButtonImprovement: document.getElementById(
       "submit-button-improvement",
     ),
+    testButton: document.getElementById("test-button"),
   };
 
   elements.languageSelect.addEventListener("change", handleLanguageChange);
@@ -87,6 +89,25 @@
     emitImproveEvent();
   });
 
+  elements.testButton.addEventListener("click", async function () {
+    emitTestEvent();
+  });
+
+  // Add a function to emit test event
+  function emitTestEvent() {
+    const sourceCode = editors.codeBefore.getValue();
+    const rules = editors.queryEditor.getValue();
+    const language = elements.languageSelect.value;
+    // Here you may want to adjust the data to fit your backend needs
+    socket.emit("test_rule", {
+      source_code: sourceCode,
+      rules: rules,
+      language: language,
+    });
+
+    let button = document.getElementById("test-button");
+    button.disabled = true;
+  }
   function emitRefactorEvent() {
     const folderPath = document.getElementById("folder-input").value;
     const rules = editors.queryEditor.getValue();
@@ -126,11 +147,25 @@
   }
 
   socket.on("infer_result", function (data) {
+    var converter = new showdown.Converter();
+    var markdown = converter.makeHtml(data.gpt_output);
+    console.log(data);
+
+    // update the explanation div
+    document.getElementById("explanation").innerHTML = markdown;
+
     updateInterface(data.rule);
     displayButton(false, "Improve rule", "improvement");
   });
 
   socket.on("infer_progress", function (data) {
+    var converter = new showdown.Converter();
+    var markdown = converter.makeHtml(data.gpt_output);
+    console.log(data);
+
+    // update the explanation div
+    document.getElementById("explanation").innerHTML = markdown;
+
     updateInterface(data.rule);
   });
 
@@ -138,8 +173,36 @@
     displayButton(false, "Apply Rules", "folder");
   });
 
+  // Add a new socket listener for the test result
+  socket.on("test_result", function (data) {
+    console.log(data);
+    // Here you may want to handle the test result
+    let button = document.getElementById("test-button");
+    button.disabled = false;
+    // Add appropriate CSS class based on the test result
+    button.classList.remove("btn-success", "btn-danger");
+    if (data.test_result === "Success") {
+      button.classList.add("btn-success");
+    } else {
+      button.classList.add("btn-danger");
+    }
+    button.textContent = data.test_result;
+    editors.codeAfter.setValue(data.refactored_code);
+
+    // Set a timeout to fade the button back to the original state
+    setTimeout(() => {
+      button.classList.remove("btn-success", "btn-danger");
+      button.classList.add("btn-primary");
+      button.textContent = "Apply rule to before";
+    }, 3000);
+
+    return button;
+  });
+
   function updateInterface(rule) {
     document.getElementById("query-container").style.display = "block";
+    document.getElementById("gpt-rule-explanation-container").style.display =
+      "block";
     document.getElementById("explanation-container").style.display = "block";
     document.getElementById("path-container").style.display = "block";
     editors.queryEditor.setValue(rule);

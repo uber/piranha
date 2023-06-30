@@ -1,7 +1,8 @@
-from typing import List, Tuple, Dict
-from tree_sitter import Tree, Node
 import re
+from typing import Dict, List, Tuple
+
 import attr
+from tree_sitter import Node, Tree
 
 
 @attr.s

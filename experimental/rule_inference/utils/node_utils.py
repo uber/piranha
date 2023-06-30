@@ -1,6 +1,7 @@
-from tree_sitter import TreeCursor, Node
-from typing import List
 import re
+from typing import List
+
+from tree_sitter import Node, TreeCursor
 
 
 class NodeUtils:
