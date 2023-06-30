@@ -22,14 +22,20 @@
   <body>
     <h3 class="text-center">Piranha Inference Playground</h3>
     <div id="playground-container" class="container custom-container">
-      <div class="row">
+      <div class="row align-items-center justify-content-between">
         <div class="col-lg-2">
           <select class="form-select" id="language-select">
             <option value="java" selected="selected">Java</option>
             <option value="kt">Kotlin</option>
           </select>
         </div>
+        <div class="col-lg-2">
+          <button id="test-button" class="btn btn-primary">
+            <span>Test Rule</span>
+          </button>
+        </div>
       </div>
+
       <div class="row">
         <div class="col-lg-6" id="code-container">
           <h5>Code before</h5>
@@ -81,8 +87,9 @@
           </button>
         </div>
       </div>
+
       <div class="row justify-content-center">
-        <div class="col-lg-6" id="query-container" style="display: none">
+        <div class="col-lg-6" id="query-container" style="display: block">
           <h5>Rules</h5>
           <textarea id="query-input"></textarea>
         </div>
@@ -98,7 +105,7 @@
 
       <div class="row justify-content-center">
         <div class="col-lg-12" id="explanation-container" style="display: none">
-          <h5>Request GPT to add enclosing_node or contains filters. Please be very specific describing what you want to accomplish</h5>
+          <h5>Request GPT to add enclosing node or contains filters.</h5>
           <textarea id="explanation-input"></textarea>
         </div>
         <div class="col-auto">

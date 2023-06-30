@@ -11,6 +11,7 @@
     submitButtonImprovement: document.getElementById(
       "submit-button-improvement",
     ),
+    testButton: document.getElementById("test-button"),
   };
 
   elements.languageSelect.addEventListener("change", handleLanguageChange);
@@ -88,6 +89,24 @@
     emitImproveEvent();
   });
 
+  elements.testButton.addEventListener("click", async function () {
+    emitTestEvent();
+  });
+
+  // Add a function to emit test event
+  function emitTestEvent() {
+    const sourceCode = editors.codeBefore.getValue();
+    const targetCode = editors.codeAfter.getValue();
+    const rules = editors.queryEditor.getValue();
+    const language = elements.languageSelect.value;
+    // Here you may want to adjust the data to fit your backend needs
+    socket.emit("test_rule", {
+      source_code: sourceCode,
+      target_code: targetCode,
+      rules: rules,
+      language: language,
+    });
+  }
   function emitRefactorEvent() {
     const folderPath = document.getElementById("folder-input").value;
     const rules = editors.queryEditor.getValue();
@@ -151,6 +170,31 @@
 
   socket.on("refactor_progress", function (data) {
     displayButton(false, "Apply Rules", "folder");
+  });
+
+  // Add a new socket listener for the test result
+  socket.on("test_result", function (data) {
+    console.log(data);
+    // Here you may want to handle the test result
+    let button = document.getElementById("test-button");
+
+    // Add appropriate CSS class based on the test result
+    button.classList.remove("btn-success", "btn-danger");
+    if (data.test_result === "Success") {
+      button.classList.add("btn-success");
+    } else {
+      button.classList.add("btn-danger");
+    }
+    button.textContent = data.test_result;
+
+    // Set a timeout to fade the button back to the original state
+    setTimeout(() => {
+      button.classList.remove("btn-success", "btn-danger");
+      button.classList.add("btn-primary");
+      button.textContent = "Test Rule";
+    }, 3000);
+
+    return button;
   });
 
   function updateInterface(rule) {

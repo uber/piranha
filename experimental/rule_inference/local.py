@@ -116,6 +116,43 @@ def improve_rules(data):
     )
 
 
+@socketio.on("test_rule")
+def test_rule(data):
+    # Extract data
+    language = data.get("language", "")
+    rules = data.get("rules", "")
+    source_code = data.get("source_code", "")
+    target_code = data.get("target_code", "")
+
+    # Here, you can use your existing implementation to test the rule
+    # Assuming you have a function 'test_rules' in the 'PiranhaAgent' class
+    agent = PiranhaAgent(
+        source_code,
+        target_code,
+        language=language,
+        hints="",
+    )
+
+    completion = f"```toml{rules}```\n```md```"
+
+    try:
+        test_result = agent.validate_rule(completion)
+        # Emit the result back to the client
+        socketio.emit(
+            "test_result",
+            {
+                "test_result": "Success",
+            },
+        )
+    except Exception as e:
+        socketio.emit(
+            "test_result",
+            {
+                "test_result": "Error",
+            },
+        )
+
+
 if __name__ == "__main__":
     openai.api_key = os.getenv("OPENAI_API_KEY")
     app.run(debug=True)
