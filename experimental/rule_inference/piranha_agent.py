@@ -7,13 +7,8 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from polyglot_piranha import (
-    PiranhaArguments,
-    PiranhaOutputSummary,
-    Rule,
-    RuleGraph,
-    execute_piranha,
-)
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
 from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
 

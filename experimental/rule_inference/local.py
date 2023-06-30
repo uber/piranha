@@ -10,8 +10,10 @@ from flask import Flask, render_template, session
 from flask_socketio import SocketIO, join_room
 from utils.pretty_toml import PrettyTOML
 
-from experimental.rule_inference.piranha_agent import PiranhaAgent
+from experimental.rule_inference.piranha_agent import (
+    PiranhaAgent, run_piranha_with_timeout)
 from experimental.rule_inference.rule_application import CodebaseRefactorer
+from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
 # Configure logging
 logger = logging.getLogger("Flask")
@@ -125,24 +127,19 @@ def test_rule(data):
     language = data.get("language", "")
     rules = data.get("rules", "")
     source_code = data.get("source_code", "")
-    target_code = data.get("target_code", "")
 
     # Here, you can use your existing implementation to test the rule
     # Assuming you have a function 'test_rules' in the 'PiranhaAgent' class
-    agent = PiranhaAgent(
-        source_code,
-        target_code,
-        language=language,
-        hints="",
-    )
 
     try:
-        completion = f"```toml{rules}```\n```md```"
-        agent.validate_rule(completion)
+        refactored_code = run_piranha_with_timeout(
+            source_code, language, RawRuleGraph.from_toml(toml.loads(rules)), 5
+        )
         socketio.emit(
             "test_result",
             {
                 "test_result": "Success",
+                "refactored_code": refactored_code,
             },
         )
     except Exception as e:
@@ -150,6 +147,7 @@ def test_rule(data):
             "test_result",
             {
                 "test_result": "Error",
+                "refactored_code": str(e),
             },
         )
 

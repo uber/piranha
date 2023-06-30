@@ -96,13 +96,11 @@
   // Add a function to emit test event
   function emitTestEvent() {
     const sourceCode = editors.codeBefore.getValue();
-    const targetCode = editors.codeAfter.getValue();
     const rules = editors.queryEditor.getValue();
     const language = elements.languageSelect.value;
     // Here you may want to adjust the data to fit your backend needs
     socket.emit("test_rule", {
       source_code: sourceCode,
-      target_code: targetCode,
       rules: rules,
       language: language,
     });
@@ -189,12 +187,13 @@
       button.classList.add("btn-danger");
     }
     button.textContent = data.test_result;
+    editors.codeAfter.setValue(data.refactored_code);
 
     // Set a timeout to fade the button back to the original state
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
       button.classList.add("btn-primary");
-      button.textContent = "Test Rule";
+      button.textContent = "Apply rule to \"code before\"";
     }, 3000);
 
     return button;
