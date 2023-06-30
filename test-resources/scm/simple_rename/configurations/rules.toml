@@ -9,9 +9,9 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Matchs an enum entry named `GLOBAL_TAG.enum_entry_name`
+# Renames tree-sitter query tag from `name` to `method_name`
 [[rules]]
-name = "delete_enum_entry"
+name = "rename_tag"
 query = """
 (
 (named_node name: (_)@named_node (field_definition (named_node (capture name: (_)@i) ))) @n
