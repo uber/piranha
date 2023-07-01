@@ -35,6 +35,7 @@ mod test_piranha_tsx;
 
 mod test_piranha_thrift;
 
+mod test_piranha_scm;
 mod test_piranha_strings;
 
 use std::sync::Once;
