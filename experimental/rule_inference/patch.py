@@ -1,12 +1,13 @@
-from pathlib import Path
-from typing import List, Tuple, Dict
-from tree_sitter import Language, Parser, Tree, Node, TreeCursor
-from tree_sitter_languages import get_language, get_parser
 import difflib
 import re
-import attr
+from pathlib import Path
+from typing import Dict, List, Tuple
 
-from node_utils import NodeUtils
+import attr
+from tree_sitter import Language, Node, Parser, Tree, TreeCursor
+from tree_sitter_languages import get_language, get_parser
+
+from experimental.rule_inference.utils.node_utils import NodeUtils
 
 
 @attr.s

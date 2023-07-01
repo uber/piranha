@@ -1,9 +1,10 @@
+import os
 from pathlib import Path
 
 import pytest
-import os
 import toml
-from rule_inference.rule_application import CodebaseRefactorer
+
+from experimental.rule_inference.rule_application import CodebaseRefactorer
 
 
 @pytest.fixture
