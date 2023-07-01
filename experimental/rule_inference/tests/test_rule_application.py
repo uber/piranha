@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pytest
 import toml
-
 from experimental.rule_inference.rule_application import CodebaseRefactorer
 
 

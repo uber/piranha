@@ -7,11 +7,6 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
-from tree_sitter import Tree
-from tree_sitter_languages import get_language, get_parser
-
 from experimental.rule_inference.comment_finder import CommentFinder
 from experimental.rule_inference.controller import Controller
 from experimental.rule_inference.piranha_chat import PiranhaGPTChat
@@ -20,6 +15,10 @@ from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
+from tree_sitter import Tree
+from tree_sitter_languages import get_language, get_parser
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
@@ -31,16 +30,14 @@ logger.addHandler(ch)
 
 
 def test_piranha_timeout(source_code: str, language: str, raw_graph: RawRuleGraph):
-    # Prepare arguments for Piranha execution
-    args = PiranhaArguments(
-        code_snippet=source_code,
-        language=language,
-        rule_graph=raw_graph.to_graph(),
-        dry_run=True,
-    )
-
-    # Execute Piranha
     try:
+        # Prepare arguments for Piranha execution
+        args = PiranhaArguments(
+            code_snippet=source_code,
+            language=language,
+            rule_graph=raw_graph.to_graph(),
+            dry_run=True,
+        )
         piranha_results = execute_piranha(args)
         # Check if the execution returns results, if yes then return the content of the first result
         # Otherwise, return an empty list
