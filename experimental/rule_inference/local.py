@@ -7,7 +7,9 @@ import attr
 import openai
 import toml
 from experimental.rule_inference.piranha_agent import (
-    PiranhaAgent, run_piranha_with_timeout)
+    PiranhaAgent,
+    run_piranha_with_timeout,
+)
 from experimental.rule_inference.rule_application import CodebaseRefactorer
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 from flask import Flask, render_template, session
@@ -137,6 +139,9 @@ def test_rule(data):
     except multiprocessing.context.TimeoutError as e:
         test_result = "Error"
         refactored_code = "Piranha is in an infinite loop."
+    except Exception as e:
+        test_result = "Error"
+        refactored_code = str(e)
 
     # Emit the result
     socketio.emit(
