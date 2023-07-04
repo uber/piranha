@@ -22,22 +22,24 @@ use itertools::Itertools;
 use jwalk::WalkDir;
 use log::{debug, trace};
 use regex::Regex;
-use tree_sitter::Query;
 
 use crate::{
-  models::piranha_arguments::PiranhaArguments,
-  models::scopes::ScopeQueryGenerator,
-  utilities::{read_file, tree_sitter_utilities::TSQuery},
+  models::piranha_arguments::PiranhaArguments, models::scopes::ScopeQueryGenerator,
+  utilities::read_file,
 };
 
-use super::{language::PiranhaLanguage, rule::InstantiatedRule};
+use super::{
+  capture_group_pattern::{CGPattern, CompiledCGPattern},
+  language::PiranhaLanguage,
+  rule::InstantiatedRule,
+};
 use glob::Pattern;
 
 /// This maintains the state for Piranha.
 #[derive(Debug, Getters, Default)]
 pub(crate) struct RuleStore {
   // Caches the compiled tree-sitter queries.
-  rule_query_cache: HashMap<String, Query>,
+  rule_query_cache: HashMap<String, CompiledCGPattern>,
   // Current global rules to be applied.
   #[get = "pub"]
   global_rules: Vec<InstantiatedRule>,
@@ -76,11 +78,21 @@ impl RuleStore {
 
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
-  pub(crate) fn query(&mut self, query_str: &TSQuery) -> &Query {
-    self
+  pub(crate) fn query(&mut self, cg_pattern: &CGPattern) -> &CompiledCGPattern {
+    if cg_pattern.get_query().starts_with("rgx ") {
+      // let mut _val = cg_pattern.get_query().to_string();
+      // _val.replace_range(..4, "rgx ");
+      // return &*self
+      //   .rule_query_cache
+      //   .entry(cg_pattern.get_query())
+      //   .or_insert_with(|| CompiledCGPattern::R(Regex::new(_val.as_str()).unwrap()));
+      panic!("Regex not supported.")
+    }
+
+    &*self
       .rule_query_cache
-      .entry(query_str.get_query())
-      .or_insert_with(|| self.language.create_query(query_str.get_query()))
+      .entry(cg_pattern.get_query())
+      .or_insert_with(|| CompiledCGPattern::Q(self.language.create_query(cg_pattern.get_query())))
   }
 
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file
