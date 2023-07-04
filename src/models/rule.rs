@@ -19,9 +19,10 @@ use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
-use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::TSQuery, Instantiate};
+use crate::utilities::{gen_py_str_methods, Instantiate};
 
 use super::{
+  capture_group_patterns::CGPattern,
   default_configs::{
     default_filters, default_groups, default_holes, default_is_seed_rule, default_query,
     default_replace, default_replace_idx, default_replace_node, default_rule_name,
@@ -49,7 +50,7 @@ pub struct Rule {
   #[serde(default = "default_query")]
   #[get = "pub"]
   #[pyo3(get)]
-  query: TSQuery,
+  query: CGPattern,
   /// The tag corresponding to the node to be replaced
   #[builder(default = "default_replace_node()")]
   #[serde(default = "default_replace_node")]
@@ -142,7 +143,7 @@ macro_rules! piranha_rule {
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
-    $(.query($crate::utilities::tree_sitter_utilities::TSQuery::new($query.to_string())))?
+    $(.query($crate::models::capture_group_patterns::CGPattern::new($query.to_string())))?
     $(.replace_node($replace_node.to_string()))?
     $(.replace_idx($replace_idx.to_string()))?
     $(.replace($replace.to_string()))?
@@ -165,7 +166,7 @@ impl Rule {
 
     rule_builder.name(name);
     if let Some(q) = query {
-      rule_builder.query(TSQuery::new(q));
+      rule_builder.query(CGPattern::new(q));
     }
 
     if let Some(replace) = replace {
@@ -249,7 +250,7 @@ impl InstantiatedRule {
     self.rule().replace().to_string()
   }
 
-  pub fn query(&self) -> TSQuery {
+  pub fn query(&self) -> CGPattern {
     self.rule().query().clone()
   }
 
