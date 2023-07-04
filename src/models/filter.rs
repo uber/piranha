@@ -15,8 +15,8 @@ use std::collections::HashMap;
 
 use derive_builder::Builder;
 use getset::Getters;
-use itertools::Itertools;
 
+use itertools::Itertools;
 use pyo3::prelude::{pyclass, pymethods};
 
 use serde_derive::Deserialize;
@@ -28,11 +28,12 @@ use crate::utilities::{
 };
 
 use super::{
-  default_configs::default_child_count, default_configs::default_sibling_count,
-  rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit, Validator,
+  capture_group_patterns::CGPattern, default_configs::default_child_count,
+  default_configs::default_sibling_count, rule::InstantiatedRule, rule_store::RuleStore,
+  source_code_unit::SourceCodeUnit, Validator,
 };
 
-use crate::utilities::{tree_sitter_utilities::TSQuery, Instantiate};
+use crate::utilities::Instantiate;
 
 use super::default_configs::{
   default_contains_at_least, default_contains_at_most, default_contains_query,
@@ -49,7 +50,7 @@ pub struct Filter {
   #[get = "pub"]
   #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
-  enclosing_node: TSQuery,
+  enclosing_node: CGPattern,
 
   /// AST patterns that some ancestor node of the primary match should match
   /// In case of multiple ancestors matching the AST pattern it will consider the outermost ancestor that matches.
@@ -57,26 +58,26 @@ pub struct Filter {
   #[get = "pub"]
   #[serde(default = "default_enclosing_node")]
   #[pyo3(get)]
-  outermost_enclosing_node: TSQuery,
+  outermost_enclosing_node: CGPattern,
 
   /// AST patterns NO ancestor node of the primary match should match
   #[builder(default = "default_not_enclosing_node()")]
   #[get = "pub"]
   #[serde(default = "default_not_enclosing_node")]
   #[pyo3(get)]
-  not_enclosing_node: TSQuery,
+  not_enclosing_node: CGPattern,
   /// AST patterns that should not match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_not_contains_queries()")]
   #[get = "pub"]
   #[serde(default = "default_not_contains_queries")]
   #[pyo3(get)]
-  not_contains: Vec<TSQuery>,
+  not_contains: Vec<CGPattern>,
   /// AST patterns that should match any subtree of node matching `enclosing_node` pattern
   #[builder(default = "default_contains_query()")]
   #[get = "pub"]
   #[serde(default = "default_contains_query")]
   #[pyo3(get)]
-  contains: TSQuery,
+  contains: CGPattern,
   /// Least number of matches we should find for the contains query
   #[builder(default = "default_contains_at_least()")]
   #[get = "pub"]
@@ -115,17 +116,17 @@ impl Filter {
     child_count: Option<u32>, sibling_count: Option<u32>,
   ) -> Self {
     FilterBuilder::default()
-      .enclosing_node(TSQuery::new(enclosing_node.unwrap_or_default()))
-      .outermost_enclosing_node(TSQuery::new(outermost_enclosing_node.unwrap_or_default()))
-      .not_enclosing_node(TSQuery::new(not_enclosing_node.unwrap_or_default()))
+      .enclosing_node(CGPattern::new(enclosing_node.unwrap_or_default()))
+      .outermost_enclosing_node(CGPattern::new(outermost_enclosing_node.unwrap_or_default()))
+      .not_enclosing_node(CGPattern::new(not_enclosing_node.unwrap_or_default()))
       .not_contains(
         not_contains
           .unwrap_or_default()
           .iter()
-          .map(|x| TSQuery::new(x.to_string()))
+          .map(|x| CGPattern::new(x.to_string()))
           .collect_vec(),
       )
-      .contains(TSQuery::new(contains.unwrap_or_default()))
+      .contains(CGPattern::new(contains.unwrap_or_default()))
       .at_least(at_least.unwrap_or(default_contains_at_least()))
       .at_most(at_most.unwrap_or(default_contains_at_most()))
       .child_count(child_count.unwrap_or(default_child_count()))
@@ -156,7 +157,7 @@ impl Validator for Filter {
 
     // If the user set `at_least` or `at_most`, then the contains query cannot be empty
     if (self.at_least != default_contains_at_least() || self.at_most != default_contains_at_most())
-      && self.contains().get_query().is_empty()
+      && self.contains().pattern().is_empty()
     {
       return Err(
         "Invalid Filter Argument. `at_least` or `at_most` is set, but `contains` is empty !!!"
@@ -259,11 +260,11 @@ impl FilterBuilder {
 macro_rules! filter {
   ($(enclosing_node = $enclosing_node:expr)? $(, outermost_enclosing_node=$outermost_enclosing_node:expr)? $(, not_enclosing_node=$not_enclosing_node:expr)? $(, not_contains= [$($q:expr,)*])? $(, contains= $p:expr)? $(, at_least=$min:expr)? $(, at_most=$max:expr)? $(, child_count=$nChildren:expr)? $(, sibling_count=$nSibling:expr)?) => {
     $crate::models::filter::FilterBuilder::default()
-      $(.enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($enclosing_node.to_string())))?
-      $(.outermost_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($outermost_enclosing_node.to_string())))?
-      $(.not_enclosing_node($crate::utilities::tree_sitter_utilities::TSQuery::new($not_enclosing_node.to_string())))?
-      $(.not_contains(vec![$($crate::utilities::tree_sitter_utilities::TSQuery::new($q.to_string()),)*]))?
-      $(.contains($crate::utilities::tree_sitter_utilities::TSQuery::new($p.to_string())))?
+      $(.enclosing_node($crate::models::capture_group_patterns::CGPattern::new($enclosing_node.to_string())))?
+      $(.outermost_enclosing_node($crate::models::capture_group_patterns::CGPattern::new($outermost_enclosing_node.to_string())))?
+      $(.not_enclosing_node($crate::models::capture_group_patterns::CGPattern::new($not_enclosing_node.to_string())))?
+      $(.not_contains(vec![$($crate::models::capture_group_patterns::CGPattern::new($q.to_string()),)*]))?
+      $(.contains($crate::models::capture_group_patterns::CGPattern::new($p.to_string())))?
       $(.at_least($min))?
       $(.at_most($max))?
       $(.child_count($nChildren))?
@@ -347,7 +348,7 @@ impl SourceCodeUnit {
     }
     // If an enclosing node is provided
     let query = instantiated_filter.enclosing_node();
-    if !query.get_query().is_empty() {
+    if !query.pattern().is_empty() {
       if let Some(result) = self._match_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
@@ -357,7 +358,7 @@ impl SourceCodeUnit {
 
     // If an outermost enclosing node is provided
     let query = instantiated_filter.outermost_enclosing_node();
-    if !query.get_query().is_empty() {
+    if !query.pattern().is_empty() {
       if let Some(result) = self._match_outermost_ancestor(rule_store, node_to_check, query) {
         node_to_check = result;
       } else {
@@ -374,7 +375,7 @@ impl SourceCodeUnit {
     &self, rule_store: &mut RuleStore, node_to_check: Node, instantiated_filter: &Filter,
   ) -> bool {
     let query = instantiated_filter.not_enclosing_node();
-    if !query.get_query().is_empty() {
+    if !query.pattern().is_empty() {
       // No ancestor should match with it
       if self
         ._match_ancestor(rule_store, node_to_check, query)
@@ -388,7 +389,7 @@ impl SourceCodeUnit {
 
   /// Search for outermost ancestor of `node` (including itself) that matches `query_str`
   fn _match_outermost_ancestor(
-    &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
+    &self, rule_store: &mut RuleStore, node: Node, ts_query: &CGPattern,
   ) -> Option<Node> {
     let mut matched_ancestor = self._match_ancestor(rule_store, node, ts_query);
     loop {
@@ -405,7 +406,7 @@ impl SourceCodeUnit {
 
   /// Search for innermost ancestor of `node` (including itself) that matches `query_str`
   fn _match_ancestor(
-    &self, rule_store: &mut RuleStore, node: Node, ts_query: &TSQuery,
+    &self, rule_store: &mut RuleStore, node: Node, ts_query: &CGPattern,
   ) -> Option<Node> {
     let mut current_node = node;
     // This ensures that the below while loop considers the current node too when checking for filters.
@@ -435,7 +436,7 @@ impl SourceCodeUnit {
   ) -> bool {
     // If the query is empty
     let ts_query = filter.contains();
-    if ts_query.get_query().is_empty() {
+    if ts_query.pattern().is_empty() {
       return true;
     }
 

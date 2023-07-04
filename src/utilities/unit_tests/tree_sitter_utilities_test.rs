@@ -15,11 +15,9 @@ use std::collections::HashMap;
 use tree_sitter::Query;
 
 use crate::{
-  models::{default_configs::JAVA, language::PiranhaLanguage},
+  models::{capture_group_patterns::CGPattern, default_configs::JAVA, language::PiranhaLanguage},
   utilities::{tree_sitter_utilities::get_all_matches_for_query, Instantiate},
 };
-
-use super::TSQuery;
 
 #[test]
 fn test_get_all_matches_for_query_positive() {
@@ -134,7 +132,7 @@ fn test_instantiate() {
     ("init".to_string(), "true".to_string()),
   ]);
   assert_eq!(
-    TSQuery("@variable_name foo bar @init".to_string())
+    CGPattern("@variable_name foo bar @init".to_string())
       .instantiate(&substitutions)
       .0,
     "isFlagTreated foo bar true"

@@ -11,16 +11,16 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use super::capture_group_patterns::CGPattern;
+use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
+use crate::utilities::tree_sitter_utilities::get_match_for_query;
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
+use crate::utilities::Instantiate;
 use derive_builder::Builder;
 use getset::Getters;
 use log::trace;
 use serde_derive::Deserialize;
 
-use crate::utilities::tree_sitter_utilities::get_node_for_range;
-use crate::utilities::tree_sitter_utilities::{get_match_for_query, TSQuery};
-use crate::utilities::Instantiate;
-
-use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
 pub(crate) struct ScopeConfig {
@@ -40,9 +40,9 @@ pub(crate) struct ScopeGenerator {
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters, Builder)]
 pub(crate) struct ScopeQueryGenerator {
   #[get = "pub"]
-  enclosing_node: TSQuery, // a tree-sitter query matching some enclosing AST pattern (like method or class)
+  enclosing_node: CGPattern, // a tree-sitter query matching some enclosing AST pattern (like method or class)
   #[get = "pub"]
-  scope: TSQuery, // a tree-sitter query that will match the same node that matched `enclosing_node`
+  scope: CGPattern, // a tree-sitter query that will match the same node that matched `enclosing_node`
 }
 
 // Implements instance methods related to getting the scope
@@ -51,7 +51,7 @@ impl SourceCodeUnit {
   /// We generate these scope queries by matching the rules provided in `<lang>_scopes.toml`.
   pub(crate) fn get_scope_query(
     &self, scope_level: &str, start_byte: usize, end_byte: usize, rules_store: &mut RuleStore,
-  ) -> TSQuery {
+  ) -> CGPattern {
     let root_node = self.root_node();
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
     // Get the scope enclosing_nodes for `scope_level` from the `scope_config.toml`.
