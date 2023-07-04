@@ -20,10 +20,7 @@ use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
 
-use crate::utilities::{
-  gen_py_str_methods,
-  tree_sitter_utilities::{get_all_matches_for_query, get_node_for_range},
-};
+use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::get_node_for_range};
 
 use super::{
   piranha_arguments::PiranhaArguments, rule::InstantiatedRule, rule_store::RuleStore,
@@ -291,14 +288,15 @@ impl SourceCodeUnit {
       } else {
         (rule.replace_node(), rule.replace_idx())
       };
-    let mut all_query_matches = get_all_matches_for_query(
-      &node,
-      self.code().to_string(),
-      rule_store.query(&rule.query()),
-      recursive,
-      replace_node_tag,
-      replace_node_idx,
-    );
+    let mut all_query_matches = rule_store
+      .query(&rule.query())
+      .get_all_matches_for_capture_node(
+        &node,
+        self.code().to_string(),
+        recursive,
+        replace_node_tag,
+        replace_node_idx,
+      );
 
     // Applies the filter and returns the first element
     for p_match in all_query_matches.iter_mut() {
