@@ -9,7 +9,10 @@ import attr
 import toml
 from experimental.rule_inference.comment_finder import CommentFinder
 from experimental.rule_inference.controller import Controller
-from experimental.rule_inference.piranha_chat import PiranhaGPTChat
+from experimental.rule_inference.piranha_chat import (
+    PiranhaGPTChat,
+    PiranhaChatException,
+)
 from experimental.rule_inference.static_inference import Inference, QueryWriter
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.node_utils import NodeUtils
@@ -35,7 +38,7 @@ logger.addHandler(ch)
 
 
 def _run_piranha_with_timeout_aux(
-    source_code: str, language: str, raw_graph: RawRuleGraph
+    source_code: str, language: str, raw_graph: RawRuleGraph, substitutions: dict
 ):
     try:
         # Prepare arguments for Piranha execution
@@ -44,13 +47,14 @@ def _run_piranha_with_timeout_aux(
             language=language,
             rule_graph=raw_graph.to_graph(),
             dry_run=True,
+            substitutions=substitutions,
         )
         piranha_results = execute_piranha(args)
         # Check if the execution returns results, if yes then return the content of the first result
         # Otherwise, return an empty list
         if piranha_results:
             return piranha_results[0].content, True
-        return "", True
+        return source_code, True
     except BaseException as e:
         return str(e), False
 
@@ -59,11 +63,13 @@ def run_piranha_with_timeout(
     source_code: str,
     language: str,
     raw_graph: RawRuleGraph,
+    substitutions: Optional[dict] = None,
     timeout: Optional[int] = 10,
 ) -> Tuple[str, bool]:
     """
     Run piranha with a timeout.
 
+    :param substitutions:
     :param raw_graph: RawRuleGraph object representing the rule graph
     :param language: Language of the source code
     :param source_code: Actual code snippet
@@ -74,7 +80,7 @@ def run_piranha_with_timeout(
     with multiprocessing.Pool(processes=1) as pool:
         async_result = pool.apply_async(
             _run_piranha_with_timeout_aux,
-            (source_code, language, raw_graph),
+            (source_code, language, raw_graph, substitutions),
         )
         return async_result.get(timeout=timeout)
 
@@ -146,9 +152,14 @@ class PiranhaAgent:
         self.rules = graph.to_toml()
         return self.rules
 
-    def infer_rules(self) -> Optional[Tuple[str, str]]:
-        """This function interacts with the AI model to refine statically generated rules."""
-        chat_interactions = self.create_chats(self.rules)
+    def infer_rules(self) -> Tuple[bool, str]:
+        """This function interacts with the AI model to refine statically generated rules.
+        Return True if the rule was successfully inferred from GPT, else False."""
+
+        try:
+            chat_interactions = self.create_chats(self.rules)
+        except BaseException as e:
+            return False, str(e)
 
         # For each completion try to transform the source code into the target code
         return self.iterate_inference(chat_interactions)
@@ -169,7 +180,9 @@ class PiranhaAgent:
             dry_run=True,
         )
         output_summaries = execute_piranha(args)
-        return output_summaries[0].content
+        if output_summaries:
+            return output_summaries[0].content
+        return code
 
     def create_chats(self, rules):
         # Remove all comments from source and target code using Piranha
@@ -203,7 +216,13 @@ class PiranhaAgent:
         chat_interactions = [
             PiranhaGPTChat(holes=prompt_holes) for _ in range(n_samples)
         ]
-        first_round = chat_interactions[0].get_completion(n_samples=n_samples)
+        try:
+            first_round = chat_interactions[0].get_completion(n_samples=n_samples)
+        except PiranhaChatException as e:
+            logger.debug(
+                f"Chat completion failed with {e}. Trying again with a new chat...\n"
+            )
+            return []
         for i, response in enumerate(first_round):
             # Hack to prevent running the prompt multiple times (it's the same for all samples)
             # It is cheaper just to sample OpenAI API
@@ -213,25 +232,28 @@ class PiranhaAgent:
     def get_explanation(self):
         return self.explanation
 
-    def iterate_inference(self, chat_interactions):
+    def iterate_inference(self, chat_interactions) -> Tuple[bool, str]:
         """BFS for a rule that transforms the source code into the target code."""
         max_rounds = 10
         for i in range(max_rounds):
             for chat in chat_interactions:
                 try:
-                    file_name, toml_block, explanation = self.validate_rule_wrapper(
-                        chat
-                    )
+                    _, toml_block, explanation = self.validate_rule_wrapper(chat)
                     self.chat = chat
                     self.explanation = explanation
-                    return file_name, toml_block
+                    return True, toml_block
                 except PiranhaAgentError as e:
                     logger.debug(
                         f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
                     )
                     chat.append_user_followup(str(e))
-        raise PiranhaAgentError(
-            f"Failed to generate a rule after {max_rounds} rounds of interaction with GPT-4."
+                except PiranhaChatException as e:
+                    logger.debug(
+                        f"Chat completion failed with {e}. Trying again with a new chat...\n"
+                    )
+        return (
+            False,
+            f"Failed to generate a rule after {max_rounds} rounds of interaction with GPT-4.",
         )
 
     def validate_rule_wrapper(self, chat):
@@ -321,7 +343,7 @@ class PiranhaAgent:
                 "Otherwise you need to use a [[rules.filters]] with contains or not_contains."
             )
 
-    def improve_rule(self, task: str, rules: str):
+    def improve_rule(self, task: str, rules: str) -> Tuple[bool, str]:
         """Improves the rule by adding a filter to it.
 
         :param desc: str, Description of what you would like to do.
@@ -329,7 +351,14 @@ class PiranhaAgent:
         :return: str, Improved rule.
         """
         max_rounds = 15
-        rules = toml.loads(rules)
+        try:
+            rules = toml.loads(rules)
+        except Exception as e:
+            return False, f"Could not parse TOML: {e}."
+
+        if self.chat is None:
+            return False, "Improvement is only support for GPT inferred rules."
+
         chat = copy.deepcopy(self.chat)
         for _ in range(max_rounds):
             try:
@@ -357,12 +386,14 @@ class PiranhaAgent:
 
                 self.chat = chat
                 self.explanation = "\n".join(explanations)
-                return validation[:-1]
+                return True, validation[:-1]
             except Exception as e:
                 logger.debug(
                     f"GPT-4 failed to generate a rule. Following up the next round with {e}. Trying again...\n"
                 )
                 chat.append_user_followup(str(e))
+
+        return False, "Unable to improve rule."
 
     def add_filter(self, desc, rule, chat) -> Tuple[dict, str]:
         """Adds a filter to the rule that encloses the nodes of the rule."""

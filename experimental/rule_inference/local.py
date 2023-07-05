@@ -24,6 +24,8 @@ logger = logging.getLogger("Flask")
 app = Flask(__name__)
 socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
 
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
 
 def valid_toml(instance, attribute, value):
     try:
@@ -65,8 +67,11 @@ def home():
 def process_folder(data):
     data = RefactorData(**data)
     refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
-    refactorer.refactor_codebase(False)
-    socketio.emit("refactor_progress", {"progress": 100})
+    success, summaries = refactorer.refactor_codebase(False)
+    if success:
+        socketio.emit("refactor_progress", {"result": "Success"})
+    else:
+        socketio.emit("refactor_progress", {"result": "Failed"})
 
 
 @socketio.on("infer_piranha")
@@ -131,8 +136,15 @@ def test_rule(data):
     source_code = data.get("source_code", "")
 
     try:
+        toml_dict = toml.loads(rules)
+        substitutions = toml_dict.get("substitutions", [{}])[0]
+
         refactored_code, success = run_piranha_with_timeout(
-            source_code, language, RawRuleGraph.from_toml(toml.loads(rules)), 5
+            source_code,
+            language,
+            RawRuleGraph.from_toml(toml_dict),
+            timeout=5,
+            substitutions=substitutions,
         )
         test_result = "Success" if success else "Error"
 
