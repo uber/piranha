@@ -11,7 +11,9 @@ from flask_socketio import SocketIO, join_room
 from utils.pretty_toml import PrettyTOML
 
 from experimental.rule_inference.piranha_agent import (
-    PiranhaAgent, run_piranha_with_timeout)
+    PiranhaAgent,
+    run_piranha_with_timeout,
+)
 from experimental.rule_inference.rule_application import CodebaseRefactorer
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
@@ -22,7 +24,7 @@ logger = logging.getLogger("Flask")
 app = Flask(__name__)
 socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
 
-logging.getLogger("werkzeug").setLevel(logging.ERROR)
+logging.getLogger("werkzeug").setLevel(logging.INFO)
 
 
 def valid_toml(instance, attribute, value):
