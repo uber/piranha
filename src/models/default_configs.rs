@@ -30,6 +30,7 @@ pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 pub const THRIFT: &str = "thrift";
 pub const STRINGS: &str = "strings";
+pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
 
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
