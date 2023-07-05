@@ -15,8 +15,13 @@ from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
+from polyglot_piranha import (
+    PiranhaArguments,
+    PiranhaOutputSummary,
+    Rule,
+    RuleGraph,
+    execute_piranha,
+)
 from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
 
@@ -29,7 +34,9 @@ ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
 
 
-def test_piranha_timeout(source_code: str, language: str, raw_graph: RawRuleGraph):
+def _run_piranha_with_timeout_aux(
+    source_code: str, language: str, raw_graph: RawRuleGraph
+):
     try:
         # Prepare arguments for Piranha execution
         args = PiranhaArguments(
@@ -66,7 +73,7 @@ def run_piranha_with_timeout(
     """
     with multiprocessing.Pool(processes=1) as pool:
         async_result = pool.apply_async(
-            test_piranha_timeout,
+            _run_piranha_with_timeout_aux,
             (source_code, language, raw_graph),
         )
         return async_result.get(timeout=timeout)
@@ -111,9 +118,8 @@ class PiranhaAgent:
         return tree
 
     def infer_rules_init(self) -> str:
-        """Implements the inference process of the Piranha Agent.
-        The function communicates with the AI model to generate a potential refactoring rule, and subsequently tests it.
-        If the rule transforms the source code into the target code, the rule is returned.
+        """This function creates the first pass of the rule inference process.
+        It statically infers rules from the example code and returns a TOML representation of the rule graph.
 
         :return: str, string containing the rule in TOML format
         """
@@ -133,7 +139,6 @@ class PiranhaAgent:
             rules[from_name].name: [rules[to_name].name for to_name in to_names]
             for from_name, to_names in finder.edges.items()
         }
-        #
         edges = [
             {"from": k, "to": v, "scope": "File"} for k, v in edges.items() if v != []
         ]
@@ -142,6 +147,7 @@ class PiranhaAgent:
         return self.rules
 
     def infer_rules(self) -> Optional[Tuple[str, str]]:
+        """This function interacts with the AI model to refine statically generated rules."""
         chat_interactions = self.create_chats(self.rules)
 
         # For each completion try to transform the source code into the target code
