@@ -17,6 +17,7 @@ use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
 use pyo3::prelude::{pyclass, pymethods};
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
 
@@ -55,6 +56,18 @@ pub(crate) struct Match {
 gen_py_str_methods!(Match);
 
 impl Match {
+  pub(crate) fn from_regex(
+    mtch: &regex::Match, matches: HashMap<String, String>, source_code: &str,
+  ) -> Self {
+    Match {
+      matched_string: mtch.as_str().to_string(),
+      range: Range::from_regex_match(mtch, source_code),
+      matches,
+      associated_comma: None,
+      associated_comments: Vec::new(),
+    }
+  }
+
   pub(crate) fn new(
     matched_string: String, range: tree_sitter::Range, matches: HashMap<String, String>,
   ) -> Self {
@@ -259,6 +272,31 @@ impl From<tree_sitter::Range> for Range {
   }
 }
 gen_py_str_methods!(Range);
+
+impl Range {
+  pub(crate) fn from_regex_match(mtch: &regex::Match, source_code: &str) -> Self {
+    Self {
+      start_byte: mtch.start(),
+      end_byte: mtch.end(),
+      start_point: position_for_offset(source_code.as_bytes(), mtch.start()),
+      end_point: position_for_offset(source_code.as_bytes(), mtch.end()),
+    }
+  }
+}
+
+// Finds the position (col and row number) for a given offset.
+fn position_for_offset(input: &[u8], offset: usize) -> Point {
+  let mut result = Point { row: 0, column: 0 };
+  for c in &input[0..offset] {
+    if *c as char == '\n' {
+      result.row += 1;
+      result.column = 0;
+    } else {
+      result.column += 1;
+    }
+  }
+  result
+}
 
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
