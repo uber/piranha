@@ -22,10 +22,7 @@ use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
-use crate::utilities::{
-  gen_py_str_methods,
-  tree_sitter_utilities::{get_all_matches_for_query, get_match_for_query, get_node_for_range},
-};
+use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::get_node_for_range};
 
 use super::{
   capture_group_patterns::CGPattern, default_configs::default_child_count,
@@ -415,9 +412,8 @@ impl SourceCodeUnit {
     }
 
     while let Some(parent) = current_node.parent() {
-      if let Some(p_match) =
-        get_match_for_query(&parent, self.code(), rule_store.query(ts_query), false)
-      {
+      let pattern = rule_store.query(ts_query);
+      if let Some(p_match) = pattern.get_match(&parent, self.code(), false) {
         let matched_ancestor = get_node_for_range(
           self.root_node(),
           p_match.range().start_byte,
@@ -442,14 +438,7 @@ impl SourceCodeUnit {
 
     // Retrieve all matches within the ancestor node
     let contains_query = &rule_store.query(filter.contains());
-    let matches = get_all_matches_for_query(
-      ancestor,
-      self.code().to_string(),
-      contains_query,
-      true,
-      None,
-      None,
-    );
+    let matches = contains_query.get_matches(ancestor, self.code().to_string(), true, None, None);
     let at_least = filter.at_least as usize;
     let at_most = filter.at_most as usize;
     // Validate if the count of matches falls within the expected range
@@ -464,7 +453,7 @@ impl SourceCodeUnit {
       // Check if there's a match within the scope node
       // If one of the filters is not satisfied, return false
       let query = &rule_store.query(ts_query);
-      if get_match_for_query(ancestor, self.code(), query, true).is_some() {
+      if query.get_match(ancestor, self.code(), true).is_some() {
         return false;
       }
     }
