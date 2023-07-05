@@ -11,9 +11,7 @@ from flask_socketio import SocketIO, join_room
 from utils.pretty_toml import PrettyTOML
 
 from experimental.rule_inference.piranha_agent import (
-    PiranhaAgent,
-    run_piranha_with_timeout,
-)
+    PiranhaAgent, run_piranha_with_timeout)
 from experimental.rule_inference.rule_application import CodebaseRefactorer
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 

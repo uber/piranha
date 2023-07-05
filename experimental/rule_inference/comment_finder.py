@@ -49,8 +49,10 @@ class CommentFinder:
         matching_pairs = {}
 
         for comment in source_dict:
-            if comment in target_dict:
-                matching_pairs[comment] = (source_dict[comment], target_dict[comment])
+            matching_pairs[comment] = (
+                source_dict[comment],
+                target_dict.get(comment, []),
+            )
 
         return matching_pairs
 

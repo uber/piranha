@@ -226,8 +226,26 @@ class Inference:
                 replace_node=qw.outer_most_node[1:],
                 replace="",
             )
+        else:
+            # find the smallest common ancestor of _nodes_before
+            ancestor = NodeUtils.find_lowest_common_ancestor(self.nodes_before)
+            deletion_str = NodeUtils.convert_to_source(
+                ancestor, exclude=self.nodes_before
+            )
 
-        raise NotImplementedError
+            deletion_str = deletion_str.replace(
+                "{placeholder}", "", len(self.nodes_before)
+            )
+
+            qw = QueryWriter([ancestor])
+            qw.write()
+
+            return RawRule(
+                name=self.name,
+                query=qw.query_str,
+                replace_node=qw.outer_most_node[1:],
+                replace=deletion_str,
+            )
 
     def create_addition(self) -> str:
         raise NotImplementedError

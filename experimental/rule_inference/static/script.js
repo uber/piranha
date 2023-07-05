@@ -9,7 +9,7 @@
     submitFolderButton: document.getElementById("submit-button-folder"),
     submitButton: document.getElementById("submit-button"),
     submitButtonImprovement: document.getElementById(
-      "submit-button-improvement"
+      "submit-button-improvement",
     ),
     testButton: document.getElementById("test-button"),
   };
@@ -20,15 +20,15 @@
   const editors = {
     codeBefore: CodeMirror.fromTextArea(
       elements.codeInputBefore,
-      editorOptions("javascript")
+      editorOptions("javascript"),
     ),
     codeAfter: CodeMirror.fromTextArea(
       elements.codeIntputAfter,
-      editorOptions("javascript")
+      editorOptions("javascript"),
     ),
     queryEditor: CodeMirror.fromTextArea(
       elements.queryInput,
-      editorOptions("toml")
+      editorOptions("toml"),
     ),
     requirementsEditor: CodeMirror.fromTextArea(elements.explanationInput, {
       lineWrapping: true,
@@ -133,7 +133,7 @@
     const button = displayButton(
       true,
       "GPT is improving the rule ...",
-      "improvement"
+      "improvement",
     );
     button.style.display = "block";
   }
@@ -226,7 +226,7 @@
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
       button.classList.add("btn-primary");
-      button.textContent = "Test rule in code before";
+      button.textContent = "Apply rule to code before";
     }, 3000);
 
     return button;
