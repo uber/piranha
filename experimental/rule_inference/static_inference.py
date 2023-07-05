@@ -119,9 +119,11 @@ class QueryWriter:
 
 @attr.s
 class Inference:
-    nodes_before = attr.ib(type=List[Node])
-    nodes_after = attr.ib(type=List[Node])
-    name = attr.ib(init=False)
+    nodes_before = attr.ib(type=List[Node], validator=attr.validators.instance_of(list))
+    nodes_after = attr.ib(type=List[Node], validator=attr.validators.instance_of(list))
+    name = attr.ib(
+        init=False,
+    )
 
     _counter = 0
 
@@ -135,7 +137,7 @@ class Inference:
         elif len(self.nodes_after) > 0:
             raise self.create_addition()
         elif len(self.nodes_before) > 0:
-            return self.create_rule(self.nodes_before)
+            return self.create_rule(self.nodes_before, [])
 
     def find_nodes_to_change(self, node_before: Node, node_after: Node):
         """
@@ -162,9 +164,7 @@ class Inference:
 
         return node_before, node_after
 
-    def create_rule(
-        self, nodes_before: List[Node], nodes_after: List[Node] = None
-    ) -> RawRule:
+    def create_rule(self, nodes_before: List[Node], nodes_after: List[Node]) -> RawRule:
         # If there is only one node
         if len(nodes_before) == 1:
             if len(nodes_after) == 1:
@@ -175,12 +175,10 @@ class Inference:
             qw = QueryWriter([node])
             query = qw.write()
 
-            replacement_str = ""
-            if nodes_after:  # If it's a replacement, not a deletion
-                lines_affected = " ".join(
-                    [NodeUtils.convert_to_source(node) for node in nodes_after]
-                )
-                replacement_str = qw.replace_with_tags(lines_affected)
+            lines_affected = " ".join(
+                [NodeUtils.convert_to_source(node) for node in nodes_after]
+            )
+            replacement_str = qw.replace_with_tags(lines_affected)
 
             return RawRule(
                 name=self.name,
@@ -199,13 +197,9 @@ class Inference:
                 "{placeholder}", "", len(nodes_before) - 1
             )
 
-            # If it's a replacement, not a deletion
-            lines_affected = ""
-            if nodes_after:
-                lines_affected = " ".join(
-                    [NodeUtils.convert_to_source(node) for node in nodes_after]
-                )
-
+            lines_affected = " ".join(
+                [NodeUtils.convert_to_source(node) for node in nodes_after]
+            )
             replacement_str = replacement_str.replace(
                 "{placeholder}", lines_affected, 1
             )

@@ -124,8 +124,8 @@ class RawRule:
 
 @attr.s
 class RawRuleGraph:
-    rules = attr.ib(type=List[RawRule])
-    edges = attr.ib(type=List[Dict])
+    rules = attr.ib(type=List[RawRule], validator=attr.validators.instance_of(list))
+    edges = attr.ib(type=List[Dict], validator=attr.validators.instance_of(list))
 
     def to_toml(self):
         rules_str = "\n\n".join(rule.to_toml() for rule in self.rules)
