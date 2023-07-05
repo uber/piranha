@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import os
+import sys
 import time
 
 import attr
@@ -11,7 +12,9 @@ from flask_socketio import SocketIO, join_room
 from utils.pretty_toml import PrettyTOML
 
 from experimental.rule_inference.piranha_agent import (
-    PiranhaAgent, run_piranha_with_timeout)
+    PiranhaAgent,
+    run_piranha_with_timeout,
+)
 from experimental.rule_inference.rule_application import CodebaseRefactorer
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
@@ -165,4 +168,8 @@ def test_rule(data):
 
 if __name__ == "__main__":
     openai.api_key = os.getenv("OPENAI_API_KEY")
+    if not openai.api_key:
+        sys.exit(
+            "Please set the OPENAI_API_KEY environment variable to your OpenAI API key."
+        )
     app.run(debug=True)
