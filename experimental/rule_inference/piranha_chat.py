@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple
 
 import attr
 import openai
+
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 
 logger = logging.getLogger("PiranhaAgent")

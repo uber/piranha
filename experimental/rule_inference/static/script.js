@@ -9,7 +9,7 @@
     submitFolderButton: document.getElementById("submit-button-folder"),
     submitButton: document.getElementById("submit-button"),
     submitButtonImprovement: document.getElementById(
-      "submit-button-improvement",
+      "submit-button-improvement"
     ),
     testButton: document.getElementById("test-button"),
   };
@@ -20,15 +20,15 @@
   const editors = {
     codeBefore: CodeMirror.fromTextArea(
       elements.codeInputBefore,
-      editorOptions("javascript"),
+      editorOptions("javascript")
     ),
     codeAfter: CodeMirror.fromTextArea(
       elements.codeIntputAfter,
-      editorOptions("javascript"),
+      editorOptions("javascript")
     ),
     queryEditor: CodeMirror.fromTextArea(
       elements.queryInput,
-      editorOptions("toml"),
+      editorOptions("toml")
     ),
     requirementsEditor: CodeMirror.fromTextArea(elements.explanationInput, {
       lineWrapping: true,
@@ -130,7 +130,11 @@
       language: language,
     });
     // elements.submitButton.style.display = "none";
-    const button = displayButton(true, "GPT is improving the rule ...", "improvement");
+    const button = displayButton(
+      true,
+      "GPT is improving the rule ...",
+      "improvement"
+    );
     button.style.display = "block";
   }
 
@@ -164,16 +168,11 @@
       button.classList.add("btn-danger");
     }
 
-
-
-
     // Set a timeout to fade the button back to the original state
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
       displayButton(false, "Improve rule", "improvement");
-
     }, 3000);
-
   });
 
   socket.on("infer_progress", function (data) {
@@ -192,7 +191,7 @@
     // otherwise red to show error
     // and then revert after timeout
 
-    let button  = document.getElementById("submit-button-folder");
+    let button = document.getElementById("submit-button-folder");
     if (data.result === "Success") {
       button.classList.add("btn-success");
       displayButton(false, "Successfully refactored codebase", "folder");
@@ -204,10 +203,7 @@
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
       displayButton(false, "Apply rules", "folder");
-
     }, 3000);
-
-
   });
 
   // Add a new socket listener for the test result

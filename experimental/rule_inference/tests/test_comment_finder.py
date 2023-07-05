@@ -1,7 +1,8 @@
 from unittest.mock import MagicMock, Mock
 
-from experimental.rule_inference.comment_finder import CommentFinder
 from tree_sitter import Tree
+
+from experimental.rule_inference.comment_finder import CommentFinder
 
 
 def setup_comment_finder(mock_tree_source, mock_tree_target):

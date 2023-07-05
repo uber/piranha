@@ -7,26 +7,20 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
+from tree_sitter import Tree
+from tree_sitter_languages import get_language, get_parser
+
 from experimental.rule_inference.comment_finder import CommentFinder
 from experimental.rule_inference.controller import Controller
-from experimental.rule_inference.piranha_chat import (
-    PiranhaGPTChat,
-    PiranhaChatException,
-)
+from experimental.rule_inference.piranha_chat import (PiranhaChatException,
+                                                      PiranhaGPTChat)
 from experimental.rule_inference.static_inference import Inference, QueryWriter
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
-from polyglot_piranha import (
-    PiranhaArguments,
-    PiranhaOutputSummary,
-    Rule,
-    RuleGraph,
-    execute_piranha,
-)
-from tree_sitter import Tree
-from tree_sitter_languages import get_language, get_parser
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)

@@ -1,20 +1,14 @@
 import logging
 import multiprocessing
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
 import attr
 import toml
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
 
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
-from polyglot_piranha import (
-    PiranhaArguments,
-    PiranhaOutputSummary,
-    Rule,
-    RuleGraph,
-    execute_piranha,
-)
-
 
 logger = logging.getLogger("CodebaseRefactorer")
 logger.setLevel(logging.DEBUG)
