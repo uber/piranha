@@ -41,8 +41,7 @@ impl CGPattern {
   }
 
   pub(crate) fn extract_regex(&self) -> String {
-    let mut _val = self.pattern();
-    _val.replace_range(..4, "rgx ");
+    let mut _val = &self.pattern()[4..];
     _val.to_string()
   }
 }
@@ -50,9 +49,8 @@ impl CGPattern {
 impl Validator for CGPattern {
   fn validate(&self) -> Result<(), String> {
     if self.pattern().starts_with("rgx ") {
-      let mut _val = self.pattern();
-      _val.replace_range(..4, "rgx ");
-      return Regex::new(_val.as_str())
+      let mut _val = &self.pattern()[4..];
+      return Regex::new(_val)
         .map(|_| Ok(()))
         .unwrap_or(Err(format!("Cannot parse the regex - {_val}")));
     }

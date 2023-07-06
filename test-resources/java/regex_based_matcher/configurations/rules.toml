@@ -1,0 +1,5 @@
+[[rules]]
+name = "replace_call"
+query = """rgx (?P<n>foo\\(\\))"""
+replace_node = "n"
+replace = "Foo"
