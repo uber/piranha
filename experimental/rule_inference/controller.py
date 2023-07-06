@@ -2,10 +2,7 @@ import json
 from typing import Any, Dict
 
 import attr
-import toml
-
 from experimental.rule_inference.piranha_chat import PiranhaGPTChat
-from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 
 # Define the option constants
 ANSWER_OPTIONS = ["yes", "no"]
@@ -19,16 +16,15 @@ class ControllerError(Exception):
 
 @attr.s
 class Controller:
-    """A class used to represent the Controller which takes user input and sends it to the model,
-    then handles the model's response.
+    """A controller that decides what the AI model should do next, given the user request.
 
     :param PiranhaGPTChat chat: an instance of the PiranhaGPTChat model.
     """
 
-    chat: PiranhaGPTChat = attr.ib()
+    chat = attr.ib(type=PiranhaGPTChat)
 
-    def get_user_answer(self, task_description: str, options: list) -> str:
-        """Send the task description to the chat model and parse the model's response.
+    def get_model_selection(self, task_description: str, options: list) -> str:
+        """Send the task description to the chat model and get the course of action the model has chosen.
 
         :param str task_description: Description of the task to be sent to the model.
         :param list options: List of valid options for the user's response.
@@ -69,10 +65,10 @@ class Controller:
             f"Response format: {JSON_FILE_FORMAT.format(options='yes/no')}. "
         )
 
-        return self.get_user_answer(task_description, ANSWER_OPTIONS)
+        return self.get_model_selection(task_description, ANSWER_OPTIONS)
 
     def get_option_for_improvement(self, rule: str) -> str:
-        """Requests from the user an option for improvement of a rule.
+        """Asks the model to choose an improvement option for the given rule.
 
         :param str rule: Rule to be improved.
         :return: The user's response as returned by the model.
@@ -84,4 +80,4 @@ class Controller:
             f"Response format: {JSON_FILE_FORMAT.format(options='/'.join(IMPROVEMENT_OPTIONS))}."
         )
 
-        return self.get_user_answer(task_description, IMPROVEMENT_OPTIONS)
+        return self.get_model_selection(task_description, IMPROVEMENT_OPTIONS)

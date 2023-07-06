@@ -2,6 +2,7 @@ import json
 from typing import Dict, List, Set
 
 import attr
+import toml
 from polyglot_piranha import Filter, OutgoingEdges, Rule, RuleGraph
 
 
@@ -75,19 +76,6 @@ class RawRule:
     filters = attr.ib(type=Set[RawFilter], default=set())
     is_seed_rule = attr.ib(type=bool, default=True)
 
-    @staticmethod
-    def from_toml(toml_dict) -> "RawRule":
-        return RawRule(
-            name=toml_dict["name"],
-            query=toml_dict.get("query", None),
-            replace_node=toml_dict.get("replace_node", None),
-            replace=toml_dict.get("replace", None),
-            groups=set(toml_dict.get("groups", set())),
-            holes=set(toml_dict.get("holes", set())),
-            filters=set([RawFilter.from_toml(f) for f in toml_dict.get("filters", [])]),
-            is_seed_rule=toml_dict.get("is_seed_rule", True),
-        )
-
     def to_toml(self):
         str_reprs = [f'name = "{self.name}"']
         if self.query:
@@ -101,12 +89,12 @@ class RawRule:
         if self.holes:
             str_reprs.append(f"holes = {json.dumps(self.holes)}")
         if self.filters:
-            str_reprs.append(self.filters_to_toml())
+            str_reprs.append(self._filters_to_toml())
         if not self.is_seed_rule:
             str_reprs.append(f"is_seed_rule = {str(self.is_seed_rule).lower()}")
         return "[[rules]]\n" + "\n".join(str_reprs)
 
-    def filters_to_toml(self):
+    def _filters_to_toml(self):
         return "\n".join([filter.to_toml() for filter in self.filters])
 
     def to_rule(self):
@@ -121,6 +109,19 @@ class RawRule:
             is_seed_rule=self.is_seed_rule,
         )
 
+    @staticmethod
+    def from_toml(toml_dict) -> "RawRule":
+        return RawRule(
+            name=toml_dict["name"],
+            query=toml_dict.get("query", None),
+            replace_node=toml_dict.get("replace_node", None),
+            replace=toml_dict.get("replace", None),
+            groups=set(toml_dict.get("groups", set())),
+            holes=set(toml_dict.get("holes", set())),
+            filters=set([RawFilter.from_toml(f) for f in toml_dict.get("filters", [])]),
+            is_seed_rule=toml_dict.get("is_seed_rule", True),
+        )
+
 
 @attr.s
 class RawRuleGraph:
@@ -133,6 +134,15 @@ class RawRuleGraph:
         if self.edges:
             edges_str = "\n\n".join(self.edge_to_toml(edge) for edge in self.edges)
         return f"{rules_str}\n{edges_str}"
+
+    def to_graph(self):
+        return RuleGraph(
+            [rule.to_rule() for rule in self.rules],
+            [
+                OutgoingEdges(edge["from"], edge["to"], edge["scope"])
+                for edge in self.edges
+            ],
+        )
 
     @staticmethod
     def edge_to_toml(edge_dict) -> str:
@@ -154,11 +164,20 @@ class RawRuleGraph:
         edges = toml_dict.get("edges", [])
         return RawRuleGraph(rules=rules, edges=edges)
 
-    def to_graph(self):
-        return RuleGraph(
-            [rule.to_rule() for rule in self.rules],
-            [
-                OutgoingEdges(edge["from"], edge["to"], edge["scope"])
-                for edge in self.edges
-            ],
-        )
+    @staticmethod
+    def validate(instance, attribute, value):
+        """
+        Validator function for TOML input. If value is not valid TOML, raises ValueError.
+
+        :param instance: The instance of the class the attribute is attached to.
+        :param attribute: The attribute that this validator function is checking.
+        :param value: The value of the attribute that is being validated.
+        :raises ValueError: If value is not valid TOML.
+        """
+        try:
+            toml_dict = toml.loads(value)
+            RawRuleGraph.from_toml(toml_dict)
+        except Exception as e:
+            raise ValueError(
+                "Invalid rule format. Please refer to the rule format in the README"
+            ) from e

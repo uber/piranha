@@ -1,10 +1,10 @@
-import pytest
-from polyglot_piranha import PiranhaArguments, execute_piranha
-from tree_sitter import Language, Parser, Node
 from typing import Tuple
 
+import pytest
 from experimental.rule_inference.static_inference import Inference
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+from polyglot_piranha import PiranhaArguments, execute_piranha
+from tree_sitter import Language, Node, Parser
 from tree_sitter_languages import get_language, get_parser
 
 

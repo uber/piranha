@@ -4,11 +4,10 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
-
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
 
 logger = logging.getLogger("CodebaseRefactorer")
 logger.setLevel(logging.DEBUG)
@@ -20,9 +19,70 @@ logger.addHandler(ch)
 
 
 def enable_piranha_logs():
+    """
+    Sets up the logging configurations for Piranha.
+    """
     FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
     logging.basicConfig(format=FORMAT)
     logging.getLogger().setLevel(logging.DEBUG)
+
+
+def _run_piranha_with_timeout_aux(
+    source_code: str, language: str, raw_graph: RawRuleGraph, substitutions: dict
+):
+    """
+    Private method to run Piranha with a timeout. Executes Piranha with provided arguments.
+
+    :param source_code: str: The source code to be refactored.
+    :param language: str: The language of the source code.
+    :param raw_graph: RawRuleGraph: The rule graph to be used for refactoring.
+    :param substitutions: dict: The substitutions to be made during refactoring.
+
+    :return: Tuple[str, bool]: The refactored code and a boolean indicating if the execution was successful.
+    """
+    try:
+        # Prepare arguments for Piranha execution
+        args = PiranhaArguments(
+            code_snippet=source_code,
+            language=language,
+            rule_graph=raw_graph.to_graph(),
+            dry_run=True,
+            substitutions=substitutions,
+        )
+        piranha_results = execute_piranha(args)
+        # Check if the execution returns results, if yes then return the content of the first result
+        # Otherwise, return an empty list
+        if piranha_results:
+            return piranha_results[0].content, True
+        return source_code, True
+    except BaseException as e:
+        return str(e), False
+
+
+def run_piranha_with_timeout(
+    source_code: str,
+    language: str,
+    raw_graph: RawRuleGraph,
+    substitutions: Optional[dict] = None,
+    timeout: Optional[int] = 10,
+) -> Tuple[str, bool]:
+    """
+    Executes Piranha with a timeout. Calls a private method to perform the execution and terminates if the timeout is reached.
+
+    :param source_code: str: The source code to be refactored.
+    :param language: str: The language of the source code.
+    :param raw_graph: RawRuleGraph: The rule graph to be used for refactoring.
+    :param substitutions: Optional[dict]: The substitutions to be made during refactoring. Default is None.
+    :param timeout: Optional[int]: The timeout for the execution in seconds. Default is 10 seconds.
+
+    :return: Tuple[str, bool]: The refactored code and a boolean indicating if the execution was successful.
+    """
+    with multiprocessing.Pool(processes=1) as pool:
+        async_result = pool.apply_async(
+            _run_piranha_with_timeout_aux,
+            (source_code, language, raw_graph, substitutions),
+        )
+        return async_result.get(timeout=timeout)
 
 
 @attr.s
@@ -42,10 +102,12 @@ class CodebaseRefactorer:
     ) -> Tuple[bool, List[PiranhaOutputSummary]]:
         """
         Applies the refactoring rules to the codebase.
-        Returns a list of piranha summaries
-        """
-        # Load the rules from the .toml file
 
+        :param dry_run: bool: A boolean that if true, runs the refactor without making actual changes. Default is True.
+
+        :return: Tuple[bool, List[PiranhaOutputSummary]]: A boolean indicating if the refactor was successful and a list
+        of summaries of the changes made by Piranha.
+        """
         try:
             toml_dict = toml.loads(self.rules)
             rule_graph = RawRuleGraph.from_toml(toml_dict)
@@ -73,21 +135,29 @@ class CodebaseRefactorer:
             return False, []
 
     @staticmethod
-    def create_rule_graph(toml_rules: List[dict]) -> RuleGraph:
+    def refactor_snippet(source_code: str, language: str, rules: str):
         """
-        Creates a Piranha RuleGraph object based on a list of rules from a .toml file.
+        Refactors a code snippet based on the provided rules.
 
-        :param toml_rules: list, The list of rules from the .toml file.
-        :return: RuleGraph, The created RuleGraph object.
+        :param source_code: str: The source code to be refactored.
+        :param language: str: The language of the source code.
+        :param rules: str: The refactoring rules in a .toml format.
+
+        :return: Tuple[bool, str]: A boolean indicating if the refactor was successful and the refactored code or error message.
         """
-        rules = []
-        for toml_rule in toml_rules:
-            rule = Rule(
-                name=toml_rule["name"],
-                query=toml_rule["query"],
-                replace_node=toml_rule["replace_node"],
-                replace=toml_rule["replace"],
+        try:
+            toml_dict = toml.loads(rules)
+            substitutions = toml_dict.get("substitutions", [{}])[0]
+
+            refactored_code, success = run_piranha_with_timeout(
+                source_code,
+                language,
+                RawRuleGraph.from_toml(toml_dict),
+                timeout=5,
+                substitutions=substitutions,
             )
-            rules.append(rule)
-
-        return RuleGraph(rules=rules, edges=[])
+            return success, refactored_code
+        except multiprocessing.context.TimeoutError as e:
+            return False, "Piranha is probably in an infinite loop."
+        except Exception as e:
+            return False, str(e)

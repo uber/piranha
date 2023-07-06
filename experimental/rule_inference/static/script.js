@@ -159,7 +159,7 @@
     document.getElementById("explanation").innerHTML = markdown;
 
     let button = document.getElementById("submit-button-improvement");
-    if (data.test_result === "Success") {
+    if (data.result === true) {
       displayButton(false, "Successfully improved rule", "improvement");
       button.classList.add("btn-success");
       updateInterface(data.rule);
@@ -186,13 +186,13 @@
     updateInterface(data.rule);
   });
 
-  socket.on("refactor_progress", function (data) {
+  socket.on("refactor_result", function (data) {
     // change button to green to indicate success
     // otherwise red to show error
     // and then revert after timeout
 
     let button = document.getElementById("submit-button-folder");
-    if (data.result === "Success") {
+    if (data.result === true) {
       button.classList.add("btn-success");
       displayButton(false, "Successfully refactored codebase", "folder");
     } else {
@@ -214,12 +214,14 @@
     button.disabled = false;
     // Add appropriate CSS class based on the test result
     button.classList.remove("btn-success", "btn-danger");
-    if (data.test_result === "Success") {
+    if (data.result === true) {
       button.classList.add("btn-success");
+      button.textContent = "Successfully applied rule"
     } else {
       button.classList.add("btn-danger");
+      button.textContent = "Error"
+
     }
-    button.textContent = data.test_result;
     editors.codeAfter.setValue(data.refactored_code);
 
     // Set a timeout to fade the button back to the original state

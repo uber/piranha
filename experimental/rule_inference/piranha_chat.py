@@ -6,7 +6,6 @@ from typing import List, Optional, Tuple
 
 import attr
 import openai
-
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 
 logger = logging.getLogger("PiranhaAgent")
@@ -24,6 +23,10 @@ class PiranhaChatException(Exception):
 
 @attr.s
 class PiranhaGPTChat:
+    """
+    A class to manage and interact with OpenAI ChatModels to generate and improve Piranha rule graphs.
+    """
+
     explanation = '''
 Your task is to improve refactoring rules for Polyglot Piranha, a tool that uses tree-sitter for parsing and refactoring code.
 The rules are expressed in a domain-specific language (DSL) specific to Polyglot Piranha. Examples and explanations of the DSL will be provided below.
@@ -302,8 +305,15 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
     )
 
     def __attrs_post_init__(self):
+        """
+        Automatically called after the initialization of the instance. It gathers example rules and edge
+        files from a specified path, formats the content and adds it to the internal message list.
+
+        :param None
+        :return None
+        """
+
         examples = self._get_examples("../../src/cleanup_rules/java")
-        # examples += self._get_examples("../../src/cleanup_rules/kt")
 
         formatted = (
             PiranhaGPTChat.explanation
@@ -315,15 +325,32 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
 
         self.messages.append({"role": "user", "content": formatted})
 
-    def append_system_message(self, system_message):
-        """Add a GPT response to the internal messages"""
+    def append_system_message(self, system_message: str):
+        """
+        Appends a message from the GPT model to the internal message list.
+
+        :param system_message: str: The message content to be added to the message list.
+        :return None
+        """
         self.messages.append({"role": "assistant", "content": system_message})
 
-    def append_user_followup(self, followup_message):
-        """Add a followup message from the user after GPT replies"""
+    def append_user_followup(self, followup_message: str):
+        """
+        Appends a follow-up message from the user to the internal message list.
+
+        :param followup_message: str: The message content to be added to the message list.
+        :return None
+        """
         self.messages.append({"role": "user", "content": followup_message})
 
-    def get_model_response(self):
+    def get_model_response(self) -> str:
+        """
+        Fetches the latest message from the GPT model. If the latest message is from the user, it will trigger
+        a new GPT model prediction and append the response to the internal message list.
+
+        :param None
+        :return str: The latest message content from the GPT model.
+        """
         latest_message = self.messages[-1]
         if latest_message["role"] == "assistant":
             return latest_message["content"]
@@ -334,7 +361,14 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
             return content
 
     def append_improve_request(self, desc, rule, enclosing_nodes):
-        """Add a followup message from the user after GPT replies"""
+        """
+        Appends a request to improve the rule to the internal message list.
+
+        :param desc: str: Description of the request.
+        :param rule: str: The rule to be improved.
+        :param enclosing_nodes: str: The enclosing nodes to be included in the rule.
+        :return None
+        """
 
         self.messages.append(
             {
@@ -348,9 +382,17 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
         )
 
     def get_completion(self, n_samples: int = 1) -> Optional[List[str]]:
+        """
+        Attempts to generate a new GPT model prediction based on the internal message list. It handles
+        common OpenAI API exceptions such as rate limiting and API errors.
+
+        :param n_samples: int: Number of samples to generate from the model.
+        :return List[str]: A list of generated messages. None if an API exception occurs.
+        :raises PiranhaChatException: If it fails to generate a completion from the GPT model after three attempts.
+        """
+
         for _ in range(3):
             try:
-                # logger.debug(self.messages[-1]["content"])
                 logger.debug("Attempting to get completion from GPT.")
                 response = openai.ChatCompletion.create(
                     model=self.model,
@@ -375,6 +417,14 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
 
     @staticmethod
     def _get_examples(path_to_examples_rules):
+        """
+        Walks through a specified directory to gather and format the content of example rule and edge files.
+        The formatted content is then returned as a single string.
+
+        :param path_to_examples_rules: str: Path to the directory containing example rule and edge files.
+        :return str: Formatted content of example rule and edge files.
+        """
+
         task_examples = ""
         for root, dirs, files in os.walk(path_to_examples_rules):
             for file in files:

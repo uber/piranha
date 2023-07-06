@@ -5,8 +5,22 @@ from tree_sitter import Node, TreeCursor
 
 
 class NodeUtils:
+    """
+    NodeUtils is a utility class that provides static methods for performing operations on AST nodes.
+    The methods include generating s-expressions, converting nodes to source code, getting non-overlapping nodes,
+    removing partial nodes, and more.
+    """
+
     @staticmethod
-    def generate_sexpr(node, depth=0, prefix=""):
+    def generate_sexpr(node: Node, depth: int = 0, prefix: str = "") -> str:
+        """
+        Creates a pretty s-expression representation of a given node.
+
+        :param node: Node to generate the s-expression for.
+        :param depth: Depth of the node in the AST.
+        :param prefix: Prefix string to be appended at the start of the s-expression.
+        :return: The generated s-expression.
+        """
         indent = " " * depth
         cursor: TreeCursor = node.walk()
         s_exp = indent + f"{prefix}({node.type} "
@@ -27,7 +41,17 @@ class NodeUtils:
         return s_exp + ")"
 
     @staticmethod
-    def convert_to_source(node: Node, depth=0, exclude=None):
+    def convert_to_source(
+        node: Node, depth: int = 0, exclude: List[Node] = None
+    ) -> str:
+        """
+        Convert a given node to its source code representation (unified).
+
+        :param node: Node to convert.
+        :param depth: Depth of the node in the AST.
+        :param exclude: List of nodes to be excluded from the source code.
+        :return: Source code representation of the node.
+        """
         if exclude is None:
             exclude = []
         for to_exclude in exclude:
@@ -41,20 +65,20 @@ class NodeUtils:
             s_exp += node.text.decode("utf8")
             return s_exp
 
-        for child in node.children:
-            nxt = NodeUtils.convert_to_source(child, depth + 1, exclude)
+        while has_next_child:
+            nxt = NodeUtils.convert_to_source(cursor.node, depth + 1, exclude)
             s_exp += nxt + " "
+            has_next_child = cursor.goto_next_sibling()
         return s_exp.strip()
 
     @staticmethod
-    def get_smallest_nonoverlapping_set(nodes: List[Node]):
+    def get_smallest_nonoverlapping_set(nodes: List[Node]) -> List[Node]:
         """
-        Get the smallest non overlapping set of nodes from the given list.
-        :param nodes:
-        :return:
+        Get the smallest non-overlapping set of nodes from the given list.
+
+        :param nodes: List of nodes.
+        :return: The smallest non-overlapping set of nodes.
         """
-        # sort the nodes by their start position
-        # if the start positions are equal, sort by end position in reverse order
         nodes = sorted(
             nodes, key=lambda x: (x.start_point, tuple(map(lambda n: -n, x.end_point)))
         )
@@ -64,7 +88,7 @@ class NodeUtils:
             if not smallest_non_overlapping_set:
                 smallest_non_overlapping_set.append(node)
             else:
-                if node.start_point >= smallest_non_overlapping_set[-1].end_point:
+                if node.start_point > smallest_non_overlapping_set[-1].end_point:
                     smallest_non_overlapping_set.append(node)
         return smallest_non_overlapping_set
 
@@ -73,10 +97,15 @@ class NodeUtils:
         """
         Remove nodes that whose children are not contained in the replacement pair.
         Until a fixed point is reached where no more nodes can be removed.
+
+        :param nodes: List of nodes.
+        :return: The updated list of nodes after removing partial nodes.
         """
         while True:
             new_nodes = [
-                node for node in nodes if all(child in nodes for child in node.children)
+                node
+                for node in nodes
+                if all(child in node.children for child in node.children)
             ]
             if len(new_nodes) == len(nodes):
                 break
@@ -85,7 +114,8 @@ class NodeUtils:
 
     @staticmethod
     def normalize_code(code: str) -> str:
-        """Eliminates unnecessary spaces and newline characters from code.
+        """
+        Eliminates unnecessary spaces and newline characters from code.
         This function is as preprocessing step before comparing the refactored code with the target code.
 
         :param code: str, Code to normalize.
@@ -104,7 +134,8 @@ class NodeUtils:
 
     @staticmethod
     def contains(node: Node, other: Node) -> bool:
-        """Checks if the given node contains the other node.
+        """
+        Checks if the given node contains the other node.
 
         :param node: Node, Node to check if it contains the other node.
         :param other: Node, Node to check if it is contained by the other node.

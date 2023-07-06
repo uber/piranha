@@ -2,23 +2,35 @@ from collections import defaultdict, deque
 from typing import Deque, Dict, List, Set, Tuple
 
 import attr
-from tree_sitter import Node, Tree
-
 from experimental.rule_inference.utils.node_utils import NodeUtils
+from tree_sitter import Node, Tree
 
 
 @attr.s
-class CommentFinder:
+class GraphParser:
     """
-    The CommentFinder class traverses an AST to find nodes of type comment.
+    The GraphParser class performs depth-first search on two given Abstract Syntax Trees (ASTs) to identify
+    'before' and 'after' code templates. The 'source_tree' represents the 'before' state, while the 'target_tree'
+    represents the 'after' state.
 
-    Each comment node is associated with a number indicating when the system should start
-    collecting nodes for the replacement pair. When "// 1 end" is encountered, the system stops collecting.
+    Each template is associated with a unique identifier, enclosed by line comments that delineate the
+    template's start and end. A sample input format is shown below:
 
-    :param source_tree: The source tree for traversing.
+    Templates:
+
+    // 1
+    x = someMethod()
+    // x
+
+    Edges:
+
+    // 1 -> 2
+    // 1 -> 3
+
+    :param source_tree: The AST containing source templates.
     :type source_tree: Tree
 
-    :param target_tree: The target tree for traversing.
+    :param target_tree: The AST containing target templates.
     :type target_tree: Tree
     """
 
@@ -36,10 +48,11 @@ class CommentFinder:
 
     def process_trees(self) -> Dict[str, Tuple[List[Node], List[Node]]]:
         """
-        This method invokes _traverse_tree on both trees, finds matching pairs using the comments,
-        and updates the edges. It returns the matching pairs.
+        Executes a tree traversal on both 'source_tree' and 'target_tree'. It finds corresponding template pairs
+        using identifiers specified in the comments. It also finds the edges between the templates. This method
+        returns a dictionary of matched template pairs, which serves as a foundation for subsequent rule inference.
 
-        :return: A dictionary of matching pairs.
+        :return: A dictionary mapping identifiers to matched template pairs.
         :rtype: Dict[str, Tuple[List[Node], List[Node]]]
         """
 
@@ -56,14 +69,14 @@ class CommentFinder:
 
         return matching_pairs
 
-    def _traverse_tree(self, tree: Tree):
+    def _traverse_tree(self, tree: Tree) -> Dict[str, List[Node]]:
         """
-        This private method contains the common traversal logic for finding comment nodes in an AST and updating edges.
+        Performs a depth-first search (DFS) on the given tree to find nodes that are used for templates.
 
-        :param tree: The tree to traverse.
+        :param tree: The tree to be traversed.
         :type tree: Tree
-        :return: A dictionary of comment nodes and associated nodes.
-        :rtype: dict
+        :return: A dictionary mapping template identifiers to corresponding nodes.
+        :rtype: Dict[str, List[Node]]
         """
         root = tree.root_node
         stack: Deque = deque([root])

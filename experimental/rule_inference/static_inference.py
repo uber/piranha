@@ -2,16 +2,22 @@ from typing import List
 
 import attr
 from comby import Comby
-from tree_sitter import Node, TreeCursor
-
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.rule_utils import RawRule
+from tree_sitter import Node, TreeCursor
 
 
 @attr.s
 class QueryWriter:
     """
-    This class writes a query for a given node considering its depth and prefix.
+    Class to represent a query writer for nodes.
+
+    :ivar seq_nodes: Sequence of nodes for which the query will be written.
+    :ivar capture_groups: A dictionary to keep track of the nodes that will be captured in the query.
+    :ivar count: A counter for naming the capture groups.
+    :ivar query_str: The Comby pattern that represents the query.
+    :ivar query_ctrs: List of constraints for the Comby pattern.
+    :ivar outer_most_node: Represents the node that is currently the furthest from the root.
     """
 
     seq_nodes = attr.ib(type=list)
@@ -25,6 +31,9 @@ class QueryWriter:
         """
         Get textual representation of the sequence.
         Find for each named child of source_node, can we replace it with its respective target group.
+
+        :param simplify: If True, simplify the query.
+        :return: The query string
         """
 
         if self.query_str:
@@ -42,7 +51,14 @@ class QueryWriter:
     def write_query(self, node: Node, depth=0, prefix="", simplify=False):
         """
         Write a query for a given node, considering its depth and prefix.
+
+        :param node: The node for which the query will be written.
+        :param depth: The current depth of the node.
+        :param prefix: Prefix for the current node.
+        :param simplify: If True, simplify the query.
+        :return: The query string for this node.
         """
+
         indent = " " * depth
         cursor: TreeCursor = node.walk()
         s_exp = indent + f"{prefix}({node.type} "
@@ -82,8 +98,12 @@ class QueryWriter:
         return s_exp + f") {node_name}"
 
     def simplify_query(self, capture_group):
-        """Simplify a query removing all the children of capture_group and replacing it with a wildcard node
-        This should be replaced with piranha at some point"""
+        """
+        Simplify a query removing all the children of capture_group and replacing it with a wildcard node.
+        This should be replaced with Piranha at some point.
+
+        :param capture_group: The capture group to simplify.
+        """
 
         comby = Comby()
         match = f"(:[[node_name]] :[_]) {capture_group}"
@@ -104,7 +124,12 @@ class QueryWriter:
                 stack.append(child)
 
     def replace_with_tags(self, replace_str: str) -> str:
-        """This logic is wrong"""
+        """
+        Replace nodes with their corresponding capture group in the replace_str.
+
+        :param replace_str: The string that needs replacement.
+        :return: The replaced string.
+        """
         for capture_group, node in sorted(
             self.capture_groups.items(), key=lambda x: -len(x[1].text)
         ):
@@ -119,6 +144,14 @@ class QueryWriter:
 
 @attr.s
 class Inference:
+    """
+    Class to represent inference on nodes.
+
+    :ivar nodes_before: The list of nodes before the transformation.
+    :ivar nodes_after: The list of nodes after the transformation.
+    :ivar name: Name of the inference rule.
+    :ivar _counter: A class-wide counter for naming the inference rules."""
+
     nodes_before = attr.ib(type=List[Node], validator=attr.validators.instance_of(list))
     nodes_after = attr.ib(type=List[Node], validator=attr.validators.instance_of(list))
     name = attr.ib(
@@ -128,10 +161,17 @@ class Inference:
     _counter = 0
 
     def __attrs_post_init__(self):
+        """
+        Initialization method to increment the counter and set the name for the rule.
+        """
         type(self)._counter += 1
         self.name = f"rule_{type(self)._counter}"
 
     def static_infer(self) -> RawRule:
+        """
+        Infer a raw rule based on the nodes before and after.
+
+        :return: A raw rule inferred from the nodes."""
         if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
             return self.create_rule(self.nodes_before, self.nodes_after)
         elif len(self.nodes_after) > 0:
@@ -141,7 +181,11 @@ class Inference:
 
     def find_nodes_to_change(self, node_before: Node, node_after: Node):
         """
-        Function to find nodes to change.
+        Function to find nodes to change if there's only one diverging node.
+
+        :param node_before: The node before the change.
+        :param node_after: The node after the change.
+        :return: The nodes that need to be changed.
         """
         diverging_nodes = []
         if node_before.type == node_after.type:
@@ -165,7 +209,13 @@ class Inference:
         return node_before, node_after
 
     def create_rule(self, nodes_before: List[Node], nodes_after: List[Node]) -> RawRule:
-        # If there is only one node
+        """
+        Create a rule based on the nodes before and after.
+
+        :param nodes_before: The list of nodes before the change.
+        :param nodes_after: The list of nodes after the change.
+        :return: A raw rule representing the transformation from nodes_before to nodes_after.
+        """
         if len(nodes_before) == 1:
             if len(nodes_after) == 1:
                 nodes_before[0], nodes_after[0] = self.find_nodes_to_change(
@@ -215,4 +265,8 @@ class Inference:
             )
 
     def create_addition(self) -> str:
+        """
+        A method to create addition rules. Currently not implemented.
+
+        :raise: NotImplementedError"""
         raise NotImplementedError
