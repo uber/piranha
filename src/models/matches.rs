@@ -284,6 +284,7 @@ impl Range {
 }
 
 // Finds the position (col and row number) for a given offset.
+// Copied from tree-sitter tests [https://github.com/tree-sitter/tree-sitter/blob/d0029a15273e526925a764033e9b7f18f96a7ce5/cli/src/parse.rs#L364]
 fn position_for_offset(input: &[u8], offset: usize) -> Point {
   let mut result = Point { row: 0, column: 0 };
   for c in &input[0..offset] {

@@ -17,12 +17,12 @@ use regex::Regex;
 use std::collections::HashMap;
 use tree_sitter::Node;
 
-/// Applies the query upon the given `node`, and gets the first match
+/// Applies the query upon the given `node`, and gets all the matches
 /// # Arguments
 /// * `node` - the root node to apply the query upon
 /// * `source_code` - the corresponding source code string for the node.
-/// * `query` - the query to be applied
 /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+/// * `replace_node` - node to replace
 ///
 /// # Returns
 /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
@@ -54,6 +54,7 @@ pub(crate) fn get_all_matches_for_regex(
   all_matches
 }
 
+// Creates an hashmap from the capture group(name) to the corresponding code snippet.
 fn extract_captures(
   captures: &regex::Captures<'_>, names: &Vec<Option<&str>>,
 ) -> HashMap<String, String> {
