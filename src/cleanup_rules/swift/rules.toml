@@ -194,10 +194,10 @@ is_seed_rule = false
 # In other scenarios (i.e. is a method invocation or some other expression) we would not simplify at all, as:
 # such expressions could have side effects
 [[rules]]
-name = "some_identifier_and_false"
+name = "something_and_false"
 query = """(
 (conjunction_expression
-        lhs: (simple_identifier) 
+        lhs: (_) 
         rhs: [(boolean_literal) @false  
             (tuple_expression 
                 value: (boolean_literal) @false)]
