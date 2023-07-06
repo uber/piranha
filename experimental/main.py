@@ -151,10 +151,14 @@ def test_rule(data):
     )
 
 
-if __name__ == "__main__":
+def main():
     openai.api_key = os.getenv("OPENAI_API_KEY")
     if not openai.api_key:
         sys.exit(
             "Please set the OPENAI_API_KEY environment variable to your OpenAI API key."
         )
     app.run(debug=True)
+
+
+if __name__ == "__main__":
+    main()
