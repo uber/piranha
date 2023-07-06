@@ -35,7 +35,6 @@ socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
 socketio_sessions = {}
 
 # Configure logging
-logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
 logger = logging.getLogger("FlaskApp")
 logger.setLevel(logging.DEBUG)
