@@ -57,7 +57,7 @@ pub(crate) fn get_all_matches_for_query(
     // If `recursive` it allows matches to the subtree of self (Node)
     // Else it ensure that the query perfectly matches the node (`self`).
     if recursive || range_matches_self {
-      let mut replace_node_range = captured_node_range;
+      let mut replace_node_range: Range = captured_node_range;
       if let Some(replace_node_name) = &replace_node {
         if let Some(r) =
           get_range_for_replace_node(query, &query_matches, replace_node_name, replace_node_idx)

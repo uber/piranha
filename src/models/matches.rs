@@ -17,7 +17,6 @@ use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
 use pyo3::prelude::{pyclass, pymethods};
-use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
 
@@ -244,7 +243,7 @@ impl Match {
   serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize,
 )]
 #[pyclass]
-struct Range {
+pub(crate) struct Range {
   #[pyo3(get)]
   start_byte: usize,
   #[pyo3(get)]

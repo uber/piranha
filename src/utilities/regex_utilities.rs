@@ -11,13 +11,11 @@
  limitations under the License.
 */
 
-use std::collections::HashMap;
-
+use crate::models::matches::Match;
 use itertools::Itertools;
 use regex::Regex;
+use std::collections::HashMap;
 use tree_sitter::Node;
-
-use crate::models::matches::Match;
 
 /// Applies the query upon the given `node`, and gets the first match
 /// # Arguments
@@ -28,40 +26,42 @@ use crate::models::matches::Match;
 ///
 /// # Returns
 /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
-pub(crate) fn get_all_matches_for_query(
+pub(crate) fn get_all_matches_for_regex(
   node: &Node, source_code: String, regex: &Regex, recursive: bool, replace_node: Option<String>,
 ) -> Vec<Match> {
-  //   let all_matches = regex.find_iter(&source_code).collect_vec();
-  let all_captures = regex.captures_iter(&source_code).collect_vec();
+  let code_snippet = node.utf8_text(source_code.as_bytes()).unwrap();
+  let all_captures = regex.captures_iter(code_snippet).collect_vec();
   let names = regex.capture_names().collect_vec();
-
+  let mut all_matches = vec![];
   for captures in all_captures {
-    for m in captures.iter() {}
+    // Check if the range of the self (node), and the range of outermost node captured by the query are equal.
+    let range_matches_node = node.start_byte() == captures.get(0).unwrap().start()
+      && node.end_byte() == captures.get(0).unwrap().end();
+    if recursive || range_matches_node {
+      let group_by_tag = if let Some(ref rn) = replace_node {
+        captures
+          .name(rn)
+          .unwrap_or_else(|| panic!("the tag {rn} provided in the replace node is not present"))
+      } else {
+        captures.get(0).unwrap()
+      };
+      let matches = extract_captures(&captures, &names);
+      all_matches.push(Match::from_regex(&group_by_tag, matches, code_snippet));
+    }
   }
-
-  //   for mtch in all_matches {
-
-  let matches = extract_captures(&all_captures, mtch, &names);
-
-  let m = Match::from_regex(&mtch, matches, &source_code);
-
-  //   }
-
-  return vec![];
+  all_matches
 }
 
 fn extract_captures(
-  all_captures: &Vec<regex::Captures<'_>>, mtch: regex::Match<'_>, names: &Vec<Option<&str>>,
+  captures: &regex::Captures<'_>, names: &Vec<Option<&str>>,
 ) -> HashMap<String, String> {
-  all_captures
+  names
     .iter()
-    .filter(|captures| captures[0].to_string() == mtch.as_str().to_string())
-    .flat_map(|captures| {
-      names.iter().flatten().flat_map(|x| {
-        captures
-          .name(x)
-          .map(|v| (x.to_string(), v.as_str().to_string()))
-      })
+    .flatten()
+    .flat_map(|x| {
+      captures
+        .name(x)
+        .map(|v| (x.to_string(), v.as_str().to_string()))
     })
     .collect()
 }

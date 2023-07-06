@@ -14,6 +14,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use crate::{
   models::Validator,
   utilities::{
+    regex_utilities::get_all_matches_for_regex,
     tree_sitter_utilities::{get_all_matches_for_query, get_ts_query_parser, number_of_errors},
     Instantiate,
   },
@@ -38,12 +39,22 @@ impl CGPattern {
   pub(crate) fn pattern(&self) -> String {
     self.0.to_string()
   }
+
+  pub(crate) fn extract_regex(&self) -> String {
+    let mut _val = self.pattern();
+    _val.replace_range(..4, "rgx ");
+    _val.to_string()
+  }
 }
 
 impl Validator for CGPattern {
   fn validate(&self) -> Result<(), String> {
     if self.pattern().starts_with("rgx ") {
-      panic!("Regex not supported")
+      let mut _val = self.pattern();
+      _val.replace_range(..4, "rgx ");
+      return Regex::new(_val.as_str())
+        .map(|_| Ok(()))
+        .unwrap_or(Err(format!("Cannot parse the regex - {_val}")));
     }
     let mut parser = get_ts_query_parser();
     parser
@@ -109,7 +120,9 @@ impl CompiledCGPattern {
         replace_node,
         replace_node_idx,
       ),
-      CompiledCGPattern::R(_) => panic!("Regex is not yet supported!!!"),
+      CompiledCGPattern::R(regex) => {
+        get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
+      }
     }
   }
 }
