@@ -1,0 +1,9 @@
+[[edges]]
+scope = "File"
+from = "update_import"
+to = ["update_list_int"]
+
+[[edges]]
+scope = "Method"
+from = "update_list_int"
+to = ["update_add"]

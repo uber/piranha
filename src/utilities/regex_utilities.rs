@@ -29,15 +29,17 @@ use tree_sitter::Node;
 pub(crate) fn get_all_matches_for_regex(
   node: &Node, source_code: String, regex: &Regex, recursive: bool, replace_node: Option<String>,
 ) -> Vec<Match> {
-  let code_snippet = node.utf8_text(source_code.as_bytes()).unwrap();
-  let all_captures = regex.captures_iter(code_snippet).collect_vec();
+  // let code_snippet = node.utf8_text(source_code.as_bytes()).unwrap();
+  let all_captures = regex.captures_iter(&source_code).collect_vec();
   let names = regex.capture_names().collect_vec();
   let mut all_matches = vec![];
   for captures in all_captures {
     // Check if the range of the self (node), and the range of outermost node captured by the query are equal.
     let range_matches_node = node.start_byte() == captures.get(0).unwrap().start()
       && node.end_byte() == captures.get(0).unwrap().end();
-    if recursive || range_matches_node {
+    let range_matches_inside_node = node.start_byte() <= captures.get(0).unwrap().start()
+      && node.end_byte() >= captures.get(0).unwrap().end();
+    if (recursive && range_matches_inside_node) || range_matches_node {
       let group_by_tag = if let Some(ref rn) = replace_node {
         captures
           .name(rn)
@@ -46,7 +48,7 @@ pub(crate) fn get_all_matches_for_regex(
         captures.get(0).unwrap()
       };
       let matches = extract_captures(&captures, &names);
-      all_matches.push(Match::from_regex(&group_by_tag, matches, code_snippet));
+      all_matches.push(Match::from_regex(&group_by_tag, matches, &source_code));
     }
   }
   all_matches

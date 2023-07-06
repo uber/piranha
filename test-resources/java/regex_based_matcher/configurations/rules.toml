@@ -1,5 +1,39 @@
 [[rules]]
 name = "replace_call"
-query = """rgx (?P<n>foo\\(\\))"""
+query = """rgx (?P<n1>foo\\(\\)\\.bar\\(\\)\\.baz\\(\\))"""
+replace_node = "n1"
+replace = "true"
+groups = ["replace_expression_with_boolean_literal"]
+[[rules.filters]]
+enclosing_node = """(method_declaration) @md"""
+not_contains = ["""rgx @DoNotCleanup"""]
+
+
+[[rules]]
+name = "replace_call_def_fed"
+query = """rgx (?P<n>abc\\(\\)\\.(?P<m_def>def)\\(\\)\\.ghi\\(\\))"""
+replace_node = "m_def"
+replace = "fed"
+
+[[rules]]
+name = "update_import"
+query = """rgx (?P<n>java\\.util\\.List)"""
 replace_node = "n"
-replace = "Foo"
+replace = "com.uber.NewList"
+
+[[rules]]
+name = "update_list_int"
+query = """rgx (?P<var_decl>(?P<type>List<Integer>)\\s*(?P<name>\\w+)\\s*=.*;)"""
+replace_node = "type"
+replace = "NewList"
+is_seed_rule = false
+[[rules.filter]]
+enclosing_node = "(method_declaration) @cmd"
+
+[[rules]]
+name = "update_add"
+query = """rgx (?P<call>@name\\.(?P<m_name>add)\\(\\w+\\))"""
+replace_node = "m_name"
+replace = "addToNewList"
+holes = ["name"]
+is_seed_rule = false
