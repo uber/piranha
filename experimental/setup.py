@@ -26,6 +26,7 @@ setup(
         "flask",
         "flask-socketio",
         "comby",
+        "eventlet",
     ],
     entry_points={"console_scripts": ["piranha-playground = experimental.main:main"]},
 )

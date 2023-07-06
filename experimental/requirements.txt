@@ -8,3 +8,4 @@ pytest
 flask
 flask-socketio
 comby
+eventlet

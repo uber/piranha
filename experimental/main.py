@@ -14,7 +14,7 @@ import os
 import sys
 
 import openai
-from experimental.rule_inference.data_validation import (
+from experimental.data_validation import (
     ImproveData,
     InferData,
     RefactorData,
@@ -25,6 +25,8 @@ from experimental.rule_inference.rule_application import CodebaseRefactorer
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+
 # Create Flask app and SocketIO app
 app = Flask(__name__)
 socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
@@ -34,6 +36,14 @@ socketio_sessions = {}
 
 # Configure logging
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
+
+logger = logging.getLogger("FlaskApp")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
 
 
 @app.route("/")
@@ -157,7 +167,8 @@ def main():
         sys.exit(
             "Please set the OPENAI_API_KEY environment variable to your OpenAI API key."
         )
-    app.run(debug=True)
+    logger.info(f"Starting server. Listening at: http://127.0.0.1:5000")
+    socketio.run(app)
 
 
 if __name__ == "__main__":
