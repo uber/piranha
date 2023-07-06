@@ -216,11 +216,10 @@
     button.classList.remove("btn-success", "btn-danger");
     if (data.result === true) {
       button.classList.add("btn-success");
-      button.textContent = "Successfully applied rule"
+      button.textContent = "Successfully applied rule";
     } else {
       button.classList.add("btn-danger");
-      button.textContent = "Error"
-
+      button.textContent = "Error";
     }
     editors.codeAfter.setValue(data.refactored_code);
 
