@@ -29,10 +29,9 @@
             <option value="kt">Kotlin</option>
           </select>
         </div>
-        <div class="col-lg-8"></div>
-        <div class="col-lg-2">
+        <div class="col-lg-10 d-flex justify-content-end">
           <button id="test-button" class="btn btn-primary">
-            <span>Apply rule to before</span>
+            <span>Apply rule to code before</span>
           </button>
         </div>
       </div>
@@ -48,12 +47,57 @@
           <textarea id="code-input-after"></textarea>
         </div>
       </div>
+      <div class="row justify-content-center">
+        <div class="col-auto">
+          <button id="submit-button" class="btn btn-primary">
+            <span>Infer rule from example</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-12" id="query-container" style="display: block">
+          <h5>Rules</h5>
+          <textarea id="query-input"></textarea>
+        </div>
+        <div
+          class="col-lg-6"
+          b
+          id="gpt-rule-explanation-container"
+          style="display: none"
+        >
+          <h5></h5>
+          <div id="explanation" class="markdown-body"></div>
+        </div>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-12" id="explanation-container" style="display: none">
+          <h5>Request GPT to add enclosing node or contains filters.</h5>
+          <textarea id="explanation-input"></textarea>
+        </div>
+        <div class="col-auto">
+          <button
+            id="submit-button-improvement"
+            class="btn btn-primary"
+            style="display: none"
+          >
+            <span
+              id="spinner-improvement"
+              class="spinner-border spinner-border-sm"
+              role="status"
+              aria-hidden="true"
+              style="display: none"
+            ></span>
+            <span id="button-text-improvement">Improve rule</span>
+          </button>
+        </div>
+      </div>
 
       <div class="row justify-content-center">
         <div
           class="col-lg-12 text-center"
           id="path-container"
-          style="display: none"
+          style="display: block"
         >
           <h5>
             Refactor your codebase (warning: applying the rule graph will change
@@ -79,51 +123,6 @@
               </button>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="row justify-content-center">
-        <div class="col-auto">
-          <button id="submit-button" class="btn btn-primary">
-            <span>Generate rule</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="row justify-content-center">
-        <div class="col-lg-6" id="query-container" style="display: block">
-          <h5>Rules</h5>
-          <textarea id="query-input"></textarea>
-        </div>
-        <div
-          class="col-lg-6"
-          id="gpt-rule-explanation-container"
-          style="display: none"
-        >
-          <h5></h5>
-          <div id="explanation" class="markdown-body"></div>
-        </div>
-      </div>
-
-      <div class="row justify-content-center">
-        <div class="col-lg-12" id="explanation-container" style="display: none">
-          <h5>Request GPT to add enclosing node or contains filters.</h5>
-          <textarea id="explanation-input"></textarea>
-        </div>
-        <div class="col-auto">
-          <button
-            id="submit-button-improvement"
-            class="btn btn-primary"
-            style="display: none"
-          >
-            <span
-              id="spinner-improvement"
-              class="spinner-border spinner-border-sm"
-              role="status"
-              aria-hidden="true"
-              style="display: none"
-            ></span>
-            <span id="button-text-improvement">Improve rule</span>
-          </button>
         </div>
       </div>
     </div>

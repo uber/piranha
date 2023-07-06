@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple
 
 import attr
 import openai
+
 from experimental.rule_inference.utils.logger_formatter import CustomFormatter
 
 logger = logging.getLogger("PiranhaAgent")
@@ -15,6 +16,10 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
+
+
+class PiranhaChatException(Exception):
+    pass
 
 
 @attr.s
@@ -343,9 +348,9 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
         )
 
     def get_completion(self, n_samples: int = 1) -> Optional[List[str]]:
-        while True:
+        for _ in range(3):
             try:
-                logger.debug(self.messages[-1]["content"])
+                # logger.debug(self.messages[-1]["content"])
                 logger.debug("Attempting to get completion from GPT.")
                 response = openai.ChatCompletion.create(
                     model=self.model,
@@ -363,9 +368,10 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
                 openai.error.APIError,
             ) as e:
                 logger.error(e)
-                sleep_time = 10
+                sleep_time = 0.5
                 logger.error(f"Rate limit reached. Sleeping for {sleep_time}s.")
                 time.sleep(sleep_time)
+        raise PiranhaChatException("Failed to get completion from GPT.")
 
     @staticmethod
     def _get_examples(path_to_examples_rules):

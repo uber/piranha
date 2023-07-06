@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 import attr
 import toml
+
 from experimental.rule_inference.piranha_chat import PiranhaGPTChat
 from experimental.rule_inference.utils.pretty_toml import PrettyTOML
 
@@ -35,8 +36,9 @@ class Controller:
         :rtype: str
         """
         self.chat.append_user_followup(task_description)
+        n_tries = 3
 
-        while True:
+        for _ in range(n_tries):
             try:
                 completion = self.chat.get_model_response()
                 completion = json.loads(completion)
@@ -51,6 +53,7 @@ class Controller:
                     f"Error: {e}. Please respond in format: {JSON_FILE_FORMAT}\n"
                     f"Valid 'answer' options: {options}"
                 )
+        raise ControllerError(f"Failed to get valid answer after {n_tries} tries.")
 
     def should_improve_rule(self, task: str, rule: str) -> str:
         """Determines if a rule should be improved.

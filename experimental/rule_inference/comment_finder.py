@@ -2,8 +2,9 @@ from collections import defaultdict, deque
 from typing import Deque, Dict, List, Set, Tuple
 
 import attr
-from experimental.rule_inference.utils.node_utils import NodeUtils
 from tree_sitter import Node, Tree
+
+from experimental.rule_inference.utils.node_utils import NodeUtils
 
 
 @attr.s
@@ -48,8 +49,10 @@ class CommentFinder:
         matching_pairs = {}
 
         for comment in source_dict:
-            if comment in target_dict:
-                matching_pairs[comment] = (source_dict[comment], target_dict[comment])
+            matching_pairs[comment] = (
+                source_dict[comment],
+                target_dict.get(comment, []),
+            )
 
         return matching_pairs
 

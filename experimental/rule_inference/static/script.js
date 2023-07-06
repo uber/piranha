@@ -129,8 +129,12 @@
       target_code: targetCode,
       language: language,
     });
-    elements.submitButton.style.display = "none";
-    const button = displayButton(true, "Processing...", "improvement");
+    // elements.submitButton.style.display = "none";
+    const button = displayButton(
+      true,
+      "GPT is improving the rule ...",
+      "improvement",
+    );
     button.style.display = "block";
   }
 
@@ -154,8 +158,21 @@
     // update the explanation div
     document.getElementById("explanation").innerHTML = markdown;
 
-    updateInterface(data.rule);
-    displayButton(false, "Improve rule", "improvement");
+    let button = document.getElementById("submit-button-improvement");
+    if (data.test_result === "Success") {
+      displayButton(false, "Successfully improved rule", "improvement");
+      button.classList.add("btn-success");
+      updateInterface(data.rule);
+    } else {
+      displayButton(false, "Unable to improve / generate rule", "improvement");
+      button.classList.add("btn-danger");
+    }
+
+    // Set a timeout to fade the button back to the original state
+    setTimeout(() => {
+      button.classList.remove("btn-success", "btn-danger");
+      displayButton(false, "Improve rule", "improvement");
+    }, 3000);
   });
 
   socket.on("infer_progress", function (data) {
@@ -170,7 +187,23 @@
   });
 
   socket.on("refactor_progress", function (data) {
-    displayButton(false, "Apply Rules", "folder");
+    // change button to green to indicate success
+    // otherwise red to show error
+    // and then revert after timeout
+
+    let button = document.getElementById("submit-button-folder");
+    if (data.result === "Success") {
+      button.classList.add("btn-success");
+      displayButton(false, "Successfully refactored codebase", "folder");
+    } else {
+      button.classList.add("btn-danger");
+      displayButton(false, "Unable to refactor codebase", "folder");
+    }
+
+    setTimeout(() => {
+      button.classList.remove("btn-success", "btn-danger");
+      displayButton(false, "Apply rules", "folder");
+    }, 3000);
   });
 
   // Add a new socket listener for the test result
@@ -193,7 +226,7 @@
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
       button.classList.add("btn-primary");
-      button.textContent = "Apply rule to before";
+      button.textContent = "Apply rule to code before";
     }, 3000);
 
     return button;

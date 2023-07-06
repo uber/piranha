@@ -1,11 +1,28 @@
 import logging
-from typing import List
+import multiprocessing
+from typing import List, Optional, Tuple
 
 import attr
 import toml
-from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
                               RuleGraph, execute_piranha)
+
+from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+
+logger = logging.getLogger("CodebaseRefactorer")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(CustomFormatter())
+logger.addHandler(ch)
+
+
+def enable_piranha_logs():
+    FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+    logging.basicConfig(format=FORMAT)
+    logging.getLogger().setLevel(logging.DEBUG)
 
 
 @attr.s
@@ -20,35 +37,40 @@ class CodebaseRefactorer:
     include_paths = attr.ib(type=List[str], default=None)
     exclude_paths = attr.ib(type=List[str], default=None)
 
-    def refactor_codebase(self, dry_run: bool = True) -> List[PiranhaOutputSummary]:
+    def refactor_codebase(
+        self, dry_run: bool = True
+    ) -> Tuple[bool, List[PiranhaOutputSummary]]:
         """
         Applies the refactoring rules to the codebase.
         Returns a list of piranha summaries
         """
         # Load the rules from the .toml file
 
-        FORMAT = (
-            "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
-        )
-        logging.basicConfig(format=FORMAT)
-        logging.getLogger().setLevel(logging.DEBUG)
+        try:
+            toml_dict = toml.loads(self.rules)
+            rule_graph = RawRuleGraph.from_toml(toml_dict)
 
-        toml_dict = toml.loads(self.rules)
-        rule_graph = RawRuleGraph.from_toml(toml_dict)
+            # Create the Piranha rule graph
 
-        # Create the Piranha rule graph
+            # Create the PiranhaArguments object
+            args = PiranhaArguments(
+                language=self.language,
+                path_to_codebase=self.path_to_codebase,
+                rule_graph=rule_graph.to_graph(),
+                dry_run=dry_run,
+                substitutions=toml_dict.get("substitutions", [{}])[0],
+            )
 
-        # Create the PiranhaArguments object
-        args = PiranhaArguments(
-            language=self.language,
-            path_to_codebase=self.path_to_codebase,
-            rule_graph=rule_graph.to_graph(),
-            dry_run=dry_run,
-            substitutions=toml_dict.get("substitutions", [{}])[0],
-        )
+            output_summaries = execute_piranha(args)
+            logger.info("Changed files:")
+            for summary in output_summaries:
+                logger.info(summary.path)
 
-        # Execute the refactoring
-        return execute_piranha(args)
+            # Execute the refactoring
+            return True, output_summaries
+        except BaseException as e:
+            logger.error(e)
+            return False, []
 
     @staticmethod
     def create_rule_graph(toml_rules: List[dict]) -> RuleGraph:

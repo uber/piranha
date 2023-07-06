@@ -2,6 +2,7 @@ import json
 from unittest.mock import Mock
 
 import pytest
+
 from experimental.rule_inference.controller import Controller, ControllerError
 
 
@@ -61,8 +62,10 @@ def test_get_user_answer_invalid_json():
     # After the invalid JSON response, the model responds with a correct answer
     mock_chat.get_model_response.side_effect = [invalid_json, valid_json_correct_answer]
 
-    assert controller.get_user_answer(task_description, options) == correct_answer
-    assert mock_chat.append_user_followup.call_count == 2
+    assert (
+        controller.get_user_answer(task_description, options) == correct_answer
+        and mock_chat.append_user_followup.call_count == 2
+    )
 
 
 def test_should_improve_rule():

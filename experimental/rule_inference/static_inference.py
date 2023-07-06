@@ -2,9 +2,10 @@ from typing import List
 
 import attr
 from comby import Comby
+from tree_sitter import Node, TreeCursor
+
 from experimental.rule_inference.utils.node_utils import NodeUtils
 from experimental.rule_inference.utils.rule_utils import RawRule
-from tree_sitter import Node, TreeCursor
 
 
 @attr.s
@@ -118,9 +119,11 @@ class QueryWriter:
 
 @attr.s
 class Inference:
-    nodes_before = attr.ib(type=List[Node])
-    nodes_after = attr.ib(type=List[Node])
-    name = attr.ib(init=False)
+    nodes_before = attr.ib(type=List[Node], validator=attr.validators.instance_of(list))
+    nodes_after = attr.ib(type=List[Node], validator=attr.validators.instance_of(list))
+    name = attr.ib(
+        init=False,
+    )
 
     _counter = 0
 
@@ -130,11 +133,11 @@ class Inference:
 
     def static_infer(self) -> RawRule:
         if len(self.nodes_after) > 0 and len(self.nodes_before) > 0:
-            return self.create_replacement()
+            return self.create_rule(self.nodes_before, self.nodes_after)
         elif len(self.nodes_after) > 0:
             raise self.create_addition()
         elif len(self.nodes_before) > 0:
-            return self.create_deletion()
+            return self.create_rule(self.nodes_before, [])
 
     def find_nodes_to_change(self, node_before: Node, node_after: Node):
         """
@@ -161,48 +164,45 @@ class Inference:
 
         return node_before, node_after
 
-    def create_replacement(self) -> RawRule:
-        """
-        Create a rule based on the node before and after.
-        """
-        # For replacements (---- +++++)
-        if len(self.nodes_before) == 1:
-            if len(self.nodes_after) == 1:
-                self.nodes_before[0], self.nodes_after[0] = self.find_nodes_to_change(
-                    self.nodes_before[0], self.nodes_after[0]
+    def create_rule(self, nodes_before: List[Node], nodes_after: List[Node]) -> RawRule:
+        # If there is only one node
+        if len(nodes_before) == 1:
+            if len(nodes_after) == 1:
+                nodes_before[0], nodes_after[0] = self.find_nodes_to_change(
+                    nodes_before[0], nodes_after[0]
                 )
-            qw = QueryWriter([self.nodes_before[0]])
-            qw.write()
+            node = nodes_before[0]
+            qw = QueryWriter([node])
+            query = qw.write()
+
             lines_affected = " ".join(
-                [NodeUtils.convert_to_source(node) for node in self.nodes_after]
+                [NodeUtils.convert_to_source(node) for node in nodes_after]
             )
             replacement_str = qw.replace_with_tags(lines_affected)
 
             return RawRule(
                 name=self.name,
-                query=qw.query_str,
+                query=query,
                 replace_node=qw.outer_most_node[1:],
                 replace=replacement_str,
             )
 
+        # If there are multiple nodes
         else:
-            # find the smallest common ancestor of _nodes_before
-            ancestor = NodeUtils.find_lowest_common_ancestor(self.nodes_before)
+            ancestor = NodeUtils.find_lowest_common_ancestor(nodes_before)
             replacement_str = NodeUtils.convert_to_source(
-                ancestor, exclude=self.nodes_before
+                ancestor, exclude=nodes_before
             )
-
             replacement_str = replacement_str.replace(
-                "{placeholder}", "", len(self.nodes_before) - 1
+                "{placeholder}", "", len(nodes_before) - 1
             )
 
             lines_affected = " ".join(
-                [NodeUtils.convert_to_source(node) for node in self.nodes_after]
+                [NodeUtils.convert_to_source(node) for node in nodes_after]
             )
             replacement_str = replacement_str.replace(
                 "{placeholder}", lines_affected, 1
             )
-
             qw = QueryWriter([ancestor])
             qw.write()
             replacement_str = qw.replace_with_tags(replacement_str)
@@ -213,20 +213,6 @@ class Inference:
                 replace_node=qw.outer_most_node[1:],
                 replace=replacement_str,
             )
-
-    def create_deletion(self) -> RawRule:
-        if len(self.nodes_before) == 1:
-            node_before = self.nodes_before[0]
-            qw = QueryWriter([node_before])
-            query = qw.write()
-            return RawRule(
-                name=self.name,
-                query=query,
-                replace_node=qw.outer_most_node[1:],
-                replace="",
-            )
-
-        raise NotImplementedError
 
     def create_addition(self) -> str:
         raise NotImplementedError

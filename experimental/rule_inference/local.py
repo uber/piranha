@@ -1,19 +1,22 @@
 import logging
 import multiprocessing
 import os
+import sys
 import time
 
 import attr
 import openai
 import toml
-from experimental.rule_inference.piranha_agent import (
-    PiranhaAgent, run_piranha_with_timeout)
-from experimental.rule_inference.rule_application import CodebaseRefactorer
-from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 from flask import Flask, render_template, session
 from flask_socketio import SocketIO, join_room
-
 from utils.pretty_toml import PrettyTOML
+
+from experimental.rule_inference.piranha_agent import (
+    PiranhaAgent,
+    run_piranha_with_timeout,
+)
+from experimental.rule_inference.rule_application import CodebaseRefactorer
+from experimental.rule_inference.utils.rule_utils import RawRuleGraph
 
 # Configure logging
 logger = logging.getLogger("Flask")
@@ -21,6 +24,8 @@ logger = logging.getLogger("Flask")
 # Create Flask app and SocketIO app
 app = Flask(__name__)
 socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
+
+logging.getLogger("werkzeug").setLevel(logging.INFO)
 
 
 def valid_toml(instance, attribute, value):
@@ -63,8 +68,11 @@ def home():
 def process_folder(data):
     data = RefactorData(**data)
     refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
-    refactorer.refactor_codebase(False)
-    socketio.emit("refactor_progress", {"progress": 100})
+    success, summaries = refactorer.refactor_codebase(False)
+    if success:
+        socketio.emit("refactor_progress", {"result": "Success"})
+    else:
+        socketio.emit("refactor_progress", {"result": "Failed"})
 
 
 @socketio.on("infer_piranha")
@@ -129,14 +137,24 @@ def test_rule(data):
     source_code = data.get("source_code", "")
 
     try:
+        toml_dict = toml.loads(rules)
+        substitutions = toml_dict.get("substitutions", [{}])[0]
+
         refactored_code, success = run_piranha_with_timeout(
-            source_code, language, RawRuleGraph.from_toml(toml.loads(rules)), 5
+            source_code,
+            language,
+            RawRuleGraph.from_toml(toml_dict),
+            timeout=5,
+            substitutions=substitutions,
         )
         test_result = "Success" if success else "Error"
 
     except multiprocessing.context.TimeoutError as e:
         test_result = "Error"
         refactored_code = "Piranha is in an infinite loop."
+    except Exception as e:
+        test_result = "Error"
+        refactored_code = str(e)
 
     # Emit the result
     socketio.emit(
@@ -150,4 +168,8 @@ def test_rule(data):
 
 if __name__ == "__main__":
     openai.api_key = os.getenv("OPENAI_API_KEY")
+    if not openai.api_key:
+        sys.exit(
+            "Please set the OPENAI_API_KEY environment variable to your OpenAI API key."
+        )
     app.run(debug=True)

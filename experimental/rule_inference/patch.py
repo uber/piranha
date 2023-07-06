@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import attr
-from experimental.rule_inference.utils.node_utils import NodeUtils
 from tree_sitter import Language, Node, Parser, Tree, TreeCursor
 from tree_sitter_languages import get_language, get_parser
+
+from experimental.rule_inference.utils.node_utils import NodeUtils
 
 
 @attr.s
