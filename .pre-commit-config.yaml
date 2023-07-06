@@ -49,7 +49,7 @@ repos:
           - --license-filepath
           - license_header.txt
           - --comment-style
-          - """| |"""
+          - "#"
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: "v2.0.1"
     hooks:
