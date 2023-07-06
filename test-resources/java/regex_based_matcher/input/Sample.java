@@ -23,9 +23,15 @@ class A {
     }
 
     void someTypeChange() {
+        // Will get updated
         List<Integer> a = getList();
         Integer item = getItem();
         a.add(item);
+        
+        // Will not get updated
+        List<String> b = getListStr();
+        Integer item = getItemStr();
+        b.add(item);
     }
 
 }
