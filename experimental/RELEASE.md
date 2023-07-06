@@ -10,4 +10,4 @@
    1. `python setup.py sdist bdist_wheel`
 8. Upload the package to PyPI:
    1. `twine upload dist/*`
-9. Visit [piranha-playground](https://pypi.org/project/piranha-playground/)
+9. Visit [polyglot-piranha-playground](https://pypi.org/project/polyglot-piranha-playground/)

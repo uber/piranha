@@ -137,6 +137,7 @@ class CodebaseRefactorer:
                 rule_graph=rule_graph.to_graph(),
                 dry_run=dry_run,
                 substitutions=toml_dict.get("substitutions", [{}])[0],
+                allow_dirty_ast=True,
             )
 
             output_summaries = execute_piranha(args)
