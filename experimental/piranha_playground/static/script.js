@@ -150,23 +150,18 @@
     });
   }
 
-  socket.on("infer_result", function (data) {
+  socket.on("infer_success", function (data) {
     var converter = new showdown.Converter();
     var markdown = converter.makeHtml(data.gpt_output);
     console.log(data);
 
     // update the explanation div
-    document.getElementById("explanation").innerHTML = markdown;
+    // document.getElementById("explanation").innerHTML = markdown;
 
     let button = document.getElementById("submit-button-improvement");
-    if (data.result === true) {
-      displayButton(false, "Successfully improved rule", "improvement");
-      button.classList.add("btn-success");
-      updateInterface(data.rule);
-    } else {
-      displayButton(false, "Unable to improve / generate rule", "improvement");
-      button.classList.add("btn-danger");
-    }
+    displayButton(false, "Successfully improved rule", "improvement");
+    button.classList.add("btn-success");
+    updateInterface(data.rule);
 
     // Set a timeout to fade the button back to the original state
     setTimeout(() => {
@@ -174,6 +169,21 @@
       displayButton(false, "Improve rule", "improvement");
     }, 3000);
   });
+
+  socket.on("infer_error", function (data) {
+    console.log(data);
+
+    let button = document.getElementById("submit-button-improvement");
+    displayButton(false, "Unable to improve / generate rule", "improvement");
+    button.classList.add("btn-danger");
+
+    // Set a timeout to fade the button back to the original state
+    setTimeout(() => {
+      button.classList.remove("btn-success", "btn-danger");
+      displayButton(false, "Improve rule", "improvement");
+    }, 3000);
+  });
+
 
   socket.on("infer_progress", function (data) {
     var converter = new showdown.Converter();
@@ -206,22 +216,14 @@
     }, 3000);
   });
 
-  // Add a new socket listener for the test result
-  socket.on("test_result", function (data) {
+  function updateTestButton(data, status, buttonText, editorValue) {
     console.log(data);
-    // Here you may want to handle the test result
     let button = document.getElementById("test-button");
     button.disabled = false;
-    // Add appropriate CSS class based on the test result
     button.classList.remove("btn-success", "btn-danger");
-    if (data.result === true) {
-      button.classList.add("btn-success");
-      button.textContent = "Successfully applied rule";
-    } else {
-      button.classList.add("btn-danger");
-      button.textContent = "Error";
-    }
-    editors.codeAfter.setValue(data.refactored_code);
+    button.classList.add(status);
+    button.textContent = buttonText;
+    editors.codeAfter.setValue(editorValue);
 
     // Set a timeout to fade the button back to the original state
     setTimeout(() => {
@@ -231,7 +233,18 @@
     }, 3000);
 
     return button;
+  }
+
+  // Add a new socket listener for the test result
+  socket.on("test_result", function (data) {
+    return updateTestButton(data, "btn-success", "Successfully applied rule", data.refactored_code);
   });
+
+  // Add a new socket listener for the test error
+  socket.on("test_error", function (data) {
+    return updateTestButton(data, "btn-danger", "Error", data.error);
+  });
+
 
   function updateInterface(rule) {
     document.getElementById("query-container").style.display = "block";

@@ -20,8 +20,14 @@ from piranha_playground.data_validation import (
     RefactorData,
     RefactorSnippet,
 )
-from piranha_playground.rule_inference.piranha_agent import PiranhaAgent
-from piranha_playground.rule_inference.rule_application import CodebaseRefactorer
+from piranha_playground.rule_inference.piranha_agent import (
+    PiranhaAgent,
+    PiranhaAgentError,
+)
+from piranha_playground.rule_inference.rule_application import (
+    CodebaseRefactorer,
+    CodebaseRefactorerException,
+)
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 
@@ -82,10 +88,10 @@ def process_folder(data):
     try:
         data = RefactorData(**data)
         refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
-        success, _ = refactorer.refactor_codebase(False)
-        socketio.emit("refactor_result", {"result": success})
-    except ValueError as e:
-        socketio.emit("refactor_error", {"result": False})
+        refactorer.refactor_codebase(False)
+        socketio.emit("refactor_result", {"result": True})
+    except (ValueError, CodebaseRefactorerException) as e:
+        socketio.emit("refactor_result", {"result": False})
 
 
 @socketio.on("infer_piranha")
@@ -106,20 +112,17 @@ def infer_from_example(data):
         )
         static_rules = agent.infer_rules_statically()
         socketio.emit("infer_progress", {"rule": static_rules})
-        result, rule = agent.infer_rules()
+        rules = agent.infer_rules()
         socketio_sessions[request.sid]["agent"] = agent
         socketio.emit(
-            "infer_result",
+            "infer_success",
             {
-                "result": result,
-                "rule": rule,
+                "rule": rules,
                 "gpt_output": agent.get_explanation(),
             },
         )
-    except ValueError as e:
-        socketio.emit(
-            "infer_error", {"success": False, "rule": str(e), "gpt_output": ""}
-        )
+    except (ValueError, PiranhaAgentError) as e:
+        socketio.emit("infer_error", {"error": str(e)})
 
 
 @socketio.on("improve_piranha")
@@ -133,19 +136,16 @@ def improve_rules(data):
     try:
         data = ImproveData(**data)
         agent: PiranhaAgent = socketio_sessions[request.sid].get("agent")
-        success, rule = agent.improve_rule(data.requirements, data.rules)
+        rules = agent.improve_rule(data.requirements, data.rules)
         socketio.emit(
-            "improve_result",
+            "infer_result",
             {
-                "result": success,
-                "rule": rule,
+                "rule": rules,
                 "gpt_output": agent.get_explanation(),
             },
         )
-    except ValueError as e:
-        socketio.emit(
-            "improve_error", {"success": False, "rule": str(e), "gpt_output": ""}
-        )
+    except (ValueError, PiranhaAgentError, AttributeError) as e:
+        socketio.emit("infer_error", {"error": str(e)})
 
 
 @socketio.on("test_rule")
@@ -158,15 +158,12 @@ def test_rule(data):
     """
     try:
         data = RefactorSnippet(**data)
-        success, refactored_code = CodebaseRefactorer.refactor_snippet(
+        refactored_code = CodebaseRefactorer.refactor_snippet(
             data.source_code, data.language, data.rules
         )
-
-        socketio.emit(
-            "test_result", {"result": success, "refactored_code": refactored_code}
-        )
-    except ValueError as e:
-        socketio.emit("test_error", {"result": False, "refactored_code": str(e)})
+        socketio.emit("test_result", {"refactored_code": refactored_code})
+    except (ValueError, CodebaseRefactorerException) as e:
+        socketio.emit("test_error", {"error": str(e)})
 
 
 def main():

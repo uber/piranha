@@ -8,11 +8,15 @@
 # License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
-
+import pytest
 import toml
 import pathlib
 from piranha_playground.rule_inference.rule_application import CodebaseRefactorer
 from polyglot_piranha import PiranhaOutputSummary
+
+from piranha_playground.rule_inference.rule_application import (
+    CodebaseRefactorerException,
+)
 
 
 # Test for successful execution of Piranha with a timeout
@@ -44,7 +48,7 @@ def test_run_piranha_with_timeout_success():
         "test-resources/java/feature_flag_system_2/control/input",
         toml.dumps(toml_dict),
     )
-    result, output_summaries = refactorer.refactor_codebase(False)
+    output_summaries = refactorer.refactor_codebase()
     assert len(output_summaries) == 4
     summary: PiranhaOutputSummary
     for summary in output_summaries:
@@ -65,5 +69,5 @@ def test_run_piranha_with_timeout_exception():
     """
     source_code = "class A {}"
 
-    success, output = CodebaseRefactorer.refactor_snippet(source_code, language, graph)
-    assert output == "Piranha is probably in an infinite loop."
+    with pytest.raises(CodebaseRefactorerException):
+        CodebaseRefactorer.refactor_snippet(source_code, language, graph)

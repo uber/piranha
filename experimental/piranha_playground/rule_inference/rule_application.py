@@ -34,6 +34,14 @@ ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
 
 
+class CodebaseRefactorerException(Exception):
+    """
+    Exception class for CodebaseRefactorer.
+    """
+
+    pass
+
+
 def enable_piranha_logs():
     """
     Sets up the logging configurations for Piranha.
@@ -113,16 +121,14 @@ class CodebaseRefactorer:
     include_paths = attr.ib(type=List[str], default=None)
     exclude_paths = attr.ib(type=List[str], default=None)
 
-    def refactor_codebase(
-        self, dry_run: bool = True
-    ) -> Tuple[bool, List[PiranhaOutputSummary]]:
+    def refactor_codebase(self, dry_run: bool = True) -> List[PiranhaOutputSummary]:
         """
         Applies the refactoring rules to the codebase.
 
         :param dry_run: bool: A boolean that if true, runs the refactor without making actual changes. Default is True.
 
-        :return: Tuple[bool, List[PiranhaOutputSummary]]: A boolean indicating if the refactor was successful and a list
-        of summaries of the changes made by Piranha.
+        :return: List[PiranhaOutputSummary]: A list of summaries of the changes made by Piranha.
+        :raises CodebaseRefactorerException: If the refactoring fails.
         """
         try:
             toml_dict = toml.loads(self.rules)
@@ -144,15 +150,12 @@ class CodebaseRefactorer:
             logger.info("Changed files:")
             for summary in output_summaries:
                 logger.info(summary.path)
-
-            # Execute the refactoring
-            return True, output_summaries
+            return output_summaries
         except BaseException as e:
-            logger.error(e)
-            return False, []
+            raise CodebaseRefactorerException(str(e)) from e
 
     @staticmethod
-    def refactor_snippet(source_code: str, language: str, rules: str):
+    def refactor_snippet(source_code: str, language: str, rules: str) -> str:
         """
         Refactors a code snippet based on the provided rules.
 
@@ -160,7 +163,8 @@ class CodebaseRefactorer:
         :param language: str: The language of the source code.
         :param rules: str: The refactoring rules in a .toml format.
 
-        :return: Tuple[bool, str]: A boolean indicating if the refactor was successful and the refactored code or error message.
+        :return: str: The refactored code or error message.
+        :raises CodebaseRefactorerException: If the refactoring fails.
         """
         try:
             toml_dict = toml.loads(rules)
@@ -173,8 +177,10 @@ class CodebaseRefactorer:
                 timeout=5,
                 substitutions=substitutions,
             )
-            return success, refactored_code
+            return refactored_code
         except multiprocessing.context.TimeoutError as e:
-            return False, "Piranha is probably in an infinite loop."
+            raise CodebaseRefactorerException(
+                "Piranha is likely in an infinite loop. Please check your rules."
+            ) from e
         except Exception as e:
-            return False, str(e)
+            raise CodebaseRefactorerException(str(e)) from e
