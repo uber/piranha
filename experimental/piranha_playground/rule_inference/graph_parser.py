@@ -18,11 +18,11 @@ from tree_sitter import Node, Tree
 
 
 @attr.s
-class GraphParser:
+class TemplateParser:
     """
-    The GraphParser class performs depth-first search on two given Abstract Syntax Trees (ASTs) to identify
-    'before' and 'after' code templates. The 'source_tree' represents the 'before' state, while the 'target_tree'
-    represents the 'after' state.
+    The TemplateParser class performs depth-first search on two given Abstract Syntax Trees (ASTs) to identify
+    mapping from 'before' code snippet (sub-AST) to 'after' code snippet (sub-AST) required to construct the
+    rules of the graph. It also parses special comments that specify the flow between the rules.
 
     Each template is associated with a unique identifier, enclosed by line comments that delineate the
     template's start and end. A sample input format is shown below:
@@ -57,9 +57,9 @@ class GraphParser:
         type=Dict[str, Set[str]], default=attr.Factory(lambda: defaultdict(set))
     )
 
-    def process_trees(self) -> Dict[str, Tuple[List[Node], List[Node]]]:
+    def parse_templates(self) -> Dict[str, Tuple[List[Node], List[Node]]]:
         """
-        Executes a tree traversal on both 'source_tree' and 'target_tree'. It finds corresponding template pairs
+        Executes the actual tree traversal on both 'source_tree' and 'target_tree'. It finds corresponding template pairs
         using identifiers specified in the comments. It also finds the edges between the templates. This method
         returns a dictionary of matched template pairs, which serves as a foundation for subsequent rule inference.
 

@@ -19,7 +19,7 @@ from typing import List, Optional, Tuple
 import attr
 import toml
 from piranha_playground.rule_inference.controller import Controller
-from piranha_playground.rule_inference.graph_parser import GraphParser
+from piranha_playground.rule_inference.graph_parser import TemplateParser
 from piranha_playground.rule_inference.piranha_chat import (
     PiranhaChatException,
     PiranhaGPTChat,
@@ -117,8 +117,8 @@ class PiranhaAgent:
         target_tree = self.get_tree_from_code(self.target_code)
 
         rules = {}
-        finder = GraphParser(source_tree, target_tree)
-        pairs = finder.process_trees()
+        finder = TemplateParser(source_tree, target_tree)
+        pairs = finder.parse_templates()
         for comment_name, (nodes_before, nodes_after) in pairs.items():
             inference_engine = Inference(nodes_before, nodes_after)
             rule = inference_engine.static_infer()

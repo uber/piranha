@@ -12,7 +12,7 @@
 from typing import Tuple
 
 import pytest
-from piranha_playground.rule_inference.graph_parser import GraphParser
+from piranha_playground.rule_inference.graph_parser import TemplateParser
 from tree_sitter import Node, Tree
 from tree_sitter_languages import get_parser
 
@@ -54,10 +54,10 @@ def test_simple_template():
     source_tree, target_tree = parse_code(language, source_code, target_code)
 
     # Initialize GraphParser
-    graph_parser = GraphParser(source_tree, target_tree)
+    graph_parser = TemplateParser(source_tree, target_tree)
 
     # Process trees
-    result = graph_parser.process_trees()
+    result = graph_parser.parse_templates()
     assert (
         result["1"][0][0].text == b"void someMethod(String arg) {\n\n      }"
         and result["1"][1][0].text == b"public String someMethod() {\n\n      }"
@@ -81,10 +81,10 @@ def test_edge_parsing():
     source_tree, target_tree = parse_code(language, source_code, target_code)
 
     # Initialize GraphParser
-    graph_parser = GraphParser(source_tree, target_tree)
+    graph_parser = TemplateParser(source_tree, target_tree)
 
     # Process trees
-    graph_parser.process_trees()
+    graph_parser.parse_templates()
     assert graph_parser.edges == {"1": {"2"}, "2": {"3", "1"}}
 
 
@@ -143,10 +143,10 @@ def test_complex_template_non_nested():
     source_tree, target_tree = parse_code(language, source_code, target_code)
 
     # Initialize GraphParser
-    graph_parser = GraphParser(source_tree, target_tree)
+    graph_parser = TemplateParser(source_tree, target_tree)
 
     # Process trees
-    result = graph_parser.process_trees()
+    result = graph_parser.parse_templates()
 
     # Assert the expected texts in the processed trees
     assert (

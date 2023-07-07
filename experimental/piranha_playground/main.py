@@ -76,14 +76,16 @@ def process_folder(data):
     """
     Event handler for the refactor_codebase event.
     Attempts to refactor a codebase based on the provided rules.
-    Emits the refactor_progress event with the result of the refactoring attempt.
 
     :param data: A dictionary containing the necessary information to perform the refactoring.
     """
-    data = RefactorData(**data)
-    refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
-    success, _ = refactorer.refactor_codebase(False)
-    socketio.emit("refactor_result", {"result": success})
+    try:
+        data = RefactorData(**data)
+        refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
+        success, _ = refactorer.refactor_codebase(False)
+        socketio.emit("refactor_result", {"result": success})
+    except ValueError as e:
+        socketio.emit("refactor_error", {"result": False})
 
 
 @socketio.on("infer_piranha")
@@ -94,28 +96,30 @@ def infer_from_example(data):
 
     :param data: A dictionary containing the source and target code examples and the programming language.
     """
-    data = InferData(**data)
-    agent = PiranhaAgent(
-        data.source_code,
-        data.target_code,
-        language=data.language,
-        hints="",
-    )
-
-    static_rules = agent.infer_rules_statically()
-    socketio.emit("infer_progress", {"rule": static_rules})
-
-    # Store the agent in case the user wants to improve the rule
-    result, rule = agent.infer_rules()
-    socketio_sessions[request.sid]["agent"] = agent
-    socketio.emit(
-        "infer_result",
-        {
-            "result": result,
-            "rule": rule,
-            "gpt_output": agent.get_explanation(),
-        },
-    )
+    try:
+        data = InferData(**data)
+        agent = PiranhaAgent(
+            data.source_code,
+            data.target_code,
+            language=data.language,
+            hints="",
+        )
+        static_rules = agent.infer_rules_statically()
+        socketio.emit("infer_progress", {"rule": static_rules})
+        result, rule = agent.infer_rules()
+        socketio_sessions[request.sid]["agent"] = agent
+        socketio.emit(
+            "infer_result",
+            {
+                "result": result,
+                "rule": rule,
+                "gpt_output": agent.get_explanation(),
+            },
+        )
+    except ValueError as e:
+        socketio.emit(
+            "infer_error", {"success": False, "rule": str(e), "gpt_output": ""}
+        )
 
 
 @socketio.on("improve_piranha")
@@ -126,17 +130,22 @@ def improve_rules(data):
 
     :param data: A dictionary containing the requirements and current rules.
     """
-    data = ImproveData(**data)
-    agent: PiranhaAgent = socketio_sessions[request.sid].get("agent")
-    success, rule = agent.improve_rule(data.requirements, data.rules)
-    socketio.emit(
-        "infer_result",
-        {
-            "result": success,
-            "rule": rule,
-            "gpt_output": agent.get_explanation(),
-        },
-    )
+    try:
+        data = ImproveData(**data)
+        agent: PiranhaAgent = socketio_sessions[request.sid].get("agent")
+        success, rule = agent.improve_rule(data.requirements, data.rules)
+        socketio.emit(
+            "improve_result",
+            {
+                "result": success,
+                "rule": rule,
+                "gpt_output": agent.get_explanation(),
+            },
+        )
+    except ValueError as e:
+        socketio.emit(
+            "improve_error", {"success": False, "rule": str(e), "gpt_output": ""}
+        )
 
 
 @socketio.on("test_rule")
@@ -147,17 +156,17 @@ def test_rule(data):
 
     :param data: A dictionary containing the language, rules, and source code.
     """
-    data = RefactorSnippet(**data)
-    success, refactored_code = CodebaseRefactorer.refactor_snippet(
-        data.source_code, data.language, data.rules
-    )
-    socketio.emit(
-        "test_result",
-        {
-            "result": success,
-            "refactored_code": refactored_code,
-        },
-    )
+    try:
+        data = RefactorSnippet(**data)
+        success, refactored_code = CodebaseRefactorer.refactor_snippet(
+            data.source_code, data.language, data.rules
+        )
+
+        socketio.emit(
+            "test_result", {"result": success, "refactored_code": refactored_code}
+        )
+    except ValueError as e:
+        socketio.emit("test_error", {"result": False, "refactored_code": str(e)})
 
 
 def main():
