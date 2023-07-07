@@ -44,7 +44,7 @@ repos:
           - --comment-style
           - /*| | */
       - id: insert-license
-        files: '^experimental/.*\.py$'
+        files: '^piranha_playground/.*\.py$'
         args:
           - --license-filepath
           - license_header.txt
@@ -60,4 +60,4 @@ repos:
     rev: "" # Use the sha or tag you want to point at
     hooks:
       - id: prettier
-        files: ^experimental/
+        files: ^piranha_playground/

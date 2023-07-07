@@ -23,7 +23,7 @@ source .env/bin/activate
 3. Navigate into the directory:
 
 ```
-cd experimental/rule_inference
+cd experimental
 ```
 
 4. Install the necessary requirements:
@@ -41,7 +41,8 @@ To run the playground
 ```
 export OPENAI_API_KEY=<YOUR_KEY>
 export PYTHONPATH=/path/to/piranha/experimental
-python -m local
+cd piranha_playground
+python -m main
 ```
 
 To define your transformation rules, you will need to provide pairs of code snippets: 'before' and 'after' transformation. Each piece of code that needs transformation should be marked by unique identifiers surrounded by comments (like `// 1`, `// 2`, etc.). These identifiers serve two purposes:
