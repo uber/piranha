@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 setup(
     name="polyglot-piranha-playground",
     version="0.1",
-    description="Your package description here",
+    description="A playground for Piranha",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/uber/piranha",
