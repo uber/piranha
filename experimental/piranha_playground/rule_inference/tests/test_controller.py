@@ -13,7 +13,7 @@ import json
 from unittest.mock import Mock
 
 import pytest
-from experimental.rule_inference.controller import Controller, ControllerError
+from piranha_playground.rule_inference.controller import Controller, ControllerError
 
 
 def setup_controller(mock_response):

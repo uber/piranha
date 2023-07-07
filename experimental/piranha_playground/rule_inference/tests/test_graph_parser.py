@@ -12,7 +12,7 @@
 from typing import Tuple
 
 import pytest
-from experimental.rule_inference.graph_parser import GraphParser
+from piranha_playground.rule_inference.graph_parser import GraphParser
 from tree_sitter import Node, Tree
 from tree_sitter_languages import get_parser
 

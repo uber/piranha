@@ -11,7 +11,7 @@
 
 import toml
 import pathlib
-from experimental.rule_inference.rule_application import CodebaseRefactorer
+from piranha_playground.rule_inference.rule_application import CodebaseRefactorer
 from polyglot_piranha import PiranhaOutputSummary
 
 

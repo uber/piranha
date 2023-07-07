@@ -14,7 +14,12 @@ from setuptools import setup, find_packages
 setup(
     name="polyglot-piranha-playground",
     version="0.1",
+    description="Your package description here",
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    url="https://github.com/uber/piranha",
     packages=find_packages(),
+    include_package_data=True,
     install_requires=[
         "tree-sitter",
         "tree-sitter-languages",
@@ -28,5 +33,13 @@ setup(
         "comby",
         "eventlet",
     ],
-    entry_points={"console_scripts": ["piranha-playground = experimental.main:main"]},
+    entry_points={
+        "console_scripts": ["piranha-playground = piranha_playground.main:main"]
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.7",
 )

@@ -13,8 +13,8 @@ from typing import List
 
 import attr
 from comby import Comby
-from experimental.rule_inference.utils.node_utils import NodeUtils
-from experimental.rule_inference.utils.rule_utils import RawRule
+from piranha_playground.rule_inference.utils.node_utils import NodeUtils
+from piranha_playground.rule_inference.utils.rule_utils import RawRule
 from tree_sitter import Node, TreeCursor
 
 

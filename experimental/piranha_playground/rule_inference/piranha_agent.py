@@ -18,18 +18,18 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from experimental.rule_inference.controller import Controller
-from experimental.rule_inference.graph_parser import GraphParser
-from experimental.rule_inference.piranha_chat import (
+from piranha_playground.rule_inference.controller import Controller
+from piranha_playground.rule_inference.graph_parser import GraphParser
+from piranha_playground.rule_inference.piranha_chat import (
     PiranhaChatException,
     PiranhaGPTChat,
 )
-from experimental.rule_inference.rule_application import run_piranha_with_timeout
-from experimental.rule_inference.static_inference import Inference, QueryWriter
-from experimental.rule_inference.utils.logger_formatter import CustomFormatter
-from experimental.rule_inference.utils.node_utils import NodeUtils
-from experimental.rule_inference.utils.pretty_toml import PrettyTOML
-from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+from piranha_playground.rule_inference.rule_application import run_piranha_with_timeout
+from piranha_playground.rule_inference.static_inference import Inference, QueryWriter
+from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
+from piranha_playground.rule_inference.utils.node_utils import NodeUtils
+from piranha_playground.rule_inference.utils.pretty_toml import PrettyTOML
+from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 from polyglot_piranha import (
     PiranhaArguments,
     PiranhaOutputSummary,

@@ -13,7 +13,7 @@ import json
 from typing import Any, Dict
 
 import attr
-from experimental.rule_inference.piranha_chat import PiranhaGPTChat
+from piranha_playground.rule_inference.piranha_chat import PiranhaGPTChat
 
 # Define the option constants
 ANSWER_OPTIONS = ["yes", "no"]

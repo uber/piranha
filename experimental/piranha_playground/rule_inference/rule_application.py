@@ -15,8 +15,8 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from experimental.rule_inference.utils.logger_formatter import CustomFormatter
-from experimental.rule_inference.utils.rule_utils import RawRuleGraph
+from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
+from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 from polyglot_piranha import (
     PiranhaArguments,
     PiranhaOutputSummary,

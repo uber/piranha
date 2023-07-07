@@ -14,18 +14,18 @@ import os
 import sys
 
 import openai
-from experimental.data_validation import (
+from piranha_playground.data_validation import (
     ImproveData,
     InferData,
     RefactorData,
     RefactorSnippet,
 )
-from experimental.rule_inference.piranha_agent import PiranhaAgent
-from experimental.rule_inference.rule_application import CodebaseRefactorer
+from piranha_playground.rule_inference.piranha_agent import PiranhaAgent
+from piranha_playground.rule_inference.rule_application import CodebaseRefactorer
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 
-from experimental.rule_inference.utils.logger_formatter import CustomFormatter
+from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
 
 # Create Flask app and SocketIO app
 app = Flask(__name__)
