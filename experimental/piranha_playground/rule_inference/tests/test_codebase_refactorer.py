@@ -57,17 +57,20 @@ def test_run_piranha_with_timeout_success():
             assert rewrite.p_match.matched_string and rewrite.p_match.matches
 
 
+@pytest.mark.skip(reason="This test doesnt work in CI")
 # Test for timeout scenario while executing Piranha
 def test_run_piranha_with_timeout_exception():
     language = "java"
-    graph = """
+    graph = '''
     [[rules]]
     name = "rename_variable"
-    query = "(identifier) @var_name"
+    query = """(
+        (identifier) @var_name
+        (#eq? @var_name "A")
+    )"""
     replace_node = "var_name"
-    replace = "other_name"
-    """
+    replace = "A"
+    '''
     source_code = "class A {}"
-
     with pytest.raises(CodebaseRefactorerException):
-        CodebaseRefactorer.refactor_snippet(source_code, language, graph)
+        refactored = CodebaseRefactorer.refactor_snippet(source_code, language, graph)

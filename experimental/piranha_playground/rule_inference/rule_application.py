@@ -133,10 +133,6 @@ class CodebaseRefactorer:
         try:
             toml_dict = toml.loads(self.rules)
             rule_graph = RawRuleGraph.from_toml(toml_dict)
-
-            # Create the Piranha rule graph
-
-            # Create the PiranhaArguments object
             args = PiranhaArguments(
                 language=self.language,
                 path_to_codebase=self.path_to_codebase,
@@ -169,7 +165,6 @@ class CodebaseRefactorer:
         try:
             toml_dict = toml.loads(rules)
             substitutions = toml_dict.get("substitutions", [{}])[0]
-
             refactored_code, success = run_piranha_with_timeout(
                 source_code,
                 language,
