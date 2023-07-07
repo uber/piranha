@@ -15,13 +15,12 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use super::eq_without_whitespace;
 use crate::{
-  models::{edit::Edit, matches::Match, Validator},
+  models::{edit::Edit, matches::Match},
   utilities::MapOfVec,
 };
 use itertools::Itertools;
 use log::debug;
-use pyo3::prelude::pyclass;
-use serde_derive::Deserialize;
+
 use std::collections::HashMap;
 use tree_sitter::{InputEdit, Node, Parser, Point, Query, QueryCapture, QueryCursor, Range};
 use tree_sitter_traversal::{traverse, Order};
@@ -337,31 +336,6 @@ pub(crate) fn number_of_errors(node: &Node) -> usize {
   traverse(node.walk(), Order::Post)
     .filter(|node| node.is_error() || node.is_missing())
     .count()
-}
-
-#[pyclass]
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
-pub struct TSQuery(String);
-
-impl TSQuery {
-  pub(crate) fn new(query: String) -> Self {
-    Self(query)
-  }
-
-  pub(crate) fn get_query(&self) -> String {
-    self.0.to_string()
-  }
-}
-
-impl Validator for TSQuery {
-  fn validate(&self) -> Result<(), String> {
-    let mut parser = get_ts_query_parser();
-    parser
-      .parse(self.get_query(), None)
-      .filter(|x| number_of_errors(&x.root_node()) == 0)
-      .map(|_| Ok(()))
-      .unwrap_or(Err(format!("Cannot parse - {}", self.get_query())))
-  }
 }
 
 #[cfg(test)]
