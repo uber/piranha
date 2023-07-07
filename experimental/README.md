@@ -40,7 +40,7 @@ To run the playground
 
 ```
 export OPENAI_API_KEY=<YOUR_KEY>
-export PYTHONPATH=/path/to/piranha
+export PYTHONPATH=/path/to/piranha/experimental
 python -m local
 ```
 
