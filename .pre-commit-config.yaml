@@ -43,10 +43,21 @@ repos:
           - license_header.txt
           - --comment-style
           - /*| | */
-
+      - id: insert-license
+        files: '^piranha_playground/.*\.py$'
+        args:
+          - --license-filepath
+          - license_header.txt
+          - --comment-style
+          - "#"
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: "v2.0.1"
     hooks:
       - id: autopep8
         files: demo/
         exclude: only_lists.py
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "" # Use the sha or tag you want to point at
+    hooks:
+      - id: prettier
+        files: ^piranha_playground/
