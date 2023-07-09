@@ -74,17 +74,11 @@ pub(crate) enum CompiledCGPattern {
 }
 
 impl CompiledCGPattern {
-  /// Applies the query upon the given node, and gets all the matches
+  /// Applies the CGPattern (self) upon the input `node`, and returns the first match
   /// # Arguments
   /// * `node` - the root node to apply the query upon
   /// * `source_code` - the corresponding source code string for the node.
-  /// * `query` - the query to be applied
   /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
-  ///
-  /// # Returns
-  /// A vector of `tuples` containing the range of the matches in the source code and the corresponding mapping for the tags (to code snippets).
-  /// By default it returns the range of the outermost node for each query match.
-  /// If `replace_node` is provided in the rule, it returns the range of the node corresponding to that tag.
   pub(crate) fn get_match(&self, node: &Node, source_code: &str, recursive: bool) -> Option<Match> {
     if let Some(m) = self
       .get_matches(node, source_code.to_string(), recursive, None, None)
