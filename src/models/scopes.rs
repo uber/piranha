@@ -13,7 +13,6 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use super::capture_group_patterns::CGPattern;
 use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
-use crate::utilities::tree_sitter_utilities::get_match_for_query;
 use crate::utilities::tree_sitter_utilities::get_node_for_range;
 use crate::utilities::Instantiate;
 use derive_builder::Builder;
@@ -65,12 +64,8 @@ impl SourceCodeUnit {
         changed_node.kind()
       );
       for m in &scope_enclosing_nodes {
-        if let Some(p_match) = get_match_for_query(
-          &changed_node,
-          self.code(),
-          rules_store.query(m.enclosing_node()),
-          false,
-        ) {
+        let pattern = rules_store.query(m.enclosing_node());
+        if let Some(p_match) = pattern.get_match(&changed_node, self.code(), false) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
           return m.scope().instantiate(p_match.matches());
