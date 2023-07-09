@@ -22,21 +22,22 @@ use itertools::Itertools;
 use jwalk::WalkDir;
 use log::{debug, trace};
 use regex::Regex;
-use tree_sitter::Query;
 
 use crate::{
   models::capture_group_patterns::CGPattern, models::piranha_arguments::PiranhaArguments,
   models::scopes::ScopeQueryGenerator, utilities::read_file,
 };
 
-use super::{language::PiranhaLanguage, rule::InstantiatedRule};
+use super::{
+  capture_group_patterns::CompiledCGPattern, language::PiranhaLanguage, rule::InstantiatedRule,
+};
 use glob::Pattern;
 
 /// This maintains the state for Piranha.
 #[derive(Debug, Getters, Default)]
 pub(crate) struct RuleStore {
   // Caches the compiled tree-sitter queries.
-  rule_query_cache: HashMap<String, Query>,
+  rule_query_cache: HashMap<String, CompiledCGPattern>,
   // Current global rules to be applied.
   #[get = "pub"]
   global_rules: Vec<InstantiatedRule>,
@@ -75,11 +76,16 @@ impl RuleStore {
 
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
-  pub(crate) fn query(&mut self, query_str: &CGPattern) -> &Query {
-    self
+  pub(crate) fn query(&mut self, cg_pattern: &CGPattern) -> &CompiledCGPattern {
+    let pattern = cg_pattern.pattern();
+    if pattern.starts_with("rgx ") {
+      panic!("Regex not supported.")
+    }
+
+    &*self
       .rule_query_cache
-      .entry(query_str.pattern())
-      .or_insert_with(|| self.language.create_query(query_str.pattern()))
+      .entry(pattern.to_string())
+      .or_insert_with(|| CompiledCGPattern::Q(self.language.create_query(pattern)))
   }
 
   // For the given scope level, get the ScopeQueryGenerator from the `scope_config.toml` file

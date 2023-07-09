@@ -14,13 +14,17 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use crate::{
   models::Validator,
   utilities::{
-    tree_sitter_utilities::{get_ts_query_parser, number_of_errors},
+    tree_sitter_utilities::{get_all_matches_for_query, get_ts_query_parser, number_of_errors},
     Instantiate,
   },
 };
 use pyo3::prelude::pyclass;
+use regex::Regex;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
+use tree_sitter::{Node, Query};
+
+use super::matches::Match;
 
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
@@ -38,12 +42,18 @@ impl CGPattern {
 
 impl Validator for CGPattern {
   fn validate(&self) -> Result<(), String> {
+    if self.pattern().starts_with("rgx ") {
+      panic!("Regex not supported")
+    }
     let mut parser = get_ts_query_parser();
     parser
       .parse(self.pattern(), None)
       .filter(|x| number_of_errors(&x.root_node()) == 0)
       .map(|_| Ok(()))
-      .unwrap_or(Err(format!("Cannot parse - {}", self.pattern())))
+      .unwrap_or(Err(format!(
+        "Cannot parse the tree-sitter query - {}",
+        self.pattern()
+      )))
   }
 }
 
@@ -54,5 +64,46 @@ impl Instantiate for CGPattern {
       .map(|(k, v)| (k.to_string(), v.replace('\n', "\\n")))
       .collect();
     CGPattern::new(self.pattern().instantiate(&substitutions))
+  }
+}
+
+#[derive(Debug)]
+pub(crate) enum CompiledCGPattern {
+  Q(Query),
+  R(Regex), // Regex is not yet supported
+}
+
+impl CompiledCGPattern {
+  /// Applies the CGPattern (self) upon the input `node`, and returns the first match
+  /// # Arguments
+  /// * `node` - the root node to apply the query upon
+  /// * `source_code` - the corresponding source code string for the node.
+  /// * `recursive` - if `true` it matches the query to `self` and `self`'s sub-ASTs, else it matches the `query` only to `self`.
+  pub(crate) fn get_match(&self, node: &Node, source_code: &str, recursive: bool) -> Option<Match> {
+    if let Some(m) = self
+      .get_matches(node, source_code.to_string(), recursive, None, None)
+      .first()
+    {
+      return Some(m.clone());
+    }
+    None
+  }
+
+  /// Applies the pattern upon the given `node`, and gets all the matches
+  pub(crate) fn get_matches(
+    &self, node: &Node, source_code: String, recursive: bool, replace_node: Option<String>,
+    replace_node_idx: Option<u8>,
+  ) -> Vec<Match> {
+    match self {
+      CompiledCGPattern::Q(query) => get_all_matches_for_query(
+        node,
+        source_code,
+        query,
+        recursive,
+        replace_node,
+        replace_node_idx,
+      ),
+      CompiledCGPattern::R(_) => panic!("Regex is not yet supported!!!"),
+    }
   }
 }

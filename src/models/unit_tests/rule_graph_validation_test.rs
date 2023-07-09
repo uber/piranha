@@ -118,3 +118,13 @@ fn test_filter_bad_arg_contains_n_sibling() {
     .sibling_count(2)
     .build();
 }
+
+#[test]
+#[should_panic(expected = "Regex not supported")]
+fn test_unsupported_regex() {
+  RuleGraphBuilder::default()
+    .rules(vec![
+      piranha_rule! {name = "Test rule", query = "rgx (\\w+) (\\w)+"},
+    ])
+    .build();
+}
