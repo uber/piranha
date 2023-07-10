@@ -79,7 +79,7 @@ impl Instantiate for CGPattern {
 #[derive(Debug)]
 pub(crate) enum CompiledCGPattern {
   Q(Query),
-  R(Regex), // Regex is not yet supported
+  R(Regex),
 }
 
 impl CompiledCGPattern {
