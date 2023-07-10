@@ -32,6 +32,7 @@ pub const STRINGS: &str = "strings";
 pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
 
 pub const REGEX_QUERY_PREFIX: &str = "rgx ";
+pub const AST_GREP_PREFIX: &str = "sg ";
 
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
