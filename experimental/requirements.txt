@@ -1,0 +1,11 @@
+tree-sitter
+tree-sitter-languages
+attrs
+openai
+polyglot-piranha
+toml
+pytest
+flask
+flask-socketio
+comby
+eventlet
