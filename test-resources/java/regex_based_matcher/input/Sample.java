@@ -1,10 +1,14 @@
 package com.uber.piranha;
 
-import java.util.List;
+import our.list.OurListOfInteger;
+import our.map.OurMapOfStringInteger;
+import our.map.OurMapOfLongFloat;
+import not.our.map.NotOurMapOfDoubleInteger;
 
 class A {
 
     void foobar() {
+        // Will be removed
         boolean b = foo().bar().baz();
         if (b) {
             System.out.println("Hello World!");
@@ -24,14 +28,33 @@ class A {
 
     void someTypeChange() {
         // Will get updated
-        List<Integer> a = getList();
+        OurListOfInteger a = getList();
         Integer item = getItem();
-        a.add(item);
+        a.addToOurList(item);
         
         // Will not get updated
         List<String> b = getListStr();
-        Integer item = getItemStr();
+        String item = getItemStr();
         b.add(item);
+    }
+
+    void someOtherTypeChange() {
+        // Will get updated
+        OurMapOfStringInteger siMap = getMapSI();
+        String sKey = getStrKey();
+        Integer iItem = getIItem();
+        siMap.pushIntoOurMap(sKey, iItem);
+        
+        // Will get updated
+        OurMapOfLongFloat lfMap = getMapLF();
+        Long lKey = getLongKey();
+        Float fItem = getFItem();
+        lfMap.pushIntoOurMap(lKey, fItem);
+
+        // Will not get updated
+        NotOurMapOfDoubleInteger dlMap = getMapDL();
+        Double dKey = getDoubleKey();
+        dlMap.pushIntoOurMap(dKey, iItem);
     }
 
 }

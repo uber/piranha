@@ -25,11 +25,10 @@ use tree_sitter::Node;
 /// * `replace_node` - node to replace
 ///
 /// # Returns
-/// The range of the match in the source code and the corresponding mapping from tags to code snippets.
+/// List containing all the matches against `node`
 pub(crate) fn get_all_matches_for_regex(
   node: &Node, source_code: String, regex: &Regex, recursive: bool, replace_node: Option<String>,
 ) -> Vec<Match> {
-  // let code_snippet = node.utf8_text(source_code.as_bytes()).unwrap();
   let all_captures = regex.captures_iter(&source_code).collect_vec();
   let names = regex.capture_names().collect_vec();
   let mut all_matches = vec![];
@@ -40,21 +39,25 @@ pub(crate) fn get_all_matches_for_regex(
     let range_matches_inside_node = node.start_byte() <= captures.get(0).unwrap().start()
       && node.end_byte() >= captures.get(0).unwrap().end();
     if (recursive && range_matches_inside_node) || range_matches_node {
-      let group_by_tag = if let Some(ref rn) = replace_node {
+      let replace_node_match = if let Some(ref rn) = replace_node {
         captures
           .name(rn)
-          .unwrap_or_else(|| panic!("the tag {rn} provided in the replace node is not present"))
+          .unwrap_or_else(|| panic!("The tag {rn} provided in the replace node is not present"))
       } else {
         captures.get(0).unwrap()
       };
       let matches = extract_captures(&captures, &names);
-      all_matches.push(Match::from_regex(&group_by_tag, matches, &source_code));
+      all_matches.push(Match::from_regex(
+        &replace_node_match,
+        matches,
+        &source_code,
+      ));
     }
   }
   all_matches
 }
 
-// Creates an hashmap from the capture group(name) to the corresponding code snippet.
+// Creates a hashmap from the capture group(name) to the corresponding code snippet.
 fn extract_captures(
   captures: &regex::Captures<'_>, names: &Vec<Option<&str>>,
 ) -> HashMap<String, String> {

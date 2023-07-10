@@ -1,6 +1,8 @@
 package com.uber.piranha;
 
-import com.uber.NewList;
+import java.util.HashMap;
+import java.util.List;
+import not.our.map.NotOurMapOfDoubleInteger;
 
 class A {
 
@@ -21,14 +23,33 @@ class A {
 
     void someTypeChange() {
         // Will get updated
-        NewList a = getList();
+        List<Integer> a = getList();
         Integer item = getItem();
-        a.addToNewList(item);
+        a.add(item);
 
         // Will not get updated
         List<String> b = getListStr();
-        Integer item = getItemStr();
+        String item = getItemStr();
         b.add(item);
+    }
+
+    void someOtherTypeChange() {
+        // Will get updated
+        HashMap<String, Integer> siMap = getMapSI();
+        String sKey = getStrKey();
+        Integer iItem = getIItem();
+        siMap.push(sKey, iItem);
+        
+        // Will get updated
+        HashMap<Long, Float>  lfMap = getMapLF();
+        Long lKey = getLongKey();
+        Float fItem = getFItem();
+        lfMap.push(lKey, fItem);
+
+        // Will not get updated
+        NotOurMapOfDoubleInteger dlMap = getMapDL();
+        Double dKey = getDoubleKey();
+        dlMap.pushIntoOurMap(dKey, iItem);
     }
 
 }

@@ -25,7 +25,7 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
-use super::matches::Match;
+use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
 
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
@@ -40,19 +40,19 @@ impl CGPattern {
     self.0.to_string()
   }
 
-  pub(crate) fn extract_regex(&self) -> String {
-    let mut _val = &self.pattern()[4..];
-    _val.to_string()
+  pub(crate) fn extract_regex(&self) -> Result<Regex, regex::Error> {
+    let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
+    Regex::new(_val)
   }
 }
 
 impl Validator for CGPattern {
   fn validate(&self) -> Result<(), String> {
     if self.pattern().starts_with("rgx ") {
-      let mut _val = &self.pattern()[4..];
-      return Regex::new(_val)
+      return self
+        .extract_regex()
         .map(|_| Ok(()))
-        .unwrap_or(Err(format!("Cannot parse the regex - {_val}")));
+        .unwrap_or(Err(format!("Cannot parse the regex - {}", self.pattern())));
     }
     let mut parser = get_ts_query_parser();
     parser

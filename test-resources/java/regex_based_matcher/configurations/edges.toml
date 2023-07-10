@@ -18,3 +18,14 @@ to = ["update_list_int"]
 scope = "Method"
 from = "update_list_int"
 to = ["update_add"]
+
+
+[[edges]]
+scope = "File"
+from = "delete_import_our_map_of"
+to = ["change_type_from_OurHashMap", "add_import_For_hashmap"]
+
+[[edges]]
+scope = "Method"
+from = "change_type_from_OurHashMap"
+to = ["update_push"]

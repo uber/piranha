@@ -30,30 +30,75 @@ replace_node = "m_def"
 replace = "fed"
 
 
-# The below three rules do a dummy type migration from List<Integer> to NewList 
+# The below three rules do a dummy type migration from OurListOfInteger to List<Integer> 
 
-# Updates the import statement from `java.util.List` to `com.uber.NEwList`
+# Updates the import statement from `java.util.List` to `com.uber.NewList`
 [[rules]]
 name = "update_import"
-query = """rgx (?P<n>java\\.util\\.List)"""
+query = """rgx (?P<n>our\\.list\\.OurListOfInteger)"""
 replace_node = "n"
-replace = "com.uber.NewList"
+replace = "java.util.List"
 
-# Updates the type of local variables from `List<Integer>` to `com.uber.NewList`
+# Updates the type of local variables from `OurListOfInteger` to `List<Integer>`
 [[rules]]
 name = "update_list_int"
-query = """rgx (?P<var_decl>(?P<type>List<Integer>)\\s*(?P<name>\\w+)\\s*=.*;)"""
+query = """rgx (?P<var_decl>(?P<type>OurListOf(?P<param>Integer))\\s*(?P<name>\\w+)\\s*=.*;)"""
 replace_node = "type"
-replace = "NewList"
+replace = "List<@param>"
 is_seed_rule = false
 [[rules.filter]]
 enclosing_node = "(method_declaration) @cmd"
 
-# Updates the relevant callsite from `add` to `addToNewList`
+# Updates the relevant callsite from `addToOurList` to `add`
 [[rules]]
 name = "update_add"
-query = """rgx (?P<call>@name\\.(?P<m_name>add)\\(\\w+\\))"""
+query = """rgx (?P<call>@name\\.(?P<m_name>addToOurList)\\(\\w+\\))"""
 replace_node = "m_name"
-replace = "addToNewList"
+replace = "add"
+holes = ["name"]
+is_seed_rule = false
+
+
+# The below three rules do a dummy type migration  like - from OurMapOfStringInteger to HashMap<String, Integer>
+
+# Deletes the import statement `our.map.OurMapOf...` 
+[[rules]]
+name = "delete_import_our_map_of"
+query = """rgx (?P<n>import our\\.map\\.OurMapOf\\w+;)"""
+replace_node = "n"
+replace = ""
+
+# Adds Import to java.util.hashmap if absent
+[[rules]]
+name = "add_import_For_hashmap"
+query = """(package_declaration) @pkg"""
+replace_node = "pkg"
+replace = "@pkg\nimport java.util.HashMap;"
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(program) @prgrm"
+not_contains = [
+  "((import_declaration) @im (#match? @im \"java.util.HashMap\"))",
+]
+
+# Before:
+# OurMapOfStringInteger
+# After: 
+# HashMap<String, Integer>
+[[rules]]
+name = "change_type_from_OurHashMap"
+query = """rgx (?P<var_decl>(?P<type>\\bOurMapOf(?P<param1>[A-Z]\\w+)(?P<param2>[A-Z]\\w+))\\s*(?P<name>\\w+)\\s*=.*;)"""
+replace_node = "type"
+replace = "HashMap<@param1, @param2>"
+is_seed_rule = false
+[[rules.filter]]
+enclosing_node = "(method_declaration) @cmd"
+
+# Updates the relevant callsite from `pushIntoOurMap` to `push`
+[[rules]]
+name = "update_push"
+query = """rgx (?P<call>@name\\.(?P<m_name>pushIntoOurMap)\\(.*\\))"""
+replace_node = "m_name"
+replace = "push"
 holes = ["name"]
 is_seed_rule = false
