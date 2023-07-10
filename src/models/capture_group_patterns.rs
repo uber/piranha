@@ -14,18 +14,23 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use crate::{
   models::Validator,
   utilities::{
+    ast_grep_utilities::get_all_matches_for_ast_grep_pattern,
     regex_utilities::get_all_matches_for_regex,
     tree_sitter_utilities::{get_all_matches_for_query, get_ts_query_parser, number_of_errors},
     Instantiate,
   },
 };
+use ast_grep_core::{language::TSLanguage, Pattern, StrDoc};
 use pyo3::prelude::pyclass;
 use regex::Regex;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
-use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
+use super::{
+  default_configs::{AST_GREP_PREFIX, REGEX_QUERY_PREFIX},
+  matches::Match,
+};
 
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
@@ -54,6 +59,9 @@ impl Validator for CGPattern {
         .map(|_| Ok(()))
         .unwrap_or(Err(format!("Cannot parse the regex - {}", self.pattern())));
     }
+    if self.pattern().starts_with(AST_GREP_PREFIX) {
+      return Ok(());
+    }
     let mut parser = get_ts_query_parser();
     parser
       .parse(self.pattern(), None)
@@ -78,6 +86,7 @@ impl Instantiate for CGPattern {
 
 #[derive(Debug)]
 pub(crate) enum CompiledCGPattern {
+  P(Pattern<StrDoc<TSLanguage>>),
   Q(Query),
   R(Regex),
 }
@@ -104,6 +113,7 @@ impl CompiledCGPattern {
     replace_node_idx: Option<u8>,
   ) -> Vec<Match> {
     match self {
+      CompiledCGPattern::P(_pattern) => panic!("ast-grep pattern is not supported"),
       CompiledCGPattern::Q(query) => get_all_matches_for_query(
         node,
         source_code,
@@ -112,9 +122,7 @@ impl CompiledCGPattern {
         replace_node,
         replace_node_idx,
       ),
-      CompiledCGPattern::R(regex) => {
-        get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
-      }
+      CompiledCGPattern::R(regex) => get_all_matches_for_ast_grep_pattern(),
     }
   }
 }

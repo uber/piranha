@@ -13,6 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
+use ast_grep_core::{language::TSLanguage, StrDoc};
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
@@ -61,6 +62,19 @@ impl Match {
     Match {
       matched_string: mtch.as_str().to_string(),
       range: Range::from_regex_match(mtch, source_code),
+      matches,
+      associated_comma: None,
+      associated_comments: Vec::new(),
+    }
+  }
+
+  pub(crate) fn from_ast_grep_captures(
+    captures: &ast_grep_core::Node<'_, StrDoc<TSLanguage>>, matches: HashMap<String, String>,
+    source_code: &str,
+  ) -> Self {
+    Match {
+      matched_string: captures.text().to_string(),
+      range: Range::from_range(&captures.range(), source_code),
       matches,
       associated_comma: None,
       associated_comments: Vec::new(),
@@ -279,6 +293,15 @@ impl Range {
       end_byte: mtch.end(),
       start_point: position_for_offset(source_code.as_bytes(), mtch.start()),
       end_point: position_for_offset(source_code.as_bytes(), mtch.end()),
+    }
+  }
+
+  pub(crate) fn from_range(range: &std::ops::Range<usize>, source_code: &str) -> Self {
+    Self {
+      start_byte: range.start,
+      end_byte: range.end,
+      start_point: position_for_offset(source_code.as_bytes(), range.start),
+      end_point: position_for_offset(source_code.as_bytes(), range.end),
     }
   }
 }
