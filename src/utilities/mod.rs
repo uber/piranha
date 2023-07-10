@@ -11,6 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+pub(crate) mod ast_grep_utilities;
 pub(crate) mod regex_utilities;
 pub(crate) mod tree_sitter_utilities;
 use std::collections::HashMap;
