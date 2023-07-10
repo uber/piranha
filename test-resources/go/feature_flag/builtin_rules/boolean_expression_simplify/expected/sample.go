@@ -53,17 +53,12 @@ func simplify_false_and_something(something bool) {
     fmt.Println("else 4")
     // selector_expression: simplify
     fmt.Println("else 5")
-    // does not simplify binary_expression; left call may contain side-effects
-    if exp.BoolValue("random") && false {
-        fmt.Println("keep 1")
-    } else {
-        fmt.Println("keep 2")
-    }
+    // simplify
+    
+    fmt.Println("keep 2")
 
     // function call && false
-    if f1() && false {
-        fmt.Println("keep as it is")
-    }
+    
 
     // function call || true
     if f1() || true {

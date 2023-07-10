@@ -219,15 +219,10 @@ groups = ["boolean_expression_simplify"]
 query = """
 (
     (binary_expression
-        left : [
-            (identifier)
-            (true)
-            (false)
-        ] @lhs
+        left : (_) @lhs
         operator : "&&"
-        right: (false)
-    )
-@binary_expression)
+        right: (false)) @binary_expression
+)
 """
 replace = "false"
 replace_node = "binary_expression"
