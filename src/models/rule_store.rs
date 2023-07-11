@@ -79,7 +79,10 @@ impl RuleStore {
   pub(crate) fn query(&mut self, cg_pattern: &CGPattern) -> &CompiledCGPattern {
     let pattern = cg_pattern.pattern();
     if pattern.starts_with("rgx ") {
-      panic!("Regex not supported.")
+      return &*self
+        .rule_query_cache
+        .entry(pattern)
+        .or_insert_with(|| CompiledCGPattern::R(cg_pattern.extract_regex().unwrap()));
     }
 
     &*self
