@@ -41,7 +41,7 @@ class XPMethodChainCases {
       System.out.println("!!!");
     }
     if (sp.otherFlag().getCachedValue() || sp.isStaleFeature().getCachedValue()) {
-      System.out.println("!!!");
+      System.out.println("simplify and keep the statement");
     }
     // test for identifier || true
     if (a || sp.isStaleFeature().getCachedValue()){

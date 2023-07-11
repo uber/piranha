@@ -45,7 +45,7 @@ internal class XPMethodChainCases {
                 println("!!!")
             }
             if (sp.isOtherFlag().cachedValue || sp.isStaleFeature().cachedValue) {
-                println("LHS is not a simple identifier!!!")
+                println("simplify if and keep statement")
             }
             // simple_identifier && false, should be deleted
             if (a && !sp.isStaleFeature().cachedValue){
