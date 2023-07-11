@@ -32,7 +32,7 @@ replace = "fed"
 
 # The below three rules do a dummy type migration from OurListOfInteger to List<Integer> 
 
-# Updates the import statement from `java.util.List` to `com.uber.NewList`
+# Updates the import statement from `out.list.OurListOfInteger` to `java.util.List`
 [[rules]]
 name = "update_import"
 query = """rgx (?P<n>our\\.list\\.OurListOfInteger)"""
@@ -59,7 +59,8 @@ holes = ["name"]
 is_seed_rule = false
 
 
-# The below three rules do a dummy type migration  like - from OurMapOfStringInteger to HashMap<String, Integer>
+# The below three rules do a dummy type migration OurMapOf{T1}{T2} to HashMap<T1, T2>. For example, from OurMapOfStringInteger to HashMap<String, Integer>. 
+# This is to exercise non-constant regex matches for replace_node.
 
 # Deletes the import statement `our.map.OurMapOf...` 
 [[rules]]
@@ -68,7 +69,7 @@ query = """rgx (?P<n>import our\\.map\\.OurMapOf\\w+;)"""
 replace_node = "n"
 replace = ""
 
-# Adds Import to java.util.hashmap if absent
+# Adds Import to java.util.Hashmap if absent
 [[rules]]
 name = "add_import_For_hashmap"
 query = """(package_declaration) @pkg"""

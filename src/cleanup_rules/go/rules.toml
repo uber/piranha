@@ -129,16 +129,7 @@ name = "simplify_something_and_false"
 query = """
 (
     (binary_expression
-        left : ([
-                (identifier)
-                (parenthesized_expression (identifier))
-                (true)
-                (parenthesized_expression (true))
-                (false)
-                (parenthesized_expression (false))
-                (selector_expression)
-                (parenthesized_expression (selector_expression))
-            ]) @lhs
+        left : (_) @lhs
         operator : "&&"
         right: [(false) (parenthesized_expression (false))]
     ) @binary_expression
