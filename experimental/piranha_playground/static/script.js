@@ -80,9 +80,6 @@
   elements.submitButtonImprovement.addEventListener("click", emitImproveEvent);
   elements.testButton.addEventListener("click", emitTestEvent);
 
-
-
-
   async function emitInferEvent() {
     const sourceCode = editors.codeBefore.getValue();
     const targetCode = editors.codeAfter.getValue();
@@ -114,8 +111,7 @@
         button.classList.remove("btn-success", "btn-danger");
         displayButton(false, "Infer rules from templates", "infer");
       }, 3000);
-    }
-    else {
+    } else {
       displayButton(false, "Unable to infer rules", "infer");
       button.classList.add("btn-danger");
 
@@ -127,7 +123,6 @@
     }
 
     await emitImproveEventAux("general");
-
   }
 
   async function emitTestEvent() {
@@ -151,12 +146,16 @@
     const data = await response.json();
     // Add a new socket listener for the test result
     if (response.status === 200) {
-      return updateTestButton(data, "btn-success", "Successfully applied rule", data.refactored_code);
+      return updateTestButton(
+        data,
+        "btn-success",
+        "Successfully applied rule",
+        data.refactored_code,
+      );
     } else {
       return updateTestButton(data, "btn-danger", "Error", data.error);
     }
   }
-
 
   async function emitRefactorEvent() {
     const folderPath = document.getElementById("folder-input").value;
@@ -189,7 +188,6 @@
       button.classList.remove("btn-success", "btn-danger");
       displayButton(false, "Apply rules", "folder");
     }, 3000);
-
   }
 
   async function emitImproveEvent() {
@@ -213,7 +211,7 @@
         language: language,
         rules: rules,
         requirements: requirements,
-        option: option
+        option: option,
       }),
     });
 
@@ -227,8 +225,7 @@
       displayButton(false, "Successfully improved rule", "improvement");
       button.classList.add("btn-success");
       updateInterface(data.rule);
-    }
-    else {
+    } else {
       displayButton(false, "Unable to improve / generate rule", "improvement");
       button.classList.add("btn-danger");
     }
@@ -239,7 +236,6 @@
       displayButton(false, "Improve rule", "improvement");
     }, 3000);
   }
-
 
   function updateTestButton(data, status, buttonText, editorValue) {
     console.log(data);
@@ -260,15 +256,14 @@
     return button;
   }
 
-
-
   function updateInterface(rule) {
     document.getElementById("query-container").style.display = "block";
     document.getElementById("gpt-rule-explanation-container").style.display =
       "block";
     document.getElementById("explanation-container").style.display = "block";
     document.getElementById("path-container").style.display = "block";
-    document.getElementById("submit-button-improvement").style.display = "block";
+    document.getElementById("submit-button-improvement").style.display =
+      "block";
     editors.queryEditor.setValue(rule);
     if (editors.requirementsEditor.getValue() === "") {
       editors.requirementsEditor.setValue(" ");

@@ -8,7 +8,7 @@ from piranha_playground.rule_inference.utils.rule_utils import *
 
 @pytest.fixture
 def client():
-    app.config['TESTING'] = True
+    app.config["TESTING"] = True
     with app.test_client() as client:
         yield client
 
@@ -18,32 +18,32 @@ def test_infer_static_rule(client):
     data = {
         "source_code": "// 1\nclass A {}",
         "target_code": "// 1\nclass B {}",
-        "language": "java"
+        "language": "java",
     }
-    response = client.post('/infer_piranha', json=data)
+    response = client.post("/infer_piranha", json=data)
 
     assert response.status_code == 200
-    graph = RawRuleGraph.from_toml(toml.loads(response.get_json()['rules']))
+    graph = RawRuleGraph.from_toml(toml.loads(response.get_json()["rules"]))
     assert len(graph.rules) == 1
 
 
-# @pytest.mark.skip(reason="This test requires OpenAI key and is flaky")
+@pytest.mark.skip(reason="This test requires OpenAI key and is flaky")
 def test_improve_rules(client):
     # Test data for the /improve_piranha route
     data = {
         "source_code": "// 1\nclass A {}",
         "target_code": "// 1\nclass B {}",
         "language": "java",
-        "requirements": 'Can you complete my rule?',
+        "requirements": "Can you complete my rule?",
         "rules": '''[[rules]]\nname = "rename_class_A_to_B"''',
-        "option": "general"  # Please provide example option data
+        "option": "general",  # Please provide example option data
     }
-    response = client.post('/improve_piranha', json=data)
+    response = client.post("/improve_piranha", json=data)
 
     assert response.status_code == 200
     # Check that the response contains rule and gpt_output
-    assert 'rule' in response.get_json()
-    assert 'gpt_output' in response.get_json()
+    assert "rule" in response.get_json()
+    assert "gpt_output" in response.get_json()
 
 
 def test_test_rule(client):
@@ -59,12 +59,8 @@ def test_test_rule(client):
         replace = """B"""
         '''
 
-    data = {
-        "source_code": "class A {}",
-        "language": "java",
-        "rules": rule
-    }
-    response = client.post('/test_rule', json=data)
+    data = {"source_code": "class A {}", "language": "java", "rules": rule}
+    response = client.post("/test_rule", json=data)
 
     assert response.status_code == 200
     # Check that the response contains refactored_code
@@ -98,11 +94,11 @@ def test_process_folder(client):
     data = {
         "language": "java",
         "folder_path": "test-resources/java/feature_flag_system_2/control/input",
-        "rules": toml.dumps(toml_dict)
+        "rules": toml.dumps(toml_dict),
     }
-    response = client.post('/refactor_codebase', json=data)
+    response = client.post("/refactor_codebase", json=data)
 
     # Check status code and 'result' field in response
     assert response.status_code == 200
-    assert 'result' in response.get_json()
-    assert response.get_json()['result'] == True
+    assert "result" in response.get_json()
+    assert response.get_json()["result"] == True
