@@ -307,9 +307,7 @@ groups = ["boolean_expression_simplify"]
 name = "simplify_something_or_true"
 query = """
 (
-(disjunction_expression [(simple_identifier)
-                          (boolean_literal)
-                        ] @lhs 
+(disjunction_expression (_) @lhs 
                         ((boolean_literal) @rhs)  ) @disjunction_expression
 (#eq? @rhs "true")  
 )"""

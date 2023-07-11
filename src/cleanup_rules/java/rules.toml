@@ -239,11 +239,7 @@ name = "simplify_something_or_true"
 query = """
 (
     (binary_expression
-        left : [
-            (identifier)
-            (true)
-            (false)
-        ] @lhs
+        left : (_) @lhs
         operator:"||"
         right: (true)
     )

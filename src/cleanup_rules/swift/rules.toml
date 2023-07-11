@@ -103,10 +103,10 @@ is_seed_rule = false
 #   true
 #
 [[rules]]
-name = "some_identifier_or_true"
+name = "something_or_true"
 query = """(
 (disjunction_expression
-        lhs: (simple_identifier)
+        lhs: (_)
         rhs: [(boolean_literal) @true  
             (tuple_expression 
                 value: (boolean_literal) @true)]
