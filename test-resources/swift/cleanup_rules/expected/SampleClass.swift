@@ -43,7 +43,7 @@ class SampleClass {
     func checkAndFalse() {
         isEnabled = false
         isEnabled = false
-        isEnabled = f2() && false
+        isEnabled = false
         isEnabled = false
     }
     

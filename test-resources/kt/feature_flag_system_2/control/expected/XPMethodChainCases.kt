@@ -37,9 +37,6 @@ internal class XPMethodChainCases {
                 println("!!!")
             }
 
-            if (sp.isOtherFlag().cachedValue && false) {
-                println("LHS is not a simple identifier!!!")
-            }
             if (sp.isOtherFlag().cachedValue) {
                 println("!!!")
             }
