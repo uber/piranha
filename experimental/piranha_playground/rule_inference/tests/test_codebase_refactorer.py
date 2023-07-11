@@ -8,15 +8,16 @@
 # License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
+import pathlib
+from unittest.mock import Mock, patch
+
 import pytest
 import toml
-import pathlib
-from piranha_playground.rule_inference.rule_application import CodebaseRefactorer
 from polyglot_piranha import PiranhaOutputSummary
 
 from piranha_playground.rule_inference.rule_application import (
-    CodebaseRefactorerException,
-)
+    CodebaseRefactorer, CodebaseRefactorerException,
+    _run_piranha_with_timeout_aux)
 
 
 # Test for successful execution of Piranha with a timeout
@@ -57,7 +58,6 @@ def test_run_piranha_with_timeout_success():
             assert rewrite.p_match.matched_string and rewrite.p_match.matches
 
 
-@pytest.mark.skip(reason="This test doesn't work in CI")
 def test_snippet_application():
     language = "java"
     graph = '''
@@ -72,5 +72,6 @@ def test_snippet_application():
     '''
     source_code = "class A {}"
 
-    x = CodebaseRefactorer.refactor_snippet(source_code, language, graph)
-    assert x == "class B {}"
+    with patch('piranha_playground.rule_inference.rule_application.run_piranha_with_timeout', new=_run_piranha_with_timeout_aux):
+        x = CodebaseRefactorer.refactor_snippet(source_code, language, graph)
+        assert x == "class B {}"

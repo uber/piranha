@@ -13,8 +13,9 @@ from collections import defaultdict, deque
 from typing import Deque, Dict, List, Set, Tuple
 
 import attr
-from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 from tree_sitter import Node, Tree
+
+from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 
 
 @attr.s

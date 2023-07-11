@@ -13,9 +13,10 @@ from typing import List
 
 import attr
 from comby import Comby
+from tree_sitter import Node, TreeCursor
+
 from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 from piranha_playground.rule_inference.utils.rule_utils import RawRule
-from tree_sitter import Node, TreeCursor
 
 
 @attr.s

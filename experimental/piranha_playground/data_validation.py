@@ -11,6 +11,7 @@
 
 import attr
 import toml
+
 from piranha_playground.rule_inference.utils.pretty_toml import PrettyTOML
 from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 

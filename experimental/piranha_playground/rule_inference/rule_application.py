@@ -15,15 +15,12 @@ from typing import List, Optional, Tuple
 
 import attr
 import toml
-from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
+
+from piranha_playground.rule_inference.utils.logger_formatter import \
+    CustomFormatter
 from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
-from polyglot_piranha import (
-    PiranhaArguments,
-    PiranhaOutputSummary,
-    Rule,
-    RuleGraph,
-    execute_piranha,
-)
 
 logger = logging.getLogger("CodebaseRefactorer")
 logger.setLevel(logging.DEBUG)
@@ -52,7 +49,7 @@ def enable_piranha_logs():
 
 
 def _run_piranha_with_timeout_aux(
-    source_code: str, language: str, raw_graph: RawRuleGraph, substitutions: dict
+    source_code: str, language: str, raw_graph: RawRuleGraph, substitutions: dict, timeout: int = 0
 ):
     """
     Private method to run Piranha with a timeout. Executes Piranha with provided arguments.

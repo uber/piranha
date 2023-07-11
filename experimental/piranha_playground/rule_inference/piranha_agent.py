@@ -14,31 +14,29 @@ import difflib
 import logging
 import multiprocessing
 import re
-from typing import List, Optional, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
 import attr
 import toml
+from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
+                              RuleGraph, execute_piranha)
+from tree_sitter import Tree
+from tree_sitter_languages import get_language, get_parser
+
 from piranha_playground.rule_inference.controller import Controller
 from piranha_playground.rule_inference.graph_parser import TemplateParser
 from piranha_playground.rule_inference.piranha_chat import (
-    PiranhaChatException,
-    PiranhaGPTChat,
-)
-from piranha_playground.rule_inference.rule_application import run_piranha_with_timeout
-from piranha_playground.rule_inference.static_inference import Inference, QueryWriter
-from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
+    PiranhaChatException, PiranhaGPTChat)
+from piranha_playground.rule_inference.rule_application import \
+    run_piranha_with_timeout
+from piranha_playground.rule_inference.static_inference import (Inference,
+                                                                QueryWriter)
+from piranha_playground.rule_inference.utils.logger_formatter import \
+    CustomFormatter
 from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 from piranha_playground.rule_inference.utils.pretty_toml import PrettyTOML
-from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph, RawRule
-from polyglot_piranha import (
-    PiranhaArguments,
-    PiranhaOutputSummary,
-    Rule,
-    RuleGraph,
-    execute_piranha,
-)
-from tree_sitter import Tree
-from tree_sitter_languages import get_language, get_parser
+from piranha_playground.rule_inference.utils.rule_utils import (RawRule,
+                                                                RawRuleGraph)
 
 logger = logging.getLogger("PiranhaChat")
 logger.setLevel(logging.DEBUG)
