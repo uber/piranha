@@ -1,0 +1,105 @@
+# Copyright (c) 2023 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Replace foo().bar().baz() with `true` inside methods not nnotated as @DoNotCleanup
+[[rules]]
+name = "replace_call"
+query = """rgx (?P<n1>foo\\(\\)\\.bar\\(\\)\\.baz\\(\\))"""
+replace_node = "n1"
+replace = "true"
+groups = ["replace_expression_with_boolean_literal"]
+[[rules.filters]]
+enclosing_node = """(method_declaration) @md"""
+not_contains = ["""rgx @DoNotCleanup"""]
+
+# Before:  
+# abc().def().ghi()
+# abc().fed().ghi()
+[[rules]]
+name = "replace_call_def_fed"
+query = """rgx (?P<n>abc\\(\\)\\.(?P<m_def>def)\\(\\)\\.ghi\\(\\))"""
+replace_node = "m_def"
+replace = "fed"
+
+
+# The below three rules do a dummy type migration from OurListOfInteger to List<Integer> 
+
+# Updates the import statement from `out.list.OurListOfInteger` to `java.util.List`
+[[rules]]
+name = "update_import"
+query = """rgx (?P<n>our\\.list\\.OurListOfInteger)"""
+replace_node = "n"
+replace = "java.util.List"
+
+# Updates the type of local variables from `OurListOfInteger` to `List<Integer>`
+[[rules]]
+name = "update_list_int"
+query = """rgx (?P<var_decl>(?P<type>OurListOf(?P<param>Integer))\\s*(?P<name>\\w+)\\s*=.*;)"""
+replace_node = "type"
+replace = "List<@param>"
+is_seed_rule = false
+[[rules.filter]]
+enclosing_node = "(method_declaration) @cmd"
+
+# Updates the relevant callsite from `addToOurList` to `add`
+[[rules]]
+name = "update_add"
+query = """rgx (?P<call>@name\\.(?P<m_name>addToOurList)\\(\\w+\\))"""
+replace_node = "m_name"
+replace = "add"
+holes = ["name"]
+is_seed_rule = false
+
+
+# The below three rules do a dummy type migration OurMapOf{T1}{T2} to HashMap<T1, T2>. For example, from OurMapOfStringInteger to HashMap<String, Integer>. 
+# This is to exercise non-constant regex matches for replace_node.
+
+# Deletes the import statement `our.map.OurMapOf...` 
+[[rules]]
+name = "delete_import_our_map_of"
+query = """rgx (?P<n>import our\\.map\\.OurMapOf\\w+;)"""
+replace_node = "n"
+replace = ""
+
+# Adds Import to java.util.Hashmap if absent
+[[rules]]
+name = "add_import_For_hashmap"
+query = """(package_declaration) @pkg"""
+replace_node = "pkg"
+replace = "@pkg\nimport java.util.HashMap;"
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(program) @prgrm"
+not_contains = [
+  "((import_declaration) @im (#match? @im \"java.util.HashMap\"))",
+]
+
+# Before:
+# OurMapOfStringInteger
+# After: 
+# HashMap<String, Integer>
+[[rules]]
+name = "change_type_from_OurHashMap"
+query = """rgx (?P<var_decl>(?P<type>\\bOurMapOf(?P<param1>[A-Z]\\w+)(?P<param2>[A-Z]\\w+))\\s*(?P<name>\\w+)\\s*=.*;)"""
+replace_node = "type"
+replace = "HashMap<@param1, @param2>"
+is_seed_rule = false
+[[rules.filter]]
+enclosing_node = "(method_declaration) @cmd"
+
+# Updates the relevant callsite from `pushIntoOurMap` to `push`
+[[rules]]
+name = "update_push"
+query = """rgx (?P<call>@name\\.(?P<m_name>pushIntoOurMap)\\(.*\\))"""
+replace_node = "m_name"
+replace = "push"
+holes = ["name"]
+is_seed_rule = false

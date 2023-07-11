@@ -14,6 +14,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use crate::{
   models::Validator,
   utilities::{
+    regex_utilities::get_all_matches_for_regex,
     tree_sitter_utilities::{get_all_matches_for_query, get_ts_query_parser, number_of_errors},
     Instantiate,
   },
@@ -24,7 +25,7 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
-use super::matches::Match;
+use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
 
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
@@ -38,12 +39,20 @@ impl CGPattern {
   pub(crate) fn pattern(&self) -> String {
     self.0.to_string()
   }
+
+  pub(crate) fn extract_regex(&self) -> Result<Regex, regex::Error> {
+    let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
+    Regex::new(_val)
+  }
 }
 
 impl Validator for CGPattern {
   fn validate(&self) -> Result<(), String> {
     if self.pattern().starts_with("rgx ") {
-      panic!("Regex not supported")
+      return self
+        .extract_regex()
+        .map(|_| Ok(()))
+        .unwrap_or(Err(format!("Cannot parse the regex - {}", self.pattern())));
     }
     let mut parser = get_ts_query_parser();
     parser
@@ -70,7 +79,7 @@ impl Instantiate for CGPattern {
 #[derive(Debug)]
 pub(crate) enum CompiledCGPattern {
   Q(Query),
-  R(Regex), // Regex is not yet supported
+  R(Regex),
 }
 
 impl CompiledCGPattern {
@@ -103,7 +112,9 @@ impl CompiledCGPattern {
         replace_node,
         replace_node_idx,
       ),
-      CompiledCGPattern::R(_) => panic!("Regex is not yet supported!!!"),
+      CompiledCGPattern::R(regex) => {
+        get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
+      }
     }
   }
 }
