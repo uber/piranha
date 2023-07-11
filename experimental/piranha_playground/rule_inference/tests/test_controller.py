@@ -88,7 +88,7 @@ def test_should_improve_rule():
 
     controller, mock_chat = setup_controller(valid_json_correct_answer)
 
-    assert controller.should_improve_rule(task_description, rule) == correct_answer
+    assert controller.should_improve_rule(task_description, rule)
     mock_chat.append_user_followup.assert_called_once()
 
 

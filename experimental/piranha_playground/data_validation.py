@@ -32,9 +32,12 @@ class ImproveData:
     Data class representing the information needed for the improve_piranha event.
     """
 
+    source_code = attr.ib(validator=attr.validators.instance_of(str))
+    target_code = attr.ib(validator=attr.validators.instance_of(str))
     language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
     requirements = attr.ib(validator=attr.validators.instance_of(str))
     rules = attr.ib(validator=RawRuleGraph.validate)
+    option = attr.ib(validator=attr.validators.in_(["user", "general"]))
 
     def __attrs_post_init__(self):
         self.rules = toml.dumps(toml.loads(self.rules), encoder=PrettyTOML())

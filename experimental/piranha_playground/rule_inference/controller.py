@@ -62,13 +62,13 @@ class Controller:
                 )
         raise ControllerError(f"Failed to get valid answer after {n_tries} tries.")
 
-    def should_improve_rule(self, task: str, rule: str) -> str:
+    def should_improve_rule(self, task: str, rule: str) -> bool:
         """Determines if a rule should be improved.
 
         :param str task: Task requested by the user.
         :param str rule: Rule to be checked for improvements.
-        :return: The user's response as returned by the model.
-        :rtype: str
+        :return: Whether the model decides to improve the rule.
+        :rtype: bool
         """
         task_description = (
             f"User requests improvements for: '{task}'.\n"
@@ -76,7 +76,7 @@ class Controller:
             f"Response format: {JSON_FILE_FORMAT.format(options='yes/no')}. "
         )
 
-        return self.get_model_selection(task_description, ANSWER_OPTIONS)
+        return self.get_model_selection(task_description, ANSWER_OPTIONS) == "yes"
 
     def get_option_for_improvement(self, rule: str) -> str:
         """Asks the model to choose an improvement option for the given rule.
