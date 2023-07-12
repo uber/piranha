@@ -5,8 +5,9 @@ from unittest.mock import patch
 import pytest
 
 from piranha_playground.main import app
-from piranha_playground.rule_inference.rule_application import \
-    _run_piranha_with_timeout_aux
+from piranha_playground.rule_inference.rule_application import (
+    _run_piranha_with_timeout_aux,
+)
 from piranha_playground.rule_inference.utils.rule_utils import *
 
 
@@ -24,13 +25,16 @@ def test_infer_static_rule(client):
         "target_code": "// 1\nclass B {}",
         "language": "java",
     }
-    response = client.post("/infer_piranha", json=data)
+
+    response = client.post("/infer_rule_graph", json=data)
 
     assert response.status_code == 200
     graph = RawRuleGraph.from_toml(toml.loads(response.get_json()["rules"]))
     assert len(graph.rules) == 1
 
 
+
+@pytest.mark.skip(reason="This test requires OpenAI API key")
 def test_improve_rules(client):
     # Test data for the /improve_piranha route
     data = {
@@ -41,7 +45,8 @@ def test_improve_rules(client):
         "rules": '''[[rules]]\nname = "rename_class_A_to_B"''',
         "option": "general",  # Please provide example option data
     }
-    response = client.post("/improve_piranha", json=data)
+
+    response = client.post("/improve_rule_graph", json=data)
 
     assert response.status_code == 200
     # Check that the response contains rule and gpt_output
@@ -63,7 +68,11 @@ def test_test_rule(client):
         '''
 
     data = {"source_code": "class A {}", "language": "java", "rules": rule}
-    with patch('piranha_playground.rule_inference.rule_application.run_piranha_with_timeout', new=_run_piranha_with_timeout_aux):
+
+    with patch(
+        "piranha_playground.rule_inference.rule_application.run_piranha_with_timeout",
+        new=_run_piranha_with_timeout_aux,
+    ):
         response = client.post("/test_rule", json=data)
 
     assert response.status_code == 200
@@ -101,7 +110,10 @@ def test_process_folder(client):
         "rules": toml.dumps(toml_dict),
     }
 
-    with patch('piranha_playground.rule_inference.rule_application.run_piranha_with_timeout', new=_run_piranha_with_timeout_aux):
+    with patch(
+        "piranha_playground.rule_inference.rule_application.run_piranha_with_timeout",
+        new=_run_piranha_with_timeout_aux,
+    ):
         response = client.post("/refactor_codebase", json=data)
 
     # Check status code and 'result' field in response
