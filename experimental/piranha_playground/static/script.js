@@ -87,7 +87,7 @@
 
     displayButton(true, "Inferring...", "infer");
 
-    const response = await fetch("http://127.0.0.1:5000/infer_piranha", {
+    const response = await fetch("http://127.0.0.1:5000/infer_rule_graph", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -202,7 +202,7 @@
     const requirements = editors.requirementsEditor.getValue();
     displayButton(true, "Improving...", "improvement");
 
-    const response = await fetch("http://127.0.0.1:5000/improve_piranha", {
+    const response = await fetch("http://127.0.0.1:5000/improve_rule_graph", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
