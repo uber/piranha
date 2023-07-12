@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use tree_sitter::{Parser, Point};
+use tree_sitter::Parser;
 
 use crate::{
   filter,
@@ -19,6 +19,7 @@ use crate::{
     default_configs::{JAVA, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
+    matches::{Point, Range},
     piranha_arguments::PiranhaArgumentsBuilder,
     rule::InstantiatedRule,
     rule_store::RuleStore,
@@ -30,7 +31,6 @@ use {
   super::SourceCodeUnit,
   crate::models::edit::Edit,
   std::{collections::HashMap, path::PathBuf},
-  tree_sitter::Range,
 };
 
 impl SourceCodeUnit {
@@ -55,14 +55,8 @@ fn range(
   Range {
     start_byte,
     end_byte,
-    start_point: tree_sitter::Point {
-      row: start_row,
-      column: start_column,
-    },
-    end_point: tree_sitter::Point {
-      row: end_row,
-      column: end_column,
-    },
+    start_point: Point::new(start_row, start_column),
+    end_point: Point::new(end_row, end_column),
   }
 }
 
@@ -593,7 +587,7 @@ fn run_test_satisfies_filters_without_enclosing(
   let end = Point::new(9, 9);
   let node = &source_code_unit
     .root_node()
-    .descendant_for_point_range(start, end)
+    .descendant_for_point_range(start.into(), end.into())
     .unwrap();
 
   assert!(assertion(source_code_unit.is_satisfied(

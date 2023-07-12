@@ -1,5 +1,3 @@
-use tree_sitter::Point;
-
 /*
 Copyright (c) 2023 Uber Technologies, Inc.
 
@@ -18,6 +16,7 @@ use crate::{
     default_configs::{JAVA, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
+    matches::Point,
     piranha_arguments::PiranhaArgumentsBuilder,
   },
   utilities::eq_without_whitespace,
@@ -318,7 +317,7 @@ fn run_test_satisfies_filters_not_enclosing_node(
   let end = Point::new(3, 29);
   let node = &source_code_unit
     .root_node()
-    .descendant_for_point_range(start, end)
+    .descendant_for_point_range(start.into(), end.into())
     .unwrap();
 
   let map: HashMap<String, String> = HashMap::new();
