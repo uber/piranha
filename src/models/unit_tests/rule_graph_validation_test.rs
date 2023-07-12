@@ -12,13 +12,10 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 use std::collections::HashMap;
 
-
 use crate::models::{
   capture_group_patterns::CGPattern, filter::FilterBuilder, rule_graph::RuleGraphBuilder,
 };
-use crate::utilities::tree_sitter_utilities::TSQuery;
 use crate::{edges, piranha_rule};
-
 
 #[test]
 #[should_panic(

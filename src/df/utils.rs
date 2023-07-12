@@ -11,25 +11,25 @@
  limitations under the License.
 */
 
-use std::str::FromStr;
-use tree_sitter::{Node, Parser, Query};
-
 use crate::models::default_configs::TS_SCHEME;
 use crate::models::language::PiranhaLanguage;
-use crate::models::piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder};
+use crate::models::piranha_arguments::PiranhaArgumentsBuilder;
 use crate::models::rule::Rule;
-use crate::models::rule_graph::{RuleGraph, RuleGraphBuilder};
-use crate::utilities::tree_sitter_utilities::{
-  get_all_matches_for_query, get_node_for_range,
-};
-use crate::{execute_piranha};
-use crate::models::rule::piranha_rule;
+use crate::models::rule_graph::RuleGraphBuilder;
+
+use crate::execute_piranha;
 use crate::models::filter::filter;
-use regex::Regex;
+use crate::models::rule::piranha_rule;
+
 use std::string::String;
 
 /// Find defined tags in a query
 pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
+
+  if node.query().pattern().is_empty() {
+    return vec![];
+  }
+
   let rules = vec![piranha_rule! {
     name = "capture_groups",
     query = "(capture) @cap",
@@ -51,28 +51,39 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
   let output_summaries = execute_piranha(&piranha_arguments);
 
   // maps matched strings to a vec of strings
-  let tags = output_summaries[0]
-    .matches()
-    .iter()
-    .map(|m| m.0.clone())
-    .collect::<Vec<String>>();
+  let tags = output_summaries
+    .get(0)
+    .map(|summary| {
+      summary
+        .matches()
+        .iter()
+        .map(|m| m.1.matched_string().clone())
+        .collect::<Vec<String>>()
+    })
+    .unwrap_or_else(Vec::new);
+
+  println!("tags: {:?}", tags);
+
   tags
 }
 
 /// Find all tags used in predicates
 pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
 
+  if node.query().pattern().is_empty() {
+    return vec![];
+  }
 
   let rules = vec![piranha_rule! {
     name = "capture_groups",
     query = "(
-    [ (capture) @cap
-      (identifier) @id
-      (string) @str]
-    (#match? @cap \"@\")
-    (#match? @id \"@\")
-    (#match? @str \"@\")
-    ",
+      [ (capture) @cap
+        (identifier) @id
+        (string) @str]
+      (#match? @cap \"@\")
+      (#match? @id \"@\")
+      (#match? @str \"@\")
+    )",
     filters =[
         filter! {
           enclosing_node = "(predicate) @pred"
@@ -83,25 +94,32 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
   let graph = RuleGraphBuilder::default().rules(rules).build();
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-      .rule_graph(graph)
-      .language(PiranhaLanguage::from(TS_SCHEME))
-      .code_snippet(node.query().pattern())
-      .build();
+    .rule_graph(graph)
+    .language(PiranhaLanguage::from(TS_SCHEME))
+    .code_snippet(node.query().pattern())
+    .build();
 
   let output_summaries = execute_piranha(&piranha_arguments);
 
-
   // maps matched strings to a vec of strings
-  let matched_strings = output_summaries[0]
-      .matches()
-      .iter()
-      .map(|m| m.0.clone())
-      .collect::<Vec<String>>();
+  let matched_strings = output_summaries
+    .get(0)
+    .map(|summary| {
+      summary
+        .matches()
+        .iter()
+        .map(|m| m.1.matched_string().clone())
+        .collect::<Vec<String>>()
+    })
+    .unwrap_or_else(Vec::new);
 
   let mut tags = vec![];
   for mut candidate_tag in matched_strings {
     candidate_tag = candidate_tag.replace('\"', "");
     tags.push(candidate_tag);
   }
+
+  println!("tags: {:?}", tags);
   tags
+
 }
