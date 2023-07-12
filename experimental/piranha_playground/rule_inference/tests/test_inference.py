@@ -12,11 +12,12 @@
 from typing import Tuple
 
 import pytest
-from piranha_playground.rule_inference.static_inference import Inference
-from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 from polyglot_piranha import PiranhaArguments, execute_piranha
 from tree_sitter import Language, Node, Parser
 from tree_sitter_languages import get_language, get_parser
+
+from piranha_playground.rule_inference.static_inference import Inference
+from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 
 
 def parse_code(language: str, source_code: str, target_code: str) -> Tuple[Node, Node]:

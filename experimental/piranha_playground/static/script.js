@@ -7,7 +7,7 @@
     gptExplanation: document.getElementById("gpt-rule-explanation"),
     explanationInput: document.getElementById("explanation-input"),
     submitFolderButton: document.getElementById("submit-button-folder"),
-    submitButton: document.getElementById("submit-button"),
+    submitButtonInfer: document.getElementById("submit-button-infer"),
     submitButtonImprovement: document.getElementById(
       "submit-button-improvement",
     ),
@@ -75,134 +75,108 @@
     return button;
   }
 
-  const socket = io.connect("http://127.0.0.1:5000");
+  elements.submitFolderButton.addEventListener("click", emitRefactorEvent);
+  elements.submitButtonInfer.addEventListener("click", emitInferEvent);
+  elements.submitButtonImprovement.addEventListener("click", emitImproveEvent);
+  elements.testButton.addEventListener("click", emitTestEvent);
 
-  elements.submitFolderButton.addEventListener("click", async function () {
-    emitRefactorEvent();
-  });
+  async function emitInferEvent() {
+    const sourceCode = editors.codeBefore.getValue();
+    const targetCode = editors.codeAfter.getValue();
+    const language = elements.languageSelect.value;
 
-  elements.submitButton.addEventListener("click", async function () {
-    emitInferEvent();
-  });
+    displayButton(true, "Inferring...", "infer");
 
-  elements.submitButtonImprovement.addEventListener("click", async function () {
-    emitImproveEvent();
-  });
+    const response = await fetch("http://127.0.0.1:5000/infer_rule_graph", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        target_code: targetCode,
+        language: language,
+      }),
+    });
 
-  elements.testButton.addEventListener("click", async function () {
-    emitTestEvent();
-  });
+    const data = await response.json();
+    let button = elements.submitButtonInfer;
 
-  // Add a function to emit test event
-  function emitTestEvent() {
+    if (response.status === 200) {
+      updateInterface(data.rules);
+
+      displayButton(false, "Successfully inferred rules", "infer");
+      button.classList.add("btn-success");
+
+      // Set a timeout to fade the button back to the original state
+      setTimeout(() => {
+        button.classList.remove("btn-success", "btn-danger");
+        displayButton(false, "Infer rules from templates", "infer");
+      }, 3000);
+    } else {
+      displayButton(false, "Unable to infer rules", "infer");
+      button.classList.add("btn-danger");
+
+      // Set a timeout to fade the button back to the original state
+      setTimeout(() => {
+        button.classList.remove("btn-success", "btn-danger");
+        displayButton(false, "Infer rules from templates", "infer");
+      }, 3000);
+    }
+
+    await emitImproveEventAux("general");
+  }
+
+  async function emitTestEvent() {
     const sourceCode = editors.codeBefore.getValue();
     const rules = editors.queryEditor.getValue();
     const language = elements.languageSelect.value;
-    // Here you may want to adjust the data to fit your backend needs
-    socket.emit("test_rule", {
-      source_code: sourceCode,
-      rules: rules,
-      language: language,
+
+    const response = await fetch("http://127.0.0.1:5000/test_rule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        rules: rules,
+        language: language,
+      }),
     });
 
     let button = document.getElementById("test-button");
     button.disabled = true;
+
+    const data = await response.json();
+    // Add a new socket listener for the test result
+    if (response.status === 200) {
+      return updateTestButton(
+        data,
+        "btn-success",
+        "Successfully applied rule",
+        data.refactored_code,
+      );
+    } else {
+      return updateTestButton(data, "btn-danger", "Error", data.error);
+    }
   }
-  function emitRefactorEvent() {
+
+  async function emitRefactorEvent() {
     const folderPath = document.getElementById("folder-input").value;
     const rules = editors.queryEditor.getValue();
     const language = elements.languageSelect.value;
-    socket.emit("refactor_codebase", {
-      rules: rules,
-      folder_path: folderPath,
-      language: language,
+
+    const response = await fetch("http://127.0.0.1:5000/refactor_codebase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        rules: rules,
+        folder_path: folderPath,
+        language: language,
+      }),
     });
+
     displayButton(true, "Processing...", "folder");
-  }
-
-  function emitInferEvent() {
-    const sourceCode = editors.codeBefore.getValue();
-    const targetCode = editors.codeAfter.getValue();
-    const language = elements.languageSelect.value;
-    socket.emit("infer_piranha", {
-      source_code: sourceCode,
-      target_code: targetCode,
-      language: language,
-    });
-    // elements.submitButton.style.display = "none";
-    const button = displayButton(
-      true,
-      "GPT is improving the rule ...",
-      "improvement",
-    );
-    button.style.display = "block";
-  }
-
-  function emitImproveEvent() {
-    const requirements = editors.requirementsEditor.getValue();
-    const rules = editors.queryEditor.getValue();
-    const language = elements.languageSelect.value;
-    displayButton(true, "Improving...", "improvement");
-    socket.emit("improve_piranha", {
-      rules: rules,
-      requirements: requirements,
-      language: language,
-    });
-  }
-
-  socket.on("infer_success", function (data) {
-    var converter = new showdown.Converter();
-    var markdown = converter.makeHtml(data.gpt_output);
-    console.log(data);
-
-    // update the explanation div
-    // document.getElementById("explanation").innerHTML = markdown;
-
-    let button = document.getElementById("submit-button-improvement");
-    displayButton(false, "Successfully improved rule", "improvement");
-    button.classList.add("btn-success");
-    updateInterface(data.rule);
-
-    // Set a timeout to fade the button back to the original state
-    setTimeout(() => {
-      button.classList.remove("btn-success", "btn-danger");
-      displayButton(false, "Improve rule", "improvement");
-    }, 3000);
-  });
-
-  socket.on("infer_error", function (data) {
-    console.log(data);
-
-    let button = document.getElementById("submit-button-improvement");
-    displayButton(false, "Unable to improve / generate rule", "improvement");
-    button.classList.add("btn-danger");
-
-    // Set a timeout to fade the button back to the original state
-    setTimeout(() => {
-      button.classList.remove("btn-success", "btn-danger");
-      displayButton(false, "Improve rule", "improvement");
-    }, 3000);
-  });
-
-
-  socket.on("infer_progress", function (data) {
-    var converter = new showdown.Converter();
-    var markdown = converter.makeHtml(data.gpt_output);
-    console.log(data);
-
-    // update the explanation div
-    document.getElementById("explanation").innerHTML = markdown;
-
-    updateInterface(data.rule);
-  });
-
-  socket.on("refactor_result", function (data) {
-    // change button to green to indicate success
-    // otherwise red to show error
-    // and then revert after timeout
+    const data = await response.json();
 
     let button = document.getElementById("submit-button-folder");
-    if (data.result === true) {
+    if (response.status === 200) {
       button.classList.add("btn-success");
       displayButton(false, "Successfully refactored codebase", "folder");
     } else {
@@ -214,7 +188,54 @@
       button.classList.remove("btn-success", "btn-danger");
       displayButton(false, "Apply rules", "folder");
     }, 3000);
-  });
+  }
+
+  async function emitImproveEvent() {
+    await emitImproveEventAux("user");
+  }
+
+  async function emitImproveEventAux(option) {
+    const sourceCode = editors.codeBefore.getValue();
+    const targetCode = editors.codeAfter.getValue();
+    const language = elements.languageSelect.value;
+    const rules = editors.queryEditor.getValue();
+    const requirements = editors.requirementsEditor.getValue();
+    displayButton(true, "Improving...", "improvement");
+
+    const response = await fetch("http://127.0.0.1:5000/improve_rule_graph", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_code: sourceCode,
+        target_code: targetCode,
+        language: language,
+        rules: rules,
+        requirements: requirements,
+        option: option,
+      }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+
+    let button = document.getElementById("submit-button-improvement");
+    if (response.status === 200) {
+      var converter = new showdown.Converter();
+      var markdown = converter.makeHtml(data.gpt_output);
+      displayButton(false, "Successfully improved rule", "improvement");
+      button.classList.add("btn-success");
+      updateInterface(data.rule);
+    } else {
+      displayButton(false, "Unable to improve / generate rule", "improvement");
+      button.classList.add("btn-danger");
+    }
+
+    // Set a timeout to fade the button back to the original state
+    setTimeout(() => {
+      button.classList.remove("btn-success", "btn-danger");
+      displayButton(false, "Improve rule", "improvement");
+    }, 3000);
+  }
 
   function updateTestButton(data, status, buttonText, editorValue) {
     console.log(data);
@@ -235,23 +256,14 @@
     return button;
   }
 
-  // Add a new socket listener for the test result
-  socket.on("test_result", function (data) {
-    return updateTestButton(data, "btn-success", "Successfully applied rule", data.refactored_code);
-  });
-
-  // Add a new socket listener for the test error
-  socket.on("test_error", function (data) {
-    return updateTestButton(data, "btn-danger", "Error", data.error);
-  });
-
-
   function updateInterface(rule) {
     document.getElementById("query-container").style.display = "block";
     document.getElementById("gpt-rule-explanation-container").style.display =
       "block";
     document.getElementById("explanation-container").style.display = "block";
     document.getElementById("path-container").style.display = "block";
+    document.getElementById("submit-button-improvement").style.display =
+      "block";
     editors.queryEditor.setValue(rule);
     if (editors.requirementsEditor.getValue() === "") {
       editors.requirementsEditor.setValue(" ");

@@ -14,6 +14,8 @@ import os
 import sys
 
 import openai
+from flask import Flask, Response, jsonify, render_template, request, session
+
 from piranha_playground.data_validation import (
     ImproveData,
     InferData,
@@ -28,19 +30,10 @@ from piranha_playground.rule_inference.rule_application import (
     CodebaseRefactorer,
     CodebaseRefactorerException,
 )
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO
-
 from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
 
-# Create Flask app and SocketIO app
+# Create Flask app
 app = Flask(__name__)
-socketio = SocketIO(app, ping_timeout=300, ping_interval=5)
-
-# Initialize session dict
-socketio_sessions = {}
-
-# Configure logging
 
 logger = logging.getLogger("FlaskApp")
 logger.setLevel(logging.DEBUG)
@@ -59,49 +52,33 @@ def home():
     return render_template("index.html")
 
 
-@socketio.on("connect")
-def on_connect():
+@app.route("/refactor_codebase", methods=["POST"])
+def process_folder():
     """
-    Event handler for new client connections.
-    Initializes session data for the client.
-    """
-    socketio_sessions[request.sid] = {}
-
-
-@socketio.on("disconnect")
-def on_disconnect():
-    """
-    Event handler for client disconnections.
-    Removes session data for the client.
-    """
-    del socketio_sessions[request.sid]
-
-
-@socketio.on("refactor_codebase")
-def process_folder(data):
-    """
-    Event handler for the refactor_codebase event.
+    Route for the refactor_codebase event.
     Attempts to refactor a codebase based on the provided rules.
 
     :param data: A dictionary containing the necessary information to perform the refactoring.
     """
+    data = request.get_json()
     try:
         data = RefactorData(**data)
         refactorer = CodebaseRefactorer(data.language, data.folder_path, data.rules)
         refactorer.refactor_codebase(False)
-        socketio.emit("refactor_result", {"result": True})
+        return jsonify({"result": True})
     except (ValueError, CodebaseRefactorerException) as e:
-        socketio.emit("refactor_result", {"result": False})
+        return jsonify({"result": False, "error": str(e)}), 400
 
 
-@socketio.on("infer_piranha")
-def infer_from_example(data):
+@app.route("/infer_rule_graph", methods=["POST"])
+def infer_static_rule():
     """
-    Event handler for the infer_piranha event.
-    Infers coding rules based on source and target code examples.
+    Route for the infer_static_rule event.
+    Infers static coding rules based on source and target code examples.
 
     :param data: A dictionary containing the source and target code examples and the programming language.
     """
+    data = request.get_json()
     try:
         data = InferData(**data)
         agent = PiranhaAgent(
@@ -111,59 +88,56 @@ def infer_from_example(data):
             hints="",
         )
         static_rules = agent.infer_rules_statically()
-        socketio.emit("infer_progress", {"rule": static_rules})
-        rules = agent.infer_rules()
-        socketio_sessions[request.sid]["agent"] = agent
-        socketio.emit(
-            "infer_success",
-            {
-                "rule": rules,
-                "gpt_output": agent.get_explanation(),
-            },
-        )
+        return jsonify({"rules": static_rules})
     except (ValueError, PiranhaAgentError) as e:
-        socketio.emit("infer_error", {"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 
-@socketio.on("improve_piranha")
-def improve_rules(data):
+@app.route("/improve_rule_graph", methods=["POST"])
+def improve_rules():
     """
-    Event handler for the improve_piranha event.
+    Route for the improve_piranha event.
     Improves the inferred coding rules.
 
     :param data: A dictionary containing the requirements and current rules.
     """
+    data = request.get_json()
     try:
         data = ImproveData(**data)
-        agent: PiranhaAgent = socketio_sessions[request.sid].get("agent")
-        rules = agent.improve_rule(data.requirements, data.rules)
-        socketio.emit(
-            "infer_result",
+        agent: PiranhaAgent = PiranhaAgent(
+            data.source_code,
+            data.target_code,
+            language=data.language,
+            hints="",
+        )
+        rules = agent.improve_rule_graph(data.requirements, data.rules, data.option)
+        return jsonify(
             {
                 "rule": rules,
                 "gpt_output": agent.get_explanation(),
-            },
+            }
         )
     except (ValueError, PiranhaAgentError, AttributeError) as e:
-        socketio.emit("infer_error", {"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 
-@socketio.on("test_rule")
-def test_rule(data):
+@app.route("/test_rule", methods=["POST"])
+def test_rule():
     """
-    Event handler for the test_rule event.
+    Route for the test_rule event.
     Tests the inferred rules by applying them to the provided source code.
 
     :param data: A dictionary containing the language, rules, and source code.
     """
+    data = request.get_json()
     try:
         data = RefactorSnippet(**data)
         refactored_code = CodebaseRefactorer.refactor_snippet(
             data.source_code, data.language, data.rules
         )
-        socketio.emit("test_result", {"refactored_code": refactored_code})
+        return jsonify({"refactored_code": refactored_code})
     except (ValueError, CodebaseRefactorerException) as e:
-        socketio.emit("test_error", {"error": str(e)})
+        return jsonify({"error": str(e)}), 400
 
 
 def main():
@@ -173,7 +147,7 @@ def main():
             "Please set the OPENAI_API_KEY environment variable to your OpenAI API key."
         )
     logger.info(f"Starting server. Listening at: http://127.0.0.1:5000")
-    socketio.run(app)
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
