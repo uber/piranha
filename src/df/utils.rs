@@ -25,7 +25,6 @@ use std::string::String;
 
 /// Find defined tags in a query
 pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
-
   if node.query().pattern().is_empty() {
     return vec![];
   }
@@ -46,6 +45,7 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
     .rule_graph(graph)
     .language(PiranhaLanguage::from(TS_SCHEME))
     .code_snippet(node.query().pattern())
+    .should_validate(false)
     .build();
 
   let output_summaries = execute_piranha(&piranha_arguments);
@@ -69,7 +69,6 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
 
 /// Find all tags used in predicates
 pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
-
   if node.query().pattern().is_empty() {
     return vec![];
   }
@@ -97,6 +96,7 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
     .rule_graph(graph)
     .language(PiranhaLanguage::from(TS_SCHEME))
     .code_snippet(node.query().pattern())
+    .should_validate(false)
     .build();
 
   let output_summaries = execute_piranha(&piranha_arguments);
@@ -121,5 +121,4 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
 
   println!("tags: {:?}", tags);
   tags
-
 }
