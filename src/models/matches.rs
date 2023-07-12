@@ -257,8 +257,8 @@ impl From<tree_sitter::Range> for Range {
     Self {
       start_byte: range.start_byte,
       end_byte: range.end_byte,
-      start_point: Point::from(range.start_point),
-      end_point: Point::from(range.end_point),
+      start_point: range.start_point.into(),
+      end_point: range.end_point.into(),
     }
   }
 }

@@ -17,7 +17,7 @@ use super::eq_without_whitespace;
 use crate::{
   models::{
     edit::Edit,
-    matches::{Match, Point, Range},
+    matches::{Match, Range},
   },
   utilities::MapOfVec,
 };
@@ -300,8 +300,8 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   Range {
     start_byte: input_edit.start_byte,
     end_byte: input_edit.new_end_byte,
-    start_point: Point::from(input_edit.start_position),
-    end_point: Point::from(input_edit.new_end_position),
+    start_point: input_edit.start_position.into(),
+    end_point: input_edit.new_end_position.into(),
   }
 }
 
