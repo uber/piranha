@@ -19,7 +19,7 @@ from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 
 
 @attr.s
-class TemplateParser:
+class GraphParser:
     """
     The TemplateParser class performs depth-first search on two given Abstract Syntax Trees (ASTs) to identify
     mapping from 'before' code snippet (sub-AST) to 'after' code snippet (sub-AST) required to construct the

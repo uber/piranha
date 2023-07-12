@@ -31,7 +31,6 @@ def test_infer_static_rule(client):
     assert len(graph.rules) == 1
 
 
-@pytest.mark.skip(reason="This test requires OpenAI API key")
 def test_improve_rules(client):
     # Test data for the /improve_piranha route
     data = {
