@@ -33,10 +33,6 @@ class XPMethodChainCases {
       System.out.println("!!!");
     }
 
-    if (sp.otherFlag().getCachedValue() && false) {	
-      System.out.println("!!!");	
-    }
-
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }

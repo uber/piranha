@@ -16,10 +16,9 @@ use std::collections::{HashMap, HashSet};
 use glob::Pattern;
 
 use super::{
-  filter::Filter, language::PiranhaLanguage, outgoing_edges::OutgoingEdges, rule::Rule,
-  rule_graph::RuleGraph,
+  capture_group_patterns::CGPattern, filter::Filter, language::PiranhaLanguage,
+  outgoing_edges::OutgoingEdges, rule::Rule, rule_graph::RuleGraph,
 };
-use crate::utilities::tree_sitter_utilities::TSQuery;
 
 pub const JAVA: &str = "java";
 pub const KOTLIN: &str = "kt";
@@ -30,6 +29,9 @@ pub const TYPESCRIPT: &str = "ts";
 pub const TSX: &str = "tsx";
 pub const THRIFT: &str = "thrift";
 pub const STRINGS: &str = "strings";
+pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
+
+pub const REGEX_QUERY_PREFIX: &str = "rgx ";
 
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
@@ -99,8 +101,8 @@ pub fn default_delete_consecutive_new_lines() -> bool {
   false
 }
 
-pub(crate) fn default_query() -> TSQuery {
-  TSQuery::new(String::new())
+pub(crate) fn default_query() -> CGPattern {
+  CGPattern::new(String::new())
 }
 
 pub fn default_replace_node() -> String {
@@ -139,12 +141,12 @@ pub(crate) fn default_edges() -> Vec<OutgoingEdges> {
   vec![]
 }
 
-pub(crate) fn default_not_contains_queries() -> Vec<TSQuery> {
+pub(crate) fn default_not_contains_queries() -> Vec<CGPattern> {
   Vec::new()
 }
 
-pub(crate) fn default_contains_query() -> TSQuery {
-  TSQuery::new(String::from(""))
+pub(crate) fn default_contains_query() -> CGPattern {
+  CGPattern::new(String::from(""))
 }
 
 pub(crate) fn default_contains_at_least() -> u32 {
@@ -163,12 +165,12 @@ pub(crate) fn default_sibling_count() -> u32 {
   u32::MAX
 }
 
-pub(crate) fn default_enclosing_node() -> TSQuery {
-  TSQuery::new(String::new())
+pub(crate) fn default_enclosing_node() -> CGPattern {
+  CGPattern::new(String::new())
 }
 
-pub(crate) fn default_not_enclosing_node() -> TSQuery {
-  TSQuery::new(String::new())
+pub(crate) fn default_not_enclosing_node() -> CGPattern {
+  CGPattern::new(String::new())
 }
 
 pub(crate) fn default_rule_name() -> String {

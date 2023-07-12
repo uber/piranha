@@ -91,20 +91,20 @@ func simplify_false_and_something(something bool) {
     } else {
         fmt.Println("else 5")
     }
-    // does not simplify binary_expression; left call may contain side-effects
+    // simplify
     if exp.BoolValue("random") && exp.BoolValue("false") {
-        fmt.Println("keep 1")
+        fmt.Println("to be removed 1")
     } else {
         fmt.Println("keep 2")
     }
     // function call && false
     if f1() && exp.BoolValue("false") {
-        fmt.Println("keep as it is")
+        fmt.Println("to be removed 2")
     }
 
     // function call || true
     if f1() || exp.BoolValue("true") {
-        fmt.Println("keep as it is")
+        fmt.Println("simplify and keep the statement")
     }
 }
 
@@ -130,7 +130,7 @@ func simplify_true_or_something(something bool) {
         fmt.Println("only true 5")
     }
 
-    // does not simplify binary_expression; left call may contain side-effects
+    // Simplify the below  if
     if exp.BoolValue("random") || exp.BoolValue("true") {
         fmt.Println("keep")
     }

@@ -35,9 +35,7 @@ class XPMethodChainCases {
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    if (sp.otherFlag().getCachedValue() || true) {
-      System.out.println("!!!");
-    }
+    System.out.println("simplify and keep the statement");
     // test for identifier || true
     System.out.println("!!!");
     

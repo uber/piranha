@@ -11,6 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+pub(crate) mod regex_utilities;
 pub(crate) mod tree_sitter_utilities;
 use std::collections::HashMap;
 use std::error::Error;
@@ -147,8 +148,6 @@ macro_rules! gen_py_str_methods {
 pub(crate) use gen_py_str_methods;
 use glob::Pattern;
 
-use self::tree_sitter_utilities::TSQuery;
-
 pub(crate) trait Instantiate {
   /// Replaces the all the occurrences of a tree-sitter specific tag with the corresponding string values
   /// specified in `substitutions`
@@ -169,16 +168,6 @@ impl Instantiate for String {
       output = output.replace(&key, substitute);
     }
     output
-  }
-}
-
-impl Instantiate for TSQuery {
-  fn instantiate(&self, substitutions: &HashMap<String, String>) -> Self {
-    let substitutions = substitutions
-      .iter()
-      .map(|(k, v)| (k.to_string(), v.replace('\n', "\\n")))
-      .collect();
-    TSQuery::new(self.get_query().instantiate(&substitutions))
   }
 }
 

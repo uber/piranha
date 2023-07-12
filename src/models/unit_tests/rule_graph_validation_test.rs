@@ -10,12 +10,15 @@ Copyright (c) 2023 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
-use crate::models::filter::FilterBuilder;
 use std::collections::HashMap;
 
-use crate::models::rule_graph::RuleGraphBuilder;
+
+use crate::models::{
+  capture_group_patterns::CGPattern, filter::FilterBuilder, rule_graph::RuleGraphBuilder,
+};
 use crate::utilities::tree_sitter_utilities::TSQuery;
 use crate::{edges, piranha_rule};
+
 
 #[test]
 #[should_panic(
@@ -39,8 +42,8 @@ fn test_filter_bad_arg_at_most() {
 )]
 fn test_filter_bad_arguments_contains_not_contains() {
   FilterBuilder::default()
-    .contains(TSQuery::new(String::from("(if_statement) @if_stmt")))
-    .not_contains(vec![TSQuery::new(String::from("(for_statement) @for"))])
+    .contains(CGPattern::new(String::from("(if_statement) @if_stmt")))
+    .not_contains(vec![CGPattern::new(String::from("(for_statement) @for"))])
     .build();
 }
 
@@ -50,7 +53,7 @@ fn test_filter_bad_arguments_contains_not_contains() {
 )]
 fn test_filter_bad_range() {
   FilterBuilder::default()
-    .contains(TSQuery::new(String::from("(if_statement) @if_stmt")))
+    .contains(CGPattern::new(String::from("(if_statement) @if_stmt")))
     .at_least(5)
     .at_most(4)
     .build();
@@ -60,7 +63,7 @@ fn test_filter_bad_range() {
 #[should_panic(expected = "Cannot parse")]
 fn test_filter_syntactically_incorrect_contains() {
   FilterBuilder::default()
-    .contains(TSQuery::new(String::from("(if_statement @if_stmt")))
+    .contains(CGPattern::new(String::from("(if_statement @if_stmt")))
     .build();
 }
 
@@ -68,7 +71,7 @@ fn test_filter_syntactically_incorrect_contains() {
 #[should_panic(expected = "Cannot parse")]
 fn test_filter_syntactically_incorrect_not_contains() {
   FilterBuilder::default()
-    .not_contains(vec![TSQuery::new(String::from("(if_statement @if_stmt"))])
+    .not_contains(vec![CGPattern::new(String::from("(if_statement @if_stmt"))])
     .build();
 }
 
@@ -76,7 +79,7 @@ fn test_filter_syntactically_incorrect_not_contains() {
 #[should_panic(expected = "Cannot parse")]
 fn test_filter_syntactically_incorrect_enclosing_node() {
   FilterBuilder::default()
-    .enclosing_node(TSQuery::new(String::from("(if_statement @if_stmt")))
+    .enclosing_node(CGPattern::new(String::from("(if_statement @if_stmt")))
     .build();
 }
 
@@ -84,7 +87,7 @@ fn test_filter_syntactically_incorrect_enclosing_node() {
 #[should_panic(expected = "Cannot parse")]
 fn test_filter_syntactically_incorrect_not_enclosing_node() {
   FilterBuilder::default()
-    .not_enclosing_node(TSQuery::new(String::from("(if_statement @if_stmt")))
+    .not_enclosing_node(CGPattern::new(String::from("(if_statement @if_stmt")))
     .build();
 }
 
@@ -104,7 +107,7 @@ fn test_rule_graph_incorrect_query() {
 )]
 fn test_filter_bad_arg_contains_n_children() {
   FilterBuilder::default()
-    .enclosing_node(TSQuery::new("(method_declaration) @i".to_string()))
+    .enclosing_node(CGPattern::new("(method_declaration) @i".to_string()))
     .child_count(2)
     .build();
 }
@@ -115,7 +118,7 @@ fn test_filter_bad_arg_contains_n_children() {
 )]
 fn test_filter_bad_arg_contains_n_sibling() {
   FilterBuilder::default()
-    .enclosing_node(TSQuery::new("(method_declaration) @i".to_string()))
+    .enclosing_node(CGPattern::new("(method_declaration) @i".to_string()))
     .sibling_count(2)
     .build();
 }

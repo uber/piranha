@@ -62,10 +62,11 @@ create_rewrite_tests! {
   test_non_seed_user_rule:  "non_seed_user_rule", 1, substitutions = substitutions! {"input_type_name" => "ArrayList"};
   test_insert_field_and_initializer:  "insert_field_and_initializer", 1;
   test_user_option_delete_if_empty: "user_option_delete_if_empty", 1;
-  test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty =false;
+  test_user_option_do_not_delete_if_empty : "user_option_do_not_delete_if_empty", 1, delete_file_if_empty = false;
   test_new_line_character_used_in_string_literal:  "new_line_character_used_in_string_literal",   1;
   test_java_delete_method_invocation_argument: "delete_method_invocation_argument", 1;
   test_java_delete_method_invocation_argument_no_op: "delete_method_invocation_argument_no_op", 0;
+  test_regex_based_matcher: "regex_based_matcher", 1, cleanup_comments = true;
 }
 
 create_match_tests! {
