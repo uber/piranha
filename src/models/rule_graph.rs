@@ -218,7 +218,7 @@ impl RuleGraph {
       .iter()
       .filter(|x| *x.is_seed_rule())
       .cloned()
-      .collect::<Vec<Rule>>();
+      .collect();
     analysis.run_analysis(rules_post_order, entry_rules);
 
     // Now validate for each rule, that all the tags used in the predicate are defined in the sigma out
