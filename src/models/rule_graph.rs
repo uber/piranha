@@ -206,7 +206,10 @@ impl RuleGraph {
       .iter()
       .map(|x| format!("@{}", x))
       .collect::<HashSet<String>>();
-    let forward = ForwardDefiniteAssignment::new(self.clone(), holes);
+    let forward = ForwardDefiniteAssignment {
+      graph: self.clone(),
+      initial_substitutions: holes,
+    };
     let mut analysis = DataflowAnalysis::new(forward);
 
     // Get the rules in post order for optimal performance of the analysis

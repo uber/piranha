@@ -2,7 +2,7 @@
 
 This folder implements a small data flow analysis framework `df.rs`.
 
-There's an to a "Definite Assignment Analysis" under `tag_analysis.rs`. 
+There's an implementation to a "Definite Assignment Analysis" under `tag_analysis.rs`. 
 The idea is to track all the variables defined through the rule graph,
 and make sure that all the variables are defined before they are used.
 Unlike "Definite Assignment Analysis", it tracks "tags" as they propagate

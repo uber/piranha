@@ -191,7 +191,7 @@ impl PiranhaArguments {
     cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
     delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
     delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
-    allow_dirty_ast: Option<bool>,
+    allow_dirty_ast: Option<bool>, should_validate: Option<bool>,
   ) -> Self {
     let subs = substitutions.map_or(vec![], |s| {
       s.iter()
@@ -237,6 +237,7 @@ impl PiranhaArguments {
       .delete_file_if_empty(delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty))
       .path_to_output_summary(path_to_output_summary)
       .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
+      .should_validate(should_validate.unwrap_or_else(default_graph_validation))
       .build()
   }
 }

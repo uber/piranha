@@ -27,11 +27,15 @@ use std::string::String;
 // the set of tags that will always reach that point. The result can then be used to check if the
 // query contains any variable tag that was not defined.
 
-#[derive(Debug, Clone, Getters)]
+#[derive(Debug, Clone, Getters, PartialEq, Eq)]
 pub struct DefiniteAssignmentSigma {
   #[get = "pub"]
   variables: HashSet<String>,
-  is_bottom: bool, // hack to prevent initializing variables with all elements for bottom
+  is_bottom: bool, // A boolean flag indicating if this state represents the "bottom" element
+                   // in the lattice of our dataflow analysis. The bottom element usually
+                   // represents a state of maximum uncertainty (e.g., all variables may
+                   // or may not be defined). It's a practical way to handle this special
+                   // state without needing to actually track all possible variables.
 }
 
 // The partial order x <= y is defined as x.contains(y)
@@ -50,35 +54,20 @@ impl Sigma for DefiniteAssignmentSigma {
     if _other.is_bottom {
       return self.clone();
     }
-    let new_variables: HashSet<String> = self
-      .variables
-      .iter()
-      .cloned()
-      .filter(|var| _other.variables.contains(var))
-      .collect();
     DefiniteAssignmentSigma {
-      variables: new_variables,
+      variables: self
+        .variables
+        .intersection(&_other.variables)
+        .cloned()
+        .collect(),
       is_bottom: false,
     }
   }
-
-  fn is_equal(&self, _other: &Self) -> bool {
-    self.variables == _other.variables && self.is_bottom == _other.is_bottom
-  }
 }
 
-pub struct ForwardDefiniteAssignment {
-  graph: RuleGraph,
-  initial_substitutions: HashSet<String>,
-}
-
-impl ForwardDefiniteAssignment {
-  pub fn new(graph: RuleGraph, initial_substitutions: HashSet<String>) -> Self {
-    ForwardDefiniteAssignment {
-      graph,
-      initial_substitutions,
-    }
-  }
+pub(crate) struct ForwardDefiniteAssignment {
+  pub(crate) graph: RuleGraph,
+  pub(crate) initial_substitutions: HashSet<String>,
 }
 
 impl Direction for ForwardDefiniteAssignment {
@@ -118,7 +107,7 @@ impl Direction for ForwardDefiniteAssignment {
   // the user
   fn entry_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
-      variables: self.initial_substitutions.iter().cloned().collect(),
+      variables: self.initial_substitutions.clone(),
       is_bottom: false,
     }
   }

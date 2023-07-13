@@ -15,8 +15,17 @@ use crate::df::df::DataflowAnalysis;
 use crate::df::df::Direction;
 use crate::df::tag_analysis::{DefiniteAssignmentSigma, ForwardDefiniteAssignment};
 
+use crate::models::rule::Rule;
 use crate::{edges, models::rule_graph::RuleGraphBuilder, piranha_rule};
 use std::collections::HashSet;
+
+fn check_sigma_in(
+  analysis: &DataflowAnalysis<ForwardDefiniteAssignment>, rule: &Rule, expected_vars: Vec<&str>,
+) {
+  let sigma = analysis.sigma_in().get(rule).unwrap().variables.clone();
+  let expected: HashSet<_> = expected_vars.into_iter().map(|s| s.to_string()).collect();
+  assert_eq!(sigma, expected);
+}
 
 #[test]
 fn test_graph_2edges() {
@@ -41,7 +50,8 @@ fn test_graph_2edges() {
       )
       (#eq? @detected_class_name @class_name)
       (#eq? @method_name \"bar\")
-    )"
+    )",
+      holes = ["@class_name"]
     },
     piranha_rule! {
       name = "detect_baz_in_bar",
@@ -54,7 +64,8 @@ fn test_graph_2edges() {
       )
       (#eq? @detected_method_name @method_name)
       (#eq? @function_name \"baz\")
-    )"
+    )",
+      holes = ["@method_name"]
     },
   ];
 
@@ -76,7 +87,10 @@ fn test_graph_2edges() {
     .edges(edges)
     .build();
 
-  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
+  let forward = ForwardDefiniteAssignment {
+    graph,
+    initial_substitutions: HashSet::new(),
+  };
   let mut analysis = DataflowAnalysis::new(forward);
 
   // Get the rules in post order for optimal performance of the analysis
@@ -86,18 +100,14 @@ fn test_graph_2edges() {
   let entry_rule = &rules[0];
   analysis.run_analysis(rules_post_order, vec![entry_rule.clone()]);
 
-  // Check the sigma in of the 2nd rule
-  let sigma = analysis
-    .sigma_in()
-    .get(&rules[2])
-    .unwrap()
-    .variables
-    .clone();
-  let expected = vec!["@method_name", "@class_name", "@detected_class_name"]
-    .into_iter()
-    .map(|s| s.to_string())
-    .collect::<HashSet<String>>();
-  assert_eq!(sigma, expected);
+  // Call the inner function to check the sigma_in of each rule
+  check_sigma_in(&analysis, &rules[0], vec![]);
+  check_sigma_in(&analysis, &rules[1], vec!["@class_name"]);
+  check_sigma_in(
+    &analysis,
+    &rules[2],
+    vec!["@class_name", "@method_name", "@detected_class_name"],
+  );
 }
 
 #[test]
@@ -133,7 +143,10 @@ fn test_forward_analysis_simple() {
     .edges(edges)
     .build();
 
-  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
+  let forward = ForwardDefiniteAssignment {
+    graph,
+    initial_substitutions: HashSet::new(),
+  };
   let mut analysis = DataflowAnalysis::new(forward);
 
   // Get the rules in post order for optimal performance of the analysis
@@ -143,23 +156,18 @@ fn test_forward_analysis_simple() {
   let entry_rule = &rules[0];
   analysis.run_analysis(rules_post_order, vec![entry_rule.clone()]);
 
-  // Check the sigma in of the 2nd rule
-  let sigma = analysis
-    .sigma_in()
-    .get(&rules[1])
-    .unwrap()
-    .variables
-    .clone();
-  let expected = vec![
-    "@class_name",
-    "@class_members",
-    "@class_body",
-    "@class_declaration",
-  ]
-  .into_iter()
-  .map(|s| s.to_string())
-  .collect::<HashSet<String>>();
-  assert_eq!(sigma, expected);
+  // Call the inner function to check the sigma_in of each rule
+  check_sigma_in(&analysis, &rules[0], vec![]);
+  check_sigma_in(
+    &analysis,
+    &rules[1],
+    vec![
+      "@class_name",
+      "@class_members",
+      "@class_body",
+      "@class_declaration",
+    ],
+  );
 }
 
 #[test]
@@ -182,7 +190,10 @@ fn test_flow_function() {
     .edges(edges)
     .build();
 
-  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
+  let forward = ForwardDefiniteAssignment {
+    graph,
+    initial_substitutions: HashSet::new(),
+  };
 
   let sigma = DefiniteAssignmentSigma {
     variables: HashSet::new(),
@@ -213,7 +224,10 @@ fn test_flow_function_0() {
     .edges(edges)
     .build();
 
-  let forward = ForwardDefiniteAssignment::new(graph, HashSet::new());
+  let forward = ForwardDefiniteAssignment {
+    graph,
+    initial_substitutions: HashSet::new(),
+  };
 
   let sigma = DefiniteAssignmentSigma {
     variables: HashSet::new(),
