@@ -31,7 +31,7 @@ use pyo3::{prelude::pyclass, pymethods};
 
 #[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
-pub(crate) struct Edit {
+pub struct Edit {
   // The match representing the target site of the edit
   #[pyo3(get)]
   #[get = "pub"]

@@ -29,7 +29,7 @@ use super::{
 
 #[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
-pub(crate) struct Match {
+pub struct Match {
   // Code snippet that matched
   #[get = "pub"]
   #[pyo3(get)]
