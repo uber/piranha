@@ -12,9 +12,10 @@
 from typing import Tuple
 
 import pytest
-from piranha_playground.rule_inference.graph_parser import TemplateParser
 from tree_sitter import Node, Tree
 from tree_sitter_languages import get_parser
+
+from piranha_playground.rule_inference.graph_parser import TemplateParser
 
 
 def parse_code(language: str, source_code: str, target_code: str) -> Tuple[Tree, Tree]:

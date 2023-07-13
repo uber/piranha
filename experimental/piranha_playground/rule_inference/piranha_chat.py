@@ -17,7 +17,9 @@ from typing import List, Optional, Tuple
 
 import attr
 import openai
-from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
+
+from piranha_playground.rule_inference.utils.logger_formatter import \
+    CustomFormatter
 
 logger = logging.getLogger("PiranhaAgent")
 logger.setLevel(logging.DEBUG)

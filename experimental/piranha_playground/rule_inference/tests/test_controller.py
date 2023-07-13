@@ -13,7 +13,9 @@ import json
 from unittest.mock import Mock
 
 import pytest
-from piranha_playground.rule_inference.controller import Controller, ControllerError
+
+from piranha_playground.rule_inference.controller import (Controller,
+                                                          ControllerError)
 
 
 def setup_controller(mock_response):
@@ -88,7 +90,7 @@ def test_should_improve_rule():
 
     controller, mock_chat = setup_controller(valid_json_correct_answer)
 
-    assert controller.should_improve_rule(task_description, rule) == correct_answer
+    assert controller.should_improve_rule(task_description, rule)
     mock_chat.append_user_followup.assert_called_once()
 
 

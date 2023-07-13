@@ -63,7 +63,7 @@ class RawFilter:
         )
 
     @staticmethod
-    def from_toml(toml_dict) -> "RawFilter":
+    def from_toml(toml_dict: Dict) -> "RawFilter":
         return RawFilter(
             enclosing_node=toml_dict.get("enclosing_node", None),
             not_enclosing_node=toml_dict.get("not_enclosing_node", None),
@@ -121,7 +121,7 @@ class RawRule:
         )
 
     @staticmethod
-    def from_toml(toml_dict) -> "RawRule":
+    def from_toml(toml_dict: Dict) -> "RawRule":
         return RawRule(
             name=toml_dict["name"],
             query=toml_dict.get("query", None),
@@ -156,7 +156,7 @@ class RawRuleGraph:
         )
 
     @staticmethod
-    def edge_to_toml(edge_dict) -> str:
+    def edge_to_toml(edge_dict: Dict) -> str:
         return "\n".join(
             [
                 "[[edges]]",
@@ -167,7 +167,7 @@ class RawRuleGraph:
         )
 
     @staticmethod
-    def from_toml(toml_dict) -> "RawRuleGraph":
+    def from_toml(toml_dict: Dict) -> "RawRuleGraph":
         rules = []
         for toml_rule in toml_dict["rules"]:
             rule = RawRule.from_toml(toml_rule)
