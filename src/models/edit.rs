@@ -64,15 +64,14 @@ impl Edit {
     edit
   }
   #[cfg(test)]
-  pub(crate) fn delete_range(code: &str, replacement_range: Range) -> Self {
-    use std::collections::HashMap;
-
+  pub(crate) fn delete_range(code: &str, range: Range) -> Self {
+    let matched_string = code[*range.start_byte()..*range.end_byte()].to_string();
     Self {
-      p_match: Match::new(
-        code[*replacement_range.start_byte()..*replacement_range.end_byte()].to_string(),
-        replacement_range,
-        HashMap::new(),
-      ),
+      p_match: Match {
+        matched_string,
+        range,
+        ..Default::default()
+      },
       replacement_string: String::new(),
       matched_rule: "Delete Range".to_string(),
     }

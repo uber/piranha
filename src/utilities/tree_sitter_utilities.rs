@@ -73,11 +73,14 @@ pub(crate) fn get_all_matches_for_query(
 
       let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
 
-      output.push(Match::new(
-        source_code[*replace_node_range.start_byte()..*replace_node_range.end_byte()].to_string(),
-        replace_node_range,
-        code_snippet_by_tag,
-      ));
+      output.push(Match {
+        matched_string: source_code
+          [*replace_node_range.start_byte()..*replace_node_range.end_byte()]
+          .to_string(),
+        range: replace_node_range,
+        matches: code_snippet_by_tag,
+        ..Default::default()
+      });
     }
   }
   // This sorts the matches from bottom to top
@@ -111,7 +114,7 @@ fn _get_query_capture_groups<'a>(
     // Ensure the outermost s-expression for is tree-sitter query is tagged.
     if let Some(captured_node) = query_match.captures.first() {
       query_matches_by_node_range.collect(
-        Range::from(captured_node.node.range()),
+        captured_node.node.range().into(),
         query_match.captures.iter().cloned().collect_vec(),
       );
     }
@@ -177,12 +180,10 @@ fn get_range_for_replace_node(
             if c_usize >= capture.node.named_child_count() {
               return None;
             }
-            return Some(Range::from(
-              capture.node.named_child(c_usize).unwrap().range(),
-            ));
+            return Some(capture.node.named_child(c_usize).unwrap().range().into());
           }
 
-          return Some(Range::from(capture.node.range()));
+          return Some(capture.node.range().into());
         }
       }
     }

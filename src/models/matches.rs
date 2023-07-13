@@ -26,31 +26,31 @@ use super::{
   source_code_unit::SourceCodeUnit,
 };
 
-#[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
+#[derive(Serialize, Debug, Default, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
 pub(crate) struct Match {
   // Code snippet that matched
   #[get = "pub"]
   #[pyo3(get)]
-  matched_string: String,
+  pub(crate) matched_string: String,
   // Range of the entire AST node captured by the match
   #[get = "pub"]
   #[pyo3(get)]
-  range: Range,
+  pub(crate) range: Range,
   // The mapping between tags and string representation of the AST captured.
   #[get = "pub"]
   #[pyo3(get)]
-  matches: HashMap<String, String>,
+  pub(crate) matches: HashMap<String, String>,
   // Captures the range of the associated comma
   #[get]
   #[get_mut]
   #[serde(skip)]
-  associated_comma: Option<Range>,
+  pub(crate) associated_comma: Option<Range>,
   // Captures the range(s) of the associated comments
   #[get]
   #[get_mut]
   #[serde(skip)]
-  associated_comments: Vec<Range>,
+  pub(crate) associated_comments: Vec<Range>,
 }
 gen_py_str_methods!(Match);
 
@@ -67,17 +67,6 @@ impl Match {
     }
   }
 
-  pub(crate) fn new(
-    matched_string: String, range: Range, matches: HashMap<String, String>,
-  ) -> Self {
-    Self {
-      matched_string,
-      range,
-      matches,
-      associated_comma: None,
-      associated_comments: Vec::new(),
-    }
-  }
   ///
   /// Returns the first and last associated ranges for the match.
   /// If there are no associated ranges, returns the range of the match itself.
@@ -141,13 +130,13 @@ impl Match {
         // Check if the sibling is a comment
         if !found_comma && content.trim().eq(",") {
           // Add the comma to the associated matches
-          self.associated_comma = Some(Range::from(sibling.range()));
+          self.associated_comma = Some(sibling.range().into());
           current_node = sibling;
           found_comma = true;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
         } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           // Add the comment to the associated matches
-          self.associated_comments.push(Range::from(sibling.range()));
+          self.associated_comments.push(sibling.range().into());
           current_node = sibling;
           found_comment = true;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
@@ -229,6 +218,7 @@ impl Match {
   Copy,
   Debug,
   PartialEq,
+  Default,
   Eq,
   Hash,
   PartialOrd,
@@ -298,6 +288,7 @@ fn position_for_offset(input: &[u8], offset: usize) -> Point {
   Clone,
   Copy,
   Debug,
+  Default,
   PartialEq,
   Eq,
   Hash,
@@ -310,16 +301,10 @@ fn position_for_offset(input: &[u8], offset: usize) -> Point {
 pub struct Point {
   #[get = "pub"]
   #[pyo3(get)]
-  row: usize,
+  pub(crate) row: usize,
   #[pyo3(get)]
   #[get = "pub"]
-  column: usize,
-}
-
-impl Point {
-  pub fn new(row: usize, column: usize) -> Self {
-    Self { row, column }
-  }
+  pub(crate) column: usize,
 }
 
 impl From<Point> for tree_sitter::Point {

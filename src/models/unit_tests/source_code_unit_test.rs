@@ -55,8 +55,14 @@ fn range(
   Range {
     start_byte,
     end_byte,
-    start_point: Point::new(start_row, start_column),
-    end_point: Point::new(end_row, end_column),
+    start_point: Point {
+      row: start_row,
+      column: start_column,
+    },
+    end_point: Point {
+      row: end_row,
+      column: end_column,
+    },
   }
 }
 
@@ -583,8 +589,8 @@ fn run_test_satisfies_filters_without_enclosing(
     &piranha_args,
   );
 
-  let start = Point::new(1, 8);
-  let end = Point::new(9, 9);
+  let start = Point { row: 1, column: 8 };
+  let end = Point { row: 9, column: 9 };
   let node = &source_code_unit
     .root_node()
     .descendant_for_point_range(start.into(), end.into())

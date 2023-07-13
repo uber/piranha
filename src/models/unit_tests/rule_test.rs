@@ -313,8 +313,8 @@ fn run_test_satisfies_filters_not_enclosing_node(
     &piranha_args,
   );
 
-  let start = Point::new(3, 10);
-  let end = Point::new(3, 29);
+  let start = Point { row: 3, column: 10 };
+  let end = Point { row: 3, column: 29 };
   let node = &source_code_unit
     .root_node()
     .descendant_for_point_range(start.into(), end.into())
