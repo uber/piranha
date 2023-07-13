@@ -15,14 +15,17 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use super::eq_without_whitespace;
 use crate::{
-  models::{edit::Edit, matches::Match},
+  models::{
+    edit::Edit,
+    matches::{Match, Range},
+  },
   utilities::MapOfVec,
 };
 use itertools::Itertools;
 use log::debug;
 
 use std::collections::HashMap;
-use tree_sitter::{InputEdit, Node, Parser, Point, Query, QueryCapture, QueryCursor, Range};
+use tree_sitter::{InputEdit, Node, Parser, Query, QueryCapture, QueryCursor};
 use tree_sitter_traversal::{traverse, Order};
 
 /// Applies the query upon the given `node`, and gets the first match
@@ -51,8 +54,8 @@ pub(crate) fn get_all_matches_for_query(
     }
 
     // Check if the range of the self (node), and the range of outermost node captured by the query are equal.
-    let range_matches_self = node.start_byte() == captured_node_range.start_byte
-      && node.end_byte() == captured_node_range.end_byte;
+    let range_matches_self = node.start_byte() == *captured_node_range.start_byte()
+      && node.end_byte() == *captured_node_range.end_byte();
 
     // If `recursive` it allows matches to the subtree of self (Node)
     // Else it ensure that the query perfectly matches the node (`self`).
@@ -70,15 +73,18 @@ pub(crate) fn get_all_matches_for_query(
 
       let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
 
-      output.push(Match::new(
-        source_code[replace_node_range.start_byte..replace_node_range.end_byte].to_string(),
-        replace_node_range,
-        code_snippet_by_tag,
-      ));
+      output.push(Match {
+        matched_string: source_code
+          [*replace_node_range.start_byte()..*replace_node_range.end_byte()]
+          .to_string(),
+        range: replace_node_range,
+        matches: code_snippet_by_tag,
+        ..Default::default()
+      });
     }
   }
   // This sorts the matches from bottom to top
-  output.sort_by(|a, b| a.range().start_byte.cmp(&b.range().start_byte));
+  output.sort_by(|a, b| a.range().start_byte().cmp(b.range().start_byte()));
   output.reverse();
   output
 }
@@ -108,7 +114,7 @@ fn _get_query_capture_groups<'a>(
     // Ensure the outermost s-expression for is tree-sitter query is tagged.
     if let Some(captured_node) = query_match.captures.first() {
       query_matches_by_node_range.collect(
-        captured_node.node.range(),
+        captured_node.node.range().into(),
         query_match.captures.iter().cloned().collect_vec(),
       );
     }
@@ -174,10 +180,10 @@ fn get_range_for_replace_node(
             if c_usize >= capture.node.named_child_count() {
               return None;
             }
-            return Some(capture.node.named_child(c_usize).unwrap().range());
+            return Some(capture.node.named_child(c_usize).unwrap().range().into());
           }
 
-          return Some(capture.node.range());
+          return Some(capture.node.range().into());
         }
       }
     }
@@ -194,23 +200,23 @@ fn get_range_for_replace_node(
 /// Note: This method does not update `self`.
 pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputEdit) {
   // Log the edit
-  let replace_range: Range = edit.p_match().range();
+  let replace_range: Range = *edit.p_match().range();
   let replacement = edit.replacement_string();
   debug!("{}", edit);
   // Create the new source code content by appropriately
   // replacing the range with the replacement string.
   let new_source_code = [
-    &code[..replace_range.start_byte],
+    &code[..*replace_range.start_byte()],
     replacement,
-    &code[replace_range.end_byte..],
+    &code[*replace_range.end_byte()..],
   ]
   .concat();
 
   let len_of_replacement = replacement.as_bytes().len();
   let old_source_code_bytes = code.as_bytes();
   let new_source_code_bytes = new_source_code.as_bytes();
-  let start_byte = replace_range.start_byte;
-  let old_end_byte = replace_range.end_byte;
+  let start_byte = *replace_range.start_byte();
+  let old_end_byte = *replace_range.end_byte();
   let new_end_byte = start_byte + len_of_replacement;
   (
     new_source_code.to_string(),
@@ -227,8 +233,8 @@ pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputE
 }
 
 // Finds the position (col and row number) for a given offset.
-fn position_for_offset(input: &[u8], offset: usize) -> Point {
-  let mut result = Point { row: 0, column: 0 };
+fn position_for_offset(input: &[u8], offset: usize) -> tree_sitter::Point {
+  let mut result = tree_sitter::Point { row: 0, column: 0 };
   for c in &input[0..offset] {
     if *c as char == '\n' {
       result.row += 1;
@@ -245,8 +251,8 @@ fn _get_tree_sitter_edit(
   replace_range: Range, len_of_replacement: usize, old_source_code_bytes: &[u8],
   new_source_code_bytes: &[u8],
 ) -> InputEdit {
-  let start_byte = replace_range.start_byte;
-  let old_end_byte = replace_range.end_byte;
+  let start_byte = *replace_range.start_byte();
+  let old_end_byte = *replace_range.end_byte();
   let new_end_byte = start_byte + len_of_replacement;
   InputEdit {
     start_byte,
@@ -295,8 +301,8 @@ pub(crate) fn get_replace_range(input_edit: InputEdit) -> Range {
   Range {
     start_byte: input_edit.start_byte,
     end_byte: input_edit.new_end_byte,
-    start_point: input_edit.start_position,
-    end_point: input_edit.new_end_position,
+    start_point: input_edit.start_position.into(),
+    end_point: input_edit.new_end_position.into(),
   }
 }
 

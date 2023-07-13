@@ -13,6 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
+use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::get_node_for_range};
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
@@ -20,37 +21,36 @@ use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
 
-use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::get_node_for_range};
-
 use super::{
   piranha_arguments::PiranhaArguments, rule::InstantiatedRule, rule_store::RuleStore,
   source_code_unit::SourceCodeUnit,
 };
 
-#[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
+#[derive(Serialize, Debug, Default, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
 pub struct Match {
   // Code snippet that matched
   #[get = "pub"]
   #[pyo3(get)]
-  matched_string: String,
+  pub(crate) matched_string: String,
   // Range of the entire AST node captured by the match
-  #[pyo3(get)]
-  range: Range,
-  // The mapping between tags and string representation of the AST captured.
-  #[pyo3(get)]
   #[get = "pub"]
-  matches: HashMap<String, String>,
+  #[pyo3(get)]
+  pub(crate) range: Range,
+  // The mapping between tags and string representation of the AST captured.
+  #[get = "pub"]
+  #[pyo3(get)]
+  pub(crate) matches: HashMap<String, String>,
   // Captures the range of the associated comma
   #[get]
   #[get_mut]
   #[serde(skip)]
-  associated_comma: Option<Range>,
+  pub(crate) associated_comma: Option<Range>,
   // Captures the range(s) of the associated comments
   #[get]
   #[get_mut]
   #[serde(skip)]
-  associated_comments: Vec<Range>,
+  pub(crate) associated_comments: Vec<Range>,
 }
 gen_py_str_methods!(Match);
 
@@ -67,17 +67,6 @@ impl Match {
     }
   }
 
-  pub(crate) fn new(
-    matched_string: String, range: tree_sitter::Range, matches: HashMap<String, String>,
-  ) -> Self {
-    Self {
-      matched_string,
-      range: Range::from(range),
-      matches,
-      associated_comma: None,
-      associated_comments: Vec::new(),
-    }
-  }
   ///
   /// Returns the first and last associated ranges for the match.
   /// If there are no associated ranges, returns the range of the match itself.
@@ -112,22 +101,6 @@ impl Match {
     self.matched_string = code[self.range.start_byte..self.range.end_byte].to_string()
   }
 
-  /// Get the edit's replacement range.
-  pub(crate) fn range(&self) -> tree_sitter::Range {
-    tree_sitter::Range {
-      start_byte: self.range.start_byte,
-      end_byte: self.range.end_byte,
-      start_point: tree_sitter::Point {
-        row: self.range.start_point.row,
-        column: self.range.start_point.column,
-      },
-      end_point: tree_sitter::Point {
-        row: self.range.end_point.row,
-        column: self.range.end_point.column,
-      },
-    }
-  }
-
   // Populates the leading and trailing comma and comment ranges for the match.
   fn populate_associated_elements(
     &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments,
@@ -157,13 +130,13 @@ impl Match {
         // Check if the sibling is a comment
         if !found_comma && content.trim().eq(",") {
           // Add the comma to the associated matches
-          self.associated_comma = Some(Range::from(sibling.range()));
+          self.associated_comma = Some(sibling.range().into());
           current_node = sibling;
           found_comma = true;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
         } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           // Add the comment to the associated matches
-          self.associated_comments.push(Range::from(sibling.range()));
+          self.associated_comments.push(sibling.range().into());
           current_node = sibling;
           found_comment = true;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
@@ -240,18 +213,33 @@ impl Match {
 /// rows and columns.
 /// Note `LocalRange` derives serialize.
 #[derive(
-  serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize,
+  serde_derive::Serialize,
+  Clone,
+  Copy,
+  Debug,
+  PartialEq,
+  Default,
+  Eq,
+  Hash,
+  PartialOrd,
+  Ord,
+  Deserialize,
+  Getters,
 )]
 #[pyclass]
-pub(crate) struct Range {
+pub struct Range {
+  #[get = "pub"]
   #[pyo3(get)]
-  start_byte: usize,
+  pub(crate) start_byte: usize,
+  #[get = "pub"]
   #[pyo3(get)]
-  end_byte: usize,
+  pub(crate) end_byte: usize,
+  #[get = "pub"]
   #[pyo3(get)]
-  start_point: Point,
+  pub(crate) start_point: Point,
+  #[get = "pub"]
   #[pyo3(get)]
-  end_point: Point,
+  pub(crate) end_point: Point,
 }
 
 impl From<tree_sitter::Range> for Range {
@@ -259,17 +247,12 @@ impl From<tree_sitter::Range> for Range {
     Self {
       start_byte: range.start_byte,
       end_byte: range.end_byte,
-      start_point: Point {
-        row: range.start_point.row,
-        column: range.start_point.column,
-      },
-      end_point: Point {
-        row: range.end_point.row,
-        column: range.end_point.column,
-      },
+      start_point: range.start_point.into(),
+      end_point: range.end_point.into(),
     }
   }
 }
+
 gen_py_str_methods!(Range);
 
 impl Range {
@@ -301,15 +284,47 @@ fn position_for_offset(input: &[u8], offset: usize) -> Point {
 /// A range of positions in a multi-line text document, both in terms of bytes and of
 /// rows and columns.
 #[derive(
-  serde_derive::Serialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize,
+  serde_derive::Serialize,
+  Clone,
+  Copy,
+  Debug,
+  Default,
+  PartialEq,
+  Eq,
+  Hash,
+  PartialOrd,
+  Ord,
+  Deserialize,
+  Getters,
 )]
 #[pyclass]
-struct Point {
+pub struct Point {
+  #[get = "pub"]
   #[pyo3(get)]
-  row: usize,
+  pub(crate) row: usize,
   #[pyo3(get)]
-  column: usize,
+  #[get = "pub"]
+  pub(crate) column: usize,
 }
+
+impl From<Point> for tree_sitter::Point {
+  fn from(value: Point) -> Self {
+    tree_sitter::Point {
+      row: *value.row(),
+      column: *value.column(),
+    }
+  }
+}
+
+impl From<tree_sitter::Point> for Point {
+  fn from(point: tree_sitter::Point) -> Self {
+    Self {
+      row: point.row,
+      column: point.column,
+    }
+  }
+}
+
 gen_py_str_methods!(Point);
 
 // Implements instance methods related to getting matches for rule
