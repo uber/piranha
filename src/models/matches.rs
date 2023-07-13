@@ -227,7 +227,7 @@ impl Match {
   Getters,
 )]
 #[pyclass]
-pub(crate) struct Range {
+pub struct Range {
   #[get = "pub"]
   #[pyo3(get)]
   pub(crate) start_byte: usize,
