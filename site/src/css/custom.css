@@ -22,3 +22,8 @@
   --ifm-color-primary-lightest: #619ebe;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+[data-theme='dark'] .hero__title,
+[data-theme='dark'] .hero__subtitle {
+  color: #ffffff;
+}

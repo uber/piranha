@@ -7,7 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Polyglot Piranha',
-  tagline: 'a practical tool for refactoring code across multiple languages at scale',
+  tagline: 'a tool for refactoring tasks for multiple languages at scale',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -112,6 +112,7 @@ const config = {
                 label: 'Discord',
                 href: 'https://discordapp.com/invite/piranha_uber',
               }
+              ],
           },
           {
             title: 'More',
