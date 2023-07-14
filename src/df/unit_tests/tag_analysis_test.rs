@@ -51,7 +51,7 @@ fn test_graph_2edges() {
       (#eq? @detected_class_name @class_name)
       (#eq? @method_name \"bar\")
     )",
-      holes = ["@class_name"]
+      holes = ["class_name"]
     },
     piranha_rule! {
       name = "detect_baz_in_bar",
@@ -65,7 +65,7 @@ fn test_graph_2edges() {
       (#eq? @detected_method_name @method_name)
       (#eq? @function_name \"baz\")
     )",
-      holes = ["@method_name"]
+      holes = ["method_name"]
     },
   ];
 
