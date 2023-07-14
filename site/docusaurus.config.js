@@ -7,7 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Polyglot Piranha',
-  tagline: 'flexible multilingual framework for chaining interdependent structural search/replace rules using *any declarative rewrite language*.',
+  tagline: 'flexible multilingual framework for chaining interdependent structural search/replace rules using any matching language.',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here

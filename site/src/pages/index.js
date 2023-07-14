@@ -15,7 +15,11 @@ function HomepageHeader() {
         <header className={clsx('hero hero--primary', styles.heroBanner)}>
             <div className="container" style={{textAlign: "left"}}>
                 <h1 className="hero__title">{siteConfig.title}</h1>
-                <p className="hero__subtitle">{siteConfig.tagline}</p>
+                <div className="row">
+                    <div className="col col--6">
+                        <p className="hero__subtitle">{siteConfig.tagline}</p>
+                    </div>
+                </div>
                 <div className={styles.buttons} style={{justifyContent: "flex-start"}}>
                     <Link
                         className="button button--secondary button--lg"
@@ -37,6 +41,7 @@ export default function Home() {
             <HomepageHeader />
             <main>
                 <HomepageFeatures />
+                <AdditionalContent />
             </main>
         </Layout>
     );

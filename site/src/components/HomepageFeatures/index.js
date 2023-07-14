@@ -8,19 +8,18 @@ const FeatureList = [
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-          Find and replace code in <b>any declarative rewrite language</b>.
+          Find and replace code in <b>any declarative matching language</b> (regex, tree-sitter queries).
           Specify extra matchers in our filter language to achieve finely-grained rewrites.
       </>
     ),
   },
   {
-    title: 'Chain transformations',
+    title: 'Chain rewrite rules',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
           Cascade program transformations by chaining your rewrite rules with our graph language.
-
-
+          Piranha will automatically refactor your code with your chaining strategy.
       </>
     ),
   },
