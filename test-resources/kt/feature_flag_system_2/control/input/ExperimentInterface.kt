@@ -18,6 +18,8 @@ import com.uber.BoolParameter
 import com.uber.Parameter
 
 internal interface SomeParameter {
+
+    /* This is a stale flag */
     @BoolParam(key = "STALE_FLAG", namespace = "some_long_name")
     fun isStaleFeature(): BoolParameter
 

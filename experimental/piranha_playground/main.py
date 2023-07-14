@@ -16,6 +16,7 @@ import sys
 import openai
 from flask import Flask, Response, jsonify, render_template, request, session
 
+
 from piranha_playground.data_validation import (
     ImproveData,
     InferData,
@@ -70,6 +71,7 @@ def process_folder():
         return jsonify({"result": False, "error": str(e)}), 400
 
 
+
 @app.route("/infer_rule_graph", methods=["POST"])
 def infer_static_rule():
     """
@@ -91,6 +93,7 @@ def infer_static_rule():
         return jsonify({"rules": static_rules})
     except (ValueError, PiranhaAgentError) as e:
         return jsonify({"error": str(e)}), 400
+
 
 
 @app.route("/improve_rule_graph", methods=["POST"])
