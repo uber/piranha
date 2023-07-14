@@ -416,8 +416,8 @@ impl SourceCodeUnit {
       if let Some(p_match) = pattern.get_match(&parent, self.code(), false) {
         let matched_ancestor = get_node_for_range(
           self.root_node(),
-          p_match.range().start_byte,
-          p_match.range().end_byte,
+          *p_match.range().start_byte(),
+          *p_match.range().end_byte(),
         );
         return Some(matched_ancestor);
       }
