@@ -9,11 +9,12 @@ from typing import Tuple, Dict, Optional, List
 
 WILDCARD = "_"
 
+
 @attr.s
 class TemplateParser:
     language = attr.ib(default="java")
     tree_sitter_language = attr.ib(default=None)
-    tree_sitter_parser = attr.ib(default=None)
+    parser = attr.ib(default=None)
     language_mappings = {
         "java": "java",
         "kt": "kotlin",
@@ -85,11 +86,8 @@ class TemplateParser:
         template_holes = {}
         replaced_code = code
         for match in matches:
-            name, alternations = self.parse_content(match.group('content'))
-            if alternations is not None:
-                template_holes[name] = alternations
-            else:
-                template_holes[name] = [WILDCARD]
+            name, alternations = self.parse_content(match.group("content"))
+            template_holes[name] = alternations or [WILDCARD]
             # replace match with identifier
             replaced_code = replaced_code.replace(match.group(), name)
 
@@ -97,9 +95,9 @@ class TemplateParser:
         return replaced_code
 
     def parse_content(self, content: str) -> Tuple[str, Optional[List[str]]]:
-        if ':' in content:
-            name, alternations = [x.strip() for x in content.split(':', 1)]
-            alternations = [x.strip() for x in alternations.split(',')]
+        if ":" in content:
+            name, alternations = [x.strip() for x in content.split(":", 1)]
+            alternations = [x.strip() for x in alternations.split(",")]
             return name, alternations
         else:
             return content, None
