@@ -153,7 +153,7 @@ replace = """newMethod ( @wild_card , @method_arg )"""
 In the above template, `:[x]` is a match wildcard, and `:[y: identifier]` is a type-constrained wildcard, which will match any node of the specified type(s). We also support alternations or multiple nodes like `:[x: identifier, string_literal]`.
 
 :::tip
-Templating syntax offers enhanced control and finer control over the code constructs you want to match.
+Templating syntax offers enhanced control over the code constructs you want to match.
 
 - Use the `:[x]` wildcard when you want to match any node regardless of its type.
 - For specific node type matching, use the type-constrained wildcard `:[x:node1,node2,node3]`. This allows you to precisely select the node types you want to match, improving the accuracy and flexibility of your rules.
