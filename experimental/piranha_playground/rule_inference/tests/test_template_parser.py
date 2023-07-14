@@ -6,9 +6,8 @@ from tree_sitter_languages import get_language, get_parser
 import attr
 from typing import Tuple, Dict, Optional, List
 import pytest
-from piranha_playground.rule_inference.template_parser import TemplateParser
+from piranha_playground.rule_inference.template_parser import TemplateParser, WILDCARD
 
-WILDCARD = "_"
 
 
 def test_template_parser_init():
