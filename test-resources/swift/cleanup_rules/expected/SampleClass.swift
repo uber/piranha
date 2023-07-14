@@ -162,6 +162,8 @@ class SampleClass {
     func checkTernary() {
         var value = 2
         var value2 = 3
+        var value3 =  nil
+        var value4 =  nil
     }
 
     func checkIfBooleanWithComments(){
