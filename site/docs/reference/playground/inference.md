@@ -10,7 +10,7 @@ for matching code. While Piranha's implementation also supports regex rules,
 they tend to be less precise and can also become quite tricky.
 
 To make it easier to write rewrite rules, **Piranha offers an inference mechanism that allows you to generate tree-sitter matchers and the rule graph from provided templates or examples**.
-This approach is not only more efficient but also enables you to maintain precision in your rules and allows for cascading transformations.
+This approach makes it easier to write precise matchers for transforming code
 
 ## Rule Generation from Examples
 
