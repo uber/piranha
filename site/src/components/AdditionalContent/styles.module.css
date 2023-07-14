@@ -10,3 +10,11 @@
   width: 200px;
 }
 
+.centeredRow {
+    justify-content: center;
+}
+
+.fullScreenGreyBackground {
+  background-color: #f5f5f5;
+  width: 100%;
+}
