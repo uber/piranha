@@ -25,11 +25,13 @@ def test_infer_static_rule(client):
         "target_code": "// 1\nclass B {}",
         "language": "java",
     }
+
     response = client.post("/infer_rule_graph", json=data)
 
     assert response.status_code == 200
     graph = RawRuleGraph.from_toml(toml.loads(response.get_json()["rules"]))
     assert len(graph.rules) == 1
+
 
 
 @pytest.mark.skip(reason="This test requires OpenAI API key")
@@ -43,6 +45,7 @@ def test_improve_rules(client):
         "rules": '''[[rules]]\nname = "rename_class_A_to_B"''',
         "option": "general",  # Please provide example option data
     }
+
     response = client.post("/improve_rule_graph", json=data)
 
     assert response.status_code == 200
@@ -65,6 +68,7 @@ def test_test_rule(client):
         '''
 
     data = {"source_code": "class A {}", "language": "java", "rules": rule}
+
     with patch(
         "piranha_playground.rule_inference.rule_application.run_piranha_with_timeout",
         new=_run_piranha_with_timeout_aux,
