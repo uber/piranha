@@ -598,14 +598,14 @@ is_seed_rule = false
 # var v = nil
 #
 [[rules]]
-name = "ternary_false_alternative_nil"
+name = "ternary_true_consequent_nil"
 query = """(
 (ternary_expression
     condition:[(boolean_literal) @true  
             (tuple_expression 
                 value: (boolean_literal) @true)]
     ) @ternary_block
-(#eq? @false "true")
+(#eq? @true "true")
 (#match? @ternary_block "\\\\?[\\\\n\\\\r\\\\s]*nil[\\\\n\\\\r\\\\s]*:")
 )"""
 groups = ["if_cleanup"]
