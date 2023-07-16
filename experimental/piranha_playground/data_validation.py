@@ -16,6 +16,11 @@ from piranha_playground.rule_inference.utils.pretty_toml import PrettyTOML
 from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 
 
+def validate_non_empty_string(instance, attribute, value):
+    if not isinstance(value, str) or value.strip() == "":
+        raise ValueError(f"{attribute.name} must be a non-empty string")
+
+
 @attr.s
 class InferData:
     """
@@ -28,15 +33,36 @@ class InferData:
 
 
 @attr.s
+class InferData:
+    """
+    Data class representing the information needed for the infer_piranha event.
+    """
+
+    source_code = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
+    target_code = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
+    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
+
+
+@attr.s
 class ImproveData:
     """
     Data class representing the information needed for the improve_piranha event.
     """
 
-    source_code = attr.ib(validator=attr.validators.instance_of(str))
-    target_code = attr.ib(validator=attr.validators.instance_of(str))
+    source_code = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
+    target_code = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
     language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
-    requirements = attr.ib(validator=attr.validators.instance_of(str))
+    requirements = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
     rules = attr.ib(validator=RawRuleGraph.validate)
     option = attr.ib(validator=attr.validators.in_(["user", "general"]))
 
@@ -51,7 +77,9 @@ class RefactorData:
     """
 
     language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
-    folder_path = attr.ib(validator=attr.validators.instance_of(str))
+    folder_path = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
     rules = attr.ib(validator=RawRuleGraph.validate)
 
 
@@ -62,5 +90,7 @@ class RefactorSnippet:
     """
 
     language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
-    source_code = attr.ib(validator=attr.validators.instance_of(str))
+    source_code = attr.ib(
+        validator=[attr.validators.instance_of(str), validate_non_empty_string]
+    )
     rules = attr.ib(validator=RawRuleGraph.validate)

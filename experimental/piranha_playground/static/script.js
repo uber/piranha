@@ -16,6 +16,13 @@
     testButton: document.getElementById("submit-button-test"),
   };
 
+  const buttonOriginalText = {
+    "submit-button-test": "Apply rule to before",
+    "submit-button-infer": "Infer rules from templates",
+    "submit-button-improvement": "Improve rule",
+    "submit-button-folder": "Apply rules",
+  };
+
   elements.languageSelect.addEventListener("change", handleLanguageChange);
   handleLanguageChange();
 
@@ -70,16 +77,30 @@
     });
   }
 
+  // Define a list of button names
+  let buttonNames = [
+    "submit-button-test",
+    "submit-button-infer",
+    "submit-button-improvement",
+    "submit-button-folder",
+  ];
+
+  // Initial text of the buttons
+  let buttonElements = {};
+  buttonNames.forEach((name) => {
+    let element = document.getElementById(name);
+    buttonElements[element] = element.innerText;
+  });
+
   function displayButton(disabled, textContent, name) {
     const button = document.getElementById("submit-button-" + name);
     const buttonText = document.getElementById("button-text-" + name);
     const spinner = document.getElementById("spinner-" + name);
-    const previousText = buttonText.textContent;
 
     button.disabled = disabled;
     spinner.style.display = disabled ? "inline-block" : "none";
     buttonText.textContent = textContent;
-    return { button, previousText };
+    return button;
   }
 
   elements.submitFolderButton.addEventListener("click", emitRefactorEvent);
@@ -101,11 +122,7 @@
     });
 
     const data = await response.json();
-    const { button, previousText } = displayButton(
-      true,
-      "Processing...",
-      buttonName,
-    );
+    const button = displayButton(true, "Processing...", buttonName);
 
     if (response.status === 200) {
       onSuccess(data);
@@ -114,11 +131,12 @@
     } else {
       button.classList.add("btn-danger");
       displayButton(false, `Error`, buttonName);
+      showAlert(data.error || "An error occurred", "danger");
     }
 
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
-      displayButton(false, previousText, buttonName);
+      displayButton(false, buttonElements[button], buttonName);
     }, 3000);
   }
 
@@ -137,7 +155,7 @@
       "infer",
       (data) => {
         updateInterface(data.rules);
-        emitImproveEventAux("general");
+        // emitImproveEventAux("general");
       },
     );
   }
@@ -219,5 +237,25 @@
     if (editors.requirementsEditor.getValue() === "") {
       editors.requirementsEditor.setValue(" ");
     }
+  }
+
+  /**
+   * Display an alert message
+   * @param {string} message - The message to be displayed
+   * @param {string} alertType - The type of the alert to be displayed
+   */
+  function showAlert(message, alertType) {
+    const alertPlaceholder = document.getElementById("alert-placeholder");
+    const alertBox = document.createElement("div");
+
+    alertBox.className = `alert alert-${alertType} fade show`;
+    alertBox.role = "alert";
+    alertBox.innerHTML = message;
+
+    alertPlaceholder.appendChild(alertBox);
+
+    setTimeout(() => {
+      alertPlaceholder.removeChild(alertBox);
+    }, 3000);
   }
 })();
