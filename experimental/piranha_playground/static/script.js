@@ -16,13 +16,6 @@
     testButton: document.getElementById("submit-button-test"),
   };
 
-  const buttonOriginalText = {
-    "submit-button-test": "Apply rule to before",
-    "submit-button-infer": "Infer rules from templates",
-    "submit-button-improvement": "Improve rule",
-    "submit-button-folder": "Apply rules",
-  };
-
   elements.languageSelect.addEventListener("change", handleLanguageChange);
   handleLanguageChange();
 
