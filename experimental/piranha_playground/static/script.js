@@ -72,17 +72,17 @@
 
   // Define a list of button names
   let buttonNames = [
-    "submit-button-test",
-    "submit-button-infer",
-    "submit-button-improvement",
-    "submit-button-folder",
+    "test",
+    "infer",
+    "improvement",
+    "folder",
   ];
 
   // Initial text of the buttons
   let buttonElements = {};
   buttonNames.forEach((name) => {
-    let element = document.getElementById(name);
-    buttonElements[element] = element.innerText;
+    let element = document.getElementById("submit-button-" + name);
+    buttonElements[name] = element.innerText;
   });
 
   function displayButton(disabled, textContent, name) {
@@ -129,7 +129,7 @@
 
     setTimeout(() => {
       button.classList.remove("btn-success", "btn-danger");
-      displayButton(false, buttonElements[button], buttonName);
+      displayButton(false, buttonElements[buttonName], buttonName);
     }, 3000);
   }
 
