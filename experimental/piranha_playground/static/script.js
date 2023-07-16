@@ -108,14 +108,14 @@
    * @param {Function} onSuccess - Function to be called if the request was successful
    */
   async function makeRequest(url, requestData, buttonName, onSuccess) {
+
+    const button = displayButton(true, "Processing...", buttonName);
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestData),
     });
-
     const data = await response.json();
-    const button = displayButton(true, "Processing...", buttonName);
 
     if (response.status === 200) {
       onSuccess(data);
