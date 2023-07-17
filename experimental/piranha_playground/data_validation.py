@@ -15,6 +15,8 @@ import toml
 from piranha_playground.rule_inference.utils.pretty_toml import PrettyTOML
 from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 
+LANGUAGES = ["kt", "java", "go", "swift"]
+
 
 @attr.s
 class InferData:
@@ -24,7 +26,7 @@ class InferData:
 
     source_code = attr.ib(validator=attr.validators.instance_of(str))
     target_code = attr.ib(validator=attr.validators.instance_of(str))
-    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
+    language = attr.ib(validator=attr.validators.in_(LANGUAGES))
 
 
 @attr.s
@@ -35,7 +37,7 @@ class ImproveData:
 
     source_code = attr.ib(validator=attr.validators.instance_of(str))
     target_code = attr.ib(validator=attr.validators.instance_of(str))
-    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
+    language = attr.ib(validator=attr.validators.in_(LANGUAGES))
     requirements = attr.ib(validator=attr.validators.instance_of(str))
     rules = attr.ib(validator=RawRuleGraph.validate)
     option = attr.ib(validator=attr.validators.in_(["user", "general"]))
@@ -50,7 +52,7 @@ class RefactorData:
     Data class representing the information needed for the refactor_codebase event.
     """
 
-    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
+    language = attr.ib(validator=attr.validators.in_(LANGUAGES))
     folder_path = attr.ib(validator=attr.validators.instance_of(str))
     rules = attr.ib(validator=RawRuleGraph.validate)
 
@@ -61,6 +63,6 @@ class RefactorSnippet:
     Data class representing the information needed for the refactor_codebase event.
     """
 
-    language = attr.ib(validator=attr.validators.in_(["kt", "java"]))
+    language = attr.ib(validator=attr.validators.in_(LANGUAGES))
     source_code = attr.ib(validator=attr.validators.instance_of(str))
     rules = attr.ib(validator=RawRuleGraph.validate)
