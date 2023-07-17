@@ -31,9 +31,18 @@
           </select>
         </div>
         <div class="col-lg-10 d-flex justify-content-end">
-          <button id="test-button" class="btn btn-primary">
-            <span>Apply rule to code before</span>
-          </button>
+          <div class="col-auto">
+            <button id="submit-button-test" class="btn btn-primary">
+              <span
+                id="spinner-test"
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+                style="display: none"
+              ></span>
+              <span id="button-text-test">Apply rule to before</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -99,6 +108,9 @@
             <span id="button-text-improvement">Improve rule</span>
           </button>
         </div>
+      </div>
+      <div class="row justify-content-center" style="padding-top: 1em">
+        <div id="alert-placeholder"></div>
       </div>
 
       <div class="row justify-content-center">
