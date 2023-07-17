@@ -1,3 +1,8 @@
+Version 0.3.11
+-------------
+* Refactor to support other matching languages
+* Introduce regex syntax for rules
+
 Version 0.3.10
 -------------
 * Add support for replace node index
