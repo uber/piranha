@@ -22,19 +22,6 @@ from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
 from piranha_playground.rule_inference.piranha_agent import PiranhaAgent
 
 
-def parse_code(language: str, source_code: str, target_code: str) -> Tuple[Node, Node]:
-    """Helper function to parse into tree sitter nodes
-    note for gpt: add type annotations, reST docstrings, and type hints"""
-    parser = get_parser(language)
-
-    source_tree = parser.parse(bytes(source_code, "utf8"))
-    target_tree = parser.parse(bytes(target_code, "utf8"))
-
-    source_node = source_tree.root_node
-    target_node = target_tree.root_node
-    return source_node, target_node
-
-
 def test_go_inference():
     # Source and target code samples
     language = "go"
