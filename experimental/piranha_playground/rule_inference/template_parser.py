@@ -19,6 +19,12 @@ class TemplateParser:
         "java": "java",
         "kt": "kotlin",
     }  # This is necessary because get_parser and piranha expect different naming conventions
+    comments_node_names = {
+        "java": "line_comment",
+        "go": "comment",
+        "kt": "comment",
+        "swift": "comment",
+    }
     template_holes = attr.ib(default=attr.Factory(dict))
 
     def __attrs_post_init__(self):

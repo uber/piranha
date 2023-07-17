@@ -18,6 +18,8 @@ from tree_sitter import Node, TreeCursor
 from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 from piranha_playground.rule_inference.utils.rule_utils import RawRule
 
+from piranha_playground.rule_inference.template_parser import WILDCARD
+
 
 @attr.s
 class QueryWriter:
@@ -77,11 +79,15 @@ class QueryWriter:
 
         # We check if the text repr of the node is a template hole.
         # If so we either use a wild card or the provided type)
-        node_rep = child_node.text.decode('utf8')
+        node_rep = child_node.text.decode("utf8")
         if node_rep in self.template_holes:
-            child_type = self.template_holes[node_rep][0] # Not very elegant TODO: fix this
+            child_type = self.template_holes[node_rep][
+                0
+            ]  # Not very elegant TODO: fix this
 
-        prefix = f"{cursor.current_field_name()}: " if cursor.current_field_name() else ""
+        prefix = (
+            f"{cursor.current_field_name()}: " if cursor.current_field_name() else ""
+        )
         s_exp = "\n"
 
         if simplify:
@@ -89,7 +95,9 @@ class QueryWriter:
             self.count += 1
 
             if child_node.child_count == 0 and node_rep not in self.template_holes:
-                self.query_ctrs.append(f"(#eq? @tag{self.count}n \"{child_node.text.decode('utf8')}\")")
+                self.query_ctrs.append(
+                    f"(#eq? @tag{self.count}n \"{child_node.text.decode('utf8')}\")"
+                )
         else:
             s_exp += self.write_query(cursor.node, depth + 1, prefix, simplify)
 
@@ -110,9 +118,11 @@ class QueryWriter:
         cursor: TreeCursor = node.walk()
 
         node_type = node.type
-        node_repr = node.text.decode('utf8')
+        node_repr = node.text.decode("utf8")
         if node_repr in self.template_holes:
             node_type = self.template_holes[node_repr][0]
+            if node_type == WILDCARD:
+                return indent + f"{prefix}({node_type})"
 
         s_exp = indent + f"{prefix}({node_type} "
 
