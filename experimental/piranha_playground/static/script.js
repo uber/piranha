@@ -71,12 +71,7 @@
   }
 
   // Define a list of button names
-  let buttonNames = [
-    "test",
-    "infer",
-    "improvement",
-    "folder",
-  ];
+  let buttonNames = ["test", "infer", "improvement", "folder"];
 
   // Initial text of the buttons
   let buttonElements = {};
@@ -108,7 +103,6 @@
    * @param {Function} onSuccess - Function to be called if the request was successful
    */
   async function makeRequest(url, requestData, buttonName, onSuccess) {
-
     const button = displayButton(true, "Processing...", buttonName);
     const response = await fetch(url, {
       method: "POST",
