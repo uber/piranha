@@ -1,17 +1,19 @@
 import re
 from collections import defaultdict
+from typing import Dict, List, Optional, Tuple
 
-from polyglot_piranha import Rule, RuleGraph, PiranhaArguments, execute_piranha
+import attr
+from polyglot_piranha import PiranhaArguments, Rule, RuleGraph, execute_piranha
 from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
-import attr
-from typing import Tuple, Dict, Optional, List
 
 WILDCARD = "_"
 
 
 @attr.s
 class TemplateParser:
+    """This class provides parsing utilities for piranha's template language"""
+
     language = attr.ib(default="java")
     tree_sitter_language = attr.ib(default=None)
     parser = attr.ib(default=None)
@@ -63,7 +65,7 @@ class TemplateParser:
         """
         rule = Rule(
             name="remove_comments",
-            query="(line_comment) @comment",
+            query=f"({self.comments_node_names[self.language]}) @comment",
             replace_node="comment",
             replace="",
         )
@@ -100,7 +102,8 @@ class TemplateParser:
         self.template_holes.update(template_holes)
         return replaced_code
 
-    def parse_content(self, content: str) -> Tuple[str, Optional[List[str]]]:
+    @staticmethod
+    def parse_content(content: str) -> Tuple[str, Optional[List[str]]]:
         if ":" in content:
             name, alternations = [x.strip() for x in content.split(":", 1)]
             alternations = [x.strip() for x in alternations.split(",")]

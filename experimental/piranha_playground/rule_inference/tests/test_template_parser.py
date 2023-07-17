@@ -1,13 +1,15 @@
 import re
 from collections import defaultdict
-from polyglot_piranha import Rule, RuleGraph, PiranhaArguments, execute_piranha
+from typing import Dict, List, Optional, Tuple
+
+import attr
+import pytest
+from polyglot_piranha import PiranhaArguments, Rule, RuleGraph, execute_piranha
 from tree_sitter import Tree
 from tree_sitter_languages import get_language, get_parser
-import attr
-from typing import Tuple, Dict, Optional, List
-import pytest
-from piranha_playground.rule_inference.template_parser import TemplateParser, WILDCARD
 
+from piranha_playground.rule_inference.template_parser import (WILDCARD,
+                                                               TemplateParser)
 
 
 def test_template_parser_init():

@@ -5,9 +5,8 @@ from unittest.mock import patch
 import pytest
 
 from piranha_playground.main import app
-from piranha_playground.rule_inference.rule_application import (
-    _run_piranha_with_timeout_aux,
-)
+from piranha_playground.rule_inference.rule_application import \
+    _run_piranha_with_timeout_aux
 from piranha_playground.rule_inference.utils.rule_utils import *
 
 
