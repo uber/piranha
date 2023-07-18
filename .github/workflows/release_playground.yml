@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: piranha/experimental
+        working-directory: ./experimental
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
