@@ -164,13 +164,15 @@ class QueryWriter:
             node_type = node.type
             s_exp = indent + f"{prefix}({node_type} "
             next_child = cursor.goto_first_child()
+            visited = 0
             while next_child:
                 if cursor.node.is_named:
+                    visited += 1
                     s_exp += self.strategy.process_child(cursor, depth)
                 next_child = cursor.goto_next_sibling()
 
             # if the node is an identifier, add it to eq constraints
-            if node.child_count == 0:
+            if visited == 0:
                 self.query_ctrs.append(
                     f"(#eq? {node_name} \"{node.text.decode('utf8')}\")"
                 )
