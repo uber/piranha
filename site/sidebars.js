@@ -17,7 +17,6 @@ const sidebars = {
             ],
         },
         'reference/rules',
-        'reference/edges',
         'reference/api',
         'reference/cli',
         {
