@@ -9,7 +9,8 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Dict
+from abc import ABC, abstractmethod
+from typing import Dict, List
 
 import attr
 from comby import Comby
@@ -18,7 +19,71 @@ from tree_sitter import Node, TreeCursor
 from piranha_playground.rule_inference.utils.node_utils import NodeUtils
 from piranha_playground.rule_inference.utils.rule_utils import RawRule
 
-from piranha_playground.rule_inference.template_parser import WILDCARD
+
+@attr.s
+class ChildProcessingStrategy(ABC):
+    """
+    Abstract Base Class to define a strategy to process a named child node.
+    """
+
+    query_writer = attr.ib(type="QueryWriter")
+
+    @abstractmethod
+    def process_child(self, cursor: TreeCursor, depth: int) -> str:
+        """This method decides a child of a node should be handled when writing a query.
+        Either expand the query for the child, simply capture it without expanding, etc.
+        :param cursor: The cursor pointing to the child node.
+        :param depth: The depth of the child node in the tree.
+        """
+        pass
+
+
+@attr.s
+class SimplifyStrategy(ChildProcessingStrategy):
+    """
+    Strategy to simplify the processing of a named child node.
+    """
+
+    def process_child(self, cursor: TreeCursor, depth: int) -> str:
+        """Simply capture the child node without expanding it."""
+        s_exp = "\n"
+        child_node: Node = cursor.node
+
+        node_rep = child_node.text.decode("utf8")
+        if node_rep in self.query_writer.template_holes:
+            node_types = self.query_writer.template_holes[node_rep]
+            alternations = " ".join([f"({node_type})" for node_type in node_types])
+            s_exp += (
+                " " * (depth + 1) + f"[{alternations}] @tag{self.query_writer.count}n"
+            )
+        else:
+            child_type = child_node.type
+            s_exp += (
+                " " * (depth + 1) + f"({child_type}) @tag{self.query_writer.count}n"
+            )
+
+            if child_node.child_count == 0:
+                self.query_writer.query_ctrs.append(
+                    f"(#eq? @tag{self.query_writer.count}n \"{child_node.text.decode('utf8')}\")"
+                )
+        self.query_writer.count += 1
+        return s_exp
+
+
+@attr.s
+class RegularStrategy(ChildProcessingStrategy):
+    """
+    Strategy for the regular processing of a named child node.
+    """
+
+    def process_child(self, cursor: TreeCursor, depth: int) -> str:
+        """Write the query as if the child node was the root of the tree."""
+        prefix = (
+            f"{cursor.current_field_name()}: " if cursor.current_field_name() else ""
+        )
+        return "\n" + self.query_writer.write_query(
+            cursor.node, depth + 1, prefix, simplify=False
+        )
 
 
 @attr.s
@@ -36,12 +101,14 @@ class QueryWriter:
     """
 
     seq_nodes = attr.ib(type=list)
-    template_holes = attr.ib(default=attr.Factory(dict))
+    template_holes = attr.ib(type=List)
     capture_groups = attr.ib(default=attr.Factory(dict))
+
     count = attr.ib(default=0)
     query_str = attr.ib(default="")
     query_ctrs = attr.ib(default=attr.Factory(list))
     outer_most_node = attr.ib(default=None)
+    strategy = attr.ib(default=None)
 
     def write(self, simplify=False):
         """
@@ -52,8 +119,9 @@ class QueryWriter:
         :return: The query string
         """
 
-        if self.query_str:
-            return self.query_str
+        self.strategy = SimplifyStrategy(self) if simplify else RegularStrategy(self)
+        self.query_str = ""
+        self.query_ctrs = []
 
         node_queries = [
             self.write_query(node, simplify=simplify) for node in self.seq_nodes
@@ -63,45 +131,6 @@ class QueryWriter:
         self.query_str = f"({self.query_str})"
 
         return self.query_str
-
-    def _process_named_child(self, cursor, depth, simplify):
-        """
-        Helper method to process a named child node.
-
-        :param cursor: Current tree cursor pointing to the node.
-        :param depth: Current depth of the node.
-        :param simplify: If True, simplify the query.
-        :return: String representing part of the query.
-        """
-
-        child_node: Node = cursor.node
-        child_type = child_node.type
-
-        # We check if the text repr of the node is a template hole.
-        # If so we either use a wild card or the provided type)
-        node_rep = child_node.text.decode("utf8")
-        if node_rep in self.template_holes:
-            child_type = self.template_holes[node_rep][
-                0
-            ]  # Not very elegant TODO: fix this
-
-        prefix = (
-            f"{cursor.current_field_name()}: " if cursor.current_field_name() else ""
-        )
-        s_exp = "\n"
-
-        if simplify:
-            s_exp += " " * (depth + 1) + f"({child_type}) @tag{self.count}n"
-            self.count += 1
-
-            if child_node.child_count == 0 and node_rep not in self.template_holes:
-                self.query_ctrs.append(
-                    f"(#eq? @tag{self.count}n \"{child_node.text.decode('utf8')}\")"
-                )
-        else:
-            s_exp += self.write_query(cursor.node, depth + 1, prefix, simplify)
-
-        return s_exp
 
     def write_query(self, node: Node, depth=0, prefix="", simplify=False):
         """
@@ -117,31 +146,39 @@ class QueryWriter:
         indent = " " * depth
         cursor: TreeCursor = node.walk()
 
-        node_type = node.type
-        node_repr = node.text.decode("utf8")
-        if node_repr in self.template_holes:
-            node_type = self.template_holes[node_repr][0]
-            if node_type == WILDCARD:
-                return indent + f"{prefix}({node_type})"
-
-        s_exp = indent + f"{prefix}({node_type} "
-
-        next_child = cursor.goto_first_child()
-        while next_child:
-            if cursor.node.is_named:
-                s_exp += self._process_named_child(cursor, depth, simplify)
-            next_child = cursor.goto_next_sibling()
-
         self.count += 1
+        node_repr = node.text.decode("utf8")
         node_name = f"@tag{self.count}n"
+
+        if node_repr in self.template_holes:
+            # Fixed node
+            node_types = self.template_holes[node_repr]
+            if len(node_types) == 1:
+                s_exp = indent + f"{prefix}({node_types[0]})"
+            else:
+                alternations = " ".join([f"({node_type})" for node_type in node_types])
+                s_exp = indent + f"{prefix}[{alternations}]"
+
+        else:
+            # Regular node
+            node_type = node.type
+            s_exp = indent + f"{prefix}({node_type} "
+            next_child = cursor.goto_first_child()
+            while next_child:
+                if cursor.node.is_named:
+                    s_exp += self.strategy.process_child(cursor, depth)
+                next_child = cursor.goto_next_sibling()
+
+            # if the node is an identifier, add it to eq constraints
+            if node.child_count == 0:
+                self.query_ctrs.append(
+                    f"(#eq? {node_name} \"{node.text.decode('utf8')}\")"
+                )
+            s_exp += f")"
+
         self.capture_groups[node_name] = node
-
-        # if the node is an identifier, add it to eq constraints
-        if node.child_count == 0 and node_repr not in self.template_holes:
-            self.query_ctrs.append(f"(#eq? {node_name} \"{node.text.decode('utf8')}\")")
-
         self.outer_most_node = node_name
-        return s_exp + f") {node_name}"
+        return s_exp + f" {node_name}"
 
     def simplify_query(self, capture_group):
         """

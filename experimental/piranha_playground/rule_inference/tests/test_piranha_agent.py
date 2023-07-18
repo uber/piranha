@@ -17,9 +17,9 @@ from polyglot_piranha import PiranhaArguments, execute_piranha
 from tree_sitter import Language, Node, Parser
 from tree_sitter_languages import get_language, get_parser
 
+from piranha_playground.rule_inference.piranha_agent import PiranhaAgent
 from piranha_playground.rule_inference.static_inference import Inference
 from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
-from piranha_playground.rule_inference.piranha_agent import PiranhaAgent
 
 
 def test_go_inference():
@@ -44,9 +44,37 @@ def test_go_inference():
     agent = PiranhaAgent(source_code, target_code, language)
     res = agent.infer_rules_statically()
     graph = RawRuleGraph.from_toml(toml.loads(res))
+    expected = [
+        "((short_var_declaration",
+        " left: (expression_list ",
+        "  (identifier ) @tag3n) @tag2n",
+        " right: (_) @tag4n) @tag1n",
+        '(#eq? @tag3n "age"))',
+    ]
+    assert len(graph.rules) == 1 and graph.rules[0].query == "\n".join(expected)
+
+
+def test_java_inference():
+    # Source and target code samples
+    language = "java"
+    source_code = """ // 1
+    :[x: identifier, method_invocation].doSomething(:[y]); 
+    """
+    target_code = """ // 1
+    doSomething(:[x: identifier, method_invocation], :[y]); 
+    """
+
+    # Initialize parser and parse the code
+    agent = PiranhaAgent(source_code, target_code, language)
+    res = agent.infer_rules_statically()
+    graph = RawRuleGraph.from_toml(toml.loads(res))
     print(graph.rules[0].query)
-    assert (
-        len(graph.rules) == 1
-        and graph.rules[0].query
-        == """((short_var_declaration\n left: (expression_list \n  (identifier ) @tag1n) @tag2n\n right: (_)) @tag3n\n(#eq? @tag1n "age"))"""
-    )
+    expected = [
+        "((method_invocation",
+        " object: [(identifier) (method_invocation)] @tag2n",
+        " name: (identifier ) @tag3n",
+        " arguments: (argument_list ",
+        "  (_) @tag5n) @tag4n) @tag1n",
+        '(#eq? @tag3n "doSomething"))',
+    ]
+    assert len(graph.rules) == 1 and graph.rules[0].query == "\n".join(expected)
