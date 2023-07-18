@@ -1,4 +1,4 @@
-name: Flask App CI
+name: Playground release
 
 on:
   workflow_dispatch:
