@@ -13,12 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::fmt;
 
-use colored::Colorize;
-use getset::{Getters, MutGetters};
-use log::{debug, trace};
-use serde_derive::{Deserialize, Serialize};
-use tree_sitter::{Node, Range};
-
+use super::matches::Range;
 use super::{
   matches::Match, rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
 };
@@ -27,7 +22,12 @@ use crate::utilities::{
   tree_sitter_utilities::{get_context, get_node_for_range},
   Instantiate,
 };
+use colored::Colorize;
+use getset::{Getters, MutGetters};
+use log::{debug, trace};
 use pyo3::{prelude::pyclass, pymethods};
+use serde_derive::{Deserialize, Serialize};
+use tree_sitter::Node;
 
 #[derive(Serialize, Debug, Clone, Getters, MutGetters, Deserialize)]
 #[pyclass]
@@ -64,14 +64,14 @@ impl Edit {
     edit
   }
   #[cfg(test)]
-  pub(crate) fn delete_range(code: &str, replacement_range: Range) -> Self {
-    use std::collections::HashMap;
+  pub(crate) fn delete_range(code: &str, range: Range) -> Self {
+    let matched_string = code[*range.start_byte()..*range.end_byte()].to_string();
     Self {
-      p_match: Match::new(
-        code[replacement_range.start_byte..replacement_range.end_byte].to_string(),
-        replacement_range,
-        HashMap::new(),
-      ),
+      p_match: Match {
+        matched_string,
+        range,
+        ..Default::default()
+      },
       replacement_string: String::new(),
       matched_rule: "Delete Range".to_string(),
     }
@@ -84,7 +84,7 @@ impl Edit {
 
 impl fmt::Display for Edit {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    let replace_range: Range = self.p_match().range();
+    let replace_range: Range = *self.p_match().range();
     let replacement = self.replacement_string();
     let replaced_code_snippet = self.p_match().matched_string();
     let mut edit_kind = "Delete code".red();

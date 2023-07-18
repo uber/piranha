@@ -212,6 +212,11 @@ class SampleClass {
     func checkTernary() {
         var value = TestEnum.stale_flag_one.isEnabled || v2 ? 2 : 3
         var value2 =  placeholder_false ? 2 : 3
+        var value3 =  placeholder_false ? 2 : nil
+        var value4 =  !placeholder_false 
+                        ?
+                                 nil 
+                                 : 2
     }
 
     func checkIfBooleanWithComments(){

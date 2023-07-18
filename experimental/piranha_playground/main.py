@@ -16,21 +16,14 @@ import sys
 import openai
 from flask import Flask, Response, jsonify, render_template, request, session
 
-from piranha_playground.data_validation import (
-    ImproveData,
-    InferData,
-    RefactorData,
-    RefactorSnippet,
-)
-from piranha_playground.rule_inference.piranha_agent import (
-    PiranhaAgent,
-    PiranhaAgentError,
-)
+from piranha_playground.data_validation import (ImproveData, InferData,
+                                                RefactorData, RefactorSnippet)
+from piranha_playground.rule_inference.piranha_agent import (PiranhaAgent,
+                                                             PiranhaAgentError)
 from piranha_playground.rule_inference.rule_application import (
-    CodebaseRefactorer,
-    CodebaseRefactorerException,
-)
-from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
+    CodebaseRefactorer, CodebaseRefactorerException)
+from piranha_playground.rule_inference.utils.logger_formatter import \
+    CustomFormatter
 
 # Create Flask app
 app = Flask(__name__)
@@ -70,6 +63,7 @@ def process_folder():
         return jsonify({"result": False, "error": str(e)}), 400
 
 
+
 @app.route("/infer_rule_graph", methods=["POST"])
 def infer_static_rule():
     """
@@ -91,6 +85,7 @@ def infer_static_rule():
         return jsonify({"rules": static_rules})
     except (ValueError, PiranhaAgentError) as e:
         return jsonify({"error": str(e)}), 400
+
 
 
 @app.route("/improve_rule_graph", methods=["POST"])

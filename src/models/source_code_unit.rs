@@ -19,7 +19,7 @@ use colored::Colorize;
 use itertools::Itertools;
 use log::{debug, error};
 
-use tree_sitter::{InputEdit, Node, Parser, Range, Tree};
+use tree_sitter::{InputEdit, Node, Parser, Tree};
 
 use crate::{
   models::capture_group_patterns::CGPattern,
@@ -30,7 +30,10 @@ use crate::{
 };
 
 use super::{
-  edit::Edit, matches::Match, piranha_arguments::PiranhaArguments, rule::InstantiatedRule,
+  edit::Edit,
+  matches::{Match, Range},
+  piranha_arguments::PiranhaArguments,
+  rule::InstantiatedRule,
   rule_store::RuleStore,
 };
 use getset::{CopyGetters, Getters, MutGetters, Setters};
@@ -171,7 +174,7 @@ impl SourceCodeUnit {
         //
         self.substitutions.extend(m.matches().clone());
 
-        self.propagate(m.range(), rule.clone(), rule_store, parser);
+        self.propagate(*m.range(), rule.clone(), rule_store, parser);
       }
     }
     query_again
@@ -238,8 +241,8 @@ impl SourceCodeUnit {
       // Process the parent
       // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
       if let Some(edit) = self.get_edit_for_context(
-        current_replace_range.start_byte,
-        current_replace_range.end_byte,
+        *current_replace_range.start_byte(),
+        *current_replace_range.end_byte(),
         rules_store,
         &next_rules_by_scope[PARENT],
       ) {
@@ -282,8 +285,8 @@ impl SourceCodeUnit {
         for rule in rules {
           let scope_query = self.get_scope_query(
             scope_level,
-            current_match_range.start_byte,
-            current_match_range.end_byte,
+            *current_match_range.start_byte(),
+            *current_match_range.end_byte(),
             rules_store,
           );
           // Add Method and Class scoped rules to the queue
@@ -302,8 +305,8 @@ impl SourceCodeUnit {
       if let Some(p_match) = scope_pattern.get_match(&self.root_node(), self.code(), true) {
         return get_node_for_range(
           self.root_node(),
-          p_match.range().start_byte,
-          p_match.range().end_byte,
+          *p_match.range().start_byte(),
+          *p_match.range().end_byte(),
         );
       }
     }

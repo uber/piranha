@@ -565,6 +565,54 @@ replace_node = "ternary_block"
 replace = "@block_false"
 is_seed_rule = false
 
+
+# A hack to handle the scenario when `nil` is used in the ternary expression
+# TODO: Track https://github.com/alex-pinkus/tree-sitter-swift/issues/303 to remove this hack
+# var v = false ? x : nil
+#
+# After
+# var v = nil
+#
+[[rules]]
+name = "ternary_false_alternative_nil"
+query = """(
+(ternary_expression
+    condition:[(boolean_literal) @false  
+            (tuple_expression 
+                value: (boolean_literal) @false)]
+    ) @ternary_block
+(#eq? @false "false")
+(#match? @ternary_block ":[\\\\n\\\\r\\\\s]*nil\\\\b")
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "nil"
+is_seed_rule = false
+
+
+## A hack to handle the scenario when `nil` is used in the ternary expression
+# TODO: Track https://github.com/alex-pinkus/tree-sitter-swift/issues/303 to remove this hack
+# var v = true ? nil : x
+#
+# After
+# var v = nil
+#
+[[rules]]
+name = "ternary_true_consequent_nil"
+query = """(
+(ternary_expression
+    condition:[(boolean_literal) @true  
+            (tuple_expression 
+                value: (boolean_literal) @true)]
+    ) @ternary_block
+(#eq? @true "true")
+(#match? @ternary_block "\\\\?[\\\\n\\\\r\\\\s]*nil[\\\\n\\\\r\\\\s]*:")
+)"""
+groups = ["if_cleanup"]
+replace_node = "ternary_block"
+replace = "nil"
+is_seed_rule = false
+
 # delete variables declared in a function scope
 [[rules]]
 name = "delete_variable_declaration"

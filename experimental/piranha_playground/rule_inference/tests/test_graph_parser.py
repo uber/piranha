@@ -15,7 +15,7 @@ import pytest
 from tree_sitter import Node, Tree
 from tree_sitter_languages import get_parser
 
-from piranha_playground.rule_inference.graph_parser import TemplateParser
+from piranha_playground.rule_inference.graph_parser import GraphParser
 
 
 def parse_code(language: str, source_code: str, target_code: str) -> Tuple[Tree, Tree]:
@@ -55,7 +55,7 @@ def test_simple_template():
     source_tree, target_tree = parse_code(language, source_code, target_code)
 
     # Initialize GraphParser
-    graph_parser = TemplateParser(source_tree, target_tree)
+    graph_parser = GraphParser(source_tree, target_tree)
 
     # Process trees
     result = graph_parser.parse_templates()
@@ -82,7 +82,7 @@ def test_edge_parsing():
     source_tree, target_tree = parse_code(language, source_code, target_code)
 
     # Initialize GraphParser
-    graph_parser = TemplateParser(source_tree, target_tree)
+    graph_parser = GraphParser(source_tree, target_tree)
 
     # Process trees
     graph_parser.parse_templates()
@@ -144,7 +144,7 @@ def test_complex_template_non_nested():
     source_tree, target_tree = parse_code(language, source_code, target_code)
 
     # Initialize GraphParser
-    graph_parser = TemplateParser(source_tree, target_tree)
+    graph_parser = GraphParser(source_tree, target_tree)
 
     # Process trees
     result = graph_parser.parse_templates()
