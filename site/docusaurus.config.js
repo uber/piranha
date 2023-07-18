@@ -45,14 +45,14 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/uber/piranha/tree/website/site',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/uber/piranha/tree/website/site',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -65,12 +65,12 @@ const config = {
     /** @type {import('@docusaurus/theme-search-algolia').ThemeConfig} */
     ({
       // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      // image: 'img/docusaurus-social-card.jpg',
       navbar: {
         title: 'Piranha',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/logo.svg',
+          alt: 'Piranha',
+          // src: 'img/logo.svg',
         },
         items: [
           {
@@ -128,7 +128,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Piranha. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,
