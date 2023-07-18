@@ -80,12 +80,14 @@ name = "Class"
 enclosing_node = """(
   [
     (class_declaration name:(_) @n) @c
+    (interface_declaration name:(_) @n) @c
     (enum_declaration name:(_) @n) @c
   ]
 )"""
 scope = """(
   [
     ((class_declaration name:(_) @z) @qc)
+    ((interface_declaration name:(_) @z) @qc)
     ((enum_declaration name:(_) @z) @qc)
   ]
 (#eq? @z "@n")
