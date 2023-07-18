@@ -2,9 +2,6 @@ name: Release Piranha Playground
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - release_playground_wf
 jobs:
   build:
     runs-on: ubuntu-latest
