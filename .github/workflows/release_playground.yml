@@ -29,6 +29,6 @@ jobs:
       - name: Build and check package
         run: |
           source .env/bin/activate
-          pip install wheel
+          pip install wheel, twine
           python setup.py sdist bdist_wheel
           twine check dist/*
