@@ -1,3 +1,7 @@
+Version 0.3.12
+-------------
+* Capture interface as "Class" scope in Java
+
 Version 0.3.11
 -------------
 * Refactor to support other matching languages
