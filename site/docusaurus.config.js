@@ -70,7 +70,7 @@ const config = {
         title: 'Piranha',
         logo: {
           alt: 'Piranha',
-          // src: 'img/logo.svg',
+          src: 'img/logo.svg',
         },
         items: [
           {

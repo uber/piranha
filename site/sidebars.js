@@ -6,7 +6,6 @@ const sidebars = {
         'reference/intro',
         'reference/usecases',
         'reference/staleflags',
-
         {
             type: 'category',
             label: 'Getting Started',
@@ -17,6 +16,8 @@ const sidebars = {
                 'reference/getting-started/demos',
             ],
         },
+        'reference/rules',
+        'reference/edges',
         'reference/api',
         'reference/cli',
         {
