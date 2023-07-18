@@ -5,35 +5,35 @@ jobs:
   build_ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Build wheel with Maturin
-        run: |
-          pip install --upgrade maturin
-          maturin build --release -o dist
-          maturin build --sdist -o dist
-      - name: Pypi Release for ubuntu-latest
-        run: |
-          pip install twine
-          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+        maturin build --sdist -o dist
+    - name: Pypi Release for ubuntu-latest
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
   build_ubuntu_18:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Build wheel with Maturin
-        run: |
-          pip install --upgrade maturin
-          maturin build --release -o dist
-          maturin build --sdist -o dist
-      - name: Pypi Release for ubuntu-latest
-        run: |
-          pip install twine
-          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+        maturin build --sdist -o dist
+    - name: Pypi Release for ubuntu-latest
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
   macos_build_x86:
     name: 'macos-x86'
     runs-on: [macos-12]
