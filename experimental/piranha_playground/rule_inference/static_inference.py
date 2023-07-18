@@ -29,7 +29,12 @@ class ChildProcessingStrategy(ABC):
     query_writer = attr.ib(type="QueryWriter")
 
     @abstractmethod
-    def process(self, cursor: TreeCursor, depth: int) -> str:
+    def process_child(self, cursor: TreeCursor, depth: int) -> str:
+        """This method decides a child of a node should be handled when writing a query.
+        Either expand the query for the child, simply capture it without expanding, etc.
+        :param cursor: The cursor pointing to the child node.
+        :param depth: The depth of the child node in the tree.
+        """
         pass
 
 
@@ -39,7 +44,8 @@ class SimplifyStrategy(ChildProcessingStrategy):
     Strategy to simplify the processing of a named child node.
     """
 
-    def process(self, cursor: TreeCursor, depth: int) -> str:
+    def process_child(self, cursor: TreeCursor, depth: int) -> str:
+        """Simply capture the child node without expanding it."""
         s_exp = "\n"
         child_node: Node = cursor.node
 
@@ -70,7 +76,8 @@ class RegularStrategy(ChildProcessingStrategy):
     Strategy for the regular processing of a named child node.
     """
 
-    def process(self, cursor: TreeCursor, depth: int) -> str:
+    def process_child(self, cursor: TreeCursor, depth: int) -> str:
+        """Write the query as if the child node was the root of the tree."""
         prefix = (
             f"{cursor.current_field_name()}: " if cursor.current_field_name() else ""
         )
@@ -159,7 +166,7 @@ class QueryWriter:
             next_child = cursor.goto_first_child()
             while next_child:
                 if cursor.node.is_named:
-                    s_exp += self.strategy.process(cursor, depth)
+                    s_exp += self.strategy.process_child(cursor, depth)
                 next_child = cursor.goto_next_sibling()
 
             # if the node is an identifier, add it to eq constraints

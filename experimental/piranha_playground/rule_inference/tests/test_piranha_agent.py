@@ -58,7 +58,7 @@ def test_java_inference():
     # Source and target code samples
     language = "java"
     source_code = """ // 1
-    :[x].doSomething(:[y]); 
+    :[x: identifier, method_invocation].doSomething(:[y]); 
     """
     target_code = """ // 1
     doSomething(:[x: identifier, method_invocation], :[y]); 
