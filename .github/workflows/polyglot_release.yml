@@ -79,4 +79,4 @@ jobs:
       - name: Pypi Release for macos-latest
         run: |
           pip install twine
-          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN_PLAYGROUND }} dist/*
+          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
