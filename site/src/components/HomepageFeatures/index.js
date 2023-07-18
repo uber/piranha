@@ -5,7 +5,7 @@ import styles from './styles.module.css';
 const FeatureList = [
   {
     title: 'Structural find / replace',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    // Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
           Find and replace code in <b>any declarative matching language</b> (regex, tree-sitter queries).
@@ -15,7 +15,7 @@ const FeatureList = [
   },
   {
     title: 'Chain rewrite rules',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    // Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
           Cascade program transformations by chaining your rewrite rules with our graph language.
@@ -25,11 +25,12 @@ const FeatureList = [
   },
 ];
 
+// <!--<Svg className={styles.featureSvg} role="img" />-->
+
 function Feature({Svg, title, description}) {
   return (
     <div className={clsx('col col--6')}>
       <div className="">
-        <Svg className={styles.featureSvg} role="img" />
       </div>
       <div className="padding-horiz--md">
         <h3>{title}</h3>
