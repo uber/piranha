@@ -232,13 +232,10 @@ impl RuleGraph {
       // If there's any tag in the predicate that is not sigma out, then we might be using an undefined variable
       for tag in tags_in_predicates {
         if !defined_variables.contains(&tag) {
-          println!(
-            "{}",
-            format!(
+          log::warn!(
               "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
               tag,
               rule.name()
-            )
           );
         }
       }
