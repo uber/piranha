@@ -32,7 +32,7 @@ pub fn get_capture_groups_from_matcher(node: &Rule) -> Vec<String> {
   }
 
   match &node.query().pattern_type() {
-    PatternType::TSQ => get_capture_groups_from_tsq(node.query().pattern()),
+    PatternType::Tsq => get_capture_groups_from_tsq(node.query().pattern()),
     PatternType::Regex => get_capture_groups_from_regex(node.query().extract_regex().unwrap()),
     PatternType::Unknown => vec![],
   }
@@ -45,7 +45,7 @@ pub fn get_capture_group_usage_from_matcher(node: &Rule) -> Vec<String> {
   }
 
   match &node.query().pattern_type() {
-    PatternType::TSQ => get_capture_group_usage_from_tsq(node.query().pattern()),
+    PatternType::Tsq => get_capture_group_usage_from_tsq(node.query().pattern()),
     PatternType::Regex => get_capture_group_usage_from_regex(node.query().pattern()),
     PatternType::Unknown => vec![],
   }
@@ -56,11 +56,10 @@ pub fn get_capture_groups_from_regex(re: Regex) -> Vec<String> {
   let mut tags = Vec::new();
 
   // Check all capture names (i.e., named groups) in the pattern
-  for capture_name in re.capture_names() {
-    if let Some(name) = capture_name {
-      let tag = format!("@{}", name);
+  for capture_name in re.capture_names().flatten(){
+      let tag = format!("@{}", capture_name);
       tags.push(tag);
-    }
+
   }
   tags
 }
