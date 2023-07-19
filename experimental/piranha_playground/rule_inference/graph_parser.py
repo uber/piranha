@@ -92,31 +92,32 @@ class GraphParser:
         """
         root = tree.root_node
         stack: Deque = deque([root])
-        comment = None
-        replacement_dict = defaultdict(list)
+        replacement_pairs = []
+        node_start = root
+
         while stack:
             node = stack.pop()
 
             if "comment" in node.type:
-                prev_comment = comment
-                comment = node.text.decode("utf8")
-                if "->" in comment:
-                    x, y = comment.split("->")
-                    self.edges[x[2:].strip()].add(y.strip())
-                    comment = prev_comment
-                elif "end" in comment:
-                    comment = None
+                node_text = node.text.decode("utf8")
+                if "->" in node_text:
+                    x, y = map(str.strip, node_text[2:].split("->"))
+                    self.edges[x].add(y)
+                elif node_text.strip().endswith("end"):
+                    replacement_pairs.append((node_start, node))
                 else:
-                    comment = comment[2:].strip()
+                    node_start = node
 
-            elif comment:
-                replacement_dict[comment].append(node)
             for child in reversed(node.children):
                 stack.append(child)
 
-        for comment, nodes in replacement_dict.items():
-            nodes = NodeUtils.remove_partial_nodes(nodes)
-            nodes = NodeUtils.get_smallest_nonoverlapping_set(nodes)
+        replacement_dict = defaultdict(list)
+        for start, end in replacement_pairs:
+            begin_capture = start.end_byte
+            end_capture = end.start_byte
+
+            nodes = NodeUtils.get_nodes_in_range(root, begin_capture, end_capture)
+            comment = start.text.decode("utf8")[2:].strip()
             replacement_dict[comment] = nodes
 
         return replacement_dict
