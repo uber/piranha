@@ -90,11 +90,7 @@ fn test_graph_2edges() {
   // Call the inner function to check the sigma_in of each rule
   check_sigma_in(&analysis, &rules[0], vec![]);
   check_sigma_in(&analysis, &rules[1], vec!["@class_name"]);
-  check_sigma_in(
-    &analysis,
-    &rules[2],
-    vec!["@class_name", "@type"],
-  );
+  check_sigma_in(&analysis, &rules[2], vec!["@class_name", "@type"]);
 }
 
 #[test]
@@ -235,9 +231,9 @@ fn test_flow_function_rgx_2() {
   let edges = vec![];
 
   let graph = RuleGraphBuilder::default()
-      .rules(vec![rule.clone()])
-      .edges(edges)
-      .build();
+    .rules(vec![rule.clone()])
+    .edges(edges)
+    .build();
 
   let forward = ForwardDefiniteAssignment {
     graph,
@@ -258,7 +254,6 @@ fn test_flow_function_rgx_2() {
   assert_eq!(variables, vec!["@m_def", "@n"]);
 }
 
-
 #[test]
 fn test_flow_function_rgx_0() {
   let rule = piranha_rule! {
@@ -270,9 +265,9 @@ fn test_flow_function_rgx_0() {
   let edges = vec![];
 
   let graph = RuleGraphBuilder::default()
-      .rules(vec![rule.clone()])
-      .edges(edges)
-      .build();
+    .rules(vec![rule.clone()])
+    .edges(edges)
+    .build();
 
   let forward = ForwardDefiniteAssignment {
     graph,

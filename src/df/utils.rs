@@ -21,18 +21,15 @@ use crate::execute_piranha;
 use crate::models::filter::filter;
 use crate::models::rule::piranha_rule;
 
-use std::string::String;
-use regex::Regex;
 use crate::models::capture_group_patterns::PatternType;
-
+use regex::Regex;
+use std::string::String;
 
 /// Find defined tags in a query
 pub fn get_capture_groups_from_matcher(node: &Rule) -> Vec<String> {
-
   if node.query().pattern().is_empty() {
     return vec![];
   }
-
 
   match &node.query().pattern_type() {
     PatternType::TSQ => get_capture_groups_from_tsq(node.query().pattern()),
@@ -43,7 +40,6 @@ pub fn get_capture_groups_from_matcher(node: &Rule) -> Vec<String> {
 
 /// Find all tags used in predicates
 pub fn get_capture_group_usage_from_matcher(node: &Rule) -> Vec<String> {
-
   if node.query().pattern().is_empty() {
     return vec![];
   }
@@ -54,7 +50,6 @@ pub fn get_capture_group_usage_from_matcher(node: &Rule) -> Vec<String> {
     PatternType::Unknown => vec![],
   }
 }
-
 
 /// Find defined tags in a regex pattern
 pub fn get_capture_groups_from_regex(re: Regex) -> Vec<String> {
@@ -82,11 +77,8 @@ pub fn get_capture_group_usage_from_regex(pattern: String) -> Vec<String> {
   capture_groups
 }
 
-
-
 /// Find defined capture_groups in a query
 pub fn get_capture_groups_from_tsq(pattern: String) -> Vec<String> {
-
   let rules = vec![piranha_rule! {
     name = "capture_groups",
     query = "(capture) @cap",

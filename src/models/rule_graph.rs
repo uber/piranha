@@ -233,9 +233,9 @@ impl RuleGraph {
       for tag in tags_in_predicates {
         if !defined_variables.contains(&tag) {
           log::warn!(
-              "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
-              tag,
-              rule.name()
+            "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
+            tag,
+            rule.name()
           );
         }
       }
