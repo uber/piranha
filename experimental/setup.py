@@ -13,7 +13,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="polyglot-piranha-playground",
-    version="0.1",
+    version="0.0.2",
     description="A playground for Piranha",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -41,5 +41,5 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.9",
 )

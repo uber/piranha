@@ -59,9 +59,11 @@ def test_java_inference():
     language = "java"
     source_code = """ // 1
     :[x: identifier, method_invocation].doSomething(:[y]); 
+    // end
     """
     target_code = """ // 1
     doSomething(:[x: identifier, method_invocation], :[y]); 
+    // end
     """
 
     # Initialize parser and parse the code

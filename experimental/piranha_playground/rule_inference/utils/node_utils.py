@@ -12,7 +12,7 @@
 import re
 from typing import List
 
-from tree_sitter import Node, TreeCursor
+from tree_sitter import Node, TreeCursor, Tree
 
 
 class NodeUtils:
@@ -191,3 +191,15 @@ class NodeUtils:
         )
 
         return ids_to_nodes[max_start_byte_id]
+
+    @staticmethod
+    def get_nodes_in_range(root: Node, start_byte, end_byte):
+        nodes = []
+        for child in root.children:
+            if start_byte <= child.end_byte and end_byte >= child.start_byte:
+                if start_byte <= child.start_byte and end_byte >= child.end_byte:
+                    nodes.append(child)
+                else:
+                    nodes += NodeUtils.get_nodes_in_range(child, start_byte, end_byte)
+
+        return NodeUtils.get_smallest_nonoverlapping_set(nodes)

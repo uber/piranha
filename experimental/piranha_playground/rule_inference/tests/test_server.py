@@ -5,8 +5,9 @@ from unittest.mock import patch
 import pytest
 
 from piranha_playground.main import app
-from piranha_playground.rule_inference.rule_application import \
-    _run_piranha_with_timeout_aux
+from piranha_playground.rule_inference.rule_application import (
+    _run_piranha_with_timeout_aux,
+)
 from piranha_playground.rule_inference.utils.rule_utils import *
 
 
@@ -20,8 +21,8 @@ def client():
 def test_infer_static_rule(client):
     # Test data for the /infer_piranha route
     data = {
-        "source_code": "// 1\nclass A {}",
-        "target_code": "// 1\nclass B {}",
+        "source_code": "// 1\nclass A {}\n//end",
+        "target_code": "// 1\nclass B {}\n//end",
         "language": "java",
     }
 
@@ -30,7 +31,6 @@ def test_infer_static_rule(client):
     assert response.status_code == 200
     graph = RawRuleGraph.from_toml(toml.loads(response.get_json()["rules"]))
     assert len(graph.rules) == 1
-
 
 
 @pytest.mark.skip(reason="This test requires OpenAI API key")
