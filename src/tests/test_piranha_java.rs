@@ -415,3 +415,25 @@ fn test_incorrect_rule() {
 
   let _ = execute_piranha(&piranha_arguments);
 }
+
+/// This test is to check if Piranha is able to handle a syntactically incorrect tree.
+#[test]
+fn test_dyn_rule() {
+
+  let rule = piranha_rule! {
+    name = "match_class",
+    query = "dyn class :[a] { }",
+    replace = ""
+  };
+
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+      .code_snippet(String::from("class A { }"))
+    .language(PiranhaLanguage::from(JAVA))
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .allow_dirty_ast(true)
+    .build();
+
+  let output_summaries = execute_piranha(&piranha_arguments);
+  // assert
+  assert_eq!(output_summaries.len(), 1);
+}

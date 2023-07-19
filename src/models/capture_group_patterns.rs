@@ -11,6 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::concrete_syntax::get_all_matches_for_metasyntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -25,6 +26,8 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
+#[derive(Debug)]
+pub struct MetaSyntax(pub String);
 use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
 
 #[pyclass]
@@ -44,6 +47,11 @@ impl CGPattern {
     let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
     Regex::new(_val)
   }
+
+  pub(crate) fn extract_dyn(&self) -> MetaSyntax {
+    let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
+    MetaSyntax(_val.to_string())
+  }
 }
 
 impl Validator for CGPattern {
@@ -53,6 +61,9 @@ impl Validator for CGPattern {
         .extract_regex()
         .map(|_| Ok(()))
         .unwrap_or(Err(format!("Cannot parse the regex - {}", self.pattern())));
+    }
+    if self.pattern().starts_with("dyn ") {
+      return Ok(());
     }
     let mut parser = get_ts_query_parser();
     parser
@@ -80,6 +91,7 @@ impl Instantiate for CGPattern {
 pub(crate) enum CompiledCGPattern {
   Q(Query),
   R(Regex),
+  M(MetaSyntax),
 }
 
 impl CompiledCGPattern {
@@ -114,6 +126,9 @@ impl CompiledCGPattern {
       ),
       CompiledCGPattern::R(regex) => {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
+      }
+      CompiledCGPattern::M(meta_syntax) => {
+        get_all_matches_for_metasyntax(node, source_code, meta_syntax, recursive, replace_node)
       }
     }
   }

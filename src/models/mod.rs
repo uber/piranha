@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 pub(crate) mod capture_group_patterns;
+pub(crate) mod concrete_syntax;
 pub(crate) mod default_configs;
 pub mod edit;
 pub mod filter;
