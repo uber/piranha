@@ -22,12 +22,70 @@ use crate::models::filter::filter;
 use crate::models::rule::piranha_rule;
 
 use std::string::String;
+use regex::Regex;
+use crate::models::capture_group_patterns::PatternType;
+
 
 /// Find defined tags in a query
-pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
+pub fn get_capture_groups_from_matcher(node: &Rule) -> Vec<String> {
+
   if node.query().pattern().is_empty() {
     return vec![];
   }
+
+
+  match &node.query().pattern_type() {
+    PatternType::TSQ => get_capture_groups_from_tsq(node.query().pattern()),
+    PatternType::Regex => get_capture_groups_from_regex(node.query().extract_regex().unwrap()),
+    PatternType::Unknown => vec![],
+  }
+}
+
+/// Find all tags used in predicates
+pub fn get_capture_group_usage_from_matcher(node: &Rule) -> Vec<String> {
+
+  if node.query().pattern().is_empty() {
+    return vec![];
+  }
+
+  match &node.query().pattern_type() {
+    PatternType::TSQ => get_capture_group_usage_from_tsq(node.query().pattern()),
+    PatternType::Regex => get_capture_group_usage_from_regex(node.query().pattern()),
+    PatternType::Unknown => vec![],
+  }
+}
+
+
+/// Find defined tags in a regex pattern
+pub fn get_capture_groups_from_regex(re: Regex) -> Vec<String> {
+  let mut tags = Vec::new();
+
+  // Check all capture names (i.e., named groups) in the pattern
+  for capture_name in re.capture_names() {
+    if let Some(name) = capture_name {
+      let tag = format!("@{}", name);
+      tags.push(tag);
+    }
+  }
+  tags
+}
+
+/// Find all tags used in a regex pattern
+pub fn get_capture_group_usage_from_regex(pattern: String) -> Vec<String> {
+  let re = Regex::new(r"@\w+").unwrap();
+  let mut capture_groups = Vec::new();
+
+  // Check all matches of @ followed by one or more word characters
+  for mat in re.find_iter(pattern.as_str()) {
+    capture_groups.push(mat.as_str().to_owned());
+  }
+  capture_groups
+}
+
+
+
+/// Find defined capture_groups in a query
+pub fn get_capture_groups_from_tsq(pattern: String) -> Vec<String> {
 
   let rules = vec![piranha_rule! {
     name = "capture_groups",
@@ -44,14 +102,14 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
   let piranha_arguments = PiranhaArgumentsBuilder::default()
     .rule_graph(graph)
     .language(PiranhaLanguage::from(TS_SCHEME))
-    .code_snippet(node.query().pattern())
+    .code_snippet(pattern)
     .should_validate(false)
     .build();
 
   let output_summaries = execute_piranha(&piranha_arguments);
 
   // maps matched strings to a vec of strings
-  let tags = output_summaries
+  let capture_groups = output_summaries
     .get(0)
     .map(|summary| {
       summary
@@ -62,17 +120,13 @@ pub fn get_tags_from_matcher(node: &Rule) -> Vec<String> {
     })
     .unwrap_or_else(Vec::new);
 
-  println!("tags: {:?}", tags);
+  log::debug!("capture_groups: {:?}", capture_groups);
 
-  tags
+  capture_groups
 }
 
-/// Find all tags used in predicates
-pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
-  if node.query().pattern().is_empty() {
-    return vec![];
-  }
-
+/// Find all capture_groups used in predicates
+pub fn get_capture_group_usage_from_tsq(pattern: String) -> Vec<String> {
   let rules = vec![piranha_rule! {
     name = "capture_groups",
     query = "(
@@ -95,7 +149,7 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
   let piranha_arguments = PiranhaArgumentsBuilder::default()
     .rule_graph(graph)
     .language(PiranhaLanguage::from(TS_SCHEME))
-    .code_snippet(node.query().pattern())
+    .code_snippet(pattern)
     .should_validate(false)
     .build();
 
@@ -113,12 +167,12 @@ pub fn get_tags_usage_from_matcher(node: &Rule) -> Vec<String> {
     })
     .unwrap_or_else(Vec::new);
 
-  let mut tags = vec![];
+  let mut capture_groups = vec![];
   for mut candidate_tag in matched_strings {
     candidate_tag = candidate_tag.replace('\"', "");
-    tags.push(candidate_tag);
+    capture_groups.push(candidate_tag);
   }
 
-  println!("tags: {:?}", tags);
-  tags
+  log::debug!("capture_groups: {:?}", capture_groups);
+  capture_groups
 }

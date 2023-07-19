@@ -12,7 +12,7 @@
 */
 
 use crate::df::df::{Direction, Sigma};
-use crate::df::utils::get_tags_from_matcher;
+use crate::df::utils::get_capture_groups_from_matcher;
 
 use crate::models::rule::Rule;
 use crate::models::rule_graph::RuleGraph;
@@ -22,10 +22,10 @@ use std::collections::HashSet;
 use std::string::String;
 
 // This file implements a data flow analysis similar to the "Definite Assignment Analysis" problem
-// in compilers. Instead of tracking variable definitions, it tracks "tags" as they propagate
+// in compilers. Instead of tracking variable definitions, it tracks "capture groups" as they propagate
 // through the graph. The goal of the analysis is to find, for each point in the graph,
-// the set of tags that will always reach that point. The result can then be used to check if the
-// query contains any variable tag that was not defined.
+// the set of capture groups that will always reach that point. The result can then be used to check if the
+// query contains any variable capture group that was not defined.
 
 #[derive(Debug, Clone, Getters, PartialEq, Eq)]
 pub struct DefiniteAssignmentSigma {
@@ -44,8 +44,8 @@ pub struct DefiniteAssignmentSigma {
 impl Sigma for DefiniteAssignmentSigma {
   type Node = Rule;
 
-  // The `merge` function computes the intersection of two sets of reaching tags.
-  // This is a conservative approach that ensures that a tag is considered "reaching"
+  // The `merge` function computes the intersection of two sets of reaching capture groups.
+  // This is a conservative approach that ensures that a capture group is considered "reaching"
   // only if it can reach a point along all paths leading to that point.
   fn join(&self, _other: &Self) -> Self {
     if self.is_bottom {
@@ -103,7 +103,7 @@ impl Direction for ForwardDefiniteAssignment {
     }
   }
 
-  // For each seed rule, the only set of tags defined are those provided as substitutions by
+  // For each seed rule, the only set of capture groups defined are those provided as substitutions by
   // the user
   fn entry_value(&self) -> DefiniteAssignmentSigma {
     DefiniteAssignmentSigma {
@@ -112,13 +112,13 @@ impl Direction for ForwardDefiniteAssignment {
     }
   }
 
-  // The `flow` function takes a rule and the current set of reaching tags
-  // (represented by `DefiniteAssignmentSigma`). It then computes the new set of reaching tags
-  // after the rule is applied. This is done by inserting into the set all the tags
+  // The `flow` function takes a rule and the current set of reaching capture groups
+  // (represented by `DefiniteAssignmentSigma`). It then computes the new set of reaching capture groups
+  // after the rule is applied. This is done by inserting into the set all the capture groups
   // that are defined in the rule.
   fn flow(&self, _node: &Rule, _input: &DefiniteAssignmentSigma) -> DefiniteAssignmentSigma {
     let mut result = _input.clone();
-    let res = get_tags_from_matcher(_node);
+    let res = get_capture_groups_from_matcher(_node);
     // insert res to result.variables
     result.variables.extend(res.iter().cloned());
     result

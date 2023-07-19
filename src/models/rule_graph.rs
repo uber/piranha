@@ -30,7 +30,7 @@ use super::{
   Validator,
 };
 use crate::df::tag_analysis::ForwardDefiniteAssignment;
-use crate::df::utils::get_tags_usage_from_matcher;
+use crate::df::utils::get_capture_group_usage_from_matcher;
 use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -228,7 +228,7 @@ impl RuleGraph {
     // Sigma out represents all the capture groups available to use in the rule's predicates
     for rule in self.rules() {
       let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
-      let tags_in_predicates = get_tags_usage_from_matcher(rule);
+      let tags_in_predicates = get_capture_group_usage_from_matcher(rule);
       // If there's any tag in the predicate that is not sigma out, then we might be using an undefined variable
       for tag in tags_in_predicates {
         if !defined_variables.contains(&tag) {

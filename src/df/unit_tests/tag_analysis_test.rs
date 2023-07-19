@@ -41,31 +41,18 @@ fn test_graph_2edges() {
     },
     piranha_rule! {
       name = "detect_method_bar_in_foo",
-      query = "(
-      (method_declaration
-          name: (identifier) @method_name
-          . (class_declaration
-                name: (_) @detected_class_name
-             )
-      )
-      (#eq? @detected_class_name @class_name)
-      (#eq? @method_name \"bar\")
-    )",
+      query = "rgx (?P<type>void|String)\\s+.*bar\\b",
       holes = ["class_name"]
     },
     piranha_rule! {
-      name = "detect_baz_in_bar",
+      name = "detect_methods_same_type",
       query = "(
-      (call_expression
-          function: (identifier) @function_name
-          . (method_declaration
-                name: (_) @detected_method_name
-             )
+      (method_declaration
+         type: (_) @other_type
       )
-      (#eq? @detected_method_name @method_name)
-      (#eq? @function_name \"baz\")
-    )",
-      holes = ["method_name"]
+      (#eq? @other_type @type)
+      )",
+      holes = ["type"]
     },
   ];
 
@@ -77,7 +64,7 @@ fn test_graph_2edges() {
     },
     edges!(
       from = "detect_method_bar_in_foo",
-      to = ["detect_baz_in_bar"],
+      to = ["detect_methods_same_type"],
       scope = "Class"
     ),
   ];
@@ -106,7 +93,7 @@ fn test_graph_2edges() {
   check_sigma_in(
     &analysis,
     &rules[2],
-    vec!["@class_name", "@method_name", "@detected_class_name"],
+    vec!["@class_name", "@type"],
   );
 }
 
@@ -223,6 +210,69 @@ fn test_flow_function_0() {
     .rules(vec![rule.clone()])
     .edges(edges)
     .build();
+
+  let forward = ForwardDefiniteAssignment {
+    graph,
+    initial_substitutions: HashSet::new(),
+  };
+
+  let sigma = DefiniteAssignmentSigma {
+    variables: HashSet::new(),
+    is_bottom: false,
+  };
+
+  let new_sigma = forward.flow(&rule, &sigma);
+  assert_eq!(new_sigma.variables.len(), 0);
+}
+
+#[test]
+fn test_flow_function_rgx_2() {
+  let rule = piranha_rule! {
+    name = "replace_call_def_fed",
+    query = "rgx (?P<n>abc\\(\\)\\.(?P<m_def>def)\\(\\)\\.ghi\\(\\))"
+  };
+
+  let edges = vec![];
+
+  let graph = RuleGraphBuilder::default()
+      .rules(vec![rule.clone()])
+      .edges(edges)
+      .build();
+
+  let forward = ForwardDefiniteAssignment {
+    graph,
+    initial_substitutions: HashSet::new(),
+  };
+
+  let sigma = DefiniteAssignmentSigma {
+    variables: HashSet::new(),
+    is_bottom: false,
+  };
+
+  let new_sigma = forward.flow(&rule, &sigma);
+  // Convert HashSet to Vec and sort it
+  let mut variables: Vec<_> = new_sigma.variables.into_iter().collect();
+  variables.sort();
+
+  // Assert there are two strings in the set @n and @m_def, check the strings
+  assert_eq!(variables, vec!["@m_def", "@n"]);
+}
+
+
+#[test]
+fn test_flow_function_rgx_0() {
+  let rule = piranha_rule! {
+    name = "replace_call_def_fed",
+    query = "rgx @Something",
+    holes = ["Something"]
+  };
+
+  let edges = vec![];
+
+  let graph = RuleGraphBuilder::default()
+      .rules(vec![rule.clone()])
+      .edges(edges)
+      .build();
 
   let forward = ForwardDefiniteAssignment {
     graph,
