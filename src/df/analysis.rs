@@ -97,7 +97,7 @@ impl<D: Direction> DataflowAnalysis<D> {
     // While there are still nodes to process in the work list
     while let Some(cur_node) = work_list.pop() {
       // Get a node from the work list, and apply the flow function to it.
-      
+
       if let Some(sigma_in) = self.sigma_in.get(&cur_node) {
         let transferred_sigma = self.direction.flow(&cur_node, sigma_in);
         self.sigma_out.insert(cur_node.clone(), transferred_sigma);

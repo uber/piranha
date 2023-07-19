@@ -12,7 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use crate::{
-  df::df::DataflowAnalysis,
+  df::analysis::DataflowAnalysis,
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };

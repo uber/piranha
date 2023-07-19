@@ -11,6 +11,6 @@
  limitations under the License.
 */
 
-pub mod df;
+pub mod analysis;
 pub mod tag_analysis;
 pub mod utils;

@@ -11,7 +11,7 @@
  limitations under the License.
 */
 
-use crate::df::df::{Direction, Sigma};
+use crate::df::analysis::{Direction, Sigma};
 use crate::df::utils::get_capture_groups_from_matcher;
 
 use crate::models::rule::Rule;

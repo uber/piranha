@@ -56,10 +56,9 @@ pub fn get_capture_groups_from_regex(re: Regex) -> Vec<String> {
   let mut tags = Vec::new();
 
   // Check all capture names (i.e., named groups) in the pattern
-  for capture_name in re.capture_names().flatten(){
-      let tag = format!("@{}", capture_name);
-      tags.push(tag);
-
+  for capture_name in re.capture_names().flatten() {
+    let tag = format!("@{}", capture_name);
+    tags.push(tag);
   }
   tags
 }

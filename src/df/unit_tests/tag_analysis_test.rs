@@ -11,8 +11,8 @@
  limitations under the License.
 */
 
-use crate::df::df::DataflowAnalysis;
-use crate::df::df::Direction;
+use crate::df::analysis::DataflowAnalysis;
+use crate::df::analysis::Direction;
 use crate::df::tag_analysis::{DefiniteAssignmentSigma, ForwardDefiniteAssignment};
 
 use crate::models::rule::Rule;
