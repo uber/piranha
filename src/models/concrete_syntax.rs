@@ -4,218 +4,81 @@ use regex::Regex;
 use std::collections::{HashMap, VecDeque};
 use tree_sitter::{Node, Parser, TreeCursor};
 
-#[derive(Builder)]
-pub struct QueryWriter<'a> {
-  node: Node<'a>,
-  code: &'a str,
-  template_holes: Vec<String>,
-  capture_groups: HashMap<String, Node<'a>>,
-  count: i32,
-  query_ctrs: Vec<String>,
-  outer_most_node: Option<String>,
-}
-
-impl<'a> QueryWriter<'a> {
-  pub fn process_child(&mut self, cursor: TreeCursor<'a>, depth: i32) -> String {
-    let prefix = match cursor.field_name() {
-      Some(name) => format!("{}: ", name),
-      None => String::new(),
-    };
-
-    format!("\n{}", self.write_query(cursor.node(), depth + 1, &prefix))
-  }
-
-  pub fn write(&mut self) -> String {
-    return self.write_query(self.node.clone(), 0, "");
-  }
-
-  pub fn write_query(&mut self, node: Node<'a>, depth: i32, prefix: &str) -> String {
-    let indent = " ".repeat(depth as usize);
-
-    self.count += 1;
-    let node_repr = node.utf8_text(self.code.as_bytes()).unwrap().to_string();
-    let node_name = format!("@tag{}n", self.count);
-
-    // Regular node
-    let node_type = node.kind();
-    let mut s_exp = format!("{}{}({} ", indent, prefix, node_type);
-
-    let mut cursor = node.walk();
-    let mut visited = 0;
-    cursor.goto_first_child();
-    while cursor.goto_next_sibling() {
-      if cursor.node().is_named() {
-        visited += 1;
-        s_exp += &self.process_child(cursor.clone(), depth);
-      }
-    }
-
-    // if the node is an identifier, add it to eq constraints
-    if visited == 0 {
-      self.query_ctrs.push(format!(
-        "(#eq? {} \"{}\")",
-        node_name,
-        node.utf8_text(self.code.as_bytes()).unwrap()
-      ));
-    }
-    s_exp += ")";
-
-    self.outer_most_node = Some(node_name.clone());
-
-    let node = node.clone();
-    let node_name = node_name.clone();
-    self.capture_groups.insert(node_name, node);
-    format!("{} {}", s_exp, self.outer_most_node.as_ref().unwrap())
-  }
-}
 
 use crate::models::capture_group_patterns::MetaSyntax;
 use crate::models::language::PiranhaLanguage;
 use crate::models::matches::Match;
 use crate::utilities::tree_sitter_utilities::get_all_matches_for_query;
 
+
 pub(crate) fn get_all_matches_for_metasyntax(
-  node: &Node, source_code: String, meta: &MetaSyntax, recursive: bool,
-  _replace_node: Option<String>,
-) -> Vec<Match> {
-  let mut parser = Parser::new();
-  parser
-    .set_language(node.language())
-    .expect("Could not set the language for the parser.");
-
-  let re = Regex::new(r":\[\s*(?P<var_name>\w+)(?:\s*:\s*(?P<types>.*))?\s*\]").unwrap();
-  let mut replacements = HashMap::new();
-
-  let meta_source = re.replace_all(meta.0.as_str(), |caps: &regex::Captures| {
-    let var_name = &caps["var_name"];
-    let types = match caps.name("types") {
-      Some(m) => m
-        .as_str()
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .collect::<Vec<_>>(),
-      None => Vec::new(),
-    };
-    replacements.insert(var_name.to_string(), types);
-    var_name.to_string()
-  });
-
-  let tree = parser
-    .parse(&meta_source.to_string().as_bytes(), None)
-    .unwrap();
-  let root = tree.root_node().child(0).unwrap();
-
-  let code = meta_source.to_string();
-  let mut query_writer = QueryWriterBuilder::default()
-    .node(root)
-    .code(&code)
-    .template_holes(replacements.keys().map(|s| s.to_string()).collect())
-    .capture_groups(HashMap::new())
-    .count(0)
-    .query_ctrs(Vec::new())
-    .outer_most_node(None)
-    .build()
-    .unwrap();
-
-  let query_str = query_writer.write();
-
-  let lang = PiranhaLanguage::from("java");
-  let query = lang.create_query(query_str);
-
-  get_all_matches_for_query(
-    &root,
-    source_code,
-    &query,
-    recursive,
-    Some(query_writer.outer_most_node.unwrap().as_str()[1..].to_string()),
-    None,
-  )
-}
-
-pub(crate) fn get_all_matches_for_metasyntax2(
   node: &Node, source_code: String, meta: &MetaSyntax, recursive: bool,
   _replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let vec_deque = vec![node.clone()].into_iter().collect::<VecDeque<_>>();
-  get_all_matches_for_metasyntax3(vec_deque, source_code, meta, _replace_node)
+  find_all_matches_for_metasyntax(vec_deque, source_code, meta, _replace_node)
 }
-pub(crate) fn get_all_matches_for_metasyntax3(
+
+
+pub(crate) fn find_all_matches_for_metasyntax(
   mut nodes: VecDeque<Node>, source_code: String, meta: &MetaSyntax, _replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
   let re_var = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
   let syntx = meta.0.trim_start();
 
+  // If there is no node to process, and the template is empty, we succeed
   if nodes.is_empty() {
-    if syntx.is_empty() {
-      return (matches, true);
-    }
-    return (matches, false);
+    return (matches, syntx.is_empty());
   }
 
   let node = nodes.front().unwrap();
   let code = node.utf8_text(source_code.as_bytes()).unwrap();
 
+  // In case the template starts with :[var_name], we try match the left most node
   if let Some(caps) = re_var.captures(syntx) {
-    while let Some(node) = nodes.pop_front() {
-      let var_name = &caps["var_name"];
-      let meta_adv_len = caps[0].len();
-      let meta_adv = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_owned());
+    let var_name = &caps["var_name"];
+    let meta_adv_len = caps[0].len();
+    let meta_adv = MetaSyntax(syntx[meta_adv_len..].trim_start().to_owned());
 
-      let (mut inner_matches, success) =
-        get_all_matches_for_metasyntax3(nodes.clone(), source_code.clone(), &meta_adv, None);
+    let (mut inner_matches, success) = find_all_matches_for_metasyntax(nodes.clone(), source_code.clone(), &meta_adv, None);
 
-      if success {
-        let mut match_map = HashMap::new();
-        match_map.insert(
-          var_name.to_string(),
-          node.utf8_text(source_code.as_bytes()).unwrap().to_string(),
-        );
+    if success {
+      let mut match_map = HashMap::new();
+      match_map.insert(var_name.to_string(), node.utf8_text(source_code.as_bytes()).unwrap().to_string());
 
-        inner_matches.push(Match {
-          matched_string: var_name.to_string(),
-          range: Range::from(node.range()),
-          matches: match_map,
-          associated_comma: None,
-          associated_comments: Vec::new(),
-        });
-        return (inner_matches, true);
-      }
+      inner_matches.push(Match {
+        matched_string: var_name.to_string(),
+        range: Range::from(node.range()),
+        matches: match_map,
+        associated_comma: None,
+        associated_comments: Vec::new(),
+      });
 
-      // Unroll and try again
-      let mut cursor = node.walk();
-      let children: VecDeque<Node> = node.children(&mut cursor).collect();
-      nodes = children.into_iter().chain(nodes.into_iter()).collect();
+      return (inner_matches, true);
     }
+
+    // If not successful, unroll and try again
+    let mut cursor = node.walk();
+    nodes = node.children(&mut cursor).into_iter().chain(nodes.into_iter()).collect();
   } else if syntx.starts_with(code.trim()) {
+
     let advance_by = code.len();
     // create new template after advancement
     nodes.pop_front();
     let meta_substring = MetaSyntax(syntx[advance_by..].to_string().trim_start().to_owned());
-    return get_all_matches_for_metasyntax3(nodes, source_code.clone(), &meta_substring, None);
+    return find_all_matches_for_metasyntax(nodes, source_code.clone(), &meta_substring, None);
   } else {
-    // for each child of metasyntax, recursive call this function
     let mut cursor = node.walk();
-    let mut children = vec![];
-
-    if cursor.goto_first_child() {
-      loop {
-        children.push(cursor.node());
-        if !cursor.goto_next_sibling() {
-          break;
-        }
-      }
-    }
-
-    let mut children_deque: VecDeque<Node> = children.into_iter().collect();
+    let mut children = node.children(&mut cursor).collect();
 
     nodes.pop_front();
     // append children into the beginning of the list
     let mut new_nodes = VecDeque::new();
-    new_nodes.append(&mut children_deque);
+    new_nodes.append(&mut children);
     new_nodes.append(&mut nodes);
 
-    return get_all_matches_for_metasyntax3(new_nodes, source_code.clone(), meta, None);
+    return find_all_matches_for_metasyntax(new_nodes, source_code.clone(), meta, None);
   }
 
   (matches, false)
