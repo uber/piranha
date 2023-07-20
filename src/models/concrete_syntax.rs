@@ -51,10 +51,9 @@ pub(crate) fn get_all_matches_for_metasyntax_aux(
     let meta_adv_len = caps[0].len();
     let meta_adv = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_owned());
 
-    let (mut inner_matches, success) =
-      get_all_matches_for_metasyntax_aux(nodes.clone(), source_code.clone(), &meta_adv, None);
-
-    if success {
+    if let (mut inner_matches, true) =
+      get_all_matches_for_metasyntax_aux(nodes.clone(), source_code.clone(), &meta_adv, None)
+    {
       let mut match_map = HashMap::new();
       match_map.insert(
         var_name.to_string(),
@@ -70,32 +69,21 @@ pub(crate) fn get_all_matches_for_metasyntax_aux(
       });
       return (inner_matches, true);
     }
-
-    // Unroll and try again
-    let mut cursor = node.walk();
-    let mut children = node.children(&mut cursor).collect();
-    let mut new_nodes = VecDeque::new();
-    new_nodes.append(&mut children);
-    new_nodes.append(&mut nodes);
-
-    return get_all_matches_for_metasyntax_aux(new_nodes, source_code.clone(), meta, None);
   } else if syntx.starts_with(code.trim()) {
     let advance_by = code.len();
     // create new template after advancement
     let meta_substring = MetaSyntax(syntx[advance_by..].to_string().trim_start().to_owned());
     return get_all_matches_for_metasyntax_aux(nodes, source_code.clone(), &meta_substring, None);
-  } else {
-    // for each child of metasyntax, recursive call this function
-    let mut cursor = node.walk();
-    let mut children = node.children(&mut cursor).collect();
-
-    // append children into the beginning of the list
-    let mut new_nodes = VecDeque::new();
-    new_nodes.append(&mut children);
-    new_nodes.append(&mut nodes);
-
-    return get_all_matches_for_metasyntax_aux(new_nodes, source_code.clone(), meta, None);
   }
 
-  (matches, false)
+  // Unroll in case we cant match anything
+  let mut cursor = node.walk();
+  let mut children = node.children(&mut cursor).collect();
+
+  // Append children into the beginning of the list
+  let mut new_nodes = VecDeque::new();
+  new_nodes.append(&mut children);
+  new_nodes.append(&mut nodes);
+
+  return get_all_matches_for_metasyntax_aux(new_nodes, source_code.clone(), meta, None);
 }
