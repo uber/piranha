@@ -200,7 +200,8 @@ impl RuleGraph {
     next_rules
   }
 
-  pub fn analyze(&self, substitutions: &HashMap<String, String>) {
+  pub fn analyze(&self, substitutions: &HashMap<String, String>) -> Vec<String> {
+    let mut warnings = Vec::new();
     let holes = substitutions.keys().cloned().collect::<HashSet<String>>();
     let holes = holes
       .iter()
@@ -212,11 +213,8 @@ impl RuleGraph {
     };
     let mut analysis = DataflowAnalysis::new(forward);
 
-    // Get the rules in post order for optimal performance of the analysis
     let mut rules_post_order = self.rules.clone();
     rules_post_order.reverse();
-    // The entry point of the rule graph
-    // get all entry points by collecting all seed rules
     let entry_rules = rules_post_order
       .iter()
       .filter(|x| *x.is_seed_rule())
@@ -224,21 +222,27 @@ impl RuleGraph {
       .collect();
     analysis.run_analysis(rules_post_order, entry_rules);
 
-    // Now validate for each rule, that all the tags used in the predicate are defined in the sigma out
-    // Sigma out represents all the capture groups available to use in the rule's predicates
     for rule in self.rules() {
       let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
       let tags_in_predicates = get_capture_group_usage_from_matcher(rule);
-      // If there's any tag in the predicate that is not sigma out, then we might be using an undefined variable
       for tag in tags_in_predicates {
         if !defined_variables.contains(&tag) {
-          log::warn!(
+          let warning = format!(
             "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
             tag,
             rule.name()
           );
+          warnings.push(warning);
         }
       }
+    }
+    warnings
+  }
+
+  pub fn analyze_and_log_warnings(&self, substitutions: &HashMap<String, String>) {
+    let warnings = self.analyze(substitutions);
+    for warning in warnings {
+      log::warn!("{}", warning);
     }
   }
 }

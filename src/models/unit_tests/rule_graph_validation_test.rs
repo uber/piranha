@@ -134,5 +134,6 @@ fn test_df_warnings() {
     ]).edges(vec![edges! {from = "Test rule", to = ["Other rule"], scope = "Method"}])
     .build();
   let empty_substitution: HashMap<String, String> = HashMap::new();
-  rule_graph.analyze(&empty_substitution);
+  let warnings = rule_graph.analyze(&empty_substitution);
+  assert_eq!(warnings.len(), 1);
 }
