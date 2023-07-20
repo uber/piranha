@@ -54,7 +54,7 @@ tree-sitter-kotlin = { git = "https://github.com/fwcd/tree-sitter-kotlin.git" }
 # TODO: Update after next version is released (https://github.com/tree-sitter/tree-sitter-java/issues/146)
 tree-sitter-java = { git = "https://github.com/tree-sitter/tree-sitter-java.git", rev = "c194ee5e6ede5f26cf4799feead4a8f165dcf14d" }
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
-tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "895cd7814488cb32cf73f68a75458b4bc6d50a85" }
+tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "ddc904f949481a831a35f34e9dc2d62d3967a4ea" }
 tree-sitter-python = "0.20.2"
 tree-sitter-typescript = "0.20.1"
 # TODO: Update after https://github.com/tree-sitter/tree-sitter-go/pull/103 lands
