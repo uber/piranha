@@ -68,8 +68,8 @@ def _run_piranha_with_timeout_aux(
     source_code: str,
     language: str,
     raw_graph: RawRuleGraph,
-    substitutions: dict,
     timeout: int = 0,
+    **kwargs,
 ):
     """
     Private method to run Piranha with a timeout. Executes Piranha with provided arguments.
@@ -88,7 +88,7 @@ def _run_piranha_with_timeout_aux(
             language=language,
             rule_graph=raw_graph.to_graph(),
             dry_run=True,
-            substitutions=substitutions,
+            **kwargs,
         )
         piranha_results = execute_piranha(args)
         # Check if the execution returns results, if yes then return the content of the first result
