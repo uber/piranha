@@ -337,7 +337,9 @@ impl Validator for PiranhaArguments {
       );
     }
     if self.should_validate {
-      self.rule_graph.analyze(&self.input_substitutions());
+      self
+        .rule_graph
+        .analyze_and_panic(&self.input_substitutions());
     }
     Ok(())
   }
