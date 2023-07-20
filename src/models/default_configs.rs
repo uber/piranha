@@ -190,5 +190,5 @@ pub(crate) fn default_allow_dirty_ast() -> bool {
 }
 
 pub(crate) fn default_graph_validation() -> bool {
-  false
+  true
 }
