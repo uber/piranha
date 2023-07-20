@@ -11,7 +11,6 @@
 
 from typing import List, Optional
 
-
 def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:
     """
     Executes piranha for the given `piranha_arguments` and returns `PiranhaOutputSummary` for each file analyzed by Piranha
@@ -38,17 +37,18 @@ class PiranhaArguments:
         exclude: Optional[List[str]] = None,
         substitutions: Optional[dict] = None,
         path_to_configurations: Optional[str] = None,
-        rule_graph: Optional[RuleGraph]= None,
+        rule_graph: Optional[RuleGraph] = None,
         code_snippet: Optional[str] = None,
         dry_run: Optional[bool] = None,
         cleanup_comments: Optional[bool] = None,
         cleanup_comments_buffer: Optional[int] = None,
         number_of_ancestors_in_parent_scope: Optional[int] = None,
         delete_consecutive_new_lines: Optional[bool] = None,
-        global_tag_prefix: Optional[str] = 'GLOBAL_TAG',
+        global_tag_prefix: Optional[str] = "GLOBAL_TAG",
         delete_file_if_empty: Optional[bool] = None,
         path_to_output: Optional[str] = None,
-        allow_dirty_ast: Optional[bool] = None
+        allow_dirty_ast: Optional[bool] = None,
+        should_validate: Optional[bool] = None,
     ):
         """
         Constructs `PiranhaArguments`
@@ -72,7 +72,7 @@ class PiranhaArguments:
                  global_tag_prefix (str): the prefix for global tags
                  delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  path_to_output (str): Path to the output json file
-                 allow_dirty_ast (bool): Allows syntax errors in the input source code 
+                 allow_dirty_ast (bool): Allows syntax errors in the input source code
         """
         ...
 
@@ -159,15 +159,14 @@ class Point:
     column: int
 
 class Filter:
-    """ A class to capture filters of a Piranha Rule
-    """
+    """A class to capture filters of a Piranha Rule"""
+
     enclosing_node: TSQuery
     "AST patterns that some ancestor node of the primary match should comply"
     not_contains: list[TSQuery]
     "AST patterns that SHOULD NOT match any subtree of node matching `enclosing_node` pattern"
     contains: TSQuery
-    "AST pattern that SHOULD match subtrees of `enclosing_node`. " \
-    "Number of matches should be within the range of `at_least` and `at_most`."
+    "AST pattern that SHOULD match subtrees of `enclosing_node`. " "Number of matches should be within the range of `at_least` and `at_most`."
     at_least: int
     "The minimum number of times the contains query should match in the enclosing node"
     at_most: int
@@ -183,9 +182,9 @@ class Filter:
         not_contains: list[str] = [],
         contains: Optional[str] = None,
         at_least: int = 1,
-        at_most: int = 4294967295, # u32::MAX
-        child_count: int = 4294967295, # u32::MAX
-        sibling_count: int = 4294967295 # u32::MAX
+        at_most: int = 4294967295,  # u32::MAX
+        child_count: int = 4294967295,  # u32::MAX
+        sibling_count: int = 4294967295,  # u32::MAX
     ):
         """
         Constructs `Filter`
@@ -200,8 +199,8 @@ class Filter:
         ...
 
 class Rule:
-    """ A class to capture Piranha Rule
-    """
+    """A class to capture Piranha Rule"""
+
     name: str
     "Name of the rule"
     query: TSQuery
@@ -312,6 +311,5 @@ class RuleGraph:
 class TSQuery:
     "Captures a Tree sitter query"
     def query(self):
-        """The query
-        """
+        """The query"""
         ...
