@@ -27,6 +27,12 @@ use tree_sitter::{Node, Query};
 
 use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
 
+pub enum PatternType {
+  Tsq,
+  Regex,
+  Unknown,
+}
+
 #[pyclass]
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Hash, Eq)]
 pub struct CGPattern(pub String);
@@ -43,6 +49,14 @@ impl CGPattern {
   pub(crate) fn extract_regex(&self) -> Result<Regex, regex::Error> {
     let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
     Regex::new(_val)
+  }
+
+  pub(crate) fn pattern_type(&self) -> PatternType {
+    match self.0.as_str() {
+      pattern if pattern.starts_with("rgx") => PatternType::Regex,
+      pattern if pattern.starts_with('(') => PatternType::Tsq,
+      _ => PatternType::Unknown,
+    }
   }
 }
 

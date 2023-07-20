@@ -12,14 +12,16 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use crate::{
+  df::analysis::DataflowAnalysis,
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
   utilities::{gen_py_str_methods, read_toml, MapOfVec},
 };
+
 use colored::Colorize;
 use derive_builder::Builder;
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, collections::HashSet, path::Path};
 
 use super::{
   default_configs::{default_edges, default_rule_graph_map, default_rules},
@@ -27,6 +29,8 @@ use super::{
   rule::{InstantiatedRule, Rules},
   Validator,
 };
+use crate::df::tag_analysis::ForwardDefiniteAssignment;
+use crate::df::utils::get_capture_group_usage_from_matcher;
 use pyo3::prelude::{pyclass, pymethods};
 
 pub(crate) static GLOBAL: &str = "Global";
@@ -115,6 +119,8 @@ impl RuleGraphBuilder {
 
     graph
   }
+
+  // We need access to the initial set of substitutions to validate the rule graph
 }
 
 impl RuleGraph {
@@ -192,6 +198,52 @@ impl RuleGraph {
       next_rules.entry(scope.to_string()).or_default();
     }
     next_rules
+  }
+
+  pub fn analyze(&self, substitutions: &HashMap<String, String>) -> Vec<String> {
+    let mut warnings = Vec::new();
+    let holes = substitutions.keys().cloned().collect::<HashSet<String>>();
+    let holes = holes
+      .iter()
+      .map(|x| format!("@{}", x))
+      .collect::<HashSet<String>>();
+    let forward = ForwardDefiniteAssignment {
+      graph: self.clone(),
+      initial_substitutions: holes,
+    };
+    let mut analysis = DataflowAnalysis::new(forward);
+
+    let mut rules_post_order = self.rules.clone();
+    rules_post_order.reverse();
+    let entry_rules = rules_post_order
+      .iter()
+      .filter(|x| *x.is_seed_rule())
+      .cloned()
+      .collect();
+    analysis.run_analysis(rules_post_order, entry_rules);
+
+    for rule in self.rules() {
+      let defined_variables = analysis.sigma_out().get(rule).unwrap().variables();
+      let tags_in_predicates = get_capture_group_usage_from_matcher(rule);
+      for tag in tags_in_predicates {
+        if !defined_variables.contains(&tag) {
+          let warning = format!(
+            "Tag {} is used in the predicate of rule {} but is not defined in the rule graph",
+            tag,
+            rule.name()
+          );
+          warnings.push(warning);
+        }
+      }
+    }
+    warnings
+  }
+
+  pub fn analyze_and_log_warnings(&self, substitutions: &HashMap<String, String>) {
+    let warnings = self.analyze(substitutions);
+    for warning in warnings {
+      log::warn!("{}", warning);
+    }
   }
 }
 

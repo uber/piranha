@@ -15,8 +15,8 @@ use super::{
   default_configs::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
     default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
-    default_dry_run, default_exclude, default_global_tag_prefix, default_include,
-    default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
+    default_dry_run, default_exclude, default_global_tag_prefix, default_graph_validation,
+    default_include, default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
     default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
     default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
@@ -38,6 +38,7 @@ use pyo3::{
 };
 use regex::Regex;
 
+use crate::models::Validator;
 use std::collections::HashMap;
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
@@ -146,6 +147,12 @@ pub struct PiranhaArguments {
   #[builder(default = "default_allow_dirty_ast()")]
   #[clap(long, default_value_t = default_allow_dirty_ast())]
   allow_dirty_ast: bool,
+
+  /// To validate a graph
+  #[get = "pub"]
+  #[builder(default = "default_graph_validation()")]
+  #[clap(long, default_value_t = default_graph_validation())]
+  should_validate: bool,
 }
 
 impl Default for PiranhaArguments {
@@ -184,7 +191,7 @@ impl PiranhaArguments {
     cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
     delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
     delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
-    allow_dirty_ast: Option<bool>,
+    allow_dirty_ast: Option<bool>, should_validate: Option<bool>,
   ) -> Self {
     let subs = substitutions.map_or(vec![], |s| {
       s.iter()
@@ -230,6 +237,7 @@ impl PiranhaArguments {
       .delete_file_if_empty(delete_file_if_empty.unwrap_or_else(default_delete_file_if_empty))
       .path_to_output_summary(path_to_output_summary)
       .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
+      .should_validate(should_validate.unwrap_or_else(default_graph_validation))
       .build()
   }
 }
@@ -268,7 +276,9 @@ impl PiranhaArgumentsBuilder {
   /// * parse `piranha_arguments.toml` (if it exists)
   /// * merge the two PiranhaArguments
   pub fn build(&self) -> PiranhaArguments {
-    if let Err(e) = &self._validate() {
+    let _arg: PiranhaArguments = self.create().unwrap();
+
+    if let Err(e) = _arg.validate() {
       panic!("{}", e);
     };
 
@@ -279,26 +289,6 @@ impl PiranhaArgumentsBuilder {
     #[rustfmt::skip]
     info!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
     _arg
-  }
-
-  fn _validate(&self) -> Result<bool, String> {
-    let _arg: PiranhaArguments = self.create().unwrap();
-    if _arg.code_snippet().is_empty() && _arg.path_to_codebase().is_empty() {
-      return Err(
-        "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`. 
-      Please specify the `path_to_codebase` or `code_snippet` when creating PiranhaArgument !!!"
-          .to_string(),
-      );
-    }
-
-    if !_arg.code_snippet().is_empty() && !_arg.path_to_codebase().is_empty() {
-      return Err(
-        "Invalid Piranha arguments. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both."
-          .to_string(),
-      );
-    }
-
-    Ok(true)
   }
 }
 
@@ -320,7 +310,7 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   let mut user_defined_rules: RuleGraph = _arg.rule_graph().clone();
   // In the scenario when rules/edges are passed as toml files
   if !_arg.path_to_configurations().is_empty() {
-    user_defined_rules = read_user_config_files(_arg.path_to_configurations())
+    user_defined_rules = read_user_config_files(_arg.path_to_configurations());
   }
 
   if user_defined_rules.graph().is_empty() {
@@ -328,6 +318,29 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   }
 
   built_in_rules.merge(&user_defined_rules)
+}
+
+impl Validator for PiranhaArguments {
+  fn validate(&self) -> Result<(), String> {
+    let _arg: PiranhaArguments = self.clone();
+    if _arg.code_snippet().is_empty() && _arg.path_to_codebase().is_empty() {
+      return Err(
+        "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`.
+      Please specify the `path_to_codebase` or `code_snippet` when creating PiranhaArgument !!!"
+          .to_string(),
+      );
+    }
+    if !_arg.code_snippet().is_empty() && !_arg.path_to_codebase().is_empty() {
+      return Err(
+        "Invalid Piranha arguments. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both."
+            .to_string(),
+      );
+    }
+    if self.should_validate {
+      self.rule_graph.analyze(&self.input_substitutions());
+    }
+    Ok(())
+  }
 }
 
 #[cfg(test)]

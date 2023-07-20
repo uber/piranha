@@ -10,11 +10,12 @@ Copyright (c) 2023 Uber Technologies, Inc.
  express or implied. See the License for the specific language governing permissions and
  limitations under the License.
 */
+use std::collections::HashMap;
 
 use crate::models::{
   capture_group_patterns::CGPattern, filter::FilterBuilder, rule_graph::RuleGraphBuilder,
 };
-use crate::piranha_rule;
+use crate::{edges, piranha_rule};
 
 #[test]
 #[should_panic(
@@ -117,4 +118,22 @@ fn test_filter_bad_arg_contains_n_sibling() {
     .enclosing_node(CGPattern::new("(method_declaration) @i".to_string()))
     .sibling_count(2)
     .build();
+}
+
+#[test]
+fn test_df_warnings() {
+  let rule_graph = RuleGraphBuilder::default()
+    .rules(vec![
+      piranha_rule! {name = "Test rule", query = "(local_variable_declaration
+                                                      (variable_declarator name: (_) @name ) @i)"},
+      piranha_rule! {name = "Other rule", query = "((local_variable_declaration
+                                                      type: (_) @other_type
+                                                      (variable_declarator name: (_) @other_name ) @other_i)
+                                                  (#eq? @other_type @type)
+                                                  (#neq? @other_name @name))", is_seed_rule = false},
+    ]).edges(vec![edges! {from = "Test rule", to = ["Other rule"], scope = "Method"}])
+    .build();
+  let empty_substitution: HashMap<String, String> = HashMap::new();
+  let warnings = rule_graph.analyze(&empty_substitution);
+  assert_eq!(warnings.len(), 1);
 }
