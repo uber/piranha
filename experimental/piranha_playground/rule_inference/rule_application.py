@@ -11,16 +11,19 @@
 
 import logging
 import multiprocessing
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import attr
 import toml
-from polyglot_piranha import (PiranhaArguments, PiranhaOutputSummary, Rule,
-                              RuleGraph, execute_piranha)
-
-from piranha_playground.rule_inference.utils.logger_formatter import \
-    CustomFormatter
+from piranha_playground.rule_inference.utils.logger_formatter import CustomFormatter
 from piranha_playground.rule_inference.utils.rule_utils import RawRuleGraph
+from polyglot_piranha import (
+    PiranhaArguments,
+    PiranhaOutputSummary,
+    Rule,
+    RuleGraph,
+    execute_piranha,
+)
 
 logger = logging.getLogger("CodebaseRefactorer")
 logger.setLevel(logging.DEBUG)
@@ -48,8 +51,25 @@ def enable_piranha_logs():
     logging.getLogger().setLevel(logging.DEBUG)
 
 
+def flatten_dict_list(d: Dict):
+    for k, v in d.items():
+        if isinstance(v, list) and len(v) == 1:
+            d[k] = v[0]
+        elif isinstance(v, dict):
+            flatten_dict_list(v)
+        elif isinstance(v, list):
+            for item in v:
+                if isinstance(item, dict):
+                    flatten_dict_list(item)
+    return d
+
+
 def _run_piranha_with_timeout_aux(
-    source_code: str, language: str, raw_graph: RawRuleGraph, substitutions: dict, timeout: int = 0
+    source_code: str,
+    language: str,
+    raw_graph: RawRuleGraph,
+    timeout: int = 0,
+    **kwargs,
 ):
     """
     Private method to run Piranha with a timeout. Executes Piranha with provided arguments.
@@ -68,7 +88,7 @@ def _run_piranha_with_timeout_aux(
             language=language,
             rule_graph=raw_graph.to_graph(),
             dry_run=True,
-            substitutions=substitutions,
+            **kwargs,
         )
         piranha_results = execute_piranha(args)
         # Check if the execution returns results, if yes then return the content of the first result
@@ -130,13 +150,14 @@ class CodebaseRefactorer:
         try:
             toml_dict = toml.loads(self.rules)
             rule_graph = RawRuleGraph.from_toml(toml_dict)
+            arguments = toml_dict.get("arguments", [{}])[0]
+            arguments = flatten_dict_list(arguments)
             args = PiranhaArguments(
                 language=self.language,
                 path_to_codebase=self.path_to_codebase,
                 rule_graph=rule_graph.to_graph(),
                 dry_run=dry_run,
-                substitutions=toml_dict.get("substitutions", [{}])[0],
-                allow_dirty_ast=True,
+                **arguments,
             )
 
             output_summaries = execute_piranha(args)
@@ -161,13 +182,14 @@ class CodebaseRefactorer:
         """
         try:
             toml_dict = toml.loads(rules)
-            substitutions = toml_dict.get("substitutions", [{}])[0]
+            arguments = toml_dict.get("arguments", [{}])[0]
+            arguments = flatten_dict_list(arguments)
             refactored_code, success = run_piranha_with_timeout(
                 source_code,
                 language,
                 RawRuleGraph.from_toml(toml_dict),
                 timeout=5,
-                substitutions=substitutions,
+                **arguments,
             )
             return refactored_code
         except multiprocessing.context.TimeoutError as e:

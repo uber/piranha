@@ -92,12 +92,16 @@ def test_process_folder(client):
     toml_dict = {
         **toml.loads(rules),
         **toml.loads(edges),
-        "substitutions": [
+        "arguments": [
             {
-                "stale_flag_name": "STALE_FLAG",
-                "treated": "true",
-                "treated_complement": "false",
-                "namespace": "some_long_name",
+                "substitutions": [
+                    {
+                        "stale_flag_name": "STALE_FLAG",
+                        "treated": "true",
+                        "treated_complement": "false",
+                        "namespace": "some_long_name",
+                    }
+                ]
             }
         ],
     }
