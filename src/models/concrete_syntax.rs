@@ -164,13 +164,15 @@ pub(crate) fn get_all_matches_for_metasyntax2(
         associated_comments: Vec::new()
       });
 
-      matches.extend(get_all_matches_for_metasyntax2(node, source_code, &new_meta, recursive, None));
+      // append to matches var_name: node.utf8_text()
+      // advance meta syntax in the parent
     }
   } else if meta.0.trim().starts_with(node.utf8_text(source_code.as_bytes()).unwrap().trim()) {
     // advance meta (i.e., strip off the matched portion) and return
     let node_text = node.utf8_text(source_code.as_bytes()).unwrap();
     let new_meta = MetaSyntax(meta.0.replacen(node_text, "", 1));
-    matches.extend(get_all_matches_for_metasyntax2(node, source_code, &new_meta, recursive, None));
+    // advance meta syntax in the parent
+
   } else {
     // for each child of metasyntax, recursive call this function
     let mut cursor = node.walk();
