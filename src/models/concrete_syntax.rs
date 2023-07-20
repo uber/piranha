@@ -1,8 +1,8 @@
+use crate::models::matches::Range;
 use derive_builder::Builder;
 use regex::Regex;
 use std::collections::{HashMap, VecDeque};
 use tree_sitter::{Node, Parser, TreeCursor};
-use crate::models::matches::Range;
 
 #[derive(Builder)]
 pub struct QueryWriter<'a> {
@@ -132,54 +132,91 @@ pub(crate) fn get_all_matches_for_metasyntax(
   )
 }
 
-
-
 pub(crate) fn get_all_matches_for_metasyntax2(
-  node: &Node,
-  source_code: String,
-  meta: &MetaSyntax,
-  recursive: bool,
+  node: &Node, source_code: String, meta: &MetaSyntax, recursive: bool,
   _replace_node: Option<String>,
-) -> Vec<Match> {
+) -> (Vec<Match>, bool) {
+  let vec_deque = vec![node.clone()].into_iter().collect::<VecDeque<_>>();
+  get_all_matches_for_metasyntax3(vec_deque, source_code, meta, _replace_node)
+}
+pub(crate) fn get_all_matches_for_metasyntax3(
+  mut nodes: VecDeque<Node>, source_code: String, meta: &MetaSyntax, _replace_node: Option<String>,
+) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
-  let re_var = Regex::new(r"^:\s*\[(?P<var_name>\w+)]").unwrap();
-  let syntx = meta.0.as_str();
-  print!("meta: {}", syntx);
-  let code = node.utf8_text(source_code.as_bytes()).unwrap();
-  print!("node: {}", code);
-  if let Some(caps) = re_var.captures(meta.0.as_str()) {
-    let var_name = &caps["var_name"];
-    if var_name == node.utf8_text(source_code.as_bytes()).unwrap() {
-      // advance meta (i.e., strip off the matched portion) and return
-      let new_meta = MetaSyntax(meta.0.replacen(var_name, "", 1));
+  let re_var = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
+  let syntx = meta.0.trim_start();
 
-      // Create a Match and add it to the matches vector
-      let mut match_map = HashMap::new();
-      match_map.insert(var_name.to_string(), node.utf8_text(source_code.as_bytes()).unwrap().to_string());
-      matches.push(Match{
-        matched_string: var_name.to_string(),
-        range: Range::from(node.range()),
-        matches: match_map,
-        associated_comma: None,
-        associated_comments: Vec::new()
-      });
-
-      // append to matches var_name: node.utf8_text()
-      // advance meta syntax in the parent
+  if nodes.is_empty() {
+    if syntx.is_empty() {
+      return (matches, true);
     }
-  } else if meta.0.trim().starts_with(node.utf8_text(source_code.as_bytes()).unwrap().trim()) {
-    // advance meta (i.e., strip off the matched portion) and return
-    let node_text = node.utf8_text(source_code.as_bytes()).unwrap();
-    let new_meta = MetaSyntax(meta.0.replacen(node_text, "", 1));
-    // advance meta syntax in the parent
+    return (matches, false);
+  }
 
+  let node = nodes.front().unwrap();
+  let code = node.utf8_text(source_code.as_bytes()).unwrap();
+
+  if let Some(caps) = re_var.captures(syntx) {
+    while let Some(node) = nodes.pop_front() {
+      let var_name = &caps["var_name"];
+      let meta_adv_len = caps[0].len();
+      let meta_adv = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_owned());
+
+      let (mut inner_matches, success) =
+        get_all_matches_for_metasyntax3(nodes.clone(), source_code.clone(), &meta_adv, None);
+
+      if success {
+        let mut match_map = HashMap::new();
+        match_map.insert(
+          var_name.to_string(),
+          node.utf8_text(source_code.as_bytes()).unwrap().to_string(),
+        );
+
+        inner_matches.push(Match {
+          matched_string: var_name.to_string(),
+          range: Range::from(node.range()),
+          matches: match_map,
+          associated_comma: None,
+          associated_comments: Vec::new(),
+        });
+        return (inner_matches, true);
+      }
+
+      // Unroll and try again
+      let mut cursor = node.walk();
+      let children: VecDeque<Node> = node.children(&mut cursor).collect();
+      nodes = children.into_iter().chain(nodes.into_iter()).collect();
+    }
+  } else if syntx.starts_with(code.trim()) {
+    let advance_by = code.len();
+    // create new template after advancement
+    nodes.pop_front();
+    let meta_substring = MetaSyntax(syntx[advance_by..].to_string().trim_start().to_owned());
+    return get_all_matches_for_metasyntax3(nodes, source_code.clone(), &meta_substring, None);
   } else {
     // for each child of metasyntax, recursive call this function
     let mut cursor = node.walk();
-    let children = node.children(&mut cursor);
-    for child in children {
-      matches.extend(get_all_matches_for_metasyntax2(&child, source_code.clone(), meta, recursive, None));
+    let mut children = vec![];
+
+    if cursor.goto_first_child() {
+      loop {
+        children.push(cursor.node());
+        if !cursor.goto_next_sibling() {
+          break;
+        }
+      }
     }
+
+    let mut children_deque: VecDeque<Node> = children.into_iter().collect();
+
+    nodes.pop_front();
+    // append children into the beginning of the list
+    let mut new_nodes = VecDeque::new();
+    new_nodes.append(&mut children_deque);
+    new_nodes.append(&mut nodes);
+
+    return get_all_matches_for_metasyntax3(new_nodes, source_code.clone(), meta, None);
   }
-  matches
+
+  (matches, false)
 }
