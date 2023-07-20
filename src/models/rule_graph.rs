@@ -248,7 +248,7 @@ impl RuleGraph {
 
   pub fn analyze_and_panic(&self, substitutions: &HashMap<String, String>) {
     let warnings = self.analyze(substitutions);
-    panic!(warnings.join("\n"));
+    panic!("{}", warnings.join("\n"));
   }
 }
 
