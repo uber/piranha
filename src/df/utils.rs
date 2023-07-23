@@ -157,11 +157,12 @@ pub fn get_capture_group_usage_from_tsq(pattern: String) -> Vec<String> {
     })
     .unwrap_or_else(Vec::new);
 
-  let mut capture_groups = vec![];
-  for mut candidate_tag in matched_strings {
-    candidate_tag = candidate_tag.replace('\"', "");
-    capture_groups.push(candidate_tag);
-  }
+  let re = Regex::new(r"@[\w_]+").unwrap();
+  let capture_groups: Vec<String> = matched_strings
+    .iter()
+    .flat_map(|candidate_tag| re.find_iter(candidate_tag))
+    .map(|mat| mat.as_str().to_owned())
+    .collect();
 
   log::debug!("capture_groups: {:?}", capture_groups);
   capture_groups
