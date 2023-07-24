@@ -1,3 +1,7 @@
+Version 0.3.14
+-------------
+* Bug-fix in graph validation
+
 Version 0.3.13
 -------------
 * Introduce graph validation 
