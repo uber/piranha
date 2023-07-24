@@ -137,3 +137,18 @@ fn test_df_warnings() {
   let warnings = rule_graph.analyze(&empty_substitution);
   assert_eq!(warnings.len(), 1);
 }
+
+#[test]
+fn test_quoted_predicates() {
+  let rule_graph = RuleGraphBuilder::default()
+    .rules(vec![piranha_rule! {name = "Test rule", query = "(
+          (local_variable_declaration
+            (variable_declarator name: (_) @name) @i)
+          (#eq? @name \"\"@stale_flag_name\"\"))"}])
+    .edges(vec![])
+    .build();
+  let mut substitutions: HashMap<String, String> = HashMap::new();
+  substitutions.insert("stale_flag_name".to_string(), "some_value".to_string());
+  let warnings = rule_graph.analyze(&substitutions);
+  assert_eq!(warnings.len(), 0);
+}
