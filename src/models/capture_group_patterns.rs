@@ -129,7 +129,7 @@ impl CompiledCGPattern {
       }
       CompiledCGPattern::M(meta_syntax) => {
         let matches =
-          get_all_matches_for_metasyntax(node, source_code, meta_syntax, recursive, replace_node);
+          get_all_matches_for_metasyntax(node, source_code, meta_syntax, recursive, &mut HashMap::new());
         println!("matches {:?}", matches);
         matches.0
       }

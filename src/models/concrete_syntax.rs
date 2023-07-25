@@ -11,6 +11,7 @@
  limitations under the License.
 */
 
+use std::any::Any;
 use crate::models::matches::Range;
 use derive_builder::Builder;
 use regex::Regex;
@@ -23,14 +24,31 @@ use crate::models::matches::Match;
 use crate::utilities::tree_sitter_utilities::get_all_matches_for_query;
 
 pub(crate) fn get_all_matches_for_metasyntax(
-  node: &Node, source_code: String, meta: &MetaSyntax, recursive: bool,
-  _replace_node: Option<String>,
+  node: &Node, source_code: String, meta: &MetaSyntax, recursive: bool, memo: &mut HashMap<(String, String), (Vec<Match>, bool)>
 ) -> (Vec<Match>, bool) {
-  get_all_matches_for_metasyntax_aux(node.walk(), source_code, meta, true,_replace_node)
+
+  let mut matches: Vec<Match> = Vec::new();
+  let mut cursor = node.walk();
+  for child in node.children(&mut cursor) {
+
+    if child.kind() == "method_invocation" { // FIXME
+      if let (mut inner_matches, true) = get_all_matches_for_metasyntax_aux_memo(child.walk(), source_code.clone(), meta, false, memo) {
+        matches.append(&mut inner_matches)
+      }
+    }
+
+    if let (mut inner_matches, true) = get_all_matches_for_metasyntax(&child, source_code.clone(), meta, false, memo) {
+      matches.append(&mut inner_matches)
+    }
+  }
+
+  return (matches.clone(), !matches.is_empty());
 }
 
-pub(crate) fn get_all_matches_for_metasyntax_aux(
-  mut cursor: TreeCursor, source_code: String, meta: &MetaSyntax, recursive: bool, _replace_node: Option<String>,
+
+
+pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
+  mut cursor: TreeCursor, source_code: String, meta: &MetaSyntax, recursive: bool, memo: &mut HashMap<(String, String), (Vec<Match>, bool)>
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
   let re_var = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
@@ -38,13 +56,12 @@ pub(crate) fn get_all_matches_for_metasyntax_aux(
 
 
   if syntx.is_empty() {
-    return (matches, true);
+    return (matches, !cursor.goto_next_sibling() && !cursor.goto_parent());
   }
 
   let node = cursor.node();
   let code = node.utf8_text(source_code.as_bytes()).unwrap();
   let mut success = false;
-  println!("Matching {} with {}", code, syntx);
 
   // In case the template starts with :[var_name], we try match
   if let Some(caps) = re_var.captures(syntx) {
@@ -57,10 +74,14 @@ pub(crate) fn get_all_matches_for_metasyntax_aux(
       let node = cursor.node();
       let node_code = node.utf8_text(source_code.as_bytes()).unwrap();
       while !tmp_cursor.goto_next_sibling() {
-        tmp_cursor.goto_parent();
+        if !tmp_cursor.goto_parent() {
+            break;
+        }
       }
+      println!("Matching {} with {}", node_code, syntx);
+
       if let (mut inner_matches, true) =
-        get_all_matches_for_metasyntax_aux(tmp_cursor.clone(), source_code.clone(), &meta_adv, false, None)
+          get_all_matches_for_metasyntax_aux_memo(tmp_cursor.clone(), source_code.clone(), &meta_adv, false, memo)
       {
         let mut match_map = HashMap::new();
         match_map.insert(
@@ -86,44 +107,28 @@ pub(crate) fn get_all_matches_for_metasyntax_aux(
     return (matches, false);
 
   } else if node.child_count() == 0 {
-     if (syntx.starts_with(code.trim())) {
+    println!("Matching {} with {}", code, syntx);
+    if (syntx.starts_with(code.trim())) {
       let advance_by = code.len();
       let meta_substring = MetaSyntax(syntx[advance_by..].to_string().trim_start().to_owned());
       while (!cursor.goto_next_sibling()) {
         if !cursor.goto_parent() {
-          return (matches, false);
+          break;
         }
       }
-      return get_all_matches_for_metasyntax_aux(
+      return get_all_matches_for_metasyntax_aux_memo(
         cursor,
         source_code.clone(),
         &meta_substring,
         false,
-        None,
+        memo
       );
     }
     return (matches, false)
 
-  } else if ! recursive {
-    cursor.goto_first_child();
-    return get_all_matches_for_metasyntax_aux(cursor.clone(), source_code.clone(), meta, recursive,None);
   } else {
-
-    let mut success = false;
-    if cursor.goto_first_child() {
-      loop {
-        if let (mut inner_matches, true) =
-            get_all_matches_for_metasyntax_aux(cursor.clone(), source_code.clone(), meta, true, None) {
-          matches.append(&mut inner_matches);
-          success = true;
-        }
-
-        if !cursor.goto_next_sibling() {
-          break;
-        }
-      }
-    }
-    return (matches, success);
+    cursor.goto_first_child();
+    return get_all_matches_for_metasyntax_aux_memo(cursor.clone(), source_code.clone(), meta, false, memo);
   }
 
 }
