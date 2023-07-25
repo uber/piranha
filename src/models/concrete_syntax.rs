@@ -67,7 +67,7 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
   if let Some(caps) = re_var.captures(syntx) {
     let var_name = &caps["var_name"];
     let meta_adv_len = caps[0].len();
-    let meta_adv = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_owned());
+    let meta_advanced = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_string());
 
     loop {
       let mut tmp_cursor = cursor.clone();
@@ -80,23 +80,23 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
       }
       println!("Matching {} with {}", node_code, syntx);
 
-      if let (mut inner_matches, true) =
-          get_all_matches_for_metasyntax_aux_memo(tmp_cursor.clone(), source_code.clone(), &meta_adv, false, memo)
+      if let (mut recursive_matches, true) =
+          get_all_matches_for_metasyntax_aux_memo(tmp_cursor.clone(), source_code.clone(), &meta_advanced, false, memo)
       {
         let mut match_map = HashMap::new();
         match_map.insert(
           var_name.to_string(),
-          node.utf8_text(source_code.as_bytes()).unwrap().to_string(),
+          node_code.to_string(),
         );
 
-        inner_matches.push(Match {
+        recursive_matches.push(Match {
           matched_string: var_name.to_string(),
           range: Range::from(node.range()),
           matches: match_map,
           associated_comma: None,
           associated_comments: Vec::new(),
         });
-        return (inner_matches, true);
+        return (recursive_matches, true);
       }
 
       if !cursor.goto_first_child() {
@@ -104,7 +104,7 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
       }
     }
 
-    return (matches, false);
+    return (Vec::new(), false);
 
   } else if node.child_count() == 0 {
     println!("Matching {} with {}", code, syntx);
@@ -124,7 +124,7 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
         memo
       );
     }
-    return (matches, false)
+    return (Vec::new(), false)
 
   } else {
     cursor.goto_first_child();
