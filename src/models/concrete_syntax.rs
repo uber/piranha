@@ -32,7 +32,7 @@ pub(crate) fn get_all_matches_for_metasyntax(
   for child in node.children(&mut cursor) {
 
     if child.kind() == "method_invocation" { // FIXME
-      if let (mut inner_matches, true) = get_all_matches_for_metasyntax_aux_memo(child.walk(), source_code.clone(), meta, false, memo) {
+      if let (mut inner_matches, true) = get_matches_for_node(child.walk(), source_code.clone(), meta, false, memo) {
         matches.append(&mut inner_matches)
       }
     }
@@ -47,7 +47,27 @@ pub(crate) fn get_all_matches_for_metasyntax(
 
 
 
-pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
+
+/// This function performs the actual matching of the metasyntax pattern against a syntax tree
+/// node. The matching is done in the following way:
+///
+/// - If the metasyntax is empty and all the nodes have been visited, then we found a match!
+///
+/// - If the metasyntax starts with `:[variable]`, the function tries to match the variable
+///   against all possible AST nodes starting at the current's cursor position (i.e., the node itself,
+///   its first child, the child of the first child, and so on.
+///   If it succeeds, it advances the metasyntax by the length of the matched
+///   AST node and calls itself recursively to try to match the rest of the metasyntax.
+///
+/// - If the metasyntax doesn't start with `:[variable]`, the function checks if the node is a leaf
+///   (i.e., has no children). If it is, and its text starts with the metasyyntax, we match the text,
+///   and advance to the next immediate node (i.e., it's sibling or it's parent's sibling). If does not
+///   match we cannot match the meta syntax template.
+///
+/// - If the metasyntax doesn't start with `:[variable]` and the node is not a leaf, the function
+///   moves the cursor to the first child of the node and calls itself recursively to try to match
+///   the metasyntax.
+pub(crate) fn get_matches_for_node(
   mut cursor: TreeCursor, source_code: String, meta: &MetaSyntax, recursive: bool, memo: &mut HashMap<(String, String), (Vec<Match>, bool)>
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
@@ -69,6 +89,8 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
     let meta_adv_len = caps[0].len();
     let meta_advanced = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_string());
 
+    // If we need to match a variable `:[var]`, we can match it against the next node or any of it's
+    // first children. We need to try all possibilities.
     loop {
       let mut tmp_cursor = cursor.clone();
       let node = cursor.node();
@@ -81,7 +103,7 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
       println!("Matching {} with {}", node_code, syntx);
 
       if let (mut recursive_matches, true) =
-          get_all_matches_for_metasyntax_aux_memo(tmp_cursor.clone(), source_code.clone(), &meta_advanced, false, memo)
+          get_matches_for_node(tmp_cursor.clone(), source_code.clone(), &meta_advanced, false, memo)
       {
         let mut match_map = HashMap::new();
         match_map.insert(
@@ -116,7 +138,7 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
           break;
         }
       }
-      return get_all_matches_for_metasyntax_aux_memo(
+      return get_matches_for_node(
         cursor,
         source_code.clone(),
         &meta_substring,
@@ -128,7 +150,7 @@ pub(crate) fn get_all_matches_for_metasyntax_aux_memo(
 
   } else {
     cursor.goto_first_child();
-    return get_all_matches_for_metasyntax_aux_memo(cursor.clone(), source_code.clone(), meta, false, memo);
+    return get_matches_for_node(cursor.clone(), source_code.clone(), meta, false, memo);
   }
 
 }
