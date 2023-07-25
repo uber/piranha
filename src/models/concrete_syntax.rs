@@ -26,24 +26,25 @@ pub(crate) fn get_all_matches_for_metasyntax(
   node: &Node, source_code: String, meta: &MetaSyntax, recursive: bool,
   _replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
-  let vec_deque = vec![node.clone()].into_iter().collect::<VecDeque<_>>();
-  get_all_matches_for_metasyntax_aux(vec_deque, source_code, meta, _replace_node)
+  get_all_matches_for_metasyntax_aux(node.walk(), source_code, meta, true,_replace_node)
 }
 
 pub(crate) fn get_all_matches_for_metasyntax_aux(
-  mut nodes: VecDeque<Node>, source_code: String, meta: &MetaSyntax, _replace_node: Option<String>,
+  mut cursor: TreeCursor, source_code: String, meta: &MetaSyntax, recursive: bool, _replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
   let re_var = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
   let syntx = meta.0.trim_start();
 
-  // If there is no node to process, and the template is empty, we succeed
-  if nodes.is_empty() {
-    return (matches, syntx.is_empty());
+
+  if syntx.is_empty() {
+    return (matches, true);
   }
 
-  let node = nodes.pop_front().unwrap();
+  let node = cursor.node();
   let code = node.utf8_text(source_code.as_bytes()).unwrap();
+  let mut success = false;
+  println!("Matching {} with {}", code, syntx);
 
   // In case the template starts with :[var_name], we try match
   if let Some(caps) = re_var.captures(syntx) {
@@ -51,39 +52,78 @@ pub(crate) fn get_all_matches_for_metasyntax_aux(
     let meta_adv_len = caps[0].len();
     let meta_adv = MetaSyntax(syntx[meta_adv_len..].to_string().trim_start().to_owned());
 
-    if let (mut inner_matches, true) =
-      get_all_matches_for_metasyntax_aux(nodes.clone(), source_code.clone(), &meta_adv, None)
-    {
-      let mut match_map = HashMap::new();
-      match_map.insert(
-        var_name.to_string(),
-        node.utf8_text(source_code.as_bytes()).unwrap().to_string(),
-      );
+    loop {
+      let mut tmp_cursor = cursor.clone();
+      let node = cursor.node();
+      let node_code = node.utf8_text(source_code.as_bytes()).unwrap();
+      while !tmp_cursor.goto_next_sibling() {
+        tmp_cursor.goto_parent();
+      }
+      if let (mut inner_matches, true) =
+        get_all_matches_for_metasyntax_aux(tmp_cursor.clone(), source_code.clone(), &meta_adv, false, None)
+      {
+        let mut match_map = HashMap::new();
+        match_map.insert(
+          var_name.to_string(),
+          node.utf8_text(source_code.as_bytes()).unwrap().to_string(),
+        );
 
-      inner_matches.push(Match {
-        matched_string: var_name.to_string(),
-        range: Range::from(node.range()),
-        matches: match_map,
-        associated_comma: None,
-        associated_comments: Vec::new(),
-      });
-      return (inner_matches, true);
+        inner_matches.push(Match {
+          matched_string: var_name.to_string(),
+          range: Range::from(node.range()),
+          matches: match_map,
+          associated_comma: None,
+          associated_comments: Vec::new(),
+        });
+        return (inner_matches, true);
+      }
+
+      if !cursor.goto_first_child() {
+        break;
+      }
     }
-  } else if syntx.starts_with(code.trim()) {
-    let advance_by = code.len();
-    // create new template after advancement
-    let meta_substring = MetaSyntax(syntx[advance_by..].to_string().trim_start().to_owned());
-    return get_all_matches_for_metasyntax_aux(nodes, source_code.clone(), &meta_substring, None);
+
+    return (matches, false);
+
+  } else if node.child_count() == 0 {
+     if (syntx.starts_with(code.trim())) {
+      let advance_by = code.len();
+      let meta_substring = MetaSyntax(syntx[advance_by..].to_string().trim_start().to_owned());
+      while (!cursor.goto_next_sibling()) {
+        if !cursor.goto_parent() {
+          return (matches, false);
+        }
+      }
+      return get_all_matches_for_metasyntax_aux(
+        cursor,
+        source_code.clone(),
+        &meta_substring,
+        false,
+        None,
+      );
+    }
+    return (matches, false)
+
+  } else if ! recursive {
+    cursor.goto_first_child();
+    return get_all_matches_for_metasyntax_aux(cursor.clone(), source_code.clone(), meta, recursive,None);
+  } else {
+
+    let mut success = false;
+    if cursor.goto_first_child() {
+      loop {
+        if let (mut inner_matches, true) =
+            get_all_matches_for_metasyntax_aux(cursor.clone(), source_code.clone(), meta, true, None) {
+          matches.append(&mut inner_matches);
+          success = true;
+        }
+
+        if !cursor.goto_next_sibling() {
+          break;
+        }
+      }
+    }
+    return (matches, success);
   }
 
-  // Unroll in case we cant match anything
-  let mut cursor = node.walk();
-  let mut children = node.children(&mut cursor).collect();
-
-  // Append children into the beginning of the list
-  let mut new_nodes = VecDeque::new();
-  new_nodes.append(&mut children);
-  new_nodes.append(&mut nodes);
-
-  return get_all_matches_for_metasyntax_aux(new_nodes, source_code.clone(), meta, None);
 }

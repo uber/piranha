@@ -421,12 +421,12 @@ fn test_incorrect_rule() {
 fn test_dyn_rule() {
   let rule = piranha_rule! {
     name = "match_class",
-    query = "dyn class :[a] {     public static void main(String[] :[b]) { if(x.isTreated(:[x])) { println(:[y] -> :[p]);  } } }",
+    query = "dyn println(:[template1])",
     replace = ""
   };
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-      .code_snippet(String::from("class A { public static      void main(String[] args) { if(x.isTreated(StaleFlag)) { println(x -> foo()); } } }"))
+      .code_snippet(String::from("class A { public static      void main(String[] args) { if(x.isTreated(StaleFlag)) { println(println(println(println))); println(x -> foo()); println(x->y); } } }"))
     .language(PiranhaLanguage::from(JAVA))
     .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
     .allow_dirty_ast(true)
