@@ -16,8 +16,10 @@ import toml
 from polyglot_piranha import PiranhaOutputSummary
 
 from piranha_playground.rule_inference.rule_application import (
-    CodebaseRefactorer, CodebaseRefactorerException,
-    _run_piranha_with_timeout_aux)
+    CodebaseRefactorer,
+    CodebaseRefactorerException,
+    _run_piranha_with_timeout_aux,
+)
 
 
 # Test for successful execution of Piranha with a timeout
@@ -34,12 +36,16 @@ def test_run_piranha_with_timeout_success():
     toml_dict = {
         **toml.loads(rules),
         **toml.loads(edges),
-        "substitutions": [
+        "arguments": [
             {
-                "stale_flag_name": "STALE_FLAG",
-                "treated": "true",
-                "treated_complement": "false",
-                "namespace": "some_long_name",
+                "substitutions": [
+                    {
+                        "stale_flag_name": "STALE_FLAG",
+                        "treated": "true",
+                        "treated_complement": "false",
+                        "namespace": "some_long_name",
+                    }
+                ]
             }
         ],
     }
@@ -72,6 +78,9 @@ def test_snippet_application():
     '''
     source_code = "class A {}"
 
-    with patch('piranha_playground.rule_inference.rule_application.run_piranha_with_timeout', new=_run_piranha_with_timeout_aux):
+    with patch(
+        "piranha_playground.rule_inference.rule_application.run_piranha_with_timeout",
+        new=_run_piranha_with_timeout_aux,
+    ):
         x = CodebaseRefactorer.refactor_snippet(source_code, language, graph)
         assert x == "class B {}"

@@ -245,6 +245,13 @@ impl RuleGraph {
       log::warn!("{}", warning);
     }
   }
+
+  pub fn analyze_and_panic(&self, substitutions: &HashMap<String, String>) {
+    let warnings = self.analyze(substitutions);
+    if !warnings.is_empty() {
+      panic!("{}", warnings.join("\n"));
+    }
+  }
 }
 
 pub(crate) fn read_user_config_files(path_to_configurations: &String) -> RuleGraph {
