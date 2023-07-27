@@ -79,12 +79,18 @@ is_seed_rule = false
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_not_false"
-query = """dyn !false"""
+query = """
+(
+    (unary_expression
+        operator: "!"
+        operand: (false))
+@unary_expression)
+"""
 replace = "true"
-replace_node = "*"
+replace_node = "unary_expression"
 is_seed_rule = false
 
-# Before : 
+# Before :
 #  !true
 # After :
 #  false
@@ -92,17 +98,23 @@ is_seed_rule = false
 [[rules]]
 groups = ["boolean_expression_simplify"]
 name = "simplify_not_true"
-query = """dyn !true"""
+query = """
+(
+    (unary_expression
+        operator: \"!\"
+        operand: (true))
+@unary_expression)
+"""
 replace = "false"
-replace_node = "*"
+replace_node = "unary_expression"
 is_seed_rule = false
 
-# Before : 
+# Before :
 #  {
 #     someStepsBefore();
 #     {
 #        someSteps();
-#     }   
+#     }
 #     someStepsAfter();
 #  }
 # After :
@@ -135,7 +147,7 @@ replace = "@nested.statements"
 replace_node = "nested.block"
 is_seed_rule = false
 
-# Before : 
+# Before :
 #  true && abc()
 # After :
 #  abc()
@@ -149,7 +161,7 @@ query = """
     (binary_expression
         left: (true)
         operator:"&&"
-        right : (_) @rhs) 
+        right : (_) @rhs)
 ) @binary_expression
 """
 replace = "@rhs"
@@ -257,7 +269,7 @@ replace = "true"
 replace_node = "binary_expression"
 is_seed_rule = false
 
-# Before: 
+# Before:
 #  abc() || false
 # After :
 #  abc()
@@ -277,7 +289,7 @@ replace = "@lhs"
 replace_node = "binary_expression"
 is_seed_rule = false
 
-# Before: 
+# Before:
 #  false || abc()
 # After :
 #  abc()
@@ -298,7 +310,7 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 
-# Before: 
+# Before:
 #  (x) == x
 #  x == (x)
 #  x == x
@@ -325,8 +337,8 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 
-# Before: 
-#  false == true 
+# Before:
+#  false == true
 #  true == false
 # After :
 #  false
@@ -350,8 +362,8 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 
-# Before: 
-#  false != false 
+# Before:
+#  false != false
 #  true != true
 # After :
 #  false
@@ -375,8 +387,8 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 
-# Before: 
-#  false != true 
+# Before:
+#  false != true
 #  true != false
 # After :
 #  true
@@ -405,12 +417,12 @@ is_seed_rule = false
 #    return 10;
 #    somethingMore();
 #    return 100;
-#  } 
+#  }
 # After :
 #  {
 #    something();
 #    return 10;
-#  } 
+#  }
 #
 [[rules]]
 name = "delete_all_statements_after_return"
@@ -491,14 +503,14 @@ enclosing_node = "(enum_declaration) @ed"
 not_contains = ["(enum_constant) @ec"]
 
 
-# This rule deltes all the content of the file if it contains 
-# no type declaration, enum declaration and annotation type declaration. 
+# This rule deltes all the content of the file if it contains
+# no type declaration, enum declaration and annotation type declaration.
 #
-# It optionally captures the @package_name for the deleted file. 
+# It optionally captures the @package_name for the deleted file.
 [[rules]]
 name = "delete_file_with_no_type_declarations"
 query = """(
-(program 
+(program
   (package_declaration (_) @package_name)?) @program)"""
 replace = ""
 replace_node = "program"
@@ -514,26 +526,26 @@ not_contains = [
   "(record_declaration) @c_arecord_declaration",
 ]
 
-# This rule is part (and entry point) for the inline local variable cleanup. Example: 
-# 
+# This rule is part (and entry point) for the inline local variable cleanup. Example:
+#
 # Before :
-# public foo someMethod() { 
-#  boolean isFlag = true; 
+# public foo someMethod() {
+#  boolean isFlag = true;
 #  somethingElse();
 # }
 #
 # After :
-# public foo someMethod() { 
+# public foo someMethod() {
 #  somethingElse();
 # }
 #
-# Before inlining a variable we need to ensure that the variable is not re assigned anywhere within the method body 
+# Before inlining a variable we need to ensure that the variable is not re assigned anywhere within the method body
 # to a value which is not the same as the initializer of variable we are inlining..
-# Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's 
+# Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's
 # initializer is `true`. In such a scenario the variable `isFlag` should not be inlined.
-# 
-# public foo someMethod() { 
-#  boolean isFlag = true; 
+#
+# public foo someMethod() {
+#  boolean isFlag = true;
 #  isFlag = getFlagStatus();
 #  somethingElse();
 # }
@@ -543,8 +555,8 @@ not_contains = [
 name = "delete_variable_declaration"
 query = """
 (
-((local_variable_declaration 
-                declarator: (variable_declarator 
+((local_variable_declaration
+                declarator: (variable_declarator
                                     name: (_) @variable_name
                                     value: [(true) (false)] @init)) @variable_declaration)
 )
@@ -553,7 +565,7 @@ replace = ""
 replace_node = "variable_declaration"
 is_seed_rule = false
 
-# Check if there is no assignment where the variable @variable_name is 
+# Check if there is no assignment where the variable @variable_name is
 # assigned to a value other than @init, within the method body
 # Please note that the tree-sitter queries in the filter uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
@@ -574,8 +586,8 @@ not_contains = ["""
 name = "delete_field_declaration"
 query = """
 (
-((field_declaration 
-                declarator: (variable_declarator 
+((field_declaration
+                declarator: (variable_declarator
                                     name: (_) @variable_name
                                     value: [(true) (false)] @init)) @field_declaration)
 )
@@ -584,7 +596,7 @@ replace = ""
 replace_node = "field_declaration"
 is_seed_rule = false
 
-# Check if there is no assignment where the variable @variable_name is 
+# Check if there is no assignment where the variable @variable_name is
 # assigned to a value other than @init, within the method body
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
@@ -596,8 +608,8 @@ not_contains = ["""(
 (#not-eq? @a.rhs "@init")
 )"""]
 
-# This rule is part of inline variable declaration and field declaration cleanup. 
-# Delete assignment for a particular (@variable_name, @init) if: 
+# This rule is part of inline variable declaration and field declaration cleanup.
+# Delete assignment for a particular (@variable_name, @init) if:
 # (i) If the enclosing method does not contain a variable declaration for @variable_name
 # (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
 [[rules]]
@@ -609,7 +621,7 @@ query = """
                     right: (_) @r)) @expression_statement
 (#eq? @l "@variable_name")
 (#eq? @r "@init")
-) 
+)
 """
 replace = ""
 replace_node = "expression_statement"
@@ -620,15 +632,15 @@ holes = ["variable_name", "init"]
 [[rules.filters]]
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 not_contains = ["""(
-((local_variable_declaration 
-                declarator: (variable_declarator 
+((local_variable_declaration
+                declarator: (variable_declarator
                                     name: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@l")
 )"""]
 
-# This rule is part (and entry point) of the inline variable / field declaration. 
-# delete assignment if 
+# This rule is part (and entry point) of the inline variable / field declaration.
+# delete assignment if
 # (i) if it is the only assignment in the entire class in the enclosing class
 # (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
 # (iii) There is no local variable declaration of the same name in the enclosing method
@@ -639,7 +651,7 @@ query = """
 (expression_statement (assignment_expression
                                 left: (_) @variable_name
                     right: (_) @init)) @expression_statement
-) 
+)
 """
 replace = ""
 replace_node = "expression_statement"
@@ -650,7 +662,7 @@ enclosing_node = "(method_declaration) @md"
 not_contains = [
   """(
 ((local_variable_declaration
-                declarator: (variable_declarator 
+                declarator: (variable_declarator
                                     name: (_) @vdcl.lhs
                                     value: (_)? @vdcl.init)) @variable_declaration)
 (#eq? @vdcl.lhs "@variable_name")
@@ -667,8 +679,8 @@ not_contains = ["""(
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )""", """(
-((field_declaration 
-                declarator: (variable_declarator 
+((field_declaration
+                declarator: (variable_declarator
                                     name: (_) @fdcl.lhs
                                     value: (_) @fdcl.init)) @field_declaration)
 (#eq? @fdcl.lhs "@variable_name")
@@ -676,7 +688,7 @@ not_contains = ["""(
 )"""]
 
 # Replace identifier with value if :
-# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier
 # TODO: Add field filter
 [[rules]]
 name = "replace_identifier_with_value"
@@ -694,15 +706,15 @@ is_seed_rule = false
 # There should exist no local variable declaration named `@identifer`
 enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
 not_contains = ["""(
-((local_variable_declaration 
-                declarator: (variable_declarator 
+((local_variable_declaration
+                declarator: (variable_declarator
                                     name: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@identifier")
 )"""]
 
 # Dummy rule that acts as a junction for all boolean based cleanups
-# Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
+# Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ...
 # A pattern here is - if there is an outgoing edge to B there is another to C.
 # In these cases, you can use a dummy rule X as shown below:
 # X -> B, X - C, A -> X, D -> X, ...
