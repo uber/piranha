@@ -115,6 +115,7 @@ impl CompiledCGPattern {
     &self, node: &Node, source_code: String, recursive: bool, replace_node: Option<String>,
     replace_node_idx: Option<u8>,
   ) -> Vec<Match> {
+    let code_str = source_code.as_bytes();
     match self {
       CompiledCGPattern::Q(query) => get_all_matches_for_query(
         node,
@@ -128,9 +129,12 @@ impl CompiledCGPattern {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
       CompiledCGPattern::M(meta_syntax) => {
-        let matches =
-          get_all_matches_for_metasyntax(node, source_code, meta_syntax, recursive, &mut HashMap::new());
-        println!("matches {:?}", matches);
+        let matches = get_all_matches_for_metasyntax(
+          node,
+          code_str,
+          meta_syntax,
+          recursive
+        );
         matches.0
       }
     }

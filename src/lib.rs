@@ -17,6 +17,9 @@ use models::{
   rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
 
+#[macro_use]
+extern crate lazy_static;
+
 pub mod models;
 #[cfg(test)]
 mod tests;
