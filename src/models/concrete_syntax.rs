@@ -15,41 +15,41 @@ use crate::models::matches::Range;
 use derive_builder::Builder;
 use regex::Regex;
 use std::any::Any;
-use std::collections::{HashMap, VecDeque};
-use tree_sitter::{Node, Parser, TreeCursor};
+use std::collections::HashMap;
+use tree_sitter::{Node, TreeCursor};
 
 use crate::models::capture_group_patterns::MetaSyntax;
-use crate::models::language::PiranhaLanguage;
 use crate::models::matches::Match;
-use crate::utilities::tree_sitter_utilities::get_all_matches_for_query;
 
 // Precompile the regex outside the function
 lazy_static! {
-    static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
+  static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
 }
 
-
 pub(crate) fn get_all_matches_for_metasyntax(
-  node: &Node, code_str: &[u8], meta: &MetaSyntax, recursive: bool
+  node: &Node, code_str: &[u8], meta: &MetaSyntax, recursive: bool,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
   if let (mut match_map, true) = get_matches_for_node(&mut node.walk(), code_str, meta) {
-      match_map.insert("*".to_string(), node.utf8_text(code_str).unwrap().to_string());
-      matches.push(Match {
-        matched_string: "*".to_string(),
-        range: Range::from(node.range()),
-        matches: match_map,
-        associated_comma: None,
-        associated_comments: Vec::new(),
-      });
-    }
+    match_map.insert(
+      "*".to_string(),
+      node.utf8_text(code_str).unwrap().to_string(),
+    );
+    matches.push(Match {
+      matched_string: "*".to_string(),
+      range: Range::from(node.range()),
+      matches: match_map,
+      associated_comma: None,
+      associated_comments: Vec::new(),
+    });
+  }
 
   if recursive {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
       if let (mut inner_matches, true) =
-          get_all_matches_for_metasyntax(&child, code_str, meta, recursive)
+        get_all_matches_for_metasyntax(&child, code_str, meta, recursive)
       {
         matches.append(&mut inner_matches);
       }
@@ -57,7 +57,7 @@ pub(crate) fn get_all_matches_for_metasyntax(
   }
 
   let is_empty = matches.is_empty();
-  return (matches, !is_empty);
+  (matches, !is_empty);
 }
 
 fn find_next_sibling(cursor: &mut TreeCursor) {
@@ -104,7 +104,12 @@ pub(crate) fn get_matches_for_node(
   if let Some(caps) = RE_VAR.captures(match_template) {
     let var_name = &caps["var_name"];
     let meta_adv_len = caps[0].len();
-    let meta_advanced = MetaSyntax(match_template[meta_adv_len..].to_string().trim_start().to_string());
+    let meta_advanced = MetaSyntax(
+      match_template[meta_adv_len..]
+        .to_string()
+        .trim_start()
+        .to_string(),
+    );
 
     // If we need to match a variable `:[var]`, we can match it against the next node or any of it's
     // first children. We need to try all possibilities.
@@ -115,7 +120,7 @@ pub(crate) fn get_matches_for_node(
       find_next_sibling(&mut tmp_cursor);
 
       if let (mut recursive_matches, true) =
-          get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
+        get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
       {
         recursive_matches.insert(var_name.to_string(), node_code.to_string());
         return (recursive_matches, true);
@@ -129,7 +134,12 @@ pub(crate) fn get_matches_for_node(
     let code = node.utf8_text(source_code).unwrap();
     if match_template.starts_with(code.trim()) {
       let advance_by = code.len();
-      let meta_substring = MetaSyntax(match_template[advance_by..].to_string().trim_start().to_owned());
+      let meta_substring = MetaSyntax(
+        match_template[advance_by..]
+          .to_string()
+          .trim_start()
+          .to_owned(),
+      );
       find_next_sibling(cursor);
       return get_matches_for_node(cursor, source_code, &meta_substring);
     }
@@ -137,5 +147,5 @@ pub(crate) fn get_matches_for_node(
     cursor.goto_first_child();
     return get_matches_for_node(cursor, source_code, meta);
   }
-  return (HashMap::new(), false);
+  (HashMap::new(), false);
 }

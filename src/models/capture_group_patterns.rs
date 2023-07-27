@@ -129,12 +129,7 @@ impl CompiledCGPattern {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
       CompiledCGPattern::M(meta_syntax) => {
-        let matches = get_all_matches_for_metasyntax(
-          node,
-          code_str,
-          meta_syntax,
-          recursive
-        );
+        let matches = get_all_matches_for_metasyntax(node, code_str, meta_syntax, recursive);
         matches.0
       }
     }
