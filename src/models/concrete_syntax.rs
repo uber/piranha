@@ -57,7 +57,7 @@ pub(crate) fn get_all_matches_for_metasyntax(
   }
 
   let is_empty = matches.is_empty();
-  (matches, !is_empty);
+  (matches, !is_empty)
 }
 
 fn find_next_sibling(cursor: &mut TreeCursor) {
@@ -122,6 +122,14 @@ pub(crate) fn get_matches_for_node(
       if let (mut recursive_matches, true) =
         get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
       {
+        // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
+        // FIXME. This implementation might be too conservative. We could have explored other paths.
+        // FIXME. However that would mean the template is ambiguous, which is bad
+        if recursive_matches.contains_key(var_name) {
+          if recursive_matches[var_name].trim() != node_code.trim() {
+            return (recursive_matches, false);
+          }
+        }
         recursive_matches.insert(var_name.to_string(), node_code.to_string());
         return (recursive_matches, true);
       }
@@ -131,8 +139,9 @@ pub(crate) fn get_matches_for_node(
       }
     }
   } else if node.child_count() == 0 {
+    let kind = node.kind();
     let code = node.utf8_text(source_code).unwrap();
-    if match_template.starts_with(code.trim()) {
+    if match_template.starts_with(code.trim()) && !code.is_empty() {
       let advance_by = code.len();
       let meta_substring = MetaSyntax(
         match_template[advance_by..]
@@ -147,5 +156,5 @@ pub(crate) fn get_matches_for_node(
     cursor.goto_first_child();
     return get_matches_for_node(cursor, source_code, meta);
   }
-  (HashMap::new(), false);
+  (HashMap::new(), false)
 }

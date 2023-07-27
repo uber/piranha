@@ -427,7 +427,7 @@ fn test_dyn_rule() {
   };
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-      .code_snippet(String::from("class A { public static      void main(String[] args) { if(println    (  StaleFlag g)) { println(x(println(println(u)))); println(x -> foo()); println(x->y); } } }"))
+      .code_snippet(String::from("class A { public static      void main(String[] args) { if(println    (  StaleFlag )) { println(x(println(println(u)))); println(x -> foo()); println(x->y); } } }"))
     .language(PiranhaLanguage::from(JAVA))
     .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
     .allow_dirty_ast(true)
