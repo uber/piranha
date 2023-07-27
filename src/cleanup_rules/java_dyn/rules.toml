@@ -36,40 +36,38 @@ groups = ["boolean_expression_simplify"]
 #
 [[rules]]
 groups = ["if_cleanup"]
-name = "simplify_if_statement_true"
-query = """
-(
-    (if_statement
-        condition : (condition (true))
-        consequence : ((statement) @consequence))
-@if_statement)
-"""
+name = "simplify_if_statement_true_1"
+query = """dyn if (true) :[consequence]"""
 replace = "@consequence"
 replace_node = "if_statement"
 is_seed_rule = false
 
-# Before : 
-#  if (true) { doSomething(); } else { doSomethingElse();}
-# After :
-#  { doSomethingElse(); } 
-#
-# Before : 
-#  if (true) { doSomething(); }
-# After :
-#  
 [[rules]]
 groups = ["if_cleanup"]
-name = "simplify_if_statement_false"
-query = """
-(
-    (if_statement
-        condition : (condition (false))
-        consequence : ((statement) @consequence)
-        alternative : ((_) @alternative) ?)
-@if_statement)"""
+name = "simplify_if_statement_true_2"
+query = """dyn if (true) :[consequence] else :[alternative]"""
+replace = "@consequence"
+replace_node = "if_statement"
+is_seed_rule = false
+
+
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_false_1"
+query = """dyn if (false) :[consequence] else :[alternative]"""
 replace = "@alternative"
 replace_node = "if_statement"
 is_seed_rule = false
+
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_false_2"
+query = """dyn if (false) :[consequence]"""
+replace = ""
+replace_node = "if_statement"
+is_seed_rule = false
+
+
 
 # Before : 
 #  !false
