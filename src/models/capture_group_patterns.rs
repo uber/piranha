@@ -54,7 +54,7 @@ impl CGPattern {
   pub(crate) fn pattern_type(&self) -> PatternType {
     match self.0.as_str() {
       pattern if pattern.starts_with("rgx") => PatternType::Regex,
-      pattern if pattern.starts_with('(') => PatternType::Tsq,
+      pattern if pattern.trim().starts_with('(') => PatternType::Tsq,
       _ => PatternType::Unknown,
     }
   }
