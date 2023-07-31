@@ -70,7 +70,8 @@ const config = {
         title: 'Piranha',
         logo: {
           alt: 'Piranha',
-          src: 'img/logo.svg',
+          src: 'img/trace.svg',
+          height: 80,
         },
         items: [
           {
