@@ -139,10 +139,12 @@ pub(crate) fn get_matches_for_node(
       }
     }
   } else if node.child_count() == 0 {
-    let kind = node.kind();
-    let code = node.utf8_text(source_code).unwrap();
-    if match_template.starts_with(code.trim()) && !code.is_empty() {
+    let code = node.utf8_text(source_code).unwrap().trim();
+    if match_template.starts_with(code) && !code.is_empty() {
       let advance_by = code.len();
+      if advance_by > match_template.len() {
+        return (HashMap::new(), false);
+      }
       let meta_substring = MetaSyntax(
         match_template[advance_by..]
           .to_string()
