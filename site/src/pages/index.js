@@ -23,7 +23,7 @@ function HomepageHeader() {
                 <div className={styles.buttons} style={{justifyContent: "flex-start"}}>
                     <Link
                         className="button button--secondary button--lg"
-                        to="/docs/intro">
+                        to="/docs/reference/getting-started/install">
                         Getting Started
                     </Link>
                 </div>
