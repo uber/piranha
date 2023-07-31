@@ -143,6 +143,10 @@ pub(crate) fn get_matches_for_node(
     let code = node.utf8_text(source_code).unwrap();
     if match_template.starts_with(code.trim()) && !code.is_empty() {
       let advance_by = code.len();
+      // Can only advance if there is still enough chars to consume
+      if advance_by > match_template.len() {
+        return (HashMap::new(), false);
+      }
       let meta_substring = MetaSyntax(
         match_template[advance_by..]
           .to_string()
