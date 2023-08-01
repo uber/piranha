@@ -161,3 +161,7 @@ pub(crate) fn get_matches_for_node(
   }
   (HashMap::new(), false)
 }
+
+#[cfg(test)]
+#[path = "unit_tests/concrete_syntax_test.rs"]
+mod concrete_syntax_test;
