@@ -49,6 +49,7 @@ class PiranhaArguments:
         path_to_output: Optional[str] = None,
         allow_dirty_ast: Optional[bool] = None,
         should_validate: Optional[bool] = None,
+        experiment_dyn: Optional[bool] = None,
     ):
         """
         Constructs `PiranhaArguments`

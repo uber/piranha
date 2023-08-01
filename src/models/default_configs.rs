@@ -21,6 +21,7 @@ use super::{
 };
 
 pub const JAVA: &str = "java";
+pub const JAVA_DYN: &str = "java_dyn";
 pub const KOTLIN: &str = "kt";
 pub const GO: &str = "go";
 pub const PYTHON: &str = "py";
@@ -191,4 +192,8 @@ pub(crate) fn default_allow_dirty_ast() -> bool {
 
 pub(crate) fn default_graph_validation() -> bool {
   true
+}
+
+pub(crate) fn default_experiment_dyn() -> bool {
+  false
 }

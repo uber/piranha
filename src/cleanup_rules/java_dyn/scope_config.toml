@@ -1,0 +1,104 @@
+# Copyright (c) 2023 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This files spcifies the scope generators for `Java`. 
+# In `edges.toml`, we specify how the rules should be chained by constructing an edge labelled graph with rules as nodes. 
+# These edges are labelled as - Parent, Global, Method and Class. These edges determine "scope" where the next rule will be applied with respect
+# to the previously applied rule. 
+# Unlike Parent and Global scopes, capturing Method and Class scopes for Java is unique to Java's syntax. 
+# Each language has a syntax to define methods, classes, functions, therefore capturing such scopees is language dependent. 
+# This file allows users to define these language dependent scopes. 
+# Each scope consists of a scope name and a list of scope rules. 
+# Each scope rule consists of a `enclosing_node` and a `scope`.
+
+# When Piranha encounters a "Method" or "Class" scope, it looks up these configurations to obtain the list of scope rules. 
+# It then applies each `scope.rules.matcher` to the ancestors of changed node in the previous edit.
+# Upon finding the match (it short-circuits), Piranha substitutes the tags in `scope.rulesscope` based on the tag matches obtained from
+# matching `scope.rules.matcher` to create a context specific rule for the changed node.
+
+[[scopes]]
+name = "Method"
+[[scopes.rules]]
+# Example : 
+#
+# pub void foo(int a, int b, int c, int d, int e){
+#   // Let's assume that some rule was previously applied within this method body.
+# }  
+#
+# To capture the signature of the enclosing method, Piranha will match the below rule against the method.
+# This will result in matches - { n: "foo", fp: "int a, int b, int c, int d, int e"} 
+# Substituting these matches in the `scopes.rulesscope` will result in :
+#
+#(((method_declaration 
+#           name : (_) @z
+#           parameters : (formal_parameters)@fp) @xdn)
+
+# (#eq? @z "@foo")
+# (#eq? @tp "int a, int b, int c, int d, int e")
+# )
+#
+enclosing_node = """
+(
+  [(method_declaration 
+            name : (_) @n
+            parameters : (formal_parameters)@fp)
+   (constructor_declaration 
+            name: (_) @n
+            parameters : (formal_parameters)@fp)
+            
+  ]          
+            @xdn)"""
+scope = """
+(
+  [(((method_declaration 
+            name : (_) @z
+            parameters : (formal_parameters)@tp))
+    (#eq? @z "@n")
+    (#eq? @tp "@fp")                  
+    )
+   (((constructor_declaration 
+            name: (_) @z
+            parameters : (formal_parameters)@tp))
+    (#eq? @tp "@fp")
+    (#eq? @z "@n")
+    )
+  ]
+)@qdn"""
+
+# Scope generator for Java Class.
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
+enclosing_node = """(
+  [
+    (class_declaration name:(_) @n) @c
+    (interface_declaration name:(_) @n) @c
+    (enum_declaration name:(_) @n) @c
+  ]
+)"""
+scope = """(
+  [
+    ((class_declaration name:(_) @z) @qc)
+    ((interface_declaration name:(_) @z) @qc)
+    ((enum_declaration name:(_) @z) @qc)
+  ]
+(#eq? @z "@n")
+)
+"""
+
+# Scope generator for java compilation unit
+[[scopes]]
+name = "File"
+[[scopes.rules]]
+enclosing_node = """
+(program) @c_u
+"""
+scope = "(program) @compilation_unit"
