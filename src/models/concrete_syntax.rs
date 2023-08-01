@@ -123,8 +123,7 @@ pub(crate) fn get_matches_for_node(
         get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
       {
         // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
-        // FIXME. This implementation might be too conservative. We could have explored other paths.
-        // FIXME. However that would mean the template is ambiguous, which is bad
+        // No other way of unrolling exists.
         if recursive_matches.contains_key(var_name) {
           if recursive_matches[var_name].trim() != node_code.trim() {
             return (recursive_matches, false);
