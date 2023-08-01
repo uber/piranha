@@ -290,7 +290,9 @@ impl PiranhaArgumentsBuilder {
     // This code is for a feature flag
     let piranha_language = self.language.clone();
     if piranha_language
-      .filter(|x| x.extension() == ".java" && self.experiment_dyn.unwrap_or(default_experiment_dyn()))
+      .filter(|x| {
+        x.extension() == ".java" && self.experiment_dyn.unwrap_or(default_experiment_dyn())
+      })
       .is_some()
     {
       self.language = Option::from(PiranhaLanguage::from("java_dyn"));
