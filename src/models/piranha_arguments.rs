@@ -38,6 +38,7 @@ use pyo3::{
 };
 use regex::Regex;
 
+use crate::models::default_configs::default_experiment_dyn;
 use crate::models::Validator;
 use std::collections::HashMap;
 
@@ -153,6 +154,12 @@ pub struct PiranhaArguments {
   #[builder(default = "default_graph_validation()")]
   #[clap(long, default_value_t = default_graph_validation())]
   should_validate: bool,
+
+  /// To validate a graph
+  #[get = "pub"]
+  #[builder(default = "default_experiment_dyn()")]
+  #[clap(long, default_value_t = default_experiment_dyn())]
+  experiment_dyn: bool,
 }
 
 impl Default for PiranhaArguments {
@@ -191,7 +198,7 @@ impl PiranhaArguments {
     cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
     delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
     delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
-    allow_dirty_ast: Option<bool>, should_validate: Option<bool>,
+    allow_dirty_ast: Option<bool>, should_validate: Option<bool>, experiment_dyn: Option<bool>,
   ) -> Self {
     let subs = substitutions.map_or(vec![], |s| {
       s.iter()
@@ -238,6 +245,7 @@ impl PiranhaArguments {
       .path_to_output_summary(path_to_output_summary)
       .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
       .should_validate(should_validate.unwrap_or_else(default_graph_validation))
+      .experiment_dyn(experiment_dyn.unwrap_or_else(default_experiment_dyn))
       .build()
   }
 }
@@ -262,6 +270,7 @@ impl PiranhaArguments {
       .cleanup_comments_buffer(*p.cleanup_comments_buffer())
       .cleanup_comments(*p.cleanup_comments())
       .dry_run(*p.dry_run())
+      .experiment_dyn(default_experiment_dyn())
       .build()
   }
 
@@ -275,8 +284,20 @@ impl PiranhaArgumentsBuilder {
   /// * create PiranhaArgument from the builder
   /// * parse `piranha_arguments.toml` (if it exists)
   /// * merge the two PiranhaArguments
-  pub fn build(&self) -> PiranhaArguments {
+  pub fn build(&mut self) -> PiranhaArguments {
     let _arg: PiranhaArguments = self.create().unwrap();
+
+    // This code is for a feature flag
+    let piranha_language = self.language.clone();
+    if piranha_language
+      .filter(|x| {
+        x.extension() == ".java" && self.experiment_dyn.unwrap_or(default_experiment_dyn())
+      })
+      .is_some()
+    {
+      self.language = Option::from(PiranhaLanguage::from("java_dyn"));
+    }
+    // Ends here
 
     if let Err(e) = _arg.validate() {
       panic!("{}", e);
