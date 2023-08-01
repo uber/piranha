@@ -38,9 +38,9 @@ use pyo3::{
 };
 use regex::Regex;
 
+use crate::models::default_configs::default_experiment_dyn;
 use crate::models::Validator;
 use std::collections::HashMap;
-use crate::models::default_configs::default_experiment_dyn;
 
 /// A refactoring tool that eliminates dead code related to stale feature flags
 #[derive(Clone, Getters, CopyGetters, Debug, Parser, Builder)]
@@ -198,7 +198,7 @@ impl PiranhaArguments {
     cleanup_comments_buffer: Option<i32>, number_of_ancestors_in_parent_scope: Option<u8>,
     delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
     delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
-    allow_dirty_ast: Option<bool>, should_validate: Option<bool>, experiment_dyn: Option<bool>
+    allow_dirty_ast: Option<bool>, should_validate: Option<bool>, experiment_dyn: Option<bool>,
   ) -> Self {
     let subs = substitutions.map_or(vec![], |s| {
       s.iter()
@@ -245,7 +245,7 @@ impl PiranhaArguments {
       .path_to_output_summary(path_to_output_summary)
       .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
       .should_validate(should_validate.unwrap_or_else(default_graph_validation))
-        .experiment_dyn(experiment_dyn.unwrap_or_else(default_experiment_dyn))
+      .experiment_dyn(experiment_dyn.unwrap_or_else(default_experiment_dyn))
       .build()
   }
 }
@@ -270,7 +270,7 @@ impl PiranhaArguments {
       .cleanup_comments_buffer(*p.cleanup_comments_buffer())
       .cleanup_comments(*p.cleanup_comments())
       .dry_run(*p.dry_run())
-        .experiment_dyn(default_experiment_dyn())
+      .experiment_dyn(default_experiment_dyn())
       .build()
   }
 

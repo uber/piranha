@@ -21,7 +21,8 @@ use crate::utilities::parse_toml;
 
 use super::{
   default_configs::{
-    default_language, GO, JAVA, KOTLIN, PYTHON, STRINGS, SWIFT, THRIFT, TSX, TS_SCHEME, TYPESCRIPT, JAVA_DYN
+    default_language, GO, JAVA, JAVA_DYN, KOTLIN, PYTHON, STRINGS, SWIFT, THRIFT, TSX, TS_SCHEME,
+    TYPESCRIPT,
   },
   outgoing_edges::Edges,
   rule::Rules,
@@ -149,8 +150,8 @@ impl std::str::FromStr for PiranhaLanguage {
           scopes: parse_toml::<ScopeConfig>(include_str!(
             "../cleanup_rules/java_dyn/scope_config.toml"
           ))
-              .scopes()
-              .to_vec(),
+          .scopes()
+          .to_vec(),
           comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
         })
       }
