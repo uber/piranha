@@ -287,12 +287,15 @@ impl PiranhaArgumentsBuilder {
   pub fn build(&mut self) -> PiranhaArguments {
     let _arg: PiranhaArguments = self.create().unwrap();
 
-    if let Some(piranha_language) = self.language.clone() {
-      let language = piranha_language.extension();
-      if language == ".java" && self.experiment_dyn.unwrap_or(default_experiment_dyn()) {
-        self.language = Option::from(PiranhaLanguage::from("java_dyn"));
-      }
+    // This code is for a feature flag
+    let piranha_language = self.language.clone();
+    if piranha_language
+      .filter(|x| x.extension() == ".java" && self.experiment_dyn.unwrap_or(default_experiment_dyn()))
+      .is_some()
+    {
+      self.language = Option::from(PiranhaLanguage::from("java_dyn"));
     }
+    // Ends here
 
     if let Err(e) = _arg.validate() {
       panic!("{}", e);
