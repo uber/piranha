@@ -1,3 +1,7 @@
+Version 0.3.15
+-------------
+* Bug-fix in query validation
+
 Version 0.3.14
 -------------
 * Bug-fix in graph validation
