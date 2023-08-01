@@ -19,8 +19,9 @@ use models::{
 
 #[macro_use]
 extern crate lazy_static;
-
+pub mod df;
 pub mod models;
+
 #[cfg(test)]
 mod tests;
 pub mod utilities;

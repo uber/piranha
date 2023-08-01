@@ -173,9 +173,8 @@ class QueryWriter:
 
             # if the node is an identifier, add it to eq constraints
             if visited == 0:
-                self.query_ctrs.append(
-                    f"(#eq? {node_name} \"{node.text.decode('utf8')}\")"
-                )
+                text = node.text.decode("utf8").replace("\n", " ")
+                self.query_ctrs.append(f'(#eq? {node_name} "{text}")')
             s_exp += f")"
 
         self.capture_groups[node_name] = node

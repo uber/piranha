@@ -1,3 +1,16 @@
+Version 0.3.15
+-------------
+* Bug-fix in query validation
+
+Version 0.3.14
+-------------
+* Bug-fix in graph validation
+
+Version 0.3.13
+-------------
+* Introduce graph validation 
+* Improved swift syntax support
+
 Version 0.3.12
 -------------
 * Capture interface as "Class" scope in Java
