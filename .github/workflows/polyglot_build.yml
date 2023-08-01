@@ -45,5 +45,7 @@ jobs:
       - name: Run Python tests
         run: |
           source .env/bin/activate
+          pip3 install -r experimental/requirements.txt
           maturin develop
           pytest tests/tests.py
+          pytest -s -rx .

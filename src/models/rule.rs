@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 
 use colored::Colorize;
 use derive_builder::Builder;
@@ -37,7 +38,7 @@ pub(crate) struct Rules {
   pub(crate) rules: Vec<Rule>,
 }
 
-#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder)]
+#[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder, Eq)]
 #[pyclass]
 pub struct Rule {
   /// Name of the rule. (It is unique)
@@ -147,6 +148,7 @@ macro_rules! piranha_rule {
     $(.replace_node($replace_node.to_string()))?
     $(.replace_idx($replace_idx.to_string()))?
     $(.replace($replace.to_string()))?
+    $(.is_seed_rule($is_seed_rule))?
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.filters(std::collections::HashSet::from([$($filter)*])))?
@@ -288,6 +290,12 @@ impl Instantiate for Rule {
       replace: updated_rule.replace().instantiate(substitutions_for_holes),
       ..updated_rule
     }
+  }
+}
+
+impl Hash for Rule {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.name().hash(state);
   }
 }
 
