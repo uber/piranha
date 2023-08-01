@@ -65,7 +65,6 @@ impl CGPattern {
       pattern if pattern.trim().starts_with('(') => PatternType::Tsq,
       _ => PatternType::Unknown,
     }
-
   }
 }
 

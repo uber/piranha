@@ -68,7 +68,6 @@ replace_node = "if_statement"
 is_seed_rule = false
 
 
-
 # Before : 
 #  !false
 # After :
@@ -274,7 +273,6 @@ replace_node = "binary_expression"
 is_seed_rule = false
 
 
-
 # Before:
 #  false == true
 #  true == false
@@ -297,8 +295,6 @@ query = """dyn true == false"""
 replace = "false"
 replace_node = "*"
 is_seed_rule = false
-
-
 
 
 # Before:
