@@ -3,46 +3,21 @@
 PiranhaAgent uses a static inference algorithm and OpenAI's GPT-4 model to generate human-like piranha rules from code examples.
 It generates these rules in TOML format, which can be applied to refactor other parts of the codebase.
 
+
 ## Install
 
 To get started with PiranhaAgent, follow these instructions:
 
-1. Clone this repository:
-
 ```
-git clone https://github.com/uber/piranha.git
-```
-
-2. Create a Python virtual environment and activate it:
-
-```
-python3 -m venv .env
-source .env/bin/activate
-```
-
-3. Navigate into the directory:
-
-```
-cd experimental
-```
-
-4. Install the necessary requirements:
-
-```
-pip install -r requirements.txt
+pip install polyglot-piranha-playground
 ```
 
 ## Usage (Playground UI)
 
-To run the playground
-
-1. Execute the local.py script. You have to set an environment variable `OPENAI_API_KEY` with your OpenAI API key.
+To run the playground:
 
 ```
-export OPENAI_API_KEY=<YOUR_KEY>
-export PYTHONPATH=/path/to/piranha/experimental
-cd piranha_playground
-python -m main
+piranha-playground
 ```
 
 To define your transformation rules, you will need to provide pairs of code snippets: 'before' and 'after' transformation. Each piece of code that needs transformation should be marked by unique identifiers surrounded by comments (like `// 1`, `// 2`, etc.). These identifiers serve two purposes:

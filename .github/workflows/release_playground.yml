@@ -1,0 +1,33 @@
+name: Release Piranha Playground
+
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./experimental
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Create virtualenv and install dependencies
+        run: |
+          python -m venv .env
+          source .env/bin/activate
+          pip install -r requirements.txt
+
+      - name: Build and check package
+        run: |
+          source .env/bin/activate
+          pip install wheel
+          pip install twine
+          python setup.py sdist bdist_wheel
+          twine check dist/*
+          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN_PLAYGROUND }} dist/*
