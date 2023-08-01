@@ -57,6 +57,7 @@ impl CGPattern {
   pub(crate) fn extract_dyn(&self) -> MetaSyntax {
     let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
     MetaSyntax(_val.to_string())
+  }
 
   pub(crate) fn pattern_type(&self) -> PatternType {
     match self.0.as_str() {
