@@ -29,7 +29,7 @@ lazy_static! {
 // Struct to avoid dealing with lifetimes
 #[derive(Clone, PartialEq, Eq)]
 pub struct CapturedNode {
-  r: Range,
+  range: Range,
   text: String,
 }
 
@@ -51,7 +51,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
         })
     } else {
       CapturedNode {
-        r: Range::from(node.range()),
+        range: Range::from(node.range()),
         text: node.utf8_text(code_str).unwrap().to_string(),
       }
     };
@@ -60,7 +60,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 
     matches.push(Match {
       matched_string: replace_node_match.text,
-      range: replace_node_match.r,
+      range: replace_node_match.range,
       matches: match_map.into_iter().map(|(k, v)| (k, v.text)).collect(),
       associated_comma: None,
       associated_comments: Vec::new(),
@@ -161,7 +161,7 @@ pub(crate) fn get_matches_for_node(
         recursive_matches.insert(
           var_name.to_string(),
           CapturedNode {
-            r: Range::from(current_node.range()),
+            range: Range::from(current_node.range()),
             text: current_node_code.to_string(),
           },
         );
