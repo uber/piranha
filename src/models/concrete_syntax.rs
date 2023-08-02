@@ -68,7 +68,7 @@ fn find_next_sibling(cursor: &mut TreeCursor) {
   }
 }
 
-/// This function performs the actual matching of the metasyntax pattern against a syntax tree
+/// This function performs the actual matching of the concrete-syntax pattern against a syntax tree
 /// node. The matching is done in the following way:
 ///
 /// - If the metasyntax is empty and all the nodes have been visited, then we found a match!
