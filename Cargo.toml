@@ -67,6 +67,7 @@ getset = "0.1.2"
 pyo3 = "0.19.0"
 pyo3-log = "0.8.1"
 glob = "0.3.1"
+lazy_static = "1.4.0"
 
 [features]
 extension-module = ["pyo3/extension-module"]
