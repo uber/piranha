@@ -295,7 +295,7 @@ impl PiranhaArgumentsBuilder {
       })
       .is_some()
     {
-      self.language = Option::from(PiranhaLanguage::from("java_dyn"));
+      self.language = Option::from(PiranhaLanguage::from("java_cs"));
     }
     // Ends here
 

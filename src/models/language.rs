@@ -21,7 +21,7 @@ use crate::utilities::parse_toml;
 
 use super::{
   default_configs::{
-    default_language, GO, JAVA, JAVA_DYN, KOTLIN, PYTHON, STRINGS, SWIFT, THRIFT, TSX, TS_SCHEME,
+    default_language, GO, JAVA, JAVA_CS, KOTLIN, PYTHON, STRINGS, SWIFT, THRIFT, TSX, TS_SCHEME,
     TYPESCRIPT,
   },
   outgoing_edges::Edges,
@@ -138,9 +138,9 @@ impl std::str::FromStr for PiranhaLanguage {
           comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
         })
       }
-      JAVA_DYN => {
-        let rules: Rules = parse_toml(include_str!("../cleanup_rules/java_dyn/rules.toml"));
-        let edges: Edges = parse_toml(include_str!("../cleanup_rules/java_dyn/edges.toml"));
+      JAVA_CS => {
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/java_cs/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/java_cs/edges.toml"));
         Ok(Self {
           extension: language.to_string(),
           supported_language: SupportedLanguage::Java,
@@ -148,7 +148,7 @@ impl std::str::FromStr for PiranhaLanguage {
           rules: Some(rules),
           edges: Some(edges),
           scopes: parse_toml::<ScopeConfig>(include_str!(
-            "../cleanup_rules/java_dyn/scope_config.toml"
+            "../cleanup_rules/java_cs/scope_config.toml"
           ))
           .scopes()
           .to_vec(),
