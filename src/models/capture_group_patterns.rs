@@ -28,7 +28,10 @@ use tree_sitter::{Node, Query};
 
 #[derive(Debug)]
 pub struct ConcreteSyntax(pub String);
-use super::{default_configs::{REGEX_QUERY_PREFIX, CONCRETE_SYNTAX_QUERY_PREFIX}, matches::Match};
+use super::{
+  default_configs::{CONCRETE_SYNTAX_QUERY_PREFIX, REGEX_QUERY_PREFIX},
+  matches::Match,
+};
 
 pub enum PatternType {
   Tsq,

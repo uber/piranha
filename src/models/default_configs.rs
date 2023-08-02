@@ -35,7 +35,6 @@ pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-
 pub const REGEX_QUERY_PREFIX: &str = "rgx ";
 pub const CONCRETE_SYNTAX_QUERY_PREFIX: &str = "cs ";
 
-
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit
 pub(crate) const UNUSED_CODE_PATH: &str = "/dev/null";
