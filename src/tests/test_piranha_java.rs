@@ -421,7 +421,7 @@ fn test_incorrect_rule() {
 fn test_dyn_rule() {
   let rule = piranha_rule! {
     name = "match_class",
-    query = "dyn println(:[xs])",
+    query = "cs println(:[xs])",
     replace_node = "xs",
     replace = "@xs, 2"
   };

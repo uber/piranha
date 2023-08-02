@@ -28,7 +28,7 @@ use tree_sitter::{Node, Query};
 
 #[derive(Debug)]
 pub struct ConcreteSyntax(pub String);
-use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
+use super::{default_configs::{REGEX_QUERY_PREFIX, CONCRETE_SYNTAX_QUERY_PREFIX}, matches::Match};
 
 pub enum PatternType {
   Tsq,
@@ -55,7 +55,7 @@ impl CGPattern {
   }
 
   pub(crate) fn extract_dyn(&self) -> ConcreteSyntax {
-    let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
+    let mut _val = &self.pattern()[CONCRETE_SYNTAX_QUERY_PREFIX.len()..];
     ConcreteSyntax(_val.to_string())
   }
 
@@ -76,7 +76,7 @@ impl Validator for CGPattern {
         .map(|_| Ok(()))
         .unwrap_or(Err(format!("Cannot parse the regex - {}", self.pattern())));
     }
-    if self.pattern().starts_with("dyn ") {
+    if self.pattern().starts_with("cs ") {
       return Ok(());
     }
     let mut parser = get_ts_query_parser();

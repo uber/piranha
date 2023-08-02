@@ -85,7 +85,7 @@ impl RuleStore {
         .or_insert_with(|| CompiledCGPattern::R(cg_pattern.extract_regex().unwrap()));
     }
 
-    if pattern.starts_with("dyn ") {
+    if pattern.starts_with("cs ") {
       return &*self
         .rule_query_cache
         .entry(pattern)
