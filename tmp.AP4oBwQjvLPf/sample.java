@@ -1,1 +1,0 @@
-class A { public static      void main(String[] args) { if(println    (  StaleFlag )) { println(x(println(println(u)))); println(x -> foo()); println(x->y); } } }
