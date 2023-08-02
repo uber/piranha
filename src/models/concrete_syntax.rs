@@ -123,8 +123,8 @@ pub(crate) fn get_matches_for_node(
     // first children. We need to try all possibilities.
     loop {
       let mut tmp_cursor = cursor.clone();
-      let node = cursor.node();
-      let node_code = node.utf8_text(source_code).unwrap();
+      let current_node = cursor.node();
+      let current_node_code = current_node.utf8_text(source_code).unwrap();
       find_next_sibling(&mut tmp_cursor);
 
       if let (mut recursive_matches, true) =
@@ -133,11 +133,11 @@ pub(crate) fn get_matches_for_node(
         // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
         // No other way of unrolling exists.
         if recursive_matches.contains_key(var_name) {
-          if recursive_matches[var_name].trim() != node_code.trim() {
+          if recursive_matches[var_name].trim() != current_node_code.trim() {
             return (recursive_matches, false);
           }
         }
-        recursive_matches.insert(var_name.to_string(), node_code.to_string());
+        recursive_matches.insert(var_name.to_string(), current_node_code.to_string());
         return (recursive_matches, true);
       }
 
