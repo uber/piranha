@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::get_all_matches_for_ConcreteSyntax;
+use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -143,7 +143,7 @@ impl CompiledCGPattern {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
       CompiledCGPattern::M(concrete_syntax) => {
-        let matches = get_all_matches_for_ConcreteSyntax(node, code_str, concrete_syntax, recursive);
+        let matches = get_all_matches_for_concrete_syntax(node, code_str, concrete_syntax, recursive);
         matches.0
       }
     }

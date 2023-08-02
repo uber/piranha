@@ -26,7 +26,7 @@ lazy_static! {
   static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
 }
 
-pub(crate) fn get_all_matches_for_ConcreteSyntax(
+pub(crate) fn get_all_matches_for_concrete_syntax(
   node: &Node, code_str: &[u8], meta: &ConcreteSyntax, recursive: bool,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
@@ -49,7 +49,7 @@ pub(crate) fn get_all_matches_for_ConcreteSyntax(
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
       if let (mut inner_matches, true) =
-        get_all_matches_for_ConcreteSyntax(&child, code_str, meta, recursive)
+        get_all_matches_for_concrete_syntax(&child, code_str, meta, recursive)
       {
         matches.append(&mut inner_matches);
       }
