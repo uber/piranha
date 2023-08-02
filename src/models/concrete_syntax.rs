@@ -83,7 +83,7 @@ fn find_next_sibling(cursor: &mut TreeCursor) {
 ///
 /// - If the ConcreteSyntax starts with `:[variable]`, the function tries to match the variable
 ///   against all possible AST nodes starting at the current's cursor position (i.e., the node itself,
-///   its first child, the child of the first child, and so on.
+///   its first child, the child of the first child, and so on.)
 ///   If it succeeds, it advances the ConcreteSyntax by the length of the matched
 ///   AST node and calls itself recursively to try to match the rest of the ConcreteSyntax.
 ///
