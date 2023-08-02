@@ -89,7 +89,7 @@ impl RuleStore {
       return &*self
         .rule_query_cache
         .entry(pattern)
-        .or_insert_with(|| CompiledCGPattern::M(cg_pattern.extract_dyn()));
+        .or_insert_with(|| CompiledCGPattern::M(cg_pattern.extract_concrete_syntax()));
     }
 
     &*self

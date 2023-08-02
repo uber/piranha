@@ -57,7 +57,7 @@ impl CGPattern {
     Regex::new(_val)
   }
 
-  pub(crate) fn extract_dyn(&self) -> ConcreteSyntax {
+  pub(crate) fn extract_concrete_syntax(&self) -> ConcreteSyntax {
     let mut _val = &self.pattern()[CONCRETE_SYNTAX_QUERY_PREFIX.len()..];
     ConcreteSyntax(_val.to_string())
   }
