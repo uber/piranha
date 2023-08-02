@@ -26,30 +26,51 @@ lazy_static! {
   static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
 }
 
+// Struct to avoid dealing with lifetimes
+#[derive(Clone, PartialEq, Eq)]
+pub struct CapturedNode {
+  r: Range,
+  text: String,
+}
+
 pub(crate) fn get_all_matches_for_concrete_syntax(
   node: &Node, code_str: &[u8], meta: &ConcreteSyntax, recursive: bool,
+  replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
   if let (mut match_map, true) = get_matches_for_node(&mut node.walk(), code_str, meta) {
-    match_map.insert(
-      "*".to_string(),
-      node.utf8_text(code_str).unwrap().to_string(),
-    );
+    let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
+
+    let replace_node_match = if replace_node_key != "*" {
+      match_map
+        .get(&replace_node_key)
+        .cloned()
+        .unwrap_or_else(|| {
+          panic!("The tag {replace_node_key} provided in the replace node is not present")
+        })
+    } else {
+      CapturedNode {
+        r: Range::from(node.range()),
+        text: node.utf8_text(code_str).unwrap().to_string(),
+      }
+    };
+
+    match_map.insert(replace_node_key, replace_node_match.clone());
+
     matches.push(Match {
-      matched_string: "*".to_string(),
-      range: Range::from(node.range()),
-      matches: match_map,
+      matched_string: replace_node_match.text,
+      range: replace_node_match.r,
+      matches: match_map.into_iter().map(|(k, v)| (k, v.text)).collect(),
       associated_comma: None,
       associated_comments: Vec::new(),
     });
   }
-
   if recursive {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
       if let (mut inner_matches, true) =
-        get_all_matches_for_concrete_syntax(&child, code_str, meta, recursive)
+        get_all_matches_for_concrete_syntax(&child, code_str, meta, recursive, replace_node.clone())
       {
         matches.append(&mut inner_matches);
       }
@@ -97,7 +118,7 @@ fn find_next_sibling(cursor: &mut TreeCursor) {
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_node(
   cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
-) -> (HashMap<String, String>, bool) {
+) -> (HashMap<String, CapturedNode>, bool) {
   let match_template = meta.0.as_str();
 
   if match_template.is_empty() {
@@ -133,11 +154,17 @@ pub(crate) fn get_matches_for_node(
         // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
         // No other way of unrolling exists.
         if recursive_matches.contains_key(var_name) {
-          if recursive_matches[var_name].trim() != current_node_code.trim() {
+          if recursive_matches[var_name].text.trim() != current_node_code.trim() {
             return (HashMap::new(), false);
           }
         }
-        recursive_matches.insert(var_name.to_string(), current_node_code.to_string());
+        recursive_matches.insert(
+          var_name.to_string(),
+          CapturedNode {
+            r: Range::from(current_node.range()),
+            text: current_node_code.to_string(),
+          },
+        );
         return (recursive_matches, true);
       }
 

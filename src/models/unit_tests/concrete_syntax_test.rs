@@ -18,7 +18,9 @@ use crate::{
   tests::substitutions,
 };
 
-fn run_test(code: &str, pattern: &str, expected_matches: usize, expected_vars: Vec<Vec<(&str, &str)>>) {
+fn run_test(
+  code: &str, pattern: &str, expected_matches: usize, expected_vars: Vec<Vec<(&str, &str)>>,
+) {
   let java = PiranhaLanguage::from(JAVA);
   let mut parser = java.parser();
   let tree = parser.parse(code.as_bytes(), None).unwrap();
@@ -29,6 +31,7 @@ fn run_test(code: &str, pattern: &str, expected_matches: usize, expected_vars: V
     code.as_bytes(),
     &meta,
     true,
+    None,
   );
 
   assert_eq!(matches.len(), expected_matches);
@@ -60,7 +63,7 @@ fn test_multiple_match() {
     2,
     vec![
       vec![("name", "a"), ("value", "10")],
-      vec![("name", "b"), ("value", "20")]
+      vec![("name", "b"), ("value", "20")],
     ],
   );
 }
