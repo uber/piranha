@@ -134,7 +134,7 @@ pub(crate) fn get_matches_for_node(
         // No other way of unrolling exists.
         if recursive_matches.contains_key(var_name) {
           if recursive_matches[var_name].trim() != current_node_code.trim() {
-            return (recursive_matches, false);
+            return (HashMap::new(), false);
           }
         }
         recursive_matches.insert(var_name.to_string(), current_node_code.to_string());
