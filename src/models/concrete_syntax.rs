@@ -12,9 +12,9 @@
 */
 
 use crate::models::matches::Range;
-use derive_builder::Builder;
+
 use regex::Regex;
-use std::any::Any;
+
 use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 
@@ -153,10 +153,10 @@ pub(crate) fn get_matches_for_node(
       {
         // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
         // No other way of unrolling exists.
-        if recursive_matches.contains_key(var_name) {
-          if recursive_matches[var_name].text.trim() != current_node_code.trim() {
-            return (HashMap::new(), false);
-          }
+        if recursive_matches.contains_key(var_name)
+          && recursive_matches[var_name].text.trim() != current_node_code.trim()
+        {
+          return (HashMap::new(), false);
         }
         recursive_matches.insert(
           var_name.to_string(),
