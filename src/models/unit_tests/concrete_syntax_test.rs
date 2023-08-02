@@ -11,8 +11,8 @@
  limitations under the License.
 */
 
-use crate::models::capture_group_patterns::MetaSyntax;
-use crate::models::concrete_syntax::get_all_matches_for_metasyntax;
+use crate::models::capture_group_patterns::ConcreteSyntax;
+use crate::models::concrete_syntax::get_all_matches_for_ConcreteSyntax;
 use crate::{
   models::{default_configs::JAVA, language::PiranhaLanguage},
   tests::substitutions,
@@ -26,9 +26,9 @@ fn test_single_match() {
   let code = "class Example { public int a = 10; }";
   let tree = parser.parse(code.as_bytes(), None).unwrap();
 
-  let meta = MetaSyntax(String::from("public int :[name] = :[value];"));
+  let meta = ConcreteSyntax(String::from("public int :[name] = :[value];"));
 
-  let (matches, is_match_found) = get_all_matches_for_metasyntax(
+  let (matches, is_match_found) = get_all_matches_for_ConcreteSyntax(
     &tree.root_node().child(0).unwrap(),
     code.as_bytes(),
     &meta,
@@ -52,9 +52,9 @@ fn test_multiple_match() {
   let code = "class Example { public int a = 10; public int b = 20; }";
   let tree = parser.parse(code.as_bytes(), None).unwrap();
 
-  let meta = MetaSyntax(String::from("public int :[name] = :[value];"));
+  let meta = ConcreteSyntax(String::from("public int :[name] = :[value];"));
 
-  let (matches, is_match_found) = get_all_matches_for_metasyntax(
+  let (matches, is_match_found) = get_all_matches_for_ConcreteSyntax(
     &tree.root_node().child(0).unwrap(),
     code.as_bytes(),
     &meta,
@@ -84,9 +84,9 @@ fn test_no_match() {
   let code = "class Example { public int a = 10; }";
   let tree = parser.parse(code.as_bytes(), None).unwrap();
 
-  let meta = MetaSyntax(String::from("public String :[name] = :[value];"));
+  let meta = ConcreteSyntax(String::from("public String :[name] = :[value];"));
 
-  let (matches, is_match_found) = get_all_matches_for_metasyntax(
+  let (matches, is_match_found) = get_all_matches_for_ConcreteSyntax(
     &tree.root_node().child(0).unwrap(),
     code.as_bytes(),
     &meta,

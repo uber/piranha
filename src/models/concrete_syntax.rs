@@ -18,7 +18,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 
-use crate::models::capture_group_patterns::MetaSyntax;
+use crate::models::capture_group_patterns::ConcreteSyntax;
 use crate::models::matches::Match;
 
 // Precompile the regex outside the function
@@ -26,8 +26,8 @@ lazy_static! {
   static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
 }
 
-pub(crate) fn get_all_matches_for_metasyntax(
-  node: &Node, code_str: &[u8], meta: &MetaSyntax, recursive: bool,
+pub(crate) fn get_all_matches_for_ConcreteSyntax(
+  node: &Node, code_str: &[u8], meta: &ConcreteSyntax, recursive: bool,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
@@ -49,7 +49,7 @@ pub(crate) fn get_all_matches_for_metasyntax(
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
       if let (mut inner_matches, true) =
-        get_all_matches_for_metasyntax(&child, code_str, meta, recursive)
+        get_all_matches_for_ConcreteSyntax(&child, code_str, meta, recursive)
       {
         matches.append(&mut inner_matches);
       }
@@ -60,6 +60,14 @@ pub(crate) fn get_all_matches_for_metasyntax(
   (matches, !is_empty)
 }
 
+/// `find_next_sibling` navigates the cursor through the tree to the next sibling.
+/// If no sibling exists, it ascends the tree until it can move laterally or until it reaches the root.
+///
+/// # Arguments
+///
+/// * `cursor` - A mutable reference to a `TreeCursor` used to navigate the tree.
+///
+/// The function mutates the cursor position. If no further siblings exist, the cursor ends at the root.
 fn find_next_sibling(cursor: &mut TreeCursor) {
   while !cursor.goto_next_sibling() {
     if !cursor.goto_parent() {
@@ -68,27 +76,27 @@ fn find_next_sibling(cursor: &mut TreeCursor) {
   }
 }
 
-/// This function performs the actual matching of the metasyntax pattern against a syntax tree
+/// This function performs the actual matching of the ConcreteSyntax pattern against a syntax tree
 /// node. The matching is done in the following way:
 ///
-/// - If the metasyntax is empty and all the nodes have been visited, then we found a match!
+/// - If the ConcreteSyntax is empty and all the nodes have been visited, then we found a match!
 ///
-/// - If the metasyntax starts with `:[variable]`, the function tries to match the variable
+/// - If the ConcreteSyntax starts with `:[variable]`, the function tries to match the variable
 ///   against all possible AST nodes starting at the current's cursor position (i.e., the node itself,
 ///   its first child, the child of the first child, and so on.
-///   If it succeeds, it advances the metasyntax by the length of the matched
-///   AST node and calls itself recursively to try to match the rest of the metasyntax.
+///   If it succeeds, it advances the ConcreteSyntax by the length of the matched
+///   AST node and calls itself recursively to try to match the rest of the ConcreteSyntax.
 ///
-/// - If the metasyntax doesn't start with `:[variable]`, the function checks if the node is a leaf
+/// - If the ConcreteSyntax doesn't start with `:[variable]`, the function checks if the node is a leaf
 ///   (i.e., has no children). If it is, and its text starts with the metasyyntax, we match the text,
 ///   and advance to the next immediate node (i.e., it's sibling or it's parent's sibling). If does not
 ///   match we cannot match the meta syntax template.
 ///
-/// - If the metasyntax doesn't start with `:[variable]` and the node is not a leaf, the function
+/// - If the ConcreteSyntax doesn't start with `:[variable]` and the node is not a leaf, the function
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
-///   the metasyntax.
+///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_node(
-  cursor: &mut TreeCursor, source_code: &[u8], meta: &MetaSyntax,
+  cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
 ) -> (HashMap<String, String>, bool) {
   let match_template = meta.0.as_str();
 
@@ -104,7 +112,7 @@ pub(crate) fn get_matches_for_node(
   if let Some(caps) = RE_VAR.captures(match_template) {
     let var_name = &caps["var_name"];
     let meta_adv_len = caps[0].len();
-    let meta_advanced = MetaSyntax(
+    let meta_advanced = ConcreteSyntax(
       match_template[meta_adv_len..]
         .to_string()
         .trim_start()
@@ -145,7 +153,7 @@ pub(crate) fn get_matches_for_node(
       if advance_by > match_template.len() {
         return (HashMap::new(), false);
       }
-      let meta_substring = MetaSyntax(
+      let meta_substring = ConcreteSyntax(
         match_template[advance_by..]
           .to_string()
           .trim_start()

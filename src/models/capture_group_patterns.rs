@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::get_all_matches_for_metasyntax;
+use crate::models::concrete_syntax::get_all_matches_for_ConcreteSyntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -27,7 +27,7 @@ use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
 #[derive(Debug)]
-pub struct MetaSyntax(pub String);
+pub struct ConcreteSyntax(pub String);
 use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
 
 pub enum PatternType {
@@ -54,9 +54,9 @@ impl CGPattern {
     Regex::new(_val)
   }
 
-  pub(crate) fn extract_dyn(&self) -> MetaSyntax {
+  pub(crate) fn extract_dyn(&self) -> ConcreteSyntax {
     let mut _val = &self.pattern()[REGEX_QUERY_PREFIX.len()..];
-    MetaSyntax(_val.to_string())
+    ConcreteSyntax(_val.to_string())
   }
 
   pub(crate) fn pattern_type(&self) -> PatternType {
@@ -105,7 +105,7 @@ impl Instantiate for CGPattern {
 pub(crate) enum CompiledCGPattern {
   Q(Query),
   R(Regex),
-  M(MetaSyntax),
+  M(ConcreteSyntax),
 }
 
 impl CompiledCGPattern {
@@ -142,8 +142,8 @@ impl CompiledCGPattern {
       CompiledCGPattern::R(regex) => {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
-      CompiledCGPattern::M(meta_syntax) => {
-        let matches = get_all_matches_for_metasyntax(node, code_str, meta_syntax, recursive);
+      CompiledCGPattern::M(concrete_syntax) => {
+        let matches = get_all_matches_for_ConcreteSyntax(node, code_str, concrete_syntax, recursive);
         matches.0
       }
     }
