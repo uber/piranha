@@ -85,6 +85,13 @@ impl RuleStore {
         .or_insert_with(|| CompiledCGPattern::R(cg_pattern.extract_regex().unwrap()));
     }
 
+    if pattern.starts_with("cs ") {
+      return &*self
+        .rule_query_cache
+        .entry(pattern)
+        .or_insert_with(|| CompiledCGPattern::M(cg_pattern.extract_concrete_syntax()));
+    }
+
     &*self
       .rule_query_cache
       .entry(pattern.to_string())

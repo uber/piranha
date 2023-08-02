@@ -11,6 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -25,7 +26,12 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
-use super::{default_configs::REGEX_QUERY_PREFIX, matches::Match};
+#[derive(Debug)]
+pub struct ConcreteSyntax(pub String);
+use super::{
+  default_configs::{CONCRETE_SYNTAX_QUERY_PREFIX, REGEX_QUERY_PREFIX},
+  matches::Match,
+};
 
 pub enum PatternType {
   Tsq,
@@ -51,6 +57,11 @@ impl CGPattern {
     Regex::new(_val)
   }
 
+  pub(crate) fn extract_concrete_syntax(&self) -> ConcreteSyntax {
+    let mut _val = &self.pattern()[CONCRETE_SYNTAX_QUERY_PREFIX.len()..];
+    ConcreteSyntax(_val.to_string())
+  }
+
   pub(crate) fn pattern_type(&self) -> PatternType {
     match self.0.as_str() {
       pattern if pattern.starts_with("rgx") => PatternType::Regex,
@@ -67,6 +78,9 @@ impl Validator for CGPattern {
         .extract_regex()
         .map(|_| Ok(()))
         .unwrap_or(Err(format!("Cannot parse the regex - {}", self.pattern())));
+    }
+    if self.pattern().starts_with("cs ") {
+      return Ok(());
     }
     let mut parser = get_ts_query_parser();
     parser
@@ -94,6 +108,7 @@ impl Instantiate for CGPattern {
 pub(crate) enum CompiledCGPattern {
   Q(Query),
   R(Regex),
+  M(ConcreteSyntax),
 }
 
 impl CompiledCGPattern {
@@ -117,6 +132,7 @@ impl CompiledCGPattern {
     &self, node: &Node, source_code: String, recursive: bool, replace_node: Option<String>,
     replace_node_idx: Option<u8>,
   ) -> Vec<Match> {
+    let code_str = source_code.as_bytes();
     match self {
       CompiledCGPattern::Q(query) => get_all_matches_for_query(
         node,
@@ -128,6 +144,16 @@ impl CompiledCGPattern {
       ),
       CompiledCGPattern::R(regex) => {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
+      }
+      CompiledCGPattern::M(concrete_syntax) => {
+        let matches = get_all_matches_for_concrete_syntax(
+          node,
+          code_str,
+          concrete_syntax,
+          recursive,
+          replace_node,
+        );
+        matches.0
       }
     }
   }

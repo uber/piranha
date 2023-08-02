@@ -21,7 +21,7 @@ use super::{
 };
 
 pub const JAVA: &str = "java";
-pub const JAVA_DYN: &str = "java_dyn";
+pub const JAVA_CS: &str = "java_cs";
 pub const KOTLIN: &str = "kt";
 pub const GO: &str = "go";
 pub const PYTHON: &str = "py";
@@ -33,6 +33,7 @@ pub const STRINGS: &str = "strings";
 pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
 
 pub const REGEX_QUERY_PREFIX: &str = "rgx ";
+pub const CONCRETE_SYNTAX_QUERY_PREFIX: &str = "cs ";
 
 #[cfg(test)]
 //FIXME: Remove this  hack by not passing PiranhaArguments to SourceCodeUnit

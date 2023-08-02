@@ -262,3 +262,4 @@ if args.unflatten:
     graph.unflatten(stagger=args.stagger).render()
 else:
     graph.render()
+
