@@ -1,0 +1,25 @@
+.centeredRow {
+  margin-top: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.divided {
+  display: flex;
+  align-items: center;
+}
+
+.darkDivider {
+  border: 0;
+  height: 1px;
+  background: #2A434E; /* Adjust color according to your preference */
+  background-image: linear-gradient(to right, #fff, rgba(42, 67, 78, 0.5));
+}
+
+.lightDivider {
+  border: 0;
+  height: 1px;
+  background: #fff; /* Adjust color according to your preference */
+  background-image: linear-gradient(to right, rgba(42, 67, 78, 0.5), #eee);
+}
