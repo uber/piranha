@@ -16,7 +16,15 @@ const sidebars = {
                 'reference/getting-started/demos',
             ],
         },
-        'reference/rules',
+        {
+            type: 'category',
+            label: 'Piranha DSL',
+            collapsed: false,
+            items: [
+                'reference/dsl/graphs',
+                'reference/dsl/rules',
+            ],
+        },
         'reference/api',
         'reference/cli',
         {

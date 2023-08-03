@@ -1,7 +1,7 @@
 ---
-id: rules
-label: Piranha DSL
-title: Piranha DSL
+id: graphs
+label: Graph Language
+title: Graph Language
 ---
 
 Piranha Polyglot uses a domain-specific language (DSL) to specify program transformations. The DSL is used to define rules, scopes, and edges between rules. 
