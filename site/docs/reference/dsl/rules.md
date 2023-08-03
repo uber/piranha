@@ -4,7 +4,7 @@ label: Rule Languages
 title: Rule Languages
 ---
 
-Piranha offers support for three distinct rule languages which allow for precise matching and replacement of code.
+Piranha offers support for three distinct rule languages for matching and replacement of code.
 
 # Tree-sitter Queries
 
