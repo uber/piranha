@@ -1,3 +1,7 @@
+Version 0.3.16
+-------------
+* Added concrete syntax as matching language
+
 Version 0.3.15
 -------------
 * Bug-fix in query validation
