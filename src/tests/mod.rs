@@ -33,6 +33,8 @@ mod test_piranha_go;
 mod test_piranha_ts;
 mod test_piranha_tsx;
 
+mod test_piranha_scala;
+
 mod test_piranha_thrift;
 
 mod test_piranha_scm;

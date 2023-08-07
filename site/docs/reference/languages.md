@@ -15,5 +15,6 @@ title: Languages supported
 | Python           | :heavy_check_mark:        | :calendar:                         | :calendar:                 |
 | TypeScript       | :heavy_check_mark:        | :calendar:                         | :calendar:                 |
 | TypeScript+React | :heavy_check_mark:        | :calendar:                         | :calendar:                 |
+| Scala            | :heavy_check_mark:        | :calendar:                         | :calendar:                 |
 | C#               | :calendar:                | :calendar:                         | :calendar:                 |
 | JavaScript       | :calendar:                | :calendar:                         | :calendar:                 |
