@@ -1,0 +1,5 @@
+[[rules]]
+name = "Replace + operator"
+query = "cs :[x] + :[y]"
+replace_node = "*"
+replace = "add(@x,@y)"
