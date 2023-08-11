@@ -1,9 +1,6 @@
 import argparse
 from update_imports import update_imports
 
-
-
-
 def _parse_args():
     parser = argparse.ArgumentParser(description="Migrates scala tests!!!")
     parser.add_argument(
