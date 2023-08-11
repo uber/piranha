@@ -1,3 +1,7 @@
+Version 0.3.17
+-------------
+* Add support for scala
+
 Version 0.3.16
 -------------
 * Added concrete syntax as matching language
