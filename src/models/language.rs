@@ -267,7 +267,9 @@ impl std::str::FromStr for PiranhaLanguage {
         language: tree_sitter_scala::language(),
         rules: None,
         edges: None,
-        scopes: vec![],
+        scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/scala/scope_config.toml"))
+          .scopes()
+          .to_vec(),
         comment_nodes: vec![],
       }),
       _ => Err("Language not supported"),
