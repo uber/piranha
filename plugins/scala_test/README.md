@@ -1,8 +1,15 @@
 # `scalatest` Migration Plugin 
 
 ## Usage: 
+
+Clone the repository - `git clone https://github.com/uber/piranha.git`
+
+Install the dependencies - `pip3 install -r plugins/scala_test/requirements.txt`
+
+Run the tool - `python3 plugins/scala_test/main.py -h`
+
+CLI: 
 ```
-python3 plugins/scala_test/main.py -h
 usage: main.py [-h] --path_to_codebase PATH_TO_CODEBASE
 
 Migrates scala tests!!!
