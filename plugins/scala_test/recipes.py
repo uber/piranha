@@ -1,42 +1,69 @@
-from polyglot_piranha import Rule, OutgoingEdges, RuleGraph, PiranhaArguments, execute_piranha
+from polyglot_piranha import (
+    Rule,
+    OutgoingEdges,
+    RuleGraph,
+    PiranhaArguments,
+    execute_piranha,
+)
+
 
 def replace_imports(
-    target_new_types: dict[str, str], search_heuristic: str, path_to_codebase: str,
-    dry_run = False
+    target_new_types: dict[str, str],
+    search_heuristic: str,
+    path_to_codebase: str,
+    dry_run=False,
 ):
+    """This function replaces the imports of the target types with the new types.
+    The search heuristic is used to find the files that contain the target types.
+
+    Args:
+        target_new_types (dict[str, str]): A dictionary from target type to new type (fully qualified names)
+        search_heuristic (str): The search heuristic to find the files that contain the target types
+        path_to_codebase (str): The path to the codebase
+        dry_run (bool, optional): True if the changes should not be written to disk. Defaults to False.
+
+    Returns:
+        _type_: A list of PiranhaOutput objects
+    """
     find_relevant_files = Rule(
         name="find_relevant_files",
-        query="((identifier) @x (#eq? @x \"@search_heuristic\"))",
+        query='((identifier) @x (#eq? @x "@search_heuristic"))',
         holes={"search_heuristic"},
     )
-    e1 = OutgoingEdges("find_relevant_files", to=[f"update_import"], scope="File")
+    find_relevant_files_andThen_update_import = OutgoingEdges(
+        "find_relevant_files", to=["update_import"], scope="File"
+    )
 
     rules = [find_relevant_files]
-    edges = [e1]
+    edges = [find_relevant_files_andThen_update_import]
 
     for target_type, new_type in target_new_types.items():
-        rs, es = replace_import_rules_edges(target_type, new_type)
+        rs, es = replace_import_rules_and_edges(target_type, new_type)
         rules.extend(rs)
         edges.extend(es)
 
     rule_graph = RuleGraph(rules=rules, edges=edges)
 
-    args= PiranhaArguments(
+    args = PiranhaArguments(
         language="scala",
         path_to_codebase=path_to_codebase,
         rule_graph=rule_graph,
         substitutions={"search_heuristic": f"{search_heuristic}"},
-        dry_run=dry_run
+        dry_run=dry_run,
     )
-    
+
     return execute_piranha(args)
-    
 
 
-def replace_import_rules_edges(
+def replace_import_rules_and_edges(
     target_qualified_type_name: str, new_qualified_type_name: str
 ) -> (list[Rule], list[OutgoingEdges]):
-
+    """This function generates the rules and edges to replace the imports of the target type with the new type.
+    It supports both simple and nested imports. While the simple imports are replaced directly, the nested imports are deleted and the new type is imported (as a simple non-nested import).
+    Assume that the target type is "a.b.c.d" and the new type is "x.y.z". Then the following rules are generated:
+    import a.b.c.d -> import x.y.z
+    import a.b.c.{d, e} -> import x.y.z \n import a.b.c.{d}
+    """
     name_components = target_qualified_type_name.split(".")
     type_name = name_components[-1]
 

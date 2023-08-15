@@ -15,9 +15,6 @@ polyglot_piranha = "*"
 [tool.poetry.dev-dependencies]
 pytest = "*"
 
-# [tool.poetry.scripts]
-# scala_test = "scala_test.main:main"
-
 [tool.poetry.scripts."scala_test"]
 main = "scala_test.main:main"
 

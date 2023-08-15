@@ -1,14 +1,11 @@
-from logging import debug, error
+from logging import error
 from pathlib import Path
-
 from os.path import join, basename
 from os import listdir
-
 from update_imports import update_imports
-# from update_imports import update_imports
 
 def test_update_imports():
-    summary = update_imports("plugins/scala_test/tests/resources/input/", dry_run=True)
+    summary = update_imports("plugins/scala_test/tests/resources/input/", "3.2.2", dry_run=True)
     assert is_as_expected("plugins/scala_test/tests/resources/", summary)
 
 def is_as_expected(path_to_scenario, output_summary):

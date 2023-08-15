@@ -11,5 +11,7 @@ IMPORT_MAPPING = {
     "org.scalatest.junit.AssertionsForJUnit": "org.scalatestplus.junit.AssertionsForJUnit",
 }
 
-def update_imports(path_to_codebase: str, dry_run = False):
-    return replace_imports(IMPORT_MAPPING, "scalatest", path_to_codebase, dry_run)
+def update_imports(path_to_codebase: str, scalatest_version,dry_run = False):
+    if scalatest_version == "3.2.2":
+        return replace_imports(IMPORT_MAPPING, "scalatest", path_to_codebase, dry_run)
+    raise Exception(f"Unsupported version: {scalatest_version}")
