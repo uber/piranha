@@ -68,6 +68,18 @@ func callerFunc() {
 
 // should not replace the function name
 func isFlagEnabledFunc() bool {
+
+    // Should not delete this comment and the func below
+    t.Run("message", func(t *Foobar.T) {
+        fmt.Println("some logging statement")
+    })
+
+    // Should not delete this comment and the func below
+    t.Run1(func(t *Foobar.T) {
+        fmt.Println("some other logging statement")
+    }, "other_message" )
+
+
     fmt.Println("not enabled")
     return false
 }
