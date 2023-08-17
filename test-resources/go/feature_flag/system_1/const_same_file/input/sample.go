@@ -87,6 +87,19 @@ func callerFunc() {
 
 // should not replace the function name
 func isFlagEnabledFunc() bool {
+    // Should not delete this comment and the func below
+    t.Run("message", func(t *Foobar.T) {
+        isFlgEnabled := exp.BoolValue(staleFlagConst)
+        fmt.Println("some logging statement")
+    })
+    
+    // Should not delete this comment and the func below
+    t.Run1(func(t *Foobar.T) {
+        isFlgEnabled1 := exp.BoolValue(staleFlagConst)
+        fmt.Println("some other logging statement")
+    }, "other_message" )
+
+
     isFlagEnabledFunc := exp.BoolValue(staleFlagConst)
 
     if !isFlagEnabledFunc {

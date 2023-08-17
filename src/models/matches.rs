@@ -126,9 +126,11 @@ impl Match {
       } else {
         current_node.prev_sibling()
       } {
-        let content = sibling.utf8_text(code.as_bytes()).unwrap();
-        // Check if the sibling is a comment
-        if !found_comma && content.trim().eq(",") {
+        // Check if the sibling is a comma
+        if !found_comma
+          && self.is_comma(code, &sibling)
+          && self.is_comma_safe_to_delete(&sibling, trailing)
+        {
           // Add the comma to the associated matches
           self.associated_comma = Some(sibling.range().into());
           current_node = sibling;
@@ -159,6 +161,37 @@ impl Match {
   fn is_comment(&self, kind: String, piranha_arguments: &PiranhaArguments) -> bool {
     *piranha_arguments.cleanup_comments()
       && piranha_arguments.language().comment_nodes().contains(&kind)
+  }
+  // Checks if the given node is a comma
+  fn is_comma(&self, code: &str, node: &Node) -> bool {
+    let content = node.utf8_text(code.as_bytes()).unwrap();
+    return content.trim().eq(",");
+  }
+
+  /// Checks whether it is safe to delete the provided comma node, by checking if
+  /// no neighbor node lies between the comma and the of nodes intended to be deleted.
+  ///
+  /// When `trailing` is true, it considers the previous node sibling (wrt the comma
+  /// Otherwise, it considers the next sibling (wrt the comma)
+  fn is_comma_safe_to_delete(&self, comma: &Node, trailing: bool) -> bool {
+    let (start_range, end_range) = self.get_first_and_last_associated_ranges();
+
+    if trailing {
+      if let Some(prev_node) = comma.prev_sibling() {
+        // Ensure that the previous node's end byte is not beyond the deleted node's end byte
+        if prev_node.end_byte() > end_range.end_byte {
+          return false;
+        }
+      }
+    } else if let Some(next_node) = comma.next_sibling() {
+      // Ensure that the next node's start byte is not before the deleted node's start byte
+      if next_node.start_byte() < start_range.start_byte {
+        return false;
+      }
+    }
+
+    // It is safe to delete the comma node
+    true
   }
 
   /// Checks if the given comment is safe to delete.
