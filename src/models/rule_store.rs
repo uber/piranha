@@ -143,19 +143,58 @@ impl RuleStore {
   /// Note that `WalkDir` traverses the directory with parallelism.
   /// If all the global rules have no holes (i.e. we will have no grep patterns), we will try to find a match for each global rule in every file in the target.
   pub(crate) fn get_relevant_files(
-    &self, path_to_codebase: &str, include: &Vec<Pattern>, exclude: &Vec<Pattern>,
+    &self, paths_to_codebase: &Vec<String>, include: &Vec<Pattern>, exclude: &Vec<Pattern>,
   ) -> HashMap<PathBuf, String> {
-    let _path_to_codebase = Path::new(path_to_codebase).to_path_buf();
+    let mut candidate_files: HashMap<PathBuf, String> = HashMap::new();
 
-    //If the path_to_codebase is a file, then execute piranha on it
-    if _path_to_codebase.is_file() {
-      return HashMap::from_iter([(
-        _path_to_codebase.clone(),
-        read_file(&_path_to_codebase).unwrap(),
-      )]);
+    for p2codebase in paths_to_codebase {
+      if !Path::new(p2codebase).exists() {
+        panic!("Path to codebase does not exist: {}", p2codebase);
+      }
+      let _paths_to_codebase = Path::new(p2codebase).to_path_buf();
+      // If the path to codebase is a file, and the language can parse it, then add it to the files
+      if _paths_to_codebase.is_file() && self.language().can_parse(&_paths_to_codebase) {
+        candidate_files.insert(
+          _paths_to_codebase.clone(),
+          read_file(&_paths_to_codebase).unwrap(),
+        );
+        continue;
+      }
+      candidate_files.extend(self.get_candidate_files_from_dir(p2codebase, include, exclude));
     }
 
-    let mut files: HashMap<PathBuf, String> = WalkDir::new(path_to_codebase)
+    // Filter the files based on the global rules with holes
+    let final_file_set = self.filter_files_based_on_global_rule_holes(candidate_files);
+
+    debug!(
+      "{}",
+      format!("{} files will be analyzed.", final_file_set.len()).green()
+    );
+    final_file_set
+  }
+
+  // If there are global rules with holes (grep patterns containing placeholders), filter files to find matches for those patterns in the target.
+  // Otherwise, report all the files in the target.
+  fn filter_files_based_on_global_rule_holes(
+    &self, candidate_files: HashMap<PathBuf, String>,
+  ) -> HashMap<PathBuf, String> {
+    if self.any_global_rules_has_holes() {
+      let pattern = self.get_grep_heuristics();
+      return candidate_files
+        .iter()
+        // Filter the files containing the desired regex pattern
+        .filter(|x| pattern.is_match(x.1.as_str()))
+        .map(|(x, y)| (x.clone(), y.clone()))
+        .collect();
+    }
+    candidate_files
+  }
+
+  /// Gets all the files from the code base that (i) have the language appropriate file extension, and (ii) satisfy include/exclude glob pattern
+  fn get_candidate_files_from_dir(
+    &self, p2codebase: &String, include: &Vec<Pattern>, exclude: &Vec<Pattern>,
+  ) -> HashMap<PathBuf, String> {
+    let mut _files: HashMap<PathBuf, String> = WalkDir::new(p2codebase)
       // walk over the entire code base
       .into_iter()
       // ignore errors
@@ -165,24 +204,10 @@ impl RuleStore {
       // filter out all excluded paths (if any)
       .filter(|f| exclude.is_empty() || exclude.iter().all(|p| !p.matches_path(&f.path())))
       // filter files with the desired extension
-      .filter(|de| self.language().can_parse(de))
+      .filter(|de| self.language().can_parse(&de.path()))
       // read the file
       .map(|f| (f.path(), read_file(&f.path()).unwrap()))
       .collect();
-
-    if self.any_global_rules_has_holes() {
-      let pattern = self.get_grep_heuristics();
-      files = files
-        .iter()
-        // Filter the files containing the desired regex pattern
-        .filter(|x| pattern.is_match(x.1.as_str()))
-        .map(|(x, y)| (x.clone(), y.clone()))
-        .collect();
-    }
-    debug!(
-      "{}",
-      format!("{} files will be analyzed.", files.len()).green()
-    );
-    files
+    _files
   }
 }
