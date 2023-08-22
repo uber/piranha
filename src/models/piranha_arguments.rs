@@ -51,7 +51,7 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_paths_to_codebase()")]
-  #[clap(short = 'c', long, num_args = 1.., required = true)]
+  #[clap(short = 'c', long, num_args = 0.., required = true)]
   paths_to_codebase: Vec<String>,
 
   /// Paths to include (as glob patterns)
