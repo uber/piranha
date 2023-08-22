@@ -556,7 +556,7 @@ replace_node = "identifier"
 holes = ["err"]
 is_seed_rule = false
 [[rules.filters]]
-enclosing_node = "(block) @block"
+enclosing_node = "[(function_declaration) (method_declaration)] @block"
 not_contains = ["""
 (
     [
