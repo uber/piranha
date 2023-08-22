@@ -133,6 +133,7 @@ impl Match {
         current_node.prev_sibling()
       } {
         // Check if the sibling is a comma
+
         if !self.found_comma() && self.is_comma_safe_to_delete(&sibling, code, trailing) {
           // Add the comma to the associated matches
           self.associated_comma = Some(sibling.range().into());
