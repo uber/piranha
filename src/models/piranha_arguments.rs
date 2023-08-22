@@ -51,7 +51,7 @@ pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
   #[builder(default = "default_paths_to_codebase()")]
-  #[clap(short = 'c', long, required = true)]
+  #[clap(short = 'c', long, num_args = 0.., required = true)]
   paths_to_codebase: Vec<String>,
 
   /// Paths to include (as glob patterns)
@@ -191,7 +191,7 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    language: String, paths_to_codebase: Vec<String>, include: Option<Vec<String>>,
+    language: String, paths_to_codebase: Option<Vec<String>>, include: Option<Vec<String>>,
     exclude: Option<Vec<String>>, substitutions: Option<&PyDict>,
     path_to_configurations: Option<String>, rule_graph: Option<RuleGraph>,
     code_snippet: Option<String>, dry_run: Option<bool>, cleanup_comments: Option<bool>,
@@ -208,7 +208,7 @@ impl PiranhaArguments {
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     PiranhaArgumentsBuilder::default()
-      .paths_to_codebase(paths_to_codebase)
+      .paths_to_codebase(paths_to_codebase.unwrap_or_else(default_paths_to_codebase))
       .include(
         include
           .unwrap_or_default()
