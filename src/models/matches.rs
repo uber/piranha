@@ -109,6 +109,14 @@ impl Match {
     self.get_associated_elements(node, code, piranha_arguments, false);
   }
 
+  fn found_comma(&self) -> bool {
+    self.associated_comma().is_some()
+  }
+
+  fn found_comment(&self) -> bool {
+    !self.associated_comments().is_empty()
+  }
+
   /// Get the associated elements for the match.
   /// We currently capture leading and trailing comments and commas.
   fn get_associated_elements(
@@ -116,8 +124,6 @@ impl Match {
   ) {
     let mut current_node = *node;
     let mut buf = *piranha_arguments.cleanup_comments_buffer();
-    let mut found_comment = !self.associated_comments().is_empty();
-    let mut found_comma = self.associated_comma().is_some();
     loop {
       // If we are looking for trailing elements, we start from the next sibling of the node
       // Else we start from the previous sibling of the node
@@ -127,20 +133,16 @@ impl Match {
         current_node.prev_sibling()
       } {
         // Check if the sibling is a comma
-        if !found_comma
-          && self.is_comma(code, &sibling)
-          && self.is_comma_safe_to_delete(&sibling, trailing)
-        {
+
+        if !self.found_comma() && self.is_comma_safe_to_delete(&sibling, code, trailing) {
           // Add the comma to the associated matches
           self.associated_comma = Some(sibling.range().into());
           current_node = sibling;
-          found_comma = true;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
         } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           // Add the comment to the associated matches
           self.associated_comments.push(sibling.range().into());
           current_node = sibling;
-          found_comment = true;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
         }
         break; // Break the inner loop
@@ -148,7 +150,7 @@ impl Match {
 
       let parent = current_node.parent();
       // If buf is <0 or we have found a comment and a comma, we break
-      if buf < 0 || (found_comma && found_comment) || parent.is_none() {
+      if buf < 0 || (self.found_comma() && self.found_comment()) || parent.is_none() {
         break; // Break the outer loop
       }
       current_node = parent.unwrap();
@@ -173,7 +175,10 @@ impl Match {
   ///
   /// When `trailing` is true, it considers the previous node sibling (wrt the comma
   /// Otherwise, it considers the next sibling (wrt the comma)
-  fn is_comma_safe_to_delete(&self, comma: &Node, trailing: bool) -> bool {
+  fn is_comma_safe_to_delete(&self, comma: &Node, code: &str, trailing: bool) -> bool {
+    if !self.is_comma(code, comma) {
+      return false;
+    }
     let (start_range, end_range) = self.get_first_and_last_associated_ranges();
 
     if trailing {
