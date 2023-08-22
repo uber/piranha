@@ -57,7 +57,7 @@ def thrift_demo():
     for k, v in error_code_mapping.items():
         args = PiranhaArguments(
             language="thrift",
-            path_to_codebase=file_path,
+            paths_to_codebase=[file_path],
             rule_graph=RuleGraph(rules=[r1], edges=[]),
             substitutions={"input_exception_name": k, "rpc_code": v}
         )

@@ -24,7 +24,7 @@ def test_piranha_rewrite():
             "treated": "true",
             "treated_complement": "false",
         },
-        path_to_codebase="test-resources/java/feature_flag_system_1/treated/input",
+        paths_to_codebase=["test-resources/java/feature_flag_system_1/treated/input"],
         dry_run=True,
     )
 
@@ -52,7 +52,7 @@ def test_piranha_match_only():
     args = PiranhaArguments(
         path_to_configurations="test-resources/java/structural_find_with_include_exclude/configurations",
         language="java",
-        path_to_codebase="test-resources/java/structural_find_with_include_exclude/input",
+        paths_to_codebase=["test-resources/java/structural_find_with_include_exclude/input"],
         dry_run=True,
         exclude=["*/folder_2_1/**/*"]
     )
@@ -122,7 +122,7 @@ import java.util.List;
         )
 
     args = PiranhaArguments(
-        path_to_codebase= "test-resources/java/insert_field_and_import/input",
+        paths_to_codebase=["test-resources/java/insert_field_and_import/input"],
         language="java",
         rule_graph = rule_graph,
         dry_run=True,
@@ -164,7 +164,7 @@ def test_delete_unused_field():
     )
 
     args = PiranhaArguments(
-        path_to_codebase= "test-resources/java/delete_unused_field/input",
+        paths_to_codebase=["test-resources/java/delete_unused_field/input"],
         language="java",
         rule_graph = rule_graph,
         dry_run=True,
