@@ -1,3 +1,8 @@
+Version 0.3.18
+-------------
+* Improve go feature flag cleanup
+* Fix bug related to leading/trailing comma
+
 Version 0.3.17
 -------------
 * Add support for scala
