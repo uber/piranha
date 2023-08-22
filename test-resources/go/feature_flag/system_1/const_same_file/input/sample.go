@@ -87,13 +87,13 @@ func callerFunc() {
 
 // should not replace the function name
 func isFlagEnabledFunc() bool {
-    // Should not delete this comment and the func below
+    // After deleting the assignment, this comment and the leading `func {...` is not deleted
     t.Run("message", func(t *Foobar.T) {
         isFlgEnabled := exp.BoolValue(staleFlagConst)
         fmt.Println("some logging statement")
     })
 
-    // Should not delete this comment and the func below
+    // After deleting the assignment, this comment and the trailing `},` is not deleted
     t.Run1(func(t *Foobar.T) {
         fmt.Println("some other logging statement")
         isFlgEnabled1 := exp.BoolValue(staleFlagConst)
