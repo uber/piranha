@@ -92,11 +92,11 @@ func isFlagEnabledFunc() bool {
         isFlgEnabled := exp.BoolValue(staleFlagConst)
         fmt.Println("some logging statement")
     })
-    
+
     // Should not delete this comment and the func below
     t.Run1(func(t *Foobar.T) {
-        isFlgEnabled1 := exp.BoolValue(staleFlagConst)
         fmt.Println("some other logging statement")
+        isFlgEnabled1 := exp.BoolValue(staleFlagConst)
     }, "other_message" )
 
 
