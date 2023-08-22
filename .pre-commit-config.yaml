@@ -57,7 +57,7 @@ repos:
         files: demo/
         exclude: only_lists.py
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.2" # Use the sha or tag you want to point at
+    rev: "v3.0.2"
     hooks:
       - id: prettier
         files: ^experimental/piranha_playground/

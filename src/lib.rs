@@ -122,7 +122,6 @@ impl Piranha {
 
     let temp_dir = if !self.piranha_arguments.code_snippet().is_empty() {
       let td = self.write_code_snippet_to_temp();
-      // let td_path = td.path().to_str().unwrap().to_string();
       paths_to_codebase = vec![td.path().to_str().unwrap_or_default().to_string()];
       Some(td)
     } else {

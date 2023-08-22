@@ -439,7 +439,6 @@ fn test_dyn_rule() {
 }
 
 #[test]
-
 fn test_multiple_code_bases() {
   initialize();
   let _path = PathBuf::from("test-resources")
@@ -457,6 +456,31 @@ fn test_multiple_code_bases() {
     .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
     .build();
   let output_summaries = execute_piranha(&piranha_arguments);
+  // Note that we expect 2 matches because we have 2 code bases, and each code base has 1 match.
+  // We also have another codebase `folder_3` but the `paths_to_codebase` does not include it.
   assert_eq!(output_summaries.len(), 2);
   assert_frequency_for_matches(&output_summaries, &HashMap::from([("match_import", 2)]));
+}
+
+#[test]
+#[should_panic(
+  expected = "Path to codebase does not exist: test-resources/java/structural_find_replace_multiple_code_bases/folder_0"
+)]
+fn test_incorrect_codebase_path() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("structural_find_replace_multiple_code_bases");
+  // Note that structural_find_replace_multiple_code_bases/folder_0 does not exist
+  let path_to_codebase1 = _path.join("folder_0").to_str().unwrap().to_string();
+  let rule = piranha_rule! {
+    name = "match_import",
+    query = "cs import java.util.List;"
+  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .language(PiranhaLanguage::from(JAVA))
+    .paths_to_codebase(vec![path_to_codebase1])
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .build();
+  _ = execute_piranha(&piranha_arguments);
 }
