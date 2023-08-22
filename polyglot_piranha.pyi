@@ -32,7 +32,7 @@ class PiranhaArguments:
     def __init__(
         self,
         language: str,
-        path_to_codebase: Optional[str] = None,
+        paths_to_codebase: Optional[List[str]] = None,
         include: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
         substitutions: Optional[dict] = None,
@@ -58,8 +58,8 @@ class PiranhaArguments:
         ------------
             language: str
                 the target language
-            path_to_codebase: str
-                Path to source code folder or file
+            paths_to_codebase: List[str]
+                Paths to source code folder or file
             keyword arguments: _
                  substitutions (dict): Substitutions to instantiate the initial set of rules
                  path_to_configurations (str): Directory containing the configuration files - `piranha_arguments.toml`, `rules.toml`, and  `edges.toml`

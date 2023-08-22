@@ -72,8 +72,8 @@ pub fn default_dry_run() -> bool {
   false
 }
 
-pub fn default_path_to_codebase() -> String {
-  String::new()
+pub fn default_paths_to_codebase() -> Vec<String> {
+  Vec::new()
 }
 
 pub fn default_code_snippet() -> String {

@@ -23,7 +23,7 @@ def run_java_ff_demo():
             "treated": "true",
             "treated_complement": "false",
         },
-        path_to_codebase=directory_path,
+        paths_to_codebase=[directory_path],
         path_to_configurations=configuration_path,
     )
     output_summary_java = execute_piranha(args)
@@ -56,7 +56,7 @@ def run_kt_ff_demo():
             "treated": "true",
             "treated_complement": "false",
         },
-        path_to_codebase=directory_path,
+        paths_to_codebase=[directory_path],
         path_to_configurations=configuration_path,
     )
 

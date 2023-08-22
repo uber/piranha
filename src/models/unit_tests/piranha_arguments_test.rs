@@ -35,7 +35,7 @@ fn piranha_argument_invalid_no_codebase_and_snippet() {
 fn piranha_argument_invalid_both_codebase_and_snippet() {
   let _ = PiranhaArgumentsBuilder::default()
     .path_to_configurations("some/path".to_string())
-    .path_to_codebase("dev/null".to_string())
+    .paths_to_codebase(vec!["dev/null".to_string()])
     .code_snippet("class A { }".to_string())
     .language(PiranhaLanguage::from(JAVA))
     .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
