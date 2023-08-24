@@ -1,3 +1,9 @@
+Version 0.3.18
+-------------
+* Improve go feature flag cleanup
+* Fix bug related to leading/trailing comma
+* Breaking change: the Piranha argument api now accepts a list of paths to source code (paths_to_codebase), as opposed to accepting just `path_to_codebase`
+
 Version 0.3.17
 -------------
 * Add support for scala

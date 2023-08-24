@@ -16,8 +16,8 @@ use super::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
     default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
     default_dry_run, default_exclude, default_global_tag_prefix, default_graph_validation,
-    default_include, default_number_of_ancestors_in_parent_scope, default_path_to_codebase,
-    default_path_to_configurations, default_path_to_output_summaries, default_piranha_language,
+    default_include, default_number_of_ancestors_in_parent_scope, default_path_to_configurations,
+    default_path_to_output_summaries, default_paths_to_codebase, default_piranha_language,
     default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
@@ -50,9 +50,9 @@ use std::collections::HashMap;
 pub struct PiranhaArguments {
   /// Path to source code folder or file
   #[get = "pub"]
-  #[builder(default = "default_path_to_codebase()")]
-  #[clap(short = 'c', long, required = true)]
-  path_to_codebase: String,
+  #[builder(default = "default_paths_to_codebase()")]
+  #[clap(short = 'c', long, num_args = 0.., required = true)]
+  paths_to_codebase: Vec<String>,
 
   /// Paths to include (as glob patterns)
   #[get = "pub"]
@@ -191,7 +191,7 @@ impl PiranhaArguments {
   /// Returns PiranhaArgument.
   #[new]
   fn py_new(
-    language: String, path_to_codebase: Option<String>, include: Option<Vec<String>>,
+    language: String, paths_to_codebase: Option<Vec<String>>, include: Option<Vec<String>>,
     exclude: Option<Vec<String>>, substitutions: Option<&PyDict>,
     path_to_configurations: Option<String>, rule_graph: Option<RuleGraph>,
     code_snippet: Option<String>, dry_run: Option<bool>, cleanup_comments: Option<bool>,
@@ -208,7 +208,7 @@ impl PiranhaArguments {
 
     let rg = rule_graph.unwrap_or_else(|| RuleGraphBuilder::default().build());
     PiranhaArgumentsBuilder::default()
-      .path_to_codebase(path_to_codebase.unwrap_or_else(default_path_to_codebase))
+      .paths_to_codebase(paths_to_codebase.unwrap_or_else(default_paths_to_codebase))
       .include(
         include
           .unwrap_or_default()
@@ -258,7 +258,7 @@ impl PiranhaArguments {
   pub fn from_cli() -> Self {
     let p = PiranhaArguments::parse();
     PiranhaArgumentsBuilder::default()
-      .path_to_codebase(p.path_to_codebase().to_string())
+      .paths_to_codebase(p.paths_to_codebase().clone())
       .substitutions(p.substitutions.clone())
       .language(p.language().clone())
       .path_to_configurations(p.path_to_configurations().to_string())
@@ -344,14 +344,14 @@ fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
 impl Validator for PiranhaArguments {
   fn validate(&self) -> Result<(), String> {
     let _arg: PiranhaArguments = self.clone();
-    if _arg.code_snippet().is_empty() && _arg.path_to_codebase().is_empty() {
+    if _arg.code_snippet().is_empty() && _arg.paths_to_codebase().is_empty() {
       return Err(
         "Invalid Piranha Argument. Missing `path_to_codebase` or `code_snippet`.
       Please specify the `path_to_codebase` or `code_snippet` when creating PiranhaArgument !!!"
           .to_string(),
       );
     }
-    if !_arg.code_snippet().is_empty() && !_arg.path_to_codebase().is_empty() {
+    if !_arg.code_snippet().is_empty() && !_arg.paths_to_codebase().is_empty() {
       return Err(
         "Invalid Piranha arguments. Please either specify the `path_to_codebase` or the `code_snippet`. Not Both."
             .to_string(),

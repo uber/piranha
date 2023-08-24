@@ -1,0 +1,3 @@
+[[rules]]
+name = "match_bool_value"
+query = "cs :[x].BoolValue(\":[y]\")"

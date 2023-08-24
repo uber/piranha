@@ -14,7 +14,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use glob::Pattern;
 
 use super::{
-  copy_folder_to_temp_dir, create_match_tests, create_rewrite_tests,
+  assert_frequency_for_matches, copy_folder_to_temp_dir, create_match_tests, create_rewrite_tests,
   execute_piranha_and_check_result, initialize, substitutions,
 };
 use crate::{
@@ -97,7 +97,7 @@ fn test_delete_method_invocation_argument_invalid() {
   let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(path_to_codebase)
+    .paths_to_codebase(vec![path_to_codebase])
     .path_to_configurations(path_to_configurations)
     .language(PiranhaLanguage::from(JAVA))
     .build();
@@ -117,7 +117,7 @@ fn test_scenarios_find_and_propagate_panic() {
   let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(path_to_codebase)
+    .paths_to_codebase(vec![path_to_codebase])
     .path_to_configurations(path_to_configurations)
     .language(PiranhaLanguage::from(JAVA))
     .build();
@@ -135,7 +135,7 @@ fn test_scenarios_find_and_propagate_invalid_substitutions_panic() {
   let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(path_to_codebase)
+    .paths_to_codebase(vec![path_to_codebase])
     .path_to_configurations(path_to_configurations)
     .language(PiranhaLanguage::from(JAVA))
     .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
@@ -207,7 +207,7 @@ fn _helper_user_option_delete_consecutive_lines(
   let temp_dir = copy_folder_to_temp_dir(&path_to_scenario.join("input"));
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
     .path_to_configurations(
       path_to_scenario
         .join("configurations")
@@ -292,7 +292,7 @@ fn test_consecutive_scope_level_rules() {
   }];
 
   let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
     .language(PiranhaLanguage::from(JAVA))
     .rule_graph(
       RuleGraphBuilder::default()
@@ -324,7 +324,7 @@ fn test_handle_syntactically_incorrect_tree() {
   };
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
     .language(PiranhaLanguage::from(JAVA))
     .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
     .allow_dirty_ast(true)
@@ -356,7 +356,7 @@ fn test_do_not_allow_syntactically_incorrect_tree() {
   };
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
     .language(PiranhaLanguage::from(JAVA))
     .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
     .build();
@@ -388,7 +388,7 @@ fn test_handle_syntactically_incorrect_tree_panic() {
   };
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
     .language(PiranhaLanguage::from(JAVA))
     .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
     .build();
@@ -408,7 +408,7 @@ fn test_incorrect_rule() {
   let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(path_to_codebase)
+    .paths_to_codebase(vec![path_to_codebase])
     .path_to_configurations(path_to_configurations)
     .language(PiranhaLanguage::from(JAVA))
     .build();
@@ -436,4 +436,51 @@ fn test_dyn_rule() {
   let output_summaries = execute_piranha(&piranha_arguments);
   // assert
   assert_eq!(output_summaries.len(), 1);
+}
+
+#[test]
+fn test_multiple_code_bases() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("structural_find_replace_multiple_code_bases");
+  let path_to_codebase1 = _path.join("folder_1").to_str().unwrap().to_string();
+  let path_to_codebase2 = _path.join("folder_2").to_str().unwrap().to_string();
+  let rule = piranha_rule! {
+    name = "match_import",
+    query = "cs import java.util.List;"
+  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .language(PiranhaLanguage::from(JAVA))
+    .paths_to_codebase(vec![path_to_codebase1, path_to_codebase2])
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .build();
+  let output_summaries = execute_piranha(&piranha_arguments);
+  // Note that we expect 2 matches because we have 2 code bases, and each code base has 1 match.
+  // We also have another codebase `folder_3` but the `paths_to_codebase` does not include it.
+  assert_eq!(output_summaries.len(), 2);
+  assert_frequency_for_matches(&output_summaries, &HashMap::from([("match_import", 2)]));
+}
+
+#[test]
+#[should_panic(
+  expected = "Path to codebase does not exist: test-resources/java/structural_find_replace_multiple_code_bases/folder_0"
+)]
+fn test_incorrect_codebase_path() {
+  initialize();
+  let _path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("structural_find_replace_multiple_code_bases");
+  // Note that structural_find_replace_multiple_code_bases/folder_0 does not exist
+  let path_to_codebase1 = _path.join("folder_0").to_str().unwrap().to_string();
+  let rule = piranha_rule! {
+    name = "match_import",
+    query = "cs import java.util.List;"
+  };
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .language(PiranhaLanguage::from(JAVA))
+    .paths_to_codebase(vec![path_to_codebase1])
+    .rule_graph(RuleGraphBuilder::default().rules(vec![rule]).build())
+    .build();
+  _ = execute_piranha(&piranha_arguments);
 }

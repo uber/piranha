@@ -12,7 +12,7 @@ def java_demo():
     args = PiranhaArguments(
         "java",
         substitutions={},
-        path_to_codebase=join(match_only_dir, "java"),
+        paths_to_codebase=[join(match_only_dir, "java")],
         path_to_configurations=join(match_only_dir, "java/configurations"),
     )
     output_summary_java = execute_piranha(args)
@@ -31,7 +31,7 @@ def go_demo():
     args = PiranhaArguments(
         "go",
         substitutions={},
-        path_to_codebase=join(match_only_dir, "go"),
+        paths_to_codebase=[join(match_only_dir, "go")],
         path_to_configurations=join(match_only_dir, "go/configurations"),
     )
     output_summary_go = execute_piranha(args)
@@ -49,7 +49,7 @@ def ts_demo():
     args = PiranhaArguments(
         "ts",
         substitutions={},
-        path_to_codebase=join(match_only_dir, "ts"),
+        paths_to_codebase=[join(match_only_dir, "ts")],
         path_to_configurations=join(match_only_dir, "ts/configurations"),
     )
     output_summary_typescript = execute_piranha(args)
@@ -67,7 +67,7 @@ def tsx_demo():
     args = PiranhaArguments(
         "tsx",
         substitutions={},
-        path_to_codebase=join(match_only_dir, "tsx"),
+        paths_to_codebase=[join(match_only_dir, "tsx")],
         path_to_configurations=join(match_only_dir, "tsx/configurations"),
     )
     output_summary_typescript = execute_piranha(args)

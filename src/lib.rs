@@ -118,11 +118,11 @@ impl Piranha {
 
     let mut parser = piranha_args.language().parser();
 
-    let mut path_to_codebase = self.piranha_arguments.path_to_codebase().to_string();
+    let mut paths_to_codebase = self.piranha_arguments.paths_to_codebase().clone();
 
     let temp_dir = if !self.piranha_arguments.code_snippet().is_empty() {
       let td = self.write_code_snippet_to_temp();
-      path_to_codebase = td.path().to_str().unwrap_or_default().to_string();
+      paths_to_codebase = vec![td.path().to_str().unwrap_or_default().to_string()];
       Some(td)
     } else {
       None
@@ -137,7 +137,7 @@ impl Piranha {
       // Iterate over each file containing the usage of the feature flag API
 
       for (path, content) in self.rule_store.get_relevant_files(
-        &path_to_codebase,
+        &paths_to_codebase,
         piranha_args.include(),
         piranha_args.exclude(),
       ) {

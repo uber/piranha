@@ -25,7 +25,7 @@ def swift_demo():
             "stale_flag_name": "test_second_experiment",
         },
         path_to_configurations=configuration_path,
-        path_to_codebase=file_path,
+        paths_to_codebase=[file_path],
         cleanup_comments=True,
     )
 
@@ -56,7 +56,7 @@ def java_demo():
             "stale_flag_name": "STALE_FLAG",
         },
         path_to_configurations=configuration_path,
-        path_to_codebase=file_path,
+        paths_to_codebase=[file_path],
         cleanup_comments=True,
     )
 

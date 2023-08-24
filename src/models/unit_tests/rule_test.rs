@@ -113,7 +113,7 @@ fn test_get_edit_positive_recursive() {
   let mut rule_store = RuleStore::default();
 
   let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .build();
   let mut parser = args.language().parser();
 
@@ -173,7 +173,7 @@ fn test_get_edit_negative_recursive() {
   let mut rule_store = RuleStore::default();
 
   let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .build();
   let mut parser = args.language().parser();
 
@@ -214,7 +214,7 @@ fn test_get_edit_for_context_positive() {
 
   let mut rule_store = RuleStore::default();
   let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .build();
   let mut parser = args.language().parser();
 
@@ -255,7 +255,7 @@ fn test_get_edit_for_context_negative() {
   let mut rule_store = RuleStore::default();
 
   let args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .build();
   let mut parser = args.language().parser();
 
@@ -302,7 +302,7 @@ fn run_test_satisfies_filters_not_enclosing_node(
   let java = PiranhaLanguage::from(JAVA);
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
