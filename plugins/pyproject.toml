@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry]
+name = "scala_test"
+version = "0.0.1"
+description = "Rules to migrate 'scaletest'"
+# Add any other metadata you need
+
+[tool.poetry.dependencies]
+python = "^3.9"
+polyglot_piranha = "*"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+
+[tool.poetry.scripts."scala_test"]
+main = "scala_test.main:main"
+
+[tool.poetry.scripts."pytest"]
+main = "pytest"

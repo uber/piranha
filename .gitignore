@@ -23,6 +23,7 @@ target
 Cargo.lock
 tmp_test*
 env/
+**.egg-info
 
 
 # Dependencies
