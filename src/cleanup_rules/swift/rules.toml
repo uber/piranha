@@ -1175,12 +1175,13 @@ query = """(
         (_)+ @extras
     )
 )"""
-groups = ["if_cleanup"]
+groups = ["post_processing_cleanup"]
 replace_node = "extras"
 replace = ""
 is_seed_rule = false
 [[rules.filters]]
 not_contains = ["(directive) @d"]
+enclosing_node = "(function_declaration) @crfd"
 
 # Dummy rule that acts as a junction for all boolean based cleanups
 # Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
