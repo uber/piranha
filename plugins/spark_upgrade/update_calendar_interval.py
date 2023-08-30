@@ -51,5 +51,4 @@ def update_CalendarInterval(paths_to_codebase: List[str]):
         allow_dirty_ast=True,
     )
 
-    print("Hey")
     return execute_piranha(args)

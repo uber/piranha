@@ -14,7 +14,6 @@ def _parse_args():
     )
     parser.add_argument(
         "--new_version",
-        required=True,
         default="3.3",
         help="Version of `Spark` to update to.",
     )
