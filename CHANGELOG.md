@@ -1,3 +1,8 @@
+Version 0.3.19
+-------------
+* Fix swift cleanup of statements after return 
+* Introduce spark3 upgrade plugin 
+
 Version 0.3.18
 -------------
 * Improve go feature flag cleanup
