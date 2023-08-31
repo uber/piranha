@@ -1,3 +1,7 @@
+Version 0.3.19
+-------------
+* Fix swift cleanup of statements after return 
+
 Version 0.3.18
 -------------
 * Improve go feature flag cleanup
