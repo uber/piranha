@@ -29,7 +29,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 def test_update_CalendarInterval():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/update_calendar_interval/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/update_calendar_interval/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -42,7 +41,6 @@ def test_update_CalendarInterval():
 def test_update_IDFModelSignatureChange():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/idf_model_signature_change/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/idf_model_signature_change/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -54,7 +52,6 @@ def test_update_IDFModelSignatureChange():
 def test_update_accessing_execution_plan():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/accessing_execution_plan/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/accessing_execution_plan/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -66,7 +63,6 @@ def test_update_accessing_execution_plan():
 def test_update_gradient_boost_trees():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/gradient_boost_trees/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/gradient_boost_trees/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -78,7 +74,6 @@ def test_update_gradient_boost_trees():
 def test_update_calculator_signature_change():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/calculator_signature_change/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/calculator_signature_change/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -90,7 +85,6 @@ def test_update_calculator_signature_change():
 def test_sql_new_execution():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/sql_new_execution/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/sql_new_execution/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -102,7 +96,6 @@ def test_sql_new_execution():
 def test_query_test_check_answer_change():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/query_test_check_answer_change/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/query_test_check_answer_change/"
-    logging.info("Here")
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
