@@ -11,7 +11,7 @@
  limitations under the License.
 */
 
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 use getset::Getters;
 use serde_derive::Deserialize;
@@ -91,8 +91,8 @@ impl PiranhaLanguage {
     parser
   }
 
-  pub(crate) fn can_parse(&self, de: &jwalk::DirEntry<((), ())>) -> bool {
-    de.path()
+  pub(crate) fn can_parse(&self, path: &PathBuf) -> bool {
+    path
       .extension()
       .and_then(|e| e.to_str().filter(|x| x.eq(&self.extension())))
       .is_some()
@@ -267,7 +267,9 @@ impl std::str::FromStr for PiranhaLanguage {
         language: tree_sitter_scala::language(),
         rules: None,
         edges: None,
-        scopes: vec![],
+        scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/scala/scope_config.toml"))
+          .scopes()
+          .to_vec(),
         comment_nodes: vec![],
       }),
       _ => Err("Language not supported"),

@@ -47,7 +47,7 @@ fn execute_piranha_with_default_swift_args(scenario: &str, substitutions: Vec<(S
   let _path = PathBuf::from("test-resources").join(SWIFT).join(scenario);
   let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
   let piranha_arguments = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
     .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
     .language(PiranhaLanguage::from(SWIFT))
     .cleanup_comments(true)

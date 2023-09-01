@@ -75,7 +75,6 @@ scope = "Parent"
 from = "boolean_literal_cleanup"
 to = [
   "variable_inline_cleanup",
-  "delete_all_statements_after_return",
   "boolean_expression_simplify",
   "statement_cleanup",
 ]
@@ -88,7 +87,7 @@ to = ["boolean_literal_cleanup"]
 [[edges]]
 scope = "File"
 from = "statement_cleanup"
-to = ["if_cleanup"]
+to = ["post_processing_cleanup", "if_cleanup"]
 
 [[edges]]
 scope = "Parent"

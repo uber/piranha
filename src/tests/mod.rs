@@ -104,9 +104,8 @@ fn execute_piranha_and_check_result(
   piranha_arguments: &PiranhaArguments, path_to_expected: &Path, files_changed: usize,
   ignore_whitespace: bool,
 ) {
-  let path_to_codebase = Path::new(piranha_arguments.path_to_codebase());
+  let path_to_codebase = Path::new(piranha_arguments.paths_to_codebase().first().unwrap());
   let output_summaries = execute_piranha(piranha_arguments);
-
   assert_eq!(output_summaries.len(), files_changed);
 
   let mut all_files_match = true;
@@ -179,10 +178,10 @@ macro_rules! create_match_tests {
     fn $test_name() {
       super::initialize();
       let _path= std::path::PathBuf::from("test-resources").join($language).join($path_to_test);
-      let path_to_codebase = _path.join("input").to_str().unwrap().to_string();
+      let paths_to_codebase = vec![_path.join("input").to_str().unwrap().to_string()];
       let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
       let piranha_arguments =  $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
-        .path_to_codebase(path_to_codebase)
+        .paths_to_codebase(paths_to_codebase)
         .path_to_configurations(path_to_configurations)
         .language($crate::models::language::PiranhaLanguage::from($language))
         $(
@@ -225,7 +224,7 @@ macro_rules! create_rewrite_tests {
       let temp_dir= super::copy_folder_to_temp_dir(&_path.join("input"));
 
       let piranha_arguments =  $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
-        .path_to_codebase(temp_dir.path().to_str().unwrap().to_string())
+        .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
         .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())
         .language($crate::models::language::PiranhaLanguage::from($language))
         $(
