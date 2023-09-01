@@ -32,7 +32,7 @@ class AccessingExecutionPlan(ExecutePiranha):
             name="accessing_execution_plan",
             query="cs :[dataframe].queryExecution.executedPlan",
             replace_node="*",
-            replace="@dataframe.queryExecution.executedPlan.collect",
+            replace="@dataframe.queryExecution.executedPlan.asInstanceOf[AdaptiveSparkPlanExec].initialPlan",
             holes={"queryExec", "execPlan"},
         )
         return [transform_IDFModel_args]
