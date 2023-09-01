@@ -154,7 +154,7 @@ class CodebaseRefactorer:
             arguments = flatten_dict_list(arguments)
             args = PiranhaArguments(
                 language=self.language,
-                path_to_codebase=self.path_to_codebase,
+                paths_to_codebase=[self.path_to_codebase],
                 rule_graph=rule_graph.to_graph(),
                 dry_run=dry_run,
                 **arguments,

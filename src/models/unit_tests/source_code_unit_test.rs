@@ -41,7 +41,7 @@ impl SourceCodeUnit {
       &HashMap::new(),
       PathBuf::new().as_path(),
       &PiranhaArgumentsBuilder::default()
-        .path_to_codebase("some/test/path/".to_string())
+        .paths_to_codebase(vec!["some/test/path/".to_string()])
         .language(PiranhaLanguage::from(language_name.as_str()))
         .build(),
     )
@@ -156,7 +156,7 @@ fn run_test_satisfies_filters(
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -316,7 +316,7 @@ fn test_satisfies_filters_not_contains_positive() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -381,7 +381,7 @@ fn test_satisfies_filters_not_contains_negative() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -456,7 +456,7 @@ fn test_satisfies_filters_child_count() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -527,7 +527,7 @@ fn test_satisfies_filters_sibling_count() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -578,7 +578,7 @@ fn run_test_satisfies_filters_without_enclosing(
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_args = PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(
@@ -679,7 +679,7 @@ fn test_satisfies_outermost_enclosing_node() {
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
   let piranha_arguments = &PiranhaArgumentsBuilder::default()
-    .path_to_codebase(UNUSED_CODE_PATH.to_string())
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(java)
     .build();
   let source_code_unit = SourceCodeUnit::new(

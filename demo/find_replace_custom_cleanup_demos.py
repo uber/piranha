@@ -28,7 +28,7 @@ def java_demo():
             "input_type_name": "ArrayList",
         },
         path_to_configurations=configuration_path,
-        path_to_codebase=directory_path,
+        paths_to_codebase=[directory_path],
     )
     _ = execute_piranha(args)
 
@@ -62,7 +62,7 @@ def python_demo():
             "str_replacement": "dependency1_1"
         },
         path_to_configurations=configuration_path,
-        path_to_codebase=directory_path,
+        paths_to_codebase=[directory_path],
     )
     _ = execute_piranha(args)
 
