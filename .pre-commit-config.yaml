@@ -26,7 +26,7 @@ repos:
       - id: cargo-clippy
         name: cargo clippy
         language: system
-        entry: bash -c 'cargo clippy --fix --allow-staged --allow-dirty'
+        entry: bash -c 'cargo clippy --fix --allow-staged'
         types: [rust]
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
