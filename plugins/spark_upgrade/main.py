@@ -15,6 +15,7 @@ import logging
 from update_calendar_interval import UpdateCalendarInterval
 from IDF_model_signature_change import IDFModelSignatureChange
 from accessing_execution_plan import AccessingExecutionPlan
+from gradient_boost_trees import GradientBoostTrees
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -54,6 +55,8 @@ def upgrade_to_spark_3_3(path_to_codebase):
     accessing_execution_plan = AccessingExecutionPlan([path_to_codebase])
     _ = accessing_execution_plan()
 
-
+    gradient_boost_trees = GradientBoostTrees([path_to_codebase])
+    _ = gradient_boost_trees()
+    
 if __name__ == "__main__":
     main()

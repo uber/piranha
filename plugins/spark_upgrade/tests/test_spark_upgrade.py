@@ -16,6 +16,7 @@ from tempfile import TemporaryDirectory
 from update_calendar_interval import UpdateCalendarInterval
 from IDF_model_signature_change import IDFModelSignatureChange
 from accessing_execution_plan import AccessingExecutionPlan
+from gradient_boost_trees import GradientBoostTrees
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -58,6 +59,18 @@ def test_update_accessing_execution_plan():
         summary = accessing_execution_plan()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp) 
+        
+def test_update_gradient_boost_trees():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/gradient_boost_trees/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/gradient_boost_trees/"
+    logging.info("Here")
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        gradient_boost_trees = GradientBoostTrees([tp])
+        summary = gradient_boost_trees()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
 
 
 def remove_whitespace(input_str):
