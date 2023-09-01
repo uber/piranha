@@ -17,6 +17,7 @@ from update_calendar_interval import UpdateCalendarInterval
 from IDF_model_signature_change import IDFModelSignatureChange
 from accessing_execution_plan import AccessingExecutionPlan
 from gradient_boost_trees import GradientBoostTrees
+from calculator_signature_change import CalculatorSignatureChange
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -72,6 +73,17 @@ def test_update_gradient_boost_trees():
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
+def test_update_calculator_signature_change():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/calculator_signature_change/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/calculator_signature_change/"
+    logging.info("Here")
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        calculator_signature_change = CalculatorSignatureChange([tp])
+        summary = calculator_signature_change()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
 
 def remove_whitespace(input_str):
     """Removes all the whitespace from the string.
