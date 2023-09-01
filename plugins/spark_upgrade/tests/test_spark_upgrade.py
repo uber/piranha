@@ -19,6 +19,7 @@ from accessing_execution_plan import AccessingExecutionPlan
 from gradient_boost_trees import GradientBoostTrees
 from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
+from query_test_check_answer_change import QueryTestCheckAnswerChange
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -95,6 +96,18 @@ def test_sql_new_execution():
         copy_dir(input_codebase, tp)
         sql_new_execution = SQLNewExecutionChange([tp])
         summary = sql_new_execution()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
+        
+def test_query_test_check_answer_change():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/query_test_check_answer_change/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/query_test_check_answer_change/"
+    logging.info("Here")
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        query_test_check_answer_change = QueryTestCheckAnswerChange([tp])
+        summary = query_test_check_answer_change()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 

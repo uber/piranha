@@ -18,6 +18,7 @@ from accessing_execution_plan import AccessingExecutionPlan
 from gradient_boost_trees import GradientBoostTrees
 from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
+from query_test_check_answer_change import QueryTestCheckAnswerChange
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -65,6 +66,9 @@ def upgrade_to_spark_3_3(path_to_codebase):
     
     sql_new_execution = SQLNewExecutionChange([path_to_codebase])
     _ = sql_new_execution()
+    
+    query_test_check_answer_change = QueryTestCheckAnswerChange([path_to_codebase])
+    _ = query_test_check_answer_change()
     
 if __name__ == "__main__":
     main()
