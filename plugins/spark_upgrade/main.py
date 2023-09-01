@@ -17,6 +17,7 @@ from IDF_model_signature_change import IDFModelSignatureChange
 from accessing_execution_plan import AccessingExecutionPlan
 from gradient_boost_trees import GradientBoostTrees
 from calculator_signature_change import CalculatorSignatureChange
+from sql_new_execution import SQLNewExecutionChange
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -61,6 +62,9 @@ def upgrade_to_spark_3_3(path_to_codebase):
     
     calculator_signature_change = CalculatorSignatureChange([path_to_codebase])
     _ = calculator_signature_change()
+    
+    sql_new_execution = SQLNewExecutionChange([path_to_codebase])
+    _ = sql_new_execution()
     
 if __name__ == "__main__":
     main()
