@@ -15,6 +15,7 @@ from os import walk
 from tempfile import TemporaryDirectory
 from update_calendar_interval import UpdateCalendarInterval
 from IDF_model_signature_change import IDFModelSignatureChange
+from accessing_execution_plan import AccessingExecutionPlan
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -28,7 +29,6 @@ def test_update_CalendarInterval():
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
-        
         update_calendar_interval = UpdateCalendarInterval([tp])
         summary = update_calendar_interval()
         assert summary is not None
@@ -42,13 +42,22 @@ def test_update_IDFModelSignatureChange():
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
-                
         idf_model_signature_change = IDFModelSignatureChange([tp])
         summary = idf_model_signature_change()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp) 
         
-          
+def test_update_accessing_execution_plan():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/accessing_execution_plan/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/accessing_execution_plan/"
+    logging.info("Here")
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        accessing_execution_plan = AccessingExecutionPlan([tp])
+        summary = accessing_execution_plan()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp) 
 
 
 def remove_whitespace(input_str):

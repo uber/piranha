@@ -14,6 +14,7 @@ import logging
 
 from update_calendar_interval import UpdateCalendarInterval
 from IDF_model_signature_change import IDFModelSignatureChange
+from accessing_execution_plan import AccessingExecutionPlan
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -49,6 +50,9 @@ def upgrade_to_spark_3_3(path_to_codebase):
     
     idf_model_signature_change = IDFModelSignatureChange([path_to_codebase])
     _ = idf_model_signature_change()
+    
+    accessing_execution_plan = AccessingExecutionPlan([path_to_codebase])
+    _ = accessing_execution_plan()
 
 
 if __name__ == "__main__":
