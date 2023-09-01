@@ -84,8 +84,8 @@ fn test_no_match() {
 fn test_trailing_comma() {
   run_test(
     "a.foo(x, // something about the first argument
-                 y, // something about the second argument
-                );",
+           y, // something about the second argumet
+           );",
     ":[var].foo(:[arg1], :[arg2])",
     1,
     vec![vec![("var", "a"), ("arg1", "x"), ("arg2", "y")]],
