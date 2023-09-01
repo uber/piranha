@@ -148,6 +148,12 @@ pub(crate) fn get_matches_for_node(
       let current_node_code = current_node.utf8_text(source_code).unwrap();
       find_next_sibling(&mut tmp_cursor);
 
+      let next_node = tmp_cursor.node();
+      let next_node_text = next_node.utf8_text(source_code).unwrap();
+      if next_node_text == "," && !meta_advanced.0.starts_with(',') {
+        find_next_sibling(&mut tmp_cursor); // Skip comma
+      }
+
       if let (mut recursive_matches, true) =
         get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
       {
