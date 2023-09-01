@@ -10,9 +10,10 @@
 #  limitations under the License.
  
 import argparse
+import logging
 
 from update_calendar_interval import UpdateCalendarInterval
-
+from IDF_model_signature_change import IDFModelSignatureChange
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -32,6 +33,10 @@ def _parse_args():
     return args
 
 
+FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(logging.DEBUG)
+
 def main():
     args = _parse_args()
     if args.new_version == "3.3":
@@ -40,7 +45,10 @@ def main():
 
 def upgrade_to_spark_3_3(path_to_codebase):
     update_calendar_interval = UpdateCalendarInterval([path_to_codebase])
-    summary = update_calendar_interval()
+    _ = update_calendar_interval()
+    
+    idf_model_signature_change = IDFModelSignatureChange([path_to_codebase])
+    _ = idf_model_signature_change()
 
 
 if __name__ == "__main__":
