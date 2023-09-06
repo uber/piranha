@@ -13,12 +13,14 @@
 
 use crate::models::capture_group_patterns::ConcreteSyntax;
 use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
+use crate::models::default_configs::GO;
 use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
 
 fn run_test(
   code: &str, pattern: &str, expected_matches: usize, expected_vars: Vec<Vec<(&str, &str)>>,
+  language: &str,
 ) {
-  let java = PiranhaLanguage::from(JAVA);
+  let java = PiranhaLanguage::from(language);
   let mut parser = java.parser();
   let tree = parser.parse(code.as_bytes(), None).unwrap();
   let meta = ConcreteSyntax(String::from(pattern));
@@ -49,6 +51,7 @@ fn test_single_match() {
     "public int :[name] = :[value];",
     1,
     vec![vec![("name", "a"), ("value", "10")]],
+    JAVA,
   );
 }
 
@@ -62,6 +65,7 @@ fn test_multiple_match() {
       vec![("name", "a"), ("value", "10")],
       vec![("name", "b"), ("value", "20")],
     ],
+    JAVA,
   );
 }
 
@@ -72,5 +76,19 @@ fn test_no_match() {
     "public String :[name] = :[value];",
     0,
     vec![],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_trailing_comma() {
+  run_test(
+    "a.foo(x, // something about the first argument
+           y, // something about the second argumet
+           );",
+    ":[var].foo(:[arg1], :[arg2])",
+    2,
+    vec![vec![("var", "a"), ("arg1", "x"), ("arg2", "y")]],
+    GO,
   );
 }
