@@ -13,8 +13,13 @@ import logging
 from pathlib import Path
 from os import walk
 from tempfile import TemporaryDirectory
-
 from update_calendar_interval import UpdateCalendarInterval
+from IDF_model_signature_change import IDFModelSignatureChange
+from accessing_execution_plan import AccessingExecutionPlan
+from gradient_boost_trees import GradientBoostTrees
+from calculator_signature_change import CalculatorSignatureChange
+from sql_new_execution import SQLNewExecutionChange
+from query_test_check_answer_change import QueryTestCheckAnswerChange
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -22,20 +27,82 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 
 def test_update_CalendarInterval():
-    logging.error("Here")
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/"
-    logging.info("Here")
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/update_calendar_interval/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/update_calendar_interval/"
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
-        logging.info("Here")
         copy_dir(input_codebase, tp)
-        logging.info("Here")
         update_calendar_interval = UpdateCalendarInterval([tp])
         summary = update_calendar_interval()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
+        
+def test_update_IDFModelSignatureChange():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/idf_model_signature_change/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/idf_model_signature_change/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        idf_model_signature_change = IDFModelSignatureChange([tp])
+        summary = idf_model_signature_change()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp) 
+        
+def test_update_accessing_execution_plan():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/accessing_execution_plan/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/accessing_execution_plan/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        accessing_execution_plan = AccessingExecutionPlan([tp])
+        summary = accessing_execution_plan()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp) 
+        
+def test_update_gradient_boost_trees():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/gradient_boost_trees/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/gradient_boost_trees/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        gradient_boost_trees = GradientBoostTrees([tp])
+        summary = gradient_boost_trees()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
+
+def test_update_calculator_signature_change():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/calculator_signature_change/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/calculator_signature_change/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        calculator_signature_change = CalculatorSignatureChange([tp])
+        summary = calculator_signature_change()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
+
+def test_sql_new_execution():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/sql_new_execution/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/sql_new_execution/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        sql_new_execution = SQLNewExecutionChange([tp])
+        summary = sql_new_execution()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
+        
+def test_query_test_check_answer_change():
+    input_codebase = "plugins/spark_upgrade/tests/resources/input/query_test_check_answer_change/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/query_test_check_answer_change/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        query_test_check_answer_change = QueryTestCheckAnswerChange([tp])
+        summary = query_test_check_answer_change()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
 
 def remove_whitespace(input_str):
     """Removes all the whitespace from the string.
