@@ -6,6 +6,11 @@ Upgrades your codebase to Spark 3.3
 Currently, it updates to [v.3.3](https://spark.apache.org/releases/spark-release-3-3-0.html) only.
 Supported rewrites: 
 * `CalendarInterval` -> `DateTimeConstants`
+* Updates execution plan access
+* `Calculator` signature change
+* `GradientBoostTrees` api change
+* Update `SQLExecution.withNewExecutionId`
+* Update `QueryTest.CheckAnswer`
 
 
 
