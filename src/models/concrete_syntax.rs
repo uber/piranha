@@ -17,6 +17,7 @@ use regex::Regex;
 
 use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
+use tree_sitter_traversal::Cursor;
 
 use crate::models::capture_group_patterns::ConcreteSyntax;
 use crate::models::matches::Match;
@@ -128,7 +129,13 @@ pub(crate) fn get_matches_for_node(
     );
   }
 
-  let node = cursor.node();
+  let mut node = cursor.node();
+
+  // Skip comment nodes always
+  while node.kind().contains("comment") && cursor.goto_next_sibling() {
+    node = cursor.node();
+  }
+
   // In case the template starts with :[var_name], we try match
   if let Some(caps) = RE_VAR.captures(match_template) {
     let var_name = &caps["var_name"];
@@ -147,6 +154,15 @@ pub(crate) fn get_matches_for_node(
       let current_node = cursor.node();
       let current_node_code = current_node.utf8_text(source_code).unwrap();
       find_next_sibling(&mut tmp_cursor);
+
+      // Support for trailing commas
+      // This skips trailing commas as we are parsing through the match template
+      // Skips the comma node if the template doesn't contain it.
+      let next_node = tmp_cursor.node();
+      let next_node_text = next_node.utf8_text(source_code).unwrap();
+      if next_node_text == "," && !meta_advanced.0.starts_with(',') {
+        find_next_sibling(&mut tmp_cursor); // Skip comma
+      }
 
       if let (mut recursive_matches, true) =
         get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
