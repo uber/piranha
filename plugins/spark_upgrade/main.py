@@ -10,9 +10,15 @@
 #  limitations under the License.
  
 import argparse
+import logging
 
 from update_calendar_interval import UpdateCalendarInterval
-
+from IDF_model_signature_change import IDFModelSignatureChange
+from accessing_execution_plan import AccessingExecutionPlan
+from gradient_boost_trees import GradientBoostTrees
+from calculator_signature_change import CalculatorSignatureChange
+from sql_new_execution import SQLNewExecutionChange
+from query_test_check_answer_change import QueryTestCheckAnswerChange
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -32,6 +38,10 @@ def _parse_args():
     return args
 
 
+FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
+logging.basicConfig(format=FORMAT)
+logging.getLogger().setLevel(logging.DEBUG)
+
 def main():
     args = _parse_args()
     if args.new_version == "3.3":
@@ -40,8 +50,25 @@ def main():
 
 def upgrade_to_spark_3_3(path_to_codebase):
     update_calendar_interval = UpdateCalendarInterval([path_to_codebase])
-    summary = update_calendar_interval()
+    _ = update_calendar_interval()
+    
+    idf_model_signature_change = IDFModelSignatureChange([path_to_codebase])
+    _ = idf_model_signature_change()
+    
+    accessing_execution_plan = AccessingExecutionPlan([path_to_codebase])
+    _ = accessing_execution_plan()
 
-
+    gradient_boost_trees = GradientBoostTrees([path_to_codebase])
+    _ = gradient_boost_trees()
+    
+    calculator_signature_change = CalculatorSignatureChange([path_to_codebase])
+    _ = calculator_signature_change()
+    
+    sql_new_execution = SQLNewExecutionChange([path_to_codebase])
+    _ = sql_new_execution()
+    
+    query_test_check_answer_change = QueryTestCheckAnswerChange([path_to_codebase])
+    _ = query_test_check_answer_change()
+    
 if __name__ == "__main__":
     main()
