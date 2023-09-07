@@ -26,6 +26,7 @@ class TemplateParser:
         "go": "comment",
         "kt": "comment",
         "swift": "comment",
+        "tsx":"comment"
     }
     template_holes = attr.ib(default=attr.Factory(dict))
 
