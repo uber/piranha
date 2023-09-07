@@ -17,57 +17,39 @@ class XPFlagCleanerPositiveCases {
 
   private ExperimentInterface experimentation;
 
-  private boolean ftBool = experimentation.isStaleFeature().getCachedValue();
+  
 
   public void conditional_contains_stale_flag() {
 
-    if (experimentation.isStaleFeature().getCachedValue()) {
-      System.out.println("Hello World");
-    }
+    System.out.println("Hello World");
   }
 
   public void conditional_with_else_contains_stale_flag() {
 
-    if (experimentation.isStaleFeature().getCachedValue()) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    System.out.println("Hello World");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool() {
 
-    bool tBool = exp.isStaleFeature().getCachedValue();
-    if (tBool && true) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    
+    System.out.println("Hello World");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a) {
 
-    bool tBool = exp.isStaleFeature().getCachedValue();
-    if (tBool && true) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    
+    System.out.println("Hello World");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool(int a, bool abc) {
 
-    bool tBool = exp.isStaleFeature().getCachedValue();
-    if (!tBool && true) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    
+    System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned(int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
-    bool tBool = exp.isStaleFeature().getCachedValue();
+    bool tBool = true;
     tBool = abc() && tBool;
     if (!tBool && true) {
       System.out.println("Hello World");
@@ -79,40 +61,28 @@ class XPFlagCleanerPositiveCases {
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_to_same_val(
       int a, bool abc, int z) {
 
-    bool tBool = exp.isStaleFeature().getCachedValue();
-    tBool = true;
-    if (!tBool && true) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    
+    
+    System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_ftbool(int a) {
 
-    if (ftBool && true) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    System.out.println("Hello World");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool(
       int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
-    ftBool = exp.isStaleFeature().getCachedValue();
-    if (!ftBool && true) {
-      System.out.println("Hello World");
-    } else {
-      System.out.println("Hi world");
-    }
+    
+    System.out.println("Hi world");
   }
 
   public void conditional_with_else_contains_stale_flag_tbool_reassigned_ftbool_1(
       int a, bool abc, int z) {
     // Currently if there is another assignment, variable will not be inlined.
     bool ftBool = abc();
-    ftBool = exp.isStaleFeature().getCachedValue();
+    ftBool = true;
     if (!ftBool && true) {
       System.out.println("Hello World");
     } else {

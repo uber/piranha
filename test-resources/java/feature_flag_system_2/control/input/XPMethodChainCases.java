@@ -26,29 +26,23 @@ class XPMethodChainCases {
   public static void foobar(Parameter cp) {
     SomeParam sp = SomeParam.create(cp);
     // Matches API
-    if (sp.isStaleFeature().getCachedValue()) {
-      System.out.println("!");
-    }
+    System.out.println("!");
     // Matches API
-    if (!sp.isStaleFeature().getCachedValue()) {
-      System.out.println("!!!");
-    }
+    
     // Does not match API
     if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    if (sp.otherFlag().getCachedValue() && sp.isStaleFeature().getCachedValue()) {
+    if (sp.otherFlag().getCachedValue()) {
       System.out.println("!!!");
     }
-    if (sp.otherFlag().getCachedValue() || sp.isStaleFeature().getCachedValue()) {
-      System.out.println("!!!");
-    }
+    System.out.println("!!!");
     // test for identifier && false
-    if (a && sp.isStaleFeature().getCachedValue()){
+    if (a){
       System.out.println("!!! Testing identifier conjunction false");
     }
     // test for identifier || true
-    if (a || !sp.isStaleFeature().getCachedValue()){
+    if (a){
       System.out.println("!!!! Testing identifier disjunction true");
     }
     SomeParamRev spr = SomeParamRev.create(cp);
@@ -72,8 +66,8 @@ class XPMethodChainCases {
 
     System.out.println("done!");
     // Matches API
-    cp.put(sp.isStaleFeature(), true);
-    cp.put(sp.isStaleFeature(), false);
+    
+    
 
     // Do not match API
     cp.put(sp.otherFlag(), true);
@@ -82,16 +76,13 @@ class XPMethodChainCases {
 
   class TestMethodChainTest {
     // Matches annotation
-    @ParameterValue(ns = "some_long_name", key = "STALE_FLAG", val = "true")
+    
     public void testSomethingTreated() {
       System.out.println();
     }
 
     // Matches annotation
-    @ParameterValue(ns = "some_long_name", key = "STALE_FLAG", val = "false")
-    public void testSomethingControl() {
-      System.out.println();
-    }
+    
 
     // Does not match annotation
     @ParameterValue(ns = "some_long_name", key = "other_flag", val = "false")
