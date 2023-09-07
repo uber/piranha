@@ -1,4 +1,4 @@
-tree-sitter
+tree-sitter==0.20.1
 tree-sitter-languages
 attrs
 openai
