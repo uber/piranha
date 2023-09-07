@@ -2,6 +2,7 @@ tree-sitter==0.20.2
 tree-sitter-languages
 attrs
 openai
+litellm
 polyglot-piranha
 toml
 pytest

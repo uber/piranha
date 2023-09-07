@@ -14,6 +14,7 @@ import os
 import sys
 
 import openai
+import litellm
 from flask import Flask, Response, jsonify, render_template, request, session
 
 from piranha_playground.data_validation import (ImproveData, InferData,
@@ -136,8 +137,8 @@ def test_rule():
 
 
 def main():
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    if not openai.api_key:
+    litellm.api_key = os.getenv("OPENAI_API_KEY")
+    if not litellm.api_key:
         sys.exit(
             "Please set the OPENAI_API_KEY environment variable to your OpenAI API key."
         )

@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 
 import attr
 import openai
+from litellm import completion
 
 from piranha_playground.rule_inference.utils.logger_formatter import \
     CustomFormatter
@@ -407,7 +408,7 @@ enclosing_node = """((identifier) @name) (#eq? @name "x"))"""
         for _ in range(3):
             try:
                 logger.debug("Attempting to get completion from GPT.")
-                response = openai.ChatCompletion.create(
+                response = completion(
                     model=self.model,
                     messages=self.messages,
                     temperature=self.temperature,  # this is the degree of randomness of the model's output
