@@ -104,5 +104,18 @@ fn test_adhoc_variable_inline_file() {
 #[ignore] // Long running test
 fn test_delete_everything_after_return() {
   super::initialize();
-  execute_piranha_with_default_swift_args("delete_statements_after_return", vec![]);
+  execute_piranha_with_default_swift_args(
+    "post_processing_cleanup/delete_statements_after_return",
+    vec![],
+  );
+}
+
+#[test]
+#[ignore] // Long running test
+fn test_delete_empty_switch_statement() {
+  super::initialize();
+  execute_piranha_with_default_swift_args(
+    "post_processing_cleanup/clean_empty_switch_entry",
+    vec![],
+  );
 }

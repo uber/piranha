@@ -1165,6 +1165,55 @@ replace_node = "cond"
 replace = "true"
 is_seed_rule = false
 
+# rule to clean switch cases without any executable statement
+#
+# Before 
+# switch someParam{
+#     case a:
+#         return "something"
+#     case b:
+# }
+# After 
+# switch someParam{
+#     case a:
+# }
+#
+[[rules]]
+name = "delete_empty_switch_entry"
+query = """(
+    (switch_entry
+        (statements) @stmt
+    ) @se
+    (#eq? @stmt "")
+)"""
+groups = ["post_processing_cleanup"]
+replace_node = "se"
+replace = ""
+is_seed_rule = false
+
+# rule to clean empty switch statements
+#
+# Before 
+# switch someParam{
+#    
+# }
+# After 
+#
+#
+[[rules]]
+name = "delete_empty_switch_statement"
+query = """(
+    (switch_statement
+        expr: (_) @exprs
+        (_)? @nd
+    ) @sst
+    (#eq? @nd "")
+)"""
+groups = ["post_processing_cleanup"]
+replace_node = "sst"
+replace = ""
+is_seed_rule = false
+
 # rule to delete unreachable code after return statement
 [[rules]]
 name = "delete_all_statements_after_return"
@@ -1179,6 +1228,7 @@ groups = ["post_processing_cleanup"]
 replace_node = "extras"
 replace = ""
 is_seed_rule = false
+
 [[rules.filters]]
 not_contains = ["(directive) @d"]
 enclosing_node = "(function_declaration) @crfd"
