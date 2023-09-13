@@ -311,3 +311,9 @@ class C24 {
     super.init(someParameter: someVar)
   }
 }
+
+class C25 {
+  init() {
+    super.init(someParameter: someFunctionCall(a: true))
+  }
+}

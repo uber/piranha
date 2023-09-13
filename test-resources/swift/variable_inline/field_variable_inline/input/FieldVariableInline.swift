@@ -437,3 +437,10 @@ class C24 {
     super.init(someParameter: a ? someVar : someOtherVar)
   }
 }
+
+class C25 {
+  init() {
+    let a = !placeholder_false
+    super.init(someParameter: someFunctionCall(a: a))
+  }
+}

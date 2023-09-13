@@ -769,6 +769,9 @@ not_contains = [
     )""",
 ]
 
+[[rules.filters]]
+not_enclosing_node = "(value_argument_label) @va"
+
 # rule to delete declaration of variable in class scope
 [[rules]]
 name = "delete_field_declaration"
