@@ -20,6 +20,7 @@ from gradient_boost_trees import GradientBoostTrees
 from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
+from spark_config import SparkConfigChange
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -103,6 +104,18 @@ def test_query_test_check_answer_change():
         summary = query_test_check_answer_change()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
+        
+def test_spark_config_change():
+    input_codebase = "plugins/spark_upgrade/tests/resources/spark_conf/input/"
+    expected_codebase = "plugins/spark_upgrade/tests/resources/spark_conf/expected/"
+    with TemporaryDirectory() as temp_dir:
+        tp = temp_dir
+        copy_dir(input_codebase, tp)
+        spark_config_change = SparkConfigChange([tp])
+        summary = spark_config_change()
+        assert summary is not None
+        assert is_as_expected_files(expected_codebase, tp)
+
 
 def remove_whitespace(input_str):
     """Removes all the whitespace from the string.
