@@ -9,32 +9,24 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 
-class C1{
-    var a = placeholder_true
-    func f1(){
-        f.subscribe(
-            onNext: { x in 
-                var b = placeholder_false
-                if b {
-                    doSomething()
-                }
+func f1(_ someParameter: SomeParameterType) {
+    switch someParameter.actionName {
+        case .a:
+            someFunctionCall()
+        case .b:
+            anotherFunctionCall()
+        case .c:
+            if placeholder_false {
+                doSomething()
             }
-        )
     }
 }
 
-class C2{
-    var a
-
-    init(){
-        if something{
-            var b = placeholder_true
-            if b {
-                a = placeholder_true
+func f2(_ anotherParameter: SomeParameterType){
+    switch someParameter.actionName {
+        case .a:
+            if !placeholder_true {
                 doSomething()
             }
-        } else {
-            a = false
-        }
     }
 }
