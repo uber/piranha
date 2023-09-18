@@ -11,6 +11,7 @@ Supported rewrites:
 * `GradientBoostTrees` api change
 * Update `SQLExecution.withNewExecutionId`
 * Update `QueryTest.CheckAnswer`
+* Update `SparkConf` (Builder pattern style)
 
 
 
