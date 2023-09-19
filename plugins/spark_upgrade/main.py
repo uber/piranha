@@ -19,6 +19,7 @@ from gradient_boost_trees import GradientBoostTrees
 from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
+from spark_config import SparkConfigChange
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -69,6 +70,9 @@ def upgrade_to_spark_3_3(path_to_codebase):
     
     query_test_check_answer_change = QueryTestCheckAnswerChange([path_to_codebase])
     _ = query_test_check_answer_change()
+    
+    spark_config = SparkConfigChange([path_to_codebase])
+    _ = spark_config()
     
 if __name__ == "__main__":
     main()
