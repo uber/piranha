@@ -67,6 +67,7 @@ create_rewrite_tests! {
   test_java_delete_method_invocation_argument: "delete_method_invocation_argument", 1;
   test_java_delete_method_invocation_argument_no_op: "delete_method_invocation_argument_no_op", 0;
   test_regex_based_matcher: "regex_based_matcher", 1, cleanup_comments = true;
+  test_spark_conf: "spark_conf", 1;
 }
 
 create_match_tests! {

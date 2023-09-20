@@ -106,17 +106,19 @@ impl SourceCodeUnit {
   // Apply all the `rules` to the node, parent, grand parent and great grand parent.
   // Short-circuit on the first match.
   pub(crate) fn get_edit_for_context(
-    &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
-    rules: &Vec<InstantiatedRule>,
+    &self, previous_edit_range: &Range, rules_store: &mut RuleStore, rules: &Vec<InstantiatedRule>,
+    iterative: bool,
   ) -> Option<Edit> {
     let number_of_ancestors_in_parent_scope = *self
       .piranha_arguments()
       .number_of_ancestors_in_parent_scope();
-    let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
-    debug!(
-      "\n{}",
-      format!("Changed node kind {}", changed_node.kind()).blue()
+    let changed_node = get_node_for_range(
+      self.root_node(),
+      *previous_edit_range.start_byte(),
+      *previous_edit_range.end_byte(),
     );
+    debug!("\nChanged node kind {}", changed_node.kind().blue());
+
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
@@ -125,13 +127,26 @@ impl SourceCodeUnit {
         number_of_ancestors_in_parent_scope,
       )
     };
-    for rule in rules {
+    // If iterative is true, we apply the rules in the order they are provided to each ancestor in the context.
+    // If iterative is false, we apply the rules to each ancestor in the context in the order they are provided.
+    if iterative {
       for ancestor in &context() {
-        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
-          return Some(edit);
+        for rule in rules {
+          if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+            return Some(edit);
+          }
+        }
+      }
+    } else {
+      for rule in rules {
+        for ancestor in &context() {
+          if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+            return Some(edit);
+          }
         }
       }
     }
+
     None
   }
 

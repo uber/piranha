@@ -16,7 +16,7 @@ use crate::{
     default_configs::{JAVA, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
-    matches::Point,
+    matches::{Point, Range},
     piranha_arguments::PiranhaArgumentsBuilder,
   },
   utilities::eq_without_whitespace,
@@ -225,9 +225,16 @@ fn test_get_edit_for_context_positive() {
     PathBuf::new().as_path(),
     &args,
   );
+  let range = Range {
+    start_byte: 41_usize,
+    end_byte: 44_usize,
+    ..Default::default()
+  };
   let edit =
-    source_code_unit.get_edit_for_context(41_usize, 44_usize, &mut rule_store, &vec![rule]);
-  // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+    source_code_unit.get_edit_for_context(&range, &mut rule_store, &vec![rule.clone()], false);
+  assert!(edit.is_some());
+
+  let edit = source_code_unit.get_edit_for_context(&range, &mut rule_store, &vec![rule], true);
   assert!(edit.is_some());
 }
 
@@ -266,9 +273,16 @@ fn test_get_edit_for_context_negative() {
     PathBuf::new().as_path(),
     &args,
   );
+  let range = Range {
+    start_byte: 29_usize,
+    end_byte: 33_usize,
+    ..Default::default()
+  };
   let edit =
-    source_code_unit.get_edit_for_context(29_usize, 33_usize, &mut rule_store, &vec![rule]);
-  // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+    source_code_unit.get_edit_for_context(&range, &mut rule_store, &vec![rule.clone()], false);
+  assert!(edit.is_none());
+
+  let edit = source_code_unit.get_edit_for_context(&range, &mut rule_store, &vec![rule], true);
   assert!(edit.is_none());
 }
 
