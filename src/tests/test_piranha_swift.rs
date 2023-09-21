@@ -43,7 +43,9 @@ create_rewrite_tests! {
     cleanup_comments = true, delete_file_if_empty= false;
 }
 
-fn execute_piranha_with_default_swift_args(scenario: &str, substitutions: Vec<(String, String)>) {
+fn execute_piranha_for_swift(
+  scenario: &str, substitutions: Vec<(String, String)>, files_changed: usize,
+) {
   let _path = PathBuf::from("test-resources").join(SWIFT).join(scenario);
   let temp_dir = super::copy_folder_to_temp_dir(&_path.join("input"));
   let piranha_arguments = PiranhaArgumentsBuilder::default()
@@ -54,7 +56,12 @@ fn execute_piranha_with_default_swift_args(scenario: &str, substitutions: Vec<(S
     .substitutions(substitutions)
     .delete_file_if_empty(false)
     .build();
-  execute_piranha_and_check_result(&piranha_arguments, &_path.join("expected"), 1, true);
+  execute_piranha_and_check_result(
+    &piranha_arguments,
+    &_path.join("expected"),
+    files_changed,
+    true,
+  );
   temp_dir.close().unwrap();
 }
 
@@ -62,13 +69,14 @@ fn execute_piranha_with_default_swift_args(scenario: &str, substitutions: Vec<(S
 #[ignore] // Long running test
 fn test_cleanup_rules_file() {
   super::initialize();
-  execute_piranha_with_default_swift_args(
+  execute_piranha_for_swift(
     "cleanup_rules",
     substitutions! {
       "stale_flag" => "stale_flag_one",
       "treated" => "true",
       "treated_complement" => "false"
     },
+    1,
   );
 }
 
@@ -76,37 +84,38 @@ fn test_cleanup_rules_file() {
 #[ignore] // Long running test
 fn test_cleanup_with_derivatives() {
   super::initialize();
-  execute_piranha_with_default_swift_args("cleanup_with_derivatives", vec![]);
+  execute_piranha_for_swift("cleanup_with_derivatives", vec![], 1);
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_local_variable_inline_file() {
   super::initialize();
-  execute_piranha_with_default_swift_args("variable_inline/local_variable_inline", vec![]);
+  execute_piranha_for_swift("variable_inline/local_variable_inline", vec![], 1);
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_field_variable_inline_file() {
   super::initialize();
-  execute_piranha_with_default_swift_args("variable_inline/field_variable_inline", vec![]);
+  execute_piranha_for_swift("variable_inline/field_variable_inline", vec![], 2);
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_adhoc_variable_inline_file() {
   super::initialize();
-  execute_piranha_with_default_swift_args("variable_inline/adhoc_variable_inline", vec![]);
+  execute_piranha_for_swift("variable_inline/adhoc_variable_inline", vec![], 1);
 }
 
 #[test]
 #[ignore] // Long running test
 fn test_delete_everything_after_return() {
   super::initialize();
-  execute_piranha_with_default_swift_args(
+  execute_piranha_for_swift(
     "post_processing_cleanup/delete_statements_after_return",
     vec![],
+    1,
   );
 }
 
@@ -114,8 +123,9 @@ fn test_delete_everything_after_return() {
 #[ignore] // Long running test
 fn test_delete_empty_switch_statement() {
   super::initialize();
-  execute_piranha_with_default_swift_args(
+  execute_piranha_for_swift(
     "post_processing_cleanup/clean_empty_switch_entry",
     vec![],
+    1,
   );
 }

@@ -26,15 +26,15 @@ name = "Function"
 [[scopes.rules]]
 enclosing_node = """(
     (function_declaration
-        name: (simple_identifier)? @name
-        (parameter)? @params
+        name: (simple_identifier) @name
+        (parameter)* @params
         body: (function_body)
     ) @function
 )"""
 scope = """(
     (function_declaration
-        name: (simple_identifier)? @func_name
-        (parameter)? @parameters
+        name: (simple_identifier) @func_name
+        (parameter)* @parameters
         body: (function_body)
     ) @func
     (#eq? @func_name "@name")
@@ -46,13 +46,13 @@ name = "Constructor"
 [[scopes.rules]]
 enclosing_node = """(
     (init_declaration
-        (parameter)? @params
+        (parameter)* @params
         body: (function_body)
     )
 )"""
 scope = """(
     (init_declaration)
-        (parameter)? @parameters
+        (parameter)* @parameters
         body: (function_body)
     )
     (#eq? @parameters "@params")

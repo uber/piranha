@@ -37,13 +37,25 @@ class C2{
             a = false
         }
     }
+
+    func f2a(){
+        if something{
+            var b2 = placeholder_true
+            if b2 {
+                a2 = placeholder_true
+                doSomethingElse()
+            }else {
+                a = false
+            }
+        }
+    }
 }
 
 class C3 {
     private lazy var someVar: SomeType = {
         let a = placeholder_false
-        let b: VectorDrawable = a ? .caseA : .caseB
-        let c = vectorImageComboViewBuilder.buildComboView(for: b, anotherFor: someOtherVar)
+        let b: SomeContextType = a ? .caseA : .caseB
+        let c = SomeNavigationParent.buildComboView(for: b, anotherFor: someOtherVar)
         c.someAttribute = true
         return c
     }()

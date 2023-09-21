@@ -9,6 +9,7 @@
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
 class C1{
+    var a = true
     func f1(){
         f.subscribe(
             onNext: { x in 
@@ -23,27 +24,39 @@ class C2{
 
     init(){
         if something{
-            a = true
-            doSomething()
+            var b = true
+            if b {
+                a = true
+                doSomething()
+            }
         } else {
             a = false
+        }
+    }
+
+    func f2a(){
+        if something{
+            
+            a2 = true
+                doSomethingElse()
+            
         }
     }
 }
 
 class C3 {
     private lazy var someVar: SomeType = {
-        
-        let b: VectorDrawable = .caseB
-        let c = vectorImageComboViewBuilder.buildComboView(for: b, anotherFor: someOtherVar)
+        let a = false
+        let b: SomeContextType = a ? .caseA : .caseB
+        let c = SomeNavigationParent.buildComboView(for: b, anotherFor: someOtherVar)
         c.someAttribute = true
         return c
     }()
 
     private var someComputedVar: SomeVarType {
-        
+        let localVar = false
         return shared {
-            SomeFunctionCall(a: "b", c: c)
+            SomeFunctionCall(a: localVar ? "a" : "b", c: c)
         }
     }
 
