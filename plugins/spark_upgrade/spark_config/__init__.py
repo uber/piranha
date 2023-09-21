@@ -43,16 +43,16 @@ class SparkConfigChange(ExecutePiranha):
     def get_edges(self) -> List[OutgoingEdges]:
         return [
             OutgoingEdges(
-                "spark_conf_change_java_scala", ["dummy"], scope="AnyParent"
+                "spark_conf_change_java_scala", ["dummy"], scope="ParentIterative"
             ),
-            OutgoingEdges("BuilderPattern", ["dummy"], scope="AnyParent"),
+            OutgoingEdges("BuilderPattern", ["dummy"], scope="ParentIterative"),
             OutgoingEdges(
                 "dummy",
                 [
                     "BuilderPattern",
                     "update_enclosing_var_declaration",
                 ],
-                scope="AnyParent",
+                scope="ParentIterative",
             ),
             OutgoingEdges(
                 "update_enclosing_var_declaration",
