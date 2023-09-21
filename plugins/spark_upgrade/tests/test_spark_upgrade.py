@@ -114,6 +114,9 @@ def test_spark_config_change():
         spark_config_change = SparkConfigChange([tp])
         summary = spark_config_change()
         assert summary is not None
+        spark_config_change = SparkConfigChange([tp], "java")
+        summary = spark_config_change()
+        assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
 
