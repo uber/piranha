@@ -17,4 +17,5 @@ use crate::models::default_configs::SCALA;
 create_rewrite_tests! {
   SCALA,
   test_simple_match_replace: "simple_match_replace", 1;
+
 }
