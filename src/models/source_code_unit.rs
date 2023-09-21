@@ -241,7 +241,7 @@ impl SourceCodeUnit {
       // Process the parent
       // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
       if let Some(edit) =
-        self._get_parent_edits(&current_replace_range, rules_store, &next_rules_by_scope)
+        self.get_edit_for_ancestors(&current_replace_range, rules_store, &next_rules_by_scope)
       {
         self.rewrites_mut().push(edit.clone());
         // Apply the matched rule to the parent
@@ -258,23 +258,6 @@ impl SourceCodeUnit {
     for (sq, rle) in &next_rules_stack {
       self.apply_rule(rle.clone(), rules_store, parser, &Some(sq.clone()));
     }
-  }
-
-  fn _get_parent_edits(
-    &self, replace_range: &Range, rules_store: &mut RuleStore,
-    next_rules: &HashMap<String, Vec<InstantiatedRule>>,
-  ) -> Option<Edit> {
-    // Get the parent edit
-    self
-      .get_edit_for_context(replace_range, rules_store, &next_rules[PARENT], false)
-      .or_else(|| {
-        self.get_edit_for_context(
-          replace_range,
-          rules_store,
-          &next_rules[PARENT_ITERATIVE],
-          true,
-        )
-      })
   }
 
   /// Adds the "Method" and "Class" scoped next rules to the queue.
