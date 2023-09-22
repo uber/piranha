@@ -74,5 +74,8 @@ def upgrade_to_spark_3_3(path_to_codebase):
     spark_config = SparkConfigChange([path_to_codebase])
     _ = spark_config()
     
+    spark_config = SparkConfigChange([path_to_codebase], language="java")
+    _ = spark_config()
+    
 if __name__ == "__main__":
     main()
