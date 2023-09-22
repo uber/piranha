@@ -16,8 +16,9 @@ use crate::{
     default_configs::{JAVA, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
-    matches::Point,
+    matches::{Point, Range},
     piranha_arguments::PiranhaArgumentsBuilder,
+    rule_graph::{PARENT, PARENT_ITERATIVE},
   },
   utilities::eq_without_whitespace,
 };
@@ -225,9 +226,17 @@ fn test_get_edit_for_context_positive() {
     PathBuf::new().as_path(),
     &args,
   );
-  let edit =
-    source_code_unit.get_edit_for_context(41_usize, 44_usize, &mut rule_store, &vec![rule]);
-  // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+  let range = Range {
+    start_byte: 41_usize,
+    end_byte: 44_usize,
+    ..Default::default()
+  };
+
+  let next_rules = HashMap::from([
+    (String::from(PARENT), vec![rule.clone()]),
+    (String::from(PARENT_ITERATIVE), vec![rule]),
+  ]);
+  let edit = source_code_unit.get_edit_for_ancestors(&range, &mut rule_store, &next_rules);
   assert!(edit.is_some());
 }
 
@@ -266,9 +275,16 @@ fn test_get_edit_for_context_negative() {
     PathBuf::new().as_path(),
     &args,
   );
-  let edit =
-    source_code_unit.get_edit_for_context(29_usize, 33_usize, &mut rule_store, &vec![rule]);
-  // let edit = rule.get_edit(&source_code_unit, &mut rule_store, node, true);
+  let range = Range {
+    start_byte: 29_usize,
+    end_byte: 33_usize,
+    ..Default::default()
+  };
+  let next_rules = HashMap::from([
+    (String::from(PARENT), vec![rule.clone()]),
+    (String::from(PARENT_ITERATIVE), vec![rule]),
+  ]);
+  let edit = source_code_unit.get_edit_for_ancestors(&range, &mut rule_store, &next_rules);
   assert!(edit.is_none());
 }
 
