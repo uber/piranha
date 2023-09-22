@@ -15,7 +15,6 @@ query = "cs new SparkConf()"
 replace_node = "*"
 replace = 'new SparkSession.builder()'
 
-
 [[rules]]
 name = "set_spark_home_change_java_scala"
 query = "cs :[r].setSparkHome(:[a1])"
@@ -31,7 +30,6 @@ replace_node = "*"
 replace = "@r.executorEnv(@a1, @a2)"
 is_seed_rule = false
 groups = ["BuilderPattern"]
-
 
 [[rules]]
 name = "app_name_change_java_scala"

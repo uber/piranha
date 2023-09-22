@@ -267,7 +267,7 @@ impl SourceCodeUnit {
     stack: &mut VecDeque<(CGPattern, InstantiatedRule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
-      // Scope level is not "Parent" or "Global"
+      // Scope level is not "Parent", "ParentIterative" or "Global"
       if ![PARENT, PARENT_ITERATIVE, GLOBAL].contains(&scope_level.as_str()) {
         for rule in rules {
           let scope_query = self.get_scope_query(

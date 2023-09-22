@@ -22,8 +22,5 @@ class Sample {
       .setAppName(appName3)
       .setMaster(master3)
       .setSparkHome(sparkHome3);
-
-
   }
-
 }
