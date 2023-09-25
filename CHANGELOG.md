@@ -1,6 +1,7 @@
 Version 0.3.20
 -------------
-* Bug fix: concrete syntax matching- Handle trailing commas and comments 
+* Bug fix: concrete syntax matching- Handle trailing commas and comments
+* Feature: Support for ParentIterative edge
 
 Version 0.3.19
 -------------
