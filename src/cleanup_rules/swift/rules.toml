@@ -746,6 +746,12 @@ not_contains = [
         )
         (#eq? @c1var "@identifier")
     )""",
+  """(
+        (value_argument
+            value: (simple_identifier) @svar
+        )
+        (#eq? @svar "@identifier")
+  )""",
   # skip the rule if there is a declaration of the same variable
   """(
         (property_declaration
@@ -768,6 +774,33 @@ not_contains = [
         (#eq? @variable "@identifier")
     )""",
 ]
+
+[[rules]]
+name = "replace_argument_with_value"
+query = """(
+    (call_expression
+    (call_suffix
+        (value_arguments
+            (value_argument
+                value: [
+                    (simple_identifier) @revar
+                    (navigation_expression
+                        target: (self_expression)
+                        suffix: (navigation_suffix
+                            suffix: (simple_identifier) @revar
+                        )
+                    )
+                ] @valere
+            )
+        )
+    )
+    )
+    (#eq? @revar "@hvariable")
+)"""
+replace_node = "valere"
+replace = "@hvalue"
+holes = ["hvariable", "hvalue"]
+is_seed_rule = false
 
 # rule to delete declaration of variable in class scope
 [[rules]]

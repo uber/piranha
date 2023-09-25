@@ -30,14 +30,19 @@ to = [
 [[edges]]
 scope = "Function"
 from = "delete_variable_declaration"
-to = ["replace_identifier_with_value", "delete_parent_assignment"]
+to = [
+  "replace_argument_with_value",
+  "replace_identifier_with_value",
+  "delete_parent_assignment",
+]
 
 [[edges]]
 scope = "Class"
 from = "delete_field_initialisation_init"
 to = [
-  "replace_self_identifier_with_value",
+  "replace_argument_with_value",
   "replace_identifier_with_value",
+  "replace_self_identifier_with_value",
   "delete_field_declaration",
 ]
 
@@ -45,8 +50,9 @@ to = [
 scope = "Class"
 from = "delete_field_initialisation"
 to = [
-  "replace_self_identifier_with_value",
+  "replace_argument_with_value",
   "replace_identifier_with_value",
+  "replace_self_identifier_with_value",
   "delete_parent_assignment",
 ]
 
