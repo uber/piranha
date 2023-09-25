@@ -23,7 +23,7 @@ use tree_sitter::{InputEdit, Node, Parser, Tree};
 
 use crate::{
   models::capture_group_patterns::CGPattern,
-  models::rule_graph::{GLOBAL, PARENT},
+  models::rule_graph::{GLOBAL, PARENT, PARENT_ITERATIVE},
   utilities::tree_sitter_utilities::{
     get_node_for_range, get_replace_range, get_tree_sitter_edit, number_of_errors,
   },
@@ -240,21 +240,10 @@ impl SourceCodeUnit {
 
       // Process the parent
       // Find the rules to be applied in the "Parent" scope that match any parent (context) of the changed node in the previous edit
-      if let Some(edit) = self.get_edit_for_context(
-        *current_replace_range.start_byte(),
-        *current_replace_range.end_byte(),
-        rules_store,
-        &next_rules_by_scope[PARENT],
-      ) {
+      if let Some(edit) =
+        self.get_edit_for_ancestors(&current_replace_range, rules_store, &next_rules_by_scope)
+      {
         self.rewrites_mut().push(edit.clone());
-        debug!(
-          "\n{}",
-          format!(
-            "Cleaning up the context, by applying the rule - {}",
-            edit.matched_rule()
-          )
-          .green()
-        );
         // Apply the matched rule to the parent
         let applied_edit = self.apply_edit(&edit, parser);
         current_replace_range = get_replace_range(applied_edit);
@@ -262,11 +251,9 @@ impl SourceCodeUnit {
         // Add the (tag, code_snippet) mapping to substitution table.
         self.substitutions.extend(edit.p_match().matches().clone());
       } else {
-        // No more parents found for cleanup
         break;
       }
     }
-
     // Apply the next rules from the stack
     for (sq, rle) in &next_rules_stack {
       self.apply_rule(rle.clone(), rules_store, parser, &Some(sq.clone()));
@@ -280,8 +267,8 @@ impl SourceCodeUnit {
     stack: &mut VecDeque<(CGPattern, InstantiatedRule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
-      // Scope level is not "PArent" or "Global"
-      if ![PARENT, GLOBAL].contains(&scope_level.as_str()) {
+      // Scope level is not "Parent", "ParentIterative" or "Global"
+      if ![PARENT, PARENT_ITERATIVE, GLOBAL].contains(&scope_level.as_str()) {
         for rule in rules {
           let scope_query = self.get_scope_query(
             scope_level,
