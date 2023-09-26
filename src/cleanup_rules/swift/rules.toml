@@ -769,6 +769,9 @@ not_contains = [
     )""",
 ]
 
+[[rules.filters]]
+not_enclosing_node = "(value_argument_label) @va"
+
 # rule to delete declaration of variable in class scope
 [[rules]]
 name = "delete_field_declaration"
@@ -850,11 +853,15 @@ not_contains = [
 name = "delete_field_initialisation"
 query = """(
             (property_declaration
+                (modifiers
+                    (visibility_modifier) @mod1
+                )
                 name: (pattern
                     bound_identifier: (simple_identifier) @hvariable
                 )
                 value: (boolean_literal) @hvalue
             ) @property_declaration
+            (#eq? @mod1 "private")
 )"""
 replace_node = "property_declaration"
 replace = ""
@@ -913,8 +920,10 @@ replace = ""
 is_seed_rule = false
 
 [[rules.filters]]
-enclosing_node = "(init_declaration) @cid"
+not_enclosing_node = "(function_declaration) @cid"
 
+[[rules.filters]]
+enclosing_node = "(init_declaration) @ind"
 
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
@@ -954,6 +963,20 @@ not_contains = [
         )@property_declaration
         (#eq? @var "@hvariable")
         (#not-eq? @val "@hvalue")
+    )""",
+
+  # skip the rule if the target variables is declared with a visibility modifier other than private
+  """(
+        (property_declaration
+            (modifiers
+                (visibility_modifier) @mod2
+            )
+            name: (pattern
+                bound_identifier: (simple_identifier) @pvar
+            )
+        )@property_declaration
+        (#eq? @pvar "@hvariable")
+        (#not-eq? @mod2 "private")
     )""",
 ]
 
