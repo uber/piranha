@@ -110,6 +110,13 @@ fn test_adhoc_variable_inline_file() {
 
 #[test]
 #[ignore] // Long running test
+fn test_constructor_variable_inline_file() {
+  super::initialize();
+  execute_piranha_for_swift("variable_inline/constructor_variable_inline", vec![], 5);
+}
+
+#[test]
+#[ignore] // Long running test
 fn test_delete_everything_after_return() {
   super::initialize();
   execute_piranha_for_swift(

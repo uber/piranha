@@ -24,11 +24,8 @@ class C2{
 
     init(){
         if something{
-            var b = true
-            if b {
-                a = true
-                doSomething()
-            }
+            a = true
+            doSomething()
         } else {
             a = false
         }

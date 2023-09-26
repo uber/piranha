@@ -48,13 +48,13 @@ enclosing_node = """(
     (init_declaration
         (parameter)* @params
         body: (function_body)
-    )
+    ) @int
 )"""
 scope = """(
-    (init_declaration)
+    (init_declaration
         (parameter)* @parameters
         body: (function_body)
-    )
+    ) @sint
     (#eq? @parameters "@params")
 )"""
 
