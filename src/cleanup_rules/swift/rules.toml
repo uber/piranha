@@ -657,6 +657,50 @@ not_contains = ["""(
     (#not-eq? @val "@hvalue")
 )"""]
 
+# delete variables declared in a function scope
+[[rules]]
+name = "delete_variable_declaration_init"
+query = """(
+                (property_declaration
+                    name: (pattern
+                        bound_identifier: (simple_identifier) @hvariable
+                    )
+                    value: (boolean_literal) @hvalue
+                ) @property_declaration
+)"""
+replace_node = "property_declaration"
+replace = ""
+is_seed_rule = false
+
+[[rules.filters]]
+enclosing_node = "(init_declaration) @cfd"
+
+# skip the rule if the variable is assigned with some other value in the class scope
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = ["""(
+        (parameter
+            name: (simple_identifier) @c1var
+        )
+        (#eq? @c1var "@hvariable")
+    )""", """(
+    (assignment
+        target: (directly_assignable_expression
+            [ (navigation_expression
+                target: (self_expression)
+                suffix: (navigation_suffix
+                    suffix: (simple_identifier) @var
+                )
+                )
+                (simple_identifier) @var
+            ]
+            )
+        result: (boolean_literal) @val
+    )
+    (#eq? @var "@hvariable")
+    (#not-eq? @val "@hvalue")
+)"""]
+
 # rule to delete assignments like a = true subject to the mentioned filters
 [[rules]]
 name = "delete_parent_assignment"
@@ -739,14 +783,14 @@ is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
 not_contains = [
-  # skip the rule if the variable is one of the parameters of some function
+  #   skip the rule if the variable is one of the parameters of some function
   """(
         (parameter
             name: (simple_identifier) @c1var
         )
         (#eq? @c1var "@identifier")
     )""",
-  # skip the rule if there is a declaration of the same variable
+  #   skip the rule if there is a declaration of the same variable
   """(
         (property_declaration
             name: (pattern
@@ -757,7 +801,7 @@ not_contains = [
         (#eq? @variable "@identifier")
     )""",
 
-  # skip the rule if it is accessed in the self.x manner
+  #   skip the rule if it is accessed in the self.x manner
   """(
         (navigation_expression
             target: (self_expression)
