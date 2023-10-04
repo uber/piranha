@@ -8,8 +8,9 @@
 // License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 // express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
+
 class C1 {
-  private var a = placeholder_true
+  public var a = placeholder_true
 
   init() {}
 
@@ -21,7 +22,7 @@ class C1 {
 }
 
 class C2 {
-  private var a = placeholder_true
+  var a = placeholder_true
 
   init() {}
 
@@ -31,7 +32,7 @@ class C2 {
 }
 
 class C3 {
-  private var a = placeholder_true
+  open var a = placeholder_true
 
   init() {}
 
@@ -43,7 +44,7 @@ class C3 {
 
 class C4 {
 
-  private var a = placeholder_true
+  fileprivate var a = placeholder_true
 
   init() {}
 
@@ -54,9 +55,9 @@ class C4 {
 
 class C5 {
 
-  private var a = placeholder_true
+  internal var a = placeholder_true
 
-  private var b = placeholder_false
+  var b = placeholder_false
 
   func f5() {
 
@@ -78,9 +79,9 @@ class C5 {
 
 class C6 {
 
-  private var a = placeholder_true
+  var a = placeholder_true
 
-  private var b = placeholder_false
+  var b = placeholder_false
 
   func f6() {
 
@@ -102,7 +103,7 @@ class C6 {
 
 class C7 {
 
-  private var a = placeholder_true
+  public var a = placeholder_true
 
   func f7() {
 
@@ -118,7 +119,7 @@ class C7 {
 
 class C8 {
 
-  private var a = placeholder_true
+  var a = placeholder_true
 
   func f8() {
 
@@ -134,7 +135,7 @@ class C8 {
 
 class C9 {
 
-  private var a = placeholder_true
+  internal var a = placeholder_true
 
   func f9a() {
 
@@ -156,7 +157,7 @@ class C9 {
 
 class C10 {
 
-  private var a = placeholder_true
+  open var a = placeholder_true
 
   func f10a() {
 
@@ -178,7 +179,7 @@ class C10 {
 
 class C11 {
 
-  private var a = placeholder_true
+  var a = placeholder_true
 
   func f11a() {
 
@@ -196,7 +197,7 @@ class C11 {
 
 class C12 {
 
-  private var a
+  fileprivate var a
 
   init() {
 
@@ -220,7 +221,7 @@ class C12 {
 
 class C13 {
 
-  private var a
+  internal var a
 
   init() {
 
@@ -248,7 +249,7 @@ class C13 {
 
 class C14 {
 
-  private var a
+  public var a
 
   init(a: Bool) {
 
@@ -276,7 +277,7 @@ class C14 {
 
 class C15 {
 
-  private var a
+  var a
 
   init() {
 
@@ -304,7 +305,7 @@ class C15 {
 
 class C16 {
 
-  private var a
+  fileprivate var a
 
   init() {
 
@@ -332,7 +333,7 @@ class C16 {
 
 class C17 {
 
-  private var a
+  internal var a
 
   init(a: Bool) {
 
@@ -360,7 +361,7 @@ class C17 {
 
 class C18 {
 
-  private var a
+  open var a
 
   init() {
 
@@ -387,7 +388,7 @@ class C18 {
 }
 
 class C19 {
-  private var a = true
+  fileprivate var a = true
 
   init() {
     a = false
@@ -395,13 +396,13 @@ class C19 {
 }
 
 class C20 {
-  private var a
+  public var a
 
   init() {
     a = false
   }
 
-  func f20() {
+  func f1() {
     var a = true
   }
 }

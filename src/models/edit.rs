@@ -11,12 +11,14 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
+use std::collections::HashMap;
 use std::fmt;
 
 use super::matches::Range;
 use super::{
   matches::Match, rule::InstantiatedRule, rule_store::RuleStore, source_code_unit::SourceCodeUnit,
 };
+use crate::models::rule_graph::{PARENT, PARENT_ITERATIVE};
 use crate::utilities::{
   gen_py_str_methods,
   tree_sitter_utilities::{get_context, get_node_for_range},
@@ -105,18 +107,20 @@ impl fmt::Display for Edit {
 impl SourceCodeUnit {
   // Apply all the `rules` to the node, parent, grand parent and great grand parent.
   // Short-circuit on the first match.
-  pub(crate) fn get_edit_for_context(
-    &self, previous_edit_start: usize, previous_edit_end: usize, rules_store: &mut RuleStore,
-    rules: &Vec<InstantiatedRule>,
+  pub(crate) fn get_edit_for_ancestors(
+    &self, previous_edit_range: &Range, rules_store: &mut RuleStore,
+    next_rules: &HashMap<String, Vec<InstantiatedRule>>,
   ) -> Option<Edit> {
     let number_of_ancestors_in_parent_scope = *self
       .piranha_arguments()
       .number_of_ancestors_in_parent_scope();
-    let changed_node = get_node_for_range(self.root_node(), previous_edit_start, previous_edit_end);
-    debug!(
-      "\n{}",
-      format!("Changed node kind {}", changed_node.kind()).blue()
+    let changed_node = get_node_for_range(
+      self.root_node(),
+      *previous_edit_range.start_byte(),
+      *previous_edit_range.end_byte(),
     );
+    debug!("\nChanged node kind {}", changed_node.kind().blue());
+
     // Context contains -  the changed node in the previous edit, its's parent, grand parent and great grand parent
     let context = || {
       get_context(
@@ -125,13 +129,24 @@ impl SourceCodeUnit {
         number_of_ancestors_in_parent_scope,
       )
     };
-    for rule in rules {
+    //  we apply the rules in the order they are provided to each ancestor in the context
+    for rule in &next_rules[PARENT] {
       for ancestor in &context() {
         if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
           return Some(edit);
         }
       }
     }
+
+    // we apply the rules to each ancestor in the context in the order they are provided
+    for ancestor in &context() {
+      for rule in &next_rules[PARENT_ITERATIVE] {
+        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+          return Some(edit);
+        }
+      }
+    }
+
     None
   }
 

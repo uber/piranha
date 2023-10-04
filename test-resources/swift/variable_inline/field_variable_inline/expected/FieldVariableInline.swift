@@ -19,7 +19,7 @@ class C1 {
 }
 
 class C2 {
-  var a = true
+  private var a = true
 
   init() {}
 
@@ -38,7 +38,7 @@ class C3 {
 }
 
 class C4 {
-  var a = true
+  private var a = true
 
   init() {}
 
@@ -76,7 +76,7 @@ class C8 {
 }
 
 class C9 {
-  var a = true
+  private var a = true
 
   func f9a() {
     a = false
@@ -90,7 +90,7 @@ class C9 {
 }
 
 class C10 {
-  var a = true
+  private var a = true
 
   func f10a() {
     self.a = false
@@ -104,7 +104,7 @@ class C10 {
 }
 
 class C11 {
-  var a = true
+  private var a = true
 
   func f11a() {
     a = true
@@ -116,7 +116,7 @@ class C11 {
 }
 
 class C12 {
-  var a
+  private var a
   init() {
     a = true
     if a {
@@ -143,7 +143,7 @@ class C13 {
 
 class C14 {
 
-  var a
+  private var a
 
   init(a: Bool) {
 
@@ -171,7 +171,7 @@ class C14 {
 
 class C15 {
 
-  var a
+  private var a
 
   init() {
 
@@ -212,7 +212,7 @@ class C16 {
 
 class C17 {
 
-  var a
+  private var a
 
   init(a: Bool) {
 
@@ -240,7 +240,7 @@ class C17 {
 
 class C18 {
 
-  var a
+  private var a
 
   init() {
 
@@ -267,7 +267,7 @@ class C18 {
 }
 
 class C19 {
-  var a = true
+  private var a = true
 
   init() {
     a = false
@@ -275,39 +275,13 @@ class C19 {
 }
 
 class C20 {
-  var a
+  private var a
 
   init() {
     a = false
   }
 
-  func f1() {
+  func f20() {
     var a = true
-  }
-}
-
-// test for edge from variable_inline_cleanup to boolean_literal_cleanup
-class C21 {
-  init() {
-    super.init(someParameter: someOtherVar)
-  }
-}
-
-class C22 {
-  init() {
-    super.init(someParameter: someVar)
-  }
-}
-
-// test for edge from boolean_literal_cleanup to variable_inline_cleanup
-class C23 {
-  init() {
-    super.init(someParameter: someOtherVar)
-  }
-}
-
-class C24 {
-  init() {
-    super.init(someParameter: someVar)
   }
 }

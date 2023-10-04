@@ -67,6 +67,10 @@ create_rewrite_tests! {
   test_java_delete_method_invocation_argument: "delete_method_invocation_argument", 1;
   test_java_delete_method_invocation_argument_no_op: "delete_method_invocation_argument_no_op", 0;
   test_regex_based_matcher: "regex_based_matcher", 1, cleanup_comments = true;
+  test_parent_iterative: "parent_iterative/positive", 1;
+  // This test shows what happens if edges is not PARENT_ITERATIVE
+  // It tests the same scenario as the above test, but with edge kind as PARENT
+  test_parent_iterative_negative: "parent_iterative/negative", 1;
 }
 
 create_match_tests! {
