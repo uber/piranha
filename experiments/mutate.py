@@ -81,7 +81,7 @@ class Mutator:
 
 
 def get_top_repos():
-    GITHUB_TOKEN = "KEY"  # Replace this with your new token
+    GITHUB_TOKEN = ""  # Replace this with your new token
     HEADERS = {
         "Authorization": f"Bearer {GITHUB_TOKEN}"
     }
