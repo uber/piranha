@@ -2,11 +2,13 @@ import subprocess
 import requests
 import os
 import random
+from tree_sitter_languages import get_parser
 
 
 class Mutator:
     def __init__(self, mutation_probability):
         self.mutation_probability = mutation_probability
+        self.parser = get_parser("java")
 
     def should_mutate(self, file_path):
         # This does not need to be a bernoulli distribution
@@ -28,8 +30,8 @@ class Mutator:
             f.write(mutated_code)
 
     def mutation_strategy_1(self, code):
-        # Replace this with the actual mutation logic
-        return code  # Placeholder implementation
+        mutated_code = self._mutate_if_statements(code)
+        return mutated_code
 
     def mutation_strategy_2(self, code):
         # Placeholder implementation
@@ -43,6 +45,32 @@ class Mutator:
         # Placeholder implementation
         return code
 
+    def _mutate_if_statements(self, code):
+        for _ in range(5):
+            code_bytes = bytes(code, 'utf8')
+            tree = self.parser.parse(code_bytes)
+            cursor = tree.walk()
+
+            nodes = [cursor.node]  # Start with the root node
+            while nodes:
+                node = nodes.pop()  # Pop a node from the stack
+                if node.type == 'if_statement':
+                    # Identify start and end byte of the condition within the if statement
+                    condition_start = node.children[1].start_byte
+                    condition_end = node.children[1].end_byte
+
+                    # Negate the condition
+                    new_condition_bytes = b"(hello)"
+                    mutated_code_bytes = code_bytes[:condition_start] + new_condition_bytes + code_bytes[condition_end:]
+
+                    code = mutated_code_bytes.decode('utf8')
+                    break  # Exit the loop once a mutation is made
+
+                    # Add children of the current node to the stack for further exploration
+                nodes.extend(node.children)
+
+        return code
+
     def process_files(self, root_dir):
         for subdir, _, files in os.walk(root_dir):
             for file in files:
@@ -53,7 +81,7 @@ class Mutator:
 
 
 def get_top_repos():
-    GITHUB_TOKEN = "YOUR_NEW_GITHUB_TOKEN"  # Replace this with your new token
+    GITHUB_TOKEN = "KEY"  # Replace this with your new token
     HEADERS = {
         "Authorization": f"Bearer {GITHUB_TOKEN}"
     }
@@ -102,8 +130,8 @@ def clone_repos(repos):
 
 
 def main():
-    repos = get_top_repos()
-    clone_repos(repos)
+    #repos = get_top_repos()
+    #clone_repos(repos)
     mutator = Mutator(mutation_probability=0.2)
     mutator.process_files("./repos")
 
