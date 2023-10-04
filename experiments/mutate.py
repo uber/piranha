@@ -52,17 +52,12 @@ class Mutator:
                         self.mutate(file_path)
 
 
-
 def get_top_repos():
-    import requests
-    import json
-
-    GITHUB_TOKEN = "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"
+    GITHUB_TOKEN = "YOUR_NEW_GITHUB_TOKEN"  # Replace this with your new token
     HEADERS = {
         "Authorization": f"Bearer {GITHUB_TOKEN}"
     }
 
-    # Construct the GraphQL query
     query = """
     query {
         search(query: "language:java stars:>1 NOT leetcode NOT book NOT algorithms NOT examples NOT tutorial", type: REPOSITORY, first: 10) {
@@ -88,7 +83,6 @@ def get_top_repos():
 
     if request.status_code == 200:
         result = request.json()
-        # Extract the repository information from the GraphQL response
         repos = result['data']['search']['edges']
         return [{"name": repo['node']['name'],
                  "owner": repo['node']['owner']['login'],
@@ -102,7 +96,10 @@ def get_top_repos():
 
 def clone_repos(repos):
     for repo in repos:
-        subprocess.run(['git', 'clone', repo['clone_url'], f"./repos/{repo['name']}"])
+        # Construct the clone URL from owner and name
+        clone_url = f"https://github.com/{repo['owner']}/{repo['name']}.git"
+        subprocess.run(['git', 'clone', clone_url, f"./repos/{repo['name']}"])
+
 
 def main():
     repos = get_top_repos()
