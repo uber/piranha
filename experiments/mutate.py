@@ -54,34 +54,51 @@ class Mutator:
 
 
 def get_top_repos():
-    GITHUB_API_URL = "https://api.github.com/search/repositories"
-    GITHUB_TOKEN = "your_github_token"
-    QUERY = "language:java"
-    SORT = "stars"
-    ORDER = "desc"
-    PER_PAGE = 20
+    import requests
+    import json
 
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
+    GITHUB_TOKEN = "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"
+    HEADERS = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}"
     }
 
-    params = {
-        "q": QUERY,
-        "sort": SORT,
-        "order": ORDER,
-        "per_page": PER_PAGE
+    # Construct the GraphQL query
+    query = """
+    query {
+        search(query: "language:java stars:>1 NOT leetcode NOT book NOT algorithms NOT examples NOT tutorial", type: REPOSITORY, first: 10) {
+            edges {
+                node {
+                    ... on Repository {
+                        name
+                        owner {
+                            login
+                        }
+                        url
+                        stargazers {
+                            totalCount
+                        }
+                    }
+                }
+            }
+        }
     }
+    """
 
-    response = requests.get(GITHUB_API_URL, headers=headers, params=params)
+    request = requests.post('https://api.github.com/graphql', json={'query': query}, headers=HEADERS)
 
-    if response.status_code == 200:
-        items = response.json()['items']
-        return [{"name": item['name'], "clone_url": item['clone_url']} for item in items]
+    if request.status_code == 200:
+        result = request.json()
+        # Extract the repository information from the GraphQL response
+        repos = result['data']['search']['edges']
+        return [{"name": repo['node']['name'],
+                 "owner": repo['node']['owner']['login'],
+                 "url": repo['node']['url'],
+                 "stars": repo['node']['stargazers']['totalCount']} for repo in repos]
     else:
-        print(f"Error fetching data from GitHub API: {response.status_code}")
-        print(response.json())
+        print(f"Query failed with status code {request.status_code}")
+        print(request.text)
         return []
+
 
 def clone_repos(repos):
     for repo in repos:
