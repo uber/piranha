@@ -1,7 +1,11 @@
+Version 0.3.21
+-------------
+* Improved Swift cleanup 
+
 Version 0.3.20
 -------------
 * Bug fix: concrete syntax matching- Handle trailing commas and comments
-* Feature: Support for ParentIterative edge
+* Feature: Support for `ParentIterative` edge
 
 Version 0.3.19
 -------------
