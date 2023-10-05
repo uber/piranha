@@ -1,7 +1,7 @@
 # BOOLEAN SIMPLIFICATION
 
 [aa]
-match = "exp.isToggleEnabled(SAMPLE_STALE_FLAG)"
+match = ":[[x]].isEnabled(:[y])"
 rewrite = "true"
 
 [simplify_double_parenthesis_true]

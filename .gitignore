@@ -1,6 +1,7 @@
 java/.gradle
 java/build/
 java/*/build/
+experiments/repos
 .idea
 .DS_STORE
 piranha.iml
