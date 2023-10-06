@@ -1,0 +1,151 @@
+# BOOLEAN SIMPLIFICATION
+
+[aa]
+match = ":[[x]].isEnabled(:[y])"
+rewrite = "true"
+
+[simplify_double_parenthesis_true]
+match = "((true))"
+rewrite = "(true)"
+# Example: "((true))" becomes "(true)"
+
+[simplify_double_parenthesis_false]
+match = "((false))"
+rewrite = "(false)"
+# Example: "((false))" becomes "(false)"
+
+[simplify_negative_false]
+match = "!false"
+rewrite = "true"
+# Example: "!false" becomes "true"
+
+[simplify_negative_true]
+match = "!true"
+rewrite = "false"
+# Example: "!true" becomes "false"
+
+[simplify_true_and_r]
+match = "(true && :[a])"
+rewrite = "(:[a])"
+# Example: "(true && variable)" becomes "variable"
+
+[simplify_true_and_l]
+match = "(:[a] && true)"
+rewrite = "(:[a])"
+# Example: "(variable && true)" becomes "variable"
+
+[simplify_true_or_r]
+match = "(true || :[a])"
+rewrite = "(true)"
+# Example: "(true || variable)" becomes "true"
+
+[simplify_true_or_l]
+match = "(:[a] || true)"
+rewrite = "(true)"
+# Example: "(variable || true)" becomes "true"
+
+[simplify_false_and_r]
+match = "(false && :[a])"
+rewrite = "(false)"
+# Example: "(false && variable)" becomes "false"
+
+[simplify_false_and_l]
+match = "(:[a] && false)"
+rewrite = "(false)"
+# Example: "(variable && false)" becomes "false"
+
+[simplify_false_or_r]
+match = "(false || :[a])"
+rewrite = "(:[a])"
+# Example: "(false || variable)" becomes "variable"
+
+[simplify_false_or_l]
+match = "(:[a] || false)"
+rewrite = "(:[a])"
+# Example: "(variable || false)" becomes "variable"
+
+[simplify_equality]
+match = "(:[a] == :[a])"
+rewrite = "(true)"
+# Example: "(variable == variable)" becomes "true"
+
+[simplify_equality_parenth_l]
+match = "((:[a]) == :[a])"
+rewrite = "(true)"
+# Example: "((variable) == variable)" becomes "true"
+
+[simplify_equality_parenth_r]
+match = "(:[a] == (:[a]))"
+rewrite = "(true)"
+# Example: "(variable == (variable))" becomes "true"
+
+[simplify_true_eq_false]
+match = "(true == false)"
+rewrite = "(false)"
+# Example: "(true == false)" becomes "false"
+
+[simplify_false_eq_true]
+match = "(false == true)"
+rewrite = "(false)"
+# Example: "(false == true)" becomes "false"
+
+[simplify_true_neq_false]
+match = "(true != false)"
+rewrite = "(true)"
+# Example: "(true != false)" becomes "true"
+
+[simplify_false_neq_true]
+match = "(false != true)"
+rewrite = "(true)"
+# Example: "(false != true)" becomes "true"
+
+[simplify_tmp_eq_tmp]
+match = "(:[a] != :[a])"
+rewrite = "(false)"
+# Example: "(variable != variable)" becomes "false"
+
+# IF STATEMENT CLEANUP
+
+[simplify_if_statement_true_1]
+match = "if (true) { :[consequence] } else { :[alternative] }"
+rewrite = ":[consequence]"
+# Example: "if (true) { executeTrueBranch() } else { executeFalseBranch() }" becomes "executeTrueBranch()"
+
+[simplify_if_statement_true_2]
+match = "if (true) { :[consequence] }"
+rewrite = ":[consequence]"
+# Example: "if (true) { executeTrueBranch() }" becomes "executeTrueBranch()"
+
+[simplify_if_statement_false_1]
+match = "if (false) { :[consequence] } else { :[alternative] }"
+rewrite = ":[alternative]"
+# Example: "if (false) { executeTrueBranch() } else { executeFalseBranch() }" becomes "executeFalseBranch()"
+
+[simplify_if_statement_false_2]
+match = "if (false) { :[consequence] }"
+rewrite = ""
+# Example: "if (false) { executeTrueBranch() }" becomes ""
+
+# AFTER RETURN CLEANUP
+
+[simplify_after_return_stmt]
+match = "{ :[a] return :[val]; :[b] }"
+rewrite = "{ :[a] return :[val]; }"
+# Example: "{ setup(); return value; cleanup(); }" becomes "{ setup(); return value; }"
+
+# SIMPLIFY_TERNARY
+
+[simplify_ternary_same_branches]
+match = ":[condition] ? :[consequence] : :[consequence];"
+rewrite = ":[consequence]"
+# Example: "condition ? consequence : consequence;" becomes "consequence"
+
+[simplify_ternary_true_condition]
+match = "true ? :[consequence] : :[alternative];"
+rewrite = ":[consequence]"
+# Example: "true ? consequence : alternative;" becomes "consequence"
+
+[simplify_ternary_false_condition]
+match = "false ? :[consequence] : :[alternative];"
+rewrite = ":[alternative]"
+# Example: "false ? consequence : alternative;" becomes "alternative"
