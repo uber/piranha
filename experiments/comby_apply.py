@@ -43,6 +43,7 @@ if __name__ == '__main__':
     # Preview changes
     process = run_comby(args.config_file, args.extension, args.target_directory)
     affected_files = extract_filenames_from_diff(process.stdout)
+    comby_runs = 0
 
     while affected_files:
         print("The following files will be modified:")
@@ -52,7 +53,10 @@ if __name__ == '__main__':
         if args.in_place:
             start = time.time()
             run_comby(args.config_file, args.extension, args.target_directory, in_place=True)
+            comby_runs += time.time() - start
             print(f'Time taken: {time.time() - start} seconds')
 
         process = run_comby(args.config_file, args.extension, args.target_directory)
         affected_files = extract_filenames_from_diff(process.stdout)
+
+    print(f"Comby total runs: {comby_runs}")
