@@ -1,7 +1,7 @@
 # BOOLEAN SIMPLIFICATION
 
 [aa]
-match = ":[[x]].isEnabled(:[y])"
+match = ":[[x]].isEnabled(\"*.disable_villagers\")"
 rewrite = "true"
 
 [simplify_double_parenthesis_true]
@@ -129,7 +129,7 @@ rewrite = ""
 # AFTER RETURN CLEANUP
 
 [simplify_after_return_stmt]
-match = "{ :[a] return :[val]; :[b] }"
+match = "DOES NOT WORK { :[a] return :[val]; :[b] }"
 rewrite = "{ :[a] return :[val]; }"
 # Example: "{ setup(); return value; cleanup(); }" becomes "{ setup(); return value; }"
 

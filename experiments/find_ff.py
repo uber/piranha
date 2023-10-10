@@ -30,7 +30,7 @@ for summary in output:
         _, actual_match = mt
         all_flags.add(actual_match.matches['args'])
 
-print(len(all_flags))
+print(list(all_flags)[:10])
 
 # Handle the output (e.g., log, print, write to file)
 # ... your code to handle output ...
