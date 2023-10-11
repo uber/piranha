@@ -69,7 +69,7 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
   // Adds the given `value` to the vector corresponding to the `key`.
   // Like an adjacency list.
   fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
-    self.entry(key).or_insert_with(Vec::new).push(value);
+    self.entry(key).or_default().push(value);
   }
 }
 
