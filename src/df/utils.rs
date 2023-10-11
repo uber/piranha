@@ -108,7 +108,7 @@ pub fn get_capture_groups_from_tsq(pattern: String) -> Vec<String> {
         .map(|m| m.1.matched_string().clone())
         .collect::<Vec<String>>()
     })
-    .unwrap_or_else(Vec::new);
+    .unwrap_or_default();
 
   log::debug!("capture_groups: {:?}", capture_groups);
 
@@ -155,7 +155,7 @@ pub fn get_capture_group_usage_from_tsq(pattern: String) -> Vec<String> {
         .map(|m| m.1.matched_string().clone())
         .collect::<Vec<String>>()
     })
-    .unwrap_or_else(Vec::new);
+    .unwrap_or_default();
 
   let re = Regex::new(r"@[\w_]+").unwrap();
   let capture_groups: Vec<String> = matched_strings
