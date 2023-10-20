@@ -2,7 +2,7 @@ from polyglot_piranha import Filter, OutgoingEdges, Rule
 
 update_enclosing_var_declaration_java = Rule(
     name="update_enclosing_var_declaration_java",
-    query="cs SparkConf :[conf_var] = :[rhs];",
+    query="cs :[type] :[conf_var] = :[rhs];",
     replace_node="*",
     replace="SparkSession @conf_var = @rhs.getOrCreate();",
     is_seed_rule=False,

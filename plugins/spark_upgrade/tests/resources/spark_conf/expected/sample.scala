@@ -24,6 +24,14 @@ class Sample {
         .config("spark.driver.allowMultipleContexts", "true")
         .getOrCreate()
     sc1 = conf1.sparkContext
+    
+    val conf2 = new SparkSession.builder()
+        .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
+        .master(master)
+        .getOrCreate()
+    conf2.sparkHome(sparkHome)
+
+    conf2.executorEnv("spark.executor.extraClassPath", "test")
 
   }
 }
