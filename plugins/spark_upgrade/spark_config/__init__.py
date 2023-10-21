@@ -46,6 +46,7 @@ class SparkConfigChange(ExecutePiranha):
                 "spark_conf_change_java_scala", ["dummy"], scope="ParentIterative"
             ),
             OutgoingEdges("BuilderPattern", ["dummy"], scope="ParentIterative"),
+            #StandAloneCall
             OutgoingEdges(
                 "dummy",
                 [
@@ -56,7 +57,7 @@ class SparkConfigChange(ExecutePiranha):
             ),
             OutgoingEdges(
                 "update_enclosing_var_declaration",
-                ["update_spark_context"],
+                ["update_spark_context", "StandAloneCall"],
                 scope="File",
             ),
         ] + ([] if self.language == "scala" else java_rules.EDGES)

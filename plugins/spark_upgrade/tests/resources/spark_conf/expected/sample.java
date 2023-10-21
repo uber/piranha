@@ -25,6 +25,13 @@ public class Sample {
           .getOrCreate();
         
         sc = conf1.sparkContext();
+        
+        SparkSession conf2 = new SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true").getOrCreate();
+        conf2.config("spark.driver.instances:", "100");
+        conf2.appName(appName);
+        conf2.sparkHome(sparkHome);
+
+        sc2 = conf2.sparkContext();
 
     }
 }

@@ -20,6 +20,16 @@ class Sample {
       .set("spark.driver.allowMultipleContexts", "true")
     sc1 = new SparkContext(conf1)
     
+
+    val conf2 = new SparkConf()
+      .setMaster(master)
+    
+    conf2.setSparkHome(sparkHome)
+
+    conf2.setExecutorEnv("spark.executor.extraClassPath", "test")
+
+
+
   }
 
 }

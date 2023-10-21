@@ -13,6 +13,8 @@ from polyglot_piranha import (
     Rule,
 )
 
+
+# Rules for transforming builder patterns
 # Rule to transform EntropyCalculator() arguments
 spark_conf_change_java_scala = Rule(
     name="spark_conf_change_java_scala",
@@ -103,12 +105,106 @@ set_spark_home_change_java_scala = Rule(
     is_seed_rule=False,
 )
 
+app_name_change_java_scala_stand_alone_call = Rule(
+    name="app_name_change_java_scala_stand_alone_call",
+    query="cs @conf_var.setAppName(:[app_name])",
+    replace_node="*",
+    replace="@conf_var.appName(@app_name)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+master_name_change_java_scala_stand_alone_call = Rule(
+    name="master_name_change_java_scala_stand_alone_call",
+    query="cs @conf_var.setMaster(:[master])",
+    replace_node="*",
+    replace="@conf_var.master(@master)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+setter_name_change_java_scala_stand_alone_call = Rule(
+    name="setter_name_change_java_scala_stand_alone_call",
+    query="cs @conf_var.set(:[a1],:[a2])",
+    replace_node="*",
+    replace="@conf_var.config(@a1, @a2)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+set_all_change_java_scala_stand_alone_call = Rule(
+    name="set_all_change_java_scala_stand_alone_call",
+    query="cs @conf_var.setAll(:[a1])",
+    replace_node="*",
+    replace="@conf_var.all(@a1)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+set_if_missing_java_scala_stand_alone_call = Rule(
+    name="set_if_missing_java_scala_stand_alone_call",
+    query="cs @conf_var.setIfMissing(:[a1], :[a2])",
+    replace_node="*",
+    replace="@conf_var.ifMissing(@a1)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+set_jars_change_java_scala_stand_alone_call = Rule(
+    name="set_jars_change_java_scala_stand_alone_call",
+    query="cs @conf_var.setJars(:[a1])",
+    replace_node="*",
+    replace="@conf_var.jars(@a1)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+set_executor_env_change_1_java_scala_stand_alone_call = Rule(
+    name="set_executor_env_change_1_java_scala_stand_alone_call",
+    query="cs @conf_var.setExecutorEnv(:[a1])",
+    replace_node="*",
+    replace="@conf_var.executorEnv(@a1)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+set_executor_env_change_2_java_scala_stand_alone_call = Rule(
+    name="set_executor_env_change_2_java_scala_stand_alone_call",
+    query="cs @conf_var.setExecutorEnv(:[a1], :[a2])",
+    replace_node="*",
+    replace="@conf_var.executorEnv(@a1, @a2)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+set_spark_home_change_java_scala_stand_alone_call = Rule(
+    name="set_spark_home_change_java_scala_stand_alone_call",
+    query="cs @conf_var.setSparkHome(:[a1])",
+    replace_node="*",
+    replace="@conf_var.sparkHome(@a1)",
+    groups={"StandAloneCall"},
+    holes= {"conf_var"},
+    is_seed_rule=False,
+)
+
+
 
 
 dummy = Rule(name="dummy", is_seed_rule=False)
 
 RULES = [
+    # Transforms the initializer
     spark_conf_change_java_scala,
+    
+    # Transforms the builder pattern
     app_name_change_java_scala,
     master_name_change_java_scala,
     setter_name_change_java_scala,
@@ -118,6 +214,20 @@ RULES = [
     set_executor_env_change_1_java_scala,
     set_executor_env_change_2_java_scala,
     set_spark_home_change_java_scala,
+    
+    # Transforms the stand alone calls
+    app_name_change_java_scala_stand_alone_call,
+    master_name_change_java_scala_stand_alone_call,
+    setter_name_change_java_scala_stand_alone_call,
+    set_all_change_java_scala_stand_alone_call,
+    set_if_missing_java_scala_stand_alone_call,
+    set_jars_change_java_scala_stand_alone_call,
+    set_executor_env_change_1_java_scala_stand_alone_call,
+    set_executor_env_change_2_java_scala_stand_alone_call,
+    set_spark_home_change_java_scala_stand_alone_call,
+    
+    
+    
     dummy,
 ]
 
