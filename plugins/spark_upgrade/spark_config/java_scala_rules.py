@@ -20,7 +20,7 @@ spark_conf_change_java_scala = Rule(
     name="spark_conf_change_java_scala",
     query="cs new SparkConf()",
     replace_node="*",
-    replace='new SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true")',
+    replace='SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true")',
     holes={"spark_conf"},
 )
 

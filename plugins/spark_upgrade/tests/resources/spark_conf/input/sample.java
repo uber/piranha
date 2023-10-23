@@ -28,6 +28,9 @@ public class Sample {
 
         sc2 = new JavaSparkContext(conf2);
 
+
+        var conf3 = new SparkConf();
+
        
     }
 }

@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession
 class Sample {
   def main(args: Array[String]): Unit = {
     
-    val conf= new SparkSession.builder()
+    val conf= SparkSession.builder()
         .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
         .appName("Sample App")
         .getOrCreate()
@@ -14,7 +14,7 @@ class Sample {
     val sc = conf.sparkContext
 
 
-    val conf1 = new SparkSession.builder()
+    val conf1 = SparkSession.builder()
         .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
         .master(master)
         .all(Seq(("k2", "v2"), ("k3", "v3")))
@@ -25,7 +25,7 @@ class Sample {
         .getOrCreate()
     sc1 = conf1.sparkContext
     
-    val conf2 = new SparkSession.builder()
+    val conf2 = SparkSession.builder()
         .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
         .master(master)
         .getOrCreate()

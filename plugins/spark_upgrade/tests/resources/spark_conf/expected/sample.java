@@ -7,7 +7,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 
 public class Sample {
     public static void main(String[] args) {
-        SparkSession conf = new SparkSession.builder()
+        SparkSession conf = SparkSession.builder()
                 .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
                 .appName("Sample App")
                 .getOrCreate();
@@ -15,7 +15,7 @@ public class Sample {
         SparkContext sc = conf.sparkContext();
 
 
-        SparkSession conf1 = new SparkSession.builder()
+        SparkSession conf1 = SparkSession.builder()
           .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
           .sparkHome(sparkHome)
           .executorEnv("spark.executor.extraClassPath", "test")
@@ -26,12 +26,14 @@ public class Sample {
         
         sc = conf1.sparkContext();
         
-        SparkSession conf2 = new SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true").getOrCreate();
+        SparkSession conf2 = SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true").getOrCreate();
         conf2.config("spark.driver.instances:", "100");
         conf2.appName(appName);
         conf2.sparkHome(sparkHome);
 
         sc2 = conf2.sparkContext();
+
+        SparkSession conf3 = SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true").getOrCreate();
 
     }
 }
