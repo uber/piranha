@@ -11,7 +11,7 @@ relevant_builder_method_names_mapping = {
     "setIfMissing": "ifMissing",
     "setJars": "jars",
     "setExecutorEnv": "executorEnv",
-    "setSparkHome":  "sparkHome",
+    "setSparkHome": "sparkHome",
 }
 
 
@@ -134,26 +134,49 @@ def get_setter_call(variable_name: str, tree: Tree) -> Optional[Node]:
         if node.type == "method_invocation":
             name = node.child_by_field_name("name")
             r = node.child_by_field_name("object")
-            if name and r: 
+            if name and r:
                 name = name.text.decode()
                 r = r.text.decode()
-                if r == variable_name and name in relevant_builder_method_names_mapping.keys():
+                if (
+                    r == variable_name
+                    and name in relevant_builder_method_names_mapping.keys()
+                ):
                     return node
 
 
 def update_spark_conf_setters(
     tree: Tree, source_code: str, state: Dict[str, Any]
 ):
-    setter_call =   get_setter_call(state["spark_conf_name"], tree)
+    setter_call = get_setter_call(state["spark_conf_name"], tree)
     if setter_call:
         rcvr = state["spark_conf_name"]
         invc = setter_call.child_by_field_name("name")
         args = setter_call.child_by_field_name("arguments")
         if rcvr and invc and args:
             new_fn = relevant_builder_method_names_mapping[invc.text.decode()]
-            replacement =  f"{rcvr}.{new_fn}{args.text.decode()}"
+            replacement = f"{rcvr}.{new_fn}{args.text.decode()}"
             return rewrite(setter_call, source_code, replacement)
     return tree, source_code
+
+
+def insert_import_statement(
+    tree: Tree, source_code: str, import_statement: str
+):
+    for import_stmt in traverse_tree(tree):
+        if import_stmt.type == "import_declaration":
+            if import_stmt.text.decode() == import_statement:
+                return tree, source_code
+
+    package_decl = tree.root_node.child_by_field_name("package_declaration")
+    if not package_decl:
+        return tree, source_code
+
+    return rewrite(
+        package_decl,
+        source_code,
+        f"{package_decl.text.decode()}\n{import_statement}",
+    )
+
 
 state = {}
 no_change = False

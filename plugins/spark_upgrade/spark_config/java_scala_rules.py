@@ -1,21 +1,5 @@
-# Copyright (c) 2023 Uber Technologies, Inc.
+from polyglot_piranha import Rule
 
-# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-# except in compliance with the License. You may obtain a copy of the License at
-# <p>http://www.apache.org/licenses/LICENSE-2.0
-
-# <p>Unless required by applicable law or agreed to in writing, software distributed under the
-# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-# express or implied. See the License for the specific language governing permissions and
-# limitations under the License.
-
-from polyglot_piranha import (
-    Rule,
-)
-
-
-# Rules for transforming builder patterns
-# Rule to transform EntropyCalculator() arguments
 spark_conf_change_java_scala = Rule(
     name="spark_conf_change_java_scala",
     query="cs new SparkConf()",
@@ -78,20 +62,11 @@ set_jars_change_java_scala = Rule(
     is_seed_rule=False,
 )
 
-set_executor_env_change_1_java_scala = Rule(
+set_executor_env_change_java_scala = Rule(
     name="set_executor_env_change_1_java_scala",
-    query="cs :[r].setExecutorEnv(:[a1])",
+    query="cs :[r].setExecutorEnv:[args]",
     replace_node="*",
-    replace="@r.executorEnv(@a1)",
-    groups={"BuilderPattern"},
-    is_seed_rule=False,
-)
-
-set_executor_env_change_2_java_scala = Rule(
-    name="set_executor_env_change_2_java_scala",
-    query="cs :[r].setExecutorEnv(:[a1], :[a2])",
-    replace_node="*",
-    replace="@r.executorEnv(@a1, @a2)",
+    replace="@r.executorEnv@args",
     groups={"BuilderPattern"},
     is_seed_rule=False,
 )
@@ -111,7 +86,7 @@ app_name_change_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.appName(@app_name)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
@@ -121,7 +96,7 @@ master_name_change_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.master(@master)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
@@ -131,7 +106,7 @@ setter_name_change_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.config(@a1, @a2)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
@@ -141,7 +116,7 @@ set_all_change_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.all(@a1)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
@@ -151,7 +126,7 @@ set_if_missing_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.ifMissing(@a1)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
@@ -161,27 +136,17 @@ set_jars_change_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.jars(@a1)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
-set_executor_env_change_1_java_scala_stand_alone_call = Rule(
+set_executor_env_change_java_scala_stand_alone_call = Rule(
     name="set_executor_env_change_1_java_scala_stand_alone_call",
-    query="cs @conf_var.setExecutorEnv(:[a1])",
+    query="cs @conf_var.setExecutorEnv:[args]",
     replace_node="*",
-    replace="@conf_var.executorEnv(@a1)",
+    replace="@conf_var.executorEnv@args",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
-    is_seed_rule=False,
-)
-
-set_executor_env_change_2_java_scala_stand_alone_call = Rule(
-    name="set_executor_env_change_2_java_scala_stand_alone_call",
-    query="cs @conf_var.setExecutorEnv(:[a1], :[a2])",
-    replace_node="*",
-    replace="@conf_var.executorEnv(@a1, @a2)",
-    groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
 
@@ -191,44 +156,29 @@ set_spark_home_change_java_scala_stand_alone_call = Rule(
     replace_node="*",
     replace="@conf_var.sparkHome(@a1)",
     groups={"StandAloneCall"},
-    holes= {"conf_var"},
+    holes={"conf_var"},
     is_seed_rule=False,
 )
-
-
-
 
 dummy = Rule(name="dummy", is_seed_rule=False)
 
 RULES = [
-    # Transforms the initializer
     spark_conf_change_java_scala,
-    
-    # Transforms the builder pattern
     app_name_change_java_scala,
     master_name_change_java_scala,
     setter_name_change_java_scala,
     set_all_change_java_scala,
     set_if_missing_java_scala,
     set_jars_change_java_scala,
-    set_executor_env_change_1_java_scala,
-    set_executor_env_change_2_java_scala,
+    set_executor_env_change_java_scala,
     set_spark_home_change_java_scala,
-    
-    # Transforms the stand alone calls
     app_name_change_java_scala_stand_alone_call,
     master_name_change_java_scala_stand_alone_call,
     setter_name_change_java_scala_stand_alone_call,
     set_all_change_java_scala_stand_alone_call,
     set_if_missing_java_scala_stand_alone_call,
     set_jars_change_java_scala_stand_alone_call,
-    set_executor_env_change_1_java_scala_stand_alone_call,
-    set_executor_env_change_2_java_scala_stand_alone_call,
+    set_executor_env_change_java_scala_stand_alone_call,
     set_spark_home_change_java_scala_stand_alone_call,
-    
-    
-    
     dummy,
 ]
-
-

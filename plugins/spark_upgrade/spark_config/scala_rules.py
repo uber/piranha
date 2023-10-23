@@ -1,4 +1,3 @@
-
 from polyglot_piranha import Rule
 
 
@@ -18,7 +17,7 @@ update_spark_context_scala = Rule(
     replace="@conf_var.sparkContext",
     holes={"conf_var"},
     is_seed_rule=False,
-    groups={"update_spark_context"}
+    groups={"update_spark_context"},
 )
 
 

@@ -9,7 +9,6 @@ update_enclosing_var_declaration_java = Rule(
     groups={"update_enclosing_var_declaration"},
 )
 
-
 insert_import_spark_session_java = Rule(
     name="insert_import_spark_session_java",
     query="(package_declaration) @pkg",
@@ -45,7 +44,6 @@ update_spark_context_var_decl_lhs_java = Rule(
     groups={"update_spark_context"},
 )
 
-
 insert_import_spark_context_java = Rule(
     name="insert_import_spark_context_java",
     query="(package_declaration) @pkg",
@@ -60,7 +58,6 @@ insert_import_spark_context_java = Rule(
     },
 )
 
-
 RULES = [
     update_enclosing_var_declaration_java,
     insert_import_spark_session_java,
@@ -68,7 +65,6 @@ RULES = [
     insert_import_spark_context_java,
     update_spark_context_var_decl_lhs_java,
 ]
-
 
 EDGES = [
     OutgoingEdges(
