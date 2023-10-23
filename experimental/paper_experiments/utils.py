@@ -5,9 +5,6 @@ from tree_sitter_languages import get_parser
 
 SOURCE_CODE = """package com.piranha;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
-
 public class Sample {
     public static void main(String[] args) {
         SparkConf conf = new SparkConf()

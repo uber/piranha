@@ -164,17 +164,17 @@ def insert_import_statement(
 ):
     for import_stmt in traverse_tree(tree):
         if import_stmt.type == "import_declaration":
-            if import_stmt.text.decode() == import_statement:
+            if import_stmt.text.decode() == f'import {import_statement};':
                 return tree, source_code
 
-    package_decl = tree.root_node.child_by_field_name("package_declaration")
+    package_decl = [n for n in traverse_tree(tree) if n.type == "package_declaration"]
     if not package_decl:
         return tree, source_code
-
+    package_decl = package_decl[0]
     return rewrite(
         package_decl,
         source_code,
-        f"{package_decl.text.decode()}\n{import_statement}",
+        f"{package_decl.text.decode()}\nimport {import_statement};",
     )
 
 
@@ -184,6 +184,8 @@ while not no_change:
     TREE: Tree = parse_code("java", SOURCE_CODE)
     original_code = SOURCE_CODE
     TREE, SOURCE_CODE = update_spark_conf_init(TREE, SOURCE_CODE, state)
+    TREE, SOURCE_CODE= insert_import_statement(TREE, SOURCE_CODE, "org.apache.spark.sql.SparkSession")
+    TREE, SOURCE_CODE= insert_import_statement(TREE, SOURCE_CODE, "org.apache.spark.SparkContext")
     TREE, SOURCE_CODE = update_spark_context_init(TREE, SOURCE_CODE, state)
     no_change = SOURCE_CODE == original_code
     no_setter_found = False
