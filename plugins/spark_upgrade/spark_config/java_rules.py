@@ -1,5 +1,21 @@
 from polyglot_piranha import Filter, OutgoingEdges, Rule
 
+
+def insert_import(rule_name, fq_type: str) -> Rule:
+    return Rule(
+        name=rule_name,
+        query="(package_declaration) @pkg",
+        replace_node="pkg",
+        replace=f"@pkg \n import {fq_type};",
+        is_seed_rule=False,
+        filters={
+            Filter(
+                enclosing_node="(program) @cu",
+                not_contains=[f"cs import {fq_type};"],
+            )
+        },
+    )
+
 update_enclosing_var_declaration_java = Rule(
     name="update_enclosing_var_declaration_java",
     query="cs :[type] :[conf_var] = :[rhs];",
@@ -9,18 +25,8 @@ update_enclosing_var_declaration_java = Rule(
     groups={"update_enclosing_var_declaration"},
 )
 
-insert_import_spark_session_java = Rule(
-    name="insert_import_spark_session_java",
-    query="(package_declaration) @pkg",
-    replace_node="pkg",
-    replace="@pkg \n import org.apache.spark.sql.SparkSession;",
-    is_seed_rule=False,
-    filters={
-        Filter(
-            enclosing_node="(program) @cu",
-            not_contains=["cs import org.apache.spark.sql.SparkSession;"],
-        )
-    },
+insert_import_spark_session_java = insert_import(
+    "insert_import_spark_session_java", "org.apache.spark.sql.SparkSession"
 )
 
 update_spark_context_java = Rule(
@@ -44,18 +50,8 @@ update_spark_context_var_decl_lhs_java = Rule(
     groups={"update_spark_context"},
 )
 
-insert_import_spark_context_java = Rule(
-    name="insert_import_spark_context_java",
-    query="(package_declaration) @pkg",
-    replace_node="pkg",
-    replace="@pkg \n import org.apache.spark.SparkContext;",
-    is_seed_rule=False,
-    filters={
-        Filter(
-            enclosing_node="(program) @cu",
-            not_contains=["cs import org.apache.spark.SparkContext;"],
-        )
-    },
+insert_import_spark_context_java = insert_import(
+    "insert_import_spark_context_java", "org.apache.spark.SparkContext"
 )
 
 RULES = [
