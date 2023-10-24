@@ -1,3 +1,4 @@
+from typing import List
 import requests
 import argparse
 
@@ -37,13 +38,38 @@ def parse_arguments():
         default=1,
         help="Page number",
     )
+    # argument to specify the path to write the results
+    parser.add_argument(
+        "--output",
+        default="results.csv",
+        help="Path to write the results",
+    )
     return parser.parse_args()
 
 
-def lookup_keyword_in_repos(headers, search_string, repos):
-    for repo in repos:
+class MatchedRepo:
+    owner: str
+    name: str
+    stars: int
+    search_string: str
+    token: str
+    languages: list[str]
+    number_of_matches: int = 0
+    files: list[str] = []
+
+    def __init__(self, name, owner, stars, search_string, token, languages):
+        self.name = name
+        self.owner = owner
+        self.stars = stars
+        self.search_string = search_string
+        self.token = token
+        self.languages = languages
+        self.lookup()
+
+    def lookup(self):
+        headers = {"Authorization": f"Bearer {self.token}"}
         code_params = {
-            "q": f"{search_string} repo:{repo['owner']}/{repo['name']}",
+            "q": f"{self.search_string} repo:{self.owner}/{self.name}",
         }
 
         code_response = requests.get(
@@ -51,27 +77,39 @@ def lookup_keyword_in_repos(headers, search_string, repos):
             params=code_params,
             headers=headers,
         )
-
         if code_response.status_code == 200:
             code_data = code_response.json()
-            if code_data["total_count"] > 0:
-                print(f"{repo['owner']}/{repo['name']} - {code_data['total_count']}")
+            self.number_of_matches = code_data["total_count"]
+            self.files = [
+                item["path"]
+                for item in code_data["items"]
+                if any(l for l in self.languages if l in item["path"])
+            ]
+    def to_csv(self):
+        files = "|".join(self.files)
+        return f"{self.name}, {self.owner}, {self.stars}, {self.number_of_matches}, {files}"
 
 
-def get_repo_info(response_json):
+def get_repo_info(
+    response_json, search_string, token, languages
+) -> List[MatchedRepo]:
     repositories = []
     for item in response_json["items"]:
+        name = item["name"]
+        owner = item["owner"]["login"]
+        stars = item["stargazers_count"]
+
         repositories.append(
-            {"name": item["name"], "owner": item["owner"]["login"]}
+            MatchedRepo(name, owner, stars, search_string, token, languages)
         )
     return repositories
 
 
-def search(token, search_string, languages):
+def search(token, search_string, languages, output_csv):
     # Set up the headers with your token
     headers = {"Authorization": f"Bearer {token}"}
     # Parameters for the repository search
-    _lang_clause= " ".join([f"language:{l}" for l in languages])
+    _lang_clause = " ".join([f"language:{l}" for l in languages])
     repo_params = {
         "q": f"stars:>100 {_lang_clause}",
         "sort": "stars",
@@ -89,13 +127,22 @@ def search(token, search_string, languages):
             )
 
             if response.status_code == 200:
-                
                 data = response.json()
-                repositories = get_repo_info(data)
-                
+                repositories = get_repo_info(
+                    response_json=data,
+                    search_string=search_string,
+                    token=token,
+                    languages=languages,
+                )
+                for r in repositories:
+                    if r.number_of_matches > 0:
+                        entry = r.to_csv()
+                        with open(output_csv, "a+") as f:
+                            f.write(entry + "\n")
+                            print(entry)
                 if "next" not in response.links:
                     break
-                
+
                 repo_params["page"] += 1
 
             else:
@@ -104,13 +151,15 @@ def search(token, search_string, languages):
                 )
                 print(response.text)
                 break
-            
-            lookup_keyword_in_repos(headers, search_string, repositories)
 
     except requests.exceptions.RequestException as e:
         print(f"An error occurred: {e}")
 
 
-
 args = parse_arguments()
-search(args.token, args.search_string, args.languages)
+search(
+    token=args.token,
+    search_string=args.search_string,
+    languages=args.languages,
+    output_csv=args.output,
+)
