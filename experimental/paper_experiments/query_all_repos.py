@@ -117,7 +117,7 @@ def search(token, search_string, languages, output_csv):
         "per_page": 100,  # Number of results per page (max 100)
         # "page": 1,  # Page number
     }
-    counter = 10
+    counter = 0
     try:
         # Fetch the top starred repositories
         while True:
