@@ -116,15 +116,16 @@ def search(token, search_string, languages, output_csv):
         "order": "desc",
         "per_page": 100,  # Number of results per page (max 100)
     }
-    counter = 1
+    counter = 0
     try:
         # Fetch the top starred repositories
         while True:
             counter += 1
-            if counter > 10:
+            if counter > 70:
                 break
             repositories = []
             repo_params["page"] = counter
+            print(counter)
             response = requests.get(
                 GITHUB_REPO_URL, params=repo_params, headers=headers
             )
