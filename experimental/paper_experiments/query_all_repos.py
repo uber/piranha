@@ -83,11 +83,11 @@ class MatchedRepo:
             self.files = [
                 item["path"]
                 for item in code_data["items"]
-                if any(l for l in self.languages if l in item["path"])
+                if any(l for l in self.languages if l.lower() in item["path"])
             ]
     def to_csv(self):
-        files = "|".join(self.files)
-        return f"{self.name}, {self.owner}, {self.stars}, {self.number_of_matches}, {files}"
+        # files = "|".join(self.files)
+        return f"{self.name}, {self.owner}, {self.stars}, {self.number_of_matches}"#, {files}"
 
 
 def get_repo_info(
@@ -115,9 +115,8 @@ def search(token, search_string, languages, output_csv):
         "sort": "stars",
         "order": "desc",
         "per_page": 100,  # Number of results per page (max 100)
-        # "page": 1,  # Page number
     }
-    counter = 0
+    counter = 1
     try:
         # Fetch the top starred repositories
         while True:
@@ -125,6 +124,7 @@ def search(token, search_string, languages, output_csv):
             if counter > 10:
                 break
             repositories = []
+            repo_params["page"] = counter
             response = requests.get(
                 GITHUB_REPO_URL, params=repo_params, headers=headers
             )
@@ -145,8 +145,6 @@ def search(token, search_string, languages, output_csv):
                             print(entry)
                 if "next" not in response.links:
                     break
-
-                repo_params["page"] += 1
 
             else:
                 print(
