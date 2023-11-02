@@ -5,29 +5,24 @@ import org.apache.spark.sql.SparkSession
 
 class Sample {
   def main(args: Array[String]): Unit = {
-    
-    val conf= new SparkConf()
-      .setAppName("Sample App")
-    
-    val sc = new SparkContext(conf)
 
-    val conf1 = new SparkConf()
+    val conf = new SparkConf()
       .setMaster(master)
-      .setAll(Seq(("k2", "v2"), ("k3", "v3")))
       .setAppName(appName)
-      .setSparkHome(sparkHome)
-      .setExecutorEnv("spark.executor.extraClassPath", "test")
       .set("spark.driver.allowMultipleContexts", "true")
-    sc1 = new SparkContext(conf1)
+    val sc = new SparkContext(conf)
+    val sqlContext = new TestHiveContext(sc).sparkSession
     
-
     val conf2 = new SparkConf()
-      .setMaster(master)
     
     conf2.setSparkHome(sparkHome)
 
     conf2.setExecutorEnv("spark.executor.extraClassPath", "test")
 
+   val sparkSession = SparkSession.builder()
+        .master(master)
+        .appName(appName)
+        .getOrCreate()
 
 
   }

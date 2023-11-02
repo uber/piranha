@@ -5,33 +5,31 @@ import org.apache.spark.sql.SparkSession
 
 class Sample {
   def main(args: Array[String]): Unit = {
+
+    val conf = new SparkConf()
+      .set("spark.sql.legacy.timeParserPolicy","LEGACY")
+      .set("spark.sql.legacy.allowUntypedScalaUDF", "true")
+      .setMaster(master)
+      .setAppName(appName)
+      .set("spark.driver.allowMultipleContexts", "true")
+    val sc = new SparkContext(conf)
+    val sqlContext = new TestHiveContext(sc).sparkSession
     
-    val conf= new SparkSession.builder()
-        .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
-        .appName("Sample App")
-        .getOrCreate()
+    val conf2 = new SparkConf()
+      .set("spark.sql.legacy.timeParserPolicy","LEGACY")
+      .set("spark.sql.legacy.allowUntypedScalaUDF", "true")
+    
+    conf2.setSparkHome(sparkHome)
 
-    val sc = conf.sparkContext
+    conf2.setExecutorEnv("spark.executor.extraClassPath", "test")
 
-
-    val conf1 = new SparkSession.builder()
+    val sparkSession = SparkSession.builder()
+        .config("spark.sql.legacy.timeParserPolicy","LEGACY")
         .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
         .master(master)
-        .all(Seq(("k2", "v2"), ("k3", "v3")))
         .appName(appName)
-        .sparkHome(sparkHome)
-        .executorEnv("spark.executor.extraClassPath", "test")
-        .config("spark.driver.allowMultipleContexts", "true")
         .getOrCreate()
-    sc1 = conf1.sparkContext
-    
-    val conf2 = new SparkSession.builder()
-        .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
-        .master(master)
-        .getOrCreate()
-    conf2.sparkHome(sparkHome)
-
-    conf2.executorEnv("spark.executor.extraClassPath", "test")
 
   }
+
 }
