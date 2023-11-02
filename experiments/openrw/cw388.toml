@@ -1,60 +1,67 @@
 [[rules]]
 name = "find_class"
-match = "cs class RandomUtil :[b]"
+query = "cs public final class RandomUtil :[b]"
+
 
 [[rules]]
 name = "delete_fields"
-match = "(field_declaration) @fd"
-replace = "fd"
-replace_string = ""
+query = "(field_declaration) @fd"
+replace_node = "fd"
+replace = ""
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = ["rgx SECURE_RANDOM"]
 
 [[rules]]
 name = "append_new_fields"
-match = """(class_declaration
+query = """(class_declaration
 	name: (_) @name
     body: (class_body
-    			(_)+ @stmts) @body)
+    			(_) @first
+                (_)+ @stmts) @body)
 """
-replace="stmts"
-replace_string = """
-private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-private static final int DEF_COUNT = 20;
+replace_node="first"
+replace = """private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+  private static final int DEF_COUNT = 20;
 
-static {
-    SECURE_RANDOM.nextBytes(new byte[64]);
-}
+  static {
+      SECURE_RANDOM.nextBytes(new byte[64]);
+  }
 
-private static String generateRandomAlphanumericString() {
-    return RandomStringUtils.random(DEF_COUNT, 0, 0, true, true, null, SECURE_RANDOM);
-}
+  private static String generateRandomAlphanumericString() {
+      return RandomStringUtils.random(DEF_COUNT, 0, 0, true, true, null, SECURE_RANDOM);
+  }
 
-@stmts
+  @first
 """
 [[rules.filters]]
-not_contains = "rgx SECURE_RANDOM"
+enclosing_node = "(class_declaration) @cd"
+not_contains = ["rgx SECURE_RANDOM"]
 
 [[rules]]
 name = "replace_methods_body"
-match = """
+query = """
 (method_declaration
-	body: (_) @block)
+	body: (_) @block) @md
 """
-replace = "block"
-replace_string = "{ return generateRandomAlphanumericString(); }"
+replace_node = "block"
+replace = "{ return generateRandomAlphanumericString(); }"
 [[rules.filters]]
-not_contains = "rgx generateRandomAlphanumericString"
+enclosing_node = "(method_declaration) @method"
+not_contains = ["rgx generateRandomAlphanumericString"]
+
 
 [[edges]]
 from = "find_class"
-to = "delete_fields"
-scope = "class"
+to = ["delete_fields"]
+scope = "Class"
 
 [[edges]]
 from = "delete_fields"
-to = "append_new_fields"
-scope = "class"
+to = ["append_new_fields"]
+scope = "Class"
 
 [[edges]]
 from = "append_new_fields"
-to = "replace_methods_body"
-scope = "class"
+to = ["replace_methods_body"]
+scope = "Class"
