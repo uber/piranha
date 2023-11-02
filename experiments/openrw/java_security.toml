@@ -1,0 +1,19 @@
+[[rules]]
+name = "Update import"
+match = 'cs import java.io.File;'
+rewrite = 'cs import java.nio.file.Files;'
+
+[[rules]]
+name = "Update usage 2 args"
+match = 'cs File.createTempFile(:[prefix], :[suffix])'
+rewrite = 'cs Files.createTempFile(:[prefix], :[suffix]).toFile()'
+
+[[rules]]
+name = "Update usage 3 args"
+match = 'cs File.createTempFile(:[prefix], :[suffix], :[directory])'
+rewrite = 'cs Files.createTempFile(:[directory].toPath(), :[prefix], :[suffix]).toFile()'
+
+[[edges]]
+from = "Update import"
+to = ["Update usage 2 args", "Update usage 3 args"]
+scope = "File"
