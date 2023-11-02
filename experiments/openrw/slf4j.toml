@@ -1,26 +1,31 @@
 [[rules]]
-name = "Capture LoggerFactory usage"
-match = 'LoggerFactory.getLogger(:[any])'
+name="find_usage"
+query = 'cs LoggerFactory.getLogger(WrongClass.class)'
 
 [[rules]]
-name = "Capture class name"
-match = 'class :[className] :[body]'
+name = "get_enclosing_class"
+query = '''
+(class_declaration
+	name: (_) @cName) @class_declaration'''
+is_seed_rule = false
 
 [[rules]]
-name = "Rewrite log"
-match = 'LoggerFactory.getLogger(:[any])'
-rewrite = 'LoggerFactory.getLogger(:[className].class)'
-holes = ["className", "body"]
+name = "rewrite_log"
+query = 'cs LoggerFactory.getLogger(:[any])'
+replace_node = "*"
+replace = 'LoggerFactory.getLogger(@cName.class)'
+holes = ["cName"]
+is_seed_rule = false
 [[rules.filters]]
-not_contains = ':[className].class'
+enclosing_node = "(class_declaration) @md"
+not_contains = ['rgx Something.class']
 
 [[edges]]
-from = "Capture LoggerFactory usage"
-to = "Capture class name"
-scope = "class"
+from = "find_usage"
+to = ["get_enclosing_class"]
+scope = "File"
 
 [[edges]]
-from = "Capture class name"
-to = "Rewrite log"
-scope = "class"
-
+from = "get_enclosing_class"
+to = ["rewrite_log"]
+scope = "Class"

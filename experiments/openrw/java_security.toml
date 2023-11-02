@@ -1,17 +1,20 @@
 [[rules]]
 name = "Update import"
-match = 'cs import java.io.File;'
-rewrite = 'cs import java.nio.file.Files;'
+query = 'cs import java.io.File;'
+replace_node = "*"
+replace = 'import java.nio.file.Files;'
 
 [[rules]]
 name = "Update usage 2 args"
-match = 'cs File.createTempFile(:[prefix], :[suffix])'
-rewrite = 'cs Files.createTempFile(:[prefix], :[suffix]).toFile()'
+query = 'cs File.createTempFile(:[prefix], :[suffix])'
+replace_node = "*"
+replace = 'Files.createTempFile(@prefix, @suffix).toFile()'
 
 [[rules]]
 name = "Update usage 3 args"
-match = 'cs File.createTempFile(:[prefix], :[suffix], :[directory])'
-rewrite = 'cs Files.createTempFile(:[directory].toPath(), :[prefix], :[suffix]).toFile()'
+query = 'cs File.createTempFile(:[prefix], :[suffix], :[directory])'
+replace_node = "*"
+replace = 'Files.createTempFile(@directory.toPath(), @prefix, @suffix).toFile()'
 
 [[edges]]
 from = "Update import"
