@@ -1,0 +1,23 @@
+[[rules]]
+name = "Capture LoggerFactory usage"
+match = 'LoggerFactory.getLogger(:[any])'
+
+[[rules]]
+name = "Capture class name"
+match = 'class :[className] :[body]'
+
+[[rules]]
+name = "Rewrite log"
+match = 'LoggerFactory.getLogger(:[any])'
+rewrite = 'LoggerFactory.getLogger(:[className].class)'
+holes = ["className", "body"]
+[[rules.filters]]
+not_contains = ':[className].class'
+
+[[edges]]
+from = "Capture LoggerFactory usage"
+to = "Capture class name"
+
+[[edges]]
+from = "Capture class name"
+to = "Rewrite log"
