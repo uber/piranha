@@ -1,33 +1,32 @@
 package com.piranha;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 
 public class Sample {
     public static void main(String[] args) {
-        SparkConf conf = new SparkConf()
-                .setAppName("Sample App");
-
-        JavaSparkContext sc = new JavaSparkContext(conf);
-
-        SparkConf conf1 = new SparkConf()
-          .setSparkHome(sparkHome)
-          .setExecutorEnv("spark.executor.extraClassPath", "test")
-          .setAppName(appName)
-          .setMaster(master)
-          .set("spark.driver.allowMultipleContexts", "true");
+        String master = "local";
+        String appName = "SampleApp";
+        String sparkHome = "your_spark_home_directory";
         
-        sc = new JavaSparkContext(conf1);
+        SparkConf conf = new SparkConf()
+                .setMaster(master)
+                .setAppName(appName)
+                .set("spark.driver.allowMultipleContexts", "true");
+        
+        SparkContext sc = new SparkContext(conf);
+        TestHiveContext sqlContext = new TestHiveContext(sc);
+        SparkSession sparkSession = sqlContext.sparkSession();
 
-
-
-        var conf2 = new SparkConf();
-        conf2.set("spark.driver.instances:", "100");
-        conf2.setAppName(appName);
+        SparkConf conf2 = new SparkConf();
         conf2.setSparkHome(sparkHome);
-
-        sc2 = new JavaSparkContext(conf2);
-
-       
+        
+        conf2.setExecutorEnv("spark.executor.extraClassPath", "test");
+        
+        SparkSession sparkSession = SparkSession.builder()
+                .master(master)
+                .appName(appName)
+                .getOrCreate();
     }
 }

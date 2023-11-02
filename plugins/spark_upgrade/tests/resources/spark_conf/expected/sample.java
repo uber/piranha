@@ -1,37 +1,38 @@
-package com.piranha; 
- import org.apache.spark.SparkContext; 
- import org.apache.spark.sql.SparkSession;
+package com.piranha;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 
 public class Sample {
     public static void main(String[] args) {
-        SparkSession conf = new SparkSession.builder()
-                .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
-                .appName("Sample App")
-                .getOrCreate();
-
-        SparkContext sc = conf.sparkContext();
-
-
-        SparkSession conf1 = new SparkSession.builder()
-          .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
-          .sparkHome(sparkHome)
-          .executorEnv("spark.executor.extraClassPath", "test")
-          .appName(appName)
-          .master(master)
-          .config("spark.driver.allowMultipleContexts", "true")
-          .getOrCreate();
+        String master = "local";
+        String appName = "SampleApp";
+        String sparkHome = "your_spark_home_directory";
         
-        sc = conf1.sparkContext();
+        SparkConf conf = new SparkConf()
+                .set("spark.sql.legacy.timeParserPolicy","LEGACY")
+                .set("spark.sql.legacy.allowUntypedScalaUDF", "true")
+                .setMaster(master)
+                .setAppName(appName)
+                .set("spark.driver.allowMultipleContexts", "true");
         
-        SparkSession conf2 = new SparkSession.builder().config("spark.sql.legacy.allowUntypedScalaUDF", "true").getOrCreate();
-        conf2.config("spark.driver.instances:", "100");
-        conf2.appName(appName);
-        conf2.sparkHome(sparkHome);
+        SparkContext sc = new SparkContext(conf);
+        TestHiveContext sqlContext = new TestHiveContext(sc);
+        SparkSession sparkSession = sqlContext.sparkSession();
 
-        sc2 = conf2.sparkContext();
-
+        SparkConf conf2 = new SparkConf()
+                .set("spark.sql.legacy.timeParserPolicy","LEGACY")
+               .set("spark.sql.legacy.allowUntypedScalaUDF", "true");
+        conf2.setSparkHome(sparkHome);
+        
+        conf2.setExecutorEnv("spark.executor.extraClassPath", "test");
+        
+        SparkSession sparkSession = SparkSession.builder()
+                    .config("spark.sql.legacy.timeParserPolicy","LEGACY")
+                    .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
+                    .master(master)
+                    .appName(appName)
+                    .getOrCreate();
     }
 }

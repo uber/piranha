@@ -17,10 +17,6 @@ from polyglot_piranha import (
     OutgoingEdges,
     Rule,
 )
-import spark_config.scala_rules as scala_rules
-import spark_config.java_rules as java_rules
-import spark_config.java_scala_rules as java_scala_rules
-
 
 class SparkConfigChange(ExecutePiranha):
     def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
@@ -36,31 +32,34 @@ class SparkConfigChange(ExecutePiranha):
         return "Spark Config Change"
 
     def get_rules(self) -> List[Rule]:
-        return java_scala_rules.RULES + (
-            scala_rules.RULES if self.language == "scala" else java_rules.RULES
+        update_spark_conf_init = Rule(
+            name="update_spark_conf_init",
+            query="cs new SparkConf()",
+            replace_node="*",
+            replace='new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")',
+            filters={
+                Filter(
+                    not_enclosing_node='cs new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")'
+                )
+            },
         )
 
+        update_spark_session_builder_init = Rule(
+            name="update_spark_conf_init",
+            query="cs SparkSession.builder()",
+            replace_node="*",
+            replace='SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")',
+            filters={
+                Filter(
+                    not_enclosing_node='cs SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")'
+                )
+            },
+        )
+
+        return [update_spark_conf_init, update_spark_session_builder_init]
+
     def get_edges(self) -> List[OutgoingEdges]:
-        return [
-            OutgoingEdges(
-                "spark_conf_change_java_scala", ["dummy"], scope="ParentIterative"
-            ),
-            OutgoingEdges("BuilderPattern", ["dummy"], scope="ParentIterative"),
-            #StandAloneCall
-            OutgoingEdges(
-                "dummy",
-                [
-                    "BuilderPattern",
-                    "update_enclosing_var_declaration",
-                ],
-                scope="ParentIterative",
-            ),
-            OutgoingEdges(
-                "update_enclosing_var_declaration",
-                ["update_spark_context", "StandAloneCall"],
-                scope="File",
-            ),
-        ] + ([] if self.language == "scala" else java_rules.EDGES)
+        return []
 
     def summaries_to_custom_dict(self, _) -> Dict[str, Any]:
         return {}
