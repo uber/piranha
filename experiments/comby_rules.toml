@@ -1,8 +1,7 @@
 # BOOLEAN SIMPLIFICATION
-
-[aa]
-match = ":[[x]].isEnabled(\"*.disable_villagers\")"
-rewrite = "true"
+[cleanup_flag]
+match = "{{match}}"
+rewrite = "{{replace}}"
 
 [simplify_double_parenthesis_true]
 match = "((true))"
