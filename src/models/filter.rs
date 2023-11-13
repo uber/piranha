@@ -22,7 +22,7 @@ use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
-use crate::utilities::{tree_sitter_utilities::get_node_for_range};
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
 
 use super::{
   capture_group_patterns::CGPattern, default_configs::default_child_count,
@@ -134,7 +134,7 @@ impl Filter {
   fn __repr__(&self) -> String {
     format!("{:?}", self)
   }
-  
+
   fn __str__(&self) -> String {
     self.__repr__()
   }

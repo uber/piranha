@@ -20,7 +20,7 @@ use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
-use crate::utilities::{Instantiate};
+use crate::utilities::Instantiate;
 
 use super::{
   capture_group_patterns::CGPattern,
@@ -205,7 +205,7 @@ impl Rule {
   fn __repr__(&self) -> String {
     format!("{:?}", self)
   }
-  
+
   fn __str__(&self) -> String {
     self.__repr__()
   }

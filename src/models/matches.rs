@@ -13,7 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
-use crate::utilities::{tree_sitter_utilities::get_node_for_range};
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
@@ -58,7 +58,7 @@ impl Match {
   fn __repr__(&self) -> String {
     format!("{:?}", self)
   }
-  
+
   fn __str__(&self) -> String {
     self.__repr__()
   }
@@ -306,7 +306,7 @@ impl Range {
   fn __repr__(&self) -> String {
     format!("{:?}", self)
   }
-  
+
   fn __str__(&self) -> String {
     self.__repr__()
   }
@@ -387,7 +387,7 @@ impl Point {
   fn __repr__(&self) -> String {
     format!("{:?}", self)
   }
-  
+
   fn __str__(&self) -> String {
     self.__repr__()
   }

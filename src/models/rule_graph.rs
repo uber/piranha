@@ -82,7 +82,7 @@ impl RuleGraph {
   fn __repr__(&self) -> String {
     format!("{:?}", self)
   }
-  
+
   fn __str__(&self) -> String {
     self.__repr__()
   }
