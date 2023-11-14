@@ -13,7 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 
-use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::get_node_for_range};
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
 use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
@@ -52,7 +52,17 @@ pub struct Match {
   #[serde(skip)]
   pub(crate) associated_comments: Vec<Range>,
 }
-gen_py_str_methods!(Match);
+
+#[pymethods]
+impl Match {
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
+}
 
 impl Match {
   pub(crate) fn from_regex(
@@ -291,7 +301,16 @@ impl From<tree_sitter::Range> for Range {
   }
 }
 
-gen_py_str_methods!(Range);
+#[pymethods]
+impl Range {
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
+}
 
 impl Range {
   pub(crate) fn from_regex_match(mtch: &regex::Match, source_code: &str) -> Self {
@@ -363,7 +382,16 @@ impl From<tree_sitter::Point> for Point {
   }
 }
 
-gen_py_str_methods!(Point);
+#[pymethods]
+impl Point {
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
+}
 
 // Implements instance methods related to getting matches for rule
 impl SourceCodeUnit {
