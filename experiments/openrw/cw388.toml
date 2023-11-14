@@ -14,11 +14,11 @@ not_contains = ["rgx SECURE_RANDOM"]
 
 [[rules]]
 name = "append_new_fields"
-query = """(class_declaration
+query = """
+(class_declaration
 	name: (_) @name
     body: (class_body
-    			(_) @first
-                (_)+ @stmts) @body)
+    			(_)+ @first) @body)
 """
 replace_node="first"
 replace = """private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -32,7 +32,6 @@ replace = """private static final SecureRandom SECURE_RANDOM = new SecureRandom(
       return RandomStringUtils.random(DEF_COUNT, 0, 0, true, true, null, SECURE_RANDOM);
   }
 
-  @first
 """
 [[rules.filters]]
 enclosing_node = "(class_declaration) @cd"
