@@ -55,6 +55,25 @@ fn test_rule_try_instantiate_positive() {
   ))
 }
 
+#[test]
+fn test_rule_try_instantiate_positive_cs() {
+  let rule = piranha_rule! {
+      name= "test",
+      query= "cs :[variable_name] = :[value]",
+      replace_node = "*",
+      replace = "",
+      holes = ["variable_name"]
+  };
+
+  let substitutions: HashMap<String, String> =
+    HashMap::from([(String::from("variable_name"), String::from("foobar"))]);
+  let instantiated_rule = InstantiatedRule::new(&rule, &substitutions);
+  assert!(eq_without_whitespace(
+    instantiated_rule.query().pattern().as_str(),
+    "cs foobar = :[value]"
+  ))
+}
+
 /// Tests whether a valid rule is *not* instantiated given invalid substitutions.
 #[test]
 #[should_panic]

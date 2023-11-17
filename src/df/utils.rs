@@ -100,7 +100,7 @@ pub fn get_capture_groups_from_tsq(pattern: String) -> Vec<String> {
 
   // maps matched strings to a vec of strings
   let capture_groups = output_summaries
-    .get(0)
+    .first()
     .map(|summary| {
       summary
         .matches()
@@ -147,7 +147,7 @@ pub fn get_capture_group_usage_from_tsq(pattern: String) -> Vec<String> {
 
   // maps matched strings to a vec of strings
   let matched_strings = output_summaries
-    .get(0)
+    .first()
     .map(|summary| {
       summary
         .matches()

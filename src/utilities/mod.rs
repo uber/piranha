@@ -47,7 +47,7 @@ where
         T::default()
       } else {
         #[rustfmt::skip]
-      panic!("Could not read file: {file_path:?} \n Error : \n {err:?}");
+        panic!("Could not read file: {file_path:?} \n Error : \n {err:?}");
       }
     }
   }
@@ -138,6 +138,9 @@ impl Instantiate for String {
     for (tag, substitute) in substitutions {
       // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
       let key = format!("@{tag}");
+      output = output.replace(&key, substitute);
+
+      let key = format!(":[{tag}]");
       output = output.replace(&key, substitute);
     }
     output
