@@ -138,3 +138,17 @@ fn test_instantiate() {
     "isFlagTreated foo bar true"
   )
 }
+
+#[test]
+fn test_instantiate_cs() {
+  let substitutions = HashMap::from([
+    ("variable_name".to_string(), "isFlagTreated".to_string()),
+    ("init".to_string(), "true".to_string()),
+  ]);
+  assert_eq!(
+    CGPattern(":[variable_name] foo bar :[init]".to_string())
+      .instantiate(&substitutions)
+      .0,
+    "isFlagTreated foo bar true"
+  )
+}
