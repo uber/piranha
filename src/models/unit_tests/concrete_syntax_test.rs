@@ -92,3 +92,14 @@ fn test_trailing_comma() {
     GO,
   );
 }
+
+#[test]
+fn test_string_literal_java() {
+  run_test(
+    "a.boolVariation(\"bar\", context);",
+    ":[var].foo(\"bar\", :[arg] );",
+    1,
+    vec![vec![("var", "a"), ("arg", "context")]],
+    JAVA,
+  );
+}
