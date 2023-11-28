@@ -20,7 +20,7 @@ use getset::Getters;
 use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 
-use crate::utilities::{gen_py_str_methods, Instantiate};
+use crate::utilities::Instantiate;
 
 use super::{
   capture_group_patterns::CGPattern,
@@ -202,7 +202,13 @@ impl Rule {
     rule_builder.build().unwrap()
   }
 
-  gen_py_str_methods!();
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
 }
 
 impl Validator for Rule {

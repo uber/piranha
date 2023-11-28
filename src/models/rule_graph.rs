@@ -14,7 +14,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use crate::{
   df::analysis::DataflowAnalysis,
   models::{outgoing_edges::OutgoingEdges, rule::Rule},
-  utilities::{gen_py_str_methods, read_toml, MapOfVec},
+  utilities::{read_toml, MapOfVec},
 };
 
 use colored::Colorize;
@@ -78,7 +78,14 @@ impl RuleGraph {
       .edges(edges)
       .build()
   }
-  gen_py_str_methods!();
+
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
 }
 
 impl RuleGraphBuilder {

@@ -18,6 +18,7 @@ from polyglot_piranha import (
     Rule,
 )
 
+
 class SparkConfigChange(ExecutePiranha):
     def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
         super().__init__(
@@ -56,7 +57,26 @@ class SparkConfigChange(ExecutePiranha):
             },
         )
 
-        return [update_spark_conf_init, update_spark_session_builder_init]
+        update_import_array_queue = Rule(
+            name="update_import_array_queue",
+            query=(
+                "cs import org.spark_project.jetty.util.ArrayQueue;"
+                if self.language == "java"
+                else "cs import org.spark_project.jetty.util.ArrayQueue"
+            ),
+            replace_node="*",
+            replace=(
+                "import java.util.ArrayDeque;"
+                if self.language == "java"
+                else "import java.util.ArrayDeque"
+            ),
+        )
+
+        return [
+            update_spark_conf_init,
+            update_spark_session_builder_init,
+            update_import_array_queue,
+        ]
 
     def get_edges(self) -> List[OutgoingEdges]:
         return []
