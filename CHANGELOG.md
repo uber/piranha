@@ -1,11 +1,19 @@
+Version 0.3.22
+-------------
+* Improved rule syntax. Now :[x] pattern is supported for references too.
+
+Version 0.3.21
+-------------
+* Improved Swift cleanup
+
 Version 0.3.20
 -------------
 * Bug fix: concrete syntax matching- Handle trailing commas and comments
-* Feature: Support for ParentIterative edge
+* Feature: Support for `ParentIterative` edge
 
 Version 0.3.19
 -------------
-* Fix swift cleanup of statements after return 
+* Fix swift cleanup of statements after return
 
 Version 0.3.18
 -------------
@@ -31,7 +39,7 @@ Version 0.3.14
 
 Version 0.3.13
 -------------
-* Introduce graph validation 
+* Introduce graph validation
 * Improved swift syntax support
 
 Version 0.3.12
@@ -46,8 +54,8 @@ Version 0.3.11
 Version 0.3.10
 -------------
 * Add support for replace node index
-* Bug fix for iOS cleanup 
-  
+* Bug fix for iOS cleanup
+
 Version 0.3.9
 -------------
 * Rule graph validation #493
@@ -74,15 +82,15 @@ Version 0.3.5
 
 Version 0.3.4
 -------------
-* Support richer constraints 
+* Support richer constraints
 * ability to `include` or `exclude` particular paths
-* Support variable / field inlining in Swift 
+* Support variable / field inlining in Swift
 * More optimized if-statement cleanups
 * Swift cleanup bug fixes
-  
+
 Version 0.3.3
 -------------
-* Added equality simplification for Java 
+* Added equality simplification for Java
 * Add support for thrift
 * Ternary operator simplification for Swift
 
@@ -93,17 +101,17 @@ Version 0.3.2
 Version 0.3.1
 -------------
 * Improve handling of leading (and trailing) commas and comments
-* Fix boolean simplification rules 
-* Add Enum scope for Java 
+* Fix boolean simplification rules
+* Add Enum scope for Java
 * Add option to transform/analyze partially parsable code (`--alow-dirty-tree`)
 * Bug fixes
 
 Version 0.3.0
 -------------
-* Introduce Feature flag cleanup for Go and Swift 
-* Introduce a Python / Rust API for defining rules, edges and the arguments 
-* Introduce code snippet mode 
-* Improvements for the command line interface 
+* Introduce Feature flag cleanup for Go and Swift
+* Introduce a Python / Rust API for defining rules, edges and the arguments
+* Introduce code snippet mode
+* Improvements for the command line interface
 * Bug fixes
 
 Version 0.2.0
@@ -114,7 +122,7 @@ Version 0.2.0
 * Improve logging and expose logs via pyo3 [#246]
 * Fix *delete trailing comma* bug [#251]
 * Add `File` Scope for Kotlin [#249]
-* Added GitHub workflow to make release 
+* Added GitHub workflow to make release
 
 Version 0.2.1
 -------------
@@ -124,6 +132,3 @@ Version 0.2.1
 * Support for structural match/replace (with chaining) for Go [#256]
 * Support for structural match/replace (with chaining) for TS / TSX [#260]
 * Improve documentation [#261, #259, #258, #257]
-
-
-

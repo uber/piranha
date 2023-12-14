@@ -22,7 +22,7 @@ use pyo3::prelude::{pyclass, pymethods};
 use serde_derive::Deserialize;
 use tree_sitter::Node;
 
-use crate::utilities::{gen_py_str_methods, tree_sitter_utilities::get_node_for_range};
+use crate::utilities::tree_sitter_utilities::get_node_for_range;
 
 use super::{
   capture_group_patterns::CGPattern, default_configs::default_child_count,
@@ -130,7 +130,14 @@ impl Filter {
       .sibling_count(sibling_count.unwrap_or(default_sibling_count()))
       .build()
   }
-  gen_py_str_methods!();
+
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
 }
 
 impl Validator for Filter {

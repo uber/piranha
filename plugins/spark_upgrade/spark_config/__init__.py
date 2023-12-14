@@ -17,9 +17,6 @@ from polyglot_piranha import (
     OutgoingEdges,
     Rule,
 )
-import spark_config.scala_rules as scala_rules
-import spark_config.java_rules as java_rules
-import spark_config.java_scala_rules as java_scala_rules
 
 
 class SparkConfigChange(ExecutePiranha):
@@ -36,30 +33,53 @@ class SparkConfigChange(ExecutePiranha):
         return "Spark Config Change"
 
     def get_rules(self) -> List[Rule]:
-        return java_scala_rules.RULES + (
-            scala_rules.RULES if self.language == "scala" else java_rules.RULES
+        update_spark_conf_init = Rule(
+            name="update_spark_conf_init",
+            query="cs new SparkConf()",
+            replace_node="*",
+            replace='new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")',
+            filters={
+                Filter(
+                    not_enclosing_node='cs new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")'
+                )
+            },
         )
 
-    def get_edges(self) -> List[OutgoingEdges]:
+        update_spark_session_builder_init = Rule(
+            name="update_spark_conf_init",
+            query="cs SparkSession.builder()",
+            replace_node="*",
+            replace='SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")',
+            filters={
+                Filter(
+                    not_enclosing_node='cs SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")'
+                )
+            },
+        )
+
+        update_import_array_queue = Rule(
+            name="update_import_array_queue",
+            query=(
+                "cs import org.spark_project.jetty.util.ArrayQueue;"
+                if self.language == "java"
+                else "cs import org.spark_project.jetty.util.ArrayQueue"
+            ),
+            replace_node="*",
+            replace=(
+                "import java.util.ArrayDeque;"
+                if self.language == "java"
+                else "import java.util.ArrayDeque"
+            ),
+        )
+
         return [
-            OutgoingEdges(
-                "spark_conf_change_java_scala", ["dummy"], scope="ParentIterative"
-            ),
-            OutgoingEdges("BuilderPattern", ["dummy"], scope="ParentIterative"),
-            OutgoingEdges(
-                "dummy",
-                [
-                    "BuilderPattern",
-                    "update_enclosing_var_declaration",
-                ],
-                scope="ParentIterative",
-            ),
-            OutgoingEdges(
-                "update_enclosing_var_declaration",
-                ["update_spark_context"],
-                scope="File",
-            ),
-        ] + ([] if self.language == "scala" else java_rules.EDGES)
+            update_spark_conf_init,
+            update_spark_session_builder_init,
+            update_import_array_queue,
+        ]
+
+    def get_edges(self) -> List[OutgoingEdges]:
+        return []
 
     def summaries_to_custom_dict(self, _) -> Dict[str, Any]:
         return {}

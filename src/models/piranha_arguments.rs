@@ -248,6 +248,14 @@ impl PiranhaArguments {
       .experiment_dyn(experiment_dyn.unwrap_or_else(default_experiment_dyn))
       .build()
   }
+
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
+  }
 }
 
 impl PiranhaArguments {

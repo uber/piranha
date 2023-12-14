@@ -15,8 +15,6 @@ use getset::Getters;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::utilities::gen_py_str_methods;
-
 use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
 use pyo3::{prelude::pyclass, pymethods};
 
@@ -47,8 +45,6 @@ pub struct PiranhaOutputSummary {
   rewrites: Vec<Edit>,
 }
 
-gen_py_str_methods!(PiranhaOutputSummary);
-
 impl PiranhaOutputSummary {
   pub(crate) fn new(source_code_unit: &SourceCodeUnit) -> PiranhaOutputSummary {
     return PiranhaOutputSummary {
@@ -58,5 +54,16 @@ impl PiranhaOutputSummary {
       matches: source_code_unit.matches().iter().cloned().collect_vec(),
       rewrites: source_code_unit.rewrites().iter().cloned().collect_vec(),
     };
+  }
+}
+
+#[pymethods]
+impl PiranhaOutputSummary {
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+
+  fn __str__(&self) -> String {
+    self.__repr__()
   }
 }

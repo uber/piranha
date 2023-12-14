@@ -20,7 +20,6 @@ use super::{
 };
 use crate::models::rule_graph::{PARENT, PARENT_ITERATIVE};
 use crate::utilities::{
-  gen_py_str_methods,
   tree_sitter_utilities::{get_context, get_node_for_range},
   Instantiate,
 };
@@ -48,8 +47,6 @@ pub struct Edit {
   #[get = "pub"]
   matched_rule: String,
 }
-
-gen_py_str_methods!(Edit);
 
 impl Edit {
   pub(crate) fn new(
@@ -81,6 +78,16 @@ impl Edit {
 
   pub(crate) fn is_delete(&self) -> bool {
     self.replacement_string.trim().is_empty()
+  }
+}
+
+#[pymethods]
+impl Edit {
+  fn __repr__(&self) -> String {
+    format!("{:?}", self)
+  }
+  fn __str__(&self) -> String {
+    self.__repr__()
   }
 }
 

@@ -47,7 +47,7 @@ where
         T::default()
       } else {
         #[rustfmt::skip]
-      panic!("Could not read file: {file_path:?} \n Error : \n {err:?}");
+        panic!("Could not read file: {file_path:?} \n Error : \n {err:?}");
       }
     }
   }
@@ -69,7 +69,7 @@ impl<T: Hash + Eq, U> MapOfVec<T, U> for HashMap<T, Vec<U>> {
   // Adds the given `value` to the vector corresponding to the `key`.
   // Like an adjacency list.
   fn collect(self: &mut HashMap<T, Vec<U>>, key: T, value: U) {
-    self.entry(key).or_insert_with(Vec::new).push(value);
+    self.entry(key).or_default().push(value);
   }
 }
 
@@ -119,33 +119,6 @@ pub(crate) fn find_file(input_dir: &PathBuf, name: &str) -> PathBuf {
     .path()
 }
 
-// The macro has two match arms, one for the case where
-// (i) it adds the impl block for a given struct with `__str__` and `__repr__` functions
-// (ii) it adds `__str__` and `__repr__` functions to an existing impl block.
-// TODO: Cleanup this macro such that second match arm is called from the first match arm.
-macro_rules! gen_py_str_methods {
-  ($struct_name:ident) => {
-    #[pymethods]
-    impl $struct_name {
-      fn __repr__(&self) -> String {
-        format!("{:?}", self)
-      }
-      fn __str__(&self) -> String {
-        self.__repr__()
-      }
-    }
-  };
-  () => {
-    fn __repr__(&self) -> String {
-      format!("{:?}", self)
-    }
-    fn __str__(&self) -> String {
-      self.__repr__()
-    }
-  };
-}
-
-pub(crate) use gen_py_str_methods;
 use glob::Pattern;
 
 pub(crate) trait Instantiate {
@@ -165,6 +138,9 @@ impl Instantiate for String {
     for (tag, substitute) in substitutions {
       // Before replacing the key, it is transformed to a tree-sitter tag by adding `@` as prefix
       let key = format!("@{tag}");
+      output = output.replace(&key, substitute);
+
+      let key = format!(":[{tag}]");
       output = output.replace(&key, substitute);
     }
     output
