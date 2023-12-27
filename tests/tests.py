@@ -29,7 +29,7 @@ def test_piranha_rewrite():
     )
 
     output_summaries = execute_piranha(args)
-    
+
     assert len(output_summaries) == 2
     expected_paths = [
         "test-resources/java/feature_flag_system_1/treated/input/XPFlagCleanerPositiveCases.java",
@@ -61,16 +61,16 @@ def test_piranha_match_only():
     for summary in output_summaries:
         assert _is_readable(str(summary))
         for rule, match in summary.matches:
-            assert rule 
+            assert rule
             assert _is_readable(str(match))
 
 
 def test_insert_field_add_import():
     add_field_declaration = Rule (
         name= "add_field_declaration",
-        query= 
+        query=
         """(
-            (class_declaration name: (_)@class_name 
+            (class_declaration name: (_)@class_name
                 body : (class_body ((_)*) @class_members)  @class_body
             ) @class_declaration
             (#eq? @class_name "FooBar")
@@ -187,7 +187,7 @@ def test_incorrect_import():
         """,
     )
 
-    
+
     with pytest.raises(BaseException, match = "Incorrect Rule Graph - Cannot parse") as e:
         rule_graph = RuleGraph(
             rules= [delete_unused_field],
@@ -225,11 +225,37 @@ def _is_readable(input_str: str) -> bool:
     `<builtin.PiranhaSummary object at 0x789>`
 
     Args:
-        input_str (str): 
+        input_str (str):
             Input string
 
     Returns:
         bool: is human readable
     """
     return not any(re.findall(r"\<(.*) object at (.*)\>", input_str))
-    
+
+def test_java_toplevel_method_decl():
+    """method_declaration for Java should be accepted as top level node.
+    In other words, a code_snippet consisting of just a method, with no `public class A {}`
+    should not raise an error.
+    Possible from tree-sitter-java >= v0.20.2 (https://github.com/tree-sitter/tree-sitter-java/pull/160).
+    """
+
+    _java_toplevel_mdecl_matches_anything("public static void main(String args) {  }")
+    _java_toplevel_mdecl_matches_anything("public void foo() {  }")
+    _java_toplevel_mdecl_matches_anything("void foo() {  }")
+    _java_toplevel_mdecl_matches_anything("private void foo() {  }")
+
+def _java_toplevel_mdecl_matches_anything(code_snippet: str) -> bool:
+        match_anything_rule = Rule(name="Match anything", query="cs :[x]")
+        args = PiranhaArguments(
+            code_snippet=code_snippet,
+            language="java",
+            rule_graph=RuleGraph(rules=[match_anything_rule], edges=[]),
+            dry_run=False,
+            allow_dirty_ast=False,
+        )
+        try:
+            summaries = execute_piranha(args)
+            return len(summaries) > 0
+        except:
+            assert False, f"Java method_declaration as top level node should not raise an error:\n{code_snippet}"
