@@ -7,7 +7,7 @@ authors = [
   { name = "Lazaro Clapp", email = "lazaro@uber.com" },
   { name = "Uber Technologies Inc." },
 ]
-license = { file = "LICENSE" }
+license = "Apache-2.0"
 readme = "README.md"
 keywords = [
   "refactoring",
