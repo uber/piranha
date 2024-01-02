@@ -1,3 +1,9 @@
+Version 0.3.23
+-------------
+* Python wheel with no duplicate entries in generated METADATA
+* RELEASING.md: updated instructions
+* Starter kit for Zap Transformation plugin
+
 Version 0.3.22
 -------------
 * Improved rule syntax. Now :[x] pattern is supported for references too.
