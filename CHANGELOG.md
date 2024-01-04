@@ -1,5 +1,7 @@
 Version 0.3.23
 -------------
+This version may fail to `pip install polyglot-piranha` in some Linux versions.
+
 * Python wheel with no duplicate entries in generated METADATA
 * RELEASING.md: updated instructions
 * Starter kit for Zap Transformation plugin
