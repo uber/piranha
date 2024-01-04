@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Build wheel with Maturin
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
     - name: Build wheel with Maturin
@@ -46,7 +46,7 @@ jobs:
       CXXFLAGS: -stdlib=libc++ -mmacosx-version-min=10.16
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: Build wheel with Maturin
@@ -68,7 +68,7 @@ jobs:
       CXXFLAGS: -stdlib=libc++
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.8
       - name: Build wheel with Maturin
