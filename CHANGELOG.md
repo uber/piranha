@@ -1,3 +1,9 @@
+Version 0.3.24
+-------------
+
+* Maturin: 1.4.0 <= version < 2.0
+* Fix python wheel not working on specific Linux versions.
+
 Version 0.3.23
 -------------
 This version may fail to `pip install polyglot-piranha` in some Linux versions.
