@@ -1,7 +1,7 @@
 name: Polyglot Piranha
 on:
   pull_request:
-  push: 
+  push:
     branches:
       - master
 env:
@@ -24,7 +24,11 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt
-      - name: Run pre-commit 
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Run pre-commit
         run : |
           python -m venv .env
           source .env/bin/activate
@@ -33,10 +37,6 @@ jobs:
           pre-commit run --all-files
       - name: Run unit and integration tests
         run: cargo build && cargo test -- --include-ignored
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
       - name: Create virtualenv and install dependencies
         run: |
           python -m venv .env
@@ -45,7 +45,7 @@ jobs:
       - name: Run Python tests
         run: |
           source .env/bin/activate
-          pip3 install -r experimental/requirements.txt
+          pip install -r experimental/requirements.txt
           maturin develop
           pytest tests/tests.py
           pytest -s -rx .
