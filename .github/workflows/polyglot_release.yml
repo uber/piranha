@@ -18,8 +18,8 @@ jobs:
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-  build_ubuntu_18:
-    runs-on: ubuntu-18.04
+  build_ubuntu_20:
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v4
