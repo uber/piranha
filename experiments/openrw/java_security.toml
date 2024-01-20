@@ -1,0 +1,22 @@
+[[rules]]
+name = "Update import"
+query = 'cs import java.io.File;'
+replace_node = "*"
+replace = 'import java.nio.file.Files;'
+
+[[rules]]
+name = "Update usage 2 args"
+query = 'cs File.createTempFile(:[prefix], :[suffix])'
+replace_node = "*"
+replace = 'Files.createTempFile(@prefix, @suffix).toFile()'
+
+[[rules]]
+name = "Update usage 3 args"
+query = 'cs File.createTempFile(:[prefix], :[suffix], :[directory])'
+replace_node = "*"
+replace = 'Files.createTempFile(@directory.toPath(), @prefix, @suffix).toFile()'
+
+[[edges]]
+from = "Update import"
+to = ["Update usage 2 args", "Update usage 3 args"]
+scope = "File"

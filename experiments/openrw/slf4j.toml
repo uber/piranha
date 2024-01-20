@@ -1,0 +1,31 @@
+[[rules]]
+name="find_usage"
+query = 'cs LoggerFactory.getLogger(WrongClass.class)'
+
+[[rules]]
+name = "get_enclosing_class"
+query = '''
+(class_declaration
+	name: (_) @cName) @class_declaration'''
+is_seed_rule = false
+
+[[rules]]
+name = "rewrite_log"
+query = 'cs LoggerFactory.getLogger(:[any])'
+replace_node = "*"
+replace = 'LoggerFactory.getLogger(@cName.class)'
+holes = ["cName"]
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(class_declaration) @md"
+not_contains = ['rgx Something.class']
+
+[[edges]]
+from = "find_usage"
+to = ["get_enclosing_class"]
+scope = "File"
+
+[[edges]]
+from = "get_enclosing_class"
+to = ["rewrite_log"]
+scope = "Class"
