@@ -1,9 +1,9 @@
 // Copyright (c) 2023 Uber Technologies, Inc.
-// 
+//
 // <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 // except in compliance with the License. You may obtain a copy of the License at
 // <p>http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // <p>Unless required by applicable law or agreed to in writing, software distributed under the
 // License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 // express or implied. See the License for the specific language governing permissions and
@@ -12,8 +12,8 @@
 class SampleClass {
     func sampleFunction() {
         isEnabled = TestEnum.stale_flag_one.isEnabled && v1
-        isEnabled = f2() && TestEnum.stale_flag_one.isEnabled 
-        isEnabled = v2 && TestEnum.stale_flag_one.isEnabled 
+        isEnabled = f2() && TestEnum.stale_flag_one.isEnabled
+        isEnabled = v2 && TestEnum.stale_flag_one.isEnabled
         isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && true)
         isEnabled = (TestEnum.stale_flag_one.isEnabled && true) && v2
     }
@@ -21,8 +21,8 @@ class SampleClass {
     func checkOrTrue() {
         //simple
         isEnabled = TestEnum.stale_flag_one.isEnabled || v1
-        isEnabled = v2 || TestEnum.stale_flag_one.isEnabled 
-        isEnabled = f2 || TestEnum.stale_flag_one.isEnabled 
+        isEnabled = v2 || TestEnum.stale_flag_one.isEnabled
+        isEnabled = f2 || TestEnum.stale_flag_one.isEnabled
 
         //nested
         isEnabled = v1 || (TestEnum.stale_flag_one.isEnabled || v2)
@@ -32,26 +32,26 @@ class SampleClass {
         isEnabled = v1 && (TestEnum.stale_flag_one.isEnabled || v2)
         isEnabled = (TestEnum.stale_flag_one.isEnabled || v2) && v1
     }
-    
+
     func checkOrFalse() {
         isEnabled = placeholder_false || f1()
         isEnabled = placeholder_false || v1
-        isEnabled = f2() || placeholder_false 
-        isEnabled = v2 || placeholder_false 
+        isEnabled = f2() || placeholder_false
+        isEnabled = v2 || placeholder_false
     }
 
     func checkAndFalse() {
         isEnabled = placeholder_false && f1()
         isEnabled = placeholder_false && v1
-        isEnabled = f2() && placeholder_false 
-        isEnabled = v2 && placeholder_false 
+        isEnabled = f2() && placeholder_false
+        isEnabled = v2 && placeholder_false
     }
-    
+
     func checkNotCondition() {
         isEnabled = v2 && (TestEnum.stale_flag_one.isEnabled && !false)
         isEnabled = (TestEnum.stale_flag_one.isEnabled && !false) && v2
         isEnabled = v2 || (placeholder_false || !true)
-    } 
+    }
 
     func checkIfTrueCleanup() {
         f1()
@@ -63,7 +63,7 @@ class SampleClass {
             f2()
         } else if TestEnum.stale_flag_one.isEnabled {
             f3()
-        } 
+        }
 
         if isEnabled {
             f2()
@@ -71,7 +71,7 @@ class SampleClass {
             f3()
         } else {
             f4()
-        } 
+        }
 
         if isEnabled {
             f2()
@@ -93,7 +93,7 @@ class SampleClass {
             f5()
         }
     }
-    
+
     func checkIfFalse() {
         //test comments to be cleaned
         if !TestEnum.stale_flag_one.isEnabled && abc {
@@ -183,14 +183,14 @@ class SampleClass {
             f2()
         }
     }
-    
+
     func checkGaurdTrue() {
         guard TestEnum.stale_flag_one.isEnabled || f1() else {
             return
         }
         f1()
     }
-    
+
     func checkGaurdTrueWithAnd() {
         guard TestEnum.stale_flag_one.isEnabled && true else {
             return
@@ -208,14 +208,14 @@ class SampleClass {
             return
         }
     }
-    
+
     func checkTernary() {
         var value = TestEnum.stale_flag_one.isEnabled || v2 ? 2 : 3
         var value2 =  placeholder_false ? 2 : 3
         var value3 =  placeholder_false ? 2 : nil
-        var value4 =  !placeholder_false 
+        var value4 =  !placeholder_false
                         ?
-                                 nil 
+                                 nil
                                  : 2
     }
 
@@ -230,7 +230,7 @@ class SampleClass {
 
          if !TestEnum.stale_flag_one.isEnabled{
             // to be deleted2
-            toBeDeleted2() 
+            toBeDeleted2()
          } else if a {
             // to be preserved2
             toBePreserved2()
@@ -238,7 +238,7 @@ class SampleClass {
 
          if !TestEnum.stale_flag_one.isEnabled{
             // to be deleted3
-            toBeDeleted3() 
+            toBeDeleted3()
          } else if b {
             // to be preserved3a
             toBePreserved3a()
@@ -257,7 +257,7 @@ class SampleClass {
 
          if TestEnum.stale_flag_one.isEnabled{
             // to be preserved5
-            toBePreserved5() 
+            toBePreserved5()
          } else if c {
             // to be deleted5
             toBeDeleted5()
@@ -265,7 +265,7 @@ class SampleClass {
 
          if TestEnum.stale_flag_one.isEnabled{
             // to be preserved6
-            toBePreserved6() 
+            toBePreserved6()
          } else if d {
             // to be deleted6a
             toBeDeleted6a()
@@ -343,13 +343,13 @@ class SampleClass {
          }
 
          if !TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
-            toBePreservedEquality2() 
+            toBePreservedEquality2()
          } else if a {
             toBeDeletedEquality2()
          }
 
          if !TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
-            toBePreservedEquality3() 
+            toBePreservedEquality3()
          } else if b {
             toBeDeletedEquality3a()
          } else {
@@ -363,13 +363,13 @@ class SampleClass {
          }
 
          if TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
-            toBePreservedEquality5() 
+            toBePreservedEquality5()
          } else if c {
             toBeDeletedEquality5()
          }
 
          if TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
-            toBePreservedEquality6() 
+            toBePreservedEquality6()
          } else if d {
             toBeDeletedEquality6a()
          } else {
@@ -383,13 +383,13 @@ class SampleClass {
          }
 
          if !TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedEquality8() 
+            toBeDeletedEquality8()
          } else if a {
             toBePreservedEquality8()
          }
 
          if !TestEnum.stale_flag_one.isEnabled == TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedEquality9() 
+            toBeDeletedEquality9()
          } else if b {
             toBePreservedEquality9a()
          } else {
@@ -403,13 +403,13 @@ class SampleClass {
          }
 
          if TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedEquality11() 
+            toBeDeletedEquality11()
          } else if c {
             toBePreservedEquality11()
          }
 
          if TestEnum.stale_flag_one.isEnabled == !TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedEquality12() 
+            toBeDeletedEquality12()
          } else if d {
             toBePreservedEquality12a()
          } else {
@@ -425,13 +425,13 @@ class SampleClass {
          }
 
          if !TestEnum.stale_flag_one.isEnabled != (!TestEnum.stale_flag_one.isEnabled){
-            toBeDeletedInequality2() 
+            toBeDeletedInequality2()
          } else if a {
             toBePreservedInequality2()
          }
 
          if !TestEnum.stale_flag_one.isEnabled != !TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedInequality3() 
+            toBeDeletedInequality3()
          } else if b {
             toBePreservedInequality3a()
          } else {
@@ -445,13 +445,13 @@ class SampleClass {
          }
 
          if TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedInequality5() 
+            toBeDeletedInequality5()
          } else if c {
             toBePreservedInequality5()
          }
 
          if TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
-            toBeDeletedInequality6() 
+            toBeDeletedInequality6()
          } else if d {
             toBePreservedInequality6a()
          } else {
@@ -465,13 +465,13 @@ class SampleClass {
          }
 
          if !TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
-            toBePreservedInequality8() 
+            toBePreservedInequality8()
          } else if a {
-            toBeDeletedInequality8() 
+            toBeDeletedInequality8()
          }
 
          if !TestEnum.stale_flag_one.isEnabled != TestEnum.stale_flag_one.isEnabled{
-            toBePreservedInequality9() 
+            toBePreservedInequality9()
          } else if b {
             toBeDeletedInequality9a()
          } else {
@@ -485,13 +485,13 @@ class SampleClass {
          }
 
          if TestEnum.stale_flag_one.isEnabled != !TestEnum.stale_flag_one.isEnabled{
-            toBePreservedInequality11() 
+            toBePreservedInequality11()
          } else if c {
             toBeDeletedInequality11()
          }
 
          if (TestEnum.stale_flag_one.isEnabled) != !TestEnum.stale_flag_one.isEnabled{
-            toBePreservedInequality12() 
+            toBePreservedInequality12()
          } else if d {
             toBeDeletedInequality12a()
          } else {
@@ -499,5 +499,17 @@ class SampleClass {
          }
 
          x = condition() ? TestEnum.stale_flag_one.isEnabled : true
+    }
+
+    // regression: a cleanup in this file should not affect the following function
+    private func unrelatedCommentIsNotDeleted() {
+        return self.something.getThing(request: request)
+            .do(
+                onSubscribe: {
+                },
+                onDispose: {
+                }
+            )
+            .doSomething() // this comment should not be removed
     }
 }

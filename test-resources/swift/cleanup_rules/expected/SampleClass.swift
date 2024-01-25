@@ -1,9 +1,9 @@
 // Copyright (c) 2023 Uber Technologies, Inc.
-// 
+//
 // <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 // except in compliance with the License. You may obtain a copy of the License at
 // <p>http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // <p>Unless required by applicable law or agreed to in writing, software distributed under the
 // License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 // express or implied. See the License for the specific language governing permissions and
@@ -32,7 +32,7 @@ class SampleClass {
         isEnabled = v1
         isEnabled = v1
     }
-    
+
     func checkOrFalse() {
         isEnabled = f1()
         isEnabled = v1
@@ -46,7 +46,7 @@ class SampleClass {
         isEnabled = false
         isEnabled = false
     }
-    
+
     func checkNotCondition() {
         isEnabled = v2
         isEnabled = v2
@@ -55,19 +55,19 @@ class SampleClass {
 
     func checkIfTrueCleanup() {
         f1()
-        f2()  
-        
-        if isEnabled {
-            f2()
-        } else {
-            f3()
-        }  
+        f2()
 
         if isEnabled {
             f2()
         } else {
             f3()
-        } 
+        }
+
+        if isEnabled {
+            f2()
+        } else {
+            f3()
+        }
 
         if isEnabled {
             f2()
@@ -75,15 +75,15 @@ class SampleClass {
             f3()
         } else {
             f4()
-        } 
+        }
 
         if isEnabled {
             f2()
         } else  {
             f4()
-        } 
+        }
     }
-    
+
     func checkIfFalse() {
         f2()
 
@@ -95,7 +95,7 @@ class SampleClass {
 
         if v1 {
             f1()
-        } else { 
+        } else {
             f3()
         }
 
@@ -109,8 +109,8 @@ class SampleClass {
 
         if v1 {
             f1()
-        } else { 
-        
+        } else {
+
         }
     }
 
@@ -125,7 +125,7 @@ class SampleClass {
 
         if v1 {
             f1()
-        } else { 
+        } else {
             f3()
         }
 
@@ -139,11 +139,11 @@ class SampleClass {
 
         if v1 {
             f1()
-        } else { 
-        
+        } else {
+
         }
     }
-    
+
     func checkGaurdTrue() {
         f1()
     }
@@ -158,7 +158,7 @@ class SampleClass {
     func checkGuardFalseWithAnd() {
         return
     }
-    
+
     func checkTernary() {
         var value = 2
         var value2 = 3
@@ -169,7 +169,7 @@ class SampleClass {
     func checkIfBooleanWithComments(){
         // to be preserved1
         toBePreserved1()
-                  
+
         if a {
             // to be preserved2
             toBePreserved2()
@@ -185,11 +185,11 @@ class SampleClass {
 
         // to be preserved4
         toBePreserved4()
-                
+
 
         // to be preserved5
-        toBePreserved5() 
-                    
+        toBePreserved5()
+
         // to be preserved6
         toBePreserved6()
     }
@@ -260,7 +260,7 @@ class SampleClass {
 
         toBePreservedEquality2()
 
-        toBePreservedEquality3() 
+        toBePreservedEquality3()
 
         toBePreservedEquality4()
 
@@ -321,15 +321,28 @@ class SampleClass {
 
         toBePreservedInequality7()
 
-        toBePreservedInequality8() 
+        toBePreservedInequality8()
 
-        toBePreservedInequality9() 
+        toBePreservedInequality9()
 
         toBePreservedInequality10()
 
-        toBePreservedInequality11() 
+        toBePreservedInequality11()
 
-        toBePreservedInequality12() 
+        toBePreservedInequality12()
         x = true
     }
+
+    // regression: a cleanup in this file should not affect the following function
+    private func unrelatedCommentIsNotDeleted() {
+        return self.something.getThing(request: request)
+            .do(
+                onSubscribe: {
+                },
+                onDispose: {
+                }
+            )
+            .doSomething() // this comment should not be removed
+    }
+
 }
