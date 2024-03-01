@@ -40,7 +40,7 @@
  * A winston logger that can be configured to produce debugging output
  */
 
-var estraverse = require('estraverse'); // Convenient API for AST traversal
+const babel = require('@babel/core'); // Convenient API for AST traversal
 const winston = require('winston'); // logger
 const colors = require('colors');
 
@@ -69,7 +69,7 @@ class RefactorEngine {
     trueLiteral() {
         const vanillaLiteral = {
             // A Boolean Literal is parsed like this by recast
-            type: 'Literal',
+            type: 'BooleanLiteral',
             value: true,
             raw: 'true',
         };
@@ -83,7 +83,7 @@ class RefactorEngine {
     falseLiteral() {
         const vanillaLiteral = {
             // A Boolean Literal is parsed like this by recast
-            type: 'Literal',
+            type: 'BooleanLiteral',
             value: false,
             raw: 'false',
         };
@@ -107,7 +107,7 @@ class RefactorEngine {
     // Verify this is a literal introduced by Piranha.
     // We only refactor code associated with literals having this property and leave original code untouched
     isPiranhaLiteral(node) {
-        return node.type === 'Literal' && node.createdByPiranha !== undefined;
+        return node.type === 'BooleanLiteral' && node.createdByPiranha !== undefined;
     }
 
     reduceLogicalExpression(literal, expression, operator) {
@@ -317,9 +317,9 @@ class RefactorEngine {
     flagAPIToLiteral() {
         var methodHashMap = this.getMethodHashMap(this.properties);
         var engine = this;
-
-        estraverse.replace(this.ast, {
-            enter: function (node) {
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const node = path.node;
                 if (node.type === 'CallExpression') {
                     if (methodHashMap.has(node.callee.name)) {
                         const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
@@ -330,7 +330,7 @@ class RefactorEngine {
                             case 'Identifier':
                                 nodeArgumentIsFlag = nodeArgument.name === engine.flagname;
                                 break;
-                            case 'Literal':
+                            case 'StringLiteral':
                                 nodeArgumentIsFlag = nodeArgument.value === engine.flagname;
                                 break;
                         }
@@ -342,16 +342,14 @@ class RefactorEngine {
                                 (flagType === 'treated' && engine.behaviour) ||
                                 (flagType === 'control' && !engine.behaviour)
                             ) {
-                                return engine.trueLiteral();
+                                path.replaceWith(engine.trueLiteral());
                             } else {
-                                return engine.falseLiteral();
+                                path.replaceWith(engine.falseLiteral());
                             }
                         }
                     }
                 }
             },
-
-            fallback: 'iteration', // Ignore nodes in the AST that estraverse does not recognize
         });
     }
 
@@ -362,20 +360,21 @@ class RefactorEngine {
     evalBoolExpressions() {
         var engine = this;
 
-        estraverse.replace(this.ast, {
-            leave: function (node) {
+        babel.traverse(this.ast, {
+            exit: function (path) {
+                const node = path.node;
                 if (node.type === 'LogicalExpression') {
                     var expression1 = node.left;
                     var expression2 = node.right;
 
                     if (engine.isPiranhaLiteral(expression1)) {
                         engine.changed = true;
-                        return engine.reduceLogicalExpression(expression1, expression2, node.operator);
+                        path.replaceWith(engine.reduceLogicalExpression(expression1, expression2, node.operator));
                     }
 
                     if (engine.isPiranhaLiteral(expression2)) {
                         engine.changed = true;
-                        return engine.reduceLogicalExpression(expression2, expression1, node.operator);
+                        path.replaceWith(engine.reduceLogicalExpression(expression2, expression1, node.operator));
                     }
                 } else if (
                     node.type === 'UnaryExpression' &&
@@ -384,15 +383,13 @@ class RefactorEngine {
                 ) {
                     if (node.argument.value === true) {
                         engine.changed = true;
-                        return engine.falseLiteral();
+                        path.replaceWith(engine.falseLiteral());
                     } else if (node.argument.value === false) {
                         engine.changed = true;
-                        return engine.trueLiteral();
+                        path.replaceWith(engine.trueLiteral());
                     }
                 }
             },
-
-            fallback: 'iteration',
         });
     }
 
@@ -402,8 +399,9 @@ class RefactorEngine {
     reduceIfStatements() {
         var engine = this;
 
-        estraverse.replace(this.ast, {
-            leave: function (node) {
+        babel.traverse(this.ast, {
+            exit: function (path) {
+                const node = path.node;
                 if (
                     (node.type === 'IfStatement' || node.type === 'ConditionalExpression') &&
                     engine.isPiranhaLiteral(node.test)
@@ -413,27 +411,26 @@ class RefactorEngine {
                         engine.changed = true;
                         engine.moveCommentsToConsequent(node);
 
-                        return node.consequent;
+                        path.replaceWith(node.consequent);
                     } else if (node.test.value === false) {
                         if (node.alternate == null) {
                             engine.changed = true;
-                            this.remove();
+                            path.remove();
                         } else {
                             engine.changed = true;
                             engine.moveCommentsToAlternate(node);
 
-                            return node.alternate;
+                            path.replaceWith(node.alternate);
                         }
                     }
                 }
             },
-
-            fallback: 'iteration',
         });
 
         // Flatten any nested blocks introduced in the previous step by moving their contents to their parent
-        estraverse.traverse(this.ast, {
-            leave: function (node, parent) {
+        babel.traverse(this.ast, {
+            exit: function (path) {
+                const { node, parent } = path;
                 if (node.type === 'BlockStatement' && (parent.type === 'BlockStatement' || parent.type === 'Program')) {
                     engine.moveCommentsToExtremeChildren(node, parent, engine.keep_comments);
                     var nodeIndex = parent.body.indexOf(node);
@@ -452,8 +449,9 @@ class RefactorEngine {
         var engine = this;
 
         // Get a list of variable names which are assigned to a boolean literal
-        estraverse.traverse(this.ast, {
-            enter: function (node) {
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const node = path.node;
                 if (node.type === 'VariableDeclaration') {
                     for (var i = 0; i < node.declarations.length; i++) {
                         const declaration = node.declarations[i];
@@ -471,8 +469,6 @@ class RefactorEngine {
                     }
                 }
             },
-
-            fallback: 'iteration',
         });
 
         return assignments;
@@ -484,44 +480,46 @@ class RefactorEngine {
         var engine = this;
 
         // Remove redundant variables by deleting declarations and replacing variable references
-        estraverse.replace(this.ast, {
-            enter: function (node, parent) {
-                if (node.type === 'VariableDeclarator') {
-                    if (node.id.name in assignments) {
-                        engine.changed = true;
-                        return this.remove();
-                    }
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const { node, parent } = path;
+                if (node.type === 'VariableDeclaration') {
+                    node.declarations.forEach(function (declaration, index) {
+                        if (declaration.id.name in assignments) {
+                            engine.changed = true;
+                            node.declarations.splice(index, 1);
+                        }
+                    });
                 } else if (node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression') {
                     if (node.expression.left.name in assignments) {
                         engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
                         engine.changed = true;
-                        return this.remove();
+                        path.remove();
                     }
                 } else if (node.type === 'Identifier') {
                     if (node.name in assignments) {
                         if (assignments[node.name] === true) {
                             engine.changed = true;
-                            return engine.trueLiteral();
+                            path.replaceWith(engine.trueLiteral());
                         } else if (assignments[node.name] === false) {
                             engine.changed = true;
-                            return engine.falseLiteral();
+                            path.replaceWith(engine.falseLiteral());
                         }
                     }
                 }
             },
 
             // After previous step, some declaration may have no declarators, delete them.
-            leave: function (node, parent) {
+            exit: function (path) {
+                const { node, parent } = path;
                 if (node.type === 'VariableDeclaration') {
                     if (node.declarations.length === 0) {
-                        engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
+                        engine.preserveCommentsBasedOnOption(node, parent, true);
                         engine.changed = true;
-                        return this.remove();
+                        return path.remove();
                     }
                 }
             },
-
-            fallback: 'iteration',
         });
     }
 
@@ -533,8 +531,9 @@ class RefactorEngine {
         var current;
 
         // Create a table mapping function names to number of return statements in them
-        estraverse.traverse(this.ast, {
-            enter: function (node, parent) {
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const { node, parent } = path;
                 if (node.type === 'FunctionDeclaration') {
                     current = node.id.name;
                     numReturns[current] = 0;
@@ -557,8 +556,6 @@ class RefactorEngine {
                     numReturns[current]++;
                 }
             },
-
-            fallback: 'iteration',
         });
 
         // Filter the map for functions having only one return.
@@ -577,16 +574,17 @@ class RefactorEngine {
         var redundantFunctions = {};
         var engine = this;
 
-        estraverse.traverse(this.ast, {
-            enter: function (node, parent) {
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const { node, parent } = path;
                 if (node.type === 'FunctionDeclaration' && singleReturnFunctions[node.id.name]) {
                     if (!engine.checkAndAddRedundantFunction(node, node.id.name, redundantFunctions)) {
-                        this.skip();
+                        path.skip();
                     }
                 } else if (node.type === 'FunctionExpression') {
                     if (parent.type === 'VariableDeclarator' && singleReturnFunctions[parent.id.name]) {
                         if (!engine.checkAndAddRedundantFunction(node, parent.id.name, redundantFunctions)) {
-                            this.skip();
+                            path.skip();
                         }
                     }
                 } else if (node.type === 'ArrowFunctionExpression') {
@@ -597,14 +595,12 @@ class RefactorEngine {
                             }
                         } else {
                             if (!engine.checkAndAddRedundantFunction(node, parent.id.name, redundantFunctions)) {
-                                this.skip();
+                                path.skip();
                             }
                         }
                     }
                 }
             },
-
-            fallback: 'iteration',
         });
 
         return redundantFunctions;
@@ -615,38 +611,38 @@ class RefactorEngine {
     pruneFuncReferences(pruneList) {
         var engine = this;
 
-        estraverse.replace(this.ast, {
-            enter: function (node, parent) {
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const { node, parent } = path;
                 if (node.type === 'FunctionDeclaration' && node.id.name in pruneList) {
                     if (engine.keep_comments) {
                         engine.moveAllCommentsToSiblings(node, parent);
                     }
 
                     engine.changed = true;
-                    this.remove();
+                    path.remove();
                 } else if (node.type === 'VariableDeclarator' && node.id.name in pruneList) {
                     engine.changed = true;
-                    this.remove();
+                    path.remove();
                 } else if (node.type === 'CallExpression' && node.callee.name in pruneList) {
                     if (pruneList[node.callee.name]) {
                         engine.changed = true;
-                        return engine.trueLiteral();
+                        path.replaceWith(engine.trueLiteral());
                     } else {
                         engine.changed = true;
-                        return engine.falseLiteral();
+                        path.replaceWith(engine.falseLiteral());
                     }
                 }
             },
 
-            leave: function (node, parent) {
+            exit: function (path) {
+                const { node, parent } = path;
                 if (node.type === 'VariableDeclaration' && node.declarations.length === 0) {
                     engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
                     engine.changed = true;
-                    this.remove();
+                    path.remove();
                 }
             },
-
-            fallback: 'iteration',
         });
 
         return engine.changed;
@@ -656,8 +652,8 @@ class RefactorEngine {
     finalizeLiterals() {
         var engine = this;
 
-        estraverse.traverse(this.ast, {
-            enter: function (node) {
+        babel.traverse(this.ast, {
+            enter: function ({ node }) {
                 if (engine.isPiranhaLiteral(node)) {
                     delete node.createdByPiranha;
                 }

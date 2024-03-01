@@ -26,6 +26,7 @@ const max_iters = 15;
 const config_checker = require('./config_checker'); // Error-checking for the properties file
 const source_checker = require('./source_checker');
 const process = require('process');
+const { parseOptions } = require('../config/utils');
 
 // By default argparse prints all args under 'optional arguments'
 // A new argument group is needed to print required args separately
@@ -110,7 +111,7 @@ if (args.debug != null) {
 
 const keep_comments = args.keep_comments != null;
 
-const ast = recast.parse(fs.readFileSync(filename, 'utf-8')).program;
+const ast = recast.parse(fs.readFileSync(filename, 'utf-8'), parseOptions);
 
 const engine = new refactor.RefactorEngine(
     ast,
