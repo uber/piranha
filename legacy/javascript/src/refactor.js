@@ -309,6 +309,22 @@ class RefactorEngine {
         }
     }
 
+    classPropertyToLiteral(redundantFunctions) {
+        var engine = this;
+
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                const { node } = path;
+                if (node.type === 'MemberExpression') {
+                    if (redundantFunctions.hasOwnProperty(node.property.name)) {
+                        engine.changed = true;
+                        path.replaceWith(engine.trueLiteral());
+                    }
+                }
+            },
+        });
+    }
+
     // Replace flag checks with Boolean literals
     // testFlagFunction(flag) -> | true,  if flagType = treated and piranha.treatment = true
     //                           | false,  if flagType = treated and piranha.treatment = false
@@ -321,8 +337,12 @@ class RefactorEngine {
             enter: function (path) {
                 const node = path.node;
                 if (node.type === 'CallExpression') {
-                    if (methodHashMap.has(node.callee.name)) {
-                        const argumentIndex = methodHashMap.get(node.callee.name).argumentIndex;
+                    let calleeName = node.callee.name;
+                    if (node.callee.type === 'MemberExpression') {
+                        calleeName = node.callee.property.name;
+                    }
+                    if (methodHashMap.has(calleeName)) {
+                        const argumentIndex = methodHashMap.get(calleeName).argumentIndex;
                         const nodeArgument = node.arguments[argumentIndex];
 
                         let nodeArgumentIsFlag = false;
@@ -335,7 +355,7 @@ class RefactorEngine {
                                 break;
                         }
                         if (nodeArgumentIsFlag) {
-                            const flagType = methodHashMap.get(node.callee.name).flagType;
+                            const flagType = methodHashMap.get(calleeName).flagType;
                             engine.changed = true;
 
                             if (
@@ -452,7 +472,11 @@ class RefactorEngine {
         babel.traverse(this.ast, {
             enter: function (path) {
                 const node = path.node;
-                if (node.type === 'VariableDeclaration') {
+                if (node.type === 'ClassProperty' && node.value) {
+                    if (engine.isPiranhaLiteral(node.value) && typeof node.value.value === 'boolean') {
+                        assignments[node.key.name] = node.value.value;
+                    }
+                } else if (node.type === 'VariableDeclaration') {
                     for (var i = 0; i < node.declarations.length; i++) {
                         const declaration = node.declarations[i];
                         if (
@@ -476,7 +500,7 @@ class RefactorEngine {
 
     // Remove all variable declarations corresponding variables in `assignments`
     // Replace all references of variables in `assignments` with the corresponding literal
-    pruneVarReferences(assignments) {
+    pruneVarReferences(assignments, templateCleanupInfo) {
         var engine = this;
 
         // Remove redundant variables by deleting declarations and replacing variable references
@@ -485,19 +509,35 @@ class RefactorEngine {
                 const { node, parent } = path;
                 if (node.type === 'VariableDeclaration') {
                     node.declarations.forEach(function (declaration, index) {
-                        if (declaration.id.name in assignments) {
+                        if (assignments.hasOwnProperty(declaration.id.name)) {
                             engine.changed = true;
                             node.declarations.splice(index, 1);
                         }
                     });
                 } else if (node.type === 'ExpressionStatement' && node.expression.type === 'AssignmentExpression') {
-                    if (node.expression.left.name in assignments) {
+                    if (assignments.hasOwnProperty(node.expression.left.name)) {
                         engine.preserveCommentsBasedOnOption(node, parent, engine.keep_comments);
                         engine.changed = true;
                         path.remove();
                     }
+                } else if (node.type === 'ClassProperty') {
+                    if (assignments.hasOwnProperty(node.key.name)) {
+                        engine.changed = true;
+                        path.remove();
+                        templateCleanupInfo.properties.push(node.key.name);
+                    }
+                } else if (node.type === 'MemberExpression') {
+                    if (path.toString() === `this.${node.property.name}`) {
+                        if (assignments[node.property.name] === true) {
+                            engine.changed = true;
+                            path.replaceWith(engine.trueLiteral());
+                        } else if (assignments[node.property.name] === false) {
+                            engine.changed = true;
+                            path.replaceWith(engine.falseLiteral());
+                        }
+                    }
                 } else if (node.type === 'Identifier') {
-                    if (node.name in assignments) {
+                    if (assignments.hasOwnProperty(node.name)) {
                         if (assignments[node.name] === true) {
                             engine.changed = true;
                             path.replaceWith(engine.trueLiteral());
@@ -534,13 +574,22 @@ class RefactorEngine {
         babel.traverse(this.ast, {
             enter: function (path) {
                 const { node, parent } = path;
-                if (node.type === 'FunctionDeclaration') {
+                if (node.type === 'ClassMethod') {
+                    if (node.kind === 'get') {
+                        current = node.key.name;
+                        numReturns[current] = 0;
+                    } else {
+                        current = null;
+                    }
+                } else if (node.type === 'FunctionDeclaration' && node.id) {
                     current = node.id.name;
                     numReturns[current] = 0;
                 } else if (node.type === 'FunctionExpression') {
                     if (parent.type === 'VariableDeclarator') {
                         current = parent.id.name;
                         numReturns[current] = 0;
+                    } else {
+                        current = null;
                     }
                 } else if (node.type === 'ArrowFunctionExpression') {
                     if (parent.type === 'VariableDeclarator') {
@@ -551,9 +600,11 @@ class RefactorEngine {
                         } else {
                             numReturns[current] = 0;
                         }
+                    } else {
+                        current = null;
                     }
                 } else if (node.type === 'ReturnStatement') {
-                    numReturns[current]++;
+                    if (current) numReturns[current]++;
                 }
             },
         });
@@ -577,7 +628,11 @@ class RefactorEngine {
         babel.traverse(this.ast, {
             enter: function (path) {
                 const { node, parent } = path;
-                if (node.type === 'FunctionDeclaration' && singleReturnFunctions[node.id.name]) {
+                if (node.type === 'ClassMethod' && singleReturnFunctions.hasOwnProperty(node.key.name)) {
+                    if (!engine.checkAndAddRedundantFunction(node, node.key.name, redundantFunctions)) {
+                        path.skip();
+                    }
+                } else if (node.type === 'FunctionDeclaration' && node.id && singleReturnFunctions[node.id.name]) {
                     if (!engine.checkAndAddRedundantFunction(node, node.id.name, redundantFunctions)) {
                         path.skip();
                     }
@@ -608,23 +663,32 @@ class RefactorEngine {
 
     // Given a list of functions to be replaced, remove all function declarations
     // replace all calls to the functions with the corresponding literals
-    pruneFuncReferences(pruneList) {
+    pruneFuncReferences(pruneList, templateCleanupInfo) {
         var engine = this;
 
         babel.traverse(this.ast, {
             enter: function (path) {
                 const { node, parent } = path;
-                if (node.type === 'FunctionDeclaration' && node.id.name in pruneList) {
+                if (node.type === 'ClassMethod' && pruneList.hasOwnProperty(node.key.name)) {
                     if (engine.keep_comments) {
                         engine.moveAllCommentsToSiblings(node, parent);
                     }
 
                     engine.changed = true;
                     path.remove();
-                } else if (node.type === 'VariableDeclarator' && node.id.name in pruneList) {
+                    templateCleanupInfo.properties.push(node.key.name);
+                }
+                if (node.type === 'FunctionDeclaration' && node.id && pruneList.hasOwnProperty(node.id.name)) {
+                    if (engine.keep_comments) {
+                        engine.moveAllCommentsToSiblings(node, parent);
+                    }
+
                     engine.changed = true;
                     path.remove();
-                } else if (node.type === 'CallExpression' && node.callee.name in pruneList) {
+                } else if (node.type === 'VariableDeclarator' && pruneList.hasOwnProperty(node.id.name)) {
+                    engine.changed = true;
+                    path.remove();
+                } else if (node.type === 'CallExpression' && pruneList.hasOwnProperty(node.callee.name)) {
                     if (pruneList[node.callee.name]) {
                         engine.changed = true;
                         path.replaceWith(engine.trueLiteral());
@@ -648,6 +712,19 @@ class RefactorEngine {
         return engine.changed;
     }
 
+    consolidateReturnStatements() {
+        babel.traverse(this.ast, {
+            BlockStatement: function (path) {
+                const { node } = path;
+                const returnCount = node.body.reduce((acc, cur) => (cur.type === 'ReturnStatement' ? acc + 1 : acc), 0);
+                if (returnCount > 1) {
+                    const indexOfFirstReturn = node.body.findIndex((elem) => elem.type === 'ReturnStatement');
+                    node.body.splice(indexOfFirstReturn + 1);
+                }
+            },
+        });
+    }
+
     // Remove the piranha property from literals so code generator can work properly
     finalizeLiterals() {
         var engine = this;
@@ -666,25 +743,45 @@ class RefactorEngine {
         var iterations = 0;
         this.changed = true;
 
+        let flagname = this.flagname;
+        let isFlagKeywordFoundInFile = false;
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                if (
+                    (path.node.type === 'StringLiteral' && path.node.value === flagname) ||
+                    (path.node.type === 'Identifier' && path.node.name === flagname)
+                ) {
+                    isFlagKeywordFoundInFile = true;
+                    path.stop();
+                }
+            },
+        });
+
         this.flagAPIToLiteral();
 
+        let templateCleanupInfo = { properties: [] },
+            redundantFunctions = {};
         while (this.changed && iterations < this.max_cleanup_steps) {
             this.changed = false;
 
+            this.classPropertyToLiteral(redundantFunctions);
             this.evalBoolExpressions();
             this.reduceIfStatements();
 
             var redundantVarnames = this.getRedundantVarnames();
-            this.pruneVarReferences(redundantVarnames);
+            this.pruneVarReferences(redundantVarnames, templateCleanupInfo);
 
             var functionsWithSingleReturn = this.getFunctionsWithSingleReturn();
-            var redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
-            this.pruneFuncReferences(redundantFunctions);
+            redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
+            this.pruneFuncReferences(redundantFunctions, templateCleanupInfo);
+
+            this.consolidateReturnStatements();
 
             iterations++;
         }
 
         this.finalizeLiterals();
+        let hasASTChanges = false;
 
         if (this.print_to_console) {
             if (!this.changed) {
@@ -698,6 +795,7 @@ class RefactorEngine {
                     console.log(
                         `Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.`,
                     );
+                    hasASTChanges = true;
                 }
             } else {
                 console.log(
@@ -707,6 +805,11 @@ class RefactorEngine {
                 );
             }
         }
+        return {
+            changed: hasASTChanges,
+            templateCleanupInfo,
+            isFlagKeywordFoundInFile,
+        };
     }
 }
 
