@@ -48,7 +48,7 @@ for (let filename of jsFiles) {
     flagname,
     15,
     true,
-    true,
+    false,
     filename,
   );
   const { changed, isFlagKeywordFoundInFile} = engine.refactorPipeline();
