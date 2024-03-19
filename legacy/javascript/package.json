@@ -39,6 +39,7 @@
         "argparse": "^1.0.10",
         "chai": "^4.2.0",
         "colors": "^1.4.0",
+        "ember-template-recast": "^6.1.4",
         "fast-glob": "^3.3.2",
         "mocha": "^8.0.1",
         "recast": "^0.19.1",

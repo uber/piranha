@@ -788,12 +788,14 @@ class RefactorEngine {
                 if (iterations == 1 && this.max_cleanup_steps != 1) {
                     console.log(
                         colors.yellow(
-                            `Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}`,
+                            `Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}\n`,
                         ),
                     );
                 } else {
                     console.log(
-                        `Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.`,
+                        `Took ${iterations} ${
+                            iterations == 1 ? 'pass' : 'passes'
+                        } over the code to reach fixed point.\n`,
                     );
                     hasASTChanges = true;
                 }
@@ -801,7 +803,7 @@ class RefactorEngine {
                 console.log(
                     `Terminated before fixed point in ${iterations} ${
                         iterations == 1 ? 'pass' : 'passes'
-                    } over the code.`,
+                    } over the code.\n`,
                 );
             }
         }
