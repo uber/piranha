@@ -55,13 +55,13 @@ for (let filename of jsFiles) {
     false,
     filename,
   );
-  const { changed, isFlagKeywordFoundInFile, templateCleanupInfo } = engine.refactorPipeline();
+  const { changed, hasFlagKeywordInFile, templateCleanupInfo } = engine.refactorPipeline();
   if (path.parse(filename).base === 'component.js') {
     const templatePath = path.join(filename, "..", "template.hbs");
     templateToCleanupInfoMap[templatePath] = templateCleanupInfo;
   }
 
-  if (isFlagKeywordFoundInFile) filesHavingFlagKeyword.push(filename);
+  if (hasFlagKeywordInFile) filesHavingFlagKeyword.push(filename);
   if (changed) {
     allModifiedFiles.push(filename);
   } else if (args.modify_file) {

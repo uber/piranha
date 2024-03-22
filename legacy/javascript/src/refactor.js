@@ -66,6 +66,23 @@ class RefactorEngine {
         this.filename = filename;
     }
 
+    hasFlagKeywordInFile() {
+        let flagname = this.flagname;
+        let hasFlagKeywordInFile = false;
+        babel.traverse(this.ast, {
+            enter: function (path) {
+                if (
+                    (path.node.type === 'StringLiteral' && path.node.value === flagname) ||
+                    (path.node.type === 'Identifier' && path.node.name === flagname)
+                ) {
+                    hasFlagKeywordInFile = true;
+                    path.stop();
+                }
+            },
+        });
+        return hasFlagKeywordInFile;
+    }
+
     trueLiteral() {
         const vanillaLiteral = {
             // A Boolean Literal is parsed like this by recast
@@ -408,6 +425,12 @@ class RefactorEngine {
                         engine.changed = true;
                         path.replaceWith(engine.trueLiteral());
                     }
+                } else if (
+                    node.type === 'CallExpression' &&
+                    node.callee.name === 'Boolean' &&
+                    engine.isPiranhaLiteral(node.arguments[0])
+                ) {
+                    path.replaceWith(node.arguments[0]);
                 }
             },
         });
@@ -725,6 +748,61 @@ class RefactorEngine {
         });
     }
 
+    cleanupEmptyConstructor() {
+        babel.traverse(this.ast, {
+            ClassMethod: function (path) {
+                const { node } = path;
+                if (
+                    node.kind === 'constructor' &&
+                    (node.body.body.length === 0 ||
+                        (node.body.body.length === 1 &&
+                            node.body.body[0].type === 'ExpressionStatement' &&
+                            node.body.body[0].expression.callee &&
+                            node.body.body[0].expression.callee.type === 'Super'))
+                ) {
+                    path.remove();
+                }
+            },
+        });
+    }
+
+    emberSpecificCleanup() {
+        const engine = this;
+        babel.traverse(this.ast, {
+            //computed function cleanup
+            CallExpression: function (path) {
+                const { node } = path;
+                if (node.callee.name === 'computed') {
+                    const funcExpression = node.arguments.find((elem) => elem.type === 'FunctionExpression');
+                    if (
+                        funcExpression &&
+                        funcExpression.body.body.length === 1 &&
+                        funcExpression.body.body[0].type === 'ReturnStatement' &&
+                        funcExpression.body.body[0].argument &&
+                        engine.isPiranhaLiteral(funcExpression.body.body[0].argument)
+                    ) {
+                        path.replaceWith(funcExpression.body.body[0].argument);
+                    }
+                }
+            },
+            //Init cleanup
+            ClassMethod: function (path) {
+                const { node } = path;
+                if (
+                    node.key.name === 'init' &&
+                    !node.decorators &&
+                    (node.body.body.length === 0 ||
+                        (node.body.body.length === 1 &&
+                            node.body.body[0].type === 'ExpressionStatement' &&
+                            (path.get('body.body.0').toString().startsWith('super.init') ||
+                                path.get('body.body.0').toString().startsWith('this._super'))))
+                ) {
+                    path.remove();
+                }
+            },
+        });
+    }
+
     // Remove the piranha property from literals so code generator can work properly
     finalizeLiterals() {
         var engine = this;
@@ -740,24 +818,14 @@ class RefactorEngine {
 
     // Calls the entire pipeline
     refactorPipeline() {
-        var iterations = 0;
-        this.changed = true;
-
-        let flagname = this.flagname;
-        let isFlagKeywordFoundInFile = false;
-        babel.traverse(this.ast, {
-            enter: function (path) {
-                if (
-                    (path.node.type === 'StringLiteral' && path.node.value === flagname) ||
-                    (path.node.type === 'Identifier' && path.node.name === flagname)
-                ) {
-                    isFlagKeywordFoundInFile = true;
-                    path.stop();
-                }
-            },
-        });
+        const hasFlagKeywordInFile = this.hasFlagKeywordInFile();
+        let hasAstChanges = false;
 
         this.flagAPIToLiteral();
+        if (this.changed) hasAstChanges = true;
+
+        let iterations = 0;
+        this.changed = true;
 
         let templateCleanupInfo = { properties: [] },
             redundantFunctions = {};
@@ -774,18 +842,20 @@ class RefactorEngine {
             var functionsWithSingleReturn = this.getFunctionsWithSingleReturn();
             redundantFunctions = this.getRedundantFunctions(functionsWithSingleReturn);
             this.pruneFuncReferences(redundantFunctions, templateCleanupInfo);
-
-            this.consolidateReturnStatements();
-
             iterations++;
         }
 
+        if (hasAstChanges) {
+            this.consolidateReturnStatements();
+            this.cleanupEmptyConstructor();
+            this.emberSpecificCleanup(); //need to separate in a separate file.
+        }
+
         this.finalizeLiterals();
-        let hasASTChanges = false;
 
         if (this.print_to_console) {
             if (!this.changed) {
-                if (iterations == 1 && this.max_cleanup_steps != 1) {
+                if (!hasAstChanges) {
                     console.log(
                         colors.yellow(
                             `Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}\n`,
@@ -797,7 +867,6 @@ class RefactorEngine {
                             iterations == 1 ? 'pass' : 'passes'
                         } over the code to reach fixed point.\n`,
                     );
-                    hasASTChanges = true;
                 }
             } else {
                 console.log(
@@ -808,9 +877,9 @@ class RefactorEngine {
             }
         }
         return {
-            changed: hasASTChanges,
+            changed: hasAstChanges,
             templateCleanupInfo,
-            isFlagKeywordFoundInFile,
+            hasFlagKeywordInFile,
         };
     }
 }
