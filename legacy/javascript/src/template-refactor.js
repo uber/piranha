@@ -186,7 +186,7 @@ class TemplateRefactorEngine {
                                 }
                             }
                         }
-                    } else if (node.type === 'MustacheStatement') {
+                    } else if (node.type === 'MustacheStatement' || node.type === 'SubExpression') {
                         if (
                             node.path.original === 'if' &&
                             node.params.length > 1 &&
