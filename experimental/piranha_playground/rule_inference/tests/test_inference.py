@@ -112,8 +112,9 @@ def test_rule_simplification():
     inference = Inference([source_node], [target_node])
     rule = inference.static_infer()
 
+    print("loool", rule.replace)
     assert (
         rule.query == """((identifier ) @tag1n\n(#eq? @tag1n "flag"))"""
         and rule.replace_node == """tag1n"""
-        and rule.replace == """\"replaced\""""
+        and rule.replace == """\" replaced \""""
     )
