@@ -18,7 +18,7 @@ use super::{
     default_dry_run, default_exclude, default_global_tag_prefix, default_graph_validation,
     default_include, default_number_of_ancestors_in_parent_scope, default_path_to_configurations,
     default_path_to_output_summaries, default_paths_to_codebase, default_piranha_language,
-    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,
+    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, SWIFT, TSX, TYPESCRIPT,RUBY,
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
@@ -92,7 +92,7 @@ pub struct PiranhaArguments {
   /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
-  #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT])
+  #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT, RUBY])
   .map(|s| s.parse::<PiranhaLanguage>().unwrap()))]
   language: PiranhaLanguage,
 

@@ -1,0 +1,710 @@
+# Before : 
+# if true
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something
+[[rules]]
+name = "simplify_if_statement_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (if
+      condition : (true)
+      consequence : ((then) @consequence))
+@if_statement)
+"""
+replace = "@consequence"
+replace_node = "if_statement"
+
+# Before : 
+# if method_call
+#   [:meth_fields]
+# elsif true
+#   [:flag_fields]
+# elsif another_method_call
+#   [:another_meth_fields]
+# else
+#   [:default_fields]
+# end
+# After :
+# if method_call
+#   [:meth_fields]
+# else
+#   [:flag_fields]
+# end
+[[rules]]
+name = "simplify_elsif_statement_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(elsif 
+  condition: (true)
+  consequence: ((then) @consequence)
+) @alternative
+"""
+replace = "else @consequence"
+replace_node = "alternative"
+
+# Before : 
+# if false
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something_else
+[[rules]]
+name = "simplify_if_statement_false"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (if
+      condition : (false)
+      consequence: ((then) @consequence)
+      alternative: (else ((_)? @alternative))
+  )
+@if_statement
+)
+"""
+replace = "@alternative"
+replace_node = "if_statement"
+
+# Before : 
+# fields_array << :field_name if false
+# After :
+#
+[[rules]]
+name = "simplify_if_statement_inline_false"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (if_modifier
+      body : ((_) @body)
+      condition : (false)
+  )@if_modifier
+)
+"""
+replace = ""
+replace_node = "if_modifier"
+
+# Before : 
+# fields_array << :field_name if true
+# After :
+# fields_array << :field_name
+# 
+[[rules]]
+name = "simplify_if_statement_inline_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(if_modifier
+    body: (_) @body
+    condition: (true)
+) @if_modifier
+"""
+replace = "@body"
+replace_node = "if_modifier"
+
+# Before : 
+# fields_array << :field_name unless true
+# After :
+# 
+[[rules]]
+name = "simplify_unless_statement_inline_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (unless_modifier
+    body : ((_) @body)
+    condition: (true)
+  )@unless_modifier
+)
+"""
+replace = ""
+replace_node = "unless_modifier"
+
+# Before : 
+# fields_array << :field_name unless false
+# After :
+# fields_array << :field_name
+[[rules]]
+name = "simplify_unless_statement_inline_false"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (unless_modifier
+    body : ((_) @body)
+    condition: (false)
+  )@unless_modifier
+)
+"""
+replace = "@body"
+replace_node = "unless_modifier"
+
+# Before : 
+# unless true
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something_else
+[[rules]]
+name = "simplify_unless_statement_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(unless
+    condition: (true)
+)@unless
+"""
+replace = ""
+replace_node = "unless"
+
+
+# Before : 
+# unless false
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something
+[[rules]]
+name = "simplify_unless_statement_false"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(unless
+    condition: (false)
+    consequence: ((then) @consequence)
+)@unless
+
+"""
+replace = "@consequence"
+replace_node = "unless"
+
+# Before :
+#  true ? flag_flow : non_flag_flow
+# After :
+#  flag_flow
+#
+[[rules]]
+name = "simplify_ternary_operator_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (conditional
+      condition : (true)
+      consequence : (_)* @consequence
+      alternative: (_)* @alternative
+      )
+@conditional)
+"""
+replace = "@consequence"
+replace_node = "conditional"
+
+# Before :
+#  false ? flag_flow : non_flag_flow
+# After :
+#  non_flag_flow
+#
+[[rules]]
+name = "simplify_ternary_operator_false"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (conditional
+      condition : (false)
+      consequence : (_)* @consequence
+      alternative: (_)* @alternative
+      )
+@conditional)
+"""
+replace = "@alternative"
+replace_node = "conditional"
+
+# Before :
+#  "something #{flag_check?}"
+# After :
+#  "something true"
+#
+[[rules]]
+name = "simplify_interpolation"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(interpolation [(true) (false) (identifier)] @inter_body) @inter
+"""
+replace = "@inter_body"
+replace_node = "inter"
+
+
+# Before : 
+#  !false
+# After :
+#  true 
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_not_false"
+query = """
+(
+    (unary
+        operand: (false))
+@unary_expression)
+"""
+replace = "true"
+replace_node = "unary_expression"
+
+# Before : 
+#  !true
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_not_true"
+query = """
+(
+    (unary
+        operand: (true))
+@unary_expression)
+"""
+replace = "false"
+replace_node = "unary_expression"
+
+# Before: 
+# (true)
+# After 
+# true
+
+[[rules]]
+name = "simplify_parenthesized_expression"
+query = "(parenthesized_statements ([(true) (false) (identifier)] @expression)) @p_expr"
+replace = "@expression"
+replace_node = "p_expr"
+is_seed_rule = false
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  abc() && true
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_something_and_true"
+query = """
+(
+  (binary
+    left : (_) @lhs
+    operator: ["&&" "and"]
+    right: (true)
+  )@binary
+)
+"""
+replace = "@lhs"
+replace_node = "binary"
+
+# Before : 
+#  true && abc()
+# After :
+#  abc()
+#
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_true_and_something"
+query = """
+(
+    (binary
+        left: (true)
+        operator: ["&&" "and"]
+        right : (_) @rhs) 
+) @binary
+"""
+replace = "@rhs"
+replace_node = "binary"
+
+
+# Before :
+#  abc || true
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_something_or_true"
+query = """
+(
+    (binary
+        left : (_) @lhs
+        operator: ["||" "or"]
+        right: (true)
+    )
+@binary)"""
+replace = "true"
+replace_node = "binary"
+
+# Before :
+#  true || abc()
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_true_or_something"
+query = """
+(
+    (binary
+        left : (true)
+        operator: ["||" "or"]
+        right: (_) @rhs
+    )
+@binary)
+"""
+replace = "true"
+replace_node = "binary"
+
+# Before :
+#  abc() && false
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_something_and_false"
+query = """
+(
+  (binary
+    left : (_) @lhs
+    operator:  ["&&" "and"]
+    right: (false)
+  )@binary
+)
+"""
+replace = "false"
+replace_node = "binary"
+
+# Before : 
+#  false && abc()
+# After :
+#  false
+#
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_false_and_something"
+query = """
+(
+  (binary
+    left : (false)
+    operator:  ["&&" "and"]
+    right: (_) @rhs
+  )@binary
+)
+"""
+replace = "false"
+replace_node = "binary"
+
+
+# Before :
+#  abc || false
+# After :
+#  abc
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_something_or_false"
+query = """
+(
+    (binary
+        left : (_) @lhs
+        operator: ["||" "or"]
+        right: (false)
+    )
+@binary)"""
+replace = "@lhs"
+replace_node = "binary"
+
+# Before :
+#  false || abc()
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+is_seed_rule = false
+name = "simplify_false_or_something"
+query = """
+(
+    (binary
+        left : (false)
+        operator: ["||" "or"]
+        right: (_) @rhs
+    )
+@binary)
+"""
+replace = "@rhs"
+replace_node = "binary"
+
+
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], if: -> { true }
+# After :
+# before_action :map_user_roles, only: [:create, :update]
+#
+[[rules]]
+name = "remove_unnecessary_nested_if_block_true"
+is_seed_rule = false
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(true)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "if")
+)
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], if: -> { false }
+# After :
+#
+[[rules]]
+name = "remove_unnecessary_nested_if_block_false"
+is_seed_rule = false
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(false)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "if")
+)@call
+"""
+replace = ""
+replace_node = "call"
+
+
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], unless: -> { false }
+# After :
+# before_action :map_user_roles, only: [:create, :update]
+#
+[[rules]]
+name = "remove_unnecessary_nested_unless_block_false"
+is_seed_rule = false
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(false)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "unless")
+)@call
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], unless: -> { true }
+# After :
+# 
+#
+[[rules]]
+name = "remove_unnecessary_nested_unless_block_false"
+is_seed_rule = false
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(true)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "unless")
+)@call
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# before(:all) {     }
+# After :
+# 
+#
+[[rules]]
+name = "remove_empty_rspec_blocks"
+is_seed_rule = false
+groups = ["block_removal"]
+query = """
+(
+(call
+  method: (identifier) @method
+  (argument_list (simple_symbol) @args)
+  [
+    (block
+  	  !body
+    )
+    (do_block
+  	  !body
+    )
+  ]
+)@call
+(#match? @method "(before|after)")
+(#match? @args "(:all|:each|:example)")
+)
+"""
+replace = ""
+replace_node = "call"
+
+
+# Before :
+# def fourth_method
+#   return true
+#   call_this_method
+# end  
+# After :
+# def fourth_method
+#   return true
+# end 
+#
+[[rules]]
+name = "delete_all_statements_after_return"
+query = """
+(
+  (body_statement
+    ((_)* @pre)
+    [
+      (
+        (return)
+        ?(comment)
+      ) @r
+      (
+        (return)
+      ) @r      
+    ]
+    ((_)+ @post)
+  ) @body
+)
+"""
+replace = ""
+replace_node = "post"
+is_seed_rule = false
+
+
+[[rules]]
+name = "delete_variable_declaration"
+query = """
+(
+    (assignment
+        left: (identifier) @variable_name
+        right: [(true) (false)] @init
+    )@variable_declaration
+)
+"""
+replace = ""
+replace_node = "variable_declaration"
+is_seed_rule = false
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
+# Please note that the tree-sitter queries in the filter uses holes (i.e. `@variable_name` and `@init`).
+# These holes will be filled contextually based on the code snippet matched to `rule.query
+[[rules.filters]]
+enclosing_node = "(method) @md"
+not_contains = ["""
+(
+  (assignment
+      left: (_) @a.lhs
+      right: (_) @a.rhs
+  )@assignment
+  (#eq? @a.lhs "@variable_name")
+  (#not-eq? @a.rhs "@init")    
+)
+"""]
+
+# Replace identifier with value if :
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+# TODO: Add field filter
+[[rules]]
+name = "replace_identifier_with_value"
+query = """
+(
+(identifier) @identifier
+(#eq? @identifier "@variable_name")
+)
+"""
+replace = "@init"
+replace_node = "identifier"
+holes = ["variable_name", "init"]
+is_seed_rule = false
+[[rules.filters]]
+# There should exist no local variable declaration named `@identifer`
+enclosing_node = "(method) @md"
+not_contains = ["""
+(
+  (assignment
+      left: (_) @vdcl.lhs
+      right: (_) @vdcl.init
+  )@field_declaration
+  (#eq? @vdcl.lhs "@identifier")
+)
+"""]
+
+# Dummy rule that acts as a junction for all statement based cleanups
+[[rules]]
+name = "boolean_literal_cleanup"
+is_seed_rule = false
+
+[[rules]]
+name = "statement_cleanup"
+is_seed_rule = false
