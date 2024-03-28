@@ -115,5 +115,5 @@ def test_rule_simplification():
     assert (
         rule.query == """((identifier ) @tag1n\n(#eq? @tag1n "flag"))"""
         and rule.replace_node == """tag1n"""
-        and rule.replace == """\"replaced\""""
+        and rule.replace == """\" replaced \""""
     )
