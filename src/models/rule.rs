@@ -34,8 +34,8 @@ use super::{
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq)]
 // Represents the `rules.toml` file
-pub(crate) struct Rules {
-  pub(crate) rules: Vec<Rule>,
+pub struct Rules {
+  pub rules: Vec<Rule>,
 }
 
 #[derive(Deserialize, Debug, Clone, Default, PartialEq, Getters, Builder, Eq)]
