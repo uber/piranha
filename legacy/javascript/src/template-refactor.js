@@ -143,7 +143,7 @@ class TemplateRefactorEngine {
 
         traverse(this.ast, {
             All: {
-                enter(node) {
+                enter(node, path) {
                     if (node.type === 'BlockStatement') {
                         if (
                             node.path.original === 'if' &&
@@ -194,7 +194,10 @@ class TemplateRefactorEngine {
                         ) {
                             if (node.params[0].value === true) {
                                 engine.changed = true;
-                                if (node.params[1].type === 'StringLiteral') {
+                                if (
+                                    path.parent.node.type === 'ConcatStatement' &&
+                                    node.params[1].type === 'StringLiteral'
+                                ) {
                                     return {
                                         type: 'TextNode',
                                         chars: node.params[1].value,
@@ -205,7 +208,10 @@ class TemplateRefactorEngine {
                             } else if (node.params[0].value === false) {
                                 engine.changed = true;
                                 if (!node.params[2]) return null;
-                                if (node.params[2].type === 'StringLiteral') {
+                                if (
+                                    path.parent.node.type === 'ConcatStatement' &&
+                                    node.params[2].type === 'StringLiteral'
+                                ) {
                                     return {
                                         type: 'TextNode',
                                         chars: node.params[2].value,
