@@ -22,7 +22,7 @@ use crate::utilities::parse_toml;
 use super::{
   default_configs::{
     default_language, GO, JAVA, JAVA_CS, KOTLIN, PYTHON, SCALA, STRINGS, SWIFT, THRIFT, TSX,
-    TS_SCHEME, TYPESCRIPT,
+    TS_SCHEME, TYPESCRIPT, RUBY,
   },
   outgoing_edges::Edges,
   rule::Rules,
@@ -68,6 +68,7 @@ pub enum SupportedLanguage {
   Strings,
   TsScheme,
   Scala,
+  Ruby,
 }
 
 impl PiranhaLanguage {
@@ -272,6 +273,23 @@ impl std::str::FromStr for PiranhaLanguage {
           .to_vec(),
         comment_nodes: vec![],
       }),
+      RUBY => {
+        let ruby_rules: Rules = parse_toml(include_str!("../cleanup_rules/ruby/rules.toml"));
+        let ruby_edges: Edges = parse_toml(include_str!("../cleanup_rules/ruby/edges.toml"));
+        Ok(PiranhaLanguage {
+          extension: language.to_string(),
+          supported_language: SupportedLanguage::Ruby,
+          language: tree_sitter_ruby::language(),
+          scopes: parse_toml::<ScopeConfig>(include_str!(
+            "../cleanup_rules/ruby/scope_config.toml"
+          ))
+          .scopes()
+          .to_vec(),          
+          comment_nodes: vec![],
+          rules: Some(ruby_rules),
+          edges: Some(ruby_edges),
+        })
+      }     
       _ => Err("Language not supported"),
     }
   }

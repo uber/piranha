@@ -32,6 +32,7 @@ pub const THRIFT: &str = "thrift";
 pub const STRINGS: &str = "strings";
 pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
 pub const SCALA: &str = "scala";
+pub const RUBY: &str = "rb";
 
 pub const REGEX_QUERY_PREFIX: &str = "rgx ";
 pub const CONCRETE_SYNTAX_QUERY_PREFIX: &str = "cs ";
@@ -61,7 +62,7 @@ pub fn default_cleanup_comments_buffer() -> i32 {
 }
 
 pub fn default_cleanup_comments() -> bool {
-  false
+  true
 }
 
 pub fn default_global_tag_prefix() -> String {
@@ -101,7 +102,7 @@ pub fn default_piranha_language() -> PiranhaLanguage {
 }
 
 pub fn default_delete_consecutive_new_lines() -> bool {
-  false
+  true
 }
 
 pub(crate) fn default_query() -> CGPattern {

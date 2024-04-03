@@ -1,0 +1,36 @@
+[[scopes]]
+name = "Method"
+[[scopes.rules]]
+enclosing_node = """
+(
+    [
+        (method
+            name: (identifier) @n
+        )
+        (method
+            name: (identifier) @n
+            parameters: (method_parameters) @fp
+        )        
+    ]
+@xdn)
+"""
+scope = """
+(
+    [
+        (
+            (method
+                name: (identifier) @z
+            )
+            (#eq? @z "@n")
+        )        
+        (
+            (method
+                name: (identifier) @z
+                parameters: (method_parameters) @tp
+            )
+            (#eq? @z "@n")
+            (#eq? @tp "@fp")
+        )
+    ]
+)@qdn
+"""
