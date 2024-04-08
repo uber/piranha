@@ -11,6 +11,25 @@ class TemplateRefactorEngine {
         this.max_cleanup_steps = 15;
     }
 
+    hasFlagKeywordInFile() {
+        let flagname = this.flagname;
+        const engine = this;
+        let hasFlagKeywordInFile = false;
+        traverse(this.ast, {
+            All: {
+                enter(node) {
+                    if (
+                        (node.type === 'StringLiteral' && node.value === flagname) ||
+                        (node.type === 'PathExpression' && engine.isCleanupProperty(node.original))
+                    ) {
+                        hasFlagKeywordInFile = true;
+                    }
+                },
+            },
+        });
+        return hasFlagKeywordInFile;
+    }
+
     trueLiteral() {
         const vanillaLiteral = {
             type: 'BooleanLiteral',
@@ -228,26 +247,14 @@ class TemplateRefactorEngine {
     }
 
     refactorPipeline() {
-        const engine = this;
-        let iterations = 0;
-        this.changed = true;
-
-        let flagname = this.flagname;
-        let isFlagKeywordFoundInFile = false;
-        traverse(this.ast, {
-            All: {
-                enter(node) {
-                    if (
-                        (node.type === 'StringLiteral' && node.value === flagname) ||
-                        (node.type === 'PathExpression' && engine.isCleanupProperty(node.original))
-                    ) {
-                        isFlagKeywordFoundInFile = true;
-                    }
-                },
-            },
-        });
+        const hasFlagKeywordInFile = this.hasFlagKeywordInFile();
+        let hasAstChanges = false;
 
         this.flagAPIToLiteral();
+        if (this.changed) hasAstChanges = true;
+
+        let iterations = 0;
+        this.changed = true;
 
         while (this.changed && iterations < 15) {
             this.changed = false;
@@ -258,9 +265,8 @@ class TemplateRefactorEngine {
             iterations++;
         }
 
-        let hasASTChanges = false;
         if (!this.changed) {
-            if (iterations == 1 && this.max_cleanup_steps != 1) {
+            if (!hasAstChanges) {
                 console.log(
                     colors.yellow(`Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}\n`),
                 );
@@ -268,7 +274,6 @@ class TemplateRefactorEngine {
                 console.log(
                     `Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.\n`,
                 );
-                hasASTChanges = true;
             }
         } else {
             console.log(
@@ -279,8 +284,8 @@ class TemplateRefactorEngine {
         }
 
         return {
-            changed: hasASTChanges,
-            isFlagKeywordFoundInFile,
+            changed: hasAstChanges,
+            hasFlagKeywordInFile,
         };
     }
 }

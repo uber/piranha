@@ -84,9 +84,9 @@ for (let filename of templateFiles) {
     cleanupInfo: templateToCleanupInfoMap[filename] || { properties: [] }
   });
 
-  const { changed, isFlagKeywordFoundInFile } = engine.refactorPipeline();
+  const { changed, hasFlagKeywordInFile } = engine.refactorPipeline();
 
-  if (isFlagKeywordFoundInFile) filesHavingFlagKeyword.push(filename);
+  if (hasFlagKeywordInFile) filesHavingFlagKeyword.push(filename);
   if (changed) {
     allModifiedFiles.push(filename);
   } else if (args.modify_file) {
