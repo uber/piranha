@@ -21,6 +21,7 @@ from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
 from spark_config import SparkConfigChange
+from java_spark_context import JavaSparkContextChange
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -38,7 +39,7 @@ def test_update_CalendarInterval():
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
-        
+
 def test_update_IDFModelSignatureChange():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/idf_model_signature_change/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/idf_model_signature_change/"
@@ -48,8 +49,8 @@ def test_update_IDFModelSignatureChange():
         idf_model_signature_change = IDFModelSignatureChange([tp])
         summary = idf_model_signature_change()
         assert summary is not None
-        assert is_as_expected_files(expected_codebase, tp) 
-        
+        assert is_as_expected_files(expected_codebase, tp)
+
 def test_update_accessing_execution_plan():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/accessing_execution_plan/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/accessing_execution_plan/"
@@ -59,8 +60,8 @@ def test_update_accessing_execution_plan():
         accessing_execution_plan = AccessingExecutionPlan([tp])
         summary = accessing_execution_plan()
         assert summary is not None
-        assert is_as_expected_files(expected_codebase, tp) 
-        
+        assert is_as_expected_files(expected_codebase, tp)
+
 def test_update_gradient_boost_trees():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/gradient_boost_trees/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/gradient_boost_trees/"
@@ -93,7 +94,7 @@ def test_sql_new_execution():
         summary = sql_new_execution()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
-        
+
 def test_query_test_check_answer_change():
     input_codebase = "plugins/spark_upgrade/tests/resources/input/query_test_check_answer_change/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/expected/query_test_check_answer_change/"
@@ -104,7 +105,7 @@ def test_query_test_check_answer_change():
         summary = query_test_check_answer_change()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
-        
+
 def test_spark_config_change():
     input_codebase = "plugins/spark_upgrade/tests/resources/spark_conf/input/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/spark_conf/expected/"
@@ -117,8 +118,12 @@ def test_spark_config_change():
         spark_config_change = SparkConfigChange([tp], "java")
         summary = spark_config_change()
         assert summary is not None
-        assert is_as_expected_files(expected_codebase, tp)
 
+        javasparkcontext = JavaSparkContextChange([tp], language="java")
+        summary = javasparkcontext()
+        assert summary is not None
+
+        assert is_as_expected_files(expected_codebase, tp)
 
 def remove_whitespace(input_str):
     """Removes all the whitespace from the string.

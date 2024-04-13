@@ -18,6 +18,13 @@ from polyglot_piranha import (
     Rule,
 )
 
+_JAVASPARKCONTEXT_OCE_QUERY = """(
+    (object_creation_expression
+        type: (_) @oce_typ
+    (#eq? @oce_typ "JavaSparkContext")
+    ) @oce
+)"""
+
 
 class SparkConfigChange(ExecutePiranha):
     def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
@@ -33,28 +40,37 @@ class SparkConfigChange(ExecutePiranha):
         return "Spark Config Change"
 
     def get_rules(self) -> List[Rule]:
+        # filters cannot be added without reinstantiating Rule(), so we create the full filter set before
+        fs = {
+            Filter(
+                not_enclosing_node='cs new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")'
+            ),
+        }
+        if self.language == "java":
+            fs.add(Filter(not_enclosing_node=_JAVASPARKCONTEXT_OCE_QUERY))
+
         update_spark_conf_init = Rule(
             name="update_spark_conf_init",
             query="cs new SparkConf()",
             replace_node="*",
             replace='new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")',
-            filters={
-                Filter(
-                    not_enclosing_node='cs new SparkConf().set("spark.sql.legacy.timeParserPolicy","LEGACY").set("spark.sql.legacy.allowUntypedScalaUDF", "true")'
-                )
-            },
+            filters=fs,
         )
+
+        fs2 = {
+            Filter(
+                not_enclosing_node='cs SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")'
+            )
+        }
+        if self.language == "java":
+            fs2.add(Filter(not_enclosing_node=_JAVASPARKCONTEXT_OCE_QUERY))
 
         update_spark_session_builder_init = Rule(
             name="update_spark_conf_init",
             query="cs SparkSession.builder()",
             replace_node="*",
             replace='SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")',
-            filters={
-                Filter(
-                    not_enclosing_node='cs SparkSession.builder().config("spark.sql.legacy.timeParserPolicy","LEGACY").config("spark.sql.legacy.allowUntypedScalaUDF", "true")'
-                )
-            },
+            filters=fs2,
         )
 
         update_import_array_queue = Rule(

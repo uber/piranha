@@ -8,7 +8,7 @@
 #  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 #  express or implied. See the License for the specific language governing permissions and
 #  limitations under the License.
- 
+
 import argparse
 import logging
 
@@ -20,6 +20,7 @@ from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
 from spark_config import SparkConfigChange
+from java_spark_context import JavaSparkContextChange
 
 def _parse_args():
     parser = argparse.ArgumentParser(
@@ -52,30 +53,33 @@ def main():
 def upgrade_to_spark_3_3(path_to_codebase):
     update_calendar_interval = UpdateCalendarInterval([path_to_codebase])
     _ = update_calendar_interval()
-    
+
     idf_model_signature_change = IDFModelSignatureChange([path_to_codebase])
     _ = idf_model_signature_change()
-    
+
     accessing_execution_plan = AccessingExecutionPlan([path_to_codebase])
     _ = accessing_execution_plan()
 
     gradient_boost_trees = GradientBoostTrees([path_to_codebase])
     _ = gradient_boost_trees()
-    
+
     calculator_signature_change = CalculatorSignatureChange([path_to_codebase])
     _ = calculator_signature_change()
-    
+
     sql_new_execution = SQLNewExecutionChange([path_to_codebase])
     _ = sql_new_execution()
-    
+
     query_test_check_answer_change = QueryTestCheckAnswerChange([path_to_codebase])
     _ = query_test_check_answer_change()
-    
+
     spark_config = SparkConfigChange([path_to_codebase])
     _ = spark_config()
-    
+
     spark_config = SparkConfigChange([path_to_codebase], language="java")
     _ = spark_config()
-    
+
+    javasparkcontext = JavaSparkContextChange([path_to_codebase], language="java")
+    _ = javasparkcontext()
+
 if __name__ == "__main__":
     main()
