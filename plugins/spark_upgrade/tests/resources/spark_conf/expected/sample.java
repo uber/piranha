@@ -29,9 +29,8 @@ public class Sample {
 
         conf2.setExecutorEnv("spark.executor.extraClassPath", "test");
 
+        // Should not touch existent SparkSession.builder()
         SparkSession sparkSession = SparkSession.builder()
-                    .config("spark.sql.legacy.timeParserPolicy","LEGACY")
-                    .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
                     .master(master)
                     .appName(appName)
                     .getOrCreate();

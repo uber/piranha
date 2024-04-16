@@ -25,6 +25,17 @@ _JAVASPARKCONTEXT_OCE_QUERY = """(
     ) @oce
 )"""
 
+_SPARK_SESSION_BUILDER_CHAIN_QUERY = """(
+    (method_invocation
+        object: (method_invocation
+            object: (identifier) @spark_session
+            name: (identifier) @receiver
+        )
+        (#eq? @spark_session "SparkSession")
+        (#eq? @receiver "builder")
+    ) @mi
+)"""
+
 
 class SparkConfigChange(ExecutePiranha):
     def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
@@ -64,6 +75,7 @@ class SparkConfigChange(ExecutePiranha):
         }
         if self.language == "java":
             fs2.add(Filter(not_enclosing_node=_JAVASPARKCONTEXT_OCE_QUERY))
+            fs2.add(Filter(not_enclosing_node=_SPARK_SESSION_BUILDER_CHAIN_QUERY))
 
         update_spark_session_builder_init = Rule(
             name="update_spark_conf_init",

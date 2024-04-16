@@ -25,6 +25,7 @@ public class Sample {
 
         conf2.setExecutorEnv("spark.executor.extraClassPath", "test");
 
+        // Should not touch existent SparkSession.builder()
         SparkSession sparkSession = SparkSession.builder()
                 .master(master)
                 .appName(appName)
