@@ -8,26 +8,41 @@ const { parseOptions } = require("./config/utils");
 const templateRefactor = require("./src/template-refactor");
 const templateRecast = require('ember-template-recast');
 
-let jsFiles = fg.sync([path.join(process.cwd(), 'app/**/*.js')]);
-const templateFiles = fg.sync([path.join(process.cwd(), 'app/**/*.hbs')]);
-console.log("Total JS files in frontend/app: ", jsFiles.length);
-console.log("Total Templates files in frontend/app: ", templateFiles.length, "\n");
-
 const parser = new ArgumentParser();
 const requiredArgs = parser.addArgumentGroup();
+
 requiredArgs.addArgument(['-f', '--flag'], {
   help: 'Name of the stale flag',
   required: true,
 });
 
-requiredArgs.addArgument(['--modify-file'], {
-  help: 'Name of the output file',
-  action: 'storeTrue',
-  defaultValue: false,
+requiredArgs.addArgument(['--path'], {
+  help: 'Absolute directory path  for flag cleanup',
+  require: true
+});
+
+requiredArgs.addArgument(['--output'], {
+  help: 'Destination of the refactored output. File is modified in-place by default.'
 });
 
 const args = parser.parseArgs();
 let flagname = args.flag;
+
+let jsFiles = [], templateFiles = [];
+if(args.path.endsWith(".js")) {
+  jsFiles = [args.path];
+} else if(args.path.endsWith(".hbs")) {
+  templateFiles = [args.path];
+} else {
+  jsFiles = fg.sync([path.join(args.path, '**/*.js')]);
+  templateFiles = fg.sync([path.join(args.path, '**/*.hbs')]);
+}
+console.log("Total JS files in frontend/app: ", jsFiles.length);
+console.log("Total Templates files in frontend/app: ", templateFiles.length, "\n");
+
+if(args.output) {
+  fs.rmdirSync(args.output, { recursive: true })
+}
 
 const filesHavingFlagKeyword = [], allModifiedFiles = [], templateToCleanupInfoMap = {};
 
@@ -64,7 +79,7 @@ for (let filename of jsFiles) {
   if (hasFlagKeywordInFile) filesHavingFlagKeyword.push(filename);
   if (changed) {
     allModifiedFiles.push(filename);
-  } else if (args.modify_file) {
+  } else {
     continue;
   }
 
@@ -89,7 +104,7 @@ for (let filename of templateFiles) {
   if (hasFlagKeywordInFile) filesHavingFlagKeyword.push(filename);
   if (changed) {
     allModifiedFiles.push(filename);
-  } else if (args.modify_file) {
+  } else {
     continue;
   }
 
@@ -99,7 +114,7 @@ for (let filename of templateFiles) {
 
 function writeOutput(filename, output) {
   const { base, dir } = path.parse(filename);
-  const outputDir = args.modify_file ? dir : path.join(process.cwd(), !args.modify_file ? 'output' : '', dir);
+  let outputDir = args.output ? path.join(args.output, dir) : dir;
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
