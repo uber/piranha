@@ -25,6 +25,12 @@ requiredArgs.addArgument(['--output'], {
   help: 'Destination of the refactored output. File is modified in-place by default.'
 });
 
+requiredArgs.addArgument(['--enable-log'], {
+  help: 'Print cleanup logs',
+  action: 'storeTrue',
+  defaultValue: false,
+});
+
 const args = parser.parseArgs();
 let flagname = args.flag;
 
@@ -48,7 +54,6 @@ const filesHavingFlagKeyword = [], allModifiedFiles = [], templateToCleanupInfoM
 
 //cleanup js files
 for (let filename of jsFiles) {
-  console.log('Parsing JS file - ', filename);
   const ast = recast.parse(fs.readFileSync(filename, 'utf-8'), parseOptions);
 
   const properties = {
@@ -66,7 +71,7 @@ for (let filename of jsFiles) {
     true,
     flagname,
     15,
-    true,
+    args.enable_log,
     false,
     filename,
   );
@@ -89,14 +94,14 @@ for (let filename of jsFiles) {
 
 //cleanup templates
 for (let filename of templateFiles) {
-  console.log('Parsing template file - ', filename);
   const ast = templateRecast.parse(fs.readFileSync(filename, 'utf8'));
 
   const engine = new templateRefactor.TemplateRefactorEngine({
     ast,
     flagname,
     filename,
-    cleanupInfo: templateToCleanupInfoMap[filename] || { properties: [] }
+    cleanupInfo: templateToCleanupInfoMap[filename] || { properties: [] },
+    print_to_console: args.enable_log,
   });
 
   const { changed, hasFlagKeywordInFile } = engine.refactorPipeline();
@@ -131,8 +136,8 @@ const diff1 = filesHavingFlagKeyword.filter(filename => !allModifiedFiles.includ
 const diff2 = allModifiedFiles.filter(filename => !filesHavingFlagKeyword.includes(filename));
 if (diff1.length) {
   console.log("Attention: These files might need modification, please check them manually", diff1);
-} else if (diff2.length) {
-  console.log("Attention: These files might not need modification, please check them manually", diff2);
-} else {
-  console.log(`Total ${allModifiedFiles.length} files are modified`);
 }
+if (diff2.length) {
+  console.log("Attention: These files might not need modification, please check them manually", diff2);
+}
+console.log(`Total ${allModifiedFiles.length} files are modified by tool cleanup`)

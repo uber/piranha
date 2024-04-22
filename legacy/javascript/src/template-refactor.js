@@ -3,12 +3,13 @@ const { builders: b } = require('@glimmer/syntax');
 const colors = require('colors');
 
 class TemplateRefactorEngine {
-    constructor({ ast, flagname, filename, cleanupInfo }) {
+    constructor({ ast, flagname, filename, cleanupInfo, print_to_console }) {
         this.ast = ast;
         this.flagname = flagname;
         this.filename = filename;
         this.cleanupInfo = cleanupInfo;
         this.max_cleanup_steps = 15;
+        this.print_to_console = print_to_console;
     }
 
     hasFlagKeywordInFile() {
@@ -264,23 +265,28 @@ class TemplateRefactorEngine {
 
             iterations++;
         }
-
-        if (!this.changed) {
-            if (!hasAstChanges) {
-                console.log(
-                    colors.yellow(`Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}\n`),
-                );
+        if (this.print_to_console) {
+            if (!this.changed) {
+                if (!hasAstChanges) {
+                    console.log(colors.yellow(`${this.filename}: Piranha did not make any changes`));
+                } else {
+                    console.log(
+                        colors.green(
+                            `${this.filename}: Took ${iterations} ${
+                                iterations == 1 ? 'pass' : 'passes'
+                            } over the code to reach fixed point.`,
+                        ),
+                    );
+                }
             } else {
                 console.log(
-                    `Took ${iterations} ${iterations == 1 ? 'pass' : 'passes'} over the code to reach fixed point.\n`,
+                    colors.red(
+                        `${this.filename}: Terminated before fixed point in ${iterations} ${
+                            iterations == 1 ? 'pass' : 'passes'
+                        } over the code.`,
+                    ),
                 );
             }
-        } else {
-            console.log(
-                `Terminated before fixed point in ${iterations} ${
-                    iterations == 1 ? 'pass' : 'passes'
-                } over the code.\n`,
-            );
         }
 
         return {

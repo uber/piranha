@@ -51,7 +51,7 @@ class RefactorEngine {
         behaviour,
         flagname,
         max_cleanup_steps,
-        print_to_console = false,
+        print_to_console,
         keep_comments = false,
         filename = null,
     ) {
@@ -856,23 +856,23 @@ class RefactorEngine {
         if (this.print_to_console) {
             if (!this.changed) {
                 if (!hasAstChanges) {
-                    console.log(
-                        colors.yellow(
-                            `Piranha did not make any changes to ${this.filename} to cleanup ${this.flagname}\n`,
-                        ),
-                    );
+                    console.log(colors.yellow(`${this.filename}: Piranha did not make any changes`));
                 } else {
                     console.log(
-                        `Took ${iterations} ${
-                            iterations == 1 ? 'pass' : 'passes'
-                        } over the code to reach fixed point.\n`,
+                        colors.green(
+                            `${this.filename}: Took ${iterations} ${
+                                iterations == 1 ? 'pass' : 'passes'
+                            } over the code to reach fixed point.`,
+                        ),
                     );
                 }
             } else {
                 console.log(
-                    `Terminated before fixed point in ${iterations} ${
-                        iterations == 1 ? 'pass' : 'passes'
-                    } over the code.\n`,
+                    colors.red(
+                        `${this.filename}: Terminated before fixed point in ${iterations} ${
+                            iterations == 1 ? 'pass' : 'passes'
+                        } over the code.`,
+                    ),
                 );
             }
         }
