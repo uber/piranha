@@ -36,7 +36,13 @@ class AccessingExecutionPlan(ExecutePiranha):
             replace="@dataframe.queryExecution.executedPlan.asInstanceOf[AdaptiveSparkPlanExec].initialPlan",
             holes={"queryExec", "execPlan"},
             filters={Filter(
-                not_enclosing_node="cs @dataframe.queryExecution.executedPlan",
+                enclosing_node="(var_definition) @var_def",
+                not_contains=["""(
+                    (field_expression
+                        field: (identifier) @field_id
+                        (#eq? @field_id "initialPlan")
+                    ) @field_expr
+                )"""],
             )}
         )
         return [transform_IDFModel_args]
