@@ -30,10 +30,10 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 def test_update_CalendarInterval():
     input_codebase = (
-        "plugins/spark_upgrade/tests/resources/input/update_calendar_interval/"
+        "plugins/spark_upgrade/tests/resources/update_calendar_interval/input/"
     )
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/update_calendar_interval/"
+        "plugins/spark_upgrade/tests/resources/update_calendar_interval/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -46,10 +46,10 @@ def test_update_CalendarInterval():
 
 def test_update_IDFModelSignatureChange():
     input_codebase = (
-        "plugins/spark_upgrade/tests/resources/input/idf_model_signature_change/"
+        "plugins/spark_upgrade/tests/resources/idf_model_signature_change/input/"
     )
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/idf_model_signature_change/"
+        "plugins/spark_upgrade/tests/resources/idf_model_signature_change/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -62,10 +62,10 @@ def test_update_IDFModelSignatureChange():
 
 def test_update_accessing_execution_plan():
     input_codebase = (
-        "plugins/spark_upgrade/tests/resources/input/accessing_execution_plan/"
+        "plugins/spark_upgrade/tests/resources/accessing_execution_plan/input/"
     )
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/accessing_execution_plan/"
+        "plugins/spark_upgrade/tests/resources/accessing_execution_plan/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -77,9 +77,9 @@ def test_update_accessing_execution_plan():
 
 
 def test_update_gradient_boost_trees():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/gradient_boost_trees/"
+    input_codebase = "plugins/spark_upgrade/tests/resources/gradient_boost_trees/input/"
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/gradient_boost_trees/"
+        "plugins/spark_upgrade/tests/resources/gradient_boost_trees/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -92,10 +92,10 @@ def test_update_gradient_boost_trees():
 
 def test_update_calculator_signature_change():
     input_codebase = (
-        "plugins/spark_upgrade/tests/resources/input/calculator_signature_change/"
+        "plugins/spark_upgrade/tests/resources/calculator_signature_change/input/"
     )
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/calculator_signature_change/"
+        "plugins/spark_upgrade/tests/resources/calculator_signature_change/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -107,9 +107,9 @@ def test_update_calculator_signature_change():
 
 
 def test_sql_new_execution():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/sql_new_execution/"
+    input_codebase = "plugins/spark_upgrade/tests/resources/sql_new_execution/input/"
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/sql_new_execution/"
+        "plugins/spark_upgrade/tests/resources/sql_new_execution/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -122,10 +122,10 @@ def test_sql_new_execution():
 
 def test_query_test_check_answer_change():
     input_codebase = (
-        "plugins/spark_upgrade/tests/resources/input/query_test_check_answer_change/"
+        "plugins/spark_upgrade/tests/resources/query_test_check_answer_change/input/"
     )
     expected_codebase = (
-        "plugins/spark_upgrade/tests/resources/expected/query_test_check_answer_change/"
+        "plugins/spark_upgrade/tests/resources/query_test_check_answer_change/expected/"
     )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
@@ -170,7 +170,7 @@ def remove_whitespace(input_str):
 
 
 def test_integration():
-    """Test the integration of all plugins."""
+    """Test that the integration of all plugins terminate correctly."""
     with TemporaryDirectory() as input_temp_dir:
         for input_dir in [
             "plugins/spark_upgrade/tests/resources/accessing_execution_plan/input/",
@@ -182,7 +182,6 @@ def test_integration():
             "plugins/spark_upgrade/tests/resources/update_calendar_interval/input/",
         ]:
             dir_name = input_dir.split("/")[-3]
-            print(f"dir_name: {dir_name}")
             copy_dir(input_dir, input_temp_dir + "/" + dir_name + "/")
 
         update_calendar_interval = UpdateCalendarInterval([input_temp_dir])
@@ -206,27 +205,6 @@ def test_integration():
         javasparkcontext = JavaSparkContextChange([input_temp_dir], language="java")
         _ = javasparkcontext()
 
-        for root, _, files in walk(input_temp_dir + "/input/"):
-            input_root = Path(root)
-            print(input_root)
-            expected_root = Path(
-                "plugins/spark_upgrade/tests/resources/expected/"
-                + str(input_root.relative_to(input_temp_dir + "/input/"))
-            )
-            for file_name in files:
-                actual_file = Path(input_root, file_name)
-                expected_file = Path(expected_root, file_name)
-                _actual_content = actual_file.read_text()
-                actual_content = remove_whitespace(_actual_content).strip()
-                expected_content = remove_whitespace(expected_file.read_text())
-                if not actual_content and expected_file.exists():
-                    logging.error(f"Actual content of the file was empty !!!")
-                    assert False
-                if expected_content != actual_content:
-                    logging.error(f"Actual content of the file :\n{_actual_content}")
-                    assert False
-
-        assert True
 
 
 def copy_dir(source_dir, dest_dir):
