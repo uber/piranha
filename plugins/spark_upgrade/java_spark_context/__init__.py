@@ -70,6 +70,9 @@ class JavaSparkContextChange(ExecutePiranha):
         )
 
     def __call__(self) -> dict[str, bool]:
+        if self.language != "java":
+            return {}
+
         piranha_args = self.get_piranha_arguments()
         summaries: list[PiranhaOutputSummary] = execute_piranha(piranha_args)
         assert summaries is not None

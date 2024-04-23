@@ -122,6 +122,9 @@ def test_spark_config_change():
         javasparkcontext = JavaSparkContextChange([tp], language="java")
         summary = javasparkcontext()
         assert summary is not None
+        javasparkcontext = JavaSparkContextChange([tp])
+        summary = javasparkcontext()
+        assert summary is not None
 
         assert is_as_expected_files(expected_codebase, tp)
 

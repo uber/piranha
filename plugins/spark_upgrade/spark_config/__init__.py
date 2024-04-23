@@ -36,6 +36,15 @@ _SPARK_SESSION_BUILDER_CHAIN_QUERY = """(
     ) @mi
 )"""
 
+_EXPR_STMT_CHAIN_ENDS_WITH_GETORCREATE_QUERY = """(
+    (expression_statement
+    	(method_invocation
+        	name: (identifier) @last
+        )
+        (#match? @last "getOrCreate")
+    ) @expr_stmt
+)"""
+
 
 class SparkConfigChange(ExecutePiranha):
     def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
@@ -59,6 +68,9 @@ class SparkConfigChange(ExecutePiranha):
         }
         if self.language == "java":
             fs.add(Filter(not_enclosing_node=_JAVASPARKCONTEXT_OCE_QUERY))
+            fs.add(
+                Filter(not_enclosing_node=_EXPR_STMT_CHAIN_ENDS_WITH_GETORCREATE_QUERY)
+            )
 
         update_spark_conf_init = Rule(
             name="update_spark_conf_init",
@@ -76,6 +88,9 @@ class SparkConfigChange(ExecutePiranha):
         if self.language == "java":
             fs2.add(Filter(not_enclosing_node=_JAVASPARKCONTEXT_OCE_QUERY))
             fs2.add(Filter(not_enclosing_node=_SPARK_SESSION_BUILDER_CHAIN_QUERY))
+            fs2.add(
+                Filter(not_enclosing_node=_EXPR_STMT_CHAIN_ENDS_WITH_GETORCREATE_QUERY)
+            )
 
         update_spark_session_builder_init = Rule(
             name="update_spark_conf_init",
