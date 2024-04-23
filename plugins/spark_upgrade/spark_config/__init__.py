@@ -45,6 +45,12 @@ _EXPR_STMT_CHAIN_ENDS_WITH_GETORCREATE_QUERY = """(
     ) @expr_stmt
 )"""
 
+_SCALA_CHAIN_ENDS_WITH_GETORCREATE_QUERY = """(
+    (field_expression
+        field: (identifier) @last_field
+        (#eq? @last_field "getOrCreate")
+    ) @field_expr
+)"""
 
 class SparkConfigChange(ExecutePiranha):
     def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
@@ -71,6 +77,8 @@ class SparkConfigChange(ExecutePiranha):
             fs.add(
                 Filter(not_enclosing_node=_EXPR_STMT_CHAIN_ENDS_WITH_GETORCREATE_QUERY)
             )
+        elif self.language == "scala":
+            fs.add(Filter(not_enclosing_node=_SCALA_CHAIN_ENDS_WITH_GETORCREATE_QUERY))
 
         update_spark_conf_init = Rule(
             name="update_spark_conf_init",
@@ -91,6 +99,8 @@ class SparkConfigChange(ExecutePiranha):
             fs2.add(
                 Filter(not_enclosing_node=_EXPR_STMT_CHAIN_ENDS_WITH_GETORCREATE_QUERY)
             )
+        elif self.language == "scala":
+            fs2.add(Filter(not_enclosing_node=_SCALA_CHAIN_ENDS_WITH_GETORCREATE_QUERY))
 
         update_spark_session_builder_init = Rule(
             name="update_spark_conf_init",

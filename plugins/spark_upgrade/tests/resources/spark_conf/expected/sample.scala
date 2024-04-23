@@ -14,21 +14,19 @@ class Sample {
       .set("spark.driver.allowMultipleContexts", "true")
     val sc = new SparkContext(conf)
     val sqlContext = new TestHiveContext(sc).sparkSession
-    
+
     val conf2 = new SparkConf()
       .set("spark.sql.legacy.timeParserPolicy","LEGACY")
       .set("spark.sql.legacy.allowUntypedScalaUDF", "true")
-    
+
     conf2.setSparkHome(sparkHome)
 
     conf2.setExecutorEnv("spark.executor.extraClassPath", "test")
 
     val sparkSession = SparkSession.builder()
-        .config("spark.sql.legacy.timeParserPolicy","LEGACY")
-        .config("spark.sql.legacy.allowUntypedScalaUDF", "true")
         .master(master)
         .appName(appName)
-        .getOrCreate()
+        .getOrCreate
 
   }
 
