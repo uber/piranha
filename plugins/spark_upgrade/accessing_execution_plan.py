@@ -14,6 +14,7 @@ from execute_piranha import ExecutePiranha
 
 from polyglot_piranha import (
     Rule,
+    Filter,
 )
 
 class AccessingExecutionPlan(ExecutePiranha):
@@ -34,6 +35,9 @@ class AccessingExecutionPlan(ExecutePiranha):
             replace_node="*",
             replace="@dataframe.queryExecution.executedPlan.asInstanceOf[AdaptiveSparkPlanExec].initialPlan",
             holes={"queryExec", "execPlan"},
+            filters={Filter(
+                not_enclosing_node="cs @dataframe.queryExecution.executedPlan",
+            )}
         )
         return [transform_IDFModel_args]
 
