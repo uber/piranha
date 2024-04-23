@@ -55,17 +55,18 @@ def main():
 
 
 def upgrade_to_spark_3_3(path_to_codebase: str):
-    """Wraps calls to Piranha with try/except to prevent it failing on a single file."""
+    """Wraps calls to Piranha with try/except to prevent it failing on a single file.
+    We catch `BaseException`, as pyo3 `PanicException` extends it."""
     for scala_file in glob.glob(f"{path_to_codebase}/**/*.scala", recursive=True):
         try:
             update_file(scala_file)
-        except Exception as e:
+        except BaseException as e:
             logging.error(f"Error running for file file {scala_file}: {e}")
 
     for java_file in glob.glob(f"{path_to_codebase}/**/*.java", recursive=True):
         try:
             update_file(java_file)
-        except Exception as e:
+        except BaseException as e:
             logging.error(f"Error running for file file {java_file}: {e}")
 
 
