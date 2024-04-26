@@ -23,6 +23,7 @@ from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
 from spark_config import SparkConfigChange
 from java_spark_context import JavaSparkContextChange
+from scala_session_builder import ScalaSessionBuilder
 
 
 def _parse_args():
@@ -100,6 +101,9 @@ def update_file(file_path: str):
 
     javasparkcontext = JavaSparkContextChange([file_path], language="java")
     _ = javasparkcontext()
+
+    scalasessionbuilder = ScalaSessionBuilder([file_path], language="scala")
+    _ = scalasessionbuilder()
 
 
 if __name__ == "__main__":

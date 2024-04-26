@@ -60,7 +60,7 @@ _ADD_IMPORT_RULE = Rule(
 
 
 class JavaSparkContextChange(ExecutePiranha):
-    def __init__(self, paths_to_codebase: List[str], language: str = "scala"):
+    def __init__(self, paths_to_codebase: List[str], language: str = "java"):
         super().__init__(
             paths_to_codebase=paths_to_codebase,
             substitutions={

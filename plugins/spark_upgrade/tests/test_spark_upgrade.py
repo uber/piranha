@@ -22,6 +22,7 @@ from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
 from spark_config import SparkConfigChange
 from java_spark_context import JavaSparkContextChange
+from scala_session_builder import ScalaSessionBuilder
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -156,6 +157,13 @@ def test_spark_config_change():
         summary = javasparkcontext()
         assert summary is not None
 
+        scalasessionbuilder = ScalaSessionBuilder([tp], language="scala")
+        summary = scalasessionbuilder()
+        assert summary is not None
+        scalasessionbuilder = ScalaSessionBuilder([tp], language="java")
+        summary = scalasessionbuilder()
+        assert summary is not None
+
         assert is_as_expected_files(expected_codebase, tp)
 
 
@@ -204,7 +212,8 @@ def test_integration():
         _ = spark_config()
         javasparkcontext = JavaSparkContextChange([input_temp_dir], language="java")
         _ = javasparkcontext()
-
+        scalasessionbuilder = ScalaSessionBuilder([input_temp_dir], language="scala")
+        _ = scalasessionbuilder()
 
 
 def copy_dir(source_dir, dest_dir):
