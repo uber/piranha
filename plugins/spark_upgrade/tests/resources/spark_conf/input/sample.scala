@@ -12,9 +12,9 @@ class Sample {
       .set("spark.driver.allowMultipleContexts", "true")
     val sc = new SparkContext(conf)
     val sqlContext = new TestHiveContext(sc).sparkSession
-    
+
     val conf2 = new SparkConf()
-    
+
     conf2.setSparkHome(sparkHome)
 
     conf2.setExecutorEnv("spark.executor.extraClassPath", "test")
@@ -22,9 +22,7 @@ class Sample {
    val sparkSession = SparkSession.builder()
         .master(master)
         .appName(appName)
-        .getOrCreate()
-
-
+        .getOrCreate
   }
 
 }

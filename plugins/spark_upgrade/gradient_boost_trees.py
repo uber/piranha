@@ -14,7 +14,20 @@ from execute_piranha import ExecutePiranha
 
 from polyglot_piranha import (
     Rule,
+    Filter,
 )
+
+_INSTANCE_EXPR_QUERY = """(
+    (instance_expression
+        (type_identifier) @typ_id
+        arguments: (arguments
+            (_)
+            (_)
+            (_)
+        )
+        (#eq? @typ_id "Instance")
+    ) @inst
+)"""
 
 
 class GradientBoostTrees(ExecutePiranha):
@@ -44,6 +57,11 @@ class GradientBoostTrees(ExecutePiranha):
                 @seed,
                 @featureSubsetStrategy
             )""",
+            filters={
+                Filter(
+                    not_contains=[_INSTANCE_EXPR_QUERY],
+                )
+            },
             holes={"gbt"},
         )
 
@@ -62,6 +80,11 @@ class GradientBoostTrees(ExecutePiranha):
                 @seed,
                 @featureSubsetStrategy
             )""",
+            filters={
+                Filter(
+                    not_contains=[_INSTANCE_EXPR_QUERY],
+                )
+            },
             holes={"gbt"},
         )
         return [gradient_boost_trees, gradient_boost_trees_comment]
