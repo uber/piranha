@@ -39,6 +39,7 @@ mod test_piranha_thrift;
 
 mod test_piranha_scm;
 mod test_piranha_strings;
+mod test_piranha_ruby;
 
 use std::sync::Once;
 
@@ -222,7 +223,6 @@ macro_rules! create_rewrite_tests {
       super::initialize();
       let _path= std::path::PathBuf::from("test-resources").join($language).join($path_to_test);
       let temp_dir= super::copy_folder_to_temp_dir(&_path.join("input"));
-
       let piranha_arguments =  $crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
         .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
         .path_to_configurations(_path.join("configurations").to_str().unwrap().to_string())

@@ -1,0 +1,23 @@
+def test_empty_unless_statement_true
+end
+
+def test_empty_unless_statement_false
+end
+
+def test_empty_unless_statement_parenthesized_true
+end
+
+def test_empty_unless_statement_parenthesized_false
+end
+
+def test_empty_if_statement_true
+end
+
+def test_empty_if_statement_false
+end
+
+def test_empty_if_statement_parenthesized_true
+end
+
+def test_empty_if_statement_parenthesized_false
+end

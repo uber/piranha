@@ -1,0 +1,55 @@
+[[rules]]
+name = "delete_variable_declaration"
+query = """
+(
+    (assignment
+        left: (identifier) @variable_name
+        right: [(true) (false)] @init
+    )@variable_declaration
+)
+"""
+replace = ""
+replace_node = "variable_declaration"
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
+# Please note that the tree-sitter queries in the filter uses holes (i.e. `@variable_name` and `@init`).
+# These holes will be filled contextually based on the code snippet matched to `rule.query
+[[rules.filters]]
+enclosing_node = "(method) @md"
+not_contains = ["""
+(
+  (assignment
+      left: (_) @a.lhs
+      right: (_) @a.rhs
+  )@assignment
+  (#eq? @a.lhs "@variable_name")
+  (#not-eq? @a.rhs "@init")    
+)
+"""]
+
+# Replace identifier with value if :
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+[[rules]]
+name = "replace_identifier_with_value"
+query = """
+(
+(identifier) @identifier
+(#eq? @identifier "@variable_name")
+)
+"""
+replace = "@init"
+is_seed_rule = false
+replace_node = "identifier"
+holes = ["variable_name", "init"]
+[[rules.filters]]
+# There should exist no local variable declaration named `@identifer`
+enclosing_node = "(method) @md"
+not_contains = ["""
+(
+  (assignment
+      left: (_) @vdcl.lhs
+      right: (_) @vdcl.init
+  )@field_declaration
+  (#eq? @vdcl.lhs "@identifier")
+)
+"""]

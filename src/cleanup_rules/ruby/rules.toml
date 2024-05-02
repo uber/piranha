@@ -7,15 +7,19 @@
 # After :
 #  do_something
 [[rules]]
-name = "simplify_if_statement_true"
+name = "replace_if_true"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (if
-      condition : (true)
-      consequence : ((then) @consequence))
-@if_statement)
+      [
+        condition: (true)
+        condition: (parenthesized_statements (true))
+      ]
+      consequence : ((then) @consequence)
+  )@if_statement
+)
 """
 replace = "@consequence"
 replace_node = "if_statement"
@@ -37,12 +41,15 @@ replace_node = "if_statement"
 #   [:flag_fields]
 # end
 [[rules]]
-name = "simplify_elsif_statement_true"
+name = "replace_elsif_true"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (elsif 
-  condition: (true)
+  [
+    condition: (true)
+    condition: (parenthesized_statements (true))
+  ]
   consequence: ((then) @consequence)
 ) @alternative
 """
@@ -58,20 +65,47 @@ replace_node = "alternative"
 # After :
 #  do_something_else
 [[rules]]
-name = "simplify_if_statement_false"
+name = "replace_if_false"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (if
-      condition : (false)
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
       consequence: ((then) @consequence)
       alternative: (else ((_)? @alternative))
-  )
-@if_statement
+  )@if_statement
 )
 """
 replace = "@alternative"
+replace_node = "if_statement"
+
+# Before : 
+# if false
+#   do_something
+# end
+# After :
+# 
+[[rules]]
+name = "replace_if_statement_false_without_else"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (if
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
+      consequence: ((then) @consequence)
+      .
+  )@if_statement
+)
+"""
+replace = ""
 replace_node = "if_statement"
 
 # Before : 
@@ -79,14 +113,17 @@ replace_node = "if_statement"
 # After :
 #
 [[rules]]
-name = "simplify_if_statement_inline_false"
+name = "replace_if_inline_false"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (if_modifier
       body : ((_) @body)
-      condition : (false)
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
   )@if_modifier
 )
 """
@@ -99,31 +136,61 @@ replace_node = "if_modifier"
 # fields_array << :field_name
 # 
 [[rules]]
-name = "simplify_if_statement_inline_true"
+name = "replace_if_inline_true"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (if_modifier
     body: (_) @body
-    condition: (true)
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ]    
 ) @if_modifier
 """
 replace = "@body"
 replace_node = "if_modifier"
 
 # Before : 
+# unless false
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something
+[[rules]]
+name = "replace_unless_false"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(unless
+    [
+      condition: (false)
+      condition: (parenthesized_statements (false))
+    ]    
+    consequence: ((then) @consequence)
+)@unless
+"""
+replace = "@consequence"
+replace_node = "unless"
+
+# Before : 
 # fields_array << :field_name unless true
 # After :
 # 
 [[rules]]
-name = "simplify_unless_statement_inline_true"
+name = "replace_unless_inline_true"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (unless_modifier
     body : ((_) @body)
-    condition: (true)
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ] 
   )@unless_modifier
 )
 """
@@ -135,14 +202,17 @@ replace_node = "unless_modifier"
 # After :
 # fields_array << :field_name
 [[rules]]
-name = "simplify_unless_statement_inline_false"
+name = "replace_unless_inline_false"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (unless_modifier
     body : ((_) @body)
-    condition: (false)
+    [
+      condition: (false)
+      condition: (parenthesized_statements (false))
+    ]    
   )@unless_modifier
 )
 """
@@ -158,38 +228,42 @@ replace_node = "unless_modifier"
 # After :
 #  do_something_else
 [[rules]]
-name = "simplify_unless_statement_true"
+name = "replace_unless_true"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (unless
-    condition: (true)
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ]    
+    consequence: (_) @consequence
+    alternative: (else ((_)? @alternative))
+)@unless
+"""
+
+replace = "@alternative"
+replace_node = "unless"
+# Before : 
+# unless true
+#   do_something
+# end
+# After :
+#  
+[[rules]]
+name = "simplify_unless_statement_true_without_else"
+groups = ["if_cleanup"]
+query = """
+(unless
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ]
+    consequence: (_) @consequence
+    .
 )@unless
 """
 replace = ""
-replace_node = "unless"
-
-
-# Before : 
-# unless false
-#   do_something
-# else
-#   do_something_else
-# end
-# After :
-#  do_something
-[[rules]]
-name = "simplify_unless_statement_false"
-groups = ["if_cleanup"]
-is_seed_rule = false
-query = """
-(unless
-    condition: (false)
-    consequence: ((then) @consequence)
-)@unless
-
-"""
-replace = "@consequence"
 replace_node = "unless"
 
 # Before :
@@ -198,13 +272,16 @@ replace_node = "unless"
 #  flag_flow
 #
 [[rules]]
-name = "simplify_ternary_operator_true"
+name = "replace_ternary_operator_true"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (conditional
-      condition : (true)
+      [
+        condition: (true)
+        condition: (parenthesized_statements (true))
+      ]    
       consequence : (_)* @consequence
       alternative: (_)* @alternative
       )
@@ -219,13 +296,16 @@ replace_node = "conditional"
 #  non_flag_flow
 #
 [[rules]]
-name = "simplify_ternary_operator_false"
+name = "replace_ternary_operator_false"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
 (
   (conditional
-      condition : (false)
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
       consequence : (_)* @consequence
       alternative: (_)* @alternative
       )
@@ -240,7 +320,7 @@ replace_node = "conditional"
 #  "something true"
 #
 [[rules]]
-name = "simplify_interpolation"
+name = "replace_interpolation"
 groups = ["if_cleanup"]
 is_seed_rule = false
 query = """
@@ -258,7 +338,7 @@ replace_node = "inter"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_not_false"
+name = "replace_not_false"
 query = """
 (
     (unary
@@ -276,7 +356,7 @@ replace_node = "unary_expression"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_not_true"
+name = "replace_not_true"
 query = """
 (
     (unary
@@ -291,13 +371,6 @@ replace_node = "unary_expression"
 # After 
 # true
 
-[[rules]]
-name = "simplify_parenthesized_expression"
-query = "(parenthesized_statements ([(true) (false) (identifier)] @expression)) @p_expr"
-replace = "@expression"
-replace_node = "p_expr"
-is_seed_rule = false
-groups = ["boolean_expression_simplify"]
 
 # Before :
 #  abc() && true
@@ -307,7 +380,7 @@ groups = ["boolean_expression_simplify"]
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_something_and_true"
+name = "replace_something_and_true"
 query = """
 (
   (binary
@@ -329,7 +402,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_true_and_something"
+name = "replace_true_and_something"
 query = """
 (
     (binary
@@ -350,7 +423,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_something_or_true"
+name = "replace_something_or_true"
 query = """
 (
     (binary
@@ -370,7 +443,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_true_or_something"
+name = "replace_true_or_something"
 query = """
 (
     (binary
@@ -391,7 +464,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_something_and_false"
+name = "replace_something_and_false"
 query = """
 (
   (binary
@@ -413,7 +486,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_false_and_something"
+name = "replace_false_and_something"
 query = """
 (
   (binary
@@ -435,7 +508,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_something_or_false"
+name = "replace_something_or_false"
 query = """
 (
     (binary
@@ -455,7 +528,7 @@ replace_node = "binary"
 [[rules]]
 groups = ["boolean_expression_simplify"]
 is_seed_rule = false
-name = "simplify_false_or_something"
+name = "replace_false_or_something"
 query = """
 (
     (binary
@@ -468,15 +541,13 @@ query = """
 replace = "@rhs"
 replace_node = "binary"
 
-
 # Before : 
 # before_action :map_user_roles, only: [:create, :update], if: -> { true }
 # After :
 # before_action :map_user_roles, only: [:create, :update]
 #
 [[rules]]
-name = "remove_unnecessary_nested_if_block_true"
-is_seed_rule = false
+name = "remove_lambda_block_with_stabby_lambda_syntax_if_block_true"
 groups = ["block_removal"]
 query = """
 (call
@@ -497,12 +568,41 @@ replace = ""
 replace_node = "pair"
 
 # Before : 
+# before_action :authenticate_user!, if: lambda { true }
+# After :
+# before_action :authenticate_user!
+#
+[[rules]]
+name = "remove_lambda_block_with_lambda_keyword_if_block_true"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (call
+          method: (identifier) @identifier
+          block: (block
+          		body: (block_body
+                	(true)
+                )
+          	)
+          )
+      )@pair
+    ) @arguments
+(#eq? @hash_key_symbol "if")
+(#eq? @identifier "lambda")
+)
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
 # before_action :map_user_roles, only: [:create, :update], if: -> { false }
 # After :
 #
 [[rules]]
-name = "remove_unnecessary_nested_if_block_false"
-is_seed_rule = false
+name = "remove_lambda_block_with_stabby_lambda_syntax_if_block_false"
 groups = ["block_removal"]
 query = """
 (call
@@ -522,42 +622,42 @@ query = """
 replace = ""
 replace_node = "call"
 
-
 # Before : 
-# before_action :map_user_roles, only: [:create, :update], unless: -> { false }
+# before_action :authenticate_user!, if: lambda { false }
 # After :
-# before_action :map_user_roles, only: [:create, :update]
 #
 [[rules]]
-name = "remove_unnecessary_nested_unless_block_false"
-is_seed_rule = false
+name = "remove_lambda_block_with_lambda_keyword_if_block_false"
 groups = ["block_removal"]
 query = """
 (call
   arguments: (argument_list
       (pair
         key: (hash_key_symbol) @hash_key_symbol
-        value: (lambda 
-          body: (block
-          	body: (block_body
-            	(false)
-            )@block_body
-          ) @block
-          ))@pair) @arguments
-(#eq? @hash_key_symbol "unless")
+        value: (call
+          method: (identifier) @identifier
+          block: (block
+          		body: (block_body
+                	(false)
+                )
+          	)
+          )
+      )@pair
+    ) @arguments
+(#eq? @hash_key_symbol "if")
+(#eq? @identifier "lambda")
 )@call
 """
 replace = ""
-replace_node = "pair"
+replace_node = "call"
 
 # Before : 
 # before_action :map_user_roles, only: [:create, :update], unless: -> { true }
 # After :
-# 
+# before_action :map_user_roles, only: [:create, :update]
 #
 [[rules]]
-name = "remove_unnecessary_nested_unless_block_false"
-is_seed_rule = false
+name = "remove_lambda_block_with_stabby_lambda_syntax_unless_block_true"
 groups = ["block_removal"]
 query = """
 (call
@@ -578,13 +678,96 @@ replace = ""
 replace_node = "call"
 
 # Before : 
+# before_action :authenticate_user!, unless: lambda { true }
+# After :
+# before_action :authenticate_user!
+#
+[[rules]]
+name = "remove_lambda_block_with_lambda_keyword_unless_block_true"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (call
+          method: (identifier) @identifier
+          block: (block
+          		body: (block_body
+                	(true)
+                )
+          	)
+          )
+      )@pair
+    ) @arguments
+(#eq? @hash_key_symbol "unless")
+(#eq? @identifier "lambda")
+)@call
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], unless: -> { false }
+# After :
+#
+[[rules]]
+name = "remove_lambda_block_with_stabby_lambda_syntax_unless_block_false"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(false)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "unless")
+)@call
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
+# before_action :authenticate_user!, unless: lambda { false }
+# After :
+#
+[[rules]]
+name = "remove_lambda_block_with_lambda_keyword_unless_block_false"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (call
+          method: (identifier) @identifier
+          block: (block
+          		body: (block_body
+                	(false)
+                )
+          	)
+          )
+      )@pair
+    ) @arguments
+(#eq? @hash_key_symbol "unless")
+(#eq? @identifier "lambda")
+)@call
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
 # before(:all) {     }
 # After :
 # 
 #
 [[rules]]
 name = "remove_empty_rspec_blocks"
-is_seed_rule = false
 groups = ["block_removal"]
 query = """
 (
@@ -601,7 +784,7 @@ query = """
   ]
 )@call
 (#match? @method "(before|after)")
-(#match? @args "(:all|:each|:example)")
+(#match? @args "(:suite|:all|:context|:each|:example)")
 )
 """
 replace = ""
@@ -674,7 +857,6 @@ not_contains = ["""
 
 # Replace identifier with value if :
 # (i) There is no local variable declaration in the enclosing method with the name as the identifier 
-# TODO: Add field filter
 [[rules]]
 name = "replace_identifier_with_value"
 query = """

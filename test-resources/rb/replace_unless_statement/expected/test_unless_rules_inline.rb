@@ -1,0 +1,13 @@
+def test_unless_statement_inline_true
+end
+
+def test_unless_statement_inline_false
+  do_something
+end
+
+def test_unless_statement_inline_true_parenthesized
+end
+  
+def test_unless_statement_inline_false_parenthesized
+  do_something
+end

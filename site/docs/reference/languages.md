@@ -18,3 +18,4 @@ title: Languages supported
 | Scala            | :heavy_check_mark:        | :calendar:                         | :calendar:                 |
 | C#               | :calendar:                | :calendar:                         | :calendar:                 |
 | JavaScript       | :calendar:                | :calendar:                         | :calendar:                 |
+| Ruby             | :heavy_check_mark:        | :heavy_check_mark:                 | :heavy_check_mark:         |

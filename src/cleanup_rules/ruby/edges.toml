@@ -5,14 +5,8 @@ to = ["boolean_literal_cleanup"]
 
 [[edges]]
 scope = "Parent"
-from = "replace_expression_with_boolean_literal"
-to = ["block_removal"]
-
-
-[[edges]]
-scope = "Parent"
 from = "boolean_literal_cleanup"
-to = ["boolean_expression_simplify", "statement_cleanup"]
+to = ["boolean_expression_simplify", "statement_cleanup", "block_removal"]
 
 [[edges]]
 scope = "Parent"
@@ -22,9 +16,7 @@ to = ["boolean_literal_cleanup"]
 [[edges]]
 scope = "Parent"
 from = "statement_cleanup"
-to = [
-  "if_cleanup"
-]
+to = ["if_cleanup"]
 
 [[edges]]
 scope = "Parent"
@@ -51,3 +43,7 @@ scope = "Parent"
 from = "replace_identifier_with_value"
 to = ["boolean_literal_cleanup"]
 
+[[edges]]
+scope = "Parent"
+from = "delete_variable_declaration"
+to = ["identify_empty_methods"]

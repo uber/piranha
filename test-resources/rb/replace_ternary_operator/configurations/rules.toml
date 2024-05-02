@@ -1,0 +1,45 @@
+# Before :
+#  true ? flag_flow : non_flag_flow
+# After :
+#  flag_flow
+#
+[[rules]]
+name = "replace_ternary_operator_true"
+groups = ["if_cleanup"]
+query = """
+(
+  (conditional
+      [
+        condition: (true)
+        condition: (parenthesized_statements (true))
+      ]    
+      consequence : (_)* @consequence
+      alternative: (_)* @alternative
+      )
+@conditional)
+"""
+replace = "@consequence"
+replace_node = "conditional"
+
+# Before :
+#  false ? flag_flow : non_flag_flow
+# After :
+#  non_flag_flow
+#
+[[rules]]
+name = "replace_ternary_operator_false"
+groups = ["if_cleanup"]
+query = """
+(
+  (conditional
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
+      consequence : (_)* @consequence
+      alternative: (_)* @alternative
+      )
+@conditional)
+"""
+replace = "@alternative"
+replace_node = "conditional"
