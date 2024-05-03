@@ -1,0 +1,206 @@
+# Before : 
+#  !false
+# After :
+#  true 
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_false"
+query = """
+(
+    (unary
+        operand: (false))
+@unary_expression)
+"""
+replace = "true"
+replace_node = "unary_expression"
+
+# Before : 
+#  !true
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_true"
+query = """
+(
+    (unary
+        operand: (true))
+@unary_expression)
+"""
+replace = "false"
+replace_node = "unary_expression"
+
+# Before: 
+# (true)
+# After 
+# true
+
+[[rules]]
+name = "simplify_parenthesized_expression"
+query = "(parenthesized_statements ([(true) (false) (identifier)] @expression)) @p_expr"
+replace = "@expression"
+replace_node = "p_expr"
+groups = ["boolean_expression_simplify"]
+
+# Before :
+#  abc() && true
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_and_true"
+query = """
+(
+  (binary
+    left : (_) @lhs
+    operator: ["&&" "and"]
+    right: (true)
+  )@binary
+)
+"""
+replace = "@lhs"
+replace_node = "binary"
+
+# Before : 
+#  true && abc()
+# After :
+#  abc()
+#
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_true_and_something"
+query = """
+(
+    (binary
+        left: (true)
+        operator: ["&&" "and"]
+        right : (_) @rhs) 
+) @binary
+"""
+replace = "@rhs"
+replace_node = "binary"
+
+
+# Before :
+#  abc || true
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_or_true"
+query = """
+(
+    (binary
+        left : (_) @lhs
+        operator: ["||" "or"]
+        right: (true)
+    )
+@binary)"""
+replace = "true"
+replace_node = "binary"
+
+# Before :
+#  true || abc()
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_true_or_something"
+query = """
+(
+    (binary
+        left : (true)
+        operator: ["||" "or"]
+        right: (_) @rhs
+    )
+@binary)
+"""
+replace = "true"
+replace_node = "binary"
+
+# Before :
+#  abc() && false
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_and_false"
+query = """
+(
+  (binary
+    left : (_) @lhs
+    operator:  ["&&" "and"]
+    right: (false)
+  )@binary
+)
+"""
+replace = "false"
+replace_node = "binary"
+
+# Before : 
+#  false && abc()
+# After :
+#  false
+#
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_false_and_something"
+query = """
+(
+  (binary
+    left : (false)
+    operator:  ["&&" "and"]
+    right: (_) @rhs
+  )@binary
+)
+"""
+replace = "false"
+replace_node = "binary"
+
+
+# Before :
+#  abc || false
+# After :
+#  abc
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_or_false"
+query = """
+(
+    (binary
+        left : (_) @lhs
+        operator: ["||" "or"]
+        right: (false)
+    )
+@binary)"""
+replace = "@lhs"
+replace_node = "binary"
+
+# Before :
+#  false || abc()
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_false_or_something"
+query = """
+(
+    (binary
+        left : (false)
+        operator: ["||" "or"]
+        right: (_) @rhs
+    )
+@binary)
+"""
+replace = "@rhs"
+replace_node = "binary"

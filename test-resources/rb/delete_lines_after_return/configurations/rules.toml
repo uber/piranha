@@ -1,0 +1,21 @@
+[[rules]]
+name = "delete_all_statements_after_return"
+query = """
+(
+  (body_statement
+    ((_)* @pre)
+    [
+      (
+        (return)
+        ?(comment)
+      ) @r
+      (
+        (return)
+      ) @r      
+    ]
+    ((_)+ @post)
+  ) @body
+)
+"""
+replace = ""
+replace_node = "post"

@@ -1,0 +1,50 @@
+[[edges]]
+scope = "Parent"
+from = "replace_expression_with_boolean_literal"
+to = ["boolean_literal_cleanup"]
+
+
+[[edges]]
+scope = "Parent"
+from = "boolean_literal_cleanup"
+to = ["boolean_expression_simplify", "statement_cleanup", "block_removal"]
+
+[[edges]]
+scope = "Parent"
+from = "boolean_expression_simplify"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "statement_cleanup"
+to = ["if_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "if_cleanup"
+to = ["delete_all_statements_after_return"]
+
+[[edges]]
+scope = "Parent"
+from = "delete_all_statements_after_return"
+to = ["delete_all_statements_after_return"]
+
+[[edges]]
+scope = "Parent"
+from = "statement_cleanup"
+to = ["delete_variable_declaration"]
+
+[[edges]]
+scope = "Method"
+from = "delete_variable_declaration"
+to = ["replace_identifier_with_value"]
+
+[[edges]]
+scope = "Parent"
+from = "replace_identifier_with_value"
+to = ["boolean_literal_cleanup"]
+
+[[edges]]
+scope = "Parent"
+from = "delete_variable_declaration"
+to = ["identify_empty_methods"]
