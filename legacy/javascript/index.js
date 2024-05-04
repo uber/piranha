@@ -54,7 +54,9 @@ const filesHavingFlagKeyword = [], allModifiedFiles = [], templateToCleanupInfoM
 
 //cleanup js files
 for (let filename of jsFiles) {
-  const ast = recast.parse(fs.readFileSync(filename, 'utf-8'), parseOptions);
+  const content = fs.readFileSync(filename, 'utf-8');
+  if(!content.includes(flagname)) continue;
+  const ast = recast.parse(content, parseOptions);
 
   const properties = {
     "methodProperties": [
@@ -94,13 +96,19 @@ for (let filename of jsFiles) {
 
 //cleanup templates
 for (let filename of templateFiles) {
-  const ast = templateRecast.parse(fs.readFileSync(filename, 'utf8'));
+  const content = fs.readFileSync(filename, 'utf8');
+
+  const cleanupInfo = templateToCleanupInfoMap[filename] || { properties: [] };
+  let hasFlagOrProperty = content.includes(flagname) || cleanupInfo.properties.some((prop) => content.includes(prop));
+  if(!hasFlagOrProperty) continue;
+
+  const ast = templateRecast.parse(content);
 
   const engine = new templateRefactor.TemplateRefactorEngine({
     ast,
     flagname,
     filename,
-    cleanupInfo: templateToCleanupInfoMap[filename] || { properties: [] },
+    cleanupInfo,
     print_to_console: args.enable_log,
   });
 
