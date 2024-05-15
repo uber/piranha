@@ -2,30 +2,6 @@ name: Release Polyglot Piranha
 on:
   workflow_dispatch:
 jobs:
-  build_ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-    - name: Build wheel with Maturin
-      run: |
-        pip install --upgrade maturin
-        maturin build --release -o dist
-        maturin build --sdist -o dist
-  build_ubuntu_20:
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-    - name: Build wheel with Maturin
-      run: |
-        pip install --upgrade maturin
-        maturin build --release -o dist
-        maturin build --sdist -o dist
   macos_build_x86:
     name: 'macos-x86'
     runs-on: [macos-12]
@@ -43,24 +19,10 @@ jobs:
           python-version: 3.8
       - name: Build wheel with Maturin
         run: |
-          pip install --upgrade maturin
+          pip3 install --upgrade maturin
           maturin build --release -o dist
-  macos_build_arm:
-    name: 'macos-arm64'
-    runs-on: [macos-latest]
-    strategy:
-      matrix:
-        arch: ['arm64']
-    env:
-      # Polyglot depends on tree-sitter-python which tries to compile c++ files stdlibc++ which is depreciated in newer version of mac.
-      CXXFLAGS: -stdlib=libc++
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
         with:
-          python-version: 3.8
-      - name: Build wheel with Maturin
-        run: |
-          rustup target add aarch64-apple-darwin
-          pip install --upgrade maturin
-          maturin build --release -o dist --target universal2-apple-darwin
+          name: polyglot-piranha-package-x86
+          path: dist/*
