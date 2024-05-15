@@ -8,10 +8,6 @@ jobs:
     strategy:
       matrix:
         arch: ['x86_64']
-    env:
-      # Polyglot depends on tree-sitter-python which tries to compile c++ files stdlibc++ which is depreciated in newer version of mac.
-      MACOSX_DEPLOYMENT_TARGET: 10.16
-      CXXFLAGS: -stdlib=libc++ -mmacosx-version-min=10.16
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v4
