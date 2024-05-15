@@ -21,6 +21,8 @@ from calculator_signature_change import CalculatorSignatureChange
 from sql_new_execution import SQLNewExecutionChange
 from query_test_check_answer_change import QueryTestCheckAnswerChange
 from spark_config import SparkConfigChange
+from java_spark_context import JavaSparkContextChange
+from scala_session_builder import ScalaSessionBuilder
 
 FORMAT = "%(levelname)s %(name)s %(asctime)-15s %(filename)s:%(lineno)d %(message)s"
 logging.basicConfig(format=FORMAT)
@@ -28,8 +30,12 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 
 def test_update_CalendarInterval():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/update_calendar_interval/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/update_calendar_interval/"
+    input_codebase = (
+        "plugins/spark_upgrade/tests/resources/update_calendar_interval/input/"
+    )
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/update_calendar_interval/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -38,32 +44,44 @@ def test_update_CalendarInterval():
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
-        
+
 def test_update_IDFModelSignatureChange():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/idf_model_signature_change/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/idf_model_signature_change/"
+    input_codebase = (
+        "plugins/spark_upgrade/tests/resources/idf_model_signature_change/input/"
+    )
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/idf_model_signature_change/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
         idf_model_signature_change = IDFModelSignatureChange([tp])
         summary = idf_model_signature_change()
         assert summary is not None
-        assert is_as_expected_files(expected_codebase, tp) 
-        
+        assert is_as_expected_files(expected_codebase, tp)
+
+
 def test_update_accessing_execution_plan():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/accessing_execution_plan/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/accessing_execution_plan/"
+    input_codebase = (
+        "plugins/spark_upgrade/tests/resources/accessing_execution_plan/input/"
+    )
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/accessing_execution_plan/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
         accessing_execution_plan = AccessingExecutionPlan([tp])
         summary = accessing_execution_plan()
         assert summary is not None
-        assert is_as_expected_files(expected_codebase, tp) 
-        
+        assert is_as_expected_files(expected_codebase, tp)
+
+
 def test_update_gradient_boost_trees():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/gradient_boost_trees/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/gradient_boost_trees/"
+    input_codebase = "plugins/spark_upgrade/tests/resources/gradient_boost_trees/input/"
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/gradient_boost_trees/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -72,9 +90,14 @@ def test_update_gradient_boost_trees():
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
+
 def test_update_calculator_signature_change():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/calculator_signature_change/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/calculator_signature_change/"
+    input_codebase = (
+        "plugins/spark_upgrade/tests/resources/calculator_signature_change/input/"
+    )
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/calculator_signature_change/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -83,9 +106,12 @@ def test_update_calculator_signature_change():
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
 
+
 def test_sql_new_execution():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/sql_new_execution/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/sql_new_execution/"
+    input_codebase = "plugins/spark_upgrade/tests/resources/sql_new_execution/input/"
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/sql_new_execution/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -93,10 +119,15 @@ def test_sql_new_execution():
         summary = sql_new_execution()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
-        
+
+
 def test_query_test_check_answer_change():
-    input_codebase = "plugins/spark_upgrade/tests/resources/input/query_test_check_answer_change/"
-    expected_codebase = "plugins/spark_upgrade/tests/resources/expected/query_test_check_answer_change/"
+    input_codebase = (
+        "plugins/spark_upgrade/tests/resources/query_test_check_answer_change/input/"
+    )
+    expected_codebase = (
+        "plugins/spark_upgrade/tests/resources/query_test_check_answer_change/expected/"
+    )
     with TemporaryDirectory() as temp_dir:
         tp = temp_dir
         copy_dir(input_codebase, tp)
@@ -104,7 +135,8 @@ def test_query_test_check_answer_change():
         summary = query_test_check_answer_change()
         assert summary is not None
         assert is_as_expected_files(expected_codebase, tp)
-        
+
+
 def test_spark_config_change():
     input_codebase = "plugins/spark_upgrade/tests/resources/spark_conf/input/"
     expected_codebase = "plugins/spark_upgrade/tests/resources/spark_conf/expected/"
@@ -117,6 +149,21 @@ def test_spark_config_change():
         spark_config_change = SparkConfigChange([tp], "java")
         summary = spark_config_change()
         assert summary is not None
+
+        javasparkcontext = JavaSparkContextChange([tp], language="java")
+        summary = javasparkcontext()
+        assert summary is not None
+        javasparkcontext = JavaSparkContextChange([tp])
+        summary = javasparkcontext()
+        assert summary is not None
+
+        scalasessionbuilder = ScalaSessionBuilder([tp], language="scala")
+        summary = scalasessionbuilder()
+        assert summary is not None
+        scalasessionbuilder = ScalaSessionBuilder([tp], language="java")
+        summary = scalasessionbuilder()
+        assert summary is not None
+
         assert is_as_expected_files(expected_codebase, tp)
 
 
@@ -128,6 +175,45 @@ def remove_whitespace(input_str):
         str: transformed input strings with no whitespace
     """
     return "".join(input_str.split()).strip()
+
+
+def test_integration():
+    """Test that the integration of all plugins terminate correctly."""
+    with TemporaryDirectory() as input_temp_dir:
+        for input_dir in [
+            "plugins/spark_upgrade/tests/resources/accessing_execution_plan/input/",
+            "plugins/spark_upgrade/tests/resources/calculator_signature_change/input/",
+            "plugins/spark_upgrade/tests/resources/gradient_boost_trees/input/",
+            "plugins/spark_upgrade/tests/resources/idf_model_signature_change/input/",
+            "plugins/spark_upgrade/tests/resources/spark_conf/input/",
+            "plugins/spark_upgrade/tests/resources/sql_new_execution/input/",
+            "plugins/spark_upgrade/tests/resources/update_calendar_interval/input/",
+        ]:
+            dir_name = input_dir.split("/")[-3]
+            copy_dir(input_dir, input_temp_dir + "/" + dir_name + "/")
+
+        update_calendar_interval = UpdateCalendarInterval([input_temp_dir])
+        _ = update_calendar_interval()
+        idf_model_signature_change = IDFModelSignatureChange([input_temp_dir])
+        _ = idf_model_signature_change()
+        accessing_execution_plan = AccessingExecutionPlan([input_temp_dir])
+        _ = accessing_execution_plan()
+        gradient_boost_trees = GradientBoostTrees([input_temp_dir])
+        _ = gradient_boost_trees()
+        calculator_signature_change = CalculatorSignatureChange([input_temp_dir])
+        _ = calculator_signature_change()
+        sql_new_execution = SQLNewExecutionChange([input_temp_dir])
+        _ = sql_new_execution()
+        query_test_check_answer_change = QueryTestCheckAnswerChange([input_temp_dir])
+        _ = query_test_check_answer_change()
+        spark_config = SparkConfigChange([input_temp_dir])
+        _ = spark_config()
+        spark_config = SparkConfigChange([input_temp_dir], language="java")
+        _ = spark_config()
+        javasparkcontext = JavaSparkContextChange([input_temp_dir], language="java")
+        _ = javasparkcontext()
+        scalasessionbuilder = ScalaSessionBuilder([input_temp_dir], language="scala")
+        _ = scalasessionbuilder()
 
 
 def copy_dir(source_dir, dest_dir):
