@@ -1,0 +1,28 @@
+# Before : 
+# before(:all) {     }
+# After :
+# 
+#
+[[rules]]
+name = "remove_empty_rspec_blocks"
+groups = ["block_removal"]
+query = """
+(
+(call
+  method: (identifier) @method
+  (argument_list (simple_symbol) @args)
+  [
+    (block
+  	  !body
+    )
+    (do_block
+  	  !body
+    )
+  ]
+)@call
+(#match? @method "(before|after)")
+(#match? @args "(:suite|:all|:context|:each|:example)")
+)
+"""
+replace = ""
+replace_node = "call"

@@ -1,0 +1,4 @@
+[[edges]]
+scope = "Method"
+from = "delete_variable_declaration"
+to = ["replace_identifier_with_value"]

@@ -1,0 +1,109 @@
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], if: -> { true }
+# After :
+# before_action :map_user_roles, only: [:create, :update]
+#
+[[rules]]
+name = "remove_lambda_block_with_stabby_lambda_syntax_if_block_true"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(true)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "if")
+)
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
+# before_action :authenticate_user!, if: lambda { true }
+# After :
+# before_action :authenticate_user!
+#
+[[rules]]
+name = "remove_lambda_block_with_lambda_keyword_if_block_true"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (call
+          method: (identifier) @identifier
+          block: (block
+          		body: (block_body
+                	(true)
+                )
+          	)
+          )
+      )@pair
+    ) @arguments
+(#eq? @hash_key_symbol "if")
+(#eq? @identifier "lambda")
+)
+"""
+replace = ""
+replace_node = "pair"
+
+# Before : 
+# before_action :map_user_roles, only: [:create, :update], if: -> { false }
+# After :
+#
+[[rules]]
+name = "remove_lambda_block_with_stabby_lambda_syntax_if_block_false"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (lambda 
+          body: (block
+          	body: (block_body
+            	(false)
+            )@block_body
+          ) @block
+          ))@pair) @arguments
+(#eq? @hash_key_symbol "if")
+)@call
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# before_action :authenticate_user!, if: lambda { false }
+# After :
+#
+[[rules]]
+name = "remove_lambda_block_with_lambda_keyword_if_block_false"
+groups = ["block_removal"]
+query = """
+(call
+  arguments: (argument_list
+      (pair
+        key: (hash_key_symbol) @hash_key_symbol
+        value: (call
+          method: (identifier) @identifier
+          block: (block
+          		body: (block_body
+                	(false)
+                )
+          	)
+          )
+      )@pair
+    ) @arguments
+(#eq? @hash_key_symbol "if")
+(#eq? @identifier "lambda")
+)@call
+"""
+replace = ""
+replace_node = "call"

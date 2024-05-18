@@ -1,0 +1,146 @@
+# Before : 
+# if true
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something
+[[rules]]
+name = "replace_if_true"
+groups = ["if_cleanup"]
+query = """
+(
+  (if
+      [
+        condition: (true)
+        condition: (parenthesized_statements (true))
+      ]
+      consequence : ((then) @consequence)
+  )@if_statement
+)
+"""
+replace = "@consequence"
+replace_node = "if_statement"
+
+# Before : 
+# if method_call
+#   [:meth_fields]
+# elsif true
+#   [:flag_fields]
+# elsif another_method_call
+#   [:another_meth_fields]
+# else
+#   [:default_fields]
+# end
+# After :
+# if method_call
+#   [:meth_fields]
+# else
+#   [:flag_fields]
+# end
+[[rules]]
+name = "replace_elsif_true"
+groups = ["if_cleanup"]
+query = """
+(elsif 
+  [
+    condition: (true)
+    condition: (parenthesized_statements (true))
+  ]
+  consequence: ((then) @consequence)
+) @alternative
+"""
+replace = "else @consequence"
+replace_node = "alternative"
+
+# Before : 
+# if false
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something_else
+[[rules]]
+name = "replace_if_false"
+groups = ["if_cleanup"]
+query = """
+(
+  (if
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
+      consequence: ((then) @consequence)
+      alternative: (else ((_)? @alternative))
+  )@if_statement
+)
+"""
+replace = "@alternative"
+replace_node = "if_statement"
+
+# Before : 
+# if false
+#   do_something
+# end
+# After :
+# 
+[[rules]]
+name = "replace_if_statement_false_without_else"
+groups = ["if_cleanup"]
+query = """
+(
+  (if
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
+      consequence: ((then) @consequence)
+      .
+  )@if_statement
+)
+"""
+replace = ""
+replace_node = "if_statement"
+
+# Before : 
+# fields_array << :field_name if false
+# After :
+#
+[[rules]]
+name = "replace_if_inline_false"
+groups = ["if_cleanup"]
+query = """
+(
+  (if_modifier
+      body : ((_) @body)
+      [
+        condition: (false)
+        condition: (parenthesized_statements (false))
+      ]
+  )@if_modifier
+)
+"""
+replace = ""
+replace_node = "if_modifier"
+
+# Before : 
+# fields_array << :field_name if true
+# After :
+# fields_array << :field_name
+# 
+[[rules]]
+name = "replace_if_inline_true"
+groups = ["if_cleanup"]
+query = """
+(if_modifier
+    body: (_) @body
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ]    
+) @if_modifier
+"""
+replace = "@body"
+replace_node = "if_modifier"

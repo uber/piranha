@@ -55,6 +55,7 @@ tree-sitter-java = "0.20.2"
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
 tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
 tree-sitter-python = "0.20.2"
+tree-sitter-ruby = "0.20.1"
 tree-sitter-typescript = "0.20.1"
 # TODO: Update after https://github.com/tree-sitter/tree-sitter-go/pull/103 lands
 tree-sitter-go = { git = "https://github.com/uber/tree-sitter-go.git", rev = "f8cffd0af7baaf7bf6062e403efe7c0d06319c41" }

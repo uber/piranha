@@ -1,0 +1,30 @@
+# Before :
+# if true
+# end
+# After :
+#  
+[[rules]]
+name = "replace_empty_if_or_unless"
+groups = ["if_cleanup"]
+query = """
+[
+  (if
+    condition: [(true) (false)]
+    .
+  )@conditional
+  (if
+    condition: (parenthesized_statements [(true) (false)])
+    .
+  )@conditional
+  (unless
+    condition: [(true) (false)]
+    .
+  )@conditional
+  (unless
+    condition: (parenthesized_statements [(true) (false)])
+    .
+  )@conditional  
+]
+"""
+replace = ""
+replace_node = "conditional"

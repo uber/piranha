@@ -1,0 +1,110 @@
+# Before : 
+# unless false
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something
+[[rules]]
+name = "replace_unless_false"
+groups = ["if_cleanup"]
+query = """
+(unless
+    [
+      condition: (false)
+      condition: (parenthesized_statements (false))
+    ]    
+    consequence: ((then) @consequence)
+)@unless
+"""
+replace = "@consequence"
+replace_node = "unless"
+
+# Before : 
+# fields_array << :field_name unless true
+# After :
+# 
+[[rules]]
+name = "replace_unless_inline_true"
+groups = ["if_cleanup"]
+query = """
+(
+  (unless_modifier
+    body : ((_) @body)
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ] 
+  )@unless_modifier
+)
+"""
+replace = ""
+replace_node = "unless_modifier"
+
+# Before : 
+# fields_array << :field_name unless false
+# After :
+# fields_array << :field_name
+[[rules]]
+name = "replace_unless_inline_false"
+groups = ["if_cleanup"]
+query = """
+(
+  (unless_modifier
+    body : ((_) @body)
+    [
+      condition: (false)
+      condition: (parenthesized_statements (false))
+    ]    
+  )@unless_modifier
+)
+"""
+replace = "@body"
+replace_node = "unless_modifier"
+
+# Before : 
+# unless true
+#   do_something
+# else
+#   do_something_else
+# end
+# After :
+#  do_something_else
+[[rules]]
+name = "replace_unless_true"
+groups = ["if_cleanup"]
+query = """
+(unless
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ]    
+    consequence: (_) @consequence
+    alternative: (else ((_)? @alternative))
+)@unless
+"""
+
+replace = "@alternative"
+replace_node = "unless"
+# Before : 
+# unless true
+#   do_something
+# end
+# After :
+#  
+[[rules]]
+name = "simplify_unless_statement_true_without_else"
+groups = ["if_cleanup"]
+query = """
+(unless
+    [
+      condition: (true)
+      condition: (parenthesized_statements (true))
+    ]
+    consequence: (_) @consequence
+    .
+)@unless
+"""
+replace = ""
+replace_node = "unless"
