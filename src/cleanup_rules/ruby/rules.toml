@@ -342,8 +342,13 @@ name = "replace_not_false"
 query = """
 (
     (unary
-        operand: (false))
-@unary_expression)
+      [
+        operand: (false)
+        operand: (parenthesized_statements (false))
+      ]
+     )
+@unary_expression
+)
 """
 replace = "true"
 replace_node = "unary_expression"
@@ -360,7 +365,11 @@ name = "replace_not_true"
 query = """
 (
     (unary
-        operand: (true))
+      [
+        operand: (true)
+        operand: (parenthesized_statements (true))
+      ]
+     )
 @unary_expression)
 """
 replace = "false"
