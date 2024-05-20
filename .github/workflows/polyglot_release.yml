@@ -2,18 +2,6 @@ name: Release Polyglot Piranha
 on:
   workflow_dispatch:
 jobs:
-  build_linux:
-    runs-on: [self-hosted, Linux]
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-    - name: Archive production artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: polyglot-piranha-package-linux
-        path: dist/*
   build_ubuntu:
     runs-on: ubuntu-latest
     steps:
@@ -21,6 +9,11 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.8
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+        maturin build --sdist -o dist
     - name: Archive production artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -33,6 +26,11 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: 3.8
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+        maturin build --sdist -o dist        
     - name: Archive production artifacts
       uses: actions/upload-artifact@v2
       with:
