@@ -24,10 +24,6 @@ query = """
 replace = "@consequence"
 replace_node = "if_statement"
 
-<<<<<<< HEAD
-=======
-
->>>>>>> uber-piranha/master
 # Before : 
 # if method_call
 #   [:meth_fields]

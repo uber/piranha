@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 /*
  Copyright (c) 2023 Uber Technologies, Inc.
 
@@ -13,7 +11,6 @@
  limitations under the License.
 */
 
->>>>>>> uber-piranha/master
 use crate::models::default_configs::RUBY;
 
 use super::create_rewrite_tests;
