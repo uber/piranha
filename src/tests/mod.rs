@@ -37,6 +37,7 @@ mod test_piranha_scala;
 
 mod test_piranha_thrift;
 
+mod test_piranha_ruby;
 mod test_piranha_scm;
 mod test_piranha_strings;
 mod test_piranha_ruby;

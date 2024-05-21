@@ -24,6 +24,10 @@ query = """
 replace = "@consequence"
 replace_node = "if_statement"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> uber-piranha/master
 # Before : 
 # if method_call
 #   [:meth_fields]
@@ -565,8 +569,8 @@ query = """
         key: (hash_key_symbol) @hash_key_symbol
         value: (lambda 
           body: (block
-          	body: (block_body
-            	(true)
+              body: (block_body
+                (true)
             )@block_body
           ) @block
           ))@pair) @arguments
@@ -592,10 +596,10 @@ query = """
         value: (call
           method: (identifier) @identifier
           block: (block
-          		body: (block_body
-                	(true)
+                  body: (block_body
+                    (true)
                 )
-          	)
+              )
           )
       )@pair
     ) @arguments
@@ -620,8 +624,8 @@ query = """
         key: (hash_key_symbol) @hash_key_symbol
         value: (lambda 
           body: (block
-          	body: (block_body
-            	(false)
+              body: (block_body
+                (false)
             )@block_body
           ) @block
           ))@pair) @arguments
@@ -646,10 +650,10 @@ query = """
         value: (call
           method: (identifier) @identifier
           block: (block
-          		body: (block_body
-                	(false)
+                  body: (block_body
+                    (false)
                 )
-          	)
+              )
           )
       )@pair
     ) @arguments
@@ -675,8 +679,8 @@ query = """
         key: (hash_key_symbol) @hash_key_symbol
         value: (lambda 
           body: (block
-          	body: (block_body
-            	(true)
+              body: (block_body
+                (true)
             )@block_body
           ) @block
           ))@pair) @arguments
@@ -702,10 +706,10 @@ query = """
         value: (call
           method: (identifier) @identifier
           block: (block
-          		body: (block_body
-                	(true)
+                  body: (block_body
+                    (true)
                 )
-          	)
+              )
           )
       )@pair
     ) @arguments
@@ -730,8 +734,8 @@ query = """
         key: (hash_key_symbol) @hash_key_symbol
         value: (lambda 
           body: (block
-          	body: (block_body
-            	(false)
+              body: (block_body
+                (false)
             )@block_body
           ) @block
           ))@pair) @arguments
@@ -756,10 +760,10 @@ query = """
         value: (call
           method: (identifier) @identifier
           block: (block
-          		body: (block_body
-                	(false)
+                  body: (block_body
+                    (false)
                 )
-          	)
+              )
           )
       )@pair
     ) @arguments
@@ -785,10 +789,10 @@ query = """
   (argument_list (simple_symbol) @args)
   [
     (block
-  	  !body
+        !body
     )
     (do_block
-  	  !body
+        !body
     )
   ]
 )@call
