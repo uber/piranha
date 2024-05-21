@@ -63,7 +63,14 @@ for (let filename of jsFiles) {
       {
         "methodName": "hasTempFeature",
         "flagType": "treated",
-        "argumentIndex": 0
+        "argumentIndex": 0,
+        "repository": "itildesk"
+      },
+      {
+        "methodName": "ermFlagEnabled",
+        "flagType": "treated",
+        "argumentIndex": 0,
+        "repository": "freshrelease"
       }
     ]
   }

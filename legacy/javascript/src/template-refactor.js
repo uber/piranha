@@ -100,7 +100,7 @@ class TemplateRefactorEngine {
             plugin() {
                 return {
                     SubExpression(node) {
-                        if (node.path.original === 'has-temp-feature' && node.params[0].value === flagname) {
+                        if (['has-temp-feature', 'has-erm-flag'].includes(node.path.original) && node.params[0].value === flagname) {
                             //{{#if (and (has-temp-feature 'domain_filter') this.a1)}} -> {{#if (and true this.a1)}}
                             engine.changed = true;
                             return engine.trueLiteral();
