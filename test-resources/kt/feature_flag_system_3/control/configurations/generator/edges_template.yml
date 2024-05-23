@@ -13,11 +13,11 @@ graph:
   nodes:
     enum_parameterized:
       - lambda
+      - infix_expression
       - expression_invocation_positive
       - expression_invocation_negative
       - variable
       - import
-      - infix_expression
 
     enum:
       - enum_parameterized

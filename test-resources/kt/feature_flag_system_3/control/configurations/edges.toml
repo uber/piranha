@@ -1,626 +1,628 @@
+
+
 [[edges]]
 scope = "Global"
-from = "ytgst_enum_parameterized__literal"
-to = ["ytgst_lambda"]
+from = "laiu1_enum_parameterized__literal"
+to = ["laiu1_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "ytgst_lambda"
-to = ["ytgst_infix_expression"]
+from = "laiu1_lambda"
+to = ["laiu1_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "goloi_enum_parameterized__literal"
-to = ["goloi_lambda"]
+from = "t7czz_enum_parameterized__literal"
+to = ["t7czz_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "goloi_lambda"
-to = ["goloi_lambda_invocation_positive"]
+from = "t7czz_lambda"
+to = ["t7czz_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "fiwqt_enum_parameterized__literal"
-to = ["fiwqt_lambda"]
+from = "gqg0l_enum_parameterized__literal"
+to = ["gqg0l_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "fiwqt_lambda"
-to = ["fiwqt_lambda_invocation_negative"]
+from = "gqg0l_lambda"
+to = ["gqg0l_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "vxpuq_enum_parameterized__literal"
-to = ["vxpuq_lambda"]
+from = "mj7yz_enum_parameterized__literal"
+to = ["mj7yz_lambda"]
 
 [[edges]]
 scope = "Global"
-from = "idbhc_enum_parameterized__literal"
-to = ["idbhc_expression_invocation_positive"]
+from = "zk98i_enum_parameterized__literal"
+to = ["zk98i_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "id8fl_enum_parameterized__literal"
-to = ["id8fl_expression_invocation_negative"]
+from = "acjjd_enum_parameterized__literal"
+to = ["acjjd_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "jxxay_enum_parameterized__literal"
-to = ["jxxay_variable"]
+from = "yor41_enum_parameterized__literal"
+to = ["yor41_expression_invocation_negative"]
 
-
 [[edges]]
 scope = "Global"
-from = "jxxay_variable"
-to = ["jxxay_infix_expression"]
+from = "dahox_enum_parameterized__literal"
+to = ["dahox_variable"]
 
+
 [[edges]]
 scope = "Global"
-from = "cbyjw_enum_parameterized__literal"
-to = ["cbyjw_variable"]
-
+from = "dahox_variable"
+to = ["dahox_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "cbyjw_variable"
-to = ["cbyjw_expression_invocation_positive"]
+from = "eboe6_enum_parameterized__literal"
+to = ["eboe6_variable"]
 
+
 [[edges]]
 scope = "Global"
-from = "xnjf2_enum_parameterized__literal"
-to = ["xnjf2_variable"]
-
+from = "eboe6_variable"
+to = ["eboe6_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "xnjf2_variable"
-to = ["xnjf2_expression_invocation_negative"]
+from = "fdsu0_enum_parameterized__literal"
+to = ["fdsu0_variable"]
 
+
 [[edges]]
 scope = "Global"
-from = "dxums_enum_parameterized__literal"
-to = ["dxums_variable"]
+from = "fdsu0_variable"
+to = ["fdsu0_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "aukkj_enum_parameterized__literal"
-to = ["aukkj_import"]
+from = "eh7hu_enum_parameterized__literal"
+to = ["eh7hu_variable"]
 
 [[edges]]
 scope = "Global"
-from = "ayhas_enum_parameterized__literal"
-to = ["ayhas_infix_expression"]
+from = "tur9h_enum_parameterized__literal"
+to = ["tur9h_import"]
 
 [[edges]]
 scope = "Global"
-from = "kl9ry_enum_parameterized__literal"
-to = ["kl9ry_enum_parameterized__literal"]
+from = "cvv1q_enum_parameterized__literal"
+to = ["cvv1q_enum_parameterized__literal"]
 
 [[edges]]
 scope = "Global"
-from = "tnd41_property__literal"
-to = ["tnd41_lambda"]
+from = "wdla5_property__literal"
+to = ["wdla5_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "tnd41_lambda"
-to = ["tnd41_infix_expression"]
+from = "wdla5_lambda"
+to = ["wdla5_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "jt85p_property__literal"
-to = ["jt85p_lambda"]
+from = "x7cuh_property__literal"
+to = ["x7cuh_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "jt85p_lambda"
-to = ["jt85p_lambda_invocation_positive"]
+from = "x7cuh_lambda"
+to = ["x7cuh_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "xb9an_property__literal"
-to = ["xb9an_lambda"]
+from = "o6qdl_property__literal"
+to = ["o6qdl_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "xb9an_lambda"
-to = ["xb9an_lambda_invocation_negative"]
+from = "o6qdl_lambda"
+to = ["o6qdl_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "a6b04_property__literal"
-to = ["a6b04_lambda"]
+from = "ju10c_property__literal"
+to = ["ju10c_lambda"]
 
 [[edges]]
 scope = "Global"
-from = "yh4sl_property__literal"
-to = ["yh4sl_infix_expression"]
+from = "yefcz_property__literal"
+to = ["yefcz_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "qoxv6_property__literal"
-to = ["qoxv6_expression_invocation_positive"]
+from = "xqzd6_property__literal"
+to = ["xqzd6_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "bbhvv_property__literal"
-to = ["bbhvv_expression_invocation_negative"]
+from = "jgqtd_property__literal"
+to = ["jgqtd_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "ts6ki_property__literal"
-to = ["ts6ki_property__literal"]
+from = "q20ky_property__literal"
+to = ["q20ky_property__literal"]
 
 [[edges]]
 scope = "Global"
-from = "nxkgk_lambda__literal"
-to = ["nxkgk_infix_expression"]
+from = "ucrbi_lambda__literal"
+to = ["ucrbi_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "eclq7_lambda__literal"
-to = ["eclq7_lambda_invocation_positive"]
+from = "c7xme_lambda__literal"
+to = ["c7xme_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "qgdl5_lambda__literal"
-to = ["qgdl5_lambda_invocation_negative"]
+from = "rmv4d_lambda__literal"
+to = ["rmv4d_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "wqw50_lambda__literal"
-to = ["wqw50_lambda__literal"]
+from = "niosy_lambda__literal"
+to = ["niosy_lambda__literal"]
 
 [[edges]]
 scope = "Global"
-from = "tudra_sealed_class_parameterized__literal"
-to = ["tudra_lambda"]
+from = "mj7ju_sealed_class_parameterized__literal"
+to = ["mj7ju_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "tudra_lambda"
-to = ["tudra_infix_expression"]
+from = "mj7ju_lambda"
+to = ["mj7ju_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "uzk6d_sealed_class_parameterized__literal"
-to = ["uzk6d_lambda"]
+from = "wlxut_sealed_class_parameterized__literal"
+to = ["wlxut_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "uzk6d_lambda"
-to = ["uzk6d_lambda_invocation_positive"]
+from = "wlxut_lambda"
+to = ["wlxut_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "b9lej_sealed_class_parameterized__literal"
-to = ["b9lej_lambda"]
+from = "f4mru_sealed_class_parameterized__literal"
+to = ["f4mru_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "b9lej_lambda"
-to = ["b9lej_lambda_invocation_negative"]
+from = "f4mru_lambda"
+to = ["f4mru_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "ldke9_sealed_class_parameterized__literal"
-to = ["ldke9_lambda"]
+from = "sl1yf_sealed_class_parameterized__literal"
+to = ["sl1yf_lambda"]
 
 [[edges]]
 scope = "Global"
-from = "t6qqj_sealed_class_parameterized__literal"
-to = ["t6qqj_infix_expression"]
+from = "nkb63_sealed_class_parameterized__literal"
+to = ["nkb63_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "kltcv_sealed_class_parameterized__literal"
-to = ["kltcv_expression_invocation_positive"]
+from = "we7ad_sealed_class_parameterized__literal"
+to = ["we7ad_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "riscq_sealed_class_parameterized__literal"
-to = ["riscq_expression_invocation_negative"]
+from = "xxqsf_sealed_class_parameterized__literal"
+to = ["xxqsf_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "ylcny_sealed_class_parameterized__literal"
-to = ["ylcny_import"]
+from = "t3zdf_sealed_class_parameterized__literal"
+to = ["t3zdf_import"]
 
 [[edges]]
 scope = "Global"
-from = "cni9y_sealed_class_parameterized__literal"
-to = ["cni9y_sealed_class_parameterized__literal"]
+from = "cqvz2_sealed_class_parameterized__literal"
+to = ["cqvz2_sealed_class_parameterized__literal"]
 
 [[edges]]
 scope = "Global"
-from = "cyti8_expression_invocation_positive__literal"
-to = ["cyti8_expression_invocation_positive__literal"]
+from = "tseln_expression_invocation_positive__literal"
+to = ["tseln_expression_invocation_positive__literal"]
 
 [[edges]]
 scope = "Global"
-from = "w065l_expression_invocation_negative__literal"
-to = ["w065l_expression_invocation_negative__literal"]
+from = "ge6ly_expression_invocation_negative__literal"
+to = ["ge6ly_expression_invocation_negative__literal"]
 
 [[edges]]
 scope = "Global"
-from = "foryu_variable__literal"
-to = ["foryu_infix_expression"]
+from = "i1hms_variable__literal"
+to = ["i1hms_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "nqpeg_variable__literal"
-to = ["nqpeg_expression_invocation_positive"]
+from = "f5cwb_variable__literal"
+to = ["f5cwb_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "b0stt_variable__literal"
-to = ["b0stt_expression_invocation_negative"]
+from = "oxhyc_variable__literal"
+to = ["oxhyc_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "jvuat_variable__literal"
-to = ["jvuat_variable__literal"]
+from = "fnbud_variable__literal"
+to = ["fnbud_variable__literal"]
 
 [[edges]]
 scope = "Global"
-from = "kirbn_enum"
-to = ["kirbn_enum_parameterized"]
+from = "velr0_enum"
+to = ["velr0_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "kirbn_enum_parameterized"
-to = ["kirbn_lambda"]
+from = "velr0_enum_parameterized"
+to = ["velr0_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "kirbn_lambda"
-to = ["kirbn_infix_expression"]
+from = "velr0_lambda"
+to = ["velr0_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "l4kub_enum"
-to = ["l4kub_enum_parameterized"]
+from = "jr4er_enum"
+to = ["jr4er_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "l4kub_enum_parameterized"
-to = ["l4kub_lambda"]
+from = "jr4er_enum_parameterized"
+to = ["jr4er_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "l4kub_lambda"
-to = ["l4kub_lambda_invocation_positive"]
+from = "jr4er_lambda"
+to = ["jr4er_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "ua5us_enum"
-to = ["ua5us_enum_parameterized"]
+from = "oofya_enum"
+to = ["oofya_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "ua5us_enum_parameterized"
-to = ["ua5us_lambda"]
+from = "oofya_enum_parameterized"
+to = ["oofya_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "ua5us_lambda"
-to = ["ua5us_lambda_invocation_negative"]
+from = "oofya_lambda"
+to = ["oofya_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "asn0d_enum"
-to = ["asn0d_enum_parameterized"]
+from = "p09ui_enum"
+to = ["p09ui_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "asn0d_enum_parameterized"
-to = ["asn0d_lambda"]
+from = "p09ui_enum_parameterized"
+to = ["p09ui_lambda"]
 
 [[edges]]
 scope = "Global"
-from = "cvjbu_enum"
-to = ["cvjbu_enum_parameterized"]
+from = "fb1re_enum"
+to = ["fb1re_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "cvjbu_enum_parameterized"
-to = ["cvjbu_expression_invocation_positive"]
+from = "fb1re_enum_parameterized"
+to = ["fb1re_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "k9o4w_enum"
-to = ["k9o4w_enum_parameterized"]
+from = "ax6v5_enum"
+to = ["ax6v5_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "k9o4w_enum_parameterized"
-to = ["k9o4w_expression_invocation_negative"]
+from = "ax6v5_enum_parameterized"
+to = ["ax6v5_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "swued_enum"
-to = ["swued_enum_parameterized"]
+from = "d0e5s_enum"
+to = ["d0e5s_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "swued_enum_parameterized"
-to = ["swued_variable"]
+from = "d0e5s_enum_parameterized"
+to = ["d0e5s_expression_invocation_negative"]
 
-
 [[edges]]
 scope = "Global"
-from = "swued_variable"
-to = ["swued_infix_expression"]
+from = "v5gea_enum"
+to = ["v5gea_enum_parameterized"]
+
 
 [[edges]]
 scope = "Global"
-from = "ddcjn_enum"
-to = ["ddcjn_enum_parameterized"]
+from = "v5gea_enum_parameterized"
+to = ["v5gea_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "ddcjn_enum_parameterized"
-to = ["ddcjn_variable"]
+from = "v5gea_variable"
+to = ["v5gea_infix_expression"]
 
-
 [[edges]]
 scope = "Global"
-from = "ddcjn_variable"
-to = ["ddcjn_expression_invocation_positive"]
+from = "dkzk9_enum"
+to = ["dkzk9_enum_parameterized"]
+
 
 [[edges]]
 scope = "Global"
-from = "rpqaz_enum"
-to = ["rpqaz_enum_parameterized"]
+from = "dkzk9_enum_parameterized"
+to = ["dkzk9_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "rpqaz_enum_parameterized"
-to = ["rpqaz_variable"]
+from = "dkzk9_variable"
+to = ["dkzk9_expression_invocation_positive"]
 
-
 [[edges]]
 scope = "Global"
-from = "rpqaz_variable"
-to = ["rpqaz_expression_invocation_negative"]
+from = "y1ca9_enum"
+to = ["y1ca9_enum_parameterized"]
 
+
 [[edges]]
 scope = "Global"
-from = "yr4vd_enum"
-to = ["yr4vd_enum_parameterized"]
+from = "y1ca9_enum_parameterized"
+to = ["y1ca9_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "yr4vd_enum_parameterized"
-to = ["yr4vd_variable"]
+from = "y1ca9_variable"
+to = ["y1ca9_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "thadc_enum"
-to = ["thadc_enum_parameterized"]
+from = "wygnb_enum"
+to = ["wygnb_enum_parameterized"]
 
 
 [[edges]]
 scope = "Global"
-from = "thadc_enum_parameterized"
-to = ["thadc_import"]
+from = "wygnb_enum_parameterized"
+to = ["wygnb_variable"]
 
 [[edges]]
 scope = "Global"
-from = "o3dw4_enum"
-to = ["o3dw4_enum_parameterized"]
+from = "k4mqz_enum"
+to = ["k4mqz_enum_parameterized"]
+
 
+[[edges]]
+scope = "Global"
+from = "k4mqz_enum_parameterized"
+to = ["k4mqz_import"]
 
 [[edges]]
 scope = "Global"
-from = "o3dw4_enum_parameterized"
-to = ["o3dw4_infix_expression"]
+from = "dxils_enum"
+to = ["dxils_enum_parameterized"]
 
 [[edges]]
 scope = "Global"
-from = "mgcmb_enum"
-to = ["mgcmb_enum_parameterized"]
+from = "tcjqy_enum"
+to = ["tcjqy_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "sd0yk_enum"
-to = ["sd0yk_lambda"]
+from = "cmiza_enum"
+to = ["cmiza_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "sd0yk_lambda"
-to = ["sd0yk_infix_expression"]
+from = "cmiza_lambda"
+to = ["cmiza_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "y6adq_enum"
-to = ["y6adq_lambda"]
+from = "p9zh8_enum"
+to = ["p9zh8_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "y6adq_lambda"
-to = ["y6adq_lambda_invocation_positive"]
+from = "p9zh8_lambda"
+to = ["p9zh8_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "ppd8l_enum"
-to = ["ppd8l_lambda"]
+from = "qcr5o_enum"
+to = ["qcr5o_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "ppd8l_lambda"
-to = ["ppd8l_lambda_invocation_negative"]
+from = "qcr5o_lambda"
+to = ["qcr5o_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "w6ppe_enum"
-to = ["w6ppe_lambda"]
+from = "sojex_enum"
+to = ["sojex_lambda"]
 
 [[edges]]
 scope = "Global"
-from = "ws7ht_enum"
-to = ["ws7ht_variable"]
+from = "tmhih_enum"
+to = ["tmhih_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "ws7ht_variable"
-to = ["ws7ht_infix_expression"]
+from = "tmhih_variable"
+to = ["tmhih_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "x1h5f_enum"
-to = ["x1h5f_variable"]
+from = "fueka_enum"
+to = ["fueka_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "x1h5f_variable"
-to = ["x1h5f_expression_invocation_positive"]
+from = "fueka_variable"
+to = ["fueka_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "l9kgz_enum"
-to = ["l9kgz_variable"]
+from = "jkbm6_enum"
+to = ["jkbm6_variable"]
 
-
-[[edges]]
-scope = "Global"
-from = "l9kgz_variable"
-to = ["l9kgz_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "jm6kk_enum"
-to = ["jm6kk_variable"]
+from = "jkbm6_variable"
+to = ["jkbm6_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "zxcgr_enum"
-to = ["zxcgr_infix_expression"]
+from = "f7cnc_enum"
+to = ["f7cnc_variable"]
 
 [[edges]]
 scope = "Global"
-from = "ozvwy_enum"
-to = ["ozvwy_import"]
+from = "dgmkx_enum"
+to = ["dgmkx_import"]
 
 [[edges]]
 scope = "Global"
-from = "rimqp_enum"
-to = ["rimqp_enum"]
+from = "vulae_enum"
+to = ["vulae_enum"]
 
 [[edges]]
 scope = "Global"
-from = "xc57b_sealed_class"
-to = ["xc57b_lambda"]
+from = "szrh2_sealed_class"
+to = ["szrh2_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "xc57b_lambda"
-to = ["xc57b_infix_expression"]
+from = "szrh2_lambda"
+to = ["szrh2_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "kmezr_sealed_class"
-to = ["kmezr_lambda"]
+from = "xsh9e_sealed_class"
+to = ["xsh9e_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "kmezr_lambda"
-to = ["kmezr_lambda_invocation_positive"]
+from = "xsh9e_lambda"
+to = ["xsh9e_lambda_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "azqrl_sealed_class"
-to = ["azqrl_lambda"]
+from = "wx0ns_sealed_class"
+to = ["wx0ns_lambda"]
 
 
 [[edges]]
 scope = "Global"
-from = "azqrl_lambda"
-to = ["azqrl_lambda_invocation_negative"]
+from = "wx0ns_lambda"
+to = ["wx0ns_lambda_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "zwucn_sealed_class"
-to = ["zwucn_lambda"]
+from = "o0dnu_sealed_class"
+to = ["o0dnu_lambda"]
 
 [[edges]]
 scope = "Global"
-from = "dw13u_sealed_class"
-to = ["dw13u_variable"]
+from = "xuhrh_sealed_class"
+to = ["xuhrh_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "dw13u_variable"
-to = ["dw13u_infix_expression"]
+from = "xuhrh_variable"
+to = ["xuhrh_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "up63u_sealed_class"
-to = ["up63u_variable"]
+from = "nutjb_sealed_class"
+to = ["nutjb_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "up63u_variable"
-to = ["up63u_expression_invocation_positive"]
+from = "nutjb_variable"
+to = ["nutjb_expression_invocation_positive"]
 
 [[edges]]
 scope = "Global"
-from = "iztpd_sealed_class"
-to = ["iztpd_variable"]
+from = "tvnhd_sealed_class"
+to = ["tvnhd_variable"]
 
 
 [[edges]]
 scope = "Global"
-from = "iztpd_variable"
-to = ["iztpd_expression_invocation_negative"]
+from = "tvnhd_variable"
+to = ["tvnhd_expression_invocation_negative"]
 
 [[edges]]
 scope = "Global"
-from = "klqrb_sealed_class"
-to = ["klqrb_variable"]
+from = "dz4vb_sealed_class"
+to = ["dz4vb_variable"]
 
 [[edges]]
 scope = "Global"
-from = "rmjvf_sealed_class"
-to = ["rmjvf_infix_expression"]
+from = "mc8ur_sealed_class"
+to = ["mc8ur_infix_expression"]
 
 [[edges]]
 scope = "Global"
-from = "tsrr1_sealed_class"
-to = ["tsrr1_import"]
+from = "obaih_sealed_class"
+to = ["obaih_import"]
 
 [[edges]]
 scope = "Global"
-from = "yeltr_sealed_class"
-to = ["yeltr_sealed_class"]
+from = "twr4s_sealed_class"
+to = ["twr4s_sealed_class"]
