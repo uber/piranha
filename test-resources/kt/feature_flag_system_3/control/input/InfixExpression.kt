@@ -1,21 +1,21 @@
-enum class FeatureFlags {
-    STALE_FLAG,
-    FEATURE_B
+enum class FeatureFlags(val flagName: String) {
+    FEATURE_A("STALE_FLAG"),
+    FEATURE_B("OTHER_FLAG")
     ;
 }
 
 fun isStaleFeatureFlagEnabled() =
-    featureService.isEnabled(FeatureFalgs.STALE_FLAG.name)
+    featureService.isEnabled(FeatureFalgs.FEATURE_A.name)
 
 class Sample {
 
     fun someMethod() {
 
         every {
-            featureService.isEnabled(FeatureFlags.STALE_FLAG)
+            featureService.isEnabled(FeatureFlags.FEATURE_A)
         } returns true
 
-        val a = FeatureFlags.STALE_FLAG
+        val a = FeatureFlags.FEATURE_A
 
         every {
             a.isEnabled(featureService)

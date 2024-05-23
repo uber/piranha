@@ -1,5 +1,5 @@
-enum class FeatureFlags {
-    FEATURE_B
+enum class FeatureFlags(val flagName: String) {
+    FEATURE_B("OTHER_FLAG")
     ;
 }
 
