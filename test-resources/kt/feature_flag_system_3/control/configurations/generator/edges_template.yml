@@ -1,0 +1,56 @@
+graph:
+  start:
+    enum_parameterized__literal:
+    property__literal:
+    lambda__literal:
+    sealed_class_parameterized__literal:
+    expression_invocation_positive__literal:
+    expression_invocation_negative__literal:
+    variable__literal:
+    enum:
+    sealed_class:
+
+  nodes:
+    enum_parameterized:
+      - lambda
+      - expression_invocation_positive
+      - expression_invocation_negative
+      - variable
+      - import
+      - infix_expression
+
+    enum:
+      - enum_parameterized
+      - lambda
+      - variable
+      - infix_expression
+      - import
+
+    sealed_class:
+      - lambda
+      - variable
+      - infix_expression
+      - import
+
+    sealed_class_parameterized:
+      - lambda
+      - infix_expression
+      - expression_invocation_positive
+      - expression_invocation_negative
+      - import
+
+    property:
+      - lambda
+      - infix_expression
+      - expression_invocation_positive
+      - expression_invocation_negative
+
+    variable:
+      - infix_expression
+      - expression_invocation_positive
+      - expression_invocation_negative
+
+    lambda:
+      - infix_expression
+      - lambda_invocation_positive
+      - lambda_invocation_negative

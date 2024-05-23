@@ -1,0 +1,188 @@
+[[template]]
+name = "function_declaration"
+query = """
+(function_declaration
+    (simple_identifier) @@out@@
+    (function_body
+        %{content}%
+    )
+) @function_declaration
+"""
+
+[[template]]
+name = "function_declaration_return_statement"
+query = """
+(function_declaration
+    (simple_identifier) @@out@@
+    (function_body
+    	(statements
+        	(jump_expression
+        	    %{content}%
+        	)
+        )
+    )
+) @function_declaration
+"""
+
+[[template]]
+name = "property_declaration"
+query = """
+(property_declaration
+	(modifiers (_))
+    (variable_declaration
+    	(simple_identifier) @@out@@
+    )
+    %{content}%
+) @property_declaration
+"""
+
+[[template]]
+name = "parameterized_enum_entry"
+query = """
+(enum_entry
+    (simple_identifier) @@out@@
+    (value_arguments
+    	(value_argument [
+    	    %{content}%
+        ]
+    ))
+) @enum_entry
+"""
+
+[[template]]
+name = "parameterized_sealed_class"
+query = """
+(object_declaration
+   (type_identifier) @@out@@
+   (delegation_specifier
+   	  (constructor_invocation
+      	 (user_type
+        	 (type_identifier)
+         )
+         (value_arguments
+        	 (value_argument [
+                %{content}%
+             ])
+         )
+      )
+   )
+) @object_declaration
+"""
+
+[[template]]
+name = "method_call_expression"
+query = """
+    (call_expression
+        [
+            (navigation_expression
+                (simple_identifier)
+                (navigation_suffix
+                    (simple_identifier) @@out@@
+                )
+            )
+            (simple_identifier) @@out@@
+        ]
+        (call_suffix (value_arguments
+            (value_argument [
+                %{content}%
+            ])
+        ))
+    ) @call_expression
+"""
+
+[[template]]
+name = "identifiers"
+query = """
+    (simple_identifier) @@in@@
+    (navigation_expression(
+      (navigation_expression(
+          (navigation_suffix (
+              (simple_identifier) @@in@@
+          ))
+      ))
+    ))
+    (navigation_expression(
+      (navigation_suffix (
+          (simple_identifier) @@in@@
+      ))
+    ))
+    (navigation_expression(
+      (simple_identifier) @@in@@
+    ))
+    (simple_identifier) @@in@@
+"""
+
+[[template]]
+name = "identifiers_list"
+query = """
+    (call_expression
+        (call_suffix (value_arguments
+            (value_argument [
+                %{identifiers}%
+            ])
+        ))
+    )
+    %{identifiers}%
+"""
+
+[[template]]
+name = "identifiers_list"
+type = "literal"
+query = """
+    (call_expression
+        (call_suffix (value_arguments
+            (value_argument [
+                (string_literal) @flag_name
+            ])
+        ))
+    )
+    (string_literal) @flag_name
+"""
+
+[[template]]
+name = "literal_method_extension_expression"
+query = """
+    (call_expression
+        (navigation_expression
+            (string_literal) @flag_name
+            (navigation_suffix
+                (simple_identifier) @@out@@
+            )
+        )
+        (call_suffix)
+    ) @call_expression
+"""
+
+[[template]]
+name = "extension_call_expression"
+query = """
+    (call_expression
+        (navigation_expression
+            [
+                %{content}%
+            ]
+            (navigation_suffix
+                (simple_identifier) @@out@@
+            )
+        )
+        (call_suffix)
+    ) @call_expression
+"""
+
+[[template]]
+name = "function_invocation"
+query = """
+    (call_expression
+        [
+            (simple_identifier) @@in@@
+            (navigation_expression
+                (simple_identifier)
+                (navigation_suffix
+                    (simple_identifier) @@in@@
+                )
+            )
+            (simple_identifier) @@in@@
+        ]
+        (call_suffix (_))
+    ) @call_expression
+"""
