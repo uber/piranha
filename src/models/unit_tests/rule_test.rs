@@ -13,7 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use crate::{
   filter,
   models::{
-    default_configs::{JAVA, UNUSED_CODE_PATH},
+    default_configs::{JAVA, RUBY, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
     matches::{Point, Range},
@@ -152,6 +152,60 @@ fn test_get_edit_positive_recursive() {
   assert!(edit.is_some());
 }
 
+#[test]
+fn test_ruby_rule_1() {
+  let _rule = piranha_rule! {
+  name="test",
+  query ="
+    (
+      (
+        (call
+            arguments: (argument_list
+              (pair
+                key: (_)
+                value: (simple_symbol) @extracted_flag_name
+              )
+            )
+        )@call
+      )
+      (#eq? @extracted_flag_name @flag_name)
+    )
+    ",
+  replace_node = "extracted_flag_name",
+  replace = "-> { true }",
+  holes = ["flag_name"]
+  };
+  let source_code = "
+    def method_name
+      do_something if false
+    end
+  ";
+
+  let args = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .allow_dirty_ast(true)
+    .language(PiranhaLanguage::from(RUBY))
+    .build();
+  let substitutions: HashMap<String, String> = HashMap::from([(
+    String::from("flag_name"),
+    String::from(":esm_enhancements_enabled?"),
+  )]);
+  let rule = InstantiatedRule::new(&_rule, &substitutions);
+  let mut rule_store = RuleStore::new(&args);
+  let mut parser = args.language().parser();
+
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &args,
+  );
+  let node = source_code_unit.root_node();
+  let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
+  println!("{:?}", matches.iter().count());
+  assert!(matches.is_empty());
+}
 /// Negative tests for `rule.get_edit` method for given rule and input source code.
 #[test]
 fn test_get_edit_negative_recursive() {
