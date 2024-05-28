@@ -30,11 +30,6 @@ requiredArgs.addArgument(['--properties'], {
   required: true,
 });
 
-requiredArgs.addArgument(['--repository-name'], {
-  help: 'Repository name',
-  required: true,
-});
-
 requiredArgs.addArgument(['--enable-log'], {
   help: 'Print cleanup logs',
   action: 'storeTrue',
@@ -46,8 +41,6 @@ let flagname = args.flag;
 
 const propertiesInJson = fs.readFileSync(args.properties);
 const properties = JSON.parse(propertiesInJson);
-properties.methodProperties = properties.methodProperties.filter(({ repository }) => repository === args.repository_name);
-properties.templateHelpers = properties.templateHelpers.filter(({ repository }) => repository === args.repository_name);
 console.log(JSON.stringify(properties));
 
 let jsFiles = [], templateFiles = [];

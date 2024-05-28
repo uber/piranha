@@ -18,24 +18,20 @@
         {
             "methodName": "hasTempFeature",
             "flagType": "treated",
-            "argumentIndex": 0,
-            "repository": "itildesk"
+            "argumentIndex": 0
         },
         {
             "methodName": "ermFlagEnabled",
             "flagType": "treated",
-            "argumentIndex": 0,
-            "repository": "freshrelease"
+            "argumentIndex": 0
         }
     ],
     "templateHelpers": [
         {
-            "helperName": "has-temp-feature",
-            "repository": "itildesk"
+            "helperName": "has-temp-feature"
         },
         {
-            "helperName": "has-erm-flag",
-            "repository": "freshrelease"
+            "helperName": "has-erm-flag"
         }
     ]
 }
