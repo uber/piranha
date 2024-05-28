@@ -236,7 +236,7 @@ We believe, the easiest way to get started with Piranha is to build upon the dem
 
 To setup the demo please follow the below steps:
 * `git clone https://github.com/uber/piranha.git`
-* `cd polyglot/piranha`
+* `cd piranha`
 * Create a virtual environment:
   - `python3 -m venv .env`
   - `source .env/bin/activate`
@@ -250,7 +250,7 @@ Currently, we have demos for the following :
 
 <h4>Stale Feature Flag Cleanup:</h4>
 
-  * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/java/ff](/demo/java/ff/configurations/rules.toml) and [demo/kt/ff](/demo/kt/ff/configurations/rules.toml). These scenarios use simple feature flag API.
+  * run `python3 demo/stale_feature_flag_cleanup_demos.py`. It will execute the scenarios listed under [demo/feature_flag_cleanup/java](demo/feature_flag_cleanup/java/configurations/rules.toml) and [demo/feature_flag_cleanup/kt](demo/feature_flag_cleanup/kt/configurations/rules.toml). These scenarios use simple feature flag API.
   * In these demos the `configurations` contain :
     * `rules.toml` : expresses how to capture different feature flag APIs (`isTreated`, `enum constant`)
     * `piranha_arguments.toml` : expresses the flag behavior, i.e. the flag name and whether it is treated or not. Basically the `substitutions` provided in the `piranha_arguments.toml` can be used to instantiate the rules [reference](#piranha-arguments).
