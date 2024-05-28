@@ -11,7 +11,7 @@ const templateRecast = require('ember-template-recast');
 const parser = new ArgumentParser();
 const requiredArgs = parser.addArgumentGroup();
 
-requiredArgs.addArgument(['-f', '--flag'], {
+requiredArgs.addArgument(['--flag'], {
   help: 'Name of the stale flag',
   required: true,
 });
@@ -22,7 +22,17 @@ requiredArgs.addArgument(['--path'], {
 });
 
 requiredArgs.addArgument(['--output'], {
-  help: 'Destination of the refactored output. File is modified in-place by default.'
+  help: 'Absolute destination path of the refactored output files. File is modified in-place by default.'
+});
+
+requiredArgs.addArgument(['--properties'], {
+  help: 'Path of configuration file for Piranha',
+  required: true,
+});
+
+requiredArgs.addArgument(['--repository-name'], {
+  help: 'Repository name',
+  required: true,
 });
 
 requiredArgs.addArgument(['--enable-log'], {
@@ -34,14 +44,24 @@ requiredArgs.addArgument(['--enable-log'], {
 const args = parser.parseArgs();
 let flagname = args.flag;
 
+const propertiesInJson = fs.readFileSync(args.properties);
+const properties = JSON.parse(propertiesInJson);
+properties.methodProperties = properties.methodProperties.filter(({ repository }) => repository === args.repository_name);
+properties.templateHelpers = properties.templateHelpers.filter(({ repository }) => repository === args.repository_name);
+console.log(JSON.stringify(properties));
+
 let jsFiles = [], templateFiles = [];
 if(args.path.endsWith(".js")) {
   jsFiles = [args.path];
 } else if(args.path.endsWith(".hbs")) {
   templateFiles = [args.path];
 } else {
-  jsFiles = fg.sync([path.join(args.path, '**/*.js')]);
-  templateFiles = fg.sync([path.join(args.path, '**/*.hbs')]);
+  const excludeNodeModules = `!${path.join(args.path, 'node_modules/**')}`;
+  const excludeDist = `!${path.join(args.path, 'dist/**')}`;
+  jsFiles = fg.sync([
+    path.join(args.path, '**/*.js'), excludeNodeModules, excludeDist]
+  );
+  templateFiles = fg.sync([path.join(args.path, '**/*.hbs'), excludeNodeModules, excludeDist]);
 }
 console.log("Total JS files in frontend/app: ", jsFiles.length);
 console.log("Total Templates files in frontend/app: ", templateFiles.length, "\n");
@@ -58,22 +78,6 @@ for (let filename of jsFiles) {
   if(!content.includes(flagname)) continue;
   const ast = recast.parse(content, parseOptions);
 
-  const properties = {
-    "methodProperties": [
-      {
-        "methodName": "hasTempFeature",
-        "flagType": "treated",
-        "argumentIndex": 0,
-        "repository": "itildesk"
-      },
-      {
-        "methodName": "ermFlagEnabled",
-        "flagType": "treated",
-        "argumentIndex": 0,
-        "repository": "freshrelease"
-      }
-    ]
-  }
   const engine = new jsRefactor.RefactorEngine(
     ast,
     properties,
@@ -113,6 +117,7 @@ for (let filename of templateFiles) {
 
   const engine = new templateRefactor.TemplateRefactorEngine({
     ast,
+    properties,
     flagname,
     filename,
     cleanupInfo,

@@ -3,13 +3,16 @@ const { builders: b } = require('@glimmer/syntax');
 const colors = require('colors');
 
 class TemplateRefactorEngine {
-    constructor({ ast, flagname, filename, cleanupInfo, print_to_console }) {
+    constructor({ ast, flagname, filename, cleanupInfo, print_to_console, properties }) {
         this.ast = ast;
+        this.properties = properties;
         this.flagname = flagname;
         this.filename = filename;
         this.cleanupInfo = cleanupInfo;
         this.max_cleanup_steps = 15;
         this.print_to_console = print_to_console;
+
+        this.templateHelpersList = this.properties.templateHelpers.map(({ helperName }) => helperName);
     }
 
     hasFlagKeywordInFile() {
@@ -94,13 +97,14 @@ class TemplateRefactorEngine {
     flagAPIToLiteral() {
         const engine = this;
         const flagname = this.flagname;
+        const templateHelpersList = this.templateHelpersList;
 
         transform({
             template: this.ast,
             plugin() {
                 return {
                     SubExpression(node) {
-                        if (['has-temp-feature', 'has-erm-flag'].includes(node.path.original) && node.params[0].value === flagname) {
+                        if (templateHelpersList.includes(node.path.original) && node.params[0].value === flagname) {
                             //{{#if (and (has-temp-feature 'domain_filter') this.a1)}} -> {{#if (and true this.a1)}}
                             engine.changed = true;
                             return engine.trueLiteral();
