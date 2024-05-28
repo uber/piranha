@@ -16,10 +16,10 @@ use tree_sitter::Parser;
 use crate::{
   filter,
   models::{
-    default_configs::{JAVA, UNUSED_CODE_PATH},
+    default_configs::{JAVA, RUBY, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
-    matches::{Point, Range},
+    matches::{self, Point, Range},
     piranha_arguments::PiranhaArgumentsBuilder,
     rule::InstantiatedRule,
     rule_store::RuleStore,
@@ -698,4 +698,78 @@ fn test_satisfies_outermost_enclosing_node() {
   assert!(!source_code_unit.is_satisfied(*node, &rule_negative, &HashMap::new(), &mut rule_store,));
 
   assert!(source_code_unit.is_satisfied(*node, &rule_positive, &HashMap::new(), &mut rule_store,));
+}
+
+#[test]
+fn test_removes_blank_lines_after_inline_cleanup() {
+  let inline_cleanup_rule = piranha_rule! {
+    name= "inline_cleanup_rule",
+    query= "
+    (
+      (if_modifier
+          body : ((_) @body)
+          [
+            condition: (false)
+            condition: (parenthesized_statements (false))
+          ]
+      )@if_modifier
+    )          
+    ",
+    replace_node = "if_modifier",
+    replace = ""
+  };
+
+  let inline_rule = InstantiatedRule::new(&inline_cleanup_rule, &HashMap::new());
+
+  let source_code = r#"
+      def method_name
+        do_something if false
+      end
+  "#
+  .trim();
+
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(RUBY))
+    .build();
+
+  let mut rule_store = RuleStore::new(&piranha_arguments);
+  let mut parser = piranha_arguments.language().parser();
+
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_arguments,
+  );
+  let matches = source_code_unit.get_matches(
+    &inline_rule,
+    &mut rule_store,
+    source_code_unit.root_node(),
+    true,
+  );
+  assert_eq!(matches.len(), 1);
+  assert_eq!(
+    matches
+      .first()
+      .unwrap()
+      .associated_leading_empty_lines
+      .len(),
+    1
+  );
+  assert_eq!(
+    *matches
+      .first()
+      .unwrap()
+      .associated_leading_empty_lines
+      .first()
+      .unwrap(),
+    Range {
+      start_byte: 15,
+      end_byte: 24,
+      start_point: Point { row: 0, column: 15 },
+      end_point: Point { row: 1, column: 8 }
+    }
+  );
 }
