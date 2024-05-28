@@ -321,6 +321,15 @@ impl Range {
       end_point: position_for_offset(source_code.as_bytes(), mtch.end()),
     }
   }
+
+  pub(crate) fn from_siblings(left: tree_sitter::Range, right: tree_sitter::Range) -> Self {
+    Self {
+      start_byte: left.start_byte,
+      end_byte: right.end_byte,
+      start_point: left.start_point.into(),
+      end_point: right.end_point.into(),
+    }
+  }
 }
 
 // Finds the position (col and row number) for a given offset.

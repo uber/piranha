@@ -90,12 +90,13 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 /// * `cursor` - A mutable reference to a `TreeCursor` used to navigate the tree.
 ///
 /// The function mutates the cursor position. If no further siblings exist, the cursor ends at the root.
-fn find_next_sibling(cursor: &mut TreeCursor) {
+fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
   while !cursor.goto_next_sibling() {
     if !cursor.goto_parent() {
-      break;
+      return false;
     }
   }
+  true
 }
 
 /// This function performs the actual matching of the ConcreteSyntax pattern against a syntax tree
@@ -164,24 +165,33 @@ pub(crate) fn get_matches_for_node(
         find_next_sibling(&mut tmp_cursor); // Skip comma
       }
 
-      if let (mut recursive_matches, true) =
-        get_matches_for_node(&mut tmp_cursor, source_code, &meta_advanced)
-      {
-        // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
-        // No other way of unrolling exists.
-        if recursive_matches.contains_key(var_name)
-          && recursive_matches[var_name].text.trim() != current_node_code.trim()
+      let first = tmp_cursor.node();
+      let mut siblings_code = current_node_code.to_string();
+      loop {
+        let mut walkable_cursor = tmp_cursor.clone();
+        if let (mut recursive_matches, true) =
+          get_matches_for_node(&mut walkable_cursor, source_code, &meta_advanced)
         {
-          return (HashMap::new(), false);
+          // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
+          // No other way of unrolling exists.
+          if recursive_matches.contains_key(var_name)
+            && recursive_matches[var_name].text.trim() != current_node_code.trim()
+          {
+            return (HashMap::new(), false);
+          }
+          recursive_matches.insert(
+            var_name.to_string(),
+            CapturedNode {
+              range: Range::from_siblings(first.range(), current_node.range()),
+              text: siblings_code,
+            },
+          );
+          return (recursive_matches, true);
         }
-        recursive_matches.insert(
-          var_name.to_string(),
-          CapturedNode {
-            range: Range::from(current_node.range()),
-            text: current_node_code.to_string(),
-          },
-        );
-        return (recursive_matches, true);
+        siblings_code.push_str(tmp_cursor.node().utf8_text(source_code).unwrap());
+        if !find_next_sibling(&mut tmp_cursor) {
+          break;
+        }
       }
 
       if !cursor.goto_first_child() {
