@@ -343,8 +343,13 @@ name = "replace_not_false"
 query = """
 (
     (unary
-        operand: (false))
-@unary_expression)
+      [
+        operand: (false)
+        operand: (parenthesized_statements (false))
+      ]
+     )
+@unary_expression
+)
 """
 replace = "true"
 replace_node = "unary_expression"
@@ -361,7 +366,11 @@ name = "replace_not_true"
 query = """
 (
     (unary
-        operand: (true))
+      [
+        operand: (true)
+        operand: (parenthesized_statements (true))
+      ]
+     )
 @unary_expression)
 """
 replace = "false"
@@ -763,6 +772,262 @@ replace = ""
 replace_node = "pair"
 
 # Before : 
+# after_commit :do_something, on: :create, if: Proc.new { true }
+# After :
+# after_commit :do_something, on: :create
+#
+[[rules]]
+name = "remove_Proc_if_block_true"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              receiver: (constant) @receiver
+              block: (block
+                  body: (block_body
+                      (true)
+                      )
+              )
+            )
+        )@proc_pair    
+      )@arguments
+  )@call
+  (#eq? @operator "if")
+  (#eq? @receiver "Proc")
+)
+"""
+replace = ""
+replace_node = "proc_pair"
+
+# Before : 
+# after_commit :do_something, on: :create, if: proc { true }
+# After :
+# after_commit :do_something, on: :create
+#
+[[rules]]
+name = "remove_proc_if_block_true"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              method: (identifier) @receiver
+              block: (block
+                  body: (block_body
+                      (true)
+                      )
+              )
+            )
+        )@proc_pair    
+      )
+  )@call
+  (#eq? @operator "if")
+  (#eq? @receiver "proc")
+)
+"""
+replace = ""
+replace_node = "proc_pair"
+
+# Before : 
+# after_commit :do_something, on: :create, if: Proc.new { false }
+# After :
+# 
+#
+[[rules]]
+name = "remove_Proc_if_block_false"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              receiver: (constant) @receiver
+              block: (block
+                  body: (block_body
+                      (false)
+                      )
+              )
+            )
+        )@proc_pair    
+      )@arguments
+  )@call
+  (#eq? @operator "if")
+  (#eq? @receiver "Proc")
+)
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# after_commit :do_something, on: :create, if: proc { false }
+# After :
+# 
+#
+[[rules]]
+name = "remove_proc_if_block_false"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              method: (identifier) @receiver
+              block: (block
+                  body: (block_body
+                      (false)
+                      )
+              )
+            )
+        )@proc_pair    
+      )
+  )@call
+  (#eq? @operator "if")
+  (#eq? @receiver "proc")
+)
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# after_commit :do_something, on: :create, unless: Proc.new { true }
+# After :
+# 
+#
+[[rules]]
+name = "remove_Proc_unless_block_true"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              receiver: (constant) @receiver
+              block: (block
+                  body: (block_body
+                      (true)
+                      )
+              )
+            )
+        )@proc_pair    
+      )@arguments
+  )@call
+  (#eq? @operator "unless")
+  (#eq? @receiver "Proc")
+)
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# after_commit :do_something, on: :create, unless: proc { true }
+# After :
+# 
+#
+[[rules]]
+name = "remove_proc_unless_block_true"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              method: (identifier) @receiver
+              block: (block
+                  body: (block_body
+                      (true)
+                      )
+              )
+            )
+        )@proc_pair    
+      )
+  )@call
+  (#eq? @operator "unless")
+  (#eq? @receiver "proc")
+)
+"""
+replace = ""
+replace_node = "call"
+
+# Before : 
+# after_commit :do_something, on: :create, unless: Proc.new { false }
+# After :
+# after_commit :do_something, on: :create
+#
+[[rules]]
+name = "remove_Proc_unless_block_false"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              receiver: (constant) @receiver
+              block: (block
+                  body: (block_body
+                      (false)
+                      )
+              )
+            )
+        )@proc_pair    
+      )@arguments
+  )@call
+  (#eq? @operator "unless")
+  (#eq? @receiver "Proc")
+)
+"""
+replace = ""
+replace_node = "proc_pair"
+
+# Before : 
+# after_commit :do_something, on: :create, unless: proc { false }
+# After :
+# after_commit :do_something, on: :create
+#
+[[rules]]
+name = "remove_proc_unless_block_false"
+groups = ["block_removal"]
+query = """
+(
+  (call
+      arguments: (argument_list
+        (pair
+            key: (hash_key_symbol) @operator
+            value: (call
+              method: (identifier) @receiver
+              block: (block
+                  body: (block_body
+                      (false)
+                      )
+              )
+            )
+        )@proc_pair    
+      )
+  )@call
+  (#eq? @operator "unless")
+  (#eq? @receiver "proc")
+)
+"""
+replace = ""
+replace_node = "proc_pair"
+
+# Before : 
 # before(:all) {     }
 # After :
 # 
@@ -831,7 +1096,7 @@ name = "delete_variable_declaration"
 query = """
 (
     (assignment
-        left: (identifier) @variable_name
+        left: [(identifier) (instance_variable)] @variable_name
         right: [(true) (false)] @init
     )@variable_declaration
 )
@@ -852,7 +1117,7 @@ not_contains = ["""
       right: (_) @a.rhs
   )@assignment
   (#eq? @a.lhs "@variable_name")
-  (#not-eq? @a.rhs "@init")    
+  (#not-eq? @a.rhs "@init") 
 )
 """]
 
@@ -862,7 +1127,7 @@ not_contains = ["""
 name = "replace_identifier_with_value"
 query = """
 (
-(identifier) @identifier
+[(identifier) (instance_variable)] @identifier
 (#eq? @identifier "@variable_name")
 )
 """
