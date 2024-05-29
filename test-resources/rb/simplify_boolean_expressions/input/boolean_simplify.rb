@@ -6,6 +6,14 @@ def test_boolean_not_false
     do_something if !false
 end
 
+def test_parenthesized_boolean_not_true
+    do_something if !(true)
+end
+
+def test_parenthesized_boolean_not_false
+    do_something if !(false)
+end
+
 def test_parenthesized_expression_true
     do_something if (true)
 end

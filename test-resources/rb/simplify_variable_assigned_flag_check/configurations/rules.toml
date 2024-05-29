@@ -3,7 +3,7 @@ name = "delete_variable_declaration"
 query = """
 (
     (assignment
-        left: (identifier) @variable_name
+        left: [(identifier) (instance_variable)] @variable_name
         right: [(true) (false)] @init
     )@variable_declaration
 )
@@ -33,7 +33,7 @@ not_contains = ["""
 name = "replace_identifier_with_value"
 query = """
 (
-(identifier) @identifier
+[(identifier) (instance_variable)] @identifier
 (#eq? @identifier "@variable_name")
 )
 """
