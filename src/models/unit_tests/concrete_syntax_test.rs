@@ -92,3 +92,15 @@ fn test_trailing_comma() {
     GO,
   );
 }
+
+#[test]
+fn test_sequential_siblings_matching() {
+  // Find all usages of foo, whose last element is z.
+  run_test(
+    "a.foo(x, y, z);",
+    ":[var].foo(:[arg1], z)",
+    2,
+    vec![vec![("var", "a"), ("arg1", "x,y")]],
+    GO,
+  );
+}
