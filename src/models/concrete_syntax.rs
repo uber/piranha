@@ -40,7 +40,9 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
-  if let (mut match_map, true) = get_matches_for_node(&mut node.walk(), code_str, meta) {
+  if let (mut match_map, true) =
+    get_matched_for_sequential_siblings(&mut node.walk(), code_str, meta)
+  {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
 
     let replace_node_match = if replace_node_key != "*" {
@@ -99,6 +101,28 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
   true
 }
 
+pub(crate) fn get_matched_for_sequential_siblings(
+  cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
+) -> (HashMap<String, CapturedNode>, bool) {
+  //let mut node = cursor.node();
+  cursor.goto_first_child();
+  // let codes=cursor.node().utf8_text(source_code).unwrap().to_string();
+  // println!("{}", codes.unwrap().to_string());
+  loop {
+    // let codes=cursor.node().utf8_text(source_code).unwrap().to_string();
+
+    let mut tmp = cursor.clone();
+    let (mapping, res) = get_matches_for_node(&mut tmp, source_code, meta, true);
+    if res {
+      return (mapping, res);
+    }
+    if !cursor.goto_next_sibling() {
+      break;
+    }
+  }
+  (HashMap::new(), false)
+}
+
 /// This function performs the actual matching of the ConcreteSyntax pattern against a syntax tree
 /// node. The matching is done in the following way:
 ///
@@ -119,15 +143,12 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_node(
-  cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
+  cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax, should_match: bool,
 ) -> (HashMap<String, CapturedNode>, bool) {
   let match_template = meta.0.as_str();
 
   if match_template.is_empty() {
-    return (
-      HashMap::new(),
-      !cursor.goto_next_sibling() && !cursor.goto_parent(),
-    );
+    return (HashMap::new(), !should_match);
   }
 
   let mut node = cursor.node();
@@ -154,24 +175,20 @@ pub(crate) fn get_matches_for_node(
       let mut tmp_cursor = cursor.clone();
       let current_node = cursor.node();
       let current_node_code = current_node.utf8_text(source_code).unwrap();
-      find_next_sibling(&mut tmp_cursor);
 
-      // Support for trailing commas
-      // This skips trailing commas as we are parsing through the match template
-      // Skips the comma node if the template doesn't contain it.
-      let next_node = tmp_cursor.node();
-      let next_node_text = next_node.utf8_text(source_code).unwrap();
-      if next_node_text == "," && !meta_advanced.0.starts_with(',') {
-        find_next_sibling(&mut tmp_cursor); // Skip comma
-      }
+      let mut should_match = find_next_sibling(&mut tmp_cursor);
 
-      let first = tmp_cursor.node();
+      let first = current_node;
+      let mut is_final_sibling = false;
       let mut siblings_code = current_node_code.to_string();
       loop {
         let mut walkable_cursor = tmp_cursor.clone();
-        if let (mut recursive_matches, true) =
-          get_matches_for_node(&mut walkable_cursor, source_code, &meta_advanced)
-        {
+        if let (mut recursive_matches, true) = get_matches_for_node(
+          &mut walkable_cursor,
+          source_code,
+          &meta_advanced,
+          should_match,
+        ) {
           // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
           // No other way of unrolling exists.
           if recursive_matches.contains_key(var_name)
@@ -189,8 +206,12 @@ pub(crate) fn get_matches_for_node(
           return (recursive_matches, true);
         }
         siblings_code.push_str(tmp_cursor.node().utf8_text(source_code).unwrap());
-        if !find_next_sibling(&mut tmp_cursor) {
+        if is_final_sibling {
           break;
+        }
+        is_final_sibling = !tmp_cursor.goto_next_sibling();
+        if is_final_sibling {
+          should_match = find_next_sibling(&mut tmp_cursor);
         }
       }
 
@@ -212,12 +233,12 @@ pub(crate) fn get_matches_for_node(
           .trim_start()
           .to_owned(),
       );
-      find_next_sibling(cursor);
-      return get_matches_for_node(cursor, source_code, &meta_substring);
+      let should_match = find_next_sibling(cursor);
+      return get_matches_for_node(cursor, source_code, &meta_substring, should_match);
     }
   } else {
     cursor.goto_first_child();
-    return get_matches_for_node(cursor, source_code, meta);
+    return get_matches_for_node(cursor, source_code, meta, true);
   }
   (HashMap::new(), false)
 }

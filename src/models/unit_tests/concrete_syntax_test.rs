@@ -88,19 +88,45 @@ fn test_trailing_comma() {
            );",
     ":[var].foo(:[arg1], :[arg2])",
     2,
-    vec![vec![("var", "a"), ("arg1", "x"), ("arg2", "y")]],
+    vec![vec![("var", "a"), ("arg1", "x"), ("arg2", "y,")]],
     GO,
   );
 }
 
 #[test]
 fn test_sequential_siblings_matching() {
-  // Find all usages of foo, whose last element is z.
   run_test(
     "a.foo(x, y, z);",
     ":[var].foo(:[arg1], z)",
     2,
     vec![vec![("var", "a"), ("arg1", "x,y")]],
     GO,
+  );
+}
+
+#[test]
+fn test_sequential_siblings_stmts() {
+  // Find all usages of foo, whose last element is z.
+  run_test(
+    "{ int x = 2; x = x + 1; while(x > 0) { x = x - 1} } ",
+    "int :[stmt1] = 2; \
+            :[stmt2] = :[stmt2] + 1; \
+            \
+            :[rest]",
+    1,
+    vec![vec![("stmt1", "x"), ("stmt2", "x")]],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_sequential_siblings_stmts2() {
+  // Find all usages of foo, whose last element is z.
+  run_test(
+    "x.foo(1,2,3,4);",
+    ":[var].foo(:[args]);",
+    1,
+    vec![vec![("var", "x"), ("args", "1,2,3,4")]],
+    JAVA,
   );
 }
