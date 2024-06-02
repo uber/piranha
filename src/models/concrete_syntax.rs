@@ -58,13 +58,13 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
     };
 
     match_map.insert(replace_node_key, replace_node_match.clone());
-
     matches.push(Match {
       matched_string: replace_node_match.text,
       range: replace_node_match.range,
       matches: match_map.into_iter().map(|(k, v)| (k, v.text)).collect(),
       associated_comma: None,
       associated_comments: Vec::new(),
+      associated_leading_empty_lines: Vec::new(),
     });
   }
   if recursive {
