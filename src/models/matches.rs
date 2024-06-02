@@ -51,6 +51,10 @@ pub struct Match {
   #[get_mut]
   #[serde(skip)]
   pub(crate) associated_comments: Vec<Range>,
+  #[get]
+  #[get_mut]
+  #[serde(skip)]
+  pub(crate) associated_leading_empty_lines: Vec<Range>,
 }
 
 #[pymethods]
@@ -74,6 +78,7 @@ impl Match {
       matches,
       associated_comma: None,
       associated_comments: Vec::new(),
+      associated_leading_empty_lines: Vec::new(),
     }
   }
 
@@ -85,6 +90,7 @@ impl Match {
     let associated_ranges = [
       self.associated_comma().iter().collect_vec(),
       self.associated_comments().iter().collect_vec(),
+      self.associated_leading_empty_lines().iter().collect_vec(),
     ]
     .concat()
     .iter()
@@ -117,8 +123,45 @@ impl Match {
   ) {
     self.get_associated_elements(node, code, piranha_arguments, true);
     self.get_associated_elements(node, code, piranha_arguments, false);
+    self.get_associated_leading_empty_lines(node, code);
   }
 
+  fn get_associated_leading_empty_lines(&mut self, matched_node: &Node, code: &String) -> () {
+    if let Some(empty_range) = self.find_empty_line_range(code, matched_node.start_byte()) {
+      let skipped_range = Range {
+        start_byte: empty_range.start,
+        end_byte: empty_range.end,
+        start_point: position_for_offset(code.as_bytes(), empty_range.start),
+        end_point: position_for_offset(code.as_bytes(), empty_range.end),
+      };
+      self
+        .associated_leading_empty_lines_mut()
+        .push(skipped_range);
+    }
+  }
+
+  fn find_empty_line_range(&self, code: &str, start_byte: usize) -> Option<std::ops::Range<usize>> {
+    let mut end_byte = start_byte;
+    let code_bytes = code.as_bytes();
+    let mut found = false;
+    while end_byte > 0 {
+      let prev_char = code_bytes[end_byte - 1] as char;
+      if prev_char.is_whitespace() {
+        end_byte -= 1;
+        if prev_char == '\n' {
+          found = true;
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+    if found {
+      Some(end_byte..start_byte)
+    } else {
+      None
+    }
+  }
   fn found_comma(&self) -> bool {
     self.associated_comma().is_some()
   }
@@ -143,7 +186,6 @@ impl Match {
         current_node.prev_sibling()
       } {
         // Check if the sibling is a comma
-
         if !self.found_comma() && self.is_comma_safe_to_delete(&sibling, code, trailing) {
           // Add the comma to the associated matches
           self.associated_comma = Some(sibling.range().into());
