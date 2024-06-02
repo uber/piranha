@@ -25,6 +25,8 @@ create_rewrite_tests! {
   test_simplify_rspec_block_expressions: "simplify_rspec_block_expressions", 1;
   test_simplify_if_lambda_conditional_statements: "simplify_if_lambda_conditional_statements", 1;
   test_simplify_unless_lambda_conditional_statements: "simplify_unless_lambda_conditional_statements", 1;
+  test_simplify_if_proc_conditional_statements: "simplify_if_proc_conditional_statements", 1;
+  test_simplify_unless_proc_conditional_statements: "simplify_if_proc_conditional_statements", 1;
   test_delete_lines_after_return: "delete_lines_after_return", 1;
-  test_simplify_local_variable_assigned_flag_check: "simplify_local_variable_assigned_flag_check", 1;
+  simplify_variable_assigned_flag_check: "simplify_variable_assigned_flag_check", 1;
 }
