@@ -15,6 +15,7 @@ use crate::models::matches::Range;
 
 use regex::Regex;
 
+use itertools::Itertools;
 use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 use tree_sitter_traversal::Cursor;
@@ -40,7 +41,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
-  if let (mut match_map, true) =
+  if let (mut match_map, true, Some(range)) =
     get_matched_for_sequential_siblings(&mut node.walk(), code_str, meta)
   {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
@@ -54,8 +55,8 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
         })
     } else {
       CapturedNode {
-        range: Range::from(node.range()),
-        text: node.utf8_text(code_str).unwrap().to_string(),
+        range,
+        text: get_code_from_range(range.start_byte, range.end_byte, code_str),
       }
     };
 
@@ -103,24 +104,30 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
 
 pub(crate) fn get_matched_for_sequential_siblings(
   cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
-) -> (HashMap<String, CapturedNode>, bool) {
-  //let mut node = cursor.node();
+) -> (HashMap<String, CapturedNode>, bool, Option<Range>) {
+  let the_node = cursor.node();
+  let mut child_incr = 0;
   cursor.goto_first_child();
-  // let codes=cursor.node().utf8_text(source_code).unwrap().to_string();
-  // println!("{}", codes.unwrap().to_string());
-  loop {
-    // let codes=cursor.node().utf8_text(source_code).unwrap().to_string();
+  while {
+    let mut tmp_cursor = cursor.clone();
+    let (mapping, mut matched, indx) =
+      get_matches_for_node(&mut tmp_cursor, source_code, meta, true, the_node);
 
-    let mut tmp = cursor.clone();
-    let (mapping, res) = get_matches_for_node(&mut tmp, source_code, meta, true);
-    if res {
-      return (mapping, res);
+    if matched {
+      let mut last_node = the_node.child(the_node.child_count() - 1);
+      if let Some(last_node_index) = indx {
+        last_node = the_node.child(last_node_index);
+        matched = matched && (last_node_index != child_incr) // Makes no sense to match just 1 sibling
+      }
+      let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
+      return (mapping, matched, Some(range));
     }
-    if !cursor.goto_next_sibling() {
-      break;
-    }
-  }
-  (HashMap::new(), false)
+
+    child_incr += 1;
+    cursor.goto_next_sibling()
+  } {}
+
+  (HashMap::new(), false, None)
 }
 
 /// This function performs the actual matching of the ConcreteSyntax pattern against a syntax tree
@@ -144,11 +151,25 @@ pub(crate) fn get_matched_for_sequential_siblings(
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_node(
   cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax, should_match: bool,
-) -> (HashMap<String, CapturedNode>, bool) {
+  the_node: Node,
+) -> (HashMap<String, CapturedNode>, bool, Option<usize>) {
   let match_template = meta.0.as_str();
 
   if match_template.is_empty() {
-    return (HashMap::new(), !should_match);
+    let index = the_node
+      .children(&mut the_node.walk())
+      .enumerate()
+      .find_map(|(i, child)| {
+        if child == cursor.node() {
+          Some(i - 1) // Last matched node
+        } else {
+          None
+        }
+      });
+
+    let result = HashMap::new();
+    let matched = !should_match || index.is_some();
+    return (result, matched, index);
   }
 
   let mut node = cursor.node();
@@ -183,18 +204,19 @@ pub(crate) fn get_matches_for_node(
       let mut siblings_code = current_node_code.to_string();
       loop {
         let mut walkable_cursor = tmp_cursor.clone();
-        if let (mut recursive_matches, true) = get_matches_for_node(
+        if let (mut recursive_matches, true, last_node) = get_matches_for_node(
           &mut walkable_cursor,
           source_code,
           &meta_advanced,
           should_match,
+          the_node,
         ) {
           // If we already matched this variable, we need to make sure that the match is the same. Otherwise, we were unsuccessful.
           // No other way of unrolling exists.
           if recursive_matches.contains_key(var_name)
             && recursive_matches[var_name].text.trim() != current_node_code.trim()
           {
-            return (HashMap::new(), false);
+            return (HashMap::new(), false, None);
           }
           recursive_matches.insert(
             var_name.to_string(),
@@ -203,7 +225,7 @@ pub(crate) fn get_matches_for_node(
               text: siblings_code,
             },
           );
-          return (recursive_matches, true);
+          return (recursive_matches, true, last_node);
         }
         siblings_code.push_str(tmp_cursor.node().utf8_text(source_code).unwrap());
         if is_final_sibling {
@@ -225,7 +247,7 @@ pub(crate) fn get_matches_for_node(
       let advance_by = code.len();
       // Can only advance if there is still enough chars to consume
       if advance_by > match_template.len() {
-        return (HashMap::new(), false);
+        return (HashMap::new(), false, None);
       }
       let meta_substring = ConcreteSyntax(
         match_template[advance_by..]
@@ -234,13 +256,18 @@ pub(crate) fn get_matches_for_node(
           .to_owned(),
       );
       let should_match = find_next_sibling(cursor);
-      return get_matches_for_node(cursor, source_code, &meta_substring, should_match);
+      return get_matches_for_node(cursor, source_code, &meta_substring, should_match, the_node);
     }
   } else {
     cursor.goto_first_child();
-    return get_matches_for_node(cursor, source_code, meta, true);
+    return get_matches_for_node(cursor, source_code, meta, true, the_node);
   }
-  (HashMap::new(), false)
+  (HashMap::new(), false, None)
+}
+
+fn get_code_from_range(start_byte: usize, end_byte: usize, source_code: &[u8]) -> String {
+  let text_slice = &source_code[start_byte..end_byte];
+  String::from_utf8_lossy(text_slice).to_string()
 }
 
 #[cfg(test)]

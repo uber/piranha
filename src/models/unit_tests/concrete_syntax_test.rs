@@ -110,9 +110,7 @@ fn test_sequential_siblings_stmts() {
   run_test(
     "{ int x = 2; x = x + 1; while(x > 0) { x = x - 1} } ",
     "int :[stmt1] = 2; \
-            :[stmt2] = :[stmt2] + 1; \
-            \
-            :[rest]",
+            :[stmt2] = :[stmt2] + 1;",
     1,
     vec![vec![("stmt1", "x"), ("stmt2", "x")]],
     JAVA,
