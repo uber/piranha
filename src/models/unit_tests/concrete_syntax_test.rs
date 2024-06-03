@@ -25,13 +25,8 @@ fn run_test(
   let tree = parser.parse(code.as_bytes(), None).unwrap();
   let meta = ConcreteSyntax(String::from(pattern));
 
-  let (matches, _is_match_found) = get_all_matches_for_concrete_syntax(
-    &tree.root_node().child(0).unwrap(),
-    code.as_bytes(),
-    &meta,
-    true,
-    None,
-  );
+  let (matches, _is_match_found) =
+    get_all_matches_for_concrete_syntax(&tree.root_node(), code.as_bytes(), &meta, true, None);
 
   assert_eq!(matches.len(), expected_matches);
 
@@ -123,7 +118,7 @@ fn test_sequential_siblings_stmts2() {
   run_test(
     "x.foo(1,2,3,4);",
     ":[var].foo(:[args]);",
-    1,
+    2,
     vec![vec![("var", "x"), ("args", "1,2,3,4")]],
     JAVA,
   );
@@ -154,6 +149,18 @@ fn test_complex_template() {
         "float length = 3.14;\n        float area = length * length;",
       ),
     ]],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_match_anything() {
+  // Test matching the given code against the template
+  run_test(
+    "public static void main(String args) {  }",
+    ":[x]",
+    1,
+    vec![vec![("x", "public static void main(String args) {  }")]],
     JAVA,
   );
 }

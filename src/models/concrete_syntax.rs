@@ -121,28 +121,30 @@ pub(crate) fn match_sequential_siblings(
 ) -> (HashMap<String, CapturedNode>, bool, Option<Range>) {
   let the_node = cursor.node();
   let mut child_incr = 0;
-  cursor.goto_first_child();
   let node_str = the_node.utf8_text(source_code).unwrap();
-  // Iterate through siblings to find a match
-  while {
-    let mut tmp_cursor = cursor.clone();
-    let (mapping, mut matched, indx) =
-      get_matches_for_node(&mut tmp_cursor, source_code, meta, true, the_node);
 
-    if matched {
-      // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
-      let mut last_node = the_node.child(the_node.child_count() - 1);
-      if let Some(last_node_index) = indx {
-        last_node = the_node.child(last_node_index);
-        matched = matched && (last_node_index != child_incr); // Avoid duplication for a single sibling match
+  if cursor.goto_first_child() {
+    // Iterate through siblings to find a match
+    while {
+      let mut tmp_cursor = cursor.clone();
+      let (mapping, mut matched, indx) =
+        get_matches_for_node(&mut tmp_cursor, source_code, meta, true, the_node);
+
+      if matched {
+        // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
+        let mut last_node = the_node.child(the_node.child_count() - 1);
+        if let Some(last_node_index) = indx {
+          last_node = the_node.child(last_node_index);
+          matched = matched && (last_node_index != child_incr); // Avoid duplication for a single sibling match
+        }
+        let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
+        return (mapping, matched, Some(range));
       }
-      let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
-      return (mapping, matched, Some(range));
-    }
 
-    child_incr += 1;
-    cursor.goto_next_sibling()
-  } {}
+      child_incr += 1;
+      cursor.goto_next_sibling()
+    } {}
+  }
 
   // Return no match if none found
   (HashMap::new(), false, None)
