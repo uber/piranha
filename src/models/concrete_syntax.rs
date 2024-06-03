@@ -42,7 +42,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
   let mut matches: Vec<Match> = Vec::new();
 
   if let (mut match_map, true, Some(range)) =
-    get_matched_for_sequential_siblings(&mut node.walk(), code_str, meta)
+    match_sequential_siblings(&mut node.walk(), code_str, meta)
   {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
 
@@ -85,14 +85,6 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
   (matches, !is_empty)
 }
 
-/// `find_next_sibling` navigates the cursor through the tree to the next sibling.
-/// If no sibling exists, it ascends the tree until it can move laterally or until it reaches the root.
-///
-/// # Arguments
-///
-/// * `cursor` - A mutable reference to a `TreeCursor` used to navigate the tree.
-///
-/// The function mutates the cursor position. If no further siblings exist, the cursor ends at the root.
 fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
   while !cursor.goto_next_sibling() {
     if !cursor.goto_parent() {
@@ -102,22 +94,47 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
   true
 }
 
-pub(crate) fn get_matched_for_sequential_siblings(
+/// Attempts to match a given ConcreteSyntax template against a sequence of sibling nodes
+/// in an Abstract Syntax Tree (AST).
+///
+/// # Arguments
+///
+/// * `cursor` - A mutable reference to the TreeCursor, which is used to navigate the AST.
+/// * `source_code` - A slice of bytes representing the source code being analyzed.
+/// * `meta` - A reference to the ConcreteSyntax template used for matching.
+///
+/// # Returns
+///
+/// A tuple containing:
+/// * A HashMap where keys are variable names from the template and values are CapturedNode instances representing matched AST nodes.
+/// * A boolean indicating whether a match was found.
+/// * An Option containing the range of matched nodes if a match was found.
+///
+/// # Algorithm
+///
+/// 1. Initialize cursor to the first child and iterate through siblings.
+/// 2. Use `get_matches_for_node` to attempt matching the template against the subtree starting at each sibling.
+/// 3. If a match is found, determine the range of matched nodes and return the match mapping, status, and range.
+/// 4. If no match is found, return an empty mapping, false status, and None for range.
+pub(crate) fn match_sequential_siblings(
   cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
 ) -> (HashMap<String, CapturedNode>, bool, Option<Range>) {
   let the_node = cursor.node();
   let mut child_incr = 0;
   cursor.goto_first_child();
+
+  // Iterate through siblings to find a match
   while {
     let mut tmp_cursor = cursor.clone();
     let (mapping, mut matched, indx) =
       get_matches_for_node(&mut tmp_cursor, source_code, meta, true, the_node);
 
     if matched {
+      // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
       let mut last_node = the_node.child(the_node.child_count() - 1);
       if let Some(last_node_index) = indx {
         last_node = the_node.child(last_node_index);
-        matched = matched && (last_node_index != child_incr) // Makes no sense to match just 1 sibling
+        matched = matched && (last_node_index != child_incr); // Avoid duplication for a single sibling match
       }
       let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
       return (mapping, matched, Some(range));
@@ -127,6 +144,7 @@ pub(crate) fn get_matched_for_sequential_siblings(
     cursor.goto_next_sibling()
   } {}
 
+  // Return no match if none found
   (HashMap::new(), false, None)
 }
 
@@ -165,7 +183,7 @@ pub(crate) fn get_matches_for_node(
         } else {
           None
         }
-      });
+      }); // If index is None, we matched everything!
 
     let result = HashMap::new();
     let matched = !should_match || index.is_some();
@@ -201,7 +219,7 @@ pub(crate) fn get_matches_for_node(
 
       let first = current_node;
       let mut is_final_sibling = false;
-      let mut siblings_code = current_node_code.to_string();
+      let mut final_node = first;
       loop {
         let mut walkable_cursor = tmp_cursor.clone();
         if let (mut recursive_matches, true, last_node) = get_matches_for_node(
@@ -221,13 +239,17 @@ pub(crate) fn get_matches_for_node(
           recursive_matches.insert(
             var_name.to_string(),
             CapturedNode {
-              range: Range::from_siblings(first.range(), current_node.range()),
-              text: siblings_code,
+              range: Range::from_siblings(first.range(), final_node.range()),
+              text: get_code_from_range(
+                first.range().start_byte,
+                final_node.range().end_byte,
+                source_code,
+              ),
             },
           );
           return (recursive_matches, true, last_node);
         }
-        siblings_code.push_str(tmp_cursor.node().utf8_text(source_code).unwrap());
+        final_node = tmp_cursor.node();
         if is_final_sibling {
           break;
         }

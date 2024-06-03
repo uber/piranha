@@ -99,7 +99,7 @@ fn test_sequential_siblings_matching() {
     "a.foo(x, y, z);",
     ":[var].foo(:[arg1], z)",
     2,
-    vec![vec![("var", "a"), ("arg1", "x,y")]],
+    vec![vec![("var", "a"), ("arg1", "x, y")]],
     GO,
   );
 }
@@ -125,6 +125,35 @@ fn test_sequential_siblings_stmts2() {
     ":[var].foo(:[args]);",
     1,
     vec![vec![("var", "x"), ("args", "1,2,3,4")]],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_complex_template() {
+  // Test matching the given code against the template
+  run_test(
+    "void main() {
+    // Some comment
+    int some = 0;
+    while(some < 100) {
+        float length = 3.14;
+        float area = length * length;
+        some++;
+    }}",
+    "int :[var] = 0;
+    while(:[var] < 100) {
+      :[body]
+      :[var]++;
+    }",
+    1,
+    vec![vec![
+      ("var", "some"),
+      (
+        "body",
+        "float length = 3.14;\n        float area = length * length;",
+      ),
+    ]],
     JAVA,
   );
 }
