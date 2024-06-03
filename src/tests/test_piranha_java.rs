@@ -426,8 +426,8 @@ fn test_dyn_rule() {
   let rule = piranha_rule! {
     name = "match_class",
     query = "cs println(:[xs])",
-    replace_node = "xs",
-    replace = "@xs, 2"
+    replace_node = "*",
+    replace = "println2(@xs, 2)"
   };
 
   let piranha_arguments = PiranhaArgumentsBuilder::default()
