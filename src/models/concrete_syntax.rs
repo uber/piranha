@@ -122,7 +122,7 @@ pub(crate) fn match_sequential_siblings(
   let the_node = cursor.node();
   let mut child_incr = 0;
   cursor.goto_first_child();
-
+  let node_str = the_node.utf8_text(source_code).unwrap();
   // Iterate through siblings to find a match
   while {
     let mut tmp_cursor = cursor.clone();
@@ -172,6 +172,11 @@ pub(crate) fn get_matches_for_node(
   the_node: Node,
 ) -> (HashMap<String, CapturedNode>, bool, Option<usize>) {
   let match_template = meta.0.as_str();
+
+  if !should_match && !match_template.is_empty() {
+    // If we ran out of nodes to match, and the template is not empty. Then we failed
+    return (HashMap::new(), false, None);
+  }
 
   if match_template.is_empty() {
     let index = the_node
