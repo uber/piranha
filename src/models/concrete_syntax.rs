@@ -135,7 +135,8 @@ pub(crate) fn match_sequential_siblings(
         let mut last_node = the_node.child(the_node.child_count() - 1);
         if let Some(last_node_index) = indx {
           last_node = the_node.child(last_node_index);
-          matched = matched && (last_node_index != child_incr); // Avoid duplication for a single sibling match
+          matched = matched && (last_node_index != child_incr || the_node.child_count() == 1);
+          // Avoid duplication for a single sibling match
         }
         let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
         return (mapping, matched, Some(range));
@@ -181,6 +182,10 @@ pub(crate) fn get_matches_for_node(
   }
 
   if match_template.is_empty() {
+    if !should_match {
+      return (HashMap::new(), true, Some(the_node.child_count() - 1));
+    }
+
     let index = the_node
       .children(&mut the_node.walk())
       .enumerate()
@@ -190,11 +195,16 @@ pub(crate) fn get_matches_for_node(
         } else {
           None
         }
-      }); // If index is None, we matched everything!
+      });
 
+    // If index is None, we failed the matching
+    if index.is_none() {
+      return (HashMap::new(), false, None);
+    }
+
+    // Otherwise, create a result HashMap and return it with success and the index
     let result = HashMap::new();
-    let matched = !should_match || index.is_some();
-    return (result, matched, index);
+    return (result, true, index);
   }
 
   let mut node = cursor.node();

@@ -463,10 +463,7 @@ fn test_multiple_code_bases() {
   // Note that we expect 2 matches because we have 2 code bases, and each code base has 1 match.
   // We also have another codebase `folder_3` but the `paths_to_codebase` does not include it.
   assert_eq!(output_summaries.len(), 2);
-  assert_frequency_for_matches(&output_summaries, &HashMap::from([("match_import", 4)]));
-
-  // 2*2, because there are two ways to match. Entire a sibling of method declaration, or all children of the import statement.
-  // Maybe should force to match >1 sequential siblings to prevent multiple matches...
+  assert_frequency_for_matches(&output_summaries, &HashMap::from([("match_import", 2)]));
 }
 
 #[test]
