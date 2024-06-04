@@ -120,25 +120,28 @@ pub(crate) fn match_sequential_siblings(
 ) -> (HashMap<String, CapturedNode>, bool, Option<Range>) {
   let parent_node = cursor.node();
   let mut child_incr = 0;
-  let node_str = parent_node.utf8_text(source_code).unwrap();
 
   if cursor.goto_first_child() {
     // Iterate through siblings to find a match
     while {
       let mut tmp_cursor = cursor.clone();
-      let (mapping, mut matched, indx) =
-        get_matches_for_subsequence_of_nodes(&mut tmp_cursor, source_code, meta, true, parent_node);
+      let (mapping, indx) = get_matches_for_subsequence_of_nodes(
+        &mut tmp_cursor,
+        source_code,
+        meta,
+        true,
+        &parent_node,
+      );
 
-      if matched {
+      if let Some(last_node_index) = indx {
         // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
-        let mut last_node = parent_node.child(parent_node.child_count() - 1);
-        if let Some(last_node_index) = indx {
-          last_node = parent_node.child(last_node_index);
-          matched = matched && (last_node_index != child_incr || parent_node.child_count() == 1);
-          // Avoid duplication for a single sibling match
-        }
+        let last_node = parent_node.child(last_node_index);
         let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
-        return (mapping, matched, Some(range));
+        return (
+          mapping,
+          last_node_index != child_incr || parent_node.child_count() == 1,
+          Some(range),
+        );
       }
 
       child_incr += 1;
@@ -173,19 +176,19 @@ pub(crate) fn match_sequential_siblings(
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_subsequence_of_nodes(
   cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax, nodes_left_to_match: bool,
-  top_node: Node,
-) -> (HashMap<String, CapturedNode>, bool, Option<usize>) {
+  top_node: &Node,
+) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let match_template = meta.0.as_str();
 
   if match_template.is_empty() {
     if !nodes_left_to_match {
-      return (HashMap::new(), true, Some(top_node.child_count() - 1));
+      return (HashMap::new(), Some(top_node.child_count() - 1));
     }
 
     let index = find_last_matched_node(cursor, top_node);
-    return (HashMap::new(), index.is_some(), index);
+    return (HashMap::new(), index);
   } else if !nodes_left_to_match {
-    return (HashMap::new(), false, None);
+    return (HashMap::new(), None);
   }
 
   let mut node = cursor.node();
@@ -211,9 +214,9 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 /// It basically matches a template variable against a subsequence of nodes.
 /// Comments inline explaining what's going on during the matching process
 fn handle_template_variable_matching(
-  cursor: &mut TreeCursor, source_code: &[u8], top_node: Node, caps: regex::Captures,
+  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, caps: regex::Captures,
   match_template: &str,
-) -> (HashMap<String, CapturedNode>, bool, Option<usize>) {
+) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let var_name = &caps["var_name"];
   let meta_adv_len = caps[0].len();
   let meta_advanced = ConcreteSyntax(
@@ -233,16 +236,15 @@ fn handle_template_variable_matching(
     let mut is_final_sibling = false;
     loop {
       let mut walkable_cursor = tmp_cursor.clone();
-      let (mut recursive_matches, matched, last_matched_node_idx) =
-        get_matches_for_subsequence_of_nodes(
-          &mut walkable_cursor,
-          source_code,
-          &meta_advanced,
-          should_match,
-          top_node,
-        );
+      let (mut recursive_matches, last_matched_node_idx) = get_matches_for_subsequence_of_nodes(
+        &mut walkable_cursor,
+        source_code,
+        &meta_advanced,
+        should_match,
+        top_node,
+      );
 
-      if matched {
+      if last_matched_node_idx.is_some() {
         // Check if the variable was already matched and if the match is the same, otherwise return unsuccessful
         let matched_code = get_code_from_range(
           first_node.range().start_byte,
@@ -253,7 +255,7 @@ fn handle_template_variable_matching(
         if recursive_matches.contains_key(var_name)
           && recursive_matches[var_name].text.trim() != matched_code.trim()
         {
-          return (HashMap::new(), false, None);
+          return (HashMap::new(), None);
         }
 
         recursive_matches.insert(
@@ -263,7 +265,7 @@ fn handle_template_variable_matching(
             text: matched_code,
           },
         );
-        return (recursive_matches, true, last_matched_node_idx);
+        return (recursive_matches, last_matched_node_idx);
       }
 
       // Append an extra node to match with :[var]. Remember we had advanced tmp_cursor before,
@@ -288,18 +290,18 @@ fn handle_template_variable_matching(
       break;
     }
   }
-  (HashMap::new(), false, None)
+  (HashMap::new(), None)
 }
 
 fn handle_leaf_node(
-  cursor: &mut TreeCursor, source_code: &[u8], match_template: &str, top_node: Node,
-) -> (HashMap<String, CapturedNode>, bool, Option<usize>) {
+  cursor: &mut TreeCursor, source_code: &[u8], match_template: &str, top_node: &Node,
+) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let code = cursor.node().utf8_text(source_code).unwrap().trim();
   if match_template.starts_with(code) && !code.is_empty() {
     let advance_by = code.len();
     // Can only advance if there is still enough chars to consume
     if advance_by > match_template.len() {
-      return (HashMap::new(), false, None);
+      return (HashMap::new(), None);
     }
     let meta_substring = ConcreteSyntax(
       match_template[advance_by..]
@@ -316,10 +318,10 @@ fn handle_leaf_node(
       top_node,
     );
   }
-  (HashMap::new(), false, None)
+  (HashMap::new(), None)
 }
 
-fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: Node) -> Option<usize> {
+fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
   parent_node
     .children(&mut parent_node.walk())
     .enumerate()
