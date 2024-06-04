@@ -123,7 +123,7 @@ pub(crate) fn match_sequential_siblings(
 
   if cursor.goto_first_child() {
     // Iterate through siblings to find a match
-    while {
+    loop {
       let mut tmp_cursor = cursor.clone();
       let (mapping, indx) = get_matches_for_subsequence_of_nodes(
         &mut tmp_cursor,
@@ -133,6 +133,7 @@ pub(crate) fn match_sequential_siblings(
         &parent_node,
       );
 
+      // If we got the index of the last matched sibling, that means the matching was successful.
       if let Some(last_node_index) = indx {
         // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
         let last_node = parent_node.child(last_node_index);
@@ -145,8 +146,10 @@ pub(crate) fn match_sequential_siblings(
       }
 
       child_incr += 1;
-      cursor.goto_next_sibling()
-    } {}
+      if !cursor.goto_next_sibling() {
+        break;
+      }
+    }
   }
 
   // Return no match if none found
@@ -184,7 +187,6 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
     if !nodes_left_to_match {
       return (HashMap::new(), Some(top_node.child_count() - 1));
     }
-
     let index = find_last_matched_node(cursor, top_node);
     return (HashMap::new(), index);
   } else if !nodes_left_to_match {
