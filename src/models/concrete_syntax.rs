@@ -236,15 +236,15 @@ fn handle_template_variable_matching(
     let mut is_final_sibling = false;
     loop {
       let mut walkable_cursor = tmp_cursor.clone();
-      let (mut recursive_matches, last_matched_node_idx) = get_matches_for_subsequence_of_nodes(
-        &mut walkable_cursor,
-        source_code,
-        &meta_advanced,
-        should_match,
-        top_node,
-      );
-
-      if last_matched_node_idx.is_some() {
+      if let (mut recursive_matches, Some(last_matched_node_idx)) =
+        get_matches_for_subsequence_of_nodes(
+          &mut walkable_cursor,
+          source_code,
+          &meta_advanced,
+          should_match,
+          top_node,
+        )
+      {
         // Check if the variable was already matched and if the match is the same, otherwise return unsuccessful
         let matched_code = get_code_from_range(
           first_node.range().start_byte,
@@ -265,7 +265,7 @@ fn handle_template_variable_matching(
             text: matched_code,
           },
         );
-        return (recursive_matches, last_matched_node_idx);
+        return (recursive_matches, Some(last_matched_node_idx));
       }
 
       // Append an extra node to match with :[var]. Remember we had advanced tmp_cursor before,
