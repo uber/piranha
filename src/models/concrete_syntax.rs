@@ -112,7 +112,7 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
 /// # Algorithm
 ///
 /// 1. Initialize cursor to the first child and iterate through siblings.
-/// 2. Use `get_matches_for_node` to attempt matching the template against the subtree starting at each sibling.
+/// 2. Use `get_matches_for_subsequence_of_nodes` to attempt matching the template against the subtree starting at each sibling.
 /// 3. If a match is found, determine the range of matched nodes and return the match mapping, status, and range.
 /// 4. If no match is found, return an empty mapping, false status, and None for range.
 pub(crate) fn match_sequential_siblings(
