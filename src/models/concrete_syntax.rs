@@ -127,6 +127,8 @@ fn match_sequential_siblings(
   if cursor.goto_first_child() {
     // Iterate through siblings to find a match
     loop {
+      // Clone the cursor in order to attempt matching the sequence starting at cursor.node
+      // Cloning here is necessary other we won't be able to advance to the next sibling if the matching fails
       let mut tmp_cursor = cursor.clone();
       let (mapping, indx) =
         get_matches_for_subsequence_of_nodes(&mut tmp_cursor, source_code, cs, true, &parent_node);
