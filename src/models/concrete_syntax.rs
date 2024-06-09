@@ -33,17 +33,21 @@ pub struct CapturedNode {
   range: Range,
   text: String,
 }
+#[derive(Clone, PartialEq, Eq)]
+struct MatchResult {
+  mapping: HashMap<String, CapturedNode>,
+  range: Range,
+}
 
 pub(crate) fn get_all_matches_for_concrete_syntax(
   node: &Node, code_str: &[u8], cs: &ConcreteSyntax, recursive: bool, replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
-  if let (mut match_map, true, Some(range)) =
-    match_sequential_siblings(&mut node.walk(), code_str, cs)
-  {
+  if let Some(match_result) = match_sequential_siblings(&mut node.walk(), code_str, cs) {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
-
+    let mut match_map = match_result.mapping;
+    let range = match_result.range;
     let replace_node_match = if replace_node_key != "*" {
       match_map
         .get(&replace_node_key)
@@ -114,9 +118,9 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
 /// 2. Use `get_matches_for_subsequence_of_nodes` to attempt matching the template against a sequence of subtree starting at each sibling.
 /// 3. If a match is found, determine the range of matched nodes subtrees (i.e., [2nd,..., 4th], and return the match mapping, and range.
 /// 4. If no match is found, return an empty mapping, and None for range.
-pub(crate) fn match_sequential_siblings(
+fn match_sequential_siblings(
   cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax,
-) -> (HashMap<String, CapturedNode>, bool, Option<Range>) {
+) -> Option<MatchResult> {
   let parent_node = cursor.node();
   let mut child_incr = 0;
 
@@ -131,12 +135,11 @@ pub(crate) fn match_sequential_siblings(
       if let Some(last_node_index) = indx {
         // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
         let last_node = parent_node.child(last_node_index);
-        let range = Range::from_siblings(cursor.node().range(), last_node.unwrap().range());
-        return (
-          mapping,
-          last_node_index != child_incr || parent_node.child_count() == 1,
-          Some(range),
-        );
+        let range = Range::span_ranges(cursor.node().range(), last_node.unwrap().range());
+        if last_node_index != child_incr || parent_node.child_count() == 1 {
+          return Some(MatchResult { mapping, range });
+        }
+        return None;
       }
 
       child_incr += 1;
@@ -144,10 +147,8 @@ pub(crate) fn match_sequential_siblings(
         break;
       }
     }
-  }
-
-  // Return no match if none found
-  (HashMap::new(), false, None)
+  } // Not currently handing matching of leaf nodes. Current semantics would never match it anyway.
+  None
 }
 
 /// This function performs the actual matching of the ConcreteSyntax pattern against a syntax tree
@@ -265,14 +266,14 @@ fn handle_template_variable_matching(
         recursive_matches.insert(
           var_name.to_string(),
           CapturedNode {
-            range: Range::from_siblings(first_node.range(), last_node.range()),
+            range: Range::span_ranges(first_node.range(), last_node.range()),
             text: matched_code,
           },
         );
         return (recursive_matches, Some(last_matched_node_idx));
       }
 
-      // Append an extra node to match with :[var]. Remember we had advanced tmp_cursor before,
+      // Append an extra node to match with :[var]. Remember we had advanced next_node_cursor before,
       // therefore we cannot advance it again, otherwise we would skip nodes.
       last_node = next_node_cursor.node();
       if is_final_sibling {
@@ -281,7 +282,7 @@ fn handle_template_variable_matching(
 
       // This is used for the final iteration. We need to determine if there are any other nodes
       // left to match, to inform our next recursive call. We do this by calling find_next_sibling
-      // to move the cursor to the parent and find the next sibling at another level
+      // to move the cursor to the parent and find the next sibling at another level,
       // since at this level we already matched everything
       is_final_sibling = !next_node_cursor.goto_next_sibling();
       if is_final_sibling {
@@ -325,17 +326,26 @@ fn handle_leaf_node(
   (HashMap::new(), None)
 }
 
+/// Finds the last matched node's index in the parent node's children.
+///
+/// This function determines whether we finished our matching at a top-level child of the parent
+/// node. If so, it returns the index of that child.
+///
+/// # Arguments
+///
+/// * `cursor` - A mutable reference to a `TreeCursor`.
+/// * `parent_node` - A reference to the parent `Node`.
+///
+/// # Returns
+///
+/// * `Option<usize>` - The index of the matched child node, or `None` if no match is found.
 fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
   parent_node
     .children(&mut parent_node.walk())
     .enumerate()
-    .find_map(|(i, child)| {
-      if child == cursor.node() {
-        Some(i - 1)
-      } else {
-        None
-      }
-    })
+    .filter(|&(i, child)| child == cursor.node())
+    .map(|(i, _child)| i - 1)
+    .next()
 }
 
 fn get_code_from_range(start_byte: usize, end_byte: usize, source_code: &[u8]) -> String {

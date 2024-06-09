@@ -322,7 +322,13 @@ impl Range {
     }
   }
 
-  pub(crate) fn from_siblings(left: tree_sitter::Range, right: tree_sitter::Range) -> Self {
+  /// Creates a new range that spans from the beginning of the start range
+  /// to the end of the end range.
+  ///
+  /// This function is useful for creating a range that covers the span
+  /// from the start of one range to the end of another, regardless of whether
+  /// the ranges are contiguous.
+  pub(crate) fn span_ranges(left: tree_sitter::Range, right: tree_sitter::Range) -> Self {
     Self {
       start_byte: left.start_byte,
       end_byte: right.end_byte,
