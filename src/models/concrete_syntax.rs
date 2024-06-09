@@ -35,13 +35,12 @@ pub struct CapturedNode {
 }
 
 pub(crate) fn get_all_matches_for_concrete_syntax(
-  node: &Node, code_str: &[u8], meta: &ConcreteSyntax, recursive: bool,
-  replace_node: Option<String>,
+  node: &Node, code_str: &[u8], cs: &ConcreteSyntax, recursive: bool, replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
   if let (mut match_map, true, Some(range)) =
-    match_sequential_siblings(&mut node.walk(), code_str, meta)
+    match_sequential_siblings(&mut node.walk(), code_str, cs)
   {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
 
@@ -73,7 +72,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
       if let (mut inner_matches, true) =
-        get_all_matches_for_concrete_syntax(&child, code_str, meta, recursive, replace_node.clone())
+        get_all_matches_for_concrete_syntax(&child, code_str, cs, recursive, replace_node.clone())
       {
         matches.append(&mut inner_matches);
       }
@@ -100,7 +99,7 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
 ///
 /// * `cursor` - A mutable reference to the TreeCursor, which is used to navigate the AST.
 /// * `source_code` - A slice of bytes representing the source code being analyzed.
-/// * `meta` - A reference to the ConcreteSyntax template used for matching.
+/// * `cs` - A reference to the ConcreteSyntax template used for matching.
 ///
 /// # Returns
 ///
@@ -112,11 +111,11 @@ fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
 /// # Algorithm
 ///
 /// 1. Initialize cursor to the first child and iterate through siblings.
-/// 2. Use `get_matches_for_subsequence_of_nodes` to attempt matching the template against the subtree starting at each sibling.
-/// 3. If a match is found, determine the range of matched nodes and return the match mapping, status, and range.
-/// 4. If no match is found, return an empty mapping, false status, and None for range.
+/// 2. Use `get_matches_for_subsequence_of_nodes` to attempt matching the template against a sequence of subtree starting at each sibling.
+/// 3. If a match is found, determine the range of matched nodes subtrees (i.e., [2nd,..., 4th], and return the match mapping, and range.
+/// 4. If no match is found, return an empty mapping, and None for range.
 pub(crate) fn match_sequential_siblings(
-  cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax,
+  cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax,
 ) -> (HashMap<String, CapturedNode>, bool, Option<Range>) {
   let parent_node = cursor.node();
   let mut child_incr = 0;
@@ -125,13 +124,8 @@ pub(crate) fn match_sequential_siblings(
     // Iterate through siblings to find a match
     loop {
       let mut tmp_cursor = cursor.clone();
-      let (mapping, indx) = get_matches_for_subsequence_of_nodes(
-        &mut tmp_cursor,
-        source_code,
-        meta,
-        true,
-        &parent_node,
-      );
+      let (mapping, indx) =
+        get_matches_for_subsequence_of_nodes(&mut tmp_cursor, source_code, cs, true, &parent_node);
 
       // If we got the index of the last matched sibling, that means the matching was successful.
       if let Some(last_node_index) = indx {
@@ -169,19 +163,19 @@ pub(crate) fn match_sequential_siblings(
 ///   If it succeeds, it advances the ConcreteSyntax by the length of the matched sequence of
 ///   AST nodes, and calls itself recursively to try to match the rest of the ConcreteSyntax.
 ///
-/// - If the ConcreteSyntax doesn't start with `:[variable]`, the function checks if the node is a leaf
-///   (i.e., has no children). If it is, and its text starts with the metasyyntax, we match the text,
-///   and advance to the next immediate node (i.e., it's sibling or it's parent's sibling). If does not
-///   match we cannot match the meta syntax template.
+/// - If the ConcreteSyntax doesn't start with `:[variable]`, the function checks if the node **is a leaf**
+///   (i.e., has no children). If it is, and the leaf node matches the concrete syntax, we match it against
+///   the concrete syntax and advance to the next immediate node. If the leaf does not match the concrete syntax,
+///   then our matching has failed.
 ///
-/// - If the ConcreteSyntax doesn't start with `:[variable]` and the node is not a leaf, the function
+/// - If the ConcreteSyntax doesn't start with `:[variable]` and the node **is not a leaf**, the function
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_subsequence_of_nodes(
-  cursor: &mut TreeCursor, source_code: &[u8], meta: &ConcreteSyntax, nodes_left_to_match: bool,
+  cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax, nodes_left_to_match: bool,
   top_node: &Node,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
-  let match_template = meta.0.as_str();
+  let match_template = cs.0.as_str();
 
   if match_template.is_empty() {
     if !nodes_left_to_match {
@@ -208,7 +202,7 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   } else {
     // If the current node is an intermediate node
     cursor.goto_first_child();
-    return get_matches_for_subsequence_of_nodes(cursor, source_code, meta, true, top_node);
+    return get_matches_for_subsequence_of_nodes(cursor, source_code, cs, true, top_node);
   }
 }
 
@@ -220,46 +214,54 @@ fn handle_template_variable_matching(
   match_template: &str,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let var_name = &caps["var_name"];
-  let meta_adv_len = caps[0].len();
-  let meta_advanced = ConcreteSyntax(
-    match_template[meta_adv_len..]
+  let cs_adv_len = caps[0].len();
+  let cs_advanced = ConcreteSyntax(
+    match_template[cs_adv_len..]
       .to_string()
       .trim_start()
       .to_string(),
   );
 
-  // Matching :[var] against a sequence of nodes [first_node, last_node]
+  // Matching :[var] against a sequence of nodes [first_node, ... last_node]
   loop {
     let first_node = cursor.node();
     let mut last_node = first_node;
 
-    let mut tmp_cursor = cursor.clone();
-    let mut should_match = find_next_sibling(&mut tmp_cursor); // Advance the cursor to match the rest of the template
+    // Determine whether a next node exists:
+    let mut next_node_cursor = cursor.clone();
+    let mut should_match = find_next_sibling(&mut next_node_cursor);
+    // At this point next_node_cursor either points to the first sibling of the first node,
+    // or the first node itself, if such sibling no longer exists
+
+    // Intentionally setting is_final_sibling to false regardless of should_match, due to the logic of handling the last iteration
     let mut is_final_sibling = false;
     loop {
-      let mut walkable_cursor = tmp_cursor.clone();
+      let mut tmp_cursor = next_node_cursor.clone();
       if let (mut recursive_matches, Some(last_matched_node_idx)) =
         get_matches_for_subsequence_of_nodes(
-          &mut walkable_cursor,
+          &mut tmp_cursor,
           source_code,
-          &meta_advanced,
+          &cs_advanced,
           should_match,
           top_node,
         )
       {
-        // Check if the variable was already matched and if the match is the same, otherwise return unsuccessful
+        // Continuous code range that :[var] is matching from [first, ..., last]
         let matched_code = get_code_from_range(
           first_node.range().start_byte,
           last_node.range().end_byte,
           source_code,
         );
 
+        // Check if :[var] was already matched against some code range
+        // If it did, and it is not the same, we return unsuccessful
         if recursive_matches.contains_key(var_name)
           && recursive_matches[var_name].text.trim() != matched_code.trim()
         {
           return (HashMap::new(), None);
         }
 
+        // Otherwise insert it
         recursive_matches.insert(
           var_name.to_string(),
           CapturedNode {
@@ -272,7 +274,7 @@ fn handle_template_variable_matching(
 
       // Append an extra node to match with :[var]. Remember we had advanced tmp_cursor before,
       // therefore we cannot advance it again, otherwise we would skip nodes.
-      last_node = tmp_cursor.node();
+      last_node = next_node_cursor.node();
       if is_final_sibling {
         break;
       }
@@ -281,9 +283,9 @@ fn handle_template_variable_matching(
       // left to match, to inform our next recursive call. We do this by calling find_next_sibling
       // to move the cursor to the parent and find the next sibling at another level
       // since at this level we already matched everything
-      is_final_sibling = !tmp_cursor.goto_next_sibling();
+      is_final_sibling = !next_node_cursor.goto_next_sibling();
       if is_final_sibling {
-        should_match = find_next_sibling(&mut tmp_cursor);
+        should_match = find_next_sibling(&mut next_node_cursor);
       }
     }
 
@@ -305,7 +307,7 @@ fn handle_leaf_node(
     if advance_by > match_template.len() {
       return (HashMap::new(), None);
     }
-    let meta_substring = ConcreteSyntax(
+    let cs_substring = ConcreteSyntax(
       match_template[advance_by..]
         .to_string()
         .trim_start()
@@ -315,7 +317,7 @@ fn handle_leaf_node(
     return get_matches_for_subsequence_of_nodes(
       cursor,
       source_code,
-      &meta_substring,
+      &cs_substring,
       should_match,
       top_node,
     );
