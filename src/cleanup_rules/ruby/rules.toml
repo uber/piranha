@@ -1055,6 +1055,33 @@ query = """
 replace = ""
 replace_node = "call"
 
+# Before : 
+# before {     }
+# After :
+# 
+#
+[[rules]]
+name = "remove_empty_rspec_blocks_1"
+groups = ["block_removal"]
+query = """
+(
+(call
+  method: (identifier) @method
+  [
+    (block
+        !body
+    )
+    (do_block
+        !body
+    )
+  ]
+)@call
+(#match? @method "(before|after)")
+)
+"""
+replace = ""
+replace_node = "call"
+
 
 # Before :
 # def fourth_method
