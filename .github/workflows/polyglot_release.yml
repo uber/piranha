@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   build_ubuntu:
-    runs-on: ["self-hosted", "Linux", "fw-shared-freshworks"]
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v4
@@ -18,4 +18,21 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: polyglot-piranha-package-ubuntu
+        path: dist/*
+  build_ubuntu_20:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist
+        maturin build --sdist -o dist        
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: polyglot-piranha-package-ubuntu-20
         path: dist/*
