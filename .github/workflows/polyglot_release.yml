@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 jobs:
   build_ubuntu:
-    runs-on: fw-shared-freshworks
+    runs-on: ["self-hosted", "Linux", "fw-shared-freshworks"]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v4
