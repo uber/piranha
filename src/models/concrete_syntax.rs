@@ -122,7 +122,7 @@ fn match_sequential_siblings(
   cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax,
 ) -> Option<MatchResult> {
   let parent_node = cursor.node();
-  let mut child_incr = 0;
+  let mut child_seq_match_start = 0;
 
   if cursor.goto_first_child() {
     // Iterate through siblings to find a match
@@ -138,13 +138,13 @@ fn match_sequential_siblings(
         // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
         let last_node = parent_node.child(last_node_index);
         let range = Range::span_ranges(cursor.node().range(), last_node.unwrap().range());
-        if last_node_index != child_incr || parent_node.child_count() == 1 {
+        if last_node_index != child_seq_match_start || parent_node.child_count() == 1 {
           return Some(MatchResult { mapping, range });
         }
         return None;
       }
 
-      child_incr += 1;
+      child_seq_match_start += 1;
       if !cursor.goto_next_sibling() {
         break;
       }
