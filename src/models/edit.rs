@@ -13,6 +13,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::collections::HashMap;
 use std::fmt;
+use std::cmp::Ordering;
 
 use super::matches::Range;
 use super::{
@@ -139,7 +140,7 @@ impl SourceCodeUnit {
     //  we apply the rules in the order they are provided to each ancestor in the context
     for rule in &next_rules[PARENT] {
       for ancestor in &context() {
-        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false, None) {
           return Some(edit);
         }
       }
@@ -148,7 +149,7 @@ impl SourceCodeUnit {
     // we apply the rules to each ancestor in the context in the order they are provided
     for ancestor in &context() {
       for rule in &next_rules[PARENT_ITERATIVE] {
-        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false, None) {
           return Some(edit);
         }
       }
@@ -160,22 +161,29 @@ impl SourceCodeUnit {
   /// Gets the first match for the rule in `self`
   pub(crate) fn get_edit(
     &self, rule: &InstantiatedRule, rule_store: &mut RuleStore, node: Node, recursive: bool,
+    start_byte: Option<usize>,
   ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
+    let mut matches = self.get_matches(rule, rule_store, node, recursive);
+    matches.sort_by(|a, b| a.range.start_byte.cmp(&b.range.start_byte));
+    // Find the first match that satisfies the start_byte condition if provided
+    let match_opt = if let Some(x) = start_byte {
+      matches.iter().find(|m| m.range().start_byte > x)
+    } else {
+      matches.iter().next()
+    };
 
-    return self
-      .get_matches(rule, rule_store, node, recursive)
-      .first()
-      .map(|p_match| {
-        let replacement_string = rule.replace().instantiate(p_match.matches());
-        let edit = Edit::new(
-          p_match.clone(),
-          replacement_string,
-          rule.name(),
-          self.code(),
-        );
-        trace!("Rewrite found : {:#?}", edit);
-        edit
-      });
+    // Create and return the Edit object if a match is found
+    match_opt.map(|p_match| {
+      let replacement_string = rule.replace().instantiate(p_match.matches());
+      let edit = Edit::new(
+        p_match.clone(),
+        replacement_string,
+        rule.name(),
+        self.code(),
+      );
+      trace!("Rewrite found: {:#?}", edit);
+      edit
+    })
   }
 }

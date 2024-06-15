@@ -148,7 +148,7 @@ fn test_get_edit_positive_recursive() {
   let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
   assert!(!matches.is_empty());
 
-  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true, None);
   assert!(edit.is_some());
 }
 
@@ -207,7 +207,7 @@ fn test_get_edit_negative_recursive() {
   let node = source_code_unit.root_node();
   let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
   assert!(matches.is_empty());
-  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true);
+  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true, None);
   assert!(edit.is_none());
 }
 

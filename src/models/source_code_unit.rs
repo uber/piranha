@@ -15,6 +15,7 @@ use std::{
   path::{Path, PathBuf},
 };
 
+use crate::utilities::Instantiate;
 use colored::Colorize;
 use itertools::Itertools;
 use log::{debug, error};
@@ -105,10 +106,14 @@ impl SourceCodeUnit {
     &mut self, rule: InstantiatedRule, rules_store: &mut RuleStore, parser: &mut Parser,
     scope_query: &Option<CGPattern>,
   ) {
+    let mut start_byte = None;
     loop {
-      if !self._apply_rule(rule.clone(), rules_store, parser, scope_query) {
+      // _apply_rule only to code after the `start_byte`
+      let (matched, new_start_byte) = self._apply_rule(rule.clone(), rules_store, parser, scope_query, start_byte);
+      if !matched {
         break;
       }
+      start_byte = new_start_byte;
     }
   }
 
@@ -133,18 +138,24 @@ impl SourceCodeUnit {
   /// *** Propagate the change
   fn _apply_rule(
     &mut self, rule: InstantiatedRule, rule_store: &mut RuleStore, parser: &mut Parser,
-    scope_query: &Option<CGPattern>,
-  ) -> bool {
+    scope_query: &Option<CGPattern>, mut start_b: Option<usize>,
+  ) -> (bool, Option<usize>) {
     let scope_node = self.get_scope_node(scope_query, rule_store);
 
     let mut query_again = false;
+    let single_pass = true;
+
+    // If this rule is single pass, we are going to take into consideration the start_b; otherwise not
+    if !single_pass {
+      start_b = None
+    }
 
     // When rule is a "rewrite" rule :
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
     if !rule.rule().is_match_only_rule() {
-      if let Some(edit) = self.get_edit(&rule, rule_store, scope_node, true) {
+      if let Some(edit) = self.get_edit(&rule, rule_store, scope_node, true, start_b) {
         self.rewrites_mut().push(edit.clone());
         query_again = true;
 
@@ -155,6 +166,10 @@ impl SourceCodeUnit {
         let applied_ts_edit = self.apply_edit(&edit, parser);
 
         self.propagate(get_replace_range(applied_ts_edit), rule, rule_store, parser);
+
+        let start_byte = edit.p_match().range().start_byte;
+
+        return (query_again, Some(start_byte));
       }
     }
     // When rule is a "match-only" rule :
@@ -177,7 +192,7 @@ impl SourceCodeUnit {
         self.propagate(*m.range(), rule.clone(), rule_store, parser);
       }
     }
-    query_again
+    (query_again, None)
   }
 
   /// This is the propagation logic of the Piranha's main algorithm.
