@@ -79,9 +79,9 @@ fn test_no_match() {
 fn test_trailing_comma() {
   run_test(
     "a.foo(x, // something about the first argument
-           y, // something about the second argumet
+           y, // something about the second argument
            );",
-    ":[var].foo(:[arg1], :[arg2])",
+    ":[var].foo(:[arg1], :[arg2+])",
     2,
     vec![vec![("var", "a"), ("arg1", "x"), ("arg2", "y,")]],
     GO,
@@ -92,7 +92,7 @@ fn test_trailing_comma() {
 fn test_sequential_siblings_matching() {
   run_test(
     "a.foo(x, y, z);",
-    ":[var].foo(:[arg1], z)",
+    ":[var].foo(:[arg1+], z)",
     2,
     vec![vec![("var", "a"), ("arg1", "x, y")]],
     GO,
@@ -117,7 +117,7 @@ fn test_sequential_siblings_stmts2() {
   // Find all usages of foo, whose last element is z.
   run_test(
     "x.foo(1,2,3,4);",
-    ":[var].foo(:[args]);",
+    ":[var].foo(:[args+]);",
     2,
     vec![vec![("var", "x"), ("args", "1,2,3,4")]],
     JAVA,
@@ -138,8 +138,8 @@ fn test_complex_template() {
     }}",
     "int :[var] = 0;
     while(:[var] < 100) {
-      :[body]
-      :[var]++;
+      :[body+]
+      :[var] ++;
     }",
     1,
     vec![vec![

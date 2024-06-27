@@ -25,6 +25,7 @@ use crate::models::matches::Match;
 // Precompile the regex outside the function
 lazy_static! {
   static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
+  static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
 }
 
 // Struct to avoid dealing with lifetimes
@@ -33,6 +34,7 @@ pub struct CapturedNode {
   range: Range,
   text: String,
 }
+
 #[derive(Clone, PartialEq, Eq)]
 struct MatchResult {
   mapping: HashMap<String, CapturedNode>,
@@ -196,9 +198,12 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
     node = cursor.node();
   }
 
-  if let Some(caps) = RE_VAR.captures(match_template) {
+  if let Some(caps) = RE_VAR_PLUS.captures(match_template) {
     // If template starts with a template variable
-    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template)
+    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, true)
+  } else if let Some(caps) = RE_VAR.captures(match_template) {
+    // If template starts with a template variable
+    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, false)
   } else if node.child_count() == 0 {
     // If the current node if a leaf
     return handle_leaf_node(cursor, source_code, match_template, top_node);
@@ -209,12 +214,17 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   }
 }
 
-/// This function is a bit convoluted because I have failed to simplify it further.
-/// It basically matches a template variable against a subsequence of nodes.
-/// Comments inline explaining what's going on during the matching process
+/// This function does the template variable matching against entire tree nodes.function
+/// Keep in my mind that it will only attempt to match the template variables against nodes
+/// at either the current level of the traversal, or it's children. It can also operate on
+/// single node templates [args], and multiple nodes templates :[args+].
+
+/// For successful matches, it returns the assignment of each template varaible against a
+/// particular range. The Option<usize> indicates whether a match was succesfull, and keeps
+/// track of the last sibling node that was matched (wrt to the match_sequential_siblings function)
 fn handle_template_variable_matching(
   cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, caps: regex::Captures,
-  match_template: &str,
+  match_template: &str, one_plus: bool,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let var_name = &caps["var_name"];
   let cs_adv_len = caps[0].len();
@@ -240,6 +250,7 @@ fn handle_template_variable_matching(
     let mut is_final_sibling = false;
     loop {
       let mut tmp_cursor = next_node_cursor.clone();
+
       if let (mut recursive_matches, Some(last_matched_node_idx)) =
         get_matches_for_subsequence_of_nodes(
           &mut tmp_cursor,
@@ -277,6 +288,7 @@ fn handle_template_variable_matching(
 
       // Append an extra node to match with :[var]. Remember we had advanced next_node_cursor before,
       // therefore we cannot advance it again, otherwise we would skip nodes.
+      // We only attempt to append an extra code if we are in one_plus matching mode.
       last_node = next_node_cursor.node();
       if is_final_sibling {
         break;
@@ -289,6 +301,10 @@ fn handle_template_variable_matching(
       is_final_sibling = !next_node_cursor.goto_next_sibling();
       if is_final_sibling {
         should_match = find_next_sibling(&mut next_node_cursor);
+      }
+
+      if !one_plus {
+        break;
       }
     }
 
@@ -328,24 +344,15 @@ fn handle_leaf_node(
   (HashMap::new(), None)
 }
 
-/// Finds the last matched node's index in the parent node's children.
+/// Finds the index of the last matched node relative to the `match_sequential_siblings` function.
 ///
-/// This function determines whether we finished our matching at a top-level child of the parent
-/// node. If so, it returns the index of that child.
-///
-/// # Arguments
-///
-/// * `cursor` - A mutable reference to a `TreeCursor`.
-/// * `parent_node` - A reference to the parent `Node`.
-///
-/// # Returns
-///
-/// * `Option<usize>` - The index of the matched child node, or `None` if no match is found.
+/// This function checks if the matching concluded on a child of the node where `match_sequential_siblings`
+/// was invoked. If so, it returns the index of that child.
 fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
   parent_node
     .children(&mut parent_node.walk())
     .enumerate()
-    .filter(|&(i, child)| child == cursor.node())
+    .filter(|&(_i, child)| child == cursor.node())
     .map(|(i, _child)| i - 1)
     .next()
 }

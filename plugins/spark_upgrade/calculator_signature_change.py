@@ -13,7 +13,7 @@ from typing import Any, List, Dict
 from execute_piranha import ExecutePiranha
 
 from polyglot_piranha import (
-    Rule, Filter
+    Rule,
 )
 
 
@@ -40,11 +40,6 @@ class CalculatorSignatureChange(ExecutePiranha):
             replace_node="*",
             replace="EntropyCalculator(:[stats], :[stats].sum.toLong)",
             holes={"entropy_calculator"},
-            filters= {
-                Filter(  # avoids infinite loop
-                    not_contains=[("rgx .sum.toLong")],
-                ),
-            }
         )
 
         # Rule to transform GiniCalculator() arguments
@@ -54,11 +49,6 @@ class CalculatorSignatureChange(ExecutePiranha):
             replace_node="*",
             replace="GiniCalculator(:[stats], :[stats].sum.toLong)",
             holes={"gini_calculator"},
-            filters= {
-                Filter(  # avoids infinite loop
-                    not_contains=[("rgx .sum.toLong")],
-                ),
-            }
         )
 
         transform_VarianceCalculator_args = Rule(
@@ -67,11 +57,6 @@ class CalculatorSignatureChange(ExecutePiranha):
             replace_node="*",
             replace="VarianceCalculator(:[stats], :[stats].sum.toLong)",
             holes={"variance_calculator"},
-            filters= {
-                Filter(  # avoids infinite loop
-                    not_contains=[("rgx .sum.toLong")],
-                ),
-            }
         )
         return [
             transform_VarianceCalculator_args,
