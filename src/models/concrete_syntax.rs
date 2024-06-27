@@ -89,7 +89,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
   (matches, !is_empty)
 }
 
-fn find_next_sibling(cursor: &mut TreeCursor) -> bool {
+fn find_next_sibling_or_ancestor_sibling(cursor: &mut TreeCursor) -> bool {
   while !cursor.goto_next_sibling() {
     if !cursor.goto_parent() {
       return false;
@@ -242,7 +242,7 @@ fn handle_template_variable_matching(
 
     // Determine whether a next node exists:
     let mut next_node_cursor = cursor.clone();
-    let mut should_match = find_next_sibling(&mut next_node_cursor);
+    let mut should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
     // At this point next_node_cursor either points to the first sibling of the first node,
     // or the first node itself, if such sibling no longer exists
 
@@ -295,12 +295,12 @@ fn handle_template_variable_matching(
       }
 
       // This is used for the final iteration. We need to determine if there are any other nodes
-      // left to match, to inform our next recursive call. We do this by calling find_next_sibling
+      // left to match, to inform our next recursive call. We do this by calling find_next_sibling_or_ancestor_sibling
       // to move the cursor to the parent and find the next sibling at another level,
       // since at this level we already matched everything
       is_final_sibling = !next_node_cursor.goto_next_sibling();
       if is_final_sibling {
-        should_match = find_next_sibling(&mut next_node_cursor);
+        should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
       }
 
       if !one_plus {
@@ -332,7 +332,7 @@ fn handle_leaf_node(
         .trim_start()
         .to_owned(),
     );
-    let should_match = find_next_sibling(cursor);
+    let should_match = find_next_sibling_or_ancestor_sibling(cursor);
     return get_matches_for_subsequence_of_nodes(
       cursor,
       source_code,
