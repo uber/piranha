@@ -35,7 +35,7 @@ class PiranhaArguments:
         paths_to_codebase: Optional[List[str]] = None,
         include: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
-        substitutions: Optional[dict] = None,
+        substitutions: Optional[dict[str, str]] = None,
         path_to_configurations: Optional[str] = None,
         rule_graph: Optional[RuleGraph] = None,
         code_snippet: Optional[str] = None,
@@ -141,7 +141,7 @@ class Match:
     range: Range
     "Range of the entire AST node captured by the match"
 
-    matches: dict
+    matches: dict[str, str]
     "The mapping between tags and string representation of the AST captured"
     ""
 
@@ -289,7 +289,7 @@ class RuleGraph:
     "The rules in the graph"
     edges: list[OutgoingEdges]
     "The edges in the graph"
-    graph: dict
+    graph: dict[str, list[tuple[str, str]]]
     "The graph itself (as an adjacency list)"
 
     def __init__(
