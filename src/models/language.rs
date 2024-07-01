@@ -21,8 +21,8 @@ use crate::utilities::parse_toml;
 
 use super::{
   default_configs::{
-    default_language, GO, JAVA, JAVA_CS, KOTLIN, PYTHON, RUBY, SCALA, STRINGS, SWIFT, THRIFT, TSX,
-    TS_SCHEME, TYPESCRIPT,
+    default_language, GO, JAVA, JAVA_CS, KOTLIN, KOTLIN_ALIAS, PYTHON, RUBY, SCALA, STRINGS, SWIFT,
+    THRIFT, TSX, TS_SCHEME, TYPESCRIPT,
   },
   outgoing_edges::Edges,
   rule::Rules,
@@ -172,7 +172,7 @@ impl std::str::FromStr for PiranhaLanguage {
           comment_nodes: vec!["comment".to_string()],
         })
       }
-      KOTLIN => {
+      KOTLIN | KOTLIN_ALIAS => {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));
         Ok(PiranhaLanguage {
