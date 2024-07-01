@@ -739,10 +739,9 @@ class RefactorEngine {
         babel.traverse(this.ast, {
             BlockStatement: function (path) {
                 const { node } = path;
-                const returnCount = node.body.reduce((acc, cur) => (cur.type === 'ReturnStatement' ? acc + 1 : acc), 0);
-                if (returnCount > 1) {
-                    const indexOfFirstReturn = node.body.findIndex((elem) => elem.type === 'ReturnStatement');
-                    node.body.splice(indexOfFirstReturn + 1);
+                const indexOfFirstReturn = node.body.findIndex((elem) => elem.type === 'ReturnStatement');
+                if(indexOfFirstReturn !== -1) {
+                    node.body.splice(indexOfFirstReturn + 1);   
                 }
             },
         });

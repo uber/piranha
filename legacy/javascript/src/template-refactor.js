@@ -186,7 +186,7 @@ class TemplateRefactorEngine {
 
                                     // `if-else`
                                     if (node.inverse.chained === false) {
-                                        return node.inverse.body[0];
+                                        return node.inverse.body;
                                     }
 
                                     // `if-elseIf-else`
