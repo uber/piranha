@@ -12,7 +12,7 @@
 from __future__ import annotations
 from typing import List, Optional, Literal
 
-# Define the language constants as Literals
+# Languages that Piranha supports (see ./src/models/language.rs)
 PiranhaLanguage = Literal["java", "kt", "kotlin", "go", "py", "swift", "ts", "tsx", "thrift", "strings", "scm", "scala", "rb"]
 
 
