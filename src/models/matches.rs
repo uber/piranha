@@ -321,6 +321,21 @@ impl Range {
       end_point: position_for_offset(source_code.as_bytes(), mtch.end()),
     }
   }
+
+  /// Creates a new range that spans from the beginning of the start range
+  /// to the end of the end range.
+  ///
+  /// This function is useful for creating a range that covers the span
+  /// from the start of one range to the end of another, regardless of whether
+  /// the ranges are contiguous.
+  pub(crate) fn span_ranges(left: tree_sitter::Range, right: tree_sitter::Range) -> Self {
+    Self {
+      start_byte: left.start_byte,
+      end_byte: right.end_byte,
+      start_point: left.start_point.into(),
+      end_point: right.end_point.into(),
+    }
+  }
 }
 
 // Finds the position (col and row number) for a given offset.
