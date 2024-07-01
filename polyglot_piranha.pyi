@@ -61,7 +61,7 @@ class PiranhaArguments:
 
         Parameters
         ------------
-            language: str
+            language: PiranhaLanguage
                 the target language
             paths_to_codebase: List[str]
                 Paths to source code folder or file
