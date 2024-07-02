@@ -10,7 +10,11 @@
 # limitations under the License.
 
 from __future__ import annotations
-from typing import List, Optional
+from typing import List, Optional, Literal
+
+# Languages that Piranha supports (see ./src/models/language.rs)
+PiranhaLanguage = Literal["java", "kt", "kotlin", "go", "py", "swift", "ts", "tsx", "thrift", "strings", "scm", "scala", "rb"]
+
 
 def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:
     """
@@ -32,7 +36,7 @@ class PiranhaArguments:
 
     def __init__(
         self,
-        language: str,
+        language: PiranhaLanguage,
         paths_to_codebase: Optional[List[str]] = None,
         include: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
@@ -57,7 +61,7 @@ class PiranhaArguments:
 
         Parameters
         ------------
-            language: str
+            language: PiranhaLanguage
                 the target language
             paths_to_codebase: List[str]
                 Paths to source code folder or file
