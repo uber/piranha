@@ -176,7 +176,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let rules: Rules = parse_toml(include_str!("../cleanup_rules/kt/rules.toml"));
         let edges: Edges = parse_toml(include_str!("../cleanup_rules/kt/edges.toml"));
         Ok(PiranhaLanguage {
-          extension: language.to_string(),
+          extension: KOTLIN.to_string(),
           supported_language: SupportedLanguage::Kotlin,
           language: tree_sitter_kotlin::language(),
           rules: Some(rules),
