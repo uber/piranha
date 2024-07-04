@@ -21,6 +21,7 @@ To use/build each version, look under the corresponding [lang]/ directory and fo
 
 A few additional links on Piranha: 
 
+- Research paper published at [PLDI 2024](https://dl.acm.org/doi/10.1145/3656429) on PolyglotPiranha.
 - A technical [report](report.pdf) detailing our experiences with using Piranha at Uber.
 - A [blogpost](https://eng.uber.com/piranha/) presenting more information on Piranha. 
 - 6 minute [video](https://www.youtube.com/watch?v=V5XirDs6LX8&feature=emb_logo) overview of Piranha.
