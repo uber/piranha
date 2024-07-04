@@ -251,6 +251,69 @@ class TemplateRefactorEngine {
         });
     }
 
+    reduceUnlessStatements() {
+        const engine = this;
+
+        traverse(this.ast, {
+            All: {
+                enter(node, path) {
+                    if (node.type === 'BlockStatement') {
+                        if (
+                          node.path.original === 'unless' &&
+                          node.params.length === 1 &&
+                          engine.isPiranhaLiteral(node.params[0])
+                        ) {
+                            if (node.params[0].value === true) {
+                                engine.changed = true;
+                                return null;
+                            } else if (node.params[0].value === false) {
+                                engine.changed = true;
+                                return node.program;
+                            }
+                        }
+                    } else if (node.type === 'MustacheStatement' || node.type === 'SubExpression') {
+                        if (
+                          node.path.original === 'unless' &&
+                          node.params.length > 1 &&
+                          engine.isPiranhaLiteral(node.params[0])
+                        ) {
+                            if (node.params[0].value === false) {
+                                engine.changed = true;
+                                if(path.parent.node.type === 'ConcatStatement' && node.params[1].type === 'StringLiteral') {
+                                    return {
+                                        type: 'TextNode',
+                                        chars: node.params[1].value,
+                                    }
+                                } else {
+                                    return b.mustache(
+                                      node.params[1],
+                                      [],
+                                      b.hash(),
+                                      false,
+                                      undefined
+                                    );
+                                }
+                            } else if (node.params[0].value === true) {
+                                engine.changed = true;
+                                if(path.parent.node.type === 'ConcatStatement') {
+                                    return null;
+                                } else {
+                                    return b.mustache(
+                                      b.path('null'),
+                                      [],
+                                      b.hash(),
+                                      false,
+                                      undefined
+                                    );
+                                }
+                            }
+                        }
+                    }
+                },
+            },
+        });
+    }
+
     refactorPipeline() {
         const hasFlagKeywordInFile = this.hasFlagKeywordInFile();
         let hasAstChanges = false;
@@ -266,6 +329,7 @@ class TemplateRefactorEngine {
 
             this.evalBoolExpressions();
             this.reduceIfStatements();
+            this.reduceUnlessStatements();
 
             iterations++;
         }
