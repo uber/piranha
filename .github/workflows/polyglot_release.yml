@@ -4,33 +4,99 @@ on:
 jobs:
   build_ubuntu:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python-version }}
     - name: Build wheel with Maturin
       run: |
         pip install --upgrade maturin
         maturin build --release -o dist
         maturin build --sdist -o dist
-    - name: Pypi Release for ubuntu-latest
+    - name: Pypi Release
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
   build_ubuntu_20:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python-version }}
     - name: Build wheel with Maturin
       run: |
         pip install --upgrade maturin
         maturin build --release -o dist
         maturin build --sdist -o dist
-    - name: Pypi Release for ubuntu-latest
+    - name: Pypi Release
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+  build_ubuntu_20_arm:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name : Install rustup targets
+      run: |
+        sudo apt-get update
+        sudo apt-get install gcc-aarch64-linux-gnu
+        rustup target add aarch64-unknown-linux-gnu
+    - name: Setup cargo target and linker
+      run: |
+        mkdir -p .cargo
+        touch .cargo/config.toml
+        echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
+        echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist --target aarch64-unknown-linux-gnu -i ${{ matrix.python-version }}
+        maturin build --sdist -o dist
+    - name: Pypi Release
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+  build_ubuntu_arm:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name : Install rustup target
+      run: |
+        sudo apt-get update
+        sudo apt-get install gcc-aarch64-linux-gnu
+        rustup target add aarch64-unknown-linux-gnu
+    - name: Setup cargo target and linker
+      run: |
+        mkdir -p .cargo
+        touch .cargo/config.toml
+        echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
+        echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
+    - name: Build wheel with Maturin
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist --target aarch64-unknown-linux-gnu -i ${{ matrix.python-version }}
+        maturin build --sdist -o dist
+    - name: Pypi Release
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
@@ -39,21 +105,17 @@ jobs:
     runs-on: [macos-12]
     strategy:
       matrix:
-        arch: ['x86_64']
-    env:
-      # Polyglot depends on tree-sitter-python which tries to compile c++ files stdlibc++ which is depreciated in newer version of mac.
-      MACOSX_DEPLOYMENT_TARGET: 10.16
-      CXXFLAGS: -stdlib=libc++ -mmacosx-version-min=10.16
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python-version }}
       - name: Build wheel with Maturin
         run: |
           pip install --upgrade maturin
           maturin build --release -o dist
-      - name: Pypi Release for macos-latest
+      - name: Pypi Release
         run: |
           pip install twine
           twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
@@ -62,21 +124,21 @@ jobs:
     runs-on: [macos-latest]
     strategy:
       matrix:
-        arch: ['arm64']
-    env:
-      # Polyglot depends on tree-sitter-python which tries to compile c++ files stdlibc++ which is depreciated in newer version of mac.
-      CXXFLAGS: -stdlib=libc++
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: ${{ matrix.python-version }}
+      - name: Install rustup targets
+        run: |
+          rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
       - name: Build wheel with Maturin
         run: |
-          rustup target add aarch64-apple-darwin
           pip install --upgrade maturin
-          maturin build --release -o dist --target universal2-apple-darwin
-      - name: Pypi Release for macos-latest
+          maturin build --release -o dist --target universal2-apple-darwin -i ${{ matrix.python-version }}
+      - name: Pypi Release
         run: |
           pip install twine
           twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
