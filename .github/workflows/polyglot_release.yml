@@ -3,10 +3,11 @@ on:
   workflow_dispatch:
 jobs:
   build_ubuntu:
-    runs-on: [ubuntu-latest, ubuntu-20.04]
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -20,12 +21,13 @@ jobs:
     - name: Pypi Release
       run: |
         pip install twine
-        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
   build_ubuntu_arm:
-    runs-on: [ubuntu-latest, ubuntu-20.04]
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -50,7 +52,7 @@ jobs:
     - name: Pypi Release
       run: |
         pip install twine
-        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
   macos_build_x86:
     name: 'macos-x86'
     runs-on: [macos-12]
@@ -69,7 +71,7 @@ jobs:
       - name: Pypi Release
         run: |
           pip install twine
-          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+          twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
   macos_build_arm:
     name: 'macos-arm64'
     runs-on: [macos-latest]
@@ -92,4 +94,4 @@ jobs:
       - name: Pypi Release
         run: |
           pip install twine
-          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+          twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
