@@ -3,10 +3,11 @@ on:
   workflow_dispatch:
 jobs:
   build_ubuntu:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -16,71 +17,23 @@ jobs:
       run: |
         pip install --upgrade maturin
         maturin build --release -o dist
-        maturin build --sdist -o dist
-    - name: Pypi Release
-      run: |
-        pip install twine
-        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-  build_ubuntu_20:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Build wheel with Maturin
-      run: |
-        pip install --upgrade maturin
-        maturin build --release -o dist
-        maturin build --sdist -o dist
-    - name: Pypi Release
-      run: |
-        pip install twine
-        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-  build_ubuntu_20_arm:
-    runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name : Install rustup targets
-      run: |
-        sudo apt-get update
-        sudo apt-get install gcc-aarch64-linux-gnu
-        rustup target add aarch64-unknown-linux-gnu
-    - name: Setup cargo target and linker
-      run: |
-        mkdir -p .cargo
-        touch .cargo/config.toml
-        echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
-        echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
-    - name: Build wheel with Maturin
-      run: |
-        pip install --upgrade maturin
-        maturin build --release -o dist --target aarch64-unknown-linux-gnu -i ${{ matrix.python-version }}
         maturin build --sdist -o dist
     - name: Pypi Release
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
   build_ubuntu_arm:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name : Install rustup target
+    - name : Install rustup targets
       run: |
         sudo apt-get update
         sudo apt-get install gcc-aarch64-linux-gnu
