@@ -22,6 +22,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install gcc-aarch64-linux-gnu
         rustup target add aarch64-unknown-linux-gnu
+        mkdir -p .cargo
+        touch .cargo/config.toml
+        echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
+        echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
     - name: Setup rustup target macOS
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
