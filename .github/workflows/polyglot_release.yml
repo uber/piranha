@@ -13,6 +13,9 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - name: pip install --upgrade maturin
+      run: |
+        pip install --upgrade maturin
     - name: Setup rustup target linux aarch64
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
@@ -24,16 +27,17 @@ jobs:
       run: |
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
-    - name: Build wheel with Maturin linux
-      if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04' }}
+    - name: Build wheel with Maturin linux x86
+      if: ${{ matrix.os == 'ubuntu-20.04' }}
       run: |
-        pip install --upgrade maturin
         maturin build --release -o dist
-        maturin build --sdist -o dist
+    - name: Build wheel with Maturin linux arm
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        maturin build --release -o dist --target aarch64-unknown-linux-gnu -i ${{ matrix.python-version }}
     - name: Build wheel with Maturin macOS
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        pip install --upgrade maturin
         maturin build --release -o dist --target universal2-apple-darwin -i ${{ matrix.python-version }}
     - name: Pypi Release
       run: |
