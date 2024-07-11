@@ -2,10 +2,10 @@ name: Release Polyglot Piranha
 on:
   workflow_dispatch:
 jobs:
-  build_ubuntu:
+  build_and_release:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
+        os: [ubuntu-latest, ubuntu-20.04, macos-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
     runs-on: ${{ matrix.os }}
     steps:
@@ -13,85 +13,29 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Build wheel with Maturin
-      run: |
-        pip install --upgrade maturin
-        maturin build --release -o dist
-        maturin build --sdist -o dist
-    - name: Pypi Release
-      run: |
-        pip install twine
-        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
-  build_ubuntu_arm:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, ubuntu-20.04]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name : Install rustup targets
+    - name: Setup rustup target linux aarch64
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         sudo apt-get update
         sudo apt-get install gcc-aarch64-linux-gnu
         rustup target add aarch64-unknown-linux-gnu
-    - name: Setup cargo target and linker
+    - name: Setup rustup target macOS
+      if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        mkdir -p .cargo
-        touch .cargo/config.toml
-        echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
-        echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
-    - name: Build wheel with Maturin
+        rustup target add x86_64-apple-darwin
+        rustup target add aarch64-apple-darwin
+    - name: Build wheel with Maturin linux
+      if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04' }}
       run: |
         pip install --upgrade maturin
-        maturin build --release -o dist --target aarch64-unknown-linux-gnu -i ${{ matrix.python-version }}
+        maturin build --release -o dist
         maturin build --sdist -o dist
+    - name: Build wheel with Maturin macOS
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        pip install --upgrade maturin
+        maturin build --release -o dist --target universal2-apple-darwin -i ${{ matrix.python-version }}
     - name: Pypi Release
       run: |
         pip install twine
         twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
-  macos_build_x86:
-    name: 'macos-x86'
-    runs-on: [macos-12]
-    strategy:
-      matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Build wheel with Maturin
-        run: |
-          pip install --upgrade maturin
-          maturin build --release -o dist
-      - name: Pypi Release
-        run: |
-          pip install twine
-          twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
-  macos_build_arm:
-    name: 'macos-arm64'
-    runs-on: [macos-latest]
-    strategy:
-      matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install rustup targets
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-      - name: Build wheel with Maturin
-        run: |
-          pip install --upgrade maturin
-          maturin build --release -o dist --target universal2-apple-darwin -i ${{ matrix.python-version }}
-      - name: Pypi Release
-        run: |
-          pip install twine
-          twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
