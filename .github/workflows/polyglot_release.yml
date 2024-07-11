@@ -2,7 +2,7 @@ name: Release Polyglot Piranha
 on:
   workflow_dispatch:
 jobs:
-  build_and_release:
+  release:
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-20.04, macos-latest]
