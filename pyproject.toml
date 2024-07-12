@@ -1,12 +1,8 @@
 [project]
 name = "polyglot_piranha"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
-authors = [
-  { name = "Ameya Ketkar", email = "ketkara@uber.com" },
-  { name = "Lazaro Clapp", email = "lazaro@uber.com" },
-  { name = "Uber Technologies Inc." },
-]
+authors = [{ name = "Uber Technologies Inc." }]
 license = "Apache-2.0"
 readme = "README.md"
 keywords = [

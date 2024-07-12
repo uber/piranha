@@ -6,6 +6,8 @@ repos:
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-yaml
+        # excluding as inline json fails check-yaml
+        exclude: ^.github/workflows/polyglot_release.yml$
       - id: check-toml
         files: src/|test-resources/|demo/
       - id: end-of-file-fixer
