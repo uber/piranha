@@ -1,13 +1,13 @@
 name: Release Polyglot Piranha
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 jobs:
   release:
     strategy:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    # We suspect we need 20.04 due to glibc not being new enough on Debian/devpod.
+    # We need 20.04 due to glibc not being new enough on Debian/devpod
+    # It has glibc 2.28+ (manylinux_2_28), which is compatible with Debian 10: https://github.com/pypa/manylinux/tree/8e297ac3813be400a9a244a2828c18d3dd7e6969?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-20.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     steps:
     - uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
     - name: pip install --upgrade maturin
       run: |
         pip install --upgrade maturin
-    - name: Setup rustup target linux aarch64
+    - name: Setup rustup target linux-arm
       if: ${{ matrix.target == 'linux-arm' }}
       run: |
         sudo apt-get update
@@ -27,23 +27,14 @@ jobs:
         touch .cargo/config.toml
         echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
         echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
-    - name: Setup rustup target macOS
+    - name: Setup rustup target macOS-arm
       if: ${{ matrix.target == 'macos-arm' }}
       run: |
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
-    - name: Build wheel with Maturin linux x86
-      if: ${{ matrix.target == 'linux-x86' }}
+    - name: Build wheel with Maturin ${{ matrix.target }}
       run: |
-        maturin build --release -o dist -i ${{ matrix.python-version }}
-    - name: Build wheel with Maturin linux arm
-      if: ${{ matrix.target == 'linux-arm' }}
-      run: |
-        maturin build --release -o dist --target aarch64-unknown-linux-gnu -i ${{ matrix.python-version }}
-    - name: Build wheel with Maturin macOS
-      if: ${{ matrix.target == 'macos-arm' }}
-      run: |
-        maturin build --release -o dist --target universal2-apple-darwin -i ${{ matrix.python-version }}
+        maturin build --release -o dist --target ${{ fromJSON('{"linux-x86":"x86_64-unknown-linux-gnu","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}')[matrix.target] }} -i ${{ matrix.python-version }}
     - name: Build source distribution
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
