@@ -6,7 +6,8 @@ jobs:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    # We suspect we need 20.04 due to glibc not being new enough on Debian/devpod.
+    # We need 20.04 due to glibc not being new enough on Debian/devpod
+    # It will have GCC 12 (manylinux_2_28), which is compatible with Debian 10: https://github.com/pypa/manylinux/tree/8e297ac3813be400a9a244a2828c18d3dd7e6969?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-20.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     steps:
     - uses: actions/checkout@v4
@@ -32,9 +33,8 @@ jobs:
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
     - name: Build wheel with Maturin ${{ matrix.target }}
-      # many_linux_2_28 is compatible with Debian 10: https://github.com/pypa/manylinux/tree/8e297ac3813be400a9a244a2828c18d3dd7e6969?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
       run: |
-        maturin build --release -o dist --target ${{ fromJSON('{"linux-x86":"manylinux_2_28_x86_64","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}')[matrix.target] }} -i ${{ matrix.python-version }}
+        maturin build --release -o dist --target ${{ fromJSON('{"linux-x86":"x86_64-unknown-linux-gnu","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}')[matrix.target] }} -i ${{ matrix.python-version }}
     - name: Build source distribution
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
