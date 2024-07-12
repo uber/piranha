@@ -7,6 +7,7 @@ jobs:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    # We suspect we need 20.04 due to glibc not being new enough on Debian/devpod.
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-20.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     steps:
     - uses: actions/checkout@v4
