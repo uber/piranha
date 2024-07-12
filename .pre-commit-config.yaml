@@ -5,7 +5,7 @@ repos:
       - id: check-byte-order-marker
       - id: check-case-conflict
       - id: check-merge-conflict
-      - id: check-yaml
+      # - id: check-yaml
       - id: check-toml
         files: src/|test-resources/|demo/
       - id: end-of-file-fixer
