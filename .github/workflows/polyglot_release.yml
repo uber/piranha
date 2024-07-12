@@ -2,16 +2,16 @@ name: Release Polyglot Piranha
 on: workflow_dispatch
 env:
   # We suspect we need 20.04 due to glibc not being new enough on Debian/devpod.
-  os_json: '{"linux-x86":"ubuntu-20.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}'
+  OS_JSON: '{"linux-x86":"ubuntu-20.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}'
   # many_linux_2_28 is compatible with Debian 10: https://github.com/pypa/manylinux/tree/8e297ac3813be400a9a244a2828c18d3dd7e6969?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
-  maturin_target_json: '{"linux-x86":"manylinux_2_28","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}'
+  MATURIN_TARGET_JSON: '{"linux-x86":"manylinux_2_28","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}'
 jobs:
   release:
     strategy:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ fromJSON(env.os_json)[matrix.target] }}
+    runs-on: ${{ fromJSON(env.OS_JSON)[matrix.target] }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -38,7 +38,7 @@ jobs:
     - name: Build wheel with Maturin ${{ matrix.target }}
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
-        maturin build --release -o dist --target ${{ fromJSON(env.maturin_target_json)[matrix.target] }} -i ${{ matrix.python-version }}
+        maturin build --release -o dist --target ${{ fromJSON(env.MATURIN_TARGET_JSON)[matrix.target] }} -i ${{ matrix.python-version }}
     - name: Build source distribution
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
