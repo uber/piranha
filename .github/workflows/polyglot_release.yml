@@ -38,7 +38,7 @@ jobs:
     - name: Build wheel with Maturin ${{ matrix.target }}
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
-        maturin build --release -o dist --target ${{ fromJSON(env.maturin_target_json)matrix.target] }} -i ${{ matrix.python-version }}
+        maturin build --release -o dist --target ${{ fromJSON(env.maturin_target_json)[matrix.target] }} -i ${{ matrix.python-version }}
     - name: Build source distribution
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
