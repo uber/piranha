@@ -1,3 +1,13 @@
+Version 0.3.25
+-------------
+
+* Better concrete syntax semantics (https://github.com/uber/piranha/pull/671)
+* More Python types in _polyglot_piranha.pyi_ (https://github.com/uber/piranha/pull/675 ; https://github.com/uber/piranha/pull/674)
+* Fixing bug with `.kt` extension (https://github.com/uber/piranha/pull/676)
+* Improvements and fixes to Spark migration rules (https://github.com/uber/piranha/pull/658)
+* Ruby support (https://github.com/uber/piranha/pull/649 ; https://github.com/uber/piranha/pull/670)
+* Disabled graph validation by default (https://github.com/uber/piranha/pull/672)
+
 Version 0.3.24
 -------------
 
