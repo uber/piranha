@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import List, Optional, Literal
 
 # Languages that Piranha supports (see ./src/models/language.rs)
-PiranhaLanguage = Literal["java", "kt", "kotlin", "go", "py", "swift", "ts", "tsx", "thrift", "strings", "scm", "scala", "rb"]
+PiranhaLanguage = Literal["java", "kt", "kotlin", "go", "py", "swift", "ts", "tsx", "thrift", "strings", "scm", "scala", "rb", "yaml", "yml"]
 
 
 def execute_piranha(piranha_argument: PiranhaArguments) -> list[PiranhaOutputSummary]:

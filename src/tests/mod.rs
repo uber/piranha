@@ -40,6 +40,7 @@ mod test_piranha_thrift;
 mod test_piranha_ruby;
 mod test_piranha_scm;
 mod test_piranha_strings;
+mod test_piranha_yaml;
 
 use std::sync::Once;
 
@@ -165,7 +166,7 @@ fn execute_piranha_and_check_result(
 ///  "java",
 ///  test_a1:  "relative/path_1", HashMap::from([("match_class", 2));
 ///  test_a2:  "relative/path_2", HashMap::from([("match_class", 2), ("match_class_1", 1)])
-///  
+///
 /// ;
 /// }
 /// ```
