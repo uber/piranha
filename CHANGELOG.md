@@ -1,3 +1,8 @@
+Version 0.3.26
+-------------
+
+* Support for YAML structural find/replace
+
 Version 0.3.25
 -------------
 
