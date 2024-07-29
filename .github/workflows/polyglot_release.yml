@@ -19,9 +19,11 @@ jobs:
         pip install --upgrade maturin
     - name: Setup rustup target linux-arm
       if: ${{ matrix.target == 'linux-arm' }}
+      # g++ is needed for tree-sitter YAML dependency
       run: |
         sudo apt-get update
         sudo apt-get install gcc-aarch64-linux-gnu
+        sudo apt-get install g++-aarch64-linux-gnu
         rustup target add aarch64-unknown-linux-gnu
         mkdir -p .cargo
         touch .cargo/config.toml
