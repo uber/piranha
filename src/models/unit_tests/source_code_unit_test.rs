@@ -16,7 +16,7 @@ use tree_sitter::Parser;
 use crate::{
   filter,
   models::{
-    default_configs::{JAVA, UNUSED_CODE_PATH},
+    default_configs::{JAVA, SWIFT, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
     matches::{Point, Range},
@@ -698,4 +698,85 @@ fn test_satisfies_outermost_enclosing_node() {
   assert!(!source_code_unit.is_satisfied(*node, &rule_negative, &HashMap::new(), &mut rule_store,));
 
   assert!(source_code_unit.is_satisfied(*node, &rule_positive, &HashMap::new(), &mut rule_store,));
+}
+
+#[test]
+fn test_removes_blank_lines_after_inline_cleanup() {
+  let inline_cleanup_rule = piranha_rule! {
+    name= "inline_cleanup_rule",
+    query= "
+    (
+        (switch_entry
+            (switch_pattern) @p1
+            (switch_pattern) @p2
+            (switch_pattern) @p3
+            (switch_pattern) @p4
+            (switch_pattern) @p5
+            (switch_pattern) @p6
+        ) @custom_entry
+        (#eq? @p1 \".zeta_mismatched_analytics_fix\")
+    )
+    ",
+    replace_node = "custom_entry",
+    replace = ""
+  };
+
+  let inline_rule = InstantiatedRule::new(&inline_cleanup_rule, &HashMap::new());
+
+  let source_code = r#"
+  public var namespace: ParameterNamespace {
+        switch self {
+        case .delta_survey_new_feature_reason,
+             .gamma_feature_enabled,
+             .delta_state_in_bag,
+             .gamma_feature_enabled_inclusion:
+            return .epsilon_growth_mobile
+        case .zeta_mismatched_analytics_fix,
+             .zeta_rib_migration,
+             .zeta_external_handler,
+             .zeta_context_update,
+             .zeta_padding_refactor,
+             .zeta_theta_sf_is_cold:
+            return .hello_world
+        case .alpha_hide_alpha_button:
+            return .beta_intent_pizza
+        }
+    }
+  "#
+  .trim();
+
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(SWIFT))
+    .build();
+
+  let mut rule_store = RuleStore::new(&piranha_arguments);
+  let mut parser = piranha_arguments.language().parser();
+
+  let mut source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_arguments,
+  );
+
+  source_code_unit.apply_rule(inline_rule, &mut rule_store, &mut parser, &None);
+  let transformed_code = source_code_unit.code();
+
+  let expected_code = r#"
+  public var namespace: ParameterNamespace {
+        switch self {
+        case .delta_survey_new_feature_reason,
+             .gamma_feature_enabled,
+             .delta_state_in_bag,
+             .gamma_feature_enabled_inclusion:
+            return .epsilon_growth_mobile
+        case .alpha_hide_alpha_button:
+            return .beta_intent_pizza
+        }
+    }
+  "#
+  .trim();
+  assert_eq!(transformed_code, expected_code);
 }
