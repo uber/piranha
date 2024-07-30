@@ -413,9 +413,9 @@ fn test_satisfies_filters_child_count() {
   let rule_positive = piranha_rule! {
     name= "test",
     query= "(
-      (method_invocation
+      (method_invocation 
           name: (_) @name
-          arguments: (argument_list)@args) @mi
+          arguments: (argument_list)@args) @mi 
       (#eq? @name \"someOtherFunction\")
       )",
     replace_node= "args",
@@ -429,9 +429,9 @@ fn test_satisfies_filters_child_count() {
   let rule_neg = piranha_rule! {
     name= "test",
     query= "(
-      (method_invocation
+      (method_invocation 
           name: (_) @name
-          arguments: (argument_list)@args) @mi
+          arguments: (argument_list)@args) @mi 
       (#eq? @name \"someOtherFunction\")
       )",
     replace_node= "args",
@@ -482,9 +482,9 @@ fn test_satisfies_filters_sibling_count() {
   let rule_positive = piranha_rule! {
     name= "test",
     query= "(
-      (method_invocation
+      (method_invocation 
           name: (_) @name
-          arguments: (argument_list (_)@arg)) @mi
+          arguments: (argument_list (_)@arg)) @mi 
       (#eq? @name \"someOtherFunction\")
       (#eq? @arg \"1\")
       )",
@@ -499,9 +499,9 @@ fn test_satisfies_filters_sibling_count() {
   let rule_neg = piranha_rule! {
     name= "test",
     query= "(
-      (method_invocation
+      (method_invocation 
           name: (_) @name
-          arguments: (argument_list (_) @arg )) @mi
+          arguments: (argument_list (_) @arg )) @mi 
       (#eq? @name \"someOtherFunction\")
       (#eq? @arg \"1\")
       )",
