@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://uber.github.io/piranha/blog</id>
+    <title>Polyglot Piranha Blog</title>
+    <updated>2023-07-31T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://uber.github.io/piranha/blog"/>
+    <subtitle>Polyglot Piranha Blog</subtitle>
+    <icon>https://uber.github.io/piranha/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Piranha Blog!]]></title>
+        <id>https://uber.github.io/piranha/blog/first-blog-post</id>
+        <link href="https://uber.github.io/piranha/blog/first-blog-post"/>
+        <updated>2023-07-31T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Piranha gets a newsletter!]]></summary>
+        <content type="html"><![CDATA[<p>Piranha gets a newsletter!</p>]]></content>
+        <author>
+            <name>Daniel Ramos</name>
+        </author>
+        <category label="blog" term="blog"/>
+        <category label="piranha" term="piranha"/>
+    </entry>
+</feed>
