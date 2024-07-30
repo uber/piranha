@@ -46,7 +46,7 @@ Below we can see an [automatically generated graph](#visualizing-graphs-for-rule
 <h5> Example 1 (Stale Feature Flag Cleanup) </h5>
 
 Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU")` always returns `true` (i.e. the feature *Show Menu* is treated)
-```
+```java
 public String fooBar(boolean x) {
     if(exp.isTreated("SHOW_MENU")|| x){
         String menu = getMenu();
@@ -56,7 +56,7 @@ public String fooBar(boolean x) {
 }
 ```
 To cleanup this code with Piranha, a user would have to write *one* rule to update the expressions like `exp.isTreated("SHOW_MENU")` to `true` and hook it to the pre-built boolean simplification rules. It would result in :
-```
+```java
 public String fooBar(boolean x) {
     String menu = getMenu();
     return menu;
@@ -67,7 +67,7 @@ Note how, user only specified the seed rule to update the expression to true, an
 <h5> Example 2 (Structural Find/Replace with built-in cleanup) </h5>
 
 Let's say a user writes a piranha rule to delete an unused enum case (let's say `LOW`). However, this enum case "co-incidentally" is the only enum case in this enum declaration.
-```
+```java
 enum Level {
   LOW,
 }
@@ -80,7 +80,7 @@ If the user hooks up this *enum case deletion* rule to the pre-built rules, it w
 Let's take a canonical example of replacing `Arrays.asList` with `Collections.singletonList`, when possible.
 This task involves two steps (i) Replacing the expression (ii) Adding the import statement for `Collections` if absent (Assuming *google java format* takes care of the unused imports :smile:).
 However, Piranha does not contain pre-built rules to add such a custom import statements.
-```
+```java
 import java.util.ArrayList;
 import java.util.Arrays;
 + import java.util.Collections;
