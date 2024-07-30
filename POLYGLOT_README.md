@@ -14,7 +14,7 @@ __This repository contains the Polyglot Piranha framework and pre-built cleanup 
     - [:computer: Command-line Interface](#computer-command-line-interface)
     - [Languages supported](#languages-supported)
   - [Getting Started with demos](#getting-started-with-demos)
-  - [Piranha's DSL](...)
+  - [Piranha's DSL](#piranha-dsl)
   - [*Stale Feature Flag Cleanup* in depth](#stale-feature-flag-cleanup-in-depth)
   - [Visualizing Graphs for Rules and Groups](#visualizing-graphs-for-rules-and-groups)
   - [Piranha Arguments](#piranha-arguments)
@@ -229,7 +229,7 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/pi
 Contributions for the :calendar: (`planned`) languages or any other languages are welcome :)
 
 
-## Piranha's DSL
+## Piranha DSL
 
 In PolyglotPiranha's, programs are graphs of match-replace rules that can be composed and chained.
 
