@@ -79,6 +79,8 @@ Feature flags are commonly used to enable gradual rollout or experiment with new
 - Presence of unused code in the source as well as the binary 
 - Stale flags can also cause bugs 
 
+PolyglotPiranha is a tool that can automatically refactor code related to stale flags. At a higher level, the input to the tool is the name of the flag and the expected behavior, after specifying a list of APIs related to flags in a properties file. Piranha will use these inputs to automatically refactor the code according to the expected behavior.
+
 PolyglotPiranha (as of May 2022) is a common refactoring tool to support multiple languages and feature flag APIs.
 For legacy language-specific implementations please check following [tag](https://github.com/uber/piranha/releases/tag/last-version-having-legacy-piranha).
 
