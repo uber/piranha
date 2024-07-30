@@ -14,6 +14,7 @@ __This repository contains the Polyglot Piranha framework and pre-built cleanup 
     - [:computer: Command-line Interface](#computer-command-line-interface)
     - [Languages supported](#languages-supported)
   - [Getting Started with demos](#getting-started-with-demos)
+  - [Piranha's DSL](...)
   - [*Stale Feature Flag Cleanup* in depth](#stale-feature-flag-cleanup-in-depth)
   - [Visualizing Graphs for Rules and Groups](#visualizing-graphs-for-rules-and-groups)
   - [Piranha Arguments](#piranha-arguments)
@@ -226,6 +227,106 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/pi
 | JavaScript       | :calendar:                  | :calendar:                               | :calendar:                           |
 
 Contributions for the :calendar: (`planned`) languages or any other languages are welcome :)
+
+
+## Piranha's DSL
+
+In PolyglotPiranha's, programs are graphs of match-replace rules that can be composed and chained.
+
+### Rules
+
+Individual edits are represented as rules in Polyglot Piranha. Each rule represents a transformation that matches and replaces a specific code snippets.
+A program in PolyglotPiranha should contain at least one rule with the following properties:
+- `query`: A query to find the code pattern to refactor 
+- `replace_node`: The captured node in the query that will be replaced.
+- `replace_string`: Replacement string or pattern for the refactored code.
+- `holes`: Placeholders in your queries that will be instantiated at runtime.
+- `is_seed_rule`: Specifies whether this rule is an entry point for the rule graph.
+
+Optionally, a rule can have filters. Piranha supports two kinds of filters:
+- `enclosing_node`: A pattern that specifies the enclosing node of the rule.
+- `not_enclosing_node`: A pattern that should not match any parent of the main match.
+
+The `enclosing_node` and `not_enclosing_node` filters can be refined using contains with specified `[at_least, at_most]` bounds, as well as `not_contains`.
+
+
+The rule queries, and filters can be written in the following languages:
+
+<h4> Tree-sitter Queries </h4>
+
+The Tree-sitter queries language is one of the rule languages that Piranha supports. 
+For a detailed understanding of the syntax, refer to the [Tree-sitter Syntax Reference](https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries).
+
+<h4> Regular Expressions (Regex) </h4>
+
+Regex forms another rule language supported by Piranha. To create a rule in regex, prepend your query with `rgx `. 
+For instance: `rgx <your regex query>`. Piranha supports the regex syntax derived from the [regex](https://docs.rs/regex/) crate.
+
+<h4> Concrete Syntax </h4>
+
+Piranha's Concrete Syntax is a custom rule language designed for matching and replacing code. Concrete Syntax operates at the parse tree level, similar to [comby](https://comby.dev/).
+The key difference is that it matches a parse tree node only if the entire parse tree can be traversed using the concrete syntax template.
+
+To use concrete syntax, prepend the query with `cs <your_query>`. For example, to match the code snippet `exp.isTreated("SHOW_MENU")`, you can use the following query `cs :[object].isTreated(:[string])`
+
+
+<h4> Example of a rule in TOML </h4>
+
+```toml
+[[rules]]
+name = "your_rule_name"
+query = """(
+    (method_invocation name: (_) @name
+                       arguments: (argument_list) @args) @invk
+    (#eq? @name @hole1))
+"""
+replace_node = "invk"
+replace = "X.other_string @args"
+holes = ["hole1"]
+is_seed_rule = true
+
+[[rules.filters]]
+enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
+not_contains = [
+    """(
+    (identifier) @id
+    (#eq? @id "x"))
+    """,
+]
+
+[[rules.filters]]
+enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
+contains = """(
+    (identifier) @other_id
+    (#eq? @other_id "y"))
+    """
+at_least = 1
+at_most = 5
+```
+
+### Edges
+
+Edges in Polyglot Piranha allow rules to depend on each other, establishing a hierarchy or sequence of application among rules. 
+An edge essentially describes the direction of dependency between two or more rules.
+Edges are also represented in the TOML format.
+
+Example edges in TOML:
+```toml
+[[edges]]
+scope = "Method"
+from = "your_rule_name"
+to = ["other_rule_name", "another_rule_name"]
+
+[[edges]]
+scope = "Method"
+from = "other_rule_name"
+to = ["your_rule_name"]
+```
+
+
+
+
+
 
 
 ## Getting Started with demos
@@ -457,6 +558,7 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
 First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
+
 
 ## Visualizing Graphs for Rules and Groups
 
