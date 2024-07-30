@@ -235,7 +235,7 @@ In PolyglotPiranha, programs are graphs of match-replace rules that can be compo
 
 ### Rules
 
-Individual edits are represented as rules in Polyglot Piranha, where each rule represents matches and replaces a specific code snippet.
+Individual edits are represented as rules in Polyglot Piranha, where each rule matches and replaces a specific code snippet.
 A program in PolyglotPiranha should contain at least one rule with the following properties:
 - `query`: A query to find the code pattern to refactor 
 - `replace_node`: The captured node in the query that will be replaced.
