@@ -254,20 +254,21 @@ The rule queries, and filters can be written in the following languages:
 
 <h4> Tree-sitter Queries </h4>
 
-The Tree-sitter queries language is one of the rule languages that Piranha supports. 
 For a detailed understanding of the syntax, refer to the [Tree-sitter Syntax Reference](https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries).
 
 <h4> Regular Expressions (Regex) </h4>
 
-Regex forms another rule language supported by Piranha. To create a rule in regex, prepend your query with `rgx `. 
+To create a rule in regex, prepend your query with `rgx `.
 For instance: `rgx <your regex query>`. Piranha supports the regex syntax derived from the [regex](https://docs.rs/regex/) crate.
 
 <h4> Concrete Syntax </h4>
 
-Piranha's Concrete Syntax is a custom rule language designed for matching and replacing code. Concrete Syntax operates at the parse tree level, similar to [comby](https://comby.dev/).
+Piranha's Concrete Syntax is a custom rule language designed for matching and replacing code. 
+Concrete Syntax operates at the parse tree level, similar to [comby](https://comby.dev/).
 The key difference is that it matches a parse tree node only if the entire parse tree can be traversed using the concrete syntax template.
 
-To use concrete syntax, prepend the query with `cs <your_query>`. For example, to match the code snippet `exp.isTreated("SHOW_MENU")`, you can use the following query `cs :[object].isTreated(:[string])`
+To use concrete syntax, prepend the query with `cs <your_query>`. 
+For example, to match the code snippet `exp.isTreated("SHOW_MENU")`, you can use the following query `cs :[object].isTreated(:[string])`
 
 
 <h4> Example of a rule in TOML </h4>
@@ -278,30 +279,15 @@ name = "your_rule_name"
 query = """(
     (method_invocation name: (_) @name
                        arguments: (argument_list) @args) @invk
-    (#eq? @name @hole1))
+    (#eq? @name @method_name))
 """
 replace_node = "invk"
-replace = "X.other_string @args"
-holes = ["hole1"]
+replace = "foo @args"
+holes = ["method_name"]
 is_seed_rule = true
 
 [[rules.filters]]
-enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
-not_contains = [
-    """(
-    (identifier) @id
-    (#eq? @id "x"))
-    """,
-]
-
-[[rules.filters]]
-enclosing_node = "(your_enclosing_node_pattern) @your_capture_name"
-contains = """(
-    (identifier) @other_id
-    (#eq? @other_id "y"))
-    """
-at_least = 1
-at_most = 5
+enclosing_node = "cs class MyClass { :[body] }"
 ```
 
 ### Edges
@@ -322,11 +308,6 @@ scope = "Method"
 from = "other_rule_name"
 to = ["your_rule_name"]
 ```
-
-
-
-
-
 
 
 ## Getting Started with demos
