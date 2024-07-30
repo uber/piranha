@@ -1,6 +1,77 @@
-# Piranha
+# PolyglotPiranha
 
-[![Join the chat at https://gitter.im/uber/piranha](https://badges.gitter.im/uber/piranha.svg)](https://gitter.im/uber/piranha?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+PolyglotPiranha is a lightweight code transformation toolset for automating large scale changes. At Uber, it is mostly used to clean up stale feature flags.
+
+
+## Installation
+
+To install Polyglot Piranha, you can use it as a Python library or as a command-line tool.
+
+### Python API
+
+To install the Python API, run the following command:
+
+```bash
+pip install polyglot-piranha
+```
+
+### Command-line Interface
+
+To install the command-line interface, follow these steps:
+
+1. Install [Rust](https://www.rust-lang.org/tools/install)
+2. Clone the repository: `git clone https://github.com/uber/piranha.git`
+3. Navigate to the cloned directory: `cd piranha`
+4. Build the project: `cargo build --release` (or `cargo build --release --no-default-features` for macOS)
+5. The binary will be generated under `target/release`
+
+## Example Usage
+
+```python
+from polyglot_piranha import execute_piranha, PiranhaArguments, Rule, RuleGraph, OutgoingEdges
+
+# Original code snippet
+code = """
+if (obj.isLocEnabled() || x > 0) {
+    // do something
+} else {
+    // do something else!
+}
+"""
+
+# Define the rule to replace the method call
+r1 = Rule(
+    name="replace_method",
+    query="cs :[x].isLocEnabled()", # cs indicates we are using concrete syntax
+    replace_node="*",
+    replace="true",
+    is_seed_rule=True
+)
+
+# Define the edges for the rule graph. 
+# In this case, boolean_literal_cleanup is already defined for java [see src/cleanup_rules]
+edge = OutgoingEdges("replace_method", to=["boolean_literal_cleanup"], scope="parent")
+
+# Create Piranha arguments
+piranha_arguments = PiranhaArguments(
+    code_snippet=code,
+    language="java",
+    rule_graph=RuleGraph(rules=[r1], edges=[edge])
+)
+
+# Execute Piranha and print the transformed code
+piranha_summary = execute_piranha(piranha_arguments)
+print(piranha_summary[0].content)
+```
+
+
+## Documentation
+
+For more examples and explanations of the toolset, please check our demos and extended [POLYGLOT_README.md](POLYGLOT_README.md) file.
+
+
+## Feature Flags
+
 
 Feature flags are commonly used to enable gradual rollout or experiment with new features. In a few cases, even after the purpose of the flag is accomplished, the code pertaining to the feature flag is not removed. We refer to such flags as stale flags. The presence of code pertaining to stale flags can have the following drawbacks: 
 - Unnecessary code clutter increases the overall complexity w.r.t maintenance resulting in reduced developer productivity 
@@ -8,9 +79,10 @@ Feature flags are commonly used to enable gradual rollout or experiment with new
 - Presence of unused code in the source as well as the binary 
 - Stale flags can also cause bugs 
 
-Piranha is a tool to automatically refactor code related to stale flags. At a higher level, the input to the tool is the name of the flag and the expected behavior, after specifying a list of APIs related to flags in a properties file. Piranha will use these inputs to automatically refactor the code according to the expected behavior. 
+PolyglotPiranha is a tool that can automatically refactor code related to stale flags. At a higher level, the input to the tool is the name of the flag and the expected behavior, after specifying a list of APIs related to flags in a properties file. Piranha will use these inputs to automatically refactor the code according to the expected behavior.
 
-This repository contains four independent versions of Piranha, one for each of the four supported languages: Java, JavaScript, Objective-C and Swift. **It also contains a redesigned variant of Piranha (as of May 2022) that is a common refactoring tool to support multiple languages and feature flag APIs. If interested in this polyglot variant, goto [Polyglot Piranha](POLYGLOT_README.md)**.
+PolyglotPiranha (as of May 2022) is a common refactoring tool to support multiple languages and feature flag APIs.
+This repository also contains four legacy language-specific implementations Piranha, for Java, JavaScript, Objective-C, and Swift, before it was redesigned in May 2022.
 
 To use/build each version, look under the corresponding [lang]/ directory and follow instructions in the corresponding [lang]/README.md file. Make sure to cd into that directory to build any related code following the instructions in the README. 
 
