@@ -64,11 +64,10 @@ piranha_summary = execute_piranha(piranha_arguments)
 print(piranha_summary[0].content)
 ```
 
-For additional examples, please visit our [demo page](POLYGLOT_README.md#getting-started-with-demos)
 
 ## Documentation
 
-Find more examples and explanations of the toolset in the [POLYGLOT_README.md](POLYGLOT_README.md) file
+For more examples and explanations of the toolset, please check our demos and extended [POLYGLOT_README.md](POLYGLOT_README.md) file.
 
 
 ## Feature Flags
