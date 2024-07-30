@@ -1,7 +1,5 @@
 # PolyglotPiranha
 
-[![Join the chat at https://gitter.im/uber/piranha](https://badges.gitter.im/uber/piranha.svg)](https://gitter.im/uber/piranha?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 PolyglotPiranha is a lightweight code transformation toolset for automating large scale changes. At Uber, it is mostly used to clean up stale feature flags.
 
 
@@ -66,12 +64,11 @@ piranha_summary = execute_piranha(piranha_arguments)
 print(piranha_summary[0].content)
 ```
 
-For additional examples, please visit our [demo page](https://uber.github.io/piranha/docs/reference/getting-started/demos)
+For additional examples, please visit our [demo page](POLYGLOT_README.md#getting-started-with-demos)
 
 ## Documentation
 
-Find more examples and explanations of the toolset on the [documentation webpage](https://uber.github.io/piranha/) or in the 
-[POLYGLOT_README.md](POLYGLOT_README.md) file
+Find more examples and explanations of the toolset in the [POLYGLOT_README.md](POLYGLOT_README.md) file
 
 
 ## Feature Flags
