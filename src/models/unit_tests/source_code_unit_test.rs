@@ -16,7 +16,7 @@ use tree_sitter::Parser;
 use crate::{
   filter,
   models::{
-    default_configs::{JAVA, RUBY, UNUSED_CODE_PATH},
+    default_configs::{JAVA, RUBY,SWIFT, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
     matches::{Point, Range},
@@ -772,4 +772,87 @@ fn test_removes_blank_lines_after_inline_cleanup() {
       end_point: Point { row: 1, column: 8 }
     }
   );
+}
+
+
+
+#[test]
+fn test_switch_entry_blank_lines() {
+  let inline_cleanup_rule = piranha_rule! {
+    name= "inline_cleanup_rule",
+    query= "
+    (
+        (switch_entry
+            (switch_pattern) @p1
+            (switch_pattern) @p2
+            (switch_pattern) @p3
+            (switch_pattern) @p4
+            (switch_pattern) @p5
+            (switch_pattern) @p6
+        ) @custom_entry
+        (#eq? @p1 \".case_zeta_first\")
+    )
+    ",
+    replace_node = "custom_entry",
+    replace = ""
+  };
+
+  let inline_rule = InstantiatedRule::new(&inline_cleanup_rule, &HashMap::new());
+
+  let source_code = r#"
+    public var namespace: ParameterNamespace {
+        switch self {
+        case .case_random_word_alpha,
+             .case_random_word_beta,
+             .case_random_word_gamma,
+             .case_random_word_delta:
+            return .namespace_group_alpha
+        case .case_zeta_first,
+             .case_zeta_second,
+             .case_zeta_third,
+             .case_zeta_fourth,
+             .case_zeta_fifth,
+             .case_zeta_sixth:
+            return .namespace_group_beta
+        case .case_random_word_omega:
+            return .namespace_group_gamma
+        }
+    }
+  "#
+  .trim();
+
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(SWIFT))
+    .build();
+
+  let mut rule_store = RuleStore::new(&piranha_arguments);
+  let mut parser = piranha_arguments.language().parser();
+
+  let mut source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_arguments,
+  );
+
+  source_code_unit.apply_rule(inline_rule, &mut rule_store, &mut parser, &None);
+  let transformed_code = source_code_unit.code();
+
+  let expected_code = r#"
+    public var namespace: ParameterNamespace {
+        switch self {
+        case .case_random_word_alpha,
+             .case_random_word_beta,
+             .case_random_word_gamma,
+             .case_random_word_delta:
+            return .namespace_group_alpha
+        case .case_random_word_omega:
+            return .namespace_group_gamma
+        }
+    }
+  "#
+  .trim();
+  assert_eq!(transformed_code, expected_code);
 }
