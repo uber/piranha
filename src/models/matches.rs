@@ -126,8 +126,7 @@ impl Match {
     self.get_associated_leading_empty_lines(node, code);
   }
 
-  fn get_associated_leading_empty_lines(&mut self, matched_node: &Node, code: &String) -> () {
-  
+  fn get_associated_leading_empty_lines(&mut self, matched_node: &Node, code: &String) {
     if let Some(empty_range) = self.find_empty_line_range(code, matched_node) {
       let skipped_range = Range {
         start_byte: empty_range.start,
@@ -157,13 +156,13 @@ impl Match {
         break;
       }
     }
-    
+
     if found {
       // Get the previous sibling node's end byte if it exists, in order to prevent overdeletions
       let prev_sibling_end_byte = if let Some(prev_sibling) = node.prev_sibling() {
-          prev_sibling.end_byte()
+        prev_sibling.end_byte()
       } else {
-          0
+        0
       };
       let max_end_byte = std::cmp::max(end_byte, prev_sibling_end_byte);
       Some(max_end_byte..node.start_byte())

@@ -16,7 +16,7 @@ use tree_sitter::Parser;
 use crate::{
   filter,
   models::{
-    default_configs::{JAVA, RUBY,SWIFT, UNUSED_CODE_PATH},
+    default_configs::{JAVA, RUBY, SWIFT, UNUSED_CODE_PATH},
     filter::Filter,
     language::PiranhaLanguage,
     matches::{Point, Range},
@@ -773,8 +773,6 @@ fn test_removes_blank_lines_after_inline_cleanup() {
     }
   );
 }
-
-
 
 #[test]
 fn test_switch_entry_blank_lines() {
