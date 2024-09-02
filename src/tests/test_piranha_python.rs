@@ -34,10 +34,13 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
 
   let mut cmd = Command::cargo_bin("polyglot_piranha").unwrap();
   cmd
-    .args(["-c", "test-resources/py/delete_cleanup_str_in_list/input"])
+    .args([
+      "-c",
+      "test-resources/python/delete_cleanup_str_in_list/input",
+    ])
     .args([
       "-f",
-      "test-resources/py/delete_cleanup_str_in_list/configurations",
+      "test-resources/python/delete_cleanup_str_in_list/configurations",
     ])
     .args(["-l", "python"])
     .args(["-j", temp_file.to_str().unwrap()])
@@ -50,7 +53,7 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
   let content = read_file(&temp_file).unwrap();
   let output: Vec<PiranhaOutputSummary> = serde_json::from_str(&content).unwrap();
   let expected_path =
-    Path::new("test-resources/py/delete_cleanup_str_in_list/expected/only_lists.py");
+    Path::new("test-resources/python/delete_cleanup_str_in_list/expected/only_lists.py");
   let expected = read_file(&expected_path.to_path_buf()).unwrap();
   assert!(eq_without_whitespace(output[0].content(), &expected));
 
