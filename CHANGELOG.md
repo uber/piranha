@@ -1,3 +1,11 @@
+Version 0.3.27
+-------------
+
+* Improve whitespace handling
+* Support ctrl+c
+* Improve logging
+* Change language names
+
 Version 0.3.26
 -------------
 
