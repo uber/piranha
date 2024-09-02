@@ -33,7 +33,7 @@ pub const THRIFT: &str = "thrift";
 pub const STRINGS: &str = "strings";
 pub const TS_SCHEME: &str = "scm"; // We support scheme files that contain tree-sitter query
 pub const SCALA: &str = "scala";
-pub const RUBY: &str = "rb";
+pub const RUBY: &str = "ruby";
 pub const YAML: &str = "yaml";
 pub const YAML_ALIAS: &str = "yml";
 

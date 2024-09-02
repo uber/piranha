@@ -39,7 +39,7 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
       "-f",
       "test-resources/py/delete_cleanup_str_in_list/configurations",
     ])
-    .args(["-l", "py"])
+    .args(["-l", "python"])
     .args(["-j", temp_file.to_str().unwrap()])
     .arg("--dry-run")
     .args(["-s", "str_literal=dependency2"])
