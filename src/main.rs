@@ -12,7 +12,7 @@
 */
 
 //! Defines the entry-point for Piranha.
-use std::{fs, time::Instant};
+use std::{fs, process, time::Instant};
 
 use log::{debug, info};
 use polyglot_piranha::{
@@ -21,6 +21,13 @@ use polyglot_piranha::{
 };
 
 fn main() {
+  // Set up the Ctrl+C handler
+  ctrlc::set_handler(move || {
+    println!("Received Ctrl+C! Exiting...");
+    process::exit(130);
+  })
+  .expect("Error setting Ctrl+C handler");
+
   let now = Instant::now();
   env_logger::init();
 
