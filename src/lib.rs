@@ -60,8 +60,6 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 /// For each file, it reports its content after the rewrite, the list of matches and the list of rewrites.
 #[pyfunction]
 pub fn execute_piranha(piranha_arguments: &PiranhaArguments) -> Vec<PiranhaOutputSummary> {
-  info!("Executing Polyglot Piranha !!!");
-
   let mut piranha = Piranha::new(piranha_arguments);
   piranha.perform_cleanup();
 
@@ -80,15 +78,35 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
   for summary in summaries {
     let number_of_rewrites = &summary.rewrites().len();
     let number_of_matches = &summary.matches().len();
-    info!("File : {:?}", &summary.path());
-    info!("  # Rewrites : {}", number_of_rewrites);
-    info!("  # Matches : {}", number_of_matches);
+    info!(
+      "File: {:?} with {} matches and {} rewrites",
+      &summary.path(),
+      number_of_matches,
+      number_of_rewrites
+    );
+    if *number_of_rewrites > 0 {
+      let used_rules: Vec<&String> = summary
+        .rewrites()
+        .iter()
+        .map(|r| r.matched_rule())
+        .collect();
+      let deduplicated_rules: Vec<&String> = used_rules.into_iter().unique().collect();
+      info!(
+        "Rewrites used the following rules: {}",
+        deduplicated_rules.into_iter().join(", ")
+      );
+    }
     total_number_of_rewrites += number_of_rewrites;
     total_number_of_matches += number_of_matches;
   }
-  info!("Total files affected/matched {}", &summaries.len());
-  info!("Total number of matches {}", total_number_of_matches);
-  info!("Total number of rewrites {}", total_number_of_rewrites);
+  if summaries.len() > 1 {
+    info!(
+      "Total files: {} (with {} matches and {} rewrites)",
+      &summaries.len(),
+      total_number_of_matches,
+      total_number_of_rewrites
+    );
+  }
 }
 
 // Maintains the state of Piranha and the updated content of files in the source code.
@@ -197,7 +215,7 @@ impl Piranha {
 
   /// Write the input code snippet into a temp directory.
   /// Returns: A temporary directory containing the created input code snippet as a file
-  /// This function panics if it finds that neither `code_snippet` nor `path_to_configuration` are provided  
+  /// This function panics if it finds that neither `code_snippet` nor `path_to_configuration` are provided
   fn write_code_snippet_to_temp(&self) -> TempDir {
     let temp_dir = TempDir::new_in(".", "tmp").unwrap();
     let temp_dir_path = temp_dir.path();

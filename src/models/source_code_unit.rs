@@ -220,7 +220,7 @@ impl SourceCodeUnit {
           .iter()
           .map(|(k, v)| {
             let rules = v.iter().map(|f| f.name()).join(", ");
-            format!("Next Rules:\nScope {k} \nRules {rules}").blue()
+            format!("Next Rules:\n- Scope {k} \n- Rules {rules}").blue()
           })
           .join("\n")
       );
