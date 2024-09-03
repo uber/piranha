@@ -32,7 +32,7 @@ use derive_builder::Builder;
 use getset::{CopyGetters, Getters};
 use glob::Pattern;
 use itertools::Itertools;
-use log::{info, warn};
+use log::{debug, warn};
 use pyo3::{
   prelude::{pyclass, pymethods},
   types::PyDict,
@@ -317,7 +317,7 @@ impl PiranhaArgumentsBuilder {
     let rule_graph = get_rule_graph(&_arg);
     _arg = PiranhaArguments { rule_graph, .._arg };
     #[rustfmt::skip]
-    info!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
+    debug!( "Number of rules and edges loaded : {:?}", _arg.rule_graph().get_number_of_rules_and_edges());
     _arg
   }
 }
