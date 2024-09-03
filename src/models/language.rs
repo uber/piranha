@@ -193,7 +193,7 @@ impl std::str::FromStr for PiranhaLanguage {
         })
       }
       PYTHON => Ok(PiranhaLanguage {
-        extension: language.to_string(),
+        extension: "py".to_string(),
         supported_language: SupportedLanguage::Python,
         language: tree_sitter_python::language(),
         rules: None,
@@ -219,7 +219,7 @@ impl std::str::FromStr for PiranhaLanguage {
         })
       }
       TYPESCRIPT => Ok(PiranhaLanguage {
-        extension: language.to_string(),
+        extension: "ts".to_string(),
         supported_language: SupportedLanguage::Ts,
         language: tree_sitter_typescript::language_typescript(),
         rules: None,
@@ -278,7 +278,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let ruby_rules: Rules = parse_toml(include_str!("../cleanup_rules/ruby/rules.toml"));
         let ruby_edges: Edges = parse_toml(include_str!("../cleanup_rules/ruby/edges.toml"));
         Ok(PiranhaLanguage {
-          extension: language.to_string(),
+          extension: "rs".to_string(),
           supported_language: SupportedLanguage::Ruby,
           language: tree_sitter_ruby::language(),
           scopes: parse_toml::<ScopeConfig>(include_str!(
