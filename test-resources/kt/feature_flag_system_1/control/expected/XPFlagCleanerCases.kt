@@ -55,6 +55,12 @@ internal class XPFlagCleanerPositiveCases {
 
     }
 
+    fun test_conjunction_expression(flag1: Boolean, flag2: Boolean, condition: String) =
+        println("Hi world")
+
+    fun test_disjunction_expression(flag1: Boolean, flag2: Boolean, condition: String) =
+        println("Hello World")
+
     fun other_api_stale_flag() {
         println("Hi world")
     }

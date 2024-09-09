@@ -204,6 +204,25 @@ replace = "true"
 replace_node = "prefix_expression"
 is_seed_rule = false
 
+# Before :
+#  !false ||
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_false_disjunction"
+query = """
+(
+(prefix_expression (disjunction_expression (_) @nested_expression)) @prefix_expression
+(#match? @nested_expression "^false$")
+(#match? @prefix_expression "!.*")
+)
+"""
+replace = "true"
+replace_node = "prefix_expression"
+is_seed_rule = false
+
 # Before : 
 #  !true
 # After :
@@ -217,6 +236,25 @@ query = """
 (prefix_expression (boolean_literal) @exp) @prefix_expression
 (#eq? @exp "true")
 (#match? @prefix_expression "!.*")  
+)
+"""
+replace = "false"
+replace_node = "prefix_expression"
+is_seed_rule = false
+
+# Before :
+#  !true &&
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_true_conjunction"
+query = """
+(
+(prefix_expression (conjunction_expression (_) @nested_expression)) @prefix_expression
+(#match? @nested_expression "^true$")
+(#match? @prefix_expression "!.*")
 )
 """
 replace = "false"
