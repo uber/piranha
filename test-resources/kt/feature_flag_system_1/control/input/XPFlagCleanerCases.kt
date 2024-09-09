@@ -86,6 +86,26 @@ internal class XPFlagCleanerPositiveCases {
         }
     }
 
+    fun test_conjunction_expression(flag1: Boolean, flag2: Boolean, condition: String) =
+        if ((flag1 || flag2) &&
+            !experimentation!!.isToggleDisabled(TestExperimentName.STALE_FLAG) &&
+            condition != "ENABLED"
+        ) {
+            println("Hello World")
+        } else {
+            println("Hi world")
+        }
+
+    fun test_disjunction_expression(flag1: Boolean, flag2: Boolean, condition: String) =
+        if ((flag1 && flag2) ||
+            !experimentation!!.isToggleEnabled(TestExperimentName.STALE_FLAG) ||
+            condition != "ENABLED"
+        ) {
+            println("Hello World")
+        } else {
+            println("Hi world")
+        }
+
     fun other_api_stale_flag() {
         if (experimentation!!.isFlagTreated(TestExperimentName.STALE_FLAG)) {
             println("Hello World")
