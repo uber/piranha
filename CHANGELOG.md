@@ -1,3 +1,9 @@
+Version 0.3.28
+-------------
+
+Update tree-sitter and grammar versions.
+
+
 Version 0.3.27
 -------------
 
