@@ -29,7 +29,7 @@ doctest = false
 cc = "1.0.73"
 
 [dependencies]
-tree-sitter = "0.21.0"
+tree-sitter = "0.20.4"
 tree-sitter-traversal = "0.1.2"
 json = "0.12.4"
 toml = "0.8.8"
