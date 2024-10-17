@@ -18,7 +18,7 @@ Small pull requests for things like typos, bug fixes, etc are always welcome.
 DOs and DON'Ts
 --------------
 
-* DO format your code using Google Java Format (for Java), clang-format (for ObjC). 
+* DO format your code using rustftmt (or just make sure to install the pre-commit hook). 
 * DO include tests when adding new features. When fixing bugs, start with adding a test that highlights how the current behavior is broken.
 * DO keep the discussions focused. When a new or related topic comes up it's often better to create new issue than to side track the discussion.
 
