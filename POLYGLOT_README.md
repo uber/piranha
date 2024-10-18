@@ -113,7 +113,7 @@ Polyglot Piranha can be used as a python library or as a command line tool.
 
 `pip install polyglot-piranha`
 
-Currently, we support one simple API (`execute_piranha`), a simple python wrapper around Polyglot Piranha's CLI. 
+Currently, we support one simple API (`execute_piranha`), a simple python wrapper around Polyglot Piranha's CLI.
 We believe this makes it easy to incorporate Piranha in *"pipelining"*.
 
 <h4> <code>execute_piranha</code></h4>
@@ -126,7 +126,7 @@ piranha_arguments = PiranhaArguments(
     path_to_configurations = "...",
     language= "java",
     substitutions = {},
-    dry_run = False, 
+    dry_run = False,
     cleanup_comments = True
 )
 piranha_summary = execute_piranha(piranha_arguments)
@@ -176,7 +176,7 @@ Options:
           Paths to include (as glob patterns)
       --exclude [<EXCLUDE>...]
           Paths to exclude (as glob patterns)
-          
+
   -t, --code-snippet <CODE_SNIPPET>
           Code snippet to transform [default: ]
   -s <SUBSTITUTIONS>
@@ -223,7 +223,7 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/pi
 | Python           | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
 | TypeScript       | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
 | TypeScript+React | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| C#               | :calendar:                  | :calendar:                               | :calendar:                           |
+| C#               | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
 | JavaScript       | :calendar:                  | :calendar:                               | :calendar:                           |
 
 Contributions for the :calendar: (`planned`) languages or any other languages are welcome :)
@@ -237,7 +237,7 @@ In PolyglotPiranha, programs are graphs of match-replace rules that can be compo
 
 Individual edits are represented as rules in Polyglot Piranha, where each rule matches and replaces a specific code snippet.
 A program in PolyglotPiranha should contain at least one rule with the following properties:
-- `query`: A query to find the code pattern to refactor 
+- `query`: A query to find the code pattern to refactor
 - `replace_node`: The captured node in the query that will be replaced.
 - `replace_string`: Replacement string or pattern for the refactored code.
 - `holes`: Placeholders in your queries that will be instantiated at runtime.
@@ -263,11 +263,11 @@ For instance: `rgx <your regex query>`. Piranha supports the regex syntax derive
 
 <h4> Concrete Syntax </h4>
 
-Piranha's Concrete Syntax is a custom rule language designed for matching and replacing code. 
+Piranha's Concrete Syntax is a custom rule language designed for matching and replacing code.
 Concrete Syntax operates at the parse tree level, similar to [comby](https://comby.dev/).
 The key difference is that it matches a parse tree node only if the entire parse tree can be traversed using the concrete syntax template.
 
-To use concrete syntax, prepend the query with `cs <your_query>`. 
+To use concrete syntax, prepend the query with `cs <your_query>`.
 For example, to match the code snippet `exp.isTreated("SHOW_MENU")`, you can use the following query `cs :[object].isTreated(:[string])`
 
 
@@ -292,7 +292,7 @@ enclosing_node = "cs class MyClass { :[body] }"
 
 ### Edges
 
-Edges in Polyglot Piranha allow rules to depend on each other, establishing a hierarchy or sequence of application among rules. 
+Edges in Polyglot Piranha allow rules to depend on each other, establishing a hierarchy or sequence of application among rules.
 An edge essentially describes the direction of dependency between two or more rules.
 Edges are also represented in the TOML format.
 
@@ -582,7 +582,7 @@ The purpose of Piranha Arguments is determining the behavior of Piranha.
 
 ## Contributing
 
-Prerequisites: 
+Prerequisites:
 * Install [pre-commit](https://pre-commit.com/)
 * Install [taplo](https://taplo.tamasfe.dev/cli/introduction.html)
 
