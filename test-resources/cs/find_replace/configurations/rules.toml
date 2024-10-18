@@ -1,0 +1,14 @@
+[[rules]]
+name = "replace_namespace"
+query = """
+(
+  compilation_unit(
+    file_scoped_namespace_declaration
+      name : (_) @n1
+      (#eq? @n1 "@value_to_replace")
+  )
+)
+"""
+replace_node = "n1"
+replace = "HelloFoo"
+holes = ["value_to_replace"]
