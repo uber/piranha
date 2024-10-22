@@ -99,12 +99,11 @@ A few additional links on Piranha:
 
 If you have any questions on how to use Piranha or find any bugs, please [open a GitHub issue](https://github.com/uber/piranha/issues).
 
-## Contributors
-
-We'd love for you to contribute to Piranha!  Please note that once
-you create a pull request, you will be asked to sign our [Uber Contributor License Agreement](https://cla-assistant.io/uber/piranha).
-
-We are also looking for contributions to extend Piranha to other languages (C++, C#, Kotlin). 
-
 ## License
 Piranha is licensed under the Apache 2.0 license.  See the LICENSE file for more information.
+
+## Note
+
+This is not an official Uber product, and provided as is.
+
+
