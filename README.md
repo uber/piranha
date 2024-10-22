@@ -2,6 +2,8 @@
 
 PolyglotPiranha is a lightweight code transformation toolset for automating large scale changes. At Uber, it is mostly used to clean up stale feature flags.
 
+We only support languages that are used at Uber. We likely won't be able to add new languages in this repo.
+
 
 ## Installation
 
