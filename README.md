@@ -2,6 +2,8 @@
 
 PolyglotPiranha is a lightweight code transformation toolset for automating large scale changes. At Uber, it is mostly used to clean up stale feature flags.
 
+We only support languages that are used at Uber. We likely won't be able to add new languages in this repo. There are a number of forks (see https://github.com/uber/piranha/forks for a full list) that may provide additional features.
+
 
 ## Installation
 
@@ -97,12 +99,11 @@ A few additional links on Piranha:
 
 If you have any questions on how to use Piranha or find any bugs, please [open a GitHub issue](https://github.com/uber/piranha/issues).
 
-## Contributors
-
-We'd love for you to contribute to Piranha!  Please note that once
-you create a pull request, you will be asked to sign our [Uber Contributor License Agreement](https://cla-assistant.io/uber/piranha).
-
-We are also looking for contributions to extend Piranha to other languages (C++, C#, Kotlin). 
-
 ## License
 Piranha is licensed under the Apache 2.0 license.  See the LICENSE file for more information.
+
+## Note
+
+This is not an official Uber product, and provided as is.
+
+
