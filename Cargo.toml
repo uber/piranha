@@ -2,7 +2,7 @@
 authors = ["Uber Technologies Inc."]
 name = "piranha"
 description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
-version = "0.3.27"
+version = "0.3.28"
 edition = "2021"
 include = ["pyproject.toml", "src/"]
 exclude = ["legacy"]
@@ -29,7 +29,7 @@ doctest = false
 cc = "1.0.73"
 
 [dependencies]
-tree-sitter = "0.20.6"
+tree-sitter = "0.21.0"
 tree-sitter-traversal = "0.1.2"
 json = "0.12.4"
 toml = "0.8.8"
@@ -48,12 +48,11 @@ ctrlc = "3.4"
 
 # TODO: Update if we upgrade tree-sitter to >=0.21
 tree-sitter-kotlin = "=0.3.5"
-tree-sitter-java = "0.20.2"
-# TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
-tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
-tree-sitter-python = "0.20.2"
+tree-sitter-java = "0.21.0"
+tree-sitter-swift = { git = "https://github.com/stefanheule/tree-sitter-swift.git", branch = "0.4.3-fixed" }
+tree-sitter-python = "0.21.0"
 tree-sitter-ruby = "0.20.1"
-tree-sitter-typescript = "0.20.1"
+tree-sitter-typescript = "0.21.0"
 # TODO: Update after https://github.com/tree-sitter/tree-sitter-go/pull/103 lands
 tree-sitter-go = { git = "https://github.com/uber/tree-sitter-go.git", rev = "f8cffd0af7baaf7bf6062e403efe7c0d06319c41" }
 tree-sitter-thrift = "0.5.0"
