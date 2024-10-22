@@ -211,23 +211,6 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/pi
 
 *It can be seen that the Python API is basically a wrapper around this command line interface.*
 
-### Languages supported
-
-| Language         | Structural <br>Find-Replace | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  <br> |
-| ---------------- | --------------------------- | ---------------------------------------- | ------------------------------------ |
-| Java             | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
-| Kotlin           | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
-| Java + Kotlin    | :x:                         | :calendar:                               | :calendar:                           |
-| Swift            | :heavy_check_mark:          | :construction:                           | :construction:                       |
-| Go               | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
-| Python           | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| TypeScript       | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| TypeScript+React | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| C#               | :calendar:                  | :calendar:                               | :calendar:                           |
-| JavaScript       | :calendar:                  | :calendar:                               | :calendar:                           |
-
-Contributions for the :calendar: (`planned`) languages or any other languages are welcome :)
-
 
 ## Piranha DSL
 
@@ -580,7 +563,7 @@ The purpose of Piranha Arguments is determining the behavior of Piranha.
 
 
 
-## Contributing
+## Development
 
 Prerequisites: 
 * Install [pre-commit](https://pre-commit.com/)
