@@ -1,0 +1,59 @@
+[[rules]]
+name = "find_import"
+is_seed_rule = true
+query = """
+(
+  (import_from_statement
+    module_name: (dotted_name
+      (identifier) @module_name_part
+      (identifier) @submodule_name_part)
+    name: (dotted_name
+      (identifier) @imported_name)
+  (#eq? @module_name_part @module_name_to_check)
+  (#eq? @submodule_name_part @submodule_name_to_check)
+  (#eq? @imported_name @imported_name_to_check))
+)
+"""
+holes = [
+  "imported_name_to_check",
+  "submodule_name_to_check",
+  "module_name_to_check",
+]
+
+[[rules]]
+name = "extend_method_chain"
+query = """
+(
+  (call
+    function: (attribute
+      object: (attribute
+        object: (identifier) @obj
+        attribute: (identifier) @builder_method
+      )
+      attribute: (identifier) @config_method
+    )
+    arguments: (argument_list
+      (string) @config_arg1
+      (string) @config_arg2
+    )
+  )
+  (#eq? @obj @imported_name_to_check)
+  (#eq? @builder_method @class_attribute)
+  (#eq? @config_method @method_call_to_check)
+)
+"""
+replace_node = "config_method"
+replace = "@method_call_to_add.@config_method"
+holes = [
+  "imported_name_to_check",
+  "class_attribute",
+  "method_call_to_check",
+  "class_attribute",
+  "method_call_to_check",
+  "method_call_to_add",
+]
+is_seed_rule = false
+
+[[rules.filters]]
+enclosing_node = "((call) @cal)"
+not_contains = ["cs :[other].@method_call_to_add"]

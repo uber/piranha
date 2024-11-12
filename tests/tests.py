@@ -260,3 +260,25 @@ def _java_toplevel_mdecl_matches_anything(code_snippet: str) -> bool:
             return len(summaries) > 0
         except:
             assert False, f"Java method_declaration as top level node should not raise an error:\n{code_snippet}"
+
+def test_python_method_chain_extension():
+    args = PiranhaArguments(
+        path_to_configurations=join(dirname(__file__), "../test-resources/python/find_import_extend_method_chain/configurations"),
+        # path_to_configurations="test-resources/java/feature_flag_system_1/treated/configurations",
+        language="python",
+        substitutions={
+            "imported_name_to_check": "layers",
+            "module_name_to_check": "tensorflow",
+            "submodule_name_to_check": "keras",
+            "class_attribute": "builder",
+            "method_call_to_check": "config",
+            "method_call_to_add": "config(\"config3\", \"1\")"
+        },
+        paths_to_codebase=[join(dirname(__file__),"../test-resources/python/find_import_extend_method_chain/input")],
+        dry_run=True,
+    )
+    output_summaries = execute_piranha(args)
+    assert is_as_expected(
+        join(dirname(__file__), "../test-resources/python/find_import_extend_method_chain/"), output_summaries
+    )
+

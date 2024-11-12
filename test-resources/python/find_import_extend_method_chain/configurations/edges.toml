@@ -1,0 +1,4 @@
+[[edges]]
+scope = "File"
+from = "find_import"
+to = ["extend_method_chain"]
