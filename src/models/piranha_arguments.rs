@@ -280,6 +280,7 @@ impl PiranhaArguments {
       .cleanup_comments(*p.cleanup_comments())
       .dry_run(*p.dry_run())
       .experiment_dyn(default_experiment_dyn())
+      .allow_dirty_ast(*p.allow_dirty_ast())
       .build()
   }
 
