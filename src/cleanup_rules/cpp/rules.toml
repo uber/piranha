@@ -462,9 +462,9 @@ not_contains = [
 name = "delete_variable_declaration"
 query = """
 (
-((local_variable_declaration
-                declarator: (variable_declarator
-                                    name: (_) @variable_name
+((declaration
+                declarator: (init_declarator
+                                    declarator: (_) @variable_name
                                     value: [(true) (false)] @init)) @variable_declaration)
 )
 """
@@ -477,7 +477,7 @@ is_seed_rule = false
 # Please note that the tree-sitter queries in the filter uses holes (i.e. `@variable_name` and `@init`).
 # These holes will be filled contextually based on the code snippet matched to `rule.query
 [[rules.filters]]
-enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
+enclosing_node = "[(function_definition)] @md"
 not_contains = ["""
 (
 ((assignment_expression
@@ -492,12 +492,9 @@ not_contains = ["""
 [[rules]]
 name = "delete_field_declaration"
 query = """
-(
-((field_declaration 
-                declarator: (variable_declarator 
-                                    name: (_) @variable_name
-                                    value: [(true) (false)] @init)) @field_declaration)
-)
+(((field_declaration 
+                declarator: (_) @variable_name
+                default_value: [(true) (false)] @init)) @field_declaration)
 """
 replace = ""
 replace_node = "field_declaration"
@@ -537,10 +534,10 @@ holes = ["variable_name", "init"]
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 # which is initialized to "@init".
 [[rules.filters]]
-enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
+enclosing_node = "[(function_definition)] @md"
 not_contains = ["""(
-((local_variable_declaration 
-                declarator: (variable_declarator 
+((declaration 
+                declarator: (init_declarator 
                                     name: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@l")
@@ -565,11 +562,11 @@ replace_node = "expression_statement"
 is_seed_rule = false
 # The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
 [[rules.filters]]
-enclosing_node = "(method_declaration) @md"
+enclosing_node = "(function_definition) @md"
 not_contains = [
   """(
-((local_variable_declaration
-                declarator: (variable_declarator 
+((declaration
+                declarator: (init_declarator 
                                     name: (_) @vdcl.lhs
                                     value: (_)? @vdcl.init)) @variable_declaration)
 (#eq? @vdcl.lhs "@variable_name")
@@ -586,10 +583,9 @@ not_contains = ["""(
 (#eq? @a.lhs "@variable_name")
 (#not-eq? @a.rhs "@init")
 )""", """(
-((field_declaration 
-                declarator: (variable_declarator 
-                                    name: (_) @fdcl.lhs
-                                    value: (_) @fdcl.init)) @field_declaration)
+(((field_declaration 
+                declarator: (_) @variable_name
+                default_value: [(true) (false)] @init)) @field_declaration)
 (#eq? @fdcl.lhs "@variable_name")
 (#not-eq? @fdcl.init "@init")
 )"""]
@@ -611,10 +607,10 @@ holes = ["variable_name", "init"]
 is_seed_rule = false
 [[rules.filters]]
 # There should exist no local variable declaration named `@identifer`
-enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
+enclosing_node = "[(function_definition)] @md"
 not_contains = ["""(
-((local_variable_declaration 
-                declarator: (variable_declarator 
+((declaration 
+                declarator: (init_declarator 
                                     name: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@identifier")
