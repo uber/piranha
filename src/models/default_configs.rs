@@ -36,6 +36,7 @@ pub const SCALA: &str = "scala";
 pub const RUBY: &str = "ruby";
 pub const YAML: &str = "yaml";
 pub const YAML_ALIAS: &str = "yml";
+pub const CPP: &str = "cpp";
 
 pub const REGEX_QUERY_PREFIX: &str = "rgx ";
 pub const CONCRETE_SYNTAX_QUERY_PREFIX: &str = "cs ";

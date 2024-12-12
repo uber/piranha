@@ -21,8 +21,8 @@ use crate::utilities::parse_toml;
 
 use super::{
   default_configs::{
-    default_language, GO, JAVA, JAVA_CS, KOTLIN, KOTLIN_ALIAS, PYTHON, RUBY, SCALA, STRINGS, SWIFT,
-    THRIFT, TSX, TS_SCHEME, TYPESCRIPT, YAML, YAML_ALIAS,
+    default_language, CPP, GO, JAVA, JAVA_CS, KOTLIN, KOTLIN_ALIAS, PYTHON, RUBY, SCALA, STRINGS,
+    SWIFT, THRIFT, TSX, TS_SCHEME, TYPESCRIPT, YAML, YAML_ALIAS,
   },
   outgoing_edges::Edges,
   rule::Rules,
@@ -70,6 +70,7 @@ pub enum SupportedLanguage {
   Scala,
   Ruby,
   Yaml,
+  Cpp,
 }
 
 impl PiranhaLanguage {
@@ -295,6 +296,15 @@ impl std::str::FromStr for PiranhaLanguage {
         extension: language.to_string(),
         supported_language: SupportedLanguage::Yaml,
         language: tree_sitter_yaml::language(),
+        rules: None,
+        edges: None,
+        scopes: vec![],
+        comment_nodes: vec![],
+      }),
+      CPP => Ok(PiranhaLanguage {
+        extension: language.to_string(),
+        supported_language: SupportedLanguage::Cpp,
+        language: tree_sitter_cpp::language(),
         rules: None,
         edges: None,
         scopes: vec![],
