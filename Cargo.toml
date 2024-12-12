@@ -62,6 +62,8 @@ tree-sitter-thrift = "0.5.0"
 tree-sitter-strings = { git = "https://github.com/uber/tree-sitter-strings.git" }
 tree-sitter-query = "0.1.0"
 tree-sitter-scala = "0.20.1"
+# Newer versions do not support tree_sitter::Language
+tree-sitter-cpp = "0.20.5"
 # newer versions of "tree-sitter-yaml" require that we bump "tree-sitter" version
 tree-sitter-yaml = "0.0.1"
 derive_builder = "0.12.0"

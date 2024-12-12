@@ -41,6 +41,8 @@ mod test_piranha_scm;
 mod test_piranha_strings;
 mod test_piranha_yaml;
 
+mod test_piranha_cpp;
+
 use std::sync::Once;
 
 static INIT: Once = Once::new();

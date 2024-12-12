@@ -1,0 +1,636 @@
+# Copyright (c) 2023 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The language specific rules in this file are applied after the API specific change has been performed.
+
+# Before: 
+# (true)
+# After 
+# true
+
+[[rules]]
+name = "simplify_parenthesized_expression"
+query = "(parenthesized_expression ([(true) (false) (identifier)] @expression)) @p_expr"
+replace = "@expression"
+replace_node = "p_expr"
+is_seed_rule = false
+groups = ["boolean_expression_simplify"]
+
+# Before : 
+#  if (true) { doSomething(); }
+# After :
+#  { doSomething(); } 
+# 
+# Before : 
+#  if (true) { doSomething(); } else { doSomethingElse();}
+# After :
+#  { doSomething(); } 
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_true_1"
+query = """cs if (true) :[consequence]"""
+replace = "@consequence"
+replace_node = "*"
+is_seed_rule = false
+
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_true_2"
+query = """cs if (true) :[consequence] else :[alternative]"""
+replace = "@consequence"
+replace_node = "*"
+is_seed_rule = false
+
+
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_false_1"
+query = """cs if (false) :[consequence] else :[alternative]"""
+replace = "@alternative"
+replace_node = "*"
+is_seed_rule = false
+
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_if_statement_false_2"
+query = """cs if (false) :[consequence]"""
+replace = ""
+replace_node = "*"
+is_seed_rule = false
+
+
+# Before : 
+#  !false
+# After :
+#  true 
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_false"
+query = """cs !false"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  !true
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_true"
+query = """cs !true"""
+replace = "false"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  {
+#     someStepsBefore();
+#     {
+#        someSteps();
+#     }
+#     someStepsAfter();
+#  }
+# After :
+#  {
+#     someStepsBefore();
+#        someSteps();
+#     someStepsAfter();
+#  }
+#
+[[rules]]
+name = "remove_unnecessary_nested_block"
+query = """
+([
+    (block
+        (
+            (_)* @pre
+            (block (_)* @nested.statements) @nested.block
+            (_)* @post
+        )
+    )
+    (constructor_body
+        (
+            (_)* @pre
+            (block (_)* @nested.statements) @nested.block
+            (_)* @post
+        )
+    )
+    ]@block)"""
+replace = "@nested.statements"
+replace_node = "nested.block"
+is_seed_rule = false
+
+# Before :
+#  true && abc()
+# After :
+#  abc()
+#
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_true_and_something"
+query = """cs true && :[rhs]"""
+replace = "@rhs"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  abc() && true
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_and_true"
+query = """cs :[lhs] && true"""
+replace = "@lhs"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  false && abc()
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_false_and_something"
+query = """cs false && :[rhs]"""
+replace = "false"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  abc && false
+# After :
+#  false
+#
+[[rules]]
+name = "simplify_something_and_false"
+groups = ["boolean_expression_simplify"]
+query = """cs :[lhs] && false"""
+replace = "false"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  abc || true
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_or_true"
+query = """cs :[lhs] || true"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  true || abc()
+# After :
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_true_or_something"
+query = """cs true || :[rhs]"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+# Before:
+#  abc() || false
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_something_or_false"
+query = """cs :[lhs] || false"""
+replace = "@lhs"
+replace_node = "*"
+is_seed_rule = false
+
+# Before:
+#  false || abc()
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_false_or_something"
+query = """cs false || :[rhs]"""
+replace = "@rhs"
+replace_node = "*"
+is_seed_rule = false
+
+
+# Before:
+#  (x) == x
+#  x == (x)
+#  x == x
+# After :
+#  true
+#  true
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_true_1"
+query = """cs :[lhs] == :[lhs]"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_true_2"
+query = """cs (:[lhs]) == :[lhs]"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_true_3"
+query = """cs :[lhs] == (:[lhs])"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+
+# Before:
+#  false == true
+#  true == false
+# After :
+#  false
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_false_1"
+query = """cs false == true"""
+replace = "false"
+replace_node = "*"
+is_seed_rule = false
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_equals_equals_false_2"
+query = """cs true == false"""
+replace = "false"
+replace_node = "*"
+is_seed_rule = false
+
+
+# Before:
+#  false != false
+#  true != true
+# After :
+#  false
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_equals_false"
+query = """cs :[lhs] != :[lhs]"""
+replace = "false"
+replace_node = "*"
+is_seed_rule = false
+
+
+# Before:
+#  false != true
+#  true != false
+# After :
+#  true
+#  true
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_equals_true_1"
+query = """cs false != true"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_equals_true_2"
+query = """cs true != false"""
+replace = "true"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  {
+#    something();
+#    return 10;
+#    somethingMore();
+#    return 100;
+#  }
+# After :
+#  {
+#    something();
+#    return 10;
+#  }
+#
+[[rules]]
+name = "delete_all_statements_after_return"
+query = """(
+        (block  ((statement)* @pre)
+         ((return_statement) @r)
+         ((statement)+ @post)) @b)"""
+replace = ""
+replace_node = "post"
+is_seed_rule = false
+
+
+# Before :
+#  condition ? abc() : abc();
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_ternary_similar_consequent_alternative"
+query = """cs :[condition] ? :[consequence] : :[consequence]"""
+replace = "@consequence"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  true ? abc() : def();
+# After :
+#  abc()
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_ternary_operator_true"
+query = """cs true ? :[consequence] : :[alternative]"""
+replace = "@consequence"
+replace_node = "*"
+is_seed_rule = false
+
+# Before :
+#  false ? abc() : def();
+# After :
+#  def()
+#
+[[rules]]
+groups = ["if_cleanup"]
+name = "simplify_ternary_operator_false"
+query = """cs false ? :[consequence] : :[alternative]"""
+replace = "@alternative"
+replace_node = "*"
+is_seed_rule = false
+
+[[rules]]
+name = "delete_empty_enum_declaration"
+query = """
+(enum_declaration) @enum_declaration"""
+replace = ""
+replace_node = "enum_declaration"
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(enum_declaration) @ed"
+not_contains = ["(enum_constant) @ec"]
+
+
+# This rule deltes all the content of the file if it contains
+# no type declaration, enum declaration and annotation type declaration.
+#
+# It optionally captures the @package_name for the deleted file.
+[[rules]]
+name = "delete_file_with_no_type_declarations"
+query = """(
+(program
+  (package_declaration (_) @package_name)?) @program)"""
+replace = ""
+replace_node = "program"
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(program) @c_program"
+not_contains = [
+  "(enum_declaration) @c_enum_declaration",
+  "(class_declaration) @c_class_declaration",
+  "(interface_declaration) @c_interface_declaration",
+  "(annotation_type_declaration) @c_annotation_type_declaration",
+  "(module_declaration) @c_module_declaration",
+  "(record_declaration) @c_arecord_declaration",
+]
+
+# This rule is part (and entry point) for the inline local variable cleanup. Example:
+#
+# Before :
+# public foo someMethod() {
+#  boolean isFlag = true;
+#  somethingElse();
+# }
+#
+# After :
+# public foo someMethod() {
+#  somethingElse();
+# }
+#
+# Before inlining a variable we need to ensure that the variable is not re assigned anywhere within the method body
+# to a value which is not the same as the initializer of variable we are inlining..
+# Note the below negative example of this rule where the variable `isFlag` is re-assigned to the value `getFlagStatus()` while it's
+# initializer is `true`. In such a scenario the variable `isFlag` should not be inlined.
+#
+# public foo someMethod() {
+#  boolean isFlag = true;
+#  isFlag = getFlagStatus();
+#  somethingElse();
+# }
+#
+
+[[rules]]
+name = "delete_variable_declaration"
+query = """
+(
+((local_variable_declaration
+                declarator: (variable_declarator
+                                    name: (_) @variable_name
+                                    value: [(true) (false)] @init)) @variable_declaration)
+)
+"""
+replace = ""
+replace_node = "variable_declaration"
+is_seed_rule = false
+
+# Check if there is no assignment where the variable @variable_name is
+# assigned to a value other than @init, within the method body
+# Please note that the tree-sitter queries in the filter uses holes (i.e. `@variable_name` and `@init`).
+# These holes will be filled contextually based on the code snippet matched to `rule.query
+[[rules.filters]]
+enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
+not_contains = ["""
+(
+((assignment_expression
+                    left: (_) @a.lhs
+                    right: (_) @a.rhs) @assignment)
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)"""]
+
+# This rule is part (and entry point) of the inline field declaration cleanup.
+# Same as the rule `delete_variable_declaration`, but applicable to fields.
+[[rules]]
+name = "delete_field_declaration"
+query = """
+(
+((field_declaration 
+                declarator: (variable_declarator 
+                                    name: (_) @variable_name
+                                    value: [(true) (false)] @init)) @field_declaration)
+)
+"""
+replace = ""
+replace_node = "field_declaration"
+is_seed_rule = false
+
+# Check if there is no assignment where the variable @variable_name is 
+# assigned to a value other than @init, within the method body
+[[rules.filters]]
+enclosing_node = "(class_declaration) @cd"
+not_contains = ["""(
+((assignment_expression
+                    left: (_) @a.lhs
+                    right: (_) @a.rhs) @assignment)
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)"""]
+
+# This rule is part of inline variable declaration and field declaration cleanup. 
+# Delete assignment for a particular (@variable_name, @init) if: 
+# (i) If the enclosing method does not contain a variable declaration for @variable_name
+# (ii) If the Rhs of the assignment is same as the initializer of the variable it previously inlined.
+[[rules]]
+name = "delete_boolean_assignments_for_variable"
+query = """
+(
+(expression_statement (assignment_expression
+                                left: (_) @l
+                    right: (_) @r)) @expression_statement
+(#eq? @l "@variable_name")
+(#eq? @r "@init")
+) 
+"""
+replace = ""
+replace_node = "expression_statement"
+is_seed_rule = false
+holes = ["variable_name", "init"]
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+# which is initialized to "@init".
+[[rules.filters]]
+enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
+not_contains = ["""(
+((local_variable_declaration 
+                declarator: (variable_declarator 
+                                    name: (_) @vdcl.lhs
+                                    value: (_) @vdcl.init)) @field_declaration)
+(#eq? @vdcl.lhs "@l")
+)"""]
+
+# This rule is part (and entry point) of the inline variable / field declaration. 
+# delete assignment if 
+# (i) if it is the only assignment in the entire class in the enclosing class
+# (ii) There is a field declaration with the same rhs as this assignment in the enclosing class
+# (iii) There is no local variable declaration of the same name in the enclosing method
+[[rules]]
+name = "delete_parent_assignment"
+query = """
+(
+(expression_statement (assignment_expression
+                                left: (_) @variable_name
+                    right: (_) @init)) @expression_statement
+) 
+"""
+replace = ""
+replace_node = "expression_statement"
+is_seed_rule = false
+# The enclosing methode declaration should not contain a local variable decalration named "@variable_name"
+[[rules.filters]]
+enclosing_node = "(method_declaration) @md"
+not_contains = [
+  """(
+((local_variable_declaration
+                declarator: (variable_declarator 
+                                    name: (_) @vdcl.lhs
+                                    value: (_)? @vdcl.init)) @variable_declaration)
+(#eq? @vdcl.lhs "@variable_name")
+)""",
+]
+[[rules.filters]]
+# There should exist no field declaration named `@variable_name` and
+# there should be no assignments to @variable_name that are not same as `@init`.
+enclosing_node = "(class_declaration) @cd"
+not_contains = ["""(
+((assignment_expression
+                    left: (_) @a.lhs
+                    right: (_) @a.rhs) @a)
+(#eq? @a.lhs "@variable_name")
+(#not-eq? @a.rhs "@init")
+)""", """(
+((field_declaration 
+                declarator: (variable_declarator 
+                                    name: (_) @fdcl.lhs
+                                    value: (_) @fdcl.init)) @field_declaration)
+(#eq? @fdcl.lhs "@variable_name")
+(#not-eq? @fdcl.init "@init")
+)"""]
+
+# Replace identifier with value if :
+# (i) There is no local variable declaration in the enclosing method with the name as the identifier 
+# TODO: Add field filter
+[[rules]]
+name = "replace_identifier_with_value"
+query = """
+(
+(identifier) @identifier
+(#eq? @identifier "@variable_name")
+)
+"""
+replace = "@init"
+replace_node = "identifier"
+holes = ["variable_name", "init"]
+is_seed_rule = false
+[[rules.filters]]
+# There should exist no local variable declaration named `@identifer`
+enclosing_node = "[(method_declaration) (constructor_declaration)] @md"
+not_contains = ["""(
+((local_variable_declaration 
+                declarator: (variable_declarator 
+                                    name: (_) @vdcl.lhs
+                                    value: (_) @vdcl.init)) @field_declaration)
+(#eq? @vdcl.lhs "@identifier")
+)"""]
+
+# Dummy rule that acts as a junction for all boolean based cleanups
+# Let's say you want to define rules from A -> B, A -> C, D -> B, D -> C, ... 
+# A pattern here is - if there is an outgoing edge to B there is another to C.
+# In these cases, you can use a dummy rule X as shown below:
+# X -> B, X - C, A -> X, D -> X, ...
+[[rules]]
+name = "boolean_literal_cleanup"
+is_seed_rule = false
+
+# Dummy rule that acts as a junction for all statement based cleanups
+[[rules]]
+name = "statement_cleanup"
+is_seed_rule = false
