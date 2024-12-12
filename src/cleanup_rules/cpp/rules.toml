@@ -538,7 +538,7 @@ enclosing_node = "[(function_definition)] @md"
 not_contains = ["""(
 ((declaration 
                 declarator: (init_declarator 
-                                    name: (_) @vdcl.lhs
+                                    declarator: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@l")
 )"""]
@@ -567,7 +567,7 @@ not_contains = [
   """(
 ((declaration
                 declarator: (init_declarator 
-                                    name: (_) @vdcl.lhs
+                                    declarator: (_) @vdcl.lhs
                                     value: (_)? @vdcl.init)) @variable_declaration)
 (#eq? @vdcl.lhs "@variable_name")
 )""",
@@ -611,7 +611,7 @@ enclosing_node = "[(function_definition)] @md"
 not_contains = ["""(
 ((declaration 
                 declarator: (init_declarator 
-                                    name: (_) @vdcl.lhs
+                                    declarator: (_) @vdcl.lhs
                                     value: (_) @vdcl.init)) @field_declaration)
 (#eq? @vdcl.lhs "@identifier")
 )"""]
