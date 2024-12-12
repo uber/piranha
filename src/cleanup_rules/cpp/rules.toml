@@ -37,7 +37,7 @@ groups = ["boolean_expression_simplify"]
 [[rules]]
 groups = ["if_cleanup"]
 name = "simplify_if_statement_true_1"
-query = """cs if (true) :[consequence]"""
+query = """cs if (true) :[consequence] else :[alternative]"""
 replace = "@consequence"
 replace_node = "*"
 is_seed_rule = false
@@ -45,11 +45,10 @@ is_seed_rule = false
 [[rules]]
 groups = ["if_cleanup"]
 name = "simplify_if_statement_true_2"
-query = """cs if (true) :[consequence] else :[alternative]"""
+query = """cs if (true) :[consequence]"""
 replace = "@consequence"
 replace_node = "*"
 is_seed_rule = false
-
 
 [[rules]]
 groups = ["if_cleanup"]
