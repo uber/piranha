@@ -9,11 +9,11 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This files spcifies the scope generators for `Java`. 
+# This files spcifies the scope generators for `C++`. 
 # In `edges.toml`, we specify how the rules should be chained by constructing an edge labelled graph with rules as nodes. 
 # These edges are labelled as - Parent, Global, Method and Class. These edges determine "scope" where the next rule will be applied with respect
 # to the previously applied rule. 
-# Unlike Parent and Global scopes, capturing Method and Class scopes for Java is unique to Java's syntax. 
+# Unlike Parent and Global scopes, capturing Method and Class scopes for C++ is unique to C++'s syntax. 
 # Each language has a syntax to define methods, classes, functions, therefore capturing such scopees is language dependent. 
 # This file allows users to define these language dependent scopes. 
 # Each scope consists of a scope name and a list of scope rules. 
@@ -47,58 +47,46 @@ name = "Method"
 #
 enclosing_node = """
 (
-  [(method_declaration 
-            name : (_) @n
-            parameters : (formal_parameters)@fp)
-   (constructor_declaration 
-            name: (_) @n
-            parameters : (formal_parameters)@fp)
-            
-  ]          
+(function_definition
+        declarator: (function_declarator
+            declarator : (_) @n
+            parameters : (parameter_list)@fp))
             @xdn)"""
 scope = """
 (
-  [(((method_declaration 
-            name : (_) @z
-            parameters : (formal_parameters)@tp))
+  (((function_definition
+        declarator: (function_declarator
+            declarator : (_) @z
+            parameters : (parameter_list)@tp)))
     (#eq? @z "@n")
-    (#eq? @tp "@fp")                  
-    )
-   (((constructor_declaration 
-            name: (_) @z
-            parameters : (formal_parameters)@tp))
     (#eq? @tp "@fp")
-    (#eq? @z "@n")
     )
-  ]
 )@qdn"""
 
-# Scope generator for Java Class.
+# Scope generator for C++ Class.
 [[scopes]]
 name = "Class"
 [[scopes.rules]]
 enclosing_node = """(
   [
-    (class_declaration name:(_) @n) @c
-    (interface_declaration name:(_) @n) @c
-    (enum_declaration name:(_) @n) @c
+    (class_specifier name:(_) @n) @c
+    (enum_specifier name:(_) @n) @c
   ]
 )"""
 scope = """(
   [
-    ((class_declaration name:(_) @z) @qc)
-    ((interface_declaration name:(_) @z) @qc)
-    ((enum_declaration name:(_) @z) @qc)
+    ((class_specifier name:(_) @z) @qc)
+    ((enum_specifier name:(_) @z) @qc)
   ]
 (#eq? @z "@n")
 )
 """
 
-# Scope generator for java compilation unit
+# Scope generator for C++ compilation unit
 [[scopes]]
 name = "File"
 [[scopes.rules]]
 enclosing_node = """
-(program) @c_u
+(translation_unit) @c_u
 """
-scope = "(program) @compilation_unit"
+scope = "(translation_unit) @compilation_unit"

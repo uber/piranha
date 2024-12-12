@@ -310,8 +310,10 @@ impl std::str::FromStr for PiranhaLanguage {
           language: tree_sitter_cpp::language(),
           rules: Some(cpp_rules),
           edges: Some(cpp_edges),
-          scopes: vec![],
-          comment_nodes: vec![],
+          scopes: parse_toml::<ScopeConfig>(include_str!("../cleanup_rules/cpp/scope_config.toml"))
+            .scopes()
+            .to_vec(),
+          comment_nodes: vec!["line_comment".to_string(), "block_comment".to_string()],
         })
       }
       _ => Err("Language not supported"),
