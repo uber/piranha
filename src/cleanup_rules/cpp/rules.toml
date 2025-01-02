@@ -127,7 +127,7 @@ query = """
         )
     )
 ]@block)"""
-replace = "@nested.statements"
+replace = "{@nested.statements}"
 replace_node = "nested.block"
 is_seed_rule = false
 
