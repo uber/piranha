@@ -111,23 +111,16 @@ is_seed_rule = false
 [[rules]]
 name = "remove_unnecessary_nested_block"
 query = """
-([
+(
     ((compound_statement)*
-        (
+        (compound_statement
             (_)* @pre
             (compound_statement (_)* @nested.statements) @nested.block
             (_)* @post
         )
     )
-    ((compound_statement)*
-        (
-            (_)* @pre
-            (compound_statement (_)* @nested.statements) @nested.block
-            (_)* @post
-        )
-    )
-]@block)"""
-replace = "{@nested.statements}"
+@block)"""
+replace = "@nested.statements"
 replace_node = "nested.block"
 is_seed_rule = false
 
@@ -351,9 +344,9 @@ is_seed_rule = false
 [[rules]]
 name = "delete_all_statements_after_return"
 query = """(
-        (compound_statement  ((compound_statement)* @pre)
+        (compound_statement  ((_)* @pre)
          ((return_statement) @r)
-         ((compound_statement)+ @post)) @b)"""
+         ((_)+ @post)) @b)"""
 replace = ""
 replace_node = "post"
 is_seed_rule = false
