@@ -45,13 +45,14 @@ pub struct CGPattern(pub String);
 
 #[pymethods]
 impl CGPattern {
-  pub(crate) fn new(query: String) -> Self {
-    Self(query)
-  }
-
-  #[getter]
   pub(crate) fn pattern(&self) -> String {
     self.0.to_string()
+  }
+}
+
+impl CGPattern {
+  pub(crate) fn new(query: String) -> Self {
+    Self(query)
   }
 
   pub(crate) fn extract_regex(&self) -> Result<Regex, regex::Error> {
