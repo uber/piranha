@@ -55,6 +55,7 @@ class PiranhaArguments:
         allow_dirty_ast: Optional[bool] = None,
         should_validate: Optional[bool] = None,
         experiment_dyn: Optional[bool] = None,
+        path_to_custom_builtin_rules: Optional[str] = None,
     ):
         """
         Constructs `PiranhaArguments`
@@ -79,6 +80,7 @@ class PiranhaArguments:
                  delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  path_to_output (str): Path to the output json file
                  allow_dirty_ast (bool): Allows syntax errors in the input source code
+                 path_to_custom_builtin_rules (str): If provided, the default built-in rules will be ignored
         """
         ...
 

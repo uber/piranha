@@ -203,3 +203,7 @@ pub(crate) fn default_graph_validation() -> bool {
 pub(crate) fn default_experiment_dyn() -> bool {
   false
 }
+
+pub(crate) fn default_path_to_custom_builtin_rules() -> String {
+  String::new()
+}

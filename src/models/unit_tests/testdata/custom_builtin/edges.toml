@@ -1,0 +1,9 @@
+[[edges]]
+scope = "Class"
+from = "rule_1"
+to = ["rule_2"]
+
+[[edges]]
+scope = "Parent"
+from = "rule_2"
+to = ["rule_1"]

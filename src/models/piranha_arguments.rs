@@ -14,7 +14,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use super::{
   default_configs::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
-    default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
+    default_code_snippet, default_path_to_custom_builtin_rules, default_delete_consecutive_new_lines, default_delete_file_if_empty,
     default_dry_run, default_exclude, default_global_tag_prefix, default_graph_validation,
     default_include, default_number_of_ancestors_in_parent_scope, default_path_to_configurations,
     default_path_to_output_summaries, default_paths_to_codebase, default_piranha_language,
@@ -161,6 +161,12 @@ pub struct PiranhaArguments {
   #[builder(default = "default_experiment_dyn()")]
   #[clap(long, default_value_t = default_experiment_dyn())]
   experiment_dyn: bool,
+
+  /// Path to custom builtin rules directory
+  #[builder(default = "default_path_to_custom_builtin_rules()")]
+  #[get = "pub"]
+  #[clap(long, default_value_t = default_path_to_custom_builtin_rules())]
+  path_to_custom_builtin_rules: String,
 }
 
 impl Default for PiranhaArguments {
@@ -200,6 +206,7 @@ impl PiranhaArguments {
     delete_consecutive_new_lines: Option<bool>, global_tag_prefix: Option<String>,
     delete_file_if_empty: Option<bool>, path_to_output_summary: Option<String>,
     allow_dirty_ast: Option<bool>, should_validate: Option<bool>, experiment_dyn: Option<bool>,
+    path_to_custom_builtin_rules: Option<String>,
   ) -> Self {
     let subs = substitutions.map_or(vec![], |s| {
       s.iter()
@@ -247,6 +254,7 @@ impl PiranhaArguments {
       .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
       .should_validate(should_validate.unwrap_or_else(default_graph_validation))
       .experiment_dyn(experiment_dyn.unwrap_or_else(default_experiment_dyn))
+      .path_to_custom_builtin_rules(path_to_custom_builtin_rules.unwrap_or_else(default_path_to_custom_builtin_rules))
       .build()
   }
 
@@ -272,6 +280,7 @@ impl PiranhaArguments {
       .language(p.language().clone())
       .path_to_configurations(p.path_to_configurations().to_string())
       .path_to_output_summary(p.path_to_output_summary().clone())
+      .path_to_custom_builtin_rules(p.path_to_custom_builtin_rules().to_string())
       .delete_file_if_empty(*p.delete_file_if_empty())
       .delete_consecutive_new_lines(*p.delete_consecutive_new_lines())
       .global_tag_prefix(p.global_tag_prefix().to_string())
@@ -328,12 +337,15 @@ impl PiranhaArgumentsBuilder {
 /// Returns this merged graph
 fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   // Get the built-in rule -graph for the language
-  let piranha_language = _arg.language();
-
-  let built_in_rules = RuleGraphBuilder::default()
-    .edges(piranha_language.edges().clone().unwrap_or_default().edges)
-    .rules(piranha_language.rules().clone().unwrap_or_default().rules)
-    .build();
+    let built_in_rules = if !_arg.path_to_custom_builtin_rules().is_empty() {
+        read_user_config_files(&_arg.path_to_custom_builtin_rules())
+    } else {
+        let piranha_language = _arg.language();
+        RuleGraphBuilder::default()
+            .edges(piranha_language.edges().clone().unwrap_or_default().edges)
+            .rules(piranha_language.rules().clone().unwrap_or_default().rules)
+            .build()
+    };
 
   // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
   // Get the user-defined rule graph (if any) via the Python/Rust API
