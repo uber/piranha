@@ -14,12 +14,12 @@ Copyright (c) 2023 Uber Technologies, Inc.
 use super::{
   default_configs::{
     default_allow_dirty_ast, default_cleanup_comments, default_cleanup_comments_buffer,
-    default_code_snippet, default_path_to_custom_builtin_rules, default_delete_consecutive_new_lines, default_delete_file_if_empty,
+    default_code_snippet, default_delete_consecutive_new_lines, default_delete_file_if_empty,
     default_dry_run, default_exclude, default_global_tag_prefix, default_graph_validation,
     default_include, default_number_of_ancestors_in_parent_scope, default_path_to_configurations,
-    default_path_to_output_summaries, default_paths_to_codebase, default_piranha_language,
-    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, RUBY, SWIFT, TSX,
-    TYPESCRIPT,
+    default_path_to_custom_builtin_rules, default_path_to_output_summaries,
+    default_paths_to_codebase, default_piranha_language, default_rule_graph, default_substitutions,
+    GO, JAVA, KOTLIN, PYTHON, RUBY, SWIFT, TSX, TYPESCRIPT,
   },
   language::PiranhaLanguage,
   rule_graph::{read_user_config_files, RuleGraph, RuleGraphBuilder},
@@ -254,7 +254,9 @@ impl PiranhaArguments {
       .allow_dirty_ast(allow_dirty_ast.unwrap_or_else(default_allow_dirty_ast))
       .should_validate(should_validate.unwrap_or_else(default_graph_validation))
       .experiment_dyn(experiment_dyn.unwrap_or_else(default_experiment_dyn))
-      .path_to_custom_builtin_rules(path_to_custom_builtin_rules.unwrap_or_else(default_path_to_custom_builtin_rules))
+      .path_to_custom_builtin_rules(
+        path_to_custom_builtin_rules.unwrap_or_else(default_path_to_custom_builtin_rules),
+      )
       .build()
   }
 
@@ -337,15 +339,15 @@ impl PiranhaArgumentsBuilder {
 /// Returns this merged graph
 fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   // Get the built-in rule -graph for the language
-    let built_in_rules = if !_arg.path_to_custom_builtin_rules().is_empty() {
-        read_user_config_files(&_arg.path_to_custom_builtin_rules())
-    } else {
-        let piranha_language = _arg.language();
-        RuleGraphBuilder::default()
-            .edges(piranha_language.edges().clone().unwrap_or_default().edges)
-            .rules(piranha_language.rules().clone().unwrap_or_default().rules)
-            .build()
-    };
+  let built_in_rules = if !_arg.path_to_custom_builtin_rules().is_empty() {
+    read_user_config_files(&_arg.path_to_custom_builtin_rules())
+  } else {
+    let piranha_language = _arg.language();
+    RuleGraphBuilder::default()
+      .edges(piranha_language.edges().clone().unwrap_or_default().edges)
+      .rules(piranha_language.rules().clone().unwrap_or_default().rules)
+      .build()
+  };
 
   // TODO: Move to `PiranhaArgumentBuilder`'s _validate - https://github.com/uber/piranha/issues/387
   // Get the user-defined rule graph (if any) via the Python/Rust API
