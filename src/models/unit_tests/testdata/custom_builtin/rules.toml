@@ -12,13 +12,11 @@ replace = ""
 is_seed_rule = false
 [[rules.filters]]
 enclosing_node = "(program) @prgrm"
-not_contains = [
-    """
+not_contains = ["""
     (method_declaration
         name: (_) @ExistingName) @method_decl
     (#eq? @ExistingName "@name")
-    """
-]
+    """]
 
 [[rules]]
 name = "rule_2"
