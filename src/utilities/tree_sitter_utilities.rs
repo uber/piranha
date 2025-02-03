@@ -212,7 +212,7 @@ pub(crate) fn get_tree_sitter_edit(code: String, edit: &Edit) -> (String, InputE
   ]
   .concat();
 
-  let len_of_replacement = replacement.as_bytes().len();
+  let len_of_replacement = replacement.len();
   let old_source_code_bytes = code.as_bytes();
   let new_source_code_bytes = new_source_code.as_bytes();
   let start_byte = *replace_range.start_byte();

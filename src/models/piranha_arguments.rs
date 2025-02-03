@@ -340,7 +340,7 @@ impl PiranhaArgumentsBuilder {
 fn get_rule_graph(_arg: &PiranhaArguments) -> RuleGraph {
   // Get the built-in rule -graph for the language
   let built_in_rules = if !_arg.path_to_custom_builtin_rules().is_empty() {
-    read_user_config_files(&_arg.path_to_custom_builtin_rules())
+    read_user_config_files(_arg.path_to_custom_builtin_rules())
   } else {
     let piranha_language = _arg.language();
     RuleGraphBuilder::default()
