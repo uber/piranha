@@ -1,5 +1,8 @@
 name: Release Polyglot Piranha
-on: workflow_dispatch
+on:
+  push:
+    tags:
+      - '*'
 jobs:
   release:
     strategy:
