@@ -1,3 +1,9 @@
+Version 0.3.28
+-------------
+
+* Add a new argument `path_to_custom_builtin_rules` for overwriting builtin rules
+* Automate running the release workflow when a new tag is pushed 
+
 Version 0.3.27
 -------------
 
