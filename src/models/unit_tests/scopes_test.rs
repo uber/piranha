@@ -93,11 +93,11 @@ fn _get_method_scope() -> ScopeGenerator {
     .build()
     .unwrap();
 
-  return ScopeGeneratorBuilder::default()
+  ScopeGeneratorBuilder::default()
     .name("Method".to_string())
     .rules(vec![scope_query_generator_method])
     .build()
-    .unwrap();
+    .unwrap()
 }
 
 fn _get_piranha_args() -> PiranhaArguments {

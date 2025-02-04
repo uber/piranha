@@ -48,6 +48,52 @@ def test_piranha_rewrite():
         "test-resources/java/feature_flag_system_1/treated", output_summaries
     )
 
+def test_piranha_rewrite_custom():
+    r1 = Rule(
+        name="replace_method",
+        query=f"""(
+            (method_declaration
+                (modifiers) @modifier
+                name: (_) @name
+                body: (block) @body
+            ) @method
+            (#match? @name "empty")
+            (#match? @modifier "private")
+        )""",
+        replace_node="method",
+        replace="",
+        is_seed_rule=True,
+    )
+    edge_1 = OutgoingEdges("replace_method", to=["delete_usages"], scope="Class")
+    args = PiranhaArguments(
+        language="java",
+        paths_to_codebase=["test-resources/java/custom_rules/input"],
+        path_to_custom_builtin_rules="test-resources/java/custom_rules/custom_rules",
+        rule_graph=RuleGraph(rules=[r1], edges=[edge_1]),
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+
+    assert len(output_summaries) == 1
+    expected_paths = [
+        "test-resources/java/custom_rules/input/Sample.java",
+    ]
+    assert all([o.path in expected_paths for o in output_summaries])
+    summary: PiranhaOutputSummary
+    for summary in output_summaries:
+        assert _is_readable(str(summary))
+        for rewrite in summary.rewrites:
+            assert _is_readable(str(rewrite)) and _is_readable(str(rewrite.p_match))
+            assert rewrite.matched_rule
+            assert rewrite.p_match.matched_string and rewrite.p_match.matches
+
+    assert is_as_expected(
+        "test-resources/java/custom_rules/", output_summaries
+    )
+
+
+
 def test_piranha_match_only():
     args = PiranhaArguments(
         path_to_configurations="test-resources/java/structural_find_with_include_exclude/configurations",

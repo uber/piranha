@@ -47,7 +47,7 @@ fn test_read_toml_default() {
   let path_to_test_file =
     project_root.join("test-resources/utility_tests/another_sample.toml.toml");
   let result: TestStruct = read_toml(&path_to_test_file, true);
-  assert!(result.name.eq(""));
+  assert!(result.name.is_empty());
 }
 
 #[test]

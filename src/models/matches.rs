@@ -227,7 +227,7 @@ impl Match {
   // Checks if the given node is a comma
   fn is_comma(&self, code: &str, node: &Node) -> bool {
     let content = node.utf8_text(code.as_bytes()).unwrap();
-    return content.trim().eq(",");
+    content.trim().eq(",")
   }
 
   /// Checks whether it is safe to delete the provided comma node, by checking if

@@ -41,3 +41,23 @@ fn piranha_argument_invalid_both_codebase_and_snippet() {
     .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
     .build();
 }
+
+#[test]
+fn piranha_argument_with_custom_builtin_rules() {
+  let path_to_custom_builtin_rules = format!(
+    "{}/testdata/custom_builtin/",
+    std::path::Path::new(file!()).parent().unwrap().display()
+  );
+  let args = PiranhaArgumentsBuilder::default()
+    .path_to_configurations("some/path".to_string())
+    .paths_to_codebase(vec!["dev/null".to_string()])
+    .path_to_custom_builtin_rules(path_to_custom_builtin_rules.clone())
+    .language(PiranhaLanguage::from(JAVA))
+    .substitutions(substitutions! {"super_interface_name" => "SomeInterface"})
+    .build();
+  assert_eq!(args.rule_graph().get_number_of_rules_and_edges(), (2, 2));
+  assert_eq!(
+    args.path_to_custom_builtin_rules(),
+    &path_to_custom_builtin_rules
+  );
+}
