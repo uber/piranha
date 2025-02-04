@@ -1,3 +1,8 @@
+Version 0.3.29
+-------------
+
+* Adds LICENSE and NOTICE to package 
+
 Version 0.3.28
 -------------
 
