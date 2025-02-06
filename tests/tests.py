@@ -10,21 +10,22 @@
 # limitations under the License.
 from pathlib import Path
 from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
-from os.path import join, basename
+from os.path import join, basename, dirname
 from os import listdir
 import re
 import pytest
 
 def test_piranha_rewrite():
     args = PiranhaArguments(
-        path_to_configurations="test-resources/java/feature_flag_system_1/treated/configurations",
+        path_to_configurations=join(dirname(__file__), "../test-resources/java/feature_flag_system_1/treated/configurations"),
+        # path_to_configurations="test-resources/java/feature_flag_system_1/treated/configurations",
         language="java",
         substitutions={
             "stale_flag_name": "STALE_FLAG",
             "treated": "true",
             "treated_complement": "false",
         },
-        paths_to_codebase=["test-resources/java/feature_flag_system_1/treated/input"],
+        paths_to_codebase=[join(dirname(__file__),"../test-resources/java/feature_flag_system_1/treated/input")],
         dry_run=True,
     )
 
@@ -32,8 +33,8 @@ def test_piranha_rewrite():
 
     assert len(output_summaries) == 2
     expected_paths = [
-        "test-resources/java/feature_flag_system_1/treated/input/XPFlagCleanerPositiveCases.java",
-        "test-resources/java/feature_flag_system_1/treated/input/TestEnum.java",
+        join(dirname(__file__), "../test-resources/java/feature_flag_system_1/treated/input/XPFlagCleanerPositiveCases.java"),
+        join(dirname(__file__), "../test-resources/java/feature_flag_system_1/treated/input/TestEnum.java"),
     ]
     assert all([o.path in expected_paths for o in output_summaries])
     summary: PiranhaOutputSummary
@@ -45,7 +46,7 @@ def test_piranha_rewrite():
             assert rewrite.p_match.matched_string and rewrite.p_match.matches
 
     assert is_as_expected(
-        "test-resources/java/feature_flag_system_1/treated", output_summaries
+        join(dirname(__file__), "../test-resources/java/feature_flag_system_1/treated"), output_summaries
     )
 
 def test_piranha_rewrite_custom():
@@ -96,9 +97,9 @@ def test_piranha_rewrite_custom():
 
 def test_piranha_match_only():
     args = PiranhaArguments(
-        path_to_configurations="test-resources/java/structural_find_with_include_exclude/configurations",
+        path_to_configurations=join(dirname(__file__), "../test-resources/java/structural_find_with_include_exclude/configurations"),
         language="java",
-        paths_to_codebase=["test-resources/java/structural_find_with_include_exclude/input"],
+        paths_to_codebase=[join(dirname(__file__), "../test-resources/java/structural_find_with_include_exclude/input")],
         dry_run=True,
         exclude=["*/folder_2_1/**/*"]
     )
@@ -168,7 +169,7 @@ import java.util.List;
         )
 
     args = PiranhaArguments(
-        paths_to_codebase=["test-resources/java/insert_field_and_import/input"],
+        paths_to_codebase=[join(dirname(__file__), "../test-resources/java/insert_field_and_import/input")],
         language="java",
         rule_graph = rule_graph,
         dry_run=True,
@@ -210,7 +211,7 @@ def test_delete_unused_field():
     )
 
     args = PiranhaArguments(
-        paths_to_codebase=["test-resources/java/delete_unused_field/input"],
+        paths_to_codebase=[join(dirname(__file__), "../test-resources/java/delete_unused_field/input")],
         language="java",
         rule_graph = rule_graph,
         dry_run=True,
@@ -219,7 +220,7 @@ def test_delete_unused_field():
     output_summaries = execute_piranha(args)
     print(output_summaries[0].content)
     assert is_as_expected(
-        "test-resources/java/delete_unused_field/", output_summaries
+        join(dirname(__file__), "../test-resources/java/delete_unused_field/"), output_summaries
     )
 
 
@@ -305,3 +306,25 @@ def _java_toplevel_mdecl_matches_anything(code_snippet: str) -> bool:
             return len(summaries) > 0
         except:
             assert False, f"Java method_declaration as top level node should not raise an error:\n{code_snippet}"
+
+def test_python_method_chain_extension():
+    args = PiranhaArguments(
+        path_to_configurations=join(dirname(__file__), "../test-resources/python/find_import_extend_method_chain/configurations"),
+        # path_to_configurations="test-resources/java/feature_flag_system_1/treated/configurations",
+        language="python",
+        substitutions={
+            "imported_name_to_check": "layers",
+            "module_name_to_check": "tensorflow",
+            "submodule_name_to_check": "keras",
+            "class_attribute": "builder",
+            "method_call_to_check": "config",
+            "method_call_to_add": "config(\"config3\", \"1\")"
+        },
+        paths_to_codebase=[join(dirname(__file__),"../test-resources/python/find_import_extend_method_chain/input")],
+        dry_run=True,
+    )
+    output_summaries = execute_piranha(args)
+    assert is_as_expected(
+        join(dirname(__file__), "../test-resources/python/find_import_extend_method_chain/"), output_summaries
+    )
+

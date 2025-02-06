@@ -1,0 +1,47 @@
+# Scope generator for python files
+[[scopes]]
+name = "Function"
+[[scopes.rules]]
+enclosing_node = """
+(
+  (function_definition
+      name: (_) @n
+      parameters: (parameters) @fp
+  ) @xdn
+)"""
+scope = """
+(
+  [
+    (function_definition
+        name: (_) @z
+        parameters: (parameters) @tp
+    ) @qdn
+    (#eq? @z "@n")
+    (#eq? @tp "@fp")
+  ]
+)
+"""
+
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
+enclosing_node = """
+((class_definition name: (_) @n) @c)
+"""
+scope = """
+(
+  ((class_definition
+      name: (_) @z) @qc)
+  (#eq? @z "@n")
+)
+"""
+
+
+[[scopes]]
+name = "File"
+[[scopes.rules]]
+enclosing_node = """
+(module) @p_m
+"""
+scope = "(module) @python_module"
+
