@@ -100,21 +100,9 @@ replace = ""
 holes = ["str_literal"]
 
 # Deletes an assignment to an empty list. Example: `a = []`
-#
-# Note the multiple escapes (`\`) for the regex below
-# `\[` (match the `[` character) -> `\\\\[`
-# `\s*` (match zero or more empty spaces) -> `\\\\s*`
 [[rules]]
 name = "delete_empty_list_assignment"
-query = """
-(
-(assignment
-        left: (_) @i
-        right: (list) @list
-) @assignment
-(#match? @list "\\\\[\\\\s*,?\\\\]")
-)
-"""
-replace_node = "@assignment"
+query = """cs :[variable] = []"""
+replace_node = "*"
 replace = ""
 is_seed_rule = false
