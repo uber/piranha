@@ -1,0 +1,388 @@
+[[template]]
+name = "function_declaration"
+query = """
+(function_declaration
+  (modifiers
+    (member_modifier) @modifier_name
+  )?
+  (#not-match? @modifier_name "override")
+  (simple_identifier) @@out_flag_alias@@
+  (function_body
+    [
+      %{content}%
+      (statements
+        (jump_expression
+          %{content}%
+        )
+      )
+    ]
+  )
+) @function_declaration
+"""
+
+[[template]]
+name = "property_declaration"
+query = """
+(property_declaration
+  (modifiers (_))
+  (variable_declaration
+    (simple_identifier) @@out_flag_alias@@
+  )
+  %{content}%
+) @property_declaration
+"""
+
+[[template]]
+name = "parameterized_enum_entry"
+query = """
+(class_declaration
+  (type_identifier) @@out_parent@@
+  (enum_class_body
+    (enum_entry
+      (simple_identifier) @@out_flag_alias@@
+      (value_arguments
+        (value_argument
+          [
+            %{content}%
+          ]
+        )
+      )
+    ) @enum_entry
+  )
+)
+"""
+
+[[template]]
+name = "parameterized_sealed_class"
+query = """
+(class_declaration
+  (type_identifier) @@out_parent@@
+  (class_body
+    %{parameterized_sealed_object}%
+      %{content}%
+    %{/parameterized_sealed_object}%
+  )
+)
+"""
+
+[[template]]
+name = "parameterized_sealed_object"
+query = """
+(object_declaration
+  (type_identifier) @@out_flag_alias@@
+  (delegation_specifier
+    (constructor_invocation
+      (user_type
+        (type_identifier)
+      )
+      (value_arguments
+        (value_argument [
+          %{content}%
+        ])
+      )
+    )
+  )
+) @object_declaration
+"""
+
+[[template]]
+name = "method_call_expression"
+query = """
+(call_expression
+  [
+    (_
+      (simple_identifier)
+      (navigation_suffix
+        (simple_identifier) @@out_flag_alias@@
+      )
+    )
+    (simple_identifier) @@out_flag_alias@@
+  ]
+  (call_suffix
+    (value_arguments
+      (value_argument
+        [
+          %{content}%
+        ]
+      )
+    )
+  )
+) @call_expression
+"""
+
+[[template]]
+name = "boolean_method_call_expression"
+query = """
+(call_expression
+  [
+    (_
+      (simple_identifier)
+      (navigation_suffix
+        (simple_identifier) @@out_flag_alias@@
+      )
+    )
+    (simple_identifier) @@out_flag_alias@@
+  ]
+  (call_suffix
+    (value_arguments
+      (value_argument
+        [
+          %{content}%
+        ]
+      )
+      (value_argument
+        (boolean_literal) @boolean_argument
+      )
+    )
+  )
+) @call_expression
+"""
+
+[[template]]
+name = "identifiers"
+query = """
+  (_
+    (_
+      (_
+        (simple_identifier)
+        (navigation_suffix (
+          (simple_identifier) @@in_parent@@
+        ))
+      )
+      (navigation_suffix (
+        (simple_identifier) @@in_flag_alias@@
+      ))
+    )
+    (navigation_suffix)
+  )
+  (_
+    (_
+      (simple_identifier)
+      (navigation_suffix (
+        (simple_identifier) @@in_parent@@
+      ))
+    )
+    (navigation_suffix (
+      (simple_identifier) @@in_flag_alias@@
+    ))
+  )
+  (_
+    (_
+      (simple_identifier) @@in_parent@@
+      (navigation_suffix (
+        (simple_identifier) @@in_flag_alias@@
+      ))
+    )
+    (navigation_suffix)
+  )
+  (_
+    (simple_identifier) @@in_parent@@
+    (navigation_suffix (
+      (simple_identifier) @@in_flag_alias@@
+    ))
+  )
+  (navigation_expression(
+    (simple_identifier) @@in_flag_alias@@
+  ))
+  (simple_identifier) @@in_flag_alias@@
+"""
+
+[[template]]
+name = "identifiers_list"
+query = """
+(call_expression
+  (navigation_expression
+    [
+      %{identifiers}%
+      (_
+        (simple_identifier)
+        (call_suffix
+          (_
+            (value_argument
+              [
+                %{identifiers}%
+              ]
+            )
+          )
+        )
+      )
+    ]
+  )
+)
+(_
+  (simple_identifier)
+  (call_suffix
+    (_
+      (value_argument
+        [
+          %{identifiers}%
+        ]
+      )
+    )
+  )
+)
+%{identifiers}%
+"""
+
+[[template]]
+name = "identifiers_list"
+type = "literal"
+query = """
+(call_expression
+  (navigation_expression
+    (call_expression
+      (simple_identifier)
+      (call_suffix
+        (value_arguments
+          (value_argument
+            [
+              (string_literal) @flag_name
+            ]
+          )
+        )
+      )
+    )
+  )
+)
+(call_expression
+  (call_suffix
+    (value_arguments
+      (value_argument
+        [
+          (string_literal) @flag_name
+        ]
+      )
+    )
+  )
+)
+(string_literal) @flag_name
+"""
+
+[[template]]
+name = "literal_method_extension_expression"
+query = """
+(call_expression
+  (navigation_expression
+    (string_literal) @flag_name
+    (navigation_suffix
+      (simple_identifier) @@out_flag_alias@@
+    )
+  )
+  (call_suffix)
+) @call_expression
+"""
+
+[[template]]
+name = "extension_call_expression"
+query = """
+(call_expression
+  (navigation_expression
+    [
+      %{content}%
+    ]
+    (navigation_suffix
+      (simple_identifier) @@out_flag_alias@@
+    )
+  )
+  (call_suffix)
+) @call_expression
+"""
+
+[[template]]
+name = "function_invocation"
+query = """
+(call_expression
+  [
+    (simple_identifier) @@in_flag_alias@@
+    (navigation_expression
+      (simple_identifier)
+      (navigation_suffix
+        (simple_identifier) @@in_flag_alias@@
+      )
+    )
+    (navigation_expression
+      (call_expression
+        (simple_identifier)
+        (call_suffix)
+      )
+      (navigation_suffix
+        (simple_identifier) @@in_flag_alias@@
+      )
+    )
+  ]
+  (call_suffix (_))
+) @call_expression
+"""
+
+[[template]]
+name = "function_invocation"
+type = "literal"
+query = """
+"""
+
+
+[[template]]
+name = "expression_invocation"
+query = """
+[
+  (
+    %{method_call_expression}%
+      %{identifiers_list}%
+    %{/method_call_expression}%
+  )
+  (
+    %{extension_call_expression}%
+      %{identifiers_list}%
+    %{/extension_call_expression}%
+  )
+]
+"""
+
+[[template]]
+name = "test_expectations"
+query = """
+[
+  (call_expression
+    (navigation_expression
+      (call_expression
+        (simple_identifier) @prefix_name
+        (call_suffix
+          (value_arguments
+            (value_argument
+              (boolean_literal) @input_literal
+            )
+          )
+        )
+      )
+    )
+    (call_suffix
+      (value_arguments
+        (value_argument
+          (boolean_literal) @result_literal
+        )
+      )
+    )
+  ) @call_expression
+  (infix_expression
+    (call_expression
+      (simple_identifier) @prefix_name
+        (call_suffix
+          (annotated_lambda
+            (lambda_literal
+              (statements
+                (boolean_literal) @input_literal
+              )
+            )
+          )
+        )
+     )
+     (simple_identifier)
+     (boolean_literal) @result_literal
+   ) @call_expression
+   (infix_expression
+     (boolean_literal) @input_literal
+     (simple_identifier) @prefix_name
+     (boolean_literal) @result_literal
+   ) @call_expression
+]
+"""

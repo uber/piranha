@@ -160,6 +160,11 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 * `git clone https://github.com/uber/piranha.git`
 * `cd piranha`
 * `cargo build --release` (`cargo build --release --no-default-features` for macOS)
+* 
+* `export LD_LIBRARY_PATH=/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib:$LD_LIBRARY_PATH`
+* `export RUSTFLAGS="-L /opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib"`
+* `export PYO3_PYTHON=python3.9`
+* 
 * Binary will be generated under `target/release`
 
 

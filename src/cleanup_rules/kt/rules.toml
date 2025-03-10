@@ -124,7 +124,147 @@ replace = "@consequence"
 replace_node = "if_expression"
 is_seed_rule = false
 
-# Before : 
+
+# Before :
+# if (true) { doSomething() } else { doSomethingElse()}
+# if (true) abc() else xyz()
+# After :
+# { doSomething(); }
+# abc()
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_jump_prefixed_if_true_with_alternative"
+query = """
+(
+  (jump_expression
+    (if_expression
+      ((boolean_literal) @condition)
+      (control_structure_body
+        (statements
+          (_)+ @first_expressions
+          (_) @last_expression
+          .
+        )
+      ) @consequence
+      (control_structure_body) @alternative
+    ) @if_expression
+  ) @jump_expression
+(#eq? @condition "true")
+)
+"""
+replace = "@first_expressions\nreturn @last_expression"
+replace_node = "jump_expression"
+is_seed_rule = false
+
+# Before :
+# if (true) { doSomething() } else { doSomethingElse()}
+# if (true) abc() else xyz()
+# After :
+# { doSomething(); }
+# abc()
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_jump_prefixed_if_false_with_alternative"
+query = """
+(
+  (jump_expression
+    (if_expression
+      ((boolean_literal) @condition)
+      (control_structure_body) @consequence
+      (control_structure_body
+        (statements
+          (_)+ @first_expressions
+          (_) @last_expression
+          .
+        )
+      ) @alternative
+    ) @if_expression
+  ) @jump_expression
+(#eq? @condition "false")
+)
+"""
+replace = "@first_expressions\nreturn @last_expression"
+replace_node = "jump_expression"
+is_seed_rule = false
+
+# Before :
+#  return if (!true) {
+#     doSomething();
+#  } else { doSomethingElse();}
+# After :
+#  doSomethingElse();
+#
+# Before :
+#  if (false) { doSomething(); }
+# After :
+
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_jump_prefixed_if_prefix_true_with_alternative"
+query = """
+(
+  (jump_expression
+    (if_expression
+      (prefix_expression
+        (boolean_literal) @condition
+      )
+      (control_structure_body) @consequence
+      (control_structure_body
+        (statements
+          (_) @first_expressions
+          (_) @last_expression
+          .
+        )
+      ) @alternative
+    ) @if_expression
+  ) @jump_expression
+(#eq? @condition "true")
+)
+"""
+replace = "@first_expressions\nreturn @last_expression"
+replace_node = "jump_expression"
+is_seed_rule = false
+
+# Before :
+#  return if (!true) {
+#     doSomething();
+#  } else { doSomethingElse();}
+# After :
+#  doSomethingElse();
+#
+# Before :
+#  if (false) { doSomething(); }
+# After :
+
+[[rules]]
+groups = ["if_cleanup", "boolean_expression_simplify"]
+name = "simplify_jump_prefixed_if_prefix_false_with_alternative"
+query = """
+(
+  (jump_expression
+    (if_expression
+      (prefix_expression
+        (boolean_literal) @condition
+      )
+      (control_structure_body
+        (statements
+          (_) @first_expressions
+          (_) @last_expression
+          .
+        )
+      ) @consequence
+      (control_structure_body) @alternative
+    ) @if_expression
+  ) @jump_expression
+(#eq? @condition "false")
+)
+"""
+replace = "@first_expressions\nreturn @last_expression"
+replace_node = "jump_expression"
+is_seed_rule = false
+
+
+# Before :
 # if (true) { doSomething() } else { doSomethingElse()}
 # if (true) abc() else xyz()
 # After : 
@@ -204,7 +344,25 @@ replace = "true"
 replace_node = "prefix_expression"
 is_seed_rule = false
 
-# Before : 
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_false_disjunction"
+query = """
+(
+  (prefix_expression
+      (disjunction_expression
+          (_) @nested_expression
+      )
+  ) @prefix_expression
+  (#match? @nested_expression "^false$")
+  (#match? @prefix_expression "!.*")
+)
+"""
+replace = "true"
+replace_node = "prefix_expression"
+is_seed_rule = false
+
+# Before :
 #  !true
 # After :
 #  false
@@ -223,7 +381,31 @@ replace = "false"
 replace_node = "prefix_expression"
 is_seed_rule = false
 
-# Before : 
+# Before :
+#  !true &&
+# After :
+#  false
+#
+[[rules]]
+groups = ["boolean_expression_simplify"]
+name = "simplify_not_true_conjunction"
+query = """
+(
+  (prefix_expression
+      (conjunction_expression
+          (_) @nested_expression
+      )
+  ) @prefix_expression
+  (#match? @nested_expression "^true$")
+  (#match? @prefix_expression "!.*")
+)
+"""
+replace = "false"
+replace_node = "prefix_expression"
+is_seed_rule = false
+
+
+# Before :
 #  true && abc()
 # After :
 #  abc()
@@ -697,8 +879,11 @@ holes = ["variable_name", "init"]
 name = "replace_identifier_with_value"
 query = """
 (
-(simple_identifier) @identifier
-(#eq? @identifier "@variable_name")
+  [
+    (simple_identifier) @identifier
+    (interpolated_identifier) @identifier
+  ]
+  (#eq? @identifier "@variable_name")
 )
 """
 replace = "@init"

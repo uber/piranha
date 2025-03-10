@@ -1,0 +1,277 @@
+graph:
+  start:
+    enum_parameterized__literal:
+    property__literal:
+    lambda__literal:
+    sealed_class_parameterized__literal:
+    expression_invocation_positive__literal:
+    expression_invocation_negative__literal:
+    class_variable__literal:
+    object__literal:
+    class_object__literal:
+    variable__literal:
+    enum:
+    sealed_class:
+
+  nodes:
+    enum_parameterized:
+      global:
+        - enum_parameterized
+        - lambda
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - infix_expression
+        - variable
+        - property
+        - class_variable
+        - import
+        - string_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - equality_expression
+        - map_entry
+
+    enum:
+      global:
+        - enum_parameterized
+        - lambda
+        - variable
+        - property
+        - class_variable
+        - import
+        - map_entry
+        - string_expression
+        - infix_expression
+        - equality_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+
+    class_object:
+      global:
+        - enum_parameterized
+        - sealed_class_parameterized
+        - lambda
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+        - infix_expression
+        - variable
+        - property
+        - class_variable
+        - import
+        - string_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - equality_expression
+        - map_entry
+
+    object:
+      global:
+        - enum_parameterized
+        - sealed_class_parameterized
+        - lambda
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+        - infix_expression
+        - variable
+        - property
+        - class_variable
+        - import
+        - string_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - equality_expression
+        - map_entry
+
+    sealed_class:
+      global:
+        - lambda
+        - property
+        - variable
+        - class_variable
+        - import
+        - string_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - infix_expression
+        - equality_expression
+        - sealed_class_parameterized
+        - map_entry
+
+    sealed_class_parameterized:
+      global:
+        - lambda
+        - property
+        - variable
+        - class_variable
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+        - infix_expression
+        - import
+        - string_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - equality_expression
+        - sealed_class_parameterized
+        - map_entry
+
+    property:
+      file:
+        - lambda
+        - variable
+        - map_entry
+        - equality_expression
+        - string_expression
+        - infix_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+      global:
+        - import
+        - package
+
+    variable:
+      function:
+        - string_expression
+        - expression_invocation_positive
+        - expression_invocation_negative
+        - expression_invocation_non_boolean
+        - infix_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - equality_expression
+        - map_entry
+
+    class_variable:
+      class:
+        - variable
+        - lambda
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+        - infix_expression
+        - string_expression
+        - conditional_lambda_positive
+        - conditional_lambda_negative
+        - equality_expression
+        - map_entry
+
+    lambda:
+      global:
+        - lambda_invocation_positive
+        - lambda_invocation_negative
+        - variable
+        - infix_expression
+        - import
+        - string_expression
+        - callable_reference_positive
+        - callable_reference_negative
+
+    import:
+      file:
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+
+    package:
+      file:
+        - expression_invocation_negative
+        - expression_invocation_positive
+        - expression_invocation_non_boolean
+        - string_expression
+
+    enum_parameterized__cleanup:
+      global:
+        - remove_tests_with_conflict_test_stubs
+        - remove_stale_test_stubs
+        - remove_tests_referencing_old_flags
+        - capture_class_properties
+
+    enum__cleanup:
+      global:
+        - remove_tests_with_conflict_test_stubs
+        - remove_stale_test_stubs
+        - remove_tests_referencing_old_flags
+        - capture_class_properties
+
+    class_object__cleanup:
+      global:
+        - remove_tests_with_conflict_test_stubs
+        - remove_tests_referencing_old_flags
+        - capture_class_properties
+
+    object__cleanup:
+      global:
+        - remove_tests_with_conflict_test_stubs
+        - remove_tests_referencing_old_flags
+        - capture_class_properties
+
+    sealed_class__cleanup:
+      global:
+        - remove_tests_with_conflict_test_stubs
+        - remove_tests_referencing_old_flags
+        - capture_class_properties
+
+    expression_invocation_positive__cleanup:
+      function:
+        - remove_boolean_literals
+        - remove_tests_with_conflict_assertions
+      file:
+        - cleanup_parent_class_non_test_conflict_expectations
+        - remove_stale_test_assertions
+        - remove_stale_test_assertions_negate
+        - capture_class_properties
+        - capture_class_constructor_parameters
+
+    expression_invocation_negative__cleanup:
+      function:
+        - remove_boolean_literals
+        - remove_tests_with_conflict_assertions
+      file:
+        - cleanup_parent_class_non_test_conflict_expectations
+        - remove_stale_test_assertions
+        - remove_stale_test_assertions_negate
+        - capture_class_properties
+        - capture_class_constructor_parameters
+
+    lambda_invocation_positive__cleanup:
+      function:
+        - remove_boolean_literals
+        - remove_tests_with_conflict_assertions
+      file:
+        - cleanup_parent_class_non_test_conflict_expectations
+        - remove_stale_test_assertions
+        - remove_stale_test_assertions_negate
+        - capture_class_properties
+        - capture_class_constructor_parameters
+
+    lambda_invocation_negative__cleanup:
+      function:
+        - remove_boolean_literals
+        - remove_tests_with_conflict_assertions
+      file:
+        - cleanup_parent_class_non_test_conflict_expectations
+        - remove_stale_test_assertions
+        - remove_stale_test_assertions_negate
+        - capture_class_properties
+        - capture_class_constructor_parameters
+
+    capture_class_properties:
+      class:
+        - capture_used_class_properties
+    capture_used_class_properties:
+      class:
+        - remove_unused_class_properties
+    capture_class_constructor_parameters:
+      class:
+        - capture_used_class_constructor_parameters
+    capture_used_class_constructor_parameters:
+      class:
+        - ignore_unused_class_constructor_parameters

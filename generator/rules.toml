@@ -1,0 +1,965 @@
+
+[[rules]]
+name = "enum_parameterized"
+query = """
+  %{parameterized_enum_entry}%
+    %{identifiers_list}%
+  %{/parameterized_enum_entry}%
+"""
+replace_node = "enum_entry"
+replace = ""
+
+[[rules]]
+name = "enum"
+query = """
+(class_declaration
+  (type_identifier) @@out_parent@@
+  (enum_class_body
+    (enum_entry
+      (simple_identifier) @@in_flag_alias@@ @@out_flag_alias@@
+    ) @enum_entry
+  )
+)
+"""
+replace_node = "enum_entry"
+replace = ""
+
+[[rules]]
+name = "string_expression"
+query = """
+(string_literal
+  [
+    (interpolated_identifier) @@in_flag_alias@@ @interpolated_expr
+    (interpolated_expression
+      [
+        %{identifiers_list}%
+      ]
+    ) @interpolated_expr
+  ]
+)
+"""
+replace_node = "interpolated_expr"
+replace = ""
+
+[[rules]]
+name = "sealed_class"
+query = """
+(object_declaration
+  (type_identifier) @@in_flag_alias@@
+  (delegation_specifier
+    (user_type
+      (type_identifier)
+    )
+  )
+) @object_declaration
+"""
+replace_node = "object_declaration"
+replace = ""
+
+[[rules]]
+name = "import"
+query = """
+(import_header
+  (identifier
+    (simple_identifier) @@in_parent@@ @@out_parent@@
+    (simple_identifier) @@in_flag_alias@@ @@out_flag_alias@@
+  )
+) @import_header
+"""
+replace_node = "import_header"
+replace = ""
+
+[[rules]]
+name = "package"
+query = """
+(navigation_expression
+  (simple_identifier) @@in_parent@@  @@out_parent@@
+  (navigation_suffix
+    (simple_identifier) @@in_flag_alias@@ @@out_flag_alias@@
+  )
+)
+"""
+
+[[rules]]
+name = "sealed_class_parameterized"
+query = """
+%{parameterized_sealed_class}%
+  %{identifiers_list}%
+%{/parameterized_sealed_class}%
+"""
+replace_node = "object_declaration"
+replace = ""
+
+[[rules]]
+name = "object"
+query = """
+%{parameterized_sealed_object}%
+  %{identifiers_list}%
+%{/parameterized_sealed_object}%
+"""
+replace_node = "object_declaration"
+replace = ""
+
+[[rules]]
+name = "property"
+query = """
+(class_declaration
+  (type_identifier) @@out_parent@@
+  (_
+    (companion_object
+      (class_body
+        (property_declaration
+          (variable_declaration
+            (simple_identifier) @@out_flag_alias@@
+          )
+          [
+            %{identifiers_list}%
+          ]
+        ) @property_declaration
+      )
+    )
+  )
+)
+"""
+replace_node = "property_declaration"
+replace = ""
+
+[[rules]]
+name = "variable"
+query = """
+(
+  (property_declaration
+    (variable_declaration
+      (simple_identifier) @@out_flag_alias@@
+    )
+    [
+      %{identifiers_list}%
+      %{function_invocation}%
+    ]
+  ) @variable_declaration
+)
+"""
+replace_node = "variable_declaration"
+replace = ""
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fd"
+
+
+#[[rules]]
+#name = "boolean_variable"
+#query = """
+#(
+#  (property_declaration
+#    (variable_declaration
+#      (simple_identifier) @@out_flag_alias@@
+#    )
+#    [
+#      %{function_invocation}%
+#    ]
+#  ) @variable_declaration
+#)
+#"""
+#replace_node = "variable_declaration"
+#replace = ""
+#
+[[rules]]
+name = "class_variable"
+query = """
+(class_declaration
+  (class_body
+    (property_declaration
+      (variable_declaration
+        (simple_identifier) @@out_flag_alias@@
+      )
+      [
+        %{identifiers_list}%
+      ]
+    ) @variable_declaration
+  )
+)
+"""
+replace_node = "variable_declaration"
+replace = ""
+
+
+[[rules]]
+name = "class_object"
+query = """
+    (object_declaration
+        (type_identifier) @@out_parent@@
+        (class_body
+            (property_declaration
+                (variable_declaration
+                    (simple_identifier) @@out_flag_alias@@
+                )
+                [
+                    %{identifiers_list}%
+                ]
+            ) @variable_declaration
+        )
+    )
+"""
+replace_node = "variable_declaration"
+replace = ""
+
+[[rules]]
+name = "lambda"
+query = """
+[
+  (
+    %{function_declaration}%
+      %{method_call_expression}%
+        %{identifiers_list}%
+      %{/method_call_expression}%
+    %{/function_declaration}%
+  )
+  (
+    %{function_declaration}%
+      %{extension_call_expression}%
+        %{identifiers_list}%
+      %{/extension_call_expression}%
+    %{/function_declaration}%
+  )
+]
+"""
+replace_node = "function_declaration"
+replace = ""
+
+[[rules]]
+name = "lambda_extension"
+query = """
+%{function_declaration}%
+  %{extension_call_expression}%
+    %{identifiers_list}%
+  %{/extension_call_expression}%
+%{/function_declaration}%
+"""
+replace_node = "function_declaration"
+replace = ""
+
+[[rules]]
+name = "lambda_extension_literal"
+query = """
+%{function_declaration}%
+  %{extension_call_expression}%
+    (string_literal) @flag_name
+  %{/extension_call_expression}%
+%{/function_declaration}%
+"""
+replace_node = "function_declaration"
+
+[[rules]]
+name = "equality_expression"
+query = """
+(equality_expression
+  [
+    (simple_identifier)
+    (navigation_expression(
+      (simple_identifier)
+      (navigation_suffix(
+        (simple_identifier)
+      ))
+    ))
+  ]
+  [
+    %{identifiers_list}%
+  ]
+) @equality_expression
+"""
+replace = "false"
+replace_node = "equality_expression"
+groups = ["replace_expression_with_boolean_literal"]
+
+[[rules]]
+name = "lambda_invocation_positive"
+query = """
+  %{function_invocation}%
+  (#match? @@in_flag_alias@@ "^is.*|^should.*|Is|Should|^enabled$|^allow.*|^check|Allowed$")
+  (#not-match? @@in_flag_alias@@ "^isNot[A-Z].*|^shouldNot[A-Z].*|IsNot[A-Z]|ShouldNot[A-Z]")
+"""
+replace = "@treated"
+replace_node = "call_expression"
+groups = ["replace_expression_with_boolean_literal"]
+
+
+[[rules]]
+name = "callable_reference_positive"
+query = """
+  (callable_reference
+    (type_identifier)
+    (simple_identifier) @@in_flag_alias@@
+  ) @callable_reference
+  (#match? @@in_flag_alias@@ "^is.*|^should.*|Is|Should|^enabled$|^allow.*|^check|Allowed$")
+  (#not-match? @@in_flag_alias@@ "^isNot[A-Z].*|^shouldNot[A-Z].*|IsNot[A-Z]|ShouldNot[A-Z]")
+"""
+replace = "{ true }"
+replace_node = "callable_reference"
+
+[[rules]]
+name = "lambda_invocation_negative"
+query = """
+  %{function_invocation}%
+  (#match? @@in_flag_alias@@ "^isNot[A-Z].*|^shouldNot[A-Z].*|IsNot[A-Z]|ShouldNot[A-Z]")
+"""
+replace = "@untreated"
+replace_node = "call_expression"
+groups = ["replace_expression_with_boolean_literal"]
+
+[[rules]]
+name = "callable_reference_negative"
+query = """
+  (callable_reference
+    (type_identifier)
+    (simple_identifier) @@in_flag_alias@@
+  ) @callable_reference
+  (#match? @@in_flag_alias@@ "^isNot[A-Z].*|^shouldNot[A-Z].*|IsNot[A-Z]|ShouldNot[A-Z]")
+"""
+replace = "{ false }"
+replace_node = "callable_reference"
+
+[[rules]]
+name = "expression_invocation_positive"
+query = """
+%{expression_invocation}%%{/expression_invocation}%
+(#match? @@out_flag_alias@@ "^is.*|^should.*|Is|Should|^enabled$|^allow.*|^check|Allowed$")
+(#not-match? @@out_flag_alias@@ "^isNot[A-Z].*|^shouldNot[A-Z].*|IsNot[A-Z]|ShouldNot[A-Z]")
+"""
+groups = ["replace_expression_with_boolean_literal"]
+replace_node = "call_expression"
+replace = "@treated"
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fd"
+
+[[rules]]
+name = "expression_invocation_negative"
+query = """
+%{expression_invocation}%%{/expression_invocation}%
+(#match? @@out_flag_alias@@ "^isNot[A-Z].*|^shouldNot[A-Z].*|IsNot[A-Z]|ShouldNot[A-Z]")
+"""
+groups = ["replace_expression_with_boolean_literal"]
+replace_node = "call_expression"
+replace = "@untreated"
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fd"
+
+[[rules]]
+name = "expression_invocation_non_boolean"
+query = """
+[
+  (statements
+      %{method_call_expression}%
+        %{identifiers_list}%
+      %{/method_call_expression}%
+  )
+  (function_body
+    %{method_call_expression}%
+      %{identifiers_list}%
+    %{/method_call_expression}%
+  )
+]
+(#not-match? @@out_flag_alias@@ "^is.*|^should.*|Is|Should|^enabled$|^allow.*|^check|Allowed$")
+"""
+replace_node = "call_expression"
+replace = ""
+[[rules.filters]]
+enclosing_node = "(function_declaration) @fd"
+not_contains = ["""(modifiers (annotation) @ann (#eq? @ann "@Test"))"""]
+
+[[rules]]
+name = "infix_expression"
+query = """
+(infix_expression
+  [
+    (
+      (call_expression
+        (simple_identifier)
+        (call_suffix
+          (annotated_lambda
+            (lambda_literal
+              (statements
+                [
+                  (
+                    %{method_call_expression}%
+                      %{identifiers_list}%
+                    %{/method_call_expression}%
+                  )
+                  (
+                    %{extension_call_expression}%
+                      %{identifiers_list}%
+                    %{/extension_call_expression}%
+                  )
+                  (
+                    %{function_invocation}%
+                  )
+                ]
+              )
+            )
+          )
+        )
+      )
+      (simple_identifier)
+      (boolean_literal)
+    )
+    (
+      (simple_identifier)
+      (simple_identifier)
+      [
+        %{identifiers_list}%
+      ]
+    )
+  ]
+) @infix_expression
+"""
+replace_node = "infix_expression"
+replace = ""
+#[[rules.filters]]
+#enclosing_node = "(function_declaration) @fd"
+#not_contains = ["""(modifiers (annotation) @ann (#eq? @ann "@Test"))"""]
+
+[[rules]]
+name = "conditional_lambda_positive"
+query = """
+    (call_expression
+        %{method_call_expression}%
+            %{identifiers_list}%
+        %{/method_call_expression}%
+        (call_suffix
+            (annotated_lambda
+                (lambda_literal
+                    (statements
+                        (_)* @target_expr
+                    )
+                )
+            )
+        ) @call_suffix
+    ) @global_call_expression
+
+    (#not-match? @@out_flag_alias@@ ".*Not.*")
+"""
+replace_node = "global_call_expression"
+replace = "@target_expr"
+
+[[rules]]
+name = "conditional_lambda_negative"
+query = """
+(call_expression
+  (navigation_expression
+    (call_expression
+      %{method_call_expression}%
+        %{identifiers_list}%
+      %{/method_call_expression}%
+      (call_suffix
+        (annotated_lambda
+          (lambda_literal
+            (statements
+              (_) @target_expr
+            )
+          )
+        )
+      ) @call_suffix
+    )
+  )
+) @global_call_expression
+(#match? @@out_flag_alias@@ ".*Not.*")
+"""
+replace_node = "global_call_expression"
+replace = ""
+
+[[rules]]
+name = "map_entry"
+query = """
+(value_argument
+    (infix_expression
+        (string_literal)
+        (simple_identifier) @to
+        [
+            %{identifiers_list}%
+        ]
+    ) @infix_expression
+)
+(#match? @to "to")
+"""
+replace_node = "infix_expression"
+replace = ""
+
+[[rules]]
+name = "capture_class_constructor_parameters"
+query = """
+(
+  (class_declaration
+    (modifiers
+      (class_modifier) @cls_modifier
+      (#not-match? @cls_modifier "sealed|data")
+    )?
+    (primary_constructor
+      (class_parameter
+        (simple_identifier) @class_parameter_name
+      )
+    )
+    (class_body)
+  )
+)
+"""
+
+[[rules]]
+name = "capture_used_class_constructor_parameters"
+query = """
+(
+    (class_declaration
+      (class_body) @id
+    )
+  (#not-match? @id "@class_parameter_name")
+)
+"""
+holes = ["class_parameter_name"]
+[[rules.filters]]
+enclosing_node = "(class_declaration) @fd"
+
+[[rules]]
+name = "ignore_unused_class_constructor_parameters"
+query = """
+(
+  (class_parameter
+    (modifiers) @modifiers
+    (simple_identifier) @tmp
+  ) @class_parameter_to_remove
+  (#eq? @tmp "@class_parameter_name")
+  (#not-match? @modifiers "UnusedPrivateProperty")
+)
+"""
+replace_node = "class_parameter_to_remove"
+replace = "@SuppressWarnings(\"UnusedPrivateProperty\") @class_parameter_to_remove"
+holes = ["class_parameter_name"]
+[[rules.filters]]
+enclosing_node = "(class_declaration) @fd"
+
+[[rules]]
+name = "remove_unused_class_constructor_parameters"
+query = """
+(
+  (class_parameter
+    (modifiers) @modifiers
+    (simple_identifier) @tmp
+  ) @class_parameter_to_remove
+  (#eq? @tmp "@class_parameter_name")
+  (#not-match? @modifiers "UnusedPrivateProperty")
+)
+"""
+replace_node = "class_parameter_to_remove"
+replace = ""
+holes = ["class_parameter_name"]
+
+[[rules]]
+name = "capture_class_properties"
+query = """
+(
+  (class_declaration
+    (class_body
+      [
+        (property_declaration
+          (modifiers) @modifiers
+          (variable_declaration
+            (simple_identifier) @class_property_name
+          )
+        )
+        (companion_object
+          (class_body
+            (property_declaration
+              (modifiers)? @modifiers
+              (variable_declaration
+                (simple_identifier) @class_property_name
+              )
+            )
+          )
+        )
+      ]
+    )
+  )
+  (#not-match? @modifiers "override")
+)
+"""
+
+[[rules]]
+name = "add_suppress_warnings_class_annotation"
+query = """
+(
+  (class_declaration
+    (modifiers)? @modifiers
+    (type_identifier) @type_identifier
+  )
+  (#not-match? @modifiers "UnusedPrivateProperty")
+)
+"""
+replace_node = "type_identifier"
+replace = "@SuppressWarnings(\"UnusedPrivateProperty\") @modifiers @type_identifier"
+
+[[rules]]
+name = "test_rule"
+query = """
+(
+  (property_declaration) @pt
+)
+"""
+replace_node = "pt"
+replace = ""
+
+[[rules]]
+name = "add_suppress_warnings_test_method_annotation"
+query = """
+(
+  (function_declaration
+    (modifiers (annotation) @ann) @modifiers
+  )
+)
+"""
+replace_node = "modifiers"
+replace = "@modifiers\n@SuppressWarnings(\"UnusedPrivateProperty\")"
+[[rules.filters]]
+not_contains = [
+  """(modifiers (annotation) @ann (#not-match? @ann "UnusedPrivateProperty"))""",
+]
+
+[[rules]]
+name = "remove_boolean_literals"
+query = """
+(
+  (function_body
+    (statements
+      (boolean_literal) @boolean_literal
+    )
+  )
+)
+"""
+replace_node = "boolean_literal"
+replace = ""
+
+[[rules]]
+name = "capture_used_class_properties"
+query = """
+(
+  (class_declaration
+    (class_body) @body
+  )
+  (#not-match? @body "[a-zA-Z0-9]{4,} +@class_property_name")
+  (#not-match? @body " +[^ ]{1,2} +@class_property_name")
+  (#not-match? @body "@class_property_name\\\\\\\\.")
+  (#not-match? @body "@class_property_name\\\\\\\\)")
+  (#not-match? @body "@class_property_name\\\\\\\\(")
+  (#not-match? @body "@class_property_name.*,")
+  (#not-match? @body "@class_property_name.*}")
+  (#not-match? @body "\\\\".*@class_property_name.*\\\\"")
+)
+"""
+holes = ["class_property_name"]
+[[rules.filters]]
+enclosing_node = "(class_declaration) @fd"
+
+#(#not-match? @body "[a-zA-Z0-9]{4,} +@class_property_name")
+#(#not-match? @body ".+[^valr]{3} +@class_property_name")
+#(#not-match? @body ",.*@class_property_name")
+#(#not-match? @body "\\\\\\\\(@class_property_name")
+#(#not-match? @body "@class_property_name\\\\\\\\.")
+#(#not-match? @body "@class_property_name\\\\\\\\)")
+#(#not-match? @body "@class_property_name\\\\\\\\(")
+#(#not-match? @body "@class_property_name.*,")
+#(#not-match? @body "[^ ]{1,2} +@class_property_name")
+#(#not-match? @body "^ *@class_property_name")
+
+[[rules]]
+name = "ignore_unused_class_properties"
+query = """
+(
+  (property_declaration
+    (modifiers)? @modifiers
+    (variable_declaration
+        (simple_identifier) @tmp
+    )
+  ) @class_property_to_remove
+  (#eq? @tmp "@class_property_name")
+  (#not-match? @modifiers "UnusedPrivateProperty")
+)
+"""
+replace_node = "class_property_to_remove"
+replace = "@SuppressWarnings(\"UnusedPrivateProperty\")\n @class_property_to_remove"
+holes = ["class_property_name"]
+
+[[rules]]
+name = "remove_unused_class_properties"
+query = """
+(
+  (property_declaration
+    (modifiers)? @modifiers
+    (variable_declaration
+        (simple_identifier) @tmp
+    )
+  ) @class_property_to_remove
+  (#eq? @tmp "@class_property_name")
+  (#not-match? @modifiers "UnusedPrivateProperty")
+)
+"""
+replace_node = "class_property_to_remove"
+replace = ""
+holes = ["class_property_name"]
+[[rules.filters]]
+enclosing_node = "(class_declaration) @fd"
+
+[[rules]]
+name = "match_conflict_assertions"
+query = """
+(
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "Test")
+    (function_body
+      (statements
+        %{test_expectations}%
+        (#not-eq? @input_literal @result_literal)
+        (#match? @prefix_name "(whenever|every|shouldBe)")
+      )
+    )
+  ) @fd
+)
+"""
+replace_node = "modifiers"
+replace = "@org.junit.jupiter.api.Disabled"
+
+
+[[rules]]
+name = "remove_tests_with_conflict_assertions"
+query = """
+(
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "Test")
+    (function_body
+      (statements
+        %{test_expectations}%
+        (#not-eq? @input_literal @result_literal)
+        (#match? @prefix_name "(whenever|every|shouldBe)")
+      )
+    )
+  ) @fd
+)
+"""
+replace_node = "fd"
+replace = ""
+#replace_node = "modifiers"
+#replace = "@org.junit.jupiter.api.Disabled"
+
+[[rules]]
+name = "remove_tests_with_conflict_test_stubs"
+query = """
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "Test")
+    (function_body
+      (statements
+        %{boolean_method_call_expression}%
+          %{identifiers_list}%
+        %{/boolean_method_call_expression}%
+      )
+    )
+  ) @fd
+  (#not-match? @boolean_argument @treated)
+"""
+replace_node = "fd"
+replace = ""
+
+[[rules]]
+name = "conflict_test_stubs"
+query = """
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "Test")
+    (function_body
+      (statements
+        %{boolean_method_call_expression}%
+          %{identifiers_list}%
+        %{/boolean_method_call_expression}%
+      )
+    )
+  )
+  (#not-match? @boolean_argument @treated)
+"""
+replace_node = "call_expression"
+replace = ""
+
+[[rules]]
+name = "remove_stale_test_stubs"
+query = """
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "(Test|BeforeAll|BeforeEach)")
+    (function_body
+      (statements
+        %{boolean_method_call_expression}%
+          %{identifiers_list}%
+        %{/boolean_method_call_expression}%
+      )
+    )
+  )
+  (#match? @boolean_argument @treated)
+"""
+replace_node = "call_expression"
+replace = ""
+
+[[rules]]
+name = "ignore_test"
+query = """
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "Test")
+  )
+"""
+replace_node = "modifiers"
+replace = "@org.junit.jupiter.api.Disabled"
+[[rules.filters]]
+not_contains = [
+  """(modifiers (annotation) @ann (#not-match? @ann "Disabled"))""",
+]
+
+
+[[rules]]
+name = "remove_test"
+query = """
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      ) @ann
+    ) @modifiers
+    (#match? @user_type "Test")
+  ) @function_declaration
+"""
+replace_node = "function_declaration"
+replace = ""
+#[[rules.filters]]
+#not_contains = [
+#  """(modifiers (annotation) @ann (#not-match? @ann "Disabled"))""",
+#]
+#
+
+[[rules]]
+name = "cleanup_non_test_conflict_expectations"
+query = """
+(
+  (function_declaration
+    (modifiers)* @modifiers
+    (function_body
+      (statements
+        %{test_expectations}%
+        (#not-eq? @input_literal @result_literal)
+        (#match? @prefix_name "(whenever|every|shouldBe)")
+      )
+    )
+    (#not-match? @modifiers "(Test|Disabled)")
+  ) @fd
+)
+"""
+replace_node = "call_expression"
+replace = ""
+
+[[rules]]
+name = "cleanup_parent_class_non_test_conflict_expectations"
+query = """
+(
+  (class_declaration
+    (class_body
+    (function_declaration
+      (modifiers)* @modifiers
+      (function_body
+        (statements
+          %{test_expectations}%
+          (#not-eq? @input_literal @result_literal)
+          (#match? @prefix_name "(whenever|every|shouldBe)")
+        )
+      )
+      (#not-match? @modifiers "(Test|Disabled)")
+    ) @fd
+    )
+  ) @class_declaration
+)
+"""
+replace_node = "class_declaration"
+replace = ""
+
+[[rules]]
+name = "cleanup_conflict_assertions"
+query = """
+(
+  (statements
+    %{test_expectations}%
+    (#not-eq? @input_literal @result_literal)
+  )
+)
+"""
+replace_node = "call_expression"
+replace = ""
+
+[[rules]]
+name = "remove_tests_referencing_old_flags"
+query = """
+(
+  (function_declaration
+    (modifiers
+      (annotation
+        (user_type) @user_type
+      )
+    )
+    (simple_identifier) @test_function_name
+    (function_body) @body
+  ) @function_declaration
+  (#match? @user_type "Test")
+  (#match? @body @@in_flag_alias@@)
+)
+"""
+replace = ""
+replace_node = "function_declaration"
+
+[[rules]]
+name = "remove_stale_test_assertions"
+query = """
+(
+  %{test_expectations}%
+  (#eq? @input_literal @result_literal)
+  (#match? @prefix_name "(whenever|every|shouldBe)")
+)
+"""
+replace = ""
+replace_node = "call_expression"
+
+[[rules]]
+name = "remove_stale_test_assertions_negate"
+query = """
+(
+  %{test_expectations}%
+  (#not-eq? @input_literal @result_literal)
+  (#match? @prefix_name "(shouldNotBe)")
+)
+"""
+replace = ""
+replace_node = "call_expression"
