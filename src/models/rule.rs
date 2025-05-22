@@ -25,7 +25,7 @@ use crate::utilities::Instantiate;
 use super::{
   capture_group_patterns::CGPattern,
   default_configs::{
-    default_filters, default_groups, default_holes, default_is_seed_rule, default_query,
+    default_filters, default_groups, default_holes, default_is_seed_rule, default_delete_comments, default_query,
     default_replace, default_replace_idx, default_replace_node, default_rule_name,
   },
   filter::Filter,
@@ -95,6 +95,13 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   is_seed_rule: bool,
+
+  /// Marks a rule as a seed rule
+  #[builder(default = "default_delete_comments()")]
+  #[serde(default = "default_delete_comments")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  delete_comments: bool,
 }
 
 impl Rule {

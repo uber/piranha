@@ -119,10 +119,10 @@ impl Match {
 
   // Populates the leading and trailing comma and comment ranges for the match.
   fn populate_associated_elements(
-    &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments,
+    &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments, delete_comments: bool,
   ) {
-    self.get_associated_elements(node, code, piranha_arguments, true);
-    self.get_associated_elements(node, code, piranha_arguments, false);
+    self.get_associated_elements(node, code, piranha_arguments, true, delete_comments);
+    self.get_associated_elements(node, code, piranha_arguments, false, delete_comments);
     self.get_associated_leading_empty_lines(node, code);
   }
 
@@ -181,7 +181,7 @@ impl Match {
   /// Get the associated elements for the match.
   /// We currently capture leading and trailing comments and commas.
   fn get_associated_elements(
-    &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments, trailing: bool,
+    &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments, trailing: bool, delete_comments: bool,
   ) {
     let mut current_node = *node;
     let mut buf = *piranha_arguments.cleanup_comments_buffer();
@@ -199,7 +199,7 @@ impl Match {
           self.associated_comma = Some(sibling.range().into());
           current_node = sibling;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
-        } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
+        } else if delete_comments && self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           // Add the comment to the associated matches
           self.associated_comments.push(sibling.range().into());
           current_node = sibling;
@@ -490,7 +490,7 @@ impl SourceCodeUnit {
         p_match.range().end_byte,
       );
       if self.is_satisfied(matched_node, rule, p_match.matches(), rule_store) {
-        p_match.populate_associated_elements(&matched_node, self.code(), self.piranha_arguments());
+        p_match.populate_associated_elements(&matched_node, self.code(), self.piranha_arguments(), *rule.rule().delete_comments());
         trace!("Found match {:#?}", p_match);
         output.push(p_match.clone());
       }

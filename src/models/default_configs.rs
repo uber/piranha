@@ -192,6 +192,10 @@ pub(crate) fn default_is_seed_rule() -> bool {
   true
 }
 
+pub(crate) fn default_delete_comments() -> bool {
+  true
+}
+
 pub(crate) fn default_allow_dirty_ast() -> bool {
   false
 }
