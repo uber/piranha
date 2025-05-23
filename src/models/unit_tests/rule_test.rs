@@ -415,6 +415,7 @@ fn test_rule_delete_comments() {
   let args = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
     .language(PiranhaLanguage::from(JAVA))
+    .cleanup_comments(true)
     .build();
   let mut parser = args.language().parser();
 
