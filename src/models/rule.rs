@@ -148,6 +148,7 @@ macro_rules! piranha_rule {
                 $(, is_seed_rule = $is_seed_rule:expr)?
                 $(, groups = [$($group_name: expr)*])?
                 $(, filters = [$($filter:tt)*])?
+                $(, delete_comments = $delete_comments:expr)?
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
