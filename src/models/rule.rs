@@ -25,8 +25,8 @@ use crate::utilities::Instantiate;
 use super::{
   capture_group_patterns::CGPattern,
   default_configs::{
-    default_filters, default_groups, default_holes, default_is_seed_rule, default_query,
-    default_replace, default_replace_idx, default_replace_node, default_rule_name,
+    default_delete_comments, default_filters, default_groups, default_holes, default_is_seed_rule,
+    default_query, default_replace, default_replace_idx, default_replace_node, default_rule_name,
   },
   filter::Filter,
   Validator,
@@ -95,6 +95,13 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   is_seed_rule: bool,
+
+  /// Marks comments as deletable
+  #[builder(default = "default_delete_comments()")]
+  #[serde(default = "default_delete_comments")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  delete_comments: bool,
 }
 
 impl Rule {
@@ -141,6 +148,7 @@ macro_rules! piranha_rule {
                 $(, is_seed_rule = $is_seed_rule:expr)?
                 $(, groups = [$($group_name: expr)*])?
                 $(, filters = [$($filter:tt)*])?
+                $(, delete_comments = $delete_comments:expr)?
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
@@ -152,6 +160,7 @@ macro_rules! piranha_rule {
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.filters(std::collections::HashSet::from([$($filter)*])))?
+    $(.delete_comments($delete_comments))?
     .build().unwrap()
   };
 }
@@ -162,7 +171,7 @@ impl Rule {
   fn py_new(
     name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
     replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
+    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>, delete_comments: Option<bool>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
 
@@ -197,6 +206,10 @@ impl Rule {
 
     if let Some(is_seed_rule) = is_seed_rule {
       rule_builder.is_seed_rule(is_seed_rule);
+    }
+
+    if let Some(delete_comments) = delete_comments {
+      rule_builder.delete_comments(delete_comments);
     }
 
     rule_builder.build().unwrap()

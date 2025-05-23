@@ -235,6 +235,7 @@ fn test_get_edit_for_context_positive() {
   let mut rule_store = RuleStore::default();
   let args = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(JAVA))
     .build();
   let mut parser = args.language().parser();
 
@@ -284,6 +285,7 @@ fn test_get_edit_for_context_negative() {
 
   let args = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(JAVA))
     .build();
   let mut parser = args.language().parser();
 
@@ -380,4 +382,67 @@ fn test_satisfies_filter_not_enclosing_node_negative() {
     not_enclosing_node = "(while_statement ) @while"},
     |result| result,
   );
+}
+
+/// Tests whether comments are preserved when delete_comments is set to false
+#[test]
+fn test_rule_delete_comments() {
+  println!("Starting test...");
+  let _rule = piranha_rule! {
+    name= "delete_invoc",
+    query= "((method_invocation) @m (#eq? @m \"variable.set_value(true)\"))",
+    replace_node = "m",
+    replace = "",
+    delete_comments = false
+  };
+
+  let rule = InstantiatedRule::new(&_rule, &HashMap::new());
+  let source_code = "class Test {
+          public void foobar(){
+            // Given
+            variable.set_value(true);
+
+            // When
+            var result = data.Something();
+
+            // Then
+            assertTrue(\"This is a test\", result);
+          }
+        }";
+
+  let mut rule_store = RuleStore::default();
+
+  let args = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(JAVA))
+    .cleanup_comments(true)
+    .build();
+  let mut parser = args.language().parser();
+
+  let mut source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &args,
+  );
+  let node = source_code_unit.root_node();
+  let matches = source_code_unit.get_matches(&rule, &mut rule_store, node, true);
+  assert!(!matches.is_empty());
+
+  let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true);
+  assert!(edit.is_some());
+  let edit = edit.unwrap();
+
+  // Apply the edit to the source code unit
+  source_code_unit.apply_edit(&edit, &mut parser);
+
+  // Inspect the resulting code
+  let edited_code = source_code_unit.code();
+
+  // Now assert on the full edited code
+  assert!(edited_code.contains("// Given"));
+  assert!(edited_code.contains("// When"));
+  assert!(edited_code.contains("// Then"));
+  assert!(!edited_code.contains("variable.set_value(true);"));
 }
