@@ -1,3 +1,8 @@
+Version 0.3.30
+-------------
+
+* Adds a new argument for Rule() to optionally disallow deleting comments
+
 Version 0.3.29
 -------------
 
