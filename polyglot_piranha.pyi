@@ -228,7 +228,7 @@ class Rule:
     is_seed_rule: bool
     "Marks a rule as a seed rule"
     delete_comments: bool
-    "Marks a rule as a seed rule"
+    "Make comment deleting optional"
 
     def __init__(
         self,
