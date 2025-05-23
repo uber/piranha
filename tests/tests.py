@@ -305,3 +305,27 @@ def _java_toplevel_mdecl_matches_anything(code_snippet: str) -> bool:
             return len(summaries) > 0
         except:
             assert False, f"Java method_declaration as top level node should not raise an error:\n{code_snippet}"
+
+def test_delete_comments_preserved():
+    delete_invocation = Rule(
+        name="delete_invocation",
+        query="""(
+            (method_invocation) @m
+            (#eq? @m "variable.set_value(true)")
+        )""",
+        replace_node="m",
+        replace="",
+        delete_comments=False
+    )
+
+    args = PiranhaArguments(
+        language="java",
+        paths_to_codebase=["test-resources/java/delete_comments/input"],
+        rule_graph=RuleGraph(rules=[delete_invocation], edges=[]),
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    assert len(output_summaries) == 1
+
+    assert is_as_expected("test-resources/java/delete_comments/", output_summaries)
