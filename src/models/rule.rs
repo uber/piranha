@@ -160,6 +160,7 @@ macro_rules! piranha_rule {
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.filters(std::collections::HashSet::from([$($filter)*])))?
+    $(.delete_comments($delete_comments))?
     .build().unwrap()
   };
 }

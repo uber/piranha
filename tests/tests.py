@@ -323,6 +323,7 @@ def test_delete_comments_preserved():
         paths_to_codebase=["test-resources/java/delete_comments/input"],
         rule_graph=RuleGraph(rules=[delete_invocation], edges=[]),
         dry_run=True,
+        cleanup_comments=True
     )
 
     output_summaries = execute_piranha(args)

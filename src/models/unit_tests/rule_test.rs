@@ -235,6 +235,7 @@ fn test_get_edit_for_context_positive() {
   let mut rule_store = RuleStore::default();
   let args = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(JAVA))
     .build();
   let mut parser = args.language().parser();
 
@@ -284,6 +285,7 @@ fn test_get_edit_for_context_negative() {
 
   let args = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(JAVA))
     .build();
   let mut parser = args.language().parser();
 
@@ -395,7 +397,6 @@ fn test_rule_delete_comments() {
   };
 
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
-
   let source_code = "class Test {
           public void foobar(){
             // Given
