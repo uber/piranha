@@ -227,7 +227,7 @@ class Rule:
     "Filters to test before applying a rule"
     is_seed_rule: bool
     "Marks a rule as a seed rule"
-    keep_comment_regexes: list[str]
+    keep_comment_regexes: set[str]
     "Make comment deleting optional"
 
     def __init__(
