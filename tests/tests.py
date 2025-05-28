@@ -9,6 +9,7 @@
 # express or implied. See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
+from random import seed
 from polyglot_piranha import Filter, execute_piranha, PiranhaArguments, PiranhaOutputSummary, Rule, RuleGraph, OutgoingEdges
 from os.path import join, basename
 from os import listdir
@@ -330,3 +331,50 @@ def test_delete_comments_preserved():
     assert len(output_summaries) == 1
 
     assert is_as_expected("test-resources/java/delete_comments/", output_summaries)
+
+
+def test_kotlin_boolean_simplification():
+
+    rule = Rule(name="delete_flag", query="""cs :[x].isFlagOn()""", replace_node="*", replace="false", is_seed_rule=True)
+    edge = OutgoingEdges("delete_flag", to=["boolean_literal_cleanup"], scope="Parent")
+    args = PiranhaArguments(
+        rule_graph= RuleGraph(rules=[rule], edges=[edge]),
+        language="kotlin",
+        code_snippet="fun test() { val result = !a || foo.isFlagOn() }",
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    assert len(output_summaries) == 1
+    summary: PiranhaOutputSummary
+    for summary in output_summaries:
+        assert "fun test() { val result = !a }" == summary.content
+
+
+
+def test_kotlin_boolean_simplification():
+
+    rule = Rule(name="delete_flag", query="""cs :[x].isFlagOn()""", replace_node="*", replace="true", is_seed_rule=True)
+    edge = OutgoingEdges("delete_flag", to=["boolean_literal_cleanup"], scope="Parent")
+    args = PiranhaArguments(
+        rule_graph= RuleGraph(rules=[rule], edges=[edge]),
+        language="kotlin",
+        code_snippet="""fun test() { 
+        if (!foo.isFlagOn() || config == typeaheadConfig) { 
+            return false 
+        }
+        return true
+        }""",
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    assert len(output_summaries) == 1
+    summary: PiranhaOutputSummary
+    for summary in output_summaries:
+        assert summary.content == """fun test() { 
+        if (config == typeaheadConfig) { 
+            return false 
+        }
+        return true
+        }"""
