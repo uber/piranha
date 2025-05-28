@@ -47,7 +47,7 @@ serde_json = "1.0.82"
 ctrlc = "3.4"
 
 # TODO: Update if we upgrade tree-sitter to >=0.21
-tree-sitter-kotlin = "=0.3.5"
+tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", branch = "use-0.3.5" }
 tree-sitter-java = "0.20.2"
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
 tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
