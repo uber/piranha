@@ -349,3 +349,32 @@ def test_kotlin_boolean_simplification():
     summary: PiranhaOutputSummary
     for summary in output_summaries:
         assert "fun test() { val result = !a }" == summary.content
+
+
+
+def test_kotlin_boolean_simplification():
+
+    rule = Rule(name="delete_flag", query="""cs :[x].isFlagOn()""", replace_node="*", replace="true", is_seed_rule=True)
+    edge = OutgoingEdges("delete_flag", to=["boolean_literal_cleanup"], scope="Parent")
+    args = PiranhaArguments(
+        rule_graph= RuleGraph(rules=[rule], edges=[edge]),
+        language="kotlin",
+        code_snippet="""fun test() { 
+        if (!foo.isFlagOn() || config == typeaheadConfig) { 
+            return false 
+        }
+        return true
+        }""",
+        dry_run=True,
+    )
+
+    output_summaries = execute_piranha(args)
+    assert len(output_summaries) == 1
+    summary: PiranhaOutputSummary
+    for summary in output_summaries:
+        assert summary.content == """fun test() { 
+        if (config == typeaheadConfig) { 
+            return false 
+        }
+        return true
+        }"""
