@@ -227,7 +227,7 @@ class Rule:
     "Filters to test before applying a rule"
     is_seed_rule: bool
     "Marks a rule as a seed rule"
-    delete_comments: bool
+    keep_comment_regexes: set[str]
     "Make comment deleting optional"
 
     def __init__(
@@ -240,7 +240,7 @@ class Rule:
         holes: set[str] = set(),
         filters: set[Filter] = set(),
         is_seed_rule: bool = True,
-        delete_comments: bool = True,
+        keep_comment_regexes: Optional[set[str]] = None,
     ):
         """
         Constructs `Rule`

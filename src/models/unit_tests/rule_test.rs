@@ -393,14 +393,17 @@ fn test_rule_delete_comments() {
     query= "((method_invocation) @m (#eq? @m \"variable.set_value(true)\"))",
     replace_node = "m",
     replace = "",
-    delete_comments = false
+    keep_comment_regexes = ["// Given .*"]
   };
 
   let rule = InstantiatedRule::new(&_rule, &HashMap::new());
   let source_code = "class Test {
           public void foobar(){
-            // Given
+            // Given something
+            // This is an explanatory comment
+            // This is another explanatory comment
             variable.set_value(true);
+            other_variable.set_value(false);
 
             // When
             var result = data.Something();
@@ -433,16 +436,12 @@ fn test_rule_delete_comments() {
   let edit = source_code_unit.get_edit(&rule, &mut rule_store, node, true);
   assert!(edit.is_some());
   let edit = edit.unwrap();
-
   // Apply the edit to the source code unit
   source_code_unit.apply_edit(&edit, &mut parser);
 
-  // Inspect the resulting code
   let edited_code = source_code_unit.code();
-
-  // Now assert on the full edited code
-  assert!(edited_code.contains("// Given"));
-  assert!(edited_code.contains("// When"));
-  assert!(edited_code.contains("// Then"));
+  assert!(edited_code.contains("// Given something"));
+  assert!(!edited_code.contains("// This is another explanatory comment"));
+  assert!(!edited_code.contains("// This is an explanatory comment"));
   assert!(!edited_code.contains("variable.set_value(true);"));
 }
