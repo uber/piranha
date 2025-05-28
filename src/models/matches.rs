@@ -18,6 +18,7 @@ use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
 use pyo3::prelude::{pyclass, pymethods};
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
 
@@ -120,10 +121,10 @@ impl Match {
   // Populates the leading and trailing comma and comment ranges for the match.
   fn populate_associated_elements(
     &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments,
-    delete_comments: bool,
+    compiled_regexes: Vec<Regex>,
   ) {
-    self.get_associated_elements(node, code, piranha_arguments, true, delete_comments);
-    self.get_associated_elements(node, code, piranha_arguments, false, delete_comments);
+    self.get_associated_elements(node, code, piranha_arguments, true, &compiled_regexes);
+    self.get_associated_elements(node, code, piranha_arguments, false, &compiled_regexes);
     self.get_associated_leading_empty_lines(node, code);
   }
 
@@ -183,7 +184,7 @@ impl Match {
   /// We currently capture leading and trailing comments and commas.
   fn get_associated_elements(
     &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments, trailing: bool,
-    delete_comments: bool,
+    keep_comment_regexes: &[Regex],
   ) {
     let mut current_node = *node;
     let mut buf = *piranha_arguments.cleanup_comments_buffer();
@@ -201,11 +202,14 @@ impl Match {
           self.associated_comma = Some(sibling.range().into());
           current_node = sibling;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
-        } else if delete_comments
-          && self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing)
-        {
-          // Add the comment to the associated matches
-          self.associated_comments.push(sibling.range().into());
+        } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
+          let comment_text = sibling.utf8_text(code.as_bytes()).unwrap();
+          if !keep_comment_regexes
+            .iter()
+            .any(|re| re.is_match(comment_text))
+          {
+            self.associated_comments.push(sibling.range().into());
+          }
           current_node = sibling;
           continue; // Continue the inner loop (i.e. evaluate next sibling)
         }
@@ -494,11 +498,17 @@ impl SourceCodeUnit {
         p_match.range().end_byte,
       );
       if self.is_satisfied(matched_node, rule, p_match.matches(), rule_store) {
+        let compiled_regexes: Vec<Regex> = rule
+          .rule()
+          .keep_comment_regexes()
+          .iter()
+          .filter_map(|pattern| Regex::new(pattern).ok())
+          .collect();
         p_match.populate_associated_elements(
           &matched_node,
           self.code(),
           self.piranha_arguments(),
-          *rule.rule().delete_comments(),
+          compiled_regexes,
         );
         trace!("Found match {:#?}", p_match);
         output.push(p_match.clone());
