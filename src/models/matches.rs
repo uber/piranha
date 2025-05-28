@@ -18,10 +18,9 @@ use getset::{Getters, MutGetters};
 use itertools::Itertools;
 use log::trace;
 use pyo3::prelude::{pyclass, pymethods};
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use tree_sitter::Node;
-use regex::Regex;
-use std::collections::HashSet;
 
 use super::{
   piranha_arguments::PiranhaArguments, rule::InstantiatedRule, rule_store::RuleStore,
@@ -124,7 +123,6 @@ impl Match {
     &mut self, node: &Node, code: &String, piranha_arguments: &PiranhaArguments,
     compiled_regexes: Vec<Regex>,
   ) {
-
     self.get_associated_elements(node, code, piranha_arguments, true, &compiled_regexes);
     self.get_associated_elements(node, code, piranha_arguments, false, &compiled_regexes);
     self.get_associated_leading_empty_lines(node, code);
@@ -206,7 +204,10 @@ impl Match {
           continue; // Continue the inner loop (i.e. evaluate next sibling)
         } else if self._is_comment_safe_to_delete(&sibling, node, piranha_arguments, trailing) {
           let comment_text = sibling.utf8_text(code.as_bytes()).unwrap();
-          if !keep_comment_regexes.iter().any(|re| re.is_match(comment_text)) {
+          if !keep_comment_regexes
+            .iter()
+            .any(|re| re.is_match(comment_text))
+          {
             self.associated_comments.push(sibling.range().into());
           }
           current_node = sibling;
@@ -497,10 +498,12 @@ impl SourceCodeUnit {
         p_match.range().end_byte,
       );
       if self.is_satisfied(matched_node, rule, p_match.matches(), rule_store) {
-        let compiled_regexes: Vec<Regex> = rule.rule().keep_comment_regexes()
-        .iter()
-        .filter_map(|pattern| Regex::new(pattern).ok())
-        .collect();
+        let compiled_regexes: Vec<Regex> = rule
+          .rule()
+          .keep_comment_regexes()
+          .iter()
+          .filter_map(|pattern| Regex::new(pattern).ok())
+          .collect();
         p_match.populate_associated_elements(
           &matched_node,
           self.code(),

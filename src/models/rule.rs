@@ -25,8 +25,9 @@ use crate::utilities::Instantiate;
 use super::{
   capture_group_patterns::CGPattern,
   default_configs::{
-    default_keep_comment_regexes, default_filters, default_groups, default_holes, default_is_seed_rule,
-    default_query, default_replace, default_replace_idx, default_replace_node, default_rule_name,
+    default_filters, default_groups, default_holes, default_is_seed_rule,
+    default_keep_comment_regexes, default_query, default_replace, default_replace_idx,
+    default_replace_node, default_rule_name,
   },
   filter::Filter,
   Validator,
@@ -171,7 +172,8 @@ impl Rule {
   fn py_new(
     name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
     replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>, keep_comment_regexes: Option<HashSet<String>>,
+    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
+    keep_comment_regexes: Option<HashSet<String>>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
 
