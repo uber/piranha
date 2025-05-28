@@ -25,7 +25,7 @@ use crate::utilities::Instantiate;
 use super::{
   capture_group_patterns::CGPattern,
   default_configs::{
-    default_delete_comments, default_filters, default_groups, default_holes, default_is_seed_rule,
+    default_keep_comment_regexes, default_filters, default_groups, default_holes, default_is_seed_rule,
     default_query, default_replace, default_replace_idx, default_replace_node, default_rule_name,
   },
   filter::Filter,
@@ -97,11 +97,11 @@ pub struct Rule {
   is_seed_rule: bool,
 
   /// Marks comments as deletable
-  #[builder(default = "default_delete_comments()")]
-  #[serde(default = "default_delete_comments")]
+  #[builder(default = "default_keep_comment_regexes()")]
+  #[serde(default = "default_keep_comment_regexes")]
   #[get = "pub"]
   #[pyo3(get)]
-  delete_comments: bool,
+  keep_comment_regexes: HashSet<String>,
 }
 
 impl Rule {
@@ -148,7 +148,7 @@ macro_rules! piranha_rule {
                 $(, is_seed_rule = $is_seed_rule:expr)?
                 $(, groups = [$($group_name: expr)*])?
                 $(, filters = [$($filter:tt)*])?
-                $(, delete_comments = $delete_comments:expr)?
+                $(, keep_comment_regexes = [$($rgex: expr)*])?
               ) => {
     $crate::models::rule::RuleBuilder::default()
     .name($name.to_string())
@@ -160,7 +160,7 @@ macro_rules! piranha_rule {
     $(.holes(std::collections::HashSet::from([$($hole.to_string(),)*])))?
     $(.groups(std::collections::HashSet::from([$($group_name.to_string(),)*])))?
     $(.filters(std::collections::HashSet::from([$($filter)*])))?
-    $(.delete_comments($delete_comments))?
+    $(.keep_comment_regexes(std::collections::HashSet::from([$($rgex.to_string(),)*])))?
     .build().unwrap()
   };
 }
@@ -171,7 +171,7 @@ impl Rule {
   fn py_new(
     name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
     replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
-    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>, delete_comments: Option<bool>,
+    filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>, keep_comment_regexes: Option<HashSet<String>>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
 
@@ -208,8 +208,8 @@ impl Rule {
       rule_builder.is_seed_rule(is_seed_rule);
     }
 
-    if let Some(delete_comments) = delete_comments {
-      rule_builder.delete_comments(delete_comments);
+    if let Some(keep_comment_regexes) = keep_comment_regexes {
+      rule_builder.keep_comment_regexes(keep_comment_regexes);
     }
 
     rule_builder.build().unwrap()

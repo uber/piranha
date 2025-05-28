@@ -315,7 +315,7 @@ def test_delete_comments_preserved():
         )""",
         replace_node="m",
         replace="",
-        delete_comments=False
+        keep_comment_regexes={"// Given"}
     )
 
     args = PiranhaArguments(
