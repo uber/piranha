@@ -1,4 +1,4 @@
-name: Release Polyglot PiranhaMore actions
+name: Release Polyglot Piranha
 on:
   push:
     tags:
@@ -45,7 +45,6 @@ jobs:
       run: |
         maturin build --sdist -o dist
     - name: Pypi Release
-
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
