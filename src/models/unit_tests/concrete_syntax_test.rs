@@ -14,7 +14,10 @@
 use crate::models::capture_group_patterns::ConcreteSyntax;
 use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
 use crate::models::default_configs::GO;
-use crate::models::{default_configs::JAVA, language::PiranhaLanguage};
+use crate::models::{
+  default_configs::{JAVA, KOTLIN},
+  language::PiranhaLanguage,
+};
 
 fn run_test(
   code: &str, pattern: &str, expected_matches: usize, expected_vars: Vec<Vec<(&str, &str)>>,
@@ -37,6 +40,19 @@ fn run_test(
       assert_eq!(val, expected_val);
     }
   }
+}
+
+#[test]
+fn test_single_match_kotlin() {
+  run_test(
+    "class Something : BaseParameters(namespace = \"data\") {
+              val something_else: Boolean by parameter(\"something_else\")
+          }",
+    "val :[stale_property_name] : Boolean by parameter(\"something_else\")",
+    1,
+    vec![vec![("stale_property_name", "something_else")]],
+    KOTLIN,
+  );
 }
 
 #[test]
