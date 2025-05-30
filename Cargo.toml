@@ -49,7 +49,7 @@ ctrlc = "3.4"
 # TODO: Update if we upgrade tree-sitter to >=0.21
 # Kotlin's grammar needs to fix the way it parses unary expressions (currently -a + b gets parsed as - (a +b)).
 # Once we upstream the fix, we can point to the official version.
-tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", rev = "8eb82b294900b66965ecfe39cdcbb8b16c99ff71" }
+tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", rev = "5e0b07cb2ba628842028313b60b97699cc5e0fee" }
 tree-sitter-java = "0.20.2"
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
 tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
