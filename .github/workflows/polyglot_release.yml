@@ -14,15 +14,22 @@ jobs:
     strategy:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        # Python 3.13 is yet not supported by PyO3 (version 0.20.3).
+        python-version: ['3.9', '3.10', '3.11', '3.12']
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     # We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
-    container: ${{ contains(matrix.target, 'linux-') && 'debian:11' || '' }}
+    container: ${{ matrix.target == 'linux-x86' && 'quay.io/pypa/manylinux_2_28_x86_64' || '' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install Rust (Linux only)
+      if: ${{ matrix.target == 'linux-x86' || matrix.target == 'linux-arm' }}
+      run: |
+        apt-get update && apt-get install -y curl
+        curl https://sh.rustup.rs -sSf | sh -s -- -y
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
     - name: pip install --upgrade maturin
       run: |
         pip install --upgrade maturin
@@ -30,9 +37,8 @@ jobs:
       if: ${{ matrix.target == 'linux-arm' }}
       # g++ is needed for tree-sitter YAML dependency
       run: |
-        sudo apt-get update
-        sudo apt-get install gcc-aarch64-linux-gnu
-        sudo apt-get install g++-aarch64-linux-gnu
+        apt-get update
+        apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         rustup target add aarch64-unknown-linux-gnu
         mkdir -p .cargo
         touch .cargo/config.toml
