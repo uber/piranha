@@ -15,9 +15,8 @@ jobs:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
-    # We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
-    container: ${{ contains(matrix.target, 'linux-') && 'debian:11' || '' }}
+    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-22.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}Add commentMore actions
+    # TODO: We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
