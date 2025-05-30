@@ -14,7 +14,10 @@
 use crate::models::capture_group_patterns::ConcreteSyntax;
 use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
 use crate::models::default_configs::GO;
-use crate::models::{default_configs::{JAVA, KOTLIN}, language::PiranhaLanguage};
+use crate::models::{
+  default_configs::{JAVA, KOTLIN},
+  language::PiranhaLanguage,
+};
 
 fn run_test(
   code: &str, pattern: &str, expected_matches: usize, expected_vars: Vec<Vec<(&str, &str)>>,
@@ -38,7 +41,6 @@ fn run_test(
     }
   }
 }
-
 
 #[test]
 fn test_single_match_kotlin() {
