@@ -1,3 +1,9 @@
+Version 0.3.32
+-------------
+
+* Changes the Kotlin grammar dependency to a custom branch due to problems with parsing expressions
+* API changes for deciding whether or not to keep a comment at the rule level
+
 Version 0.3.31
 -------------
 
