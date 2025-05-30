@@ -3,21 +3,15 @@ on:
   push:
     tags:
       - '*'
-  workflow_dispatch:
-    inputs:
-      repository:
-        description: 'PyPI repository (pypi or testpypi)'
-        required: false
-        default: 'pypi'
 jobs:
   release:
     strategy:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
-    # We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
-    container: ${{ contains(matrix.target, 'linux-') && 'debian:11' || '' }}
+    # We need 20.04 due to glibc not being new enough on Debian/devpod
+    # It has glibc 2.28+ (manylinux_2_28), which is compatible with Debian 10: https://github.com/pypa/manylinux/tree/8e297ac3813be400a9a244a2828c18d3dd7e6969?tab=readme-ov-file#manylinux_2_28-almalinux-8-based
+    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-22.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -51,12 +45,6 @@ jobs:
       run: |
         maturin build --sdist -o dist
     - name: Pypi Release
-      if: ${{ github.event.inputs.repository == '' || github.event.inputs.repository == 'pypi' }}
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-    - name: TestPyPI Release
-      if: ${{ github.event.inputs.repository == 'testpypi' }}
-      run: |
-        pip install twine
-        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
