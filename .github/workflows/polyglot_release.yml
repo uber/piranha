@@ -48,11 +48,13 @@ jobs:
     - name: Build wheel with Maturin ${{ matrix.target }}
       run: |
         maturin build --release -o dist --target ${{ fromJSON('{"linux-x86":"x86_64-unknown-linux-gnu","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}')[matrix.target] }} -i ${{ matrix.python-version }}
-    - name: Build source distribution (only once for linux-x86)
-      if: ${{ matrix.target == 'linux-x86' }}
-      run: |
-        maturin build --sdist -o dist
     - name: Pypi Release
+      if: ${{ github.event.inputs.repository == '' || github.event.inputs.repository == 'pypi' }}
       run: |
         pip install twine
         twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+    - name: TestPyPI Release
+      if: ${{ github.event.inputs.repository == 'testpypi' }}
+      run: |
+        pip install twine
+        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
