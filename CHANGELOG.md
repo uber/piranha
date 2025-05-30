@@ -1,3 +1,10 @@
+Version 0.3.33
+-------------
+
+* Added Kotlin test for concrete syntax matching
+* Updated release workflow
+* Bug fixes and improvements
+
 Version 0.3.32
 -------------
 
