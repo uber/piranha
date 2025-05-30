@@ -3,6 +3,14 @@ on:
   push:
     tags:
       - '*'
+
+
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'PyPI repository (pypi or testpypi)'
+        required: false
+        default: 'pypi'
 jobs:
   release:
     strategy:
