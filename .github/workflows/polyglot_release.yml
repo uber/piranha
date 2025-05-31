@@ -16,34 +16,35 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
-      CIBW_BUILD: |
-        cp39-manylinux_x86_64
-        cp310-manylinux_x86_64
-        cp311-manylinux_x86_64
-        cp312-manylinux_x86_64
-        cp39-manylinux_aarch64
-        cp310-manylinux_aarch64
-        cp311-manylinux_aarch64
-        cp312-manylinux_aarch64
-        cp39-macosx_universal2
-        cp310-macosx_universal2
-        cp311-macosx_universal2
-        cp312-macosx_universal2
-      CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux*"
-      CIBW_BUILD_FRONTEND: build
+      CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+      CIBW_BUILD_VERBOSITY: 1
+      CIBW_ARCHS_LINUX: "x86_64 aarch64"
+      CIBW_ARCHS_MACOS: "universal2"
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install cibuildwheel
+      - name: Set up QEMU for cross-compilation
+        if: runner.os == 'ubuntu-latest'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Install maturin and cibuildwheel
         run: |
-          python -m pip install --upgrade pip
-          pip install cibuildwheel
+          python -m pip install maturin cibuildwheel
+
+      - name: Build source distribution (sdist)
+        run: maturin sdist --out dist
 
       - name: Build wheels with cibuildwheel
-        run: cibuildwheel --output-dir dist
+        run: python -m cibuildwheel --output-dir dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: dist/
