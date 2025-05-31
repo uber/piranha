@@ -13,7 +13,7 @@ jobs:
   release:
     strategy:
       matrix:
-        target: [linux-x86, linux-arm, macos-arm]
+        target: [linux-x86, linux-arm]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     # TODO: We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
