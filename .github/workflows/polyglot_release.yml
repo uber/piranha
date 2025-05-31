@@ -45,7 +45,7 @@ jobs:
         rustup target add aarch64-apple-darwin
     - name: Build wheel with Maturin ${{ matrix.target }}
       run: |
-        maturin build --release -o dist --target ${{ contains(matrix.target, 'macos') && '--target universal2-apple-darwin' || '' }} -i ${{ matrix.python-version }}
+        maturin build --release -o dist ${{ contains(matrix.target, 'macos') && '--target universal2-apple-darwin' || '' }} -i ${{ matrix.python-version }}
     - name: Build source distribution (only once for linux-x86)
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
