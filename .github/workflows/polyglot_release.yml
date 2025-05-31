@@ -17,8 +17,9 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     # TODO: We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
-    container:
-      image: debian:11
+    container: ${{ 
+      contains(matrix.target, 'linux') && fromJSON('{"linux-x86":"quay.io/pypa/manylinux2014_x86_64", "linux-arm":"quay.io/pypa/manylinux2014_aarch64"}')[matrix.target] || null 
+    }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -46,7 +47,7 @@ jobs:
         rustup target add aarch64-apple-darwin
     - name: Build wheel with Maturin ${{ matrix.target }}
       run: |
-        maturin build --release -o dist --target ${{ fromJSON('{"linux-x86":"x86_64-unknown-linux-gnu","linux-arm":"aarch64-unknown-linux-gnu","macos-arm":"universal2-apple-darwin"}')[matrix.target] }} -i ${{ matrix.python-version }}
+        maturin build --release -o dist --target ${{ contains(matrix.target, 'macos') && '--target universal2-apple-darwin' || '' }} -i ${{ matrix.python-version }}
     - name: Build source distribution (only once for linux-x86)
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
