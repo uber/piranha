@@ -20,6 +20,7 @@ jobs:
       CIBW_BUILD_VERBOSITY: 1
       CIBW_ARCHS_LINUX: "x86_64 aarch64"
       CIBW_ARCHS_MACOS: "universal2"
+      MACOSX_DEPLOYMENT_TARGET: "10.12"
 
     steps:
       - uses: actions/checkout@v4
