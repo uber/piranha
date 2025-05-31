@@ -13,13 +13,11 @@ jobs:
   release:
     strategy:
       matrix:
-        target: [linux-x86, linux-arm]
+        target: [linux-x86, linux-arm, macos-arm]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     # TODO: We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
-    container: ${{ 
-      contains(matrix.target, 'linux') && fromJSON('{"linux-x86":"quay.io/pypa/manylinux2014_x86_64", "linux-arm":"quay.io/pypa/manylinux2014_aarch64"}')[matrix.target] || null 
-    }}
+    container: ${{ contains(matrix.target, 'linux') && fromJSON('{"linux-x86":"quay.io/pypa/manylinux2014_x86_64", "linux-arm":"quay.io/pypa/manylinux2014_aarch64"}')[matrix.target] || null }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
