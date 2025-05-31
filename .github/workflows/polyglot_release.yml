@@ -13,40 +13,37 @@ jobs:
   release:
     strategy:
       matrix:
-        target: [linux-x86, linux-arm, macos-arm]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
-    # TODO: We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
-    container: ${{ contains(matrix.target, 'linux') && fromJSON('{"linux-x86":"quay.io/pypa/manylinux2014_x86_64", "linux-arm":"quay.io/pypa/manylinux2014_aarch64"}')[matrix.target] || null }}
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      CIBW_BUILD: |
+        cp39-manylinux_x86_64
+        cp310-manylinux_x86_64
+        cp311-manylinux_x86_64
+        cp312-manylinux_x86_64
+        cp39-manylinux_aarch64
+        cp310-manylinux_aarch64
+        cp311-manylinux_aarch64
+        cp312-manylinux_aarch64
+        cp39-macosx_universal2
+        cp310-macosx_universal2
+        cp311-macosx_universal2
+        cp312-macosx_universal2
+      CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux*"
+      CIBW_BUILD_FRONTEND: build
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: pip install --upgrade maturin
-      run: |
-        pip install --upgrade maturin
-    - name: Setup rustup target linux-arm
-      if: ${{ matrix.target == 'linux-arm' }}
-      # g++ is needed for tree-sitter YAML dependency
-      run: |
-        sudo apt-get update
-        sudo apt-get install gcc-aarch64-linux-gnu
-        sudo apt-get install g++-aarch64-linux-gnu
-        rustup target add aarch64-unknown-linux-gnu
-        mkdir -p .cargo
-        touch .cargo/config.toml
-        echo "[target.aarch64-unknown-linux-gnu]" >> .cargo/config.toml
-        echo "linker = \"aarch64-linux-gnu-gcc\"" >> .cargo/config.toml
-    - name: Setup rustup target macOS-arm
-      if: ${{ matrix.target == 'macos-arm' }}
-      run: |
-        rustup target add x86_64-apple-darwin
-        rustup target add aarch64-apple-darwin
-    - name: Build wheel with Maturin ${{ matrix.target }}
-      run: |
-        maturin build --release -o dist ${{ contains(matrix.target, 'macos') && '--target universal2-apple-darwin' || '' }} -i ${{ matrix.python-version }}
-    - name: Build source distribution (only once for linux-x86)
-      if: ${{ matrix.target == 'linux-x86' }}
-      run: |
-        maturin build --sdist -o dist
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install cibuildwheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install cibuildwheel
+
+      - name: Build wheels with cibuildwheel
+        run: cibuildwheel --output-dir dist
