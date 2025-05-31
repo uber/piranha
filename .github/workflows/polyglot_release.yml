@@ -14,9 +14,11 @@ jobs:
     strategy:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-22.04","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}Add commentMore actions
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-latest","macos-arm":"macos-latest"}')[matrix.target] }}
     # TODO: We need to pin a debian version for linux for consistency with internal CI and Devpod versions. This avoids version mismatches of critical libs like glibc.
+    container:
+      image: debian:11
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
@@ -49,13 +51,3 @@ jobs:
       if: ${{ matrix.target == 'linux-x86' }}
       run: |
         maturin build --sdist -o dist
-    - name: Pypi Release
-      if: ${{ github.event.inputs.repository == '' || github.event.inputs.repository == 'pypi' }}
-      run: |
-        pip install twine
-        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
-    - name: TestPyPI Release
-      if: ${{ github.event.inputs.repository == 'testpypi' }}
-      run: |
-        pip install twine
-        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
