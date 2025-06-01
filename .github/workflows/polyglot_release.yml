@@ -20,7 +20,7 @@ jobs:
       CIBW_BUILD_VERBOSITY: 1
       CIBW_ARCHS: ${{ fromJSON('{"linux-x86":"x86_64","linux-arm":"aarch64","macos-arm":"universal2"}')[matrix.target] }}
       CIBW_SKIP: "pp* *-musllinux*"
-      MACOSX_DEPLOYMENT_TARGET: "10.12"
+      MACOSX_DEPLOYMENT_TARGET: "10.13"
 
     steps:
       - uses: actions/checkout@v4
@@ -46,5 +46,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.os }}
+          name: dist-${{ matrix.target }}
           path: dist/
