@@ -13,14 +13,13 @@ jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        target: [linux-x86, linux-arm, macos-arm]
+    runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-24.04-arm","macos-arm":"macos-latest"}')[matrix.target] }}
     env:
       CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
       CIBW_BUILD_VERBOSITY: 1
-      CIBW_ARCHS_LINUX: "x86_64 aarch64"
+      CIBW_ARCHS: ${{ fromJSON('{"linux-x86":"x86_64","linux-arm":"aarch64","macos-arm":"universal2"}')[matrix.target] }}
       CIBW_SKIP: "pp* *-musllinux*"
-      CIBW_ARCHS_MACOS: "universal2"
       MACOSX_DEPLOYMENT_TARGET: "10.12"
 
     steps:
@@ -30,13 +29,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Set up QEMU for cross-compilation
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
-      - name: Install Rust targets for macOS
+      - name: Install Rust targets for macOS for cross-compilation
         run: |
           rustup target add x86_64-apple-darwin aarch64-apple-darwin
         if: runner.os == 'macOS'
