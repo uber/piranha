@@ -16,9 +16,10 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
-      CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+      CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
       CIBW_BUILD_VERBOSITY: 1
       CIBW_ARCHS_LINUX: "x86_64 aarch64"
+      CIBW_SKIP: "pp* *-musllinux*"
       CIBW_ARCHS_MACOS: "universal2"
       MACOSX_DEPLOYMENT_TARGET: "10.12"
 
