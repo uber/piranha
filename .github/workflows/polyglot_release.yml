@@ -31,7 +31,7 @@ jobs:
           python-version: '3.x'
 
       - name: Set up QEMU for cross-compilation
-        if: runner.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
