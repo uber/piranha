@@ -1,3 +1,7 @@
+Version 0.3.34
+-------------
+* Using CIBuildWheel for release after deprecation of ubuntu 20.04 in GitHub actions.
+
 Version 0.3.32
 -------------
 
@@ -17,13 +21,13 @@ Version 0.3.30
 Version 0.3.29
 -------------
 
-* Adds LICENSE and NOTICE to package 
+* Adds LICENSE and NOTICE to package
 
 Version 0.3.28
 -------------
 
 * Add a new argument `path_to_custom_builtin_rules` for overwriting builtin rules
-* Automate running the release workflow when a new tag is pushed 
+* Automate running the release workflow when a new tag is pushed
 
 Version 0.3.27
 -------------
