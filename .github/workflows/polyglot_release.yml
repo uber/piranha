@@ -2,25 +2,15 @@ name: Release Polyglot Piranha
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
   workflow_dispatch:
-    inputs:
-      repository:
-        description: 'PyPI repository (pypi or testpypi)'
-        required: false
-        default: 'pypi'
+
 jobs:
-  release:
+  build:
     strategy:
       matrix:
         target: [linux-x86, linux-arm, macos-arm]
     runs-on: ${{ fromJSON('{"linux-x86":"ubuntu-latest","linux-arm":"ubuntu-24.04-arm","macos-arm":"macos-latest"}')[matrix.target] }}
-    env:
-      CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
-      CIBW_BUILD_VERBOSITY: 1
-      CIBW_ARCHS: ${{ fromJSON('{"linux-x86":"x86_64","linux-arm":"aarch64","macos-arm":"universal2"}')[matrix.target] }}
-      CIBW_SKIP: "pp* *-musllinux*"
-      MACOSX_DEPLOYMENT_TARGET: "10.13"
 
     steps:
       - uses: actions/checkout@v4
@@ -30,21 +20,62 @@ jobs:
           python-version: '3.x'
 
       - name: Install Rust targets for macOS for cross-compilation
-        run: |
-          rustup target add x86_64-apple-darwin aarch64-apple-darwin
         if: runner.os == 'macOS'
-
-      - name: Install maturin and cibuildwheel
-        run: |
-          python -m pip install maturin cibuildwheel
-
-      - name: Build source distribution (sdist)
-        run: maturin sdist --out dist
-
-      - name: Build wheels with cibuildwheel
-        run: python -m cibuildwheel --output-dir dist
+        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
+        
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2
+        env:
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-*"
+          # For macOS, we directly build a universal binary.
+          CIBW_ARCHS: ${{ fromJSON('{"linux-x86":"x86_64","linux-arm":"aarch64","macos-arm":"universal2"}')[matrix.target] }}
+          # We do not need pypy and musllinux wheels.
+          CIBW_SKIP: "pp* *-musllinux*"
+          # This is the minimum macOS version the rust toolchain supports.
+          MACOSX_DEPLOYMENT_TARGET: "10.13"
+          # Also run python tests with the built wheels for extra validation.
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: "pytest {project}/tests"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.target }}
-          path: dist/
+          name: cibw-wheels-${{ matrix.target }}
+          path: ./wheelhouse/*.whl
+
+      - name: Build source distribution once only on linux-x86
+        if: ${{ matrix.target == "linux-x86" }} 
+        run: pipx run build --sdist --outdir ./wheelhouse
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ matrix.target == "linux-x86" }} 
+        with:
+          name: cibw-sdist
+          path: ./wheelhouse/*.tar.gz
+
+  upload:
+    needs: build
+    environment: pypi
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: cibw-*
+        path: dist
+        merge-multiple: true
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Pypi Release (only on tag push)
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      run: |
+        pip install twine
+        twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} dist/*
+
+    - name: TestPyPI Release
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        pip install twine
+        twine upload --repository testpypi --skip-existing -u __token__ -p ${{ secrets.TEST_PYPI_TOKEN }} dist/*
