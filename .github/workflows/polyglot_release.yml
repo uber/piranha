@@ -40,7 +40,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "10.13"
           # Also run python tests with the built wheels for extra validation.
           CIBW_TEST_REQUIRES: pytest
-          CIBW_TEST_COMMAND: "pytest {project}/tests"
+          CIBW_TEST_COMMAND: "pytest tests"
 
       - uses: actions/upload-artifact@v4
         with:
