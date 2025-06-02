@@ -44,11 +44,11 @@ jobs:
           path: ./wheelhouse/*.whl
 
       - name: Build source distribution once only on linux-x86
-        if: ${{ matrix.target == "linux-x86" }} 
+        if: ${{ matrix.target == 'linux-x86' }} 
         run: pipx run build --sdist --outdir ./wheelhouse
 
       - uses: actions/upload-artifact@v4
-        if: ${{ matrix.target == "linux-x86" }} 
+        if: ${{ matrix.target == 'linux-x86' }} 
         with:
           name: cibw-sdist
           path: ./wheelhouse/*.tar.gz
