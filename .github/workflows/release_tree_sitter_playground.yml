@@ -3,6 +3,10 @@ name: Deploy Tree-sitter Playground
 on:
   push:
     branches: [ master ]
+    paths:
+      - 'playground/tree-sitter/**'
+      - '**/Cargo.toml'
+      - '.github/workflows/release_tree_sitter_playground.yml'
 
 jobs:
   build-and-deploy:
