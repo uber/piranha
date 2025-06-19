@@ -99,6 +99,13 @@ A few additional links on Piranha:
 
 If you have any questions on how to use Piranha or find any bugs, please [open a GitHub issue](https://github.com/uber/piranha/issues).
 
+## Piranha Development
+
+Piranha uses several grammar repositories with custom patches to support the transformations. While
+these patches are being upstreamed, there may be discrepancies between the grammars in this 
+repository and the upstream grammars. Therefore, we have built a custom tree-sitter playground
+that can be used to test the grammars and queries for easier development.
+
 ## License
 Piranha is licensed under the Apache 2.0 license.  See the LICENSE file for more information.
 

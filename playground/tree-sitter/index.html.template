@@ -30,7 +30,7 @@
       </div>
 
       <div class="header-item">
-        <input id="query-checkbox" type="checkbox">
+        <input id="query-checkbox" type="checkbox" checked>
         <label for="query-checkbox">query</label>
       </div>
 

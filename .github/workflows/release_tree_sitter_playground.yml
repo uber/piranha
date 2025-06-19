@@ -17,10 +17,6 @@ jobs:
       pages: write
       id-token: write
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}tree-sitter/
-
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -31,14 +27,13 @@ jobs:
         python-version: '3.x'
 
     - name: Install tree-sitter CLI
-      run: cargo install tree-sitter-cli --version 0.24.4
+      # We have to lock tree-sitter CLI to 0.24 since newer CLI does not support building
+      # the old grammars we use in Piranha.
+      run: cargo install tree-sitter-cli --version "=0.24"
 
     - name: Build playground
       run: python build.py --dist-dir ./dist/tree-sitter-playground
       working-directory: playground/tree-sitter
-
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
