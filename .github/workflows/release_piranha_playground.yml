@@ -1,4 +1,4 @@
-name: Deploy Piranha Playground
+name: Release Piranha Playground
 
 on:
   workflow_dispatch:
