@@ -12,6 +12,7 @@
 */
 
 use crate::models::matches::Range;
+use crate::models::matches::Point;
 
 use regex::Regex;
 
@@ -22,10 +23,22 @@ use tree_sitter_traversal::Cursor;
 use crate::models::capture_group_patterns::ConcreteSyntax;
 use crate::models::matches::Match;
 
+/// Represents the different matching modes for template variables
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum MatchMode {
+  /// Match exactly one node :[var]
+  Single,
+  /// Match one or more nodes :[var+]
+  OnePlus,
+  /// Match zero or more nodes :[var*]
+  ZeroPlus,
+}
+
 // Precompile the regex outside the function
 lazy_static! {
   static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
   static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
+  static ref RE_VAR_ASTERISK: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\*\]").unwrap();
 }
 
 // Struct to avoid dealing with lifetimes
@@ -200,10 +213,13 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 
   if let Some(caps) = RE_VAR_PLUS.captures(match_template) {
     // If template starts with a template variable
-    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, true)
+    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, MatchMode::OnePlus)
   } else if let Some(caps) = RE_VAR.captures(match_template) {
     // If template starts with a template variable
-    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, false)
+    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, MatchMode::Single) 
+  } else if let Some(caps) = RE_VAR_ASTERISK.captures(match_template) {
+    // If template starts with a template variable with asterisk (zero or more)
+    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, MatchMode::ZeroPlus)
   } else if node.child_count() == 0 {
     // If the current node if a leaf
     return handle_leaf_node(cursor, source_code, match_template, top_node);
@@ -214,17 +230,18 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   }
 }
 
-/// This function does the template variable matching against entire tree nodes.function
-/// Keep in my mind that it will only attempt to match the template variables against nodes
-/// at either the current level of the traversal, or it's children. It can also operate on
-/// single node templates [args], and multiple nodes templates :[args+].
-
-/// For successful matches, it returns the assignment of each template varaible against a
-/// particular range. The Option<usize> indicates whether a match was succesfull, and keeps
+/// This function does the template variable matching against entire tree nodes.
+/// It handles different matching modes:
+/// - Single: Match exactly one node :[var]
+/// - OnePlus: Match one or more nodes :[var+]
+/// - ZeroPlus: Match zero or more nodes :[var*]
+///
+/// For successful matches, it returns the assignment of each template variable against a
+/// particular range. The Option<usize> indicates whether a match was successful, and keeps
 /// track of the last sibling node that was matched (wrt to the match_sequential_siblings function)
 fn handle_template_variable_matching(
   cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, caps: regex::Captures,
-  match_template: &str, one_plus: bool,
+  match_template: &str, mode: MatchMode,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let var_name = &caps["var_name"];
   let cs_adv_len = caps[0].len();
@@ -234,6 +251,35 @@ fn handle_template_variable_matching(
       .trim_start()
       .to_string(),
   );
+
+  // For zero_plus patterns, first try to match with zero nodes
+  if mode == MatchMode::ZeroPlus {
+    let mut tmp_cursor = cursor.clone();
+    if let (mut recursive_matches, Some(last_matched_node_idx)) =
+      get_matches_for_subsequence_of_nodes(
+        &mut tmp_cursor,
+        source_code,
+        &cs_advanced,
+        true, // nodes_left_to_match
+        top_node,
+      )
+    {
+      // Successfully matched with zero nodes
+      recursive_matches.insert(
+        var_name.to_string(),
+        CapturedNode {
+          range: Range {
+            start_byte: 0,
+            end_byte: 0,
+            start_point: Point { row: 0, column: 0 },
+            end_point: Point { row: 0, column: 0 },
+          },
+          text: String::new(),
+        },
+      );
+      return (recursive_matches, Some(last_matched_node_idx));
+    }
+  }
 
   // Matching :[var] against a sequence of nodes [first_node, ... last_node]
   loop {
@@ -303,7 +349,7 @@ fn handle_template_variable_matching(
         should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
       }
 
-      if !one_plus {
+      if mode == MatchMode::Single {
         break;
       }
     }
