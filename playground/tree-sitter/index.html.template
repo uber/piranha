@@ -15,7 +15,7 @@
       <div class="header-item">
         <label for="language-select" class="language-label">Language:</label>
         <select id="language-select" class="language-dropdown">
-          {{ languages }}
+          {{ LANGUAGE_OPTIONS }}
         </select>
       </div>
 

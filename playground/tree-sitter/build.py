@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
-"""
-Build script for tree-sitter playground for Piranha.
 
-This script automates the process of building tree-sitter grammars for the various languages
-supported by Piranha (with the specific version that Piranha uses).
-Parses Cargo.toml for tree-sitter dependencies, clones them, builds WASM files, and copies them to
-the assets directory.
-"""
+from __future__ import annotations
 
 import argparse
 import json
@@ -147,7 +141,7 @@ def instantiate_index_html(template_path: Path, output_path: Path):
         languages = [
             f'<option value="{lang}">{lang.title()}</option>' for lang in _LANGUAGES
         ]
-        content = content.replace("{{ languages }}", "\n".join(languages))
+        content = content.replace("{{ LANGUAGE_OPTIONS }}", "\n".join(languages))
         out.write(content)
 
 

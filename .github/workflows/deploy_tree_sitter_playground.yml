@@ -6,7 +6,7 @@ on:
     paths:
       - 'playground/tree-sitter/**'
       - '**/Cargo.toml'
-      - '.github/workflows/release_tree_sitter_playground.yml'
+      - 'deploy_tree_sitter_playground.yml'
 
 jobs:
   build-and-deploy:
@@ -25,6 +25,11 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
+
+    - name: Setup Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
 
     - name: Install tree-sitter CLI
       # We have to lock tree-sitter CLI to 0.24 since newer CLI does not support building
