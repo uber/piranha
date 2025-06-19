@@ -40,6 +40,9 @@ jobs:
       run: python build.py --dist-dir ./dist/tree-sitter-playground
       working-directory: playground/tree-sitter
 
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
