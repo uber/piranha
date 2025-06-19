@@ -6,7 +6,7 @@ on:
     paths:
       - 'playground/tree-sitter/**'
       - '**/Cargo.toml'
-      - 'deploy_tree_sitter_playground.yml'
+      - '.github/workflows/deploy_tree_sitter_playground.yml'
 
 jobs:
   build-and-deploy:
