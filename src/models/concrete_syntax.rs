@@ -11,8 +11,8 @@
  limitations under the License.
 */
 
-use crate::models::matches::Range;
 use crate::models::matches::Point;
+use crate::models::matches::Range;
 
 use regex::Regex;
 
@@ -213,13 +213,34 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 
   if let Some(caps) = RE_VAR_PLUS.captures(match_template) {
     // If template starts with a template variable
-    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, MatchMode::OnePlus)
+    handle_template_variable_matching(
+      cursor,
+      source_code,
+      top_node,
+      caps,
+      match_template,
+      MatchMode::OnePlus,
+    )
   } else if let Some(caps) = RE_VAR.captures(match_template) {
     // If template starts with a template variable
-    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, MatchMode::Single) 
+    handle_template_variable_matching(
+      cursor,
+      source_code,
+      top_node,
+      caps,
+      match_template,
+      MatchMode::Single,
+    )
   } else if let Some(caps) = RE_VAR_ASTERISK.captures(match_template) {
     // If template starts with a template variable with asterisk (zero or more)
-    handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, MatchMode::ZeroPlus)
+    handle_template_variable_matching(
+      cursor,
+      source_code,
+      top_node,
+      caps,
+      match_template,
+      MatchMode::ZeroPlus,
+    )
   } else if node.child_count() == 0 {
     // If the current node if a leaf
     return handle_leaf_node(cursor, source_code, match_template, top_node);
