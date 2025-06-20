@@ -187,7 +187,7 @@ fn test_asterisk_zero_or_more() {
   run_test(
     "class Example { }",
     "class :[name] { :[body*] }",
-    1,
+    2,
     vec![vec![("name", "Example"), ("body", "")]],
     JAVA,
   );
