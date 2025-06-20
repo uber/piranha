@@ -1,0 +1,57 @@
+// Concrete Syntax Grammar for Piranha
+// Supports alternations, constraints, and complex capture patterns
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+// Main entry point
+concrete_syntax = { SOI ~ pattern ~ where_clause? ~ EOI }
+
+// Pattern matching - alternation is the top level
+pattern = { alternation }
+alternation = { sequence ~ ("|" ~ sequence)* }
+sequence = { element+ }
+
+// An element is either a capture or literal text
+element = _{ capture | literal_text }
+
+// Captures: :[name], :[name+], :[name*]
+capture = { ":[" ~ identifier ~ capture_mode? ~ "]" }
+capture_mode = { "+" | "*" }
+
+// Literal text - anything that's not a capture or alternation  
+literal_text = { (!(":[" | "|" | "where") ~ ANY)+ }
+// Remove leading/trailing whitespace in the parser implementation
+
+// Constraints
+where_clause = { "where" ~ constraint ~ ("," ~ constraint)* }
+
+constraint = _{ length_constraint | matches_constraint | comparison_constraint }
+
+// Length constraints: len(:[name]) > 5
+length_constraint = { "len(" ~ capture_ref ~ ")" ~ comparison_op ~ number }
+
+// Regex matching: :[name] matches /pattern/
+matches_constraint = { capture_ref ~ "matches" ~ regex }
+
+// Value comparison: :[name] == "value"
+comparison_constraint = { capture_ref ~ comparison_op ~ value }
+
+// References to captures
+capture_ref = { ":[" ~ identifier ~ "]" }
+
+// Comparison operators
+comparison_op = { ">=" | "<=" | "==" | "!=" | ">" | "<" }
+
+// Values
+value = _{ string | number | boolean }
+string = { "\"" ~ string_char* ~ "\"" }
+string_char = _{ !("\"" | "\\") ~ ANY | "\\" ~ ANY }
+number = { "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+boolean = { "true" | "false" }
+
+// Regex literals: /pattern/
+regex = { "/" ~ regex_char* ~ "/" }
+regex_char = _{ !("/" | "\\") ~ ANY | "\\" ~ ANY }
+
+// Identifiers
+identifier = { ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
