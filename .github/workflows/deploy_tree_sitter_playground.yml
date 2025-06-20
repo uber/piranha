@@ -1,0 +1,53 @@
+name: Deploy Tree-sitter Playground
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'playground/tree-sitter/**'
+      - '**/Cargo.toml'
+      - '.github/workflows/deploy_tree_sitter_playground.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Setup Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Install tree-sitter CLI
+      # We have to lock tree-sitter CLI to 0.24 since newer CLI does not support building
+      # the old grammars we use in Piranha.
+      run: cargo install tree-sitter-cli --version "=0.24"
+
+    - name: Build playground
+      run: python build.py --dist-dir ./dist/tree-sitter-playground
+      working-directory: playground/tree-sitter
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: playground/tree-sitter/dist
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
