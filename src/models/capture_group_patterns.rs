@@ -146,13 +146,7 @@ impl CompiledCGPattern {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
       CompiledCGPattern::M(concrete_syntax) => {
-        let matches = parse_and_match(
-          &concrete_syntax.0,
-          node,
-          code_str,
-          recursive,
-          replace_node,
-        );
+        let matches = parse_and_match(&concrete_syntax.0, node, code_str, recursive, replace_node);
         match matches {
           Ok((matches, _)) => matches,
           Err(_) => Vec::new(),

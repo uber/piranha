@@ -12,20 +12,20 @@
 */
 
 //! Concrete Syntax Module
-//! 
+//!
 //! This module provides concrete syntax pattern matching capabilities for Piranha.
 //! It includes a parser for concrete syntax patterns and an interpreter that can
 //! match these patterns against tree-sitter ASTs.
 
-pub mod parser;
 pub mod interpreter;
+pub mod parser;
 
 // Re-export main functions for backward compatibility
 pub use interpreter::parse_and_match;
 
-use crate::models::matches::{Range, Match};
-use tree_sitter::Node;
 use crate::models::capture_group_patterns::ConcreteSyntax as ConcreteSyntaxWrapper;
+use crate::models::matches::{Match, Range};
+use tree_sitter::Node;
 
 // Legacy types kept for compatibility with existing test infrastructure
 #[derive(Clone, PartialEq, Eq)]
@@ -36,7 +36,8 @@ pub struct CapturedNode {
 
 /// Main entry point for concrete syntax matching - delegates to v3 implementation
 pub(crate) fn get_all_matches_for_concrete_syntax(
-  node: &Node, code_str: &[u8], cs: &ConcreteSyntaxWrapper, recursive: bool, replace_node: Option<String>,
+  node: &Node, code_str: &[u8], cs: &ConcreteSyntaxWrapper, recursive: bool,
+  replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   // Use v3 implementation for enhanced parsing with alternations and constraints
   match parse_and_match(&cs.0, node, code_str, recursive, replace_node) {
