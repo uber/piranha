@@ -180,3 +180,27 @@ fn test_match_anything() {
     JAVA,
   );
 }
+
+#[test]
+fn test_asterisk_zero_or_more() {
+  // Test asterisk (zero or more) matching
+  run_test(
+    "class Example { }",
+    "class :[name] { :[body*] }",
+    2,
+    vec![vec![("name", "Example"), ("body", "")]],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_asterisk_one_or_more() {
+  // Test asterisk (zero or more) matching with actual content
+  run_test(
+    "import java.util.ArrayList; class Example { int x = 1; int y = 2; }",
+    "class :[name] { :[body*] }",
+    1,
+    vec![vec![("name", "Example"), ("body", "int x = 1; int y = 2;")]],
+    JAVA,
+  );
+}
