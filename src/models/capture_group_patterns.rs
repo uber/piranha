@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use crate::models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
+use crate::models::concrete_syntax::parser::ConcreteSyntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -25,7 +26,6 @@ use regex::Regex;
 use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
-use crate::models::concrete_syntax::parser::ConcreteSyntax;
 
 use super::{
   default_configs::{CONCRETE_SYNTAX_QUERY_PREFIX, REGEX_QUERY_PREFIX},
@@ -59,7 +59,7 @@ impl CGPattern {
 
   pub(crate) fn extract_concrete_syntax(&self) -> ConcreteSyntax {
     let mut _val = &self.pattern()[CONCRETE_SYNTAX_QUERY_PREFIX.len()..];
-    ConcreteSyntax::parse(&_val.to_string()).unwrap()
+    ConcreteSyntax::parse(_val).unwrap()
   }
 
   pub(crate) fn pattern_type(&self) -> PatternType {
