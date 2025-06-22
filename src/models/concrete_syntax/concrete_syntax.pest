@@ -1,0 +1,17 @@
+// Concrete Syntax Grammar for Piranha
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+// Main entry point
+concrete_syntax = { SOI ~ pattern ~ EOI }
+pattern = { element+ }
+
+// An element is either a capture or literal text
+element = _{ capture | literal_text }
+
+// Captures: :[name], :[name+], :[name*]
+capture = { ":[" ~ identifier ~ capture_mode? ~ "]" }
+capture_mode = { "+" | "*" }
+identifier = { (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Literal text - anything that's not a capture or alternation  
+literal_text = { (!(":[") ~ ANY)+ }
