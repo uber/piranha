@@ -12,7 +12,7 @@
 */
 
 use crate::models::capture_group_patterns::ConcreteSyntax;
-use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
+use crate::models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
 use crate::models::default_configs::GO;
 use crate::models::{
   default_configs::{JAVA, KOTLIN},

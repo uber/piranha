@@ -19,14 +19,9 @@ use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 use tree_sitter_traversal::Cursor;
 
-use crate::models::capture_group_patterns::ConcreteSyntax;
+use crate::models::concrete_syntax::parser::{ConcreteSyntax, CsElement};
 use crate::models::matches::Match;
 
-// Precompile the regex outside the function
-lazy_static! {
-  static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
-  static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
-}
 
 // Struct to avoid dealing with lifetimes
 #[derive(Clone, PartialEq, Eq)]
@@ -46,7 +41,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
-  if let Some(match_result) = match_sequential_siblings(&mut node.walk(), code_str, cs) {
+  if let Some(match_result) = match_sequential_siblings(&mut node.walk(), code_str, &cs.pattern.sequence) {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
     let mut match_map = match_result.mapping;
     let range = match_result.range;
@@ -121,7 +116,7 @@ fn find_next_sibling_or_ancestor_sibling(cursor: &mut TreeCursor) -> bool {
 /// 3. If a match is found, determine the range of matched nodes subtrees (i.e., [2nd,..., 4th], and return the match mapping, and range.
 /// 4. If no match is found, return an empty mapping, and None for range.
 fn match_sequential_siblings(
-  cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax,
+  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<CsElement>,
 ) -> Option<MatchResult> {
   let parent_node = cursor.node();
   let mut child_seq_match_start = 0;
@@ -133,7 +128,7 @@ fn match_sequential_siblings(
       // Cloning here is necessary other we won't be able to advance to the next sibling if the matching fails
       let mut tmp_cursor = cursor.clone();
       let (mapping, indx) =
-        get_matches_for_subsequence_of_nodes(&mut tmp_cursor, source_code, cs, true, &parent_node);
+        get_matches_for_subsequence_of_nodes(&mut tmp_cursor, source_code, cs_elements, true, &parent_node);
 
       // If we got the index of the last matched sibling, that means the matching was successful.
       if let Some(last_node_index) = indx {
@@ -177,12 +172,11 @@ fn match_sequential_siblings(
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_subsequence_of_nodes(
-  cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax, nodes_left_to_match: bool,
+  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<CsElement>, nodes_left_to_match: bool,
   top_node: &Node,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
-  let match_template = cs.0.as_str();
 
-  if match_template.is_empty() {
+  if cs_elements.is_empty() {
     if !nodes_left_to_match {
       return (HashMap::new(), Some(top_node.child_count() - 1));
     }
@@ -197,7 +191,7 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   while node.kind().contains("comment") && cursor.goto_next_sibling() {
     node = cursor.node();
   }
-
+  
   if let Some(caps) = RE_VAR_PLUS.captures(match_template) {
     // If template starts with a template variable
     handle_template_variable_matching(cursor, source_code, top_node, caps, match_template, true)
@@ -363,5 +357,5 @@ fn get_code_from_range(start_byte: usize, end_byte: usize, source_code: &[u8]) -
 }
 
 #[cfg(test)]
-#[path = "unit_tests/concrete_syntax_test.rs"]
-mod concrete_syntax_test;
+#[path = "unit_tests/interpreter_test.rs"]
+mod interpreter_test;
