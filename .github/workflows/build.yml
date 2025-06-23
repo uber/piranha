@@ -52,4 +52,4 @@ jobs:
           pip install maturin==1.8.7 pytest
           maturin --version
           maturin develop
-          pytest -s -rx --ignore=experimental/ .
+          pytest --ignore=experimental/ .
