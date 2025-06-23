@@ -25,4 +25,4 @@ build-backend = "maturin"
 
 [tool.maturin]
 bindings = "pyo3"
-include = ["LICENSE", "NOTICE", "polyglot_piranha.pyi"]
+include = ["polyglot_piranha.pyi"]
