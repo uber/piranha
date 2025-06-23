@@ -1,15 +1,15 @@
 /*
-  Copyright (c) 2023 Uber Technologies, Inc.
- 
-  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
-  except in compliance with the License. You may obtain a copy of the License at
-  <p>http://www.apache.org/licenses/LICENSE-2.0
- 
-  <p>Unless required by applicable law or agreed to in writing, software distributed under the
-  License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-  express or implied. See the License for the specific language governing permissions and
-  limitations under the License.
- */
+ Copyright (c) 2023 Uber Technologies, Inc.
+
+ <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ except in compliance with the License. You may obtain a copy of the License at
+ <p>http://www.apache.org/licenses/LICENSE-2.0
+
+ <p>Unless required by applicable law or agreed to in writing, software distributed under the
+ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ express or implied. See the License for the specific language governing permissions and
+ limitations under the License.
+*/
 
 use crate::models::concrete_syntax::parser::*;
 
@@ -35,14 +35,20 @@ mod tests {
 
   #[test]
   fn test_parse_literal() {
-    let input = "function";
+    let input = "public int";
     let result = ConcreteSyntax::parse(input).unwrap();
     let elements = result.pattern.sequence;
 
-    assert_eq!(elements.len(), 1);
+    assert_eq!(elements.len(), 2);
     match &elements[0] {
       CsElement::Literal(text) => {
-        assert_eq!(text, "function");
+        assert_eq!(text, "public");
+      }
+      _ => panic!("Expected literal, got: {:?}", elements[0]),
+    }
+    match &elements[1] {
+      CsElement::Literal(text) => {
+        assert_eq!(text, "int");
       }
       _ => panic!("Expected literal, got: {:?}", elements[0]),
     }
@@ -50,11 +56,11 @@ mod tests {
 
   #[test]
   fn test_parse_capture_with_literal() {
-    let input = "function :[name]() {";
+    let input = "function @name() {";
     let result = ConcreteSyntax::parse(input).unwrap();
     let elements = result.pattern.sequence;
 
-    assert_eq!(elements.len(), 3);
+    assert_eq!(elements.len(), 4);
 
     // Should be: literal "function ", capture "name", literal "() {"
     match &elements[0] {
@@ -71,8 +77,13 @@ mod tests {
     }
 
     match &elements[2] {
-      CsElement::Literal(text) => assert_eq!(text, "() {"),
+      CsElement::Literal(text) => assert_eq!(text, "()"),
       _ => panic!("Expected literal, got: {:?}", elements[2]),
+    }
+
+    match &elements[3] {
+      CsElement::Literal(text) => assert_eq!(text, "{"),
+      _ => panic!("Expected literal, got: {:?}", elements[3]),
     }
   }
 
