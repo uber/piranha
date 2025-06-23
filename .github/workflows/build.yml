@@ -32,7 +32,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pipx
           pipx install pre-commit
-          pipx install taplo-cli
+          cargo install taplo-cli --locked
           pip install maturin pytest
 
       - name: Run pre-commit
