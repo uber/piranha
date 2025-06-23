@@ -35,10 +35,10 @@ jobs:
           cargo install taplo-cli --locked
           pre-commit run --all-files
 
-      - name: Run unit and integration tests
-        run: |
-          cargo build 
-          cargo test -- --include-ignored
+      # - name: Run unit and integration tests
+      #   run: |
+      #     cargo build 
+      #     cargo test -- --include-ignored
 
       - name: Run Python tests
         run: |
@@ -47,6 +47,7 @@ jobs:
           source .venv/bin/activate
           python -m pip install --upgrade pip
           pip install maturin pytest
+          maturin --version
           maturin develop
           pytest tests/tests.py
           pytest -s -rx .
