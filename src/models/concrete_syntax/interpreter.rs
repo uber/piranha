@@ -11,7 +11,6 @@
  limitations under the License.
 */
 
-use crate::models::matches::Point;
 use crate::models::matches::Range;
 
 use regex::Regex;
@@ -20,25 +19,13 @@ use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 use tree_sitter_traversal::Cursor;
 
-use crate::models::capture_group_patterns::ConcreteSyntax;
+use crate::models::concrete_syntax::parser::{ConcreteSyntax, CsElement};
 use crate::models::matches::Match;
-
-/// Represents the different matching modes for template variables
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum MatchMode {
-  /// Match exactly one node :[var]
-  Single,
-  /// Match one or more nodes :[var+]
-  OnePlus,
-  /// Match zero or more nodes :[var*]
-  ZeroPlus,
-}
 
 // Precompile the regex outside the function
 lazy_static! {
   static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
   static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
-  static ref RE_VAR_ASTERISK: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\*\]").unwrap();
 }
 
 // Struct to avoid dealing with lifetimes
@@ -59,7 +46,9 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
-  if let Some(match_result) = match_sequential_siblings(&mut node.walk(), code_str, cs) {
+  if let Some(match_result) =
+    match_sequential_siblings(&mut node.walk(), code_str, &cs.pattern.sequence)
+  {
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
     let mut match_map = match_result.mapping;
     let range = match_result.range;
@@ -134,7 +123,7 @@ fn find_next_sibling_or_ancestor_sibling(cursor: &mut TreeCursor) -> bool {
 /// 3. If a match is found, determine the range of matched nodes subtrees (i.e., [2nd,..., 4th], and return the match mapping, and range.
 /// 4. If no match is found, return an empty mapping, and None for range.
 fn match_sequential_siblings(
-  cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax,
+  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<CsElement>,
 ) -> Option<MatchResult> {
   let parent_node = cursor.node();
   let mut child_seq_match_start = 0;
@@ -145,8 +134,13 @@ fn match_sequential_siblings(
       // Clone the cursor in order to attempt matching the sequence starting at cursor.node
       // Cloning here is necessary other we won't be able to advance to the next sibling if the matching fails
       let mut tmp_cursor = cursor.clone();
-      let (mapping, indx) =
-        get_matches_for_subsequence_of_nodes(&mut tmp_cursor, source_code, cs, true, &parent_node);
+      let (mapping, indx) = get_matches_for_subsequence_of_nodes(
+        &mut tmp_cursor,
+        source_code,
+        cs_elements,
+        true,
+        &parent_node,
+      );
 
       // If we got the index of the last matched sibling, that means the matching was successful.
       if let Some(last_node_index) = indx {
@@ -190,12 +184,10 @@ fn match_sequential_siblings(
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
 ///   the ConcreteSyntax.
 pub(crate) fn get_matches_for_subsequence_of_nodes(
-  cursor: &mut TreeCursor, source_code: &[u8], cs: &ConcreteSyntax, nodes_left_to_match: bool,
-  top_node: &Node,
+  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<CsElement>,
+  nodes_left_to_match: bool, top_node: &Node,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
-  let match_template = cs.0.as_str();
-
-  if match_template.is_empty() {
+  if cs_elements.is_empty() {
     if !nodes_left_to_match {
       return (HashMap::new(), Some(top_node.child_count() - 1));
     }
@@ -211,43 +203,38 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
     node = cursor.node();
   }
 
-  if let Some(caps) = RE_VAR_PLUS.captures(match_template) {
-    // If template starts with a template variable
-    handle_template_variable_matching(
-      cursor,
-      source_code,
-      top_node,
-      caps,
-      match_template,
-      MatchMode::OnePlus,
-    )
-  } else if let Some(caps) = RE_VAR.captures(match_template) {
-    // If template starts with a template variable
-    handle_template_variable_matching(
-      cursor,
-      source_code,
-      top_node,
-      caps,
-      match_template,
-      MatchMode::Single,
-    )
-  } else if let Some(caps) = RE_VAR_ASTERISK.captures(match_template) {
-    // If template starts with a template variable with asterisk (zero or more)
-    handle_template_variable_matching(
-      cursor,
-      source_code,
-      top_node,
-      caps,
-      match_template,
-      MatchMode::ZeroPlus,
-    )
-  } else if node.child_count() == 0 {
-    // If the current node if a leaf
-    return handle_leaf_node(cursor, source_code, match_template, top_node);
-  } else {
-    // If the current node is an intermediate node
-    cursor.goto_first_child();
-    return get_matches_for_subsequence_of_nodes(cursor, source_code, cs, true, top_node);
+  // Get the first element and remaining elements
+  let first_element = &cs_elements[0];
+  let remaining_elements = &cs_elements[1..].to_vec();
+
+  match first_element {
+    CsElement::Capture { name, mode } => {
+      // Handle template variable matching
+      handle_template_variable_matching_elements(
+        cursor,
+        source_code,
+        top_node,
+        name,
+        *mode,
+        remaining_elements,
+      )
+    }
+    CsElement::Literal(literal_text) => {
+      if node.child_count() == 0 {
+        // If the current node is a leaf
+        handle_leaf_node_elements(
+          cursor,
+          source_code,
+          literal_text,
+          remaining_elements,
+          top_node,
+        )
+      } else {
+        // If the current node is an intermediate node
+        cursor.goto_first_child();
+        get_matches_for_subsequence_of_nodes(cursor, source_code, cs_elements, true, top_node)
+      }
+    }
   }
 }
 
@@ -259,28 +246,20 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 ///
 /// For successful matches, it returns the assignment of each template variable against a
 /// particular range. The Option<usize> indicates whether a match was successful, and keeps
-/// track of the last sibling node that was matched (wrt to the match_sequential_siblings function)
-fn handle_template_variable_matching(
-  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, caps: regex::Captures,
-  match_template: &str, mode: MatchMode,
+fn handle_template_variable_matching_elements(
+  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str,
+  mode: crate::models::concrete_syntax::parser::CaptureMode, remaining_elements: &Vec<CsElement>,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
-  let var_name = &caps["var_name"];
-  let cs_adv_len = caps[0].len();
-  let cs_advanced = ConcreteSyntax(
-    match_template[cs_adv_len..]
-      .to_string()
-      .trim_start()
-      .to_string(),
-  );
+  use crate::models::concrete_syntax::parser::CaptureMode;
 
   // For zero_plus patterns, first try to match with zero nodes
-  if mode == MatchMode::ZeroPlus {
+  if mode == CaptureMode::ZeroPlus {
     let mut tmp_cursor = cursor.clone();
     if let (mut recursive_matches, Some(last_matched_node_idx)) =
       get_matches_for_subsequence_of_nodes(
         &mut tmp_cursor,
         source_code,
-        &cs_advanced,
+        remaining_elements,
         true, // nodes_left_to_match
         top_node,
       )
@@ -292,8 +271,8 @@ fn handle_template_variable_matching(
           range: Range {
             start_byte: 0,
             end_byte: 0,
-            start_point: Point { row: 0, column: 0 },
-            end_point: Point { row: 0, column: 0 },
+            start_point: crate::models::matches::Point { row: 0, column: 0 },
+            end_point: crate::models::matches::Point { row: 0, column: 0 },
           },
           text: String::new(),
         },
@@ -301,7 +280,6 @@ fn handle_template_variable_matching(
       return (recursive_matches, Some(last_matched_node_idx));
     }
   }
-
   // Matching :[var] against a sequence of nodes [first_node, ... last_node]
   loop {
     let first_node = cursor.node();
@@ -317,12 +295,13 @@ fn handle_template_variable_matching(
     let mut is_final_sibling = false;
     loop {
       let mut tmp_cursor = next_node_cursor.clone();
+      let remaining_elements_tmp = remaining_elements.clone();
 
       if let (mut recursive_matches, Some(last_matched_node_idx)) =
         get_matches_for_subsequence_of_nodes(
           &mut tmp_cursor,
           source_code,
-          &cs_advanced,
+          &remaining_elements_tmp,
           should_match,
           top_node,
         )
@@ -370,7 +349,7 @@ fn handle_template_variable_matching(
         should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
       }
 
-      if mode == MatchMode::Single {
+      if mode == CaptureMode::Single {
         break;
       }
     }
@@ -383,30 +362,43 @@ fn handle_template_variable_matching(
   (HashMap::new(), None)
 }
 
-fn handle_leaf_node(
-  cursor: &mut TreeCursor, source_code: &[u8], match_template: &str, top_node: &Node,
+fn handle_leaf_node_elements(
+  cursor: &mut TreeCursor, source_code: &[u8], literal_text: &str,
+  remaining_elements: &Vec<CsElement>, top_node: &Node,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let code = cursor.node().utf8_text(source_code).unwrap().trim();
-  if match_template.starts_with(code) && !code.is_empty() {
+  if literal_text.starts_with(code) && !code.is_empty() {
     let advance_by = code.len();
     // Can only advance if there is still enough chars to consume
-    if advance_by > match_template.len() {
+    if advance_by > literal_text.len() {
       return (HashMap::new(), None);
     }
-    let cs_substring = ConcreteSyntax(
-      match_template[advance_by..]
-        .to_string()
-        .trim_start()
-        .to_owned(),
-    );
+
     let should_match = find_next_sibling_or_ancestor_sibling(cursor);
-    return get_matches_for_subsequence_of_nodes(
-      cursor,
-      source_code,
-      &cs_substring,
-      should_match,
-      top_node,
-    );
+
+    // If we consumed the entire literal, continue with remaining elements
+    if advance_by == literal_text.len() {
+      return get_matches_for_subsequence_of_nodes(
+        cursor,
+        source_code,
+        remaining_elements,
+        should_match,
+        top_node,
+      );
+    } else {
+      // If we only consumed part of the literal, create a new literal with the remaining text
+      let remaining_literal = &literal_text[advance_by..];
+      let mut new_elements = vec![CsElement::Literal(remaining_literal.to_string())];
+      new_elements.extend_from_slice(remaining_elements);
+
+      return get_matches_for_subsequence_of_nodes(
+        cursor,
+        source_code,
+        &new_elements,
+        should_match,
+        top_node,
+      );
+    }
   }
   (HashMap::new(), None)
 }
@@ -430,5 +422,5 @@ fn get_code_from_range(start_byte: usize, end_byte: usize, source_code: &[u8]) -
 }
 
 #[cfg(test)]
-#[path = "unit_tests/concrete_syntax_test.rs"]
-mod concrete_syntax_test;
+#[path = "unit_tests/interpreter_test.rs"]
+mod interpreter_test;

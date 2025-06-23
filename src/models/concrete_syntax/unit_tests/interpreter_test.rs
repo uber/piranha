@@ -11,8 +11,8 @@
  limitations under the License.
 */
 
-use crate::models::capture_group_patterns::ConcreteSyntax;
-use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
+use crate::models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
+use crate::models::concrete_syntax::parser::ConcreteSyntax;
 use crate::models::default_configs::GO;
 use crate::models::{
   default_configs::{JAVA, KOTLIN},
@@ -26,7 +26,7 @@ fn run_test(
   let java = PiranhaLanguage::from(language);
   let mut parser = java.parser();
   let tree = parser.parse(code.as_bytes(), None).unwrap();
-  let meta = ConcreteSyntax(String::from(pattern));
+  let meta = ConcreteSyntax::parse(pattern).unwrap();
 
   let (matches, _is_match_found) =
     get_all_matches_for_concrete_syntax(&tree.root_node(), code.as_bytes(), &meta, true, None);
