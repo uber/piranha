@@ -22,11 +22,8 @@ use tree_sitter_traversal::Cursor;
 use crate::models::concrete_syntax::parser::{ConcreteSyntax, CsElement};
 use crate::models::matches::Match;
 
-// Precompile the regex outside the function
-lazy_static! {
-  static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
-  static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
-}
+
+
 
 // Struct to avoid dealing with lifetimes
 #[derive(Clone, PartialEq, Eq)]
@@ -210,16 +207,12 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   match first_element {
     CsElement::Capture { name, mode } => {
       // Handle template variable matching
-      let one_plus = matches!(
-        mode,
-        crate::models::concrete_syntax::parser::CaptureMode::OnePlus
-      );
       handle_template_variable_matching_elements(
         cursor,
         source_code,
         top_node,
         name,
-        one_plus,
+        *mode,
         remaining_elements,
       )
     }
@@ -251,9 +244,39 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 /// particular range. The Option<usize> indicates whether a match was succesfull, and keeps
 /// track of the last sibling node that was matched (wrt to the match_sequential_siblings function)
 fn handle_template_variable_matching_elements(
-  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str, one_plus: bool,
+  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str, mode: crate::models::concrete_syntax::parser::CaptureMode,
   remaining_elements: &Vec<CsElement>,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
+  use crate::models::concrete_syntax::parser::CaptureMode;
+
+  // For zero_plus patterns, first try to match with zero nodes
+  if mode == CaptureMode::ZeroPlus {
+    let mut tmp_cursor = cursor.clone();
+    if let (mut recursive_matches, Some(last_matched_node_idx)) =
+      get_matches_for_subsequence_of_nodes(
+        &mut tmp_cursor,
+        source_code,
+        remaining_elements,
+        true, // nodes_left_to_match
+        top_node,
+      )
+    {
+      // Successfully matched with zero nodes
+      recursive_matches.insert(
+        var_name.to_string(),
+        CapturedNode {
+          range: Range {
+            start_byte: 0,
+            end_byte: 0,
+            start_point: crate::models::matches::Point { row: 0, column: 0 },
+            end_point: crate::models::matches::Point { row: 0, column: 0 },
+          },
+          text: String::new(),
+        },
+      );
+      return (recursive_matches, Some(last_matched_node_idx));
+    }
+  }
   // Matching :[var] against a sequence of nodes [first_node, ... last_node]
   loop {
     let first_node = cursor.node();
@@ -323,7 +346,7 @@ fn handle_template_variable_matching_elements(
         should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
       }
 
-      if !one_plus {
+      if mode == CaptureMode::Single {
         break;
       }
     }
