@@ -238,17 +238,17 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   }
 }
 
-/// This function does the template variable matching against entire tree nodes.function
-/// Keep in my mind that it will only attempt to match the template variables against nodes
-/// at either the current level of the traversal, or it's children. It can also operate on
-/// single node templates [args], and multiple nodes templates :[args+].
-
-/// For successful matches, it returns the assignment of each template varaible against a
-/// particular range. The Option<usize> indicates whether a match was succesfull, and keeps
-/// track of the last sibling node that was matched (wrt to the match_sequential_siblings function)
+/// This function does the template variable matching against entire tree nodes.
+/// It handles different matching modes:
+/// - Single: Match exactly one node :[var]
+/// - OnePlus: Match one or more nodes :[var+]
+/// - ZeroPlus: Match zero or more nodes :[var*]
+///
+/// For successful matches, it returns the assignment of each template variable against a
+/// particular range. The Option<usize> indicates whether a match was successful, and keeps
 fn handle_template_variable_matching_elements(
-  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str, mode: crate::models::concrete_syntax::parser::CaptureMode,
-  remaining_elements: &Vec<CsElement>,
+  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str,
+  mode: crate::models::concrete_syntax::parser::CaptureMode, remaining_elements: &Vec<CsElement>,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   use crate::models::concrete_syntax::parser::CaptureMode;
 
