@@ -35,10 +35,10 @@ jobs:
           cargo install taplo-cli --locked
           pre-commit run --all-files
 
-      # - name: Run unit and integration tests
-      #   run: |
-      #     cargo build 
-      #     cargo test -- --include-ignored
+      - name: Run unit and integration tests
+        run: |
+          cargo build 
+          cargo test -- --include-ignored
 
       - name: Run Python tests
         run: |
