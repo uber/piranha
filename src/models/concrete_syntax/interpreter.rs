@@ -236,13 +236,7 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
       } else {
         // If the current node is an intermediate node
         cursor.goto_first_child();
-        get_matches_for_subsequence_of_nodes(
-          cursor,
-          source_code,
-          cs_elements,
-          true,
-          top_node,
-        )
+        get_matches_for_subsequence_of_nodes(cursor, source_code, cs_elements, true, top_node)
       }
     }
   }
@@ -357,7 +351,7 @@ fn handle_leaf_node_elements(
       );
     } else {
       // If we only consumed part of the literal, create a new literal with the remaining text
-      let remaining_literal = &literal_text[advance_by..].trim_start();
+      let remaining_literal = &literal_text[advance_by..];
       let mut new_elements = vec![CsElement::Literal(remaining_literal.to_string())];
       new_elements.extend_from_slice(remaining_elements);
 
