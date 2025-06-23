@@ -22,8 +22,11 @@ use tree_sitter_traversal::Cursor;
 use crate::models::concrete_syntax::parser::{ConcreteSyntax, CsElement};
 use crate::models::matches::Match;
 
-
-
+// Precompile the regex outside the function
+lazy_static! {
+  static ref RE_VAR: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\]").unwrap();
+  static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
+}
 
 // Struct to avoid dealing with lifetimes
 #[derive(Clone, PartialEq, Eq)]
