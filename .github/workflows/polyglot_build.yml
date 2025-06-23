@@ -20,10 +20,10 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Run pre-commit
         run : |
           python -m venv .env
