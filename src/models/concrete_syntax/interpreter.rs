@@ -242,6 +242,13 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   }
 }
 
+/// This function does the template variable matching against entire tree nodes.function
+/// Keep in my mind that it will only attempt to match the template variables against nodes
+/// at either the current level of the traversal, or it's children. It can also operate on
+/// single node templates [args], and multiple nodes templates :[args+].
+/// For successful matches, it returns the assignment of each template varaible against a
+/// particular range. The Option<usize> indicates whether a match was succesfull, and keeps
+/// track of the last sibling node that was matched (wrt to the match_sequential_siblings function)
 fn handle_template_variable_matching_elements(
   cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str, one_plus: bool,
   remaining_elements: &Vec<CsElement>,
@@ -254,7 +261,9 @@ fn handle_template_variable_matching_elements(
     // Determine whether a next node exists:
     let mut next_node_cursor = cursor.clone();
     let mut should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
-
+    // At this point next_node_cursor either points to the first sibling of the first node,
+    // or the first node itself, if such sibling no longer exists
+    
     // Intentionally setting is_final_sibling to false regardless of should_match, due to the logic of handling the last iteration
     let mut is_final_sibling = false;
     loop {
