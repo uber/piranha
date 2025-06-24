@@ -37,7 +37,7 @@ jobs:
 
       - name: Run unit and integration tests
         run: |
-          cargo build 
+          cargo build
           cargo test -- --include-ignored
 
       - name: Run Python tests
@@ -52,4 +52,4 @@ jobs:
           pip install maturin==1.8.7 pytest
           maturin --version
           maturin develop
-          pytest --ignore=experimental/ .
+          pytest .
