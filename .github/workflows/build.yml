@@ -42,14 +42,8 @@ jobs:
 
       - name: Run Python tests
         run: |
-          # Maturin needs a virtual environment to work.
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip
-          # There is a bug with maturin 1.9.0 that incorrectly packages LICENSE file causing a problem.
-          # For now we have to pin it to 1.8.7 (last stable version).
-          # TODO: remove this check once maturin is fixed.
-          pip install maturin==1.8.7 pytest
-          maturin --version
-          maturin develop
+          pip install .[dev]
           pytest .
