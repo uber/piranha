@@ -25,15 +25,22 @@ pub struct ConcreteSyntaxParser;
 pub struct ConcreteSyntax {
   pub pattern: CsPattern,
 }
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct CsPattern {
   pub sequence: Vec<CsElement>,
+  pub constraints: Vec<CsConstraint>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum CsElement {
   Capture { name: String, mode: CaptureMode },
   Literal(String),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum CsConstraint {
+  In { capture: String, items: Vec<String> },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -70,10 +77,92 @@ impl ConcreteSyntax {
   }
 
   fn parse_pattern(pair: Pair<Rule>) -> Result<CsPattern, String> {
-    let elements: Result<Vec<_>, _> = pair.into_inner().map(Self::parse_element).collect();
-    Ok(CsPattern {
-      sequence: elements?,
+    let mut sequence = Vec::new();
+    let mut constraints = Vec::new();
+
+    for inner_pair in pair.into_inner() {
+      match inner_pair.as_rule() {
+        Rule::constraints => {
+          constraints = Self::parse_constraints(inner_pair)?;
+        }
+        _ => {
+          // This is an element (capture or literal)
+          sequence.push(Self::parse_element(inner_pair)?);
+        }
+      }
+    }
+
+    Ok(CsPattern { sequence, constraints })
+  }
+
+  fn parse_constraints(pair: Pair<Rule>) -> Result<Vec<CsConstraint>, String> {
+    let mut constraints = Vec::new();
+    
+    for constraint_pair in pair.into_inner() {
+      constraints.push(Self::parse_constraint(constraint_pair)?);
+    }
+    
+    Ok(constraints)
+  }
+
+  fn parse_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
+    use Rule::*;
+
+    match pair.as_rule() {
+      constraint => {
+        // The constraint rule wraps the actual constraint type
+        let inner = pair.into_inner().next().unwrap();
+        Self::parse_constraint(inner)
+      }
+      in_constraint => Self::parse_in_constraint(pair),
+      _ => Err(format!("Unexpected constraint type: {:?}", pair.as_rule())),
+    }
+  }
+
+  fn parse_in_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
+    let mut inner = pair.into_inner();
+    
+    // First should be the capture
+    let capture_pair = inner.next().ok_or("Expected capture in in_constraint")?;
+    let capture_name = Self::extract_capture_name(capture_pair)?;
+    
+    // Then we should have list_items (optional)
+    let mut items = Vec::new();
+    if let Some(list_items_pair) = inner.next() {
+      items = Self::parse_list_items(list_items_pair)?;
+    }
+
+    Ok(CsConstraint::In {
+      capture: capture_name,
+      items,
     })
+  }
+
+  fn extract_capture_name(pair: Pair<Rule>) -> Result<String, String> {
+    match pair.as_rule() {
+      Rule::capture => {
+        // Parse the capture to get its name
+        let mut inner = pair.into_inner();
+        let identifier = inner.next().unwrap().as_str().to_string();
+        Ok(identifier)
+      }
+      _ => Err(format!("Expected capture, got: {:?}", pair.as_rule())),
+    }
+  }
+
+  fn parse_list_items(pair: Pair<Rule>) -> Result<Vec<String>, String> {
+    let mut items = Vec::new();
+    
+    for quoted_string_pair in pair.into_inner() {
+      if quoted_string_pair.as_rule() == Rule::quoted_string {
+        let content = quoted_string_pair.as_str();
+        // Remove surrounding quotes
+        let unquoted = &content[1..content.len()-1];
+        items.push(unquoted.to_string());
+      }
+    }
+    
+    Ok(items)
   }
 
   fn parse_element(pair: Pair<Rule>) -> Result<CsElement, String> {
