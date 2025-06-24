@@ -1,0 +1,9 @@
+[[edges]]
+scope = "Class"
+from = "delete_empty_private_method"
+to = ["delete_usages"]
+
+[[edges]]
+scope = "Parent"
+from = "delete_usages"
+to = ["delete_empty_private_method"]

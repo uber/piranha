@@ -1,0 +1,15 @@
+// Concrete Syntax Grammar for Piranha
+concrete_syntax = { SOI ~ pattern ~ EOI }
+pattern = { (element)+ }
+
+// An element is either a capture or literal text
+element = _{ capture | literal_text | whitespace }
+
+// Captures: :[name], :[name+], :[name*], @name
+capture = { (":[" ~ identifier ~ capture_mode? ~ "]") | "@"~identifier } // FIXME: Should remove @ from the grammar, because literals may be parsed incorrectly
+capture_mode = { "+" | "*" }
+identifier = { (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// Literal text - single word/token without whitespace
+literal_text = { (!( ":[" | whitespace ) ~ ANY)+ }
+whitespace = _{ (" " | "\t" | "\r" | "\n")+ }

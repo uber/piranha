@@ -55,6 +55,7 @@ class PiranhaArguments:
         allow_dirty_ast: Optional[bool] = None,
         should_validate: Optional[bool] = None,
         experiment_dyn: Optional[bool] = None,
+        path_to_custom_builtin_rules: Optional[str] = None,
     ):
         """
         Constructs `PiranhaArguments`
@@ -79,6 +80,7 @@ class PiranhaArguments:
                  delete_file_if_empty (bool): User option that determines whether an empty file will be deleted
                  path_to_output (str): Path to the output json file
                  allow_dirty_ast (bool): Allows syntax errors in the input source code
+                 path_to_custom_builtin_rules (str): If provided, the default built-in rules will be ignored
         """
         ...
 
@@ -225,6 +227,8 @@ class Rule:
     "Filters to test before applying a rule"
     is_seed_rule: bool
     "Marks a rule as a seed rule"
+    keep_comment_regexes: set[str]
+    "Make comment deleting optional"
 
     def __init__(
         self,
@@ -236,6 +240,7 @@ class Rule:
         holes: set[str] = set(),
         filters: set[Filter] = set(),
         is_seed_rule: bool = True,
+        keep_comment_regexes: Optional[set[str]] = None,
     ):
         """
         Constructs `Rule`

@@ -11,7 +11,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::get_all_matches_for_concrete_syntax;
+use crate::models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
+use crate::models::concrete_syntax::parser::ConcreteSyntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -26,8 +27,6 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 use tree_sitter::{Node, Query};
 
-#[derive(Debug)]
-pub struct ConcreteSyntax(pub String);
 use super::{
   default_configs::{CONCRETE_SYNTAX_QUERY_PREFIX, REGEX_QUERY_PREFIX},
   matches::Match,
@@ -36,6 +35,7 @@ use super::{
 pub enum PatternType {
   Tsq,
   Regex,
+  Cs,
   Unknown,
 }
 
@@ -59,13 +59,14 @@ impl CGPattern {
 
   pub(crate) fn extract_concrete_syntax(&self) -> ConcreteSyntax {
     let mut _val = &self.pattern()[CONCRETE_SYNTAX_QUERY_PREFIX.len()..];
-    ConcreteSyntax(_val.to_string())
+    ConcreteSyntax::parse(_val).unwrap()
   }
 
   pub(crate) fn pattern_type(&self) -> PatternType {
     match self.0.as_str() {
       pattern if pattern.starts_with("rgx") => PatternType::Regex,
       pattern if pattern.trim().starts_with('(') => PatternType::Tsq,
+      pattern if pattern.trim().starts_with("cs") => PatternType::Cs,
       _ => PatternType::Unknown,
     }
   }

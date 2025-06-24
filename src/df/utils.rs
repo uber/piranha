@@ -34,6 +34,7 @@ pub fn get_capture_groups_from_matcher(node: &Rule) -> Vec<String> {
   match &node.query().pattern_type() {
     PatternType::Tsq => get_capture_groups_from_tsq(node.query().pattern()),
     PatternType::Regex => get_capture_groups_from_regex(node.query().extract_regex().unwrap()),
+    PatternType::Cs => vec![],
     PatternType::Unknown => vec![],
   }
 }
@@ -47,6 +48,7 @@ pub fn get_capture_group_usage_from_matcher(node: &Rule) -> Vec<String> {
   match &node.query().pattern_type() {
     PatternType::Tsq => get_capture_group_usage_from_tsq(node.query().pattern()),
     PatternType::Regex => get_capture_group_usage_from_regex(node.query().pattern()),
+    PatternType::Cs => vec![],
     PatternType::Unknown => vec![],
   }
 }

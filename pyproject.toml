@@ -1,6 +1,7 @@
 [project]
 name = "polyglot_piranha"
 requires-python = ">=3.8"
+dynamic = ["version"]
 description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
 authors = [{ name = "Uber Technologies Inc." }]
 license = "Apache-2.0"
@@ -24,3 +25,4 @@ build-backend = "maturin"
 
 [tool.maturin]
 bindings = "pyo3"
+include = ["LICENSE", "NOTICE", "polyglot_piranha.pyi"]

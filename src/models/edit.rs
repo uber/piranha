@@ -163,7 +163,7 @@ impl SourceCodeUnit {
   ) -> Option<Edit> {
     // Get all matches for the query in the given scope `node`.
 
-    return self
+    self
       .get_matches(rule, rule_store, node, recursive)
       .first()
       .map(|p_match| {
@@ -176,6 +176,6 @@ impl SourceCodeUnit {
         );
         trace!("Rewrite found : {:#?}", edit);
         edit
-      });
+      })
   }
 }
