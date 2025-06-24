@@ -267,4 +267,40 @@ mod tests {
     assert!(debug_str.contains("var"));
     assert!(debug_str.contains("OnePlus"));
   }
+
+  #[test]
+  fn test_where() {
+    let input = ":[var+], where:[var]in[\"a\"]";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    // Check the pattern elements
+    let elements = &result.pattern.sequence;
+    assert_eq!(elements.len(), 1);
+    
+    match &elements[0] {
+      CsElement::Capture { name, mode } => {
+        assert_eq!(name, "var");
+        assert_eq!(*mode, CaptureMode::OnePlus);
+      }
+      _ => panic!("Expected capture"),
+    }
+
+    // Check the constraints
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 1);
+    
+    match &constraints[0] {
+      CsConstraint::In { capture, items } => {
+        assert_eq!(capture, "var");
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0], "a");
+      }
+    }
+
+    // Test that Debug trait works (useful for debugging)
+    let debug_str = format!("{:?}", result);
+    assert!(debug_str.contains("var"));
+    assert!(debug_str.contains("OnePlus"));
+    assert!(debug_str.contains("constraints"));
+  }
 }
