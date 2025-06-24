@@ -270,7 +270,7 @@ mod tests {
 
   #[test]
   fn test_where() {
-    let input = ":[var+], where:[var]in[\"a\"]";
+    let input = ":[var+], where :[var] in [\"a\"]";
     let result = ConcreteSyntax::parse(input).unwrap();
 
     // Check the pattern elements
