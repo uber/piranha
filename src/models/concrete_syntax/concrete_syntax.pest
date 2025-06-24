@@ -1,6 +1,6 @@
 // Concrete Syntax Grammar for Piranha
 concrete_syntax = { SOI ~ pattern ~ EOI }
-pattern = { (element)+ }
+pattern = { (element)+ ~ ("," ~ "where" ~ constraints)? }
 
 // An element is either a capture or literal text
 element = _{ capture | literal_text | whitespace }
@@ -13,3 +13,10 @@ identifier = { (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 // Literal text - single word/token without whitespace
 literal_text = { (!( ":[" | whitespace ) ~ ANY)+ }
 whitespace = _{ (" " | "\t" | "\r" | "\n")+ }
+
+// Where constraints (extensible for future constraint types)
+constraints = { constraint ~ ("," ~ constraint)* }
+constraint = { in_constraint }
+in_constraint = { capture ~ "in" ~ "[" ~ list_items? ~ "]" }
+list_items = { quoted_string ~ ("," ~ quoted_string)* }
+quoted_string = { "\"" ~ (!"\"" ~ ANY)* ~ "\"" }
