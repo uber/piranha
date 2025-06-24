@@ -86,8 +86,9 @@ impl ConcreteSyntax {
           constraints = Self::parse_constraints(inner_pair)?;
         }
         _ => {
-          // This is an element (capture or literal)
-          sequence.push(Self::parse_element(inner_pair)?);
+          // This is an element (capture or literal) - parse_element now returns Vec<CsElement>
+          let mut elements = Self::parse_element(inner_pair)?;
+          sequence.append(&mut elements);
         }
       }
     }
@@ -165,17 +166,29 @@ impl ConcreteSyntax {
     Ok(items)
   }
 
-  fn parse_element(pair: Pair<Rule>) -> Result<CsElement, String> {
+  fn parse_element(pair: Pair<Rule>) -> Result<Vec<CsElement>, String> {
     use Rule::*;
 
     match pair.as_rule() {
-      capture => Self::parse_capture(pair),
-      literal_text => Ok(CsElement::Literal(pair.as_str().trim().to_string())),
+      capture => Ok(vec![Self::parse_capture_single(pair)?]),
+      literal_text => {
+        // Split the literal text on whitespace, similar to Python's .split()
+        let text = pair.as_str().trim();
+        let tokens: Vec<String> = text
+          .split_whitespace()
+          .map(|s| s.to_string())
+          .collect();
+        
+        Ok(tokens
+          .into_iter()
+          .map(|token| CsElement::Literal(token))
+          .collect())
+      }
       _ => Err(format!("Unexpected element: {:?}", pair.as_rule())),
     }
   }
 
-  fn parse_capture(pair: Pair<Rule>) -> Result<CsElement, String> {
+  fn parse_capture_single(pair: Pair<Rule>) -> Result<CsElement, String> {
     let mut inner = pair.into_inner();
     let identifier = inner.next().unwrap().as_str().to_string();
 
