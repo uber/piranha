@@ -27,9 +27,7 @@ requires = ["maturin>=1.4.0,<=1.8.7"]
 build-backend = "maturin"
 
 [project.optional-dependencies]
-dev = [
-  "pytest>=7.0"
-]
+dev = ["pytest>=8.0"]
 
 [tool.maturin]
 bindings = "pyo3"
