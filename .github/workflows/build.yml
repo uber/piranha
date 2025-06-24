@@ -1,4 +1,4 @@
-name: Polyglot Piranha
+name: Build Polyglot Piranha
 on:
   pull_request:
   push:
