@@ -13,7 +13,6 @@
 use crate::models::concrete_syntax::parser::*;
 use crate::models::concrete_syntax::resolver::*;
 
-
 #[cfg(test)]
 mod tests {
   use super::*;

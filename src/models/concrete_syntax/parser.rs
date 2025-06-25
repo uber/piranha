@@ -204,12 +204,7 @@ impl ConcreteSyntax {
         let text = pair.as_str().trim();
         let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_string()).collect();
 
-        Ok(
-          tokens
-            .into_iter()
-            .map(CsElement::Literal)
-            .collect(),
-        )
+        Ok(tokens.into_iter().map(CsElement::Literal).collect())
       }
       _ => Err(format!("Unexpected element: {:?}", pair.as_rule())),
     }
