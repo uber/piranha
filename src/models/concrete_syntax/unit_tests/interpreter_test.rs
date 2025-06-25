@@ -28,8 +28,14 @@ fn run_test(
   let tree = parser.parse(code.as_bytes(), None).unwrap();
   let meta = ConcreteSyntax::parse(pattern).unwrap();
 
-  let (matches, _is_match_found) =
-    get_all_matches_for_concrete_syntax(&tree.root_node(), code.as_bytes(), &meta, true, None);
+  let resolved_meta = meta.resolve().unwrap();
+  let (matches, _is_match_found) = get_all_matches_for_concrete_syntax(
+    &tree.root_node(),
+    code.as_bytes(),
+    &resolved_meta,
+    true,
+    None,
+  );
 
   assert_eq!(matches.len(), expected_matches);
 
@@ -201,6 +207,20 @@ fn test_asterisk_one_or_more() {
     "class :[name] { :[body*] }",
     1,
     vec![vec![("name", "Example"), ("body", "int x = 1; int y = 2;")]],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_where_clauses() {
+  run_test(
+    r#"foo(ab); foo("cd"); foo(1,2,3);"#,
+    r#"foo(:[args]) |> :[args] in ["ab", "\"cd\""]"#,
+    2, // now two matches
+    vec![
+      vec![("args", "ab")],
+      vec![("args", "\"cd\"")], // note the quotes are included
+    ],
     JAVA,
   );
 }
