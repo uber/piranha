@@ -15,12 +15,12 @@ use crate::models::matches::Range;
 
 use regex::Regex;
 
+use crate::models::concrete_syntax::parser::CsConstraint;
+use crate::models::concrete_syntax::resolver::{ResolvedConcreteSyntax, ResolvedCsElement};
+use crate::models::matches::Match;
 use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 use tree_sitter_traversal::Cursor;
-
-use crate::models::concrete_syntax::parser::{ConcreteSyntax, CsElement};
-use crate::models::matches::Match;
 
 // Precompile the regex outside the function
 lazy_static! {
@@ -42,7 +42,8 @@ struct MatchResult {
 }
 
 pub(crate) fn get_all_matches_for_concrete_syntax(
-  node: &Node, code_str: &[u8], cs: &ConcreteSyntax, recursive: bool, replace_node: Option<String>,
+  node: &Node, code_str: &[u8], cs: &ResolvedConcreteSyntax, recursive: bool,
+  replace_node: Option<String>,
 ) -> (Vec<Match>, bool) {
   let mut matches: Vec<Match> = Vec::new();
 
@@ -100,14 +101,14 @@ fn find_next_sibling_or_ancestor_sibling(cursor: &mut TreeCursor) -> bool {
   true
 }
 
-/// Attempts to match a given ConcreteSyntax template against a sequence of sibling nodes
+/// Attempts to match a given ResolvedConcreteSyntax template against a sequence of sibling nodes
 /// in an Abstract Syntax Tree (AST).
 ///
 /// # Arguments
 ///
 /// * `cursor` - A mutable reference to the TreeCursor, which is used to navigate the AST.
 /// * `source_code` - A slice of bytes representing the source code being analyzed.
-/// * `cs` - A reference to the ConcreteSyntax template used for matching.
+/// * `cs` - A reference to the ResolvedConcreteSyntax template used for matching.
 ///
 /// # Returns
 ///
@@ -123,7 +124,7 @@ fn find_next_sibling_or_ancestor_sibling(cursor: &mut TreeCursor) -> bool {
 /// 3. If a match is found, determine the range of matched nodes subtrees (i.e., [2nd,..., 4th], and return the match mapping, and range.
 /// 4. If no match is found, return an empty mapping, and None for range.
 fn match_sequential_siblings(
-  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<CsElement>,
+  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<ResolvedCsElement>,
 ) -> Option<MatchResult> {
   let parent_node = cursor.node();
   let mut child_seq_match_start = 0;
@@ -162,29 +163,29 @@ fn match_sequential_siblings(
   None
 }
 
-/// This function performs the actual matching of the ConcreteSyntax pattern against a syntax tree
+/// This function performs the actual matching of the ResolvedConcreteSyntax pattern against a syntax tree
 /// node. The matching is done in the following way:
 ///
 ///
-/// - If the ConcreteSyntax is empty and all the nodes have been visited, then we found a match!
+/// - If the ResolvedConcreteSyntax is empty and all the nodes have been visited, then we found a match!
 ///   Otherwise, if we ran out of nodes to match, and the template is not empty, then we failed
 ///
-/// - If the ConcreteSyntax starts with `:[variable]`, the function tries to match the variable
+/// - If the ResolvedConcreteSyntax starts with `:[variable]`, the function tries to match the variable
 ///   against all possible AST nodes starting at the current's cursor position (i.e., the node itself
 ///   and all of its siblings, its first child and respective siblings, the child of the first child, and so on.)
-///   If it succeeds, it advances the ConcreteSyntax by the length of the matched sequence of
-///   AST nodes, and calls itself recursively to try to match the rest of the ConcreteSyntax.
+///   If it succeeds, it advances the ResolvedConcreteSyntax by the length of the matched sequence of
+///   AST nodes, and calls itself recursively to try to match the rest of the ResolvedConcreteSyntax.
 ///
-/// - If the ConcreteSyntax doesn't start with `:[variable]`, the function checks if the node **is a leaf**
+/// - If the ResolvedConcreteSyntax doesn't start with `:[variable]`, the function checks if the node **is a leaf**
 ///   (i.e., has no children). If it is, and the leaf node matches the concrete syntax, we match it against
 ///   the concrete syntax and advance to the next immediate node. If the leaf does not match the concrete syntax,
 ///   then our matching has failed.
 ///
-/// - If the ConcreteSyntax doesn't start with `:[variable]` and the node **is not a leaf**, the function
+/// - If the ResolvedConcreteSyntax doesn't start with `:[variable]` and the node **is not a leaf**, the function
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
-///   the ConcreteSyntax.
+///   the ResolvedConcreteSyntax.
 pub(crate) fn get_matches_for_subsequence_of_nodes(
-  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<CsElement>,
+  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<ResolvedCsElement>,
   nodes_left_to_match: bool, top_node: &Node,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   if cs_elements.is_empty() {
@@ -208,18 +209,17 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   let remaining_elements = &cs_elements[1..].to_vec();
 
   match first_element {
-    CsElement::Capture { name, mode } => {
+    ResolvedCsElement::Capture { .. } => {
       // Handle template variable matching
       handle_template_variable_matching_elements(
         cursor,
         source_code,
         top_node,
-        name,
-        *mode,
+        first_element,
         remaining_elements,
       )
     }
-    CsElement::Literal(literal_text) => {
+    ResolvedCsElement::Literal(literal_text) => {
       if node.child_count() == 0 {
         // If the current node is a leaf
         handle_leaf_node_elements(
@@ -247,10 +247,20 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 /// For successful matches, it returns the assignment of each template variable against a
 /// particular range. The Option<usize> indicates whether a match was successful, and keeps
 fn handle_template_variable_matching_elements(
-  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node, var_name: &str,
-  mode: crate::models::concrete_syntax::parser::CaptureMode, remaining_elements: &Vec<CsElement>,
+  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node,
+  capture_element: &ResolvedCsElement, remaining_elements: &Vec<ResolvedCsElement>,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   use crate::models::concrete_syntax::parser::CaptureMode;
+
+  // Extract capture details
+  let (var_name, mode, constraints) = match capture_element {
+    ResolvedCsElement::Capture {
+      name,
+      mode,
+      constraints,
+    } => (name, *mode, constraints),
+    _ => panic!("Expected capture element"),
+  };
 
   // For zero_plus patterns, first try to match with zero nodes
   if mode == CaptureMode::ZeroPlus {
@@ -265,19 +275,29 @@ fn handle_template_variable_matching_elements(
       )
     {
       // Successfully matched with zero nodes
-      recursive_matches.insert(
-        var_name.to_string(),
-        CapturedNode {
-          range: Range {
-            start_byte: 0,
-            end_byte: 0,
-            start_point: crate::models::matches::Point { row: 0, column: 0 },
-            end_point: crate::models::matches::Point { row: 0, column: 0 },
-          },
-          text: String::new(),
+      let captured_node = CapturedNode {
+        range: Range {
+          start_byte: 0,
+          end_byte: 0,
+          start_point: crate::models::matches::Point { row: 0, column: 0 },
+          end_point: crate::models::matches::Point { row: 0, column: 0 },
         },
-      );
-      return (recursive_matches, Some(last_matched_node_idx));
+        text: String::new(),
+      };
+
+      // Check all constraints for this capture (empty string case)
+      let mut constraints_satisfied = true;
+      for constraint in constraints {
+        if !check_constraint(&captured_node, constraint) {
+          constraints_satisfied = false;
+          break;
+        }
+      }
+
+      if constraints_satisfied {
+        recursive_matches.insert(var_name.to_string(), captured_node);
+        return (recursive_matches, Some(last_matched_node_idx));
+      }
     }
   }
   // Matching :[var] against a sequence of nodes [first_node, ... last_node]
@@ -321,14 +341,28 @@ fn handle_template_variable_matching_elements(
           return (HashMap::new(), None);
         }
 
+        let captured_node = CapturedNode {
+          range: Range::span_ranges(first_node.range(), last_node.range()),
+          text: matched_code,
+        };
+
+        // Check all constraints for this capture
+        let mut constraints_satisfied = true;
+        for constraint in constraints {
+          if !check_constraint(&captured_node, constraint) {
+            constraints_satisfied = false;
+            break;
+          }
+        }
+
+        if !constraints_satisfied {
+          // Continue to try matching with more nodes or different positions
+          // The continue here will skip to the next iteration of the inner matching loop
+          break;
+        }
+
         // Otherwise insert it
-        recursive_matches.insert(
-          var_name.to_string(),
-          CapturedNode {
-            range: Range::span_ranges(first_node.range(), last_node.range()),
-            text: matched_code,
-          },
-        );
+        recursive_matches.insert(var_name.to_string(), captured_node);
         return (recursive_matches, Some(last_matched_node_idx));
       }
 
@@ -364,7 +398,7 @@ fn handle_template_variable_matching_elements(
 
 fn handle_leaf_node_elements(
   cursor: &mut TreeCursor, source_code: &[u8], literal_text: &str,
-  remaining_elements: &Vec<CsElement>, top_node: &Node,
+  remaining_elements: &Vec<ResolvedCsElement>, top_node: &Node,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   let code = cursor.node().utf8_text(source_code).unwrap().trim();
   if literal_text.starts_with(code) && !code.is_empty() {
@@ -388,7 +422,7 @@ fn handle_leaf_node_elements(
     } else {
       // If we only consumed part of the literal, create a new literal with the remaining text
       let remaining_literal = &literal_text[advance_by..];
-      let mut new_elements = vec![CsElement::Literal(remaining_literal.to_string())];
+      let mut new_elements = vec![ResolvedCsElement::Literal(remaining_literal.to_string())];
       new_elements.extend_from_slice(remaining_elements);
 
       return get_matches_for_subsequence_of_nodes(
@@ -419,6 +453,12 @@ fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option
 fn get_code_from_range(start_byte: usize, end_byte: usize, source_code: &[u8]) -> String {
   let text_slice = &source_code[start_byte..end_byte];
   String::from_utf8_lossy(text_slice).to_string()
+}
+
+fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {
+  match ctr {
+    CsConstraint::In { items, .. } => items.contains(&node.text.to_string()),
+  }
 }
 
 #[cfg(test)]
