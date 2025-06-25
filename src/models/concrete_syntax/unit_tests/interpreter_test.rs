@@ -212,7 +212,7 @@ fn test_asterisk_one_or_more() {
 }
 
 #[test]
-fn test_where_clauses() {
+fn test_simple_where_clause() {
   run_test(
     r#"foo(ab); foo("cd"); foo(1,2,3);"#,
     r#"foo(:[args]) |> :[args] in ["ab", "\"cd\""]"#,
@@ -221,6 +221,17 @@ fn test_where_clauses() {
       vec![("args", "ab")],
       vec![("args", "\"cd\"")], // note the quotes are included
     ],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_mutliple_where_clause() {
+  run_test(
+    r#"foo(c, d); foo(1,4);"#,
+    r#"foo(:[arg1], :[arg2]) |> :[arg1] in ["1"], :[arg2] in ["4"]"#,
+    1, // now two matches
+    vec![vec![("arg1", "1"), ("arg2", "4")]],
     JAVA,
   );
 }
