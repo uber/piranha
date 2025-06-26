@@ -23,7 +23,7 @@ documentation = "https://github.com/uber/piranha"
 repository = "https://github.com/uber/piranha"
 
 [build-system]
-requires = ["maturin>=1.4.0,<2.0"]
+requires = ["maturin>=1.4.0,<=1.8.7"]
 build-backend = "maturin"
 
 [tool.maturin]
