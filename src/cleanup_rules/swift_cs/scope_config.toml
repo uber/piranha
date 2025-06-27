@@ -1,0 +1,67 @@
+# Copyright (c) 2023 Uber Technologies, Inc.
+# 
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+# 
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+[[scopes]]
+name = "Class"
+[[scopes.rules]]
+enclosing_node = """
+(class_declaration name: (_) @cls_name) @class
+"""
+scope = """(
+(class_declaration name: (_) @name) @cs
+(#eq? @name "@cls_name")              
+)"""
+
+[[scopes]]
+name = "Function"
+[[scopes.rules]]
+enclosing_node = """(
+    (function_declaration
+        name: (simple_identifier) @name
+        (parameter)* @params
+        body: (function_body)
+    ) @function
+)"""
+scope = """(
+    (function_declaration
+        name: (simple_identifier) @func_name
+        (parameter)* @parameters
+        body: (function_body)
+    ) @func
+    (#eq? @func_name "@name")
+    (#eq? @parameters "@params")
+)"""
+
+[[scopes]]
+name = "Constructor"
+[[scopes.rules]]
+enclosing_node = """(
+    (init_declaration
+        (parameter)* @params
+        body: (function_body)
+    ) @int
+)"""
+scope = """(
+    (init_declaration
+        (parameter)* @parameters
+        body: (function_body)
+    ) @sint
+    (#eq? @parameters "@params")
+)"""
+
+[[scopes]]
+name = "File"
+[[scopes.rules]]
+enclosing_node = """
+(source_file) @source_file
+"""
+scope = """(source_file) @sf"""

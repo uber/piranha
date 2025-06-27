@@ -22,7 +22,7 @@ use crate::utilities::parse_toml;
 use super::{
   default_configs::{
     default_language, GO, JAVA, JAVA_CS, KOTLIN, KOTLIN_ALIAS, PYTHON, RUBY, SCALA, STRINGS, SWIFT,
-    THRIFT, TSX, TS_SCHEME, TYPESCRIPT, YAML, YAML_ALIAS,
+    SWIFT_CS, THRIFT, TSX, TS_SCHEME, TYPESCRIPT, YAML, YAML_ALIAS,
   },
   outgoing_edges::Edges,
   rule::Rules,
@@ -202,20 +202,37 @@ impl std::str::FromStr for PiranhaLanguage {
         comment_nodes: vec![],
       }),
       SWIFT => {
-        let rules: Rules = parse_toml(include_str!("../cleanup_rules/swift/rules.toml"));
-        let edges: Edges = parse_toml(include_str!("../cleanup_rules/swift/edges.toml"));
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/swift_cs/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/swift_cs/edges.toml"));
         Ok(PiranhaLanguage {
           extension: language.to_string(),
           supported_language: SupportedLanguage::Swift,
           language: tree_sitter_swift::language(),
           scopes: parse_toml::<ScopeConfig>(include_str!(
-            "../cleanup_rules/swift/scope_config.toml"
+            "../cleanup_rules/swift_cs/scope_config.toml"
           ))
           .scopes()
           .to_vec(),
           comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
           rules: Some(rules),
           edges: Some(edges),
+        })
+      }
+      SWIFT_CS => {
+        let rules: Rules = parse_toml(include_str!("../cleanup_rules/swift_cs/rules.toml"));
+        let edges: Edges = parse_toml(include_str!("../cleanup_rules/swift_cs/edges.toml"));
+        Ok(Self {
+          extension: language.to_string(),
+          supported_language: SupportedLanguage::Swift,
+          language: tree_sitter_swift::language(),
+          rules: Some(rules),
+          edges: Some(edges),
+          scopes: parse_toml::<ScopeConfig>(include_str!(
+            "../cleanup_rules/swift_cs/scope_config.toml"
+          ))
+          .scopes()
+          .to_vec(),
+          comment_nodes: vec!["comment".to_string(), "multiline_comment".to_string()],
         })
       }
       TYPESCRIPT => Ok(PiranhaLanguage {

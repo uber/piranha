@@ -27,6 +27,7 @@ pub const KOTLIN_ALIAS: &str = "kotlin";
 pub const GO: &str = "go";
 pub const PYTHON: &str = "python";
 pub const SWIFT: &str = "swift";
+pub const SWIFT_CS: &str = "swift_cs";
 pub const TYPESCRIPT: &str = "typescript";
 pub const TSX: &str = "tsx";
 pub const THRIFT: &str = "thrift";
