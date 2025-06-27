@@ -299,7 +299,7 @@ mod tests {
     }
 
     // Test that Debug trait works (useful for debugging)
-    let debug_str = format!("{:?}", result);
+    let debug_str = format!("{result:?}");
     assert!(debug_str.contains("var"));
     assert!(debug_str.contains("OnePlus"));
     assert!(debug_str.contains("constraints"));
