@@ -236,7 +236,6 @@ is_seed_rule = false
 #
 
 
-
 # Next two rules take care of if-else cleanup, these 2 rules depend on their order in this file
 #
 
@@ -395,8 +394,6 @@ groups = ["if_cleanup"]
 replace_node = "if_else_block"
 replace = "@alternatives"
 is_seed_rule = false
-
-
 
 
 # Before:
@@ -570,7 +567,6 @@ groups = ["if_cleanup"]
 replace_node = "*"
 replace = "@y"
 is_seed_rule = false
-
 
 
 # A hack to handle the scenario when `nil` is used in the ternary expression
