@@ -38,10 +38,10 @@ pub enum PatternMatchResult {
 
 /// Context passed to matching functions to reduce parameter repetition
 /// The lifetime 'tree represents the lifetime of the tree data, not the context itself
-pub struct MatchingContext<'tree> {
-  pub cursor: &'tree mut TreeCursor<'tree>,
-  pub source_code: &'tree [u8],
-  pub top_node: &'tree Node<'tree>,
+pub struct MatchingContext<'a> {
+  pub cursor: TreeCursor<'a>,
+  pub source_code: &'a [u8],
+  pub top_node: &'a Node<'a>,
 }
 
 impl PatternMatchResult {

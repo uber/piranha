@@ -116,19 +116,20 @@ fn match_sequential_siblings(
 ) -> Option<MatchResult> {
   let parent_node = cursor.node();
   let mut child_seq_match_start = 0;
-
   if cursor.goto_first_child() {
     // Iterate through siblings to find a match
     loop {
+
       // Clone the cursor in order to attempt matching the sequence starting at cursor.node
       // Cloning here is necessary other we won't be able to advance to the next sibling if the matching fails
-      let mut tmp_cursor = cursor.clone();
-      let mut ctx = MatchingContext {
-        cursor: &mut tmp_cursor,
-        source_code,
-        top_node: &parent_node,
+      let (mapping, indx) = {
+        let mut ctx =  MatchingContext {
+          cursor: cursor.clone(),
+          source_code,
+          top_node: &parent_node,
+        };
+        get_matches_for_subsequence_of_nodes(&mut ctx, cs_elements, true)
       };
-      let (mapping, indx) = get_matches_for_subsequence_of_nodes(&mut ctx, cs_elements, true);
 
       // If we got the index of the last matched sibling, that means the matching was successful.
       if let Some(last_node_index) = indx {
@@ -171,7 +172,7 @@ fn match_sequential_siblings(
 /// - If the ResolvedConcreteSyntax doesn't start with `:[variable]` and the node **is not a leaf**, the function
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
 ///   the ResolvedConcreteSyntax.
-pub(crate) fn get_matches_for_subsequence_of_nodes<'ctx>(
+pub(crate) fn get_matches_for_subsequence_of_nodes(
   ctx: &mut MatchingContext<'_>, cs_elements: &Vec<ResolvedCsElement>,
   nodes_left_to_match: bool
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
@@ -179,14 +180,14 @@ pub(crate) fn get_matches_for_subsequence_of_nodes<'ctx>(
     if !nodes_left_to_match {
       return (HashMap::new(), Some(ctx.top_node.child_count() - 1));
     }
-    let index = find_last_matched_node(ctx.cursor, ctx.top_node);
+    let index = find_last_matched_node(&mut ctx.cursor, ctx.top_node);
     return (HashMap::new(), index);
   } else if !nodes_left_to_match {
     return (HashMap::new(), None);
   }
 
   // Skip comment nodes always
-  CursorNavigator::skip_comment_nodes(ctx.cursor);
+  CursorNavigator::skip_comment_nodes(&mut ctx.cursor);
   let node = ctx.cursor.node();
 
   // Get the first element and remaining elements
@@ -232,7 +233,7 @@ pub(crate) fn get_matches_for_subsequence_of_nodes<'ctx>(
 ///
 /// For successful matches, it returns the assignment of each template variable against a
 /// particular range. The Option<usize> indicates whether a match was successful, and keeps
-fn handle_template_variable_matching_elements<'ctx>(
+fn handle_template_variable_matching_elements(
   ctx: &mut MatchingContext<'_>, capture_element: &ResolvedCsElement, remaining_elements: &Vec<ResolvedCsElement>,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   use crate::models::concrete_syntax::parser::CaptureMode;
@@ -249,9 +250,8 @@ fn handle_template_variable_matching_elements<'ctx>(
 
   // For zero_plus patterns, first try to match with zero nodes
   if mode == CaptureMode::ZeroPlus {
-    let mut tmp_cursor = ctx.cursor.clone();
     let mut temp_ctx = MatchingContext {
-      cursor: &mut tmp_cursor,
+      cursor: ctx.cursor.clone(),
       source_code: ctx.source_code,
       top_node: ctx.top_node,
     };
@@ -299,10 +299,9 @@ fn handle_template_variable_matching_elements<'ctx>(
     // Intentionally setting is_final_sibling to false regardless of should_match, due to the logic of handling the last iteration
     let mut is_final_sibling = false;
     loop {
-      let mut tmp_cursor = next_node_cursor.clone();
       let remaining_elements_tmp = remaining_elements.clone();
       let mut temp_ctx = MatchingContext {
-        cursor: &mut tmp_cursor,
+        cursor: next_node_cursor.clone(),
         source_code: ctx.source_code,
         top_node: ctx.top_node,
       };
@@ -381,7 +380,7 @@ fn handle_template_variable_matching_elements<'ctx>(
   (HashMap::new(), None)
 }
 
-fn handle_leaf_node_elements<'ctx>(
+fn handle_leaf_node_elements(
   ctx: &mut MatchingContext<'_>, literal_text: &str,
   remaining_elements: &Vec<ResolvedCsElement>,
 ) -> PatternMatchResult {
@@ -393,7 +392,7 @@ fn handle_leaf_node_elements<'ctx>(
       return PatternMatchResult::failed();
     }
 
-    let should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(ctx.cursor);
+    let should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut ctx.cursor);
 
     // If we consumed the entire literal, continue with remaining elements
     if advance_by == literal_text.len() {
