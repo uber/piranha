@@ -184,6 +184,8 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
   }
 
   // Skip comment nodes always
+  CursorNavigator::skip_comment_nodes(cursor);
+  let node = cursor.node();
 
   CursorNavigator::skip_comment_nodes(&mut ctx.cursor);
   let node = ctx.cursor.node();
