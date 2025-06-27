@@ -12,6 +12,7 @@
 */
 
 use crate::models::concrete_syntax::parser::*;
+use crate::models::concrete_syntax::resolver::ResolvedCsElement;
 
 #[cfg(test)]
 mod tests {
@@ -266,5 +267,80 @@ mod tests {
     let debug_str = format!("{result:?}");
     assert!(debug_str.contains("var"));
     assert!(debug_str.contains("OnePlus"));
+  }
+
+  #[test]
+  fn test_where() {
+    let input = ":[var+] |> :[var] in [\"a\"]";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    // Check the pattern elements
+    let elements = &result.pattern.sequence;
+    assert_eq!(elements.len(), 1);
+
+    match &elements[0] {
+      CsElement::Capture { name, mode } => {
+        assert_eq!(name, "var");
+        assert_eq!(*mode, CaptureMode::OnePlus);
+      }
+      _ => panic!("Expected capture"),
+    }
+
+    // Check the constraints
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 1);
+
+    match &constraints[0] {
+      CsConstraint::In { capture, items } => {
+        assert_eq!(capture, "var");
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0], "a");
+      }
+    }
+
+    // Test that Debug trait works (useful for debugging)
+    let debug_str = format!("{result:?}");
+    assert!(debug_str.contains("var"));
+    assert!(debug_str.contains("OnePlus"));
+    assert!(debug_str.contains("constraints"));
+  }
+
+  #[test]
+  fn test_parse_and_resolve_flow() {
+    let input = ":[var+] |> :[var] in [\"a\"]";
+
+    // Parse
+    let parsed = ConcreteSyntax::parse(input).unwrap();
+
+    // Verify parsing separated constraints from elements
+    assert_eq!(parsed.pattern.sequence.len(), 1);
+    assert_eq!(parsed.pattern.constraints.len(), 1);
+
+    // Resolve
+    let resolved = parsed.resolve().unwrap();
+
+    // Verify resolution attached constraints to captures
+    assert_eq!(resolved.pattern.sequence.len(), 1);
+
+    match &resolved.pattern.sequence[0] {
+      ResolvedCsElement::Capture {
+        name,
+        mode,
+        constraints,
+      } => {
+        assert_eq!(name, "var");
+        assert_eq!(*mode, CaptureMode::OnePlus);
+        assert_eq!(constraints.len(), 1);
+
+        match &constraints[0] {
+          CsConstraint::In { capture, items } => {
+            assert_eq!(capture, "var");
+            assert_eq!(items.len(), 1);
+            assert_eq!(items[0], "a");
+          }
+        }
+      }
+      _ => panic!("Expected capture with constraints"),
+    }
   }
 }

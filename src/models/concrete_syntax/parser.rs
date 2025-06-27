@@ -25,9 +25,11 @@ pub struct ConcreteSyntaxParser;
 pub struct ConcreteSyntax {
   pub pattern: CsPattern,
 }
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct CsPattern {
   pub sequence: Vec<CsElement>,
+  pub constraints: Vec<CsConstraint>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,11 +38,40 @@ pub enum CsElement {
   Literal(String),
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum CsConstraint {
+  In { capture: String, items: Vec<String> },
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CaptureMode {
   Single,   // :[var]
   OnePlus,  // :[var+]
   ZeroPlus, // :[var*]
+}
+
+/// Decode \" \\ \n \t … inside a string literal.
+fn unescape(src: &str) -> String {
+  let mut out = String::with_capacity(src.len());
+  let mut chars = src.chars();
+  while let Some(c) = chars.next() {
+    if c == '\\' {
+      match chars.next() {
+        Some('"') => out.push('"'),
+        Some('\\') => out.push('\\'),
+        Some('n') => out.push('\n'),
+        Some('t') => out.push('\t'),
+        Some(other) => {
+          out.push('\\');
+          out.push(other);
+        }
+        None => break, // trailing back-slash
+      }
+    } else {
+      out.push(c);
+    }
+  }
+  out
 }
 
 impl ConcreteSyntax {
@@ -70,23 +101,116 @@ impl ConcreteSyntax {
   }
 
   fn parse_pattern(pair: Pair<Rule>) -> Result<CsPattern, String> {
-    let elements: Result<Vec<_>, _> = pair.into_inner().map(Self::parse_element).collect();
+    let mut sequence = Vec::new();
+    let mut constraints = Vec::new();
+
+    for inner_pair in pair.into_inner() {
+      match inner_pair.as_rule() {
+        Rule::constraints => {
+          constraints = Self::parse_constraints(inner_pair)?;
+        }
+        _ => {
+          // This is an element (capture or literal) - parse_element now returns Vec<CsElement>
+          let mut elements = Self::parse_element(inner_pair)?;
+          sequence.append(&mut elements);
+        }
+      }
+    }
+
     Ok(CsPattern {
-      sequence: elements?,
+      sequence,
+      constraints,
     })
   }
 
-  fn parse_element(pair: Pair<Rule>) -> Result<CsElement, String> {
+  fn parse_constraints(pair: Pair<Rule>) -> Result<Vec<CsConstraint>, String> {
+    let mut constraints = Vec::new();
+
+    for constraint_pair in pair.into_inner() {
+      constraints.push(Self::parse_constraint(constraint_pair)?);
+    }
+
+    Ok(constraints)
+  }
+
+  fn parse_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
     use Rule::*;
 
     match pair.as_rule() {
-      capture => Self::parse_capture(pair),
-      literal_text => Ok(CsElement::Literal(pair.as_str().trim().to_string())),
+      constraint => {
+        // The constraint rule wraps the actual constraint type
+        let inner = pair.into_inner().next().unwrap();
+        Self::parse_constraint(inner)
+      }
+      in_constraint => Self::parse_in_constraint(pair),
+      _ => Err(format!("Unexpected constraint type: {:?}", pair.as_rule())),
+    }
+  }
+
+  fn parse_in_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
+    let mut inner = pair.into_inner();
+
+    // First should be the capture
+    let capture_pair = inner.next().ok_or("Expected capture in in_constraint")?;
+    let capture_name = Self::extract_capture_name(capture_pair)?;
+
+    // Then we should have list_items (optional)
+    let mut items = Vec::new();
+    if let Some(list_items_pair) = inner.next() {
+      items = Self::parse_list_items(list_items_pair)?;
+    }
+
+    Ok(CsConstraint::In {
+      capture: capture_name,
+      items,
+    })
+  }
+
+  fn extract_capture_name(pair: Pair<Rule>) -> Result<String, String> {
+    match pair.as_rule() {
+      Rule::capture => {
+        // Parse the capture to get its name
+        let mut inner = pair.into_inner();
+        let identifier = inner.next().unwrap().as_str().to_string();
+        Ok(identifier)
+      }
+      _ => Err(format!("Expected capture, got: {:?}", pair.as_rule())),
+    }
+  }
+
+  fn parse_list_items(pair: Pair<Rule>) -> Result<Vec<String>, String> {
+    let mut items = Vec::new();
+
+    for quoted_string_pair in pair.into_inner() {
+      if quoted_string_pair.as_rule() == Rule::quoted_string {
+        let raw = quoted_string_pair.as_str();
+        // Remove surrounding quotes
+        let unquoted = &raw[1..raw.len() - 1];
+        let cooked = unescape(unquoted);
+        items.push(cooked.to_string());
+      }
+    }
+
+    Ok(items)
+  }
+
+  fn parse_element(pair: Pair<Rule>) -> Result<Vec<CsElement>, String> {
+    use Rule::*;
+
+    match pair.as_rule() {
+      capture => Ok(vec![Self::parse_capture_single(pair)?]),
+      literal_text => {
+        // Split the literal text on whitespace, similar to Python's .split()
+        let text = pair.as_str().trim();
+        let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_string()).collect();
+
+        Ok(tokens.into_iter().map(CsElement::Literal).collect())
+      }
       _ => Err(format!("Unexpected element: {:?}", pair.as_rule())),
     }
   }
 
-  fn parse_capture(pair: Pair<Rule>) -> Result<CsElement, String> {
+  fn parse_capture_single(pair: Pair<Rule>) -> Result<CsElement, String> {
     let mut inner = pair.into_inner();
     let identifier = inner.next().unwrap().as_str().to_string();
 
@@ -108,5 +232,5 @@ impl ConcreteSyntax {
 }
 
 #[cfg(test)]
-#[path = "unit_tests/test_parser.rs"]
-mod test_parser;
+#[path = "unit_tests/parser_test.rs"]
+mod parser_test;
