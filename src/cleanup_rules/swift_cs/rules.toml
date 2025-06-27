@@ -1287,7 +1287,7 @@ is_seed_rule = false
 # rule to delete unreachable code after return statement
 [[rules]]
 name = "delete_all_statements_after_return"
-query = """return :[val] :[others+]"""
+query = """cs return :[val] :[others+]"""
 groups = ["post_processing_cleanup"]
 replace_node = "others"
 replace = ""
