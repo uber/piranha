@@ -132,7 +132,7 @@ impl Filter {
   }
 
   fn __repr__(&self) -> String {
-    format!("{:?}", self)
+    format!("{self:?}")
   }
 
   fn __str__(&self) -> String {
@@ -211,7 +211,7 @@ impl FilterBuilder {
   pub fn build(&self) -> Filter {
     match &self._validate() {
       Ok(filter) => filter.clone(),
-      Err(e) => panic!("Invalid filter - {}", e),
+      Err(e) => panic!("Invalid filter - {e}"),
     }
   }
 

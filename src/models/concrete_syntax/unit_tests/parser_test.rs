@@ -183,7 +183,7 @@ mod tests {
           assert_eq!(name, expected_name);
           assert_eq!(*mode, CaptureMode::Single);
         }
-        _ => panic!("Expected capture for input: {}", input),
+        _ => panic!("Expected capture for input: {input}"),
       }
     }
   }
@@ -225,7 +225,7 @@ mod tests {
 
     for input in error_cases {
       let result = ConcreteSyntax::parse(input);
-      assert!(result.is_err(), "Expected error for input: {}", input);
+      assert!(result.is_err(), "Expected error for input: {input}");
     }
   }
 
@@ -264,7 +264,7 @@ mod tests {
     let result = ConcreteSyntax::parse(input).unwrap();
 
     // Test that Debug trait works (useful for debugging)
-    let debug_str = format!("{:?}", result);
+    let debug_str = format!("{result:?}");
     assert!(debug_str.contains("var"));
     assert!(debug_str.contains("OnePlus"));
   }
@@ -299,7 +299,7 @@ mod tests {
     }
 
     // Test that Debug trait works (useful for debugging)
-    let debug_str = format!("{:?}", result);
+    let debug_str = format!("{result:?}");
     assert!(debug_str.contains("var"));
     assert!(debug_str.contains("OnePlus"));
     assert!(debug_str.contains("constraints"));

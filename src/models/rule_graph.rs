@@ -64,7 +64,7 @@ impl Validator for RuleGraph {
   fn validate(&self) -> Result<(), String> {
     match self.rules().iter().try_for_each(|rule| rule.validate()) {
       Ok(()) => Ok(()),
-      Err(e) => Err(format!("Incorrect Rule Graph - {}", e)),
+      Err(e) => Err(format!("Incorrect Rule Graph - {e}")),
     }
   }
 }
@@ -80,7 +80,7 @@ impl RuleGraph {
   }
 
   fn __repr__(&self) -> String {
-    format!("{:?}", self)
+    format!("{self:?}")
   }
 
   fn __str__(&self) -> String {
@@ -213,7 +213,7 @@ impl RuleGraph {
     let holes = substitutions.keys().cloned().collect::<HashSet<String>>();
     let holes = holes
       .iter()
-      .map(|x| format!("@{}", x))
+      .map(|x| format!("@{x}"))
       .collect::<HashSet<String>>();
     let forward = ForwardDefiniteAssignment {
       graph: self.clone(),
@@ -250,7 +250,7 @@ impl RuleGraph {
   pub fn analyze_and_log_warnings(&self, substitutions: &HashMap<String, String>) {
     let warnings = self.analyze(substitutions);
     for warning in warnings {
-      log::warn!("{}", warning);
+      log::warn!("{warning}");
     }
   }
 

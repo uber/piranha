@@ -75,8 +75,7 @@ impl ConcreteSyntax {
     if !constraint_map.is_empty() {
       let unresolved: Vec<String> = constraint_map.keys().cloned().collect();
       return Err(format!(
-        "Unresolved constraints for captures: {:?}",
-        unresolved
+        "Unresolved constraints for captures: {unresolved:?}"
       ));
     }
 
