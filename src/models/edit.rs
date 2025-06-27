@@ -84,7 +84,7 @@ impl Edit {
 #[pymethods]
 impl Edit {
   fn __repr__(&self) -> String {
-    format!("{:?}", self)
+    format!("{self:?}")
   }
   fn __str__(&self) -> String {
     self.__repr__()
@@ -174,7 +174,7 @@ impl SourceCodeUnit {
           rule.name(),
           self.code(),
         );
-        trace!("Rewrite found : {:#?}", edit);
+        trace!("Rewrite found : {edit:#?}");
         edit
       })
   }
