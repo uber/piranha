@@ -15,6 +15,7 @@ use crate::models::matches::Range;
 
 use regex::Regex;
 
+use crate::models::concrete_syntax::cursor_utils::CursorNavigator;
 use crate::models::concrete_syntax::parser::CsConstraint;
 use crate::models::concrete_syntax::resolver::{ResolvedConcreteSyntax, ResolvedCsElement};
 use crate::models::matches::Match;
@@ -63,7 +64,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
     } else {
       CapturedNode {
         range,
-        text: get_code_from_range(range.start_byte, range.end_byte, code_str),
+        text: CursorNavigator::get_text_from_range(range.start_byte, range.end_byte, code_str),
       }
     };
 
@@ -90,15 +91,6 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 
   let is_empty = matches.is_empty();
   (matches, !is_empty)
-}
-
-fn find_next_sibling_or_ancestor_sibling(cursor: &mut TreeCursor) -> bool {
-  while !cursor.goto_next_sibling() {
-    if !cursor.goto_parent() {
-      return false;
-    }
-  }
-  true
 }
 
 /// Attempts to match a given ResolvedConcreteSyntax template against a sequence of sibling nodes
@@ -198,11 +190,9 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
     return (HashMap::new(), None);
   }
 
-  let mut node = cursor.node();
   // Skip comment nodes always
-  while node.kind().contains("comment") && cursor.goto_next_sibling() {
-    node = cursor.node();
-  }
+  CursorNavigator::skip_comment_nodes(cursor);
+  let node = cursor.node();
 
   // Get the first element and remaining elements
   let first_element = &cs_elements[0];
@@ -307,7 +297,8 @@ fn handle_template_variable_matching_elements(
 
     // Determine whether a next node exists:
     let mut next_node_cursor = cursor.clone();
-    let mut should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
+    let mut should_match =
+      CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
     // At this point next_node_cursor either points to the first sibling of the first node,
     // or the first node itself, if such sibling no longer exists
 
@@ -327,7 +318,7 @@ fn handle_template_variable_matching_elements(
         )
       {
         // Continuous code range that :[var] is matching from [first, ..., last]
-        let matched_code = get_code_from_range(
+        let matched_code = CursorNavigator::get_text_from_range(
           first_node.range().start_byte,
           last_node.range().end_byte,
           source_code,
@@ -380,7 +371,8 @@ fn handle_template_variable_matching_elements(
       // since at this level we already matched everything
       is_final_sibling = !next_node_cursor.goto_next_sibling();
       if is_final_sibling {
-        should_match = find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
+        should_match =
+          CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
       }
 
       if mode == CaptureMode::Single {
@@ -408,7 +400,7 @@ fn handle_leaf_node_elements(
       return (HashMap::new(), None);
     }
 
-    let should_match = find_next_sibling_or_ancestor_sibling(cursor);
+    let should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(cursor);
 
     // If we consumed the entire literal, continue with remaining elements
     if advance_by == literal_text.len() {
@@ -442,17 +434,8 @@ fn handle_leaf_node_elements(
 /// This function checks if the matching concluded on a child of the node where `match_sequential_siblings`
 /// was invoked. If so, it returns the index of that child.
 fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
-  parent_node
-    .children(&mut parent_node.walk())
-    .enumerate()
-    .filter(|&(_i, child)| child == cursor.node())
-    .map(|(i, _child)| i - 1)
-    .next()
-}
-
-fn get_code_from_range(start_byte: usize, end_byte: usize, source_code: &[u8]) -> String {
-  let text_slice = &source_code[start_byte..end_byte];
-  String::from_utf8_lossy(text_slice).to_string()
+  CursorNavigator::find_child_index(&cursor.node(), parent_node)
+    .map(|i| if i > 0 { i - 1 } else { 0 })
 }
 
 fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {

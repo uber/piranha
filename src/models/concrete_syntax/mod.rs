@@ -11,6 +11,7 @@
  limitations under the License.
 */
 
+pub(crate) mod cursor_utils;
 pub(crate) mod interpreter;
 pub(crate) mod parser;
 pub(crate) mod resolver;
