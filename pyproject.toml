@@ -20,8 +20,14 @@ documentation = "https://github.com/uber/piranha"
 repository = "https://github.com/uber/piranha"
 
 [build-system]
-requires = ["maturin>=1.4.0,<2.0"]
+# There is a bug with maturin 1.9.0 that incorrectly packages LICENSE file causing a problem.
+# For now we have to pin it to 1.8.7 (last stable version).
+# TODO: remove this check once maturin is fixed.
+requires = ["maturin>=1.4.0,<=1.8.7"]
 build-backend = "maturin"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
 
 [tool.maturin]
 bindings = "pyo3"

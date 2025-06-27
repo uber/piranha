@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: "v5.0.0"
     hooks:
       - id: check-byte-order-marker
       - id: check-case-conflict
@@ -32,7 +32,7 @@ repos:
         types: [rust]
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.3.1
+    rev: "v1.5.5"
     hooks:
       - id: forbid-tabs
         files: src/
@@ -52,8 +52,8 @@ repos:
           - license_header.txt
           - --comment-style
           - "#"
-  - repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: "v2.0.2"
+  - repo: https://github.com/hhatto/autopep8
+    rev: "v2.3.2"
     hooks:
       - id: autopep8
         files: demo/

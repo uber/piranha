@@ -55,7 +55,7 @@ def python_demo():
     old_mtime = getmtime(file_path)
 
     args = PiranhaArguments(
-        "py",
+        "python",
         substitutions={
             "str_literal": "dependency2",
             "str_to_replace": "dependency1",

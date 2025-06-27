@@ -48,3 +48,6 @@ yarn-error.log*
 
 # Built website directories
 dist/
+
+# Python virtual environments
+.venv/
