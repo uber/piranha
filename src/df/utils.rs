@@ -59,7 +59,7 @@ pub fn get_capture_groups_from_regex(re: Regex) -> Vec<String> {
 
   // Check all capture names (i.e., named groups) in the pattern
   for capture_name in re.capture_names().flatten() {
-    let tag = format!("@{}", capture_name);
+    let tag = format!("@{capture_name}");
     tags.push(tag);
   }
   tags
@@ -112,7 +112,7 @@ pub fn get_capture_groups_from_tsq(pattern: String) -> Vec<String> {
     })
     .unwrap_or_default();
 
-  log::debug!("capture_groups: {:?}", capture_groups);
+  log::debug!("capture_groups: {capture_groups:?}");
 
   capture_groups
 }
@@ -166,6 +166,6 @@ pub fn get_capture_group_usage_from_tsq(pattern: String) -> Vec<String> {
     .map(|mat| mat.as_str().to_owned())
     .collect();
 
-  log::debug!("capture_groups: {:?}", capture_groups);
+  log::debug!("capture_groups: {capture_groups:?}");
   capture_groups
 }

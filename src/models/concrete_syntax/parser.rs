@@ -48,7 +48,7 @@ impl ConcreteSyntax {
     use Rule::*;
 
     let mut pairs = ConcreteSyntaxParser::parse(concrete_syntax, input)
-      .map_err(|e| format!("Parse error: {}", e))?;
+      .map_err(|e| format!("Parse error: {e}"))?;
 
     let main_pair = pairs.next().unwrap();
 

@@ -149,7 +149,7 @@ impl RuleStore {
 
     for p2codebase in paths_to_codebase {
       if !Path::new(p2codebase).exists() {
-        panic!("Path to codebase does not exist: {}", p2codebase);
+        panic!("Path to codebase does not exist: {p2codebase}");
       }
       let _paths_to_codebase = Path::new(p2codebase).to_path_buf();
       // If the path to codebase is a file, and the language can parse it, then add it to the files
