@@ -18,6 +18,7 @@ use regex::Regex;
 use crate::models::concrete_syntax::cursor_utils::CursorNavigator;
 use crate::models::concrete_syntax::parser::CsConstraint;
 use crate::models::concrete_syntax::resolver::{ResolvedConcreteSyntax, ResolvedCsElement};
+use crate::models::concrete_syntax::types::{CapturedNode, PatternMatchResult, MatchingContext};
 use crate::models::matches::Match;
 use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
@@ -29,12 +30,7 @@ lazy_static! {
   static ref RE_VAR_PLUS: Regex = Regex::new(r"^:\[(?P<var_name>\w+)\+\]").unwrap();
 }
 
-// Struct to avoid dealing with lifetimes
-#[derive(Clone, PartialEq, Eq)]
-pub struct CapturedNode {
-  range: Range,
-  text: String,
-}
+
 
 #[derive(Clone, PartialEq, Eq)]
 struct MatchResult {
@@ -127,13 +123,12 @@ fn match_sequential_siblings(
       // Clone the cursor in order to attempt matching the sequence starting at cursor.node
       // Cloning here is necessary other we won't be able to advance to the next sibling if the matching fails
       let mut tmp_cursor = cursor.clone();
-      let (mapping, indx) = get_matches_for_subsequence_of_nodes(
-        &mut tmp_cursor,
+      let mut ctx = MatchingContext {
+        cursor: &mut tmp_cursor,
         source_code,
-        cs_elements,
-        true,
-        &parent_node,
-      );
+        top_node: &parent_node,
+      };
+      let (mapping, indx) = get_matches_for_subsequence_of_nodes(&mut ctx, cs_elements, true);
 
       // If we got the index of the last matched sibling, that means the matching was successful.
       if let Some(last_node_index) = indx {
@@ -176,23 +171,23 @@ fn match_sequential_siblings(
 /// - If the ResolvedConcreteSyntax doesn't start with `:[variable]` and the node **is not a leaf**, the function
 ///   moves the cursor to the first child of the node and calls itself recursively to try to match
 ///   the ResolvedConcreteSyntax.
-pub(crate) fn get_matches_for_subsequence_of_nodes(
-  cursor: &mut TreeCursor, source_code: &[u8], cs_elements: &Vec<ResolvedCsElement>,
-  nodes_left_to_match: bool, top_node: &Node,
+pub(crate) fn get_matches_for_subsequence_of_nodes<'ctx>(
+  ctx: &mut MatchingContext<'_>, cs_elements: &Vec<ResolvedCsElement>,
+  nodes_left_to_match: bool
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   if cs_elements.is_empty() {
     if !nodes_left_to_match {
-      return (HashMap::new(), Some(top_node.child_count() - 1));
+      return (HashMap::new(), Some(ctx.top_node.child_count() - 1));
     }
-    let index = find_last_matched_node(cursor, top_node);
+    let index = find_last_matched_node(ctx.cursor, ctx.top_node);
     return (HashMap::new(), index);
   } else if !nodes_left_to_match {
     return (HashMap::new(), None);
   }
 
   // Skip comment nodes always
-  CursorNavigator::skip_comment_nodes(cursor);
-  let node = cursor.node();
+  CursorNavigator::skip_comment_nodes(ctx.cursor);
+  let node = ctx.cursor.node();
 
   // Get the first element and remaining elements
   let first_element = &cs_elements[0];
@@ -202,9 +197,7 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
     ResolvedCsElement::Capture { .. } => {
       // Handle template variable matching
       handle_template_variable_matching_elements(
-        cursor,
-        source_code,
-        top_node,
+        ctx,
         first_element,
         remaining_elements,
       )
@@ -212,17 +205,20 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
     ResolvedCsElement::Literal(literal_text) => {
       if node.child_count() == 0 {
         // If the current node is a leaf
-        handle_leaf_node_elements(
-          cursor,
-          source_code,
+        let result = handle_leaf_node_elements(
+          ctx,
           literal_text,
           remaining_elements,
-          top_node,
-        )
+        );
+        // Convert back to legacy format for compatibility
+        match result {
+          PatternMatchResult::Success { captures, consumed_nodes } => (captures, Some(consumed_nodes)),
+          PatternMatchResult::Failure { .. } => (HashMap::new(), None),
+        }
       } else {
         // If the current node is an intermediate node
-        cursor.goto_first_child();
-        get_matches_for_subsequence_of_nodes(cursor, source_code, cs_elements, true, top_node)
+        ctx.cursor.goto_first_child();
+        get_matches_for_subsequence_of_nodes(ctx, cs_elements, true)
       }
     }
   }
@@ -236,9 +232,8 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 ///
 /// For successful matches, it returns the assignment of each template variable against a
 /// particular range. The Option<usize> indicates whether a match was successful, and keeps
-fn handle_template_variable_matching_elements(
-  cursor: &mut TreeCursor, source_code: &[u8], top_node: &Node,
-  capture_element: &ResolvedCsElement, remaining_elements: &Vec<ResolvedCsElement>,
+fn handle_template_variable_matching_elements<'ctx>(
+  ctx: &mut MatchingContext<'_>, capture_element: &ResolvedCsElement, remaining_elements: &Vec<ResolvedCsElement>,
 ) -> (HashMap<String, CapturedNode>, Option<usize>) {
   use crate::models::concrete_syntax::parser::CaptureMode;
 
@@ -254,16 +249,15 @@ fn handle_template_variable_matching_elements(
 
   // For zero_plus patterns, first try to match with zero nodes
   if mode == CaptureMode::ZeroPlus {
-    let mut tmp_cursor = cursor.clone();
-    if let (mut recursive_matches, Some(last_matched_node_idx)) =
-      get_matches_for_subsequence_of_nodes(
-        &mut tmp_cursor,
-        source_code,
-        remaining_elements,
-        true, // nodes_left_to_match
-        top_node,
-      )
-    {
+    let mut tmp_cursor = ctx.cursor.clone();
+    let mut temp_ctx = MatchingContext {
+      cursor: &mut tmp_cursor,
+      source_code: ctx.source_code,
+      top_node: ctx.top_node,
+    };
+    let (mut recursive_matches, last_matched_node_idx) =
+      get_matches_for_subsequence_of_nodes(&mut temp_ctx, remaining_elements, true);
+    if let Some(last_matched_node_idx) = last_matched_node_idx {
       // Successfully matched with zero nodes
       let captured_node = CapturedNode {
         range: Range {
@@ -292,11 +286,11 @@ fn handle_template_variable_matching_elements(
   }
   // Matching :[var] against a sequence of nodes [first_node, ... last_node]
   loop {
-    let first_node = cursor.node();
+    let first_node = ctx.cursor.node();
     let mut last_node = first_node;
 
     // Determine whether a next node exists:
-    let mut next_node_cursor = cursor.clone();
+    let mut next_node_cursor = ctx.cursor.clone();
     let mut should_match =
       CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
     // At this point next_node_cursor either points to the first sibling of the first node,
@@ -307,21 +301,20 @@ fn handle_template_variable_matching_elements(
     loop {
       let mut tmp_cursor = next_node_cursor.clone();
       let remaining_elements_tmp = remaining_elements.clone();
+      let mut temp_ctx = MatchingContext {
+        cursor: &mut tmp_cursor,
+        source_code: ctx.source_code,
+        top_node: ctx.top_node,
+      };
+      let (mut recursive_matches, last_matched_node_idx) =
+        get_matches_for_subsequence_of_nodes(&mut temp_ctx, &remaining_elements_tmp, should_match);
 
-      if let (mut recursive_matches, Some(last_matched_node_idx)) =
-        get_matches_for_subsequence_of_nodes(
-          &mut tmp_cursor,
-          source_code,
-          &remaining_elements_tmp,
-          should_match,
-          top_node,
-        )
-      {
+      if let Some(last_matched_node_idx) = last_matched_node_idx {
         // Continuous code range that :[var] is matching from [first, ..., last]
         let matched_code = CursorNavigator::get_text_from_range(
           first_node.range().start_byte,
           last_node.range().end_byte,
-          source_code,
+          ctx.source_code,
         );
 
         // Check if :[var] was already matched against some code range
@@ -381,52 +374,56 @@ fn handle_template_variable_matching_elements(
     }
 
     // Move one level down, to attempt to match the template variable :[var] against smaller nodes.
-    if !cursor.goto_first_child() {
+    if !ctx.cursor.goto_first_child() {
       break;
     }
   }
   (HashMap::new(), None)
 }
 
-fn handle_leaf_node_elements(
-  cursor: &mut TreeCursor, source_code: &[u8], literal_text: &str,
-  remaining_elements: &Vec<ResolvedCsElement>, top_node: &Node,
-) -> (HashMap<String, CapturedNode>, Option<usize>) {
-  let code = cursor.node().utf8_text(source_code).unwrap().trim();
+fn handle_leaf_node_elements<'ctx>(
+  ctx: &mut MatchingContext<'_>, literal_text: &str,
+  remaining_elements: &Vec<ResolvedCsElement>,
+) -> PatternMatchResult {
+  let code = ctx.cursor.node().utf8_text(ctx.source_code).unwrap().trim();
   if literal_text.starts_with(code) && !code.is_empty() {
     let advance_by = code.len();
     // Can only advance if there is still enough chars to consume
     if advance_by > literal_text.len() {
-      return (HashMap::new(), None);
+      return PatternMatchResult::failed();
     }
 
-    let should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(cursor);
+    let should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(ctx.cursor);
 
     // If we consumed the entire literal, continue with remaining elements
     if advance_by == literal_text.len() {
-      return get_matches_for_subsequence_of_nodes(
-        cursor,
-        source_code,
+      let (captures, consumed_nodes_opt) = get_matches_for_subsequence_of_nodes(
+        ctx,
         remaining_elements,
         should_match,
-        top_node,
       );
+      return match consumed_nodes_opt {
+        Some(consumed_nodes) => PatternMatchResult::success(captures, consumed_nodes),
+        None => PatternMatchResult::failed(),
+      };
     } else {
       // If we only consumed part of the literal, create a new literal with the remaining text
       let remaining_literal = &literal_text[advance_by..];
       let mut new_elements = vec![ResolvedCsElement::Literal(remaining_literal.to_string())];
       new_elements.extend_from_slice(remaining_elements);
 
-      return get_matches_for_subsequence_of_nodes(
-        cursor,
-        source_code,
+      let (captures, consumed_nodes_opt) = get_matches_for_subsequence_of_nodes(
+        ctx,
         &new_elements,
         should_match,
-        top_node,
       );
+      return match consumed_nodes_opt {
+        Some(consumed_nodes) => PatternMatchResult::success(captures, consumed_nodes),
+        None => PatternMatchResult::failed(),
+      };
     }
   }
-  (HashMap::new(), None)
+  PatternMatchResult::failed()
 }
 
 /// Finds the index of the last matched node relative to the `match_sequential_siblings` function.
