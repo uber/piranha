@@ -61,7 +61,7 @@ pub struct Match {
 #[pymethods]
 impl Match {
   fn __repr__(&self) -> String {
-    format!("{:?}", self)
+    format!("{self:?}")
   }
 
   fn __str__(&self) -> String {
@@ -362,7 +362,7 @@ impl From<tree_sitter::Range> for Range {
 #[pymethods]
 impl Range {
   fn __repr__(&self) -> String {
-    format!("{:?}", self)
+    format!("{self:?}")
   }
 
   fn __str__(&self) -> String {
@@ -458,7 +458,7 @@ impl From<tree_sitter::Point> for Point {
 #[pymethods]
 impl Point {
   fn __repr__(&self) -> String {
-    format!("{:?}", self)
+    format!("{self:?}")
   }
 
   fn __str__(&self) -> String {
@@ -510,7 +510,7 @@ impl SourceCodeUnit {
           self.piranha_arguments(),
           compiled_regexes,
         );
-        trace!("Found match {:#?}", p_match);
+        trace!("Found match {p_match:#?}");
         output.push(p_match.clone());
       }
     }
