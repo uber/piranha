@@ -236,6 +236,7 @@ is_seed_rule = false
 #
 
 
+
 # Next two rules take care of if-else cleanup, these 2 rules depend on their order in this file
 #
 
@@ -394,6 +395,8 @@ groups = ["if_cleanup"]
 replace_node = "if_else_block"
 replace = "@alternatives"
 is_seed_rule = false
+
+
 
 
 # Before:
@@ -567,6 +570,7 @@ groups = ["if_cleanup"]
 replace_node = "*"
 replace = "@y"
 is_seed_rule = false
+
 
 
 # A hack to handle the scenario when `nil` is used in the ternary expression
@@ -1287,9 +1291,15 @@ is_seed_rule = false
 # rule to delete unreachable code after return statement
 [[rules]]
 name = "delete_all_statements_after_return"
-query = """cs return :[val] :[others+]"""
+query = """(
+    (
+        (statements)* @st
+        (control_transfer_statement) @cts
+        (_)+ @extras
+    )
+)"""
 groups = ["post_processing_cleanup"]
-replace_node = "others"
+replace_node = "extras"
 replace = ""
 is_seed_rule = false
 
