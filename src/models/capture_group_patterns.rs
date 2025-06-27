@@ -147,10 +147,11 @@ impl CompiledCGPattern {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
       CompiledCGPattern::M(concrete_syntax) => {
+        let resolved_syntax = concrete_syntax.clone().resolve().unwrap();
         let matches = get_all_matches_for_concrete_syntax(
           node,
           code_str,
-          concrete_syntax,
+          &resolved_syntax,
           recursive,
           replace_node,
         );
