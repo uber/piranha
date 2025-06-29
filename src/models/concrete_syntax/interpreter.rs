@@ -191,7 +191,6 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
 
   // Skip comment nodes always
   CursorNavigator::skip_comment_nodes(&mut ctx.cursor);
-  let node = ctx.cursor.node();
 
   // Get the first element and remaining elements
   let first_element = &cs_elements[0];
@@ -203,14 +202,10 @@ pub(crate) fn get_matches_for_subsequence_of_nodes(
       handle_template_variable_matching_elements(ctx, first_element, remaining_elements)
     }
     ResolvedCsElement::Literal(literal_text) => {
-      if node.child_count() == 0 {
-        // If the current node is a leaf
-        handle_leaf_node_elements(ctx, literal_text, remaining_elements)
-      } else {
-        // If the current node is an intermediate node
+      while ctx.cursor.node().child_count() != 0 {
         ctx.cursor.goto_first_child();
-        get_matches_for_subsequence_of_nodes(ctx, cs_elements, true)
       }
+      handle_leaf_node_elements(ctx, literal_text, remaining_elements)
     }
   }
 }
