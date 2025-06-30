@@ -152,10 +152,10 @@ fn match_sequential_siblings(
   PatternMatchResult::failed()
 }
 
-/// This is the core logic of concrete syntax matching. Given a tree-node, it essentially attempts to match
-/// the concrete syntax. Concrete syntax is essentially a parser for parserr combinators, we built a set of parsers
-/// given the concrete sytanx the user specifieis. so this function essentially orchestraes that, recursively.
-/// given a current set of parser combinators it dispatches the first one, and then we
+/// Top-level entry point for concrete-syntax matching.
+///
+/// Dispatches each element of the resolved pattern—capture groups or literal text—against the AST
+/// at the current cursor position, recursing until the pattern is fully applied.
 pub(crate) fn match_cs_pattern(
   ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], can_continue: bool,
 ) -> PatternMatchResult {
