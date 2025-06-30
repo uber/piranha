@@ -86,7 +86,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 /// at each statement position until we find a match.
 ///
 /// ```
-/// Pattern: int :[x] = 1; :[x]++;
+/// Pattern: int :[x] = 2; :[x]++;
 ///
 /// Function Body AST:
 /// ├── [0] char a = 'c' ; ← Start matching here: ❌ No match
