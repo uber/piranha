@@ -165,7 +165,7 @@ fn match_sequential_siblings(
 /// given the concrete sytanx the user specifieis. so this function essentially orchestraes that, recursively.
 /// given a current set of parser combinators it dispatches the first one, and then we
 pub(crate) fn match_cs_pattern(
-  ctx: &mut MatchingContext<'_>, cs_elements: &Vec<ResolvedCsElement>, nodes_left_to_match: bool,
+  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], nodes_left_to_match: bool,
 ) -> PatternMatchResult {
   // Handle empty pattern or exhausted nodes
   if let Some(result) = check_match_completion(ctx, cs_elements, nodes_left_to_match) {
@@ -197,7 +197,7 @@ pub(crate) fn match_cs_pattern(
 
 /// Handle the case where pattern is empty or nodes are exhausted
 fn check_match_completion(
-  ctx: &mut MatchingContext<'_>, cs_elements: &Vec<ResolvedCsElement>, nodes_left_to_match: bool,
+  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], nodes_left_to_match: bool,
 ) -> Option<PatternMatchResult> {
   if cs_elements.is_empty() {
     if !nodes_left_to_match {
@@ -227,7 +227,7 @@ fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option
 }
 
 fn match_literal(
-  ctx: &mut MatchingContext<'_>, literal_text: &str, remaining_elements: &Vec<ResolvedCsElement>,
+  ctx: &mut MatchingContext<'_>, literal_text: &str, remaining_elements: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   // We match literals against leaves
   while ctx.cursor.node().child_count() != 0 {
@@ -252,7 +252,6 @@ fn match_literal(
       let remaining_literal = &literal_text[advance_by..];
       let mut new_elements = vec![ResolvedCsElement::Literal(remaining_literal.to_string())];
       new_elements.extend_from_slice(remaining_elements);
-
       return match_cs_pattern(ctx, &new_elements, should_match);
     }
   }
