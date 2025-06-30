@@ -29,9 +29,11 @@ pub enum PatternMatchResult {
   Success {
     captures: HashMap<String, CapturedNode>,
     consumed_nodes: usize,
+    range: Option<Range>,
   },
   /// Failed to match with optional reason for debugging
   Failure { reason: Option<String> },
+
 }
 
 /// Context passed to matching functions to reduce parameter repetition
@@ -48,6 +50,7 @@ impl PatternMatchResult {
     PatternMatchResult::Success {
       captures,
       consumed_nodes,
+      range: None,
     }
   }
 
