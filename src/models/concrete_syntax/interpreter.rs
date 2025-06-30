@@ -159,7 +159,7 @@ fn match_sequential_siblings(
 pub(crate) fn match_cs_pattern(
   ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], can_continue: bool,
 ) -> PatternMatchResult {
-  // Handle empty pattern or exhausted nodes
+  // Check if we finished matching! In case, we haven't `check_match_completion` returns None
   if let Some(result) = check_match_completion(ctx, cs_elements, can_continue) {
     return result;
   }
