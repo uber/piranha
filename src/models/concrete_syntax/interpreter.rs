@@ -267,8 +267,11 @@ fn match_zero_plus_capture(
   match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, true)
 }
 
-/// This function essentially attempts to assign the capture node to all tree levels in the current
-/// traversal, i.e., either the current node, it's first chiold, or its child of child
+/// Attempts to match a capture at different tree depths by traversing down the AST.
+///
+/// This function tries to assign a node range to the capture variable at the current tree level,
+/// then moves one level deeper (to child nodes) and tries again, continuing until a match is found
+/// or no more child levels exist.
 fn match_at_all_tree_levels(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
   remaining_pattern: &[ResolvedCsElement], allow_horizontal_expansion: bool,
@@ -295,7 +298,7 @@ fn match_at_all_tree_levels(
   PatternMatchResult::failed()
 }
 
-/// Try to match a range of nodes starting at the current position, expanding the range if needed
+/// Try to match a range of nodes starting at the current cursor position, expanding the range if needed
 /// This will try to assign [range_start_node, range_end_node] to a capture group, and match the rest of the cs pattern
 /// against remaining nodes
 fn try_match_node_range(
@@ -406,20 +409,15 @@ fn check_match_completion(
   None
 }
 
-/// Finds the index of the last matched node relative to the `match_sequential_siblings` function.
-///
-/// This function checks if the matching concluded on a child of the node where `match_sequential_siblings`
-/// was invoked. If so, it returns the index of that child.
+/// Finds the index of the last matched node relative to the top level node.
+/// Returns the index of the child node where matching concluded, or 0 if the cursor
+/// is not positioned on a child of the parent node.
 fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
   CursorNavigator::find_child_index(&cursor.node(), parent_node)
     .map(|i| if i > 0 { i - 1 } else { 0 })
 }
 
-// =============================================================================
-// UTILITY FUNCTIONS
-// =============================================================================
-
-/// Parser combinator: Create an empty captured node for zero-match patterns
+/// Create an empty captured node for zero-match patterns
 fn create_empty_captured_node() -> CapturedNode {
   CapturedNode {
     range: Range {
