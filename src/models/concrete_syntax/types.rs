@@ -33,7 +33,6 @@ pub enum PatternMatchResult {
   },
   /// Failed to match with optional reason for debugging
   Failure { reason: Option<String> },
-
 }
 
 /// Context passed to matching functions to reduce parameter repetition
