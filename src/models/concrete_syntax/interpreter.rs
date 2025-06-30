@@ -40,6 +40,7 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
     range: Some(range),
   } = match_sequential_siblings(&mut node.walk(), source_code_ref, &cs.pattern.sequence)
   {
+    // If the user doesn't specify a replace node, we use '*' as the default (everything)
     let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
 
     if replace_node_key == "*" {
@@ -156,10 +157,10 @@ fn match_sequential_siblings(
 /// given the concrete sytanx the user specifieis. so this function essentially orchestraes that, recursively.
 /// given a current set of parser combinators it dispatches the first one, and then we
 pub(crate) fn match_cs_pattern(
-  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], nodes_left_to_match: bool,
+  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], can_continue: bool,
 ) -> PatternMatchResult {
   // Handle empty pattern or exhausted nodes
-  if let Some(result) = check_match_completion(ctx, cs_elements, nodes_left_to_match) {
+  if let Some(result) = check_match_completion(ctx, cs_elements, can_continue) {
     return result;
   }
 
@@ -167,22 +168,19 @@ pub(crate) fn match_cs_pattern(
   CursorNavigator::skip_comment_nodes(&mut ctx.cursor);
 
   // Get the first element and remaining elements
-  let first_element = &cs_elements[0];
-  let remaining_elements = &cs_elements[1..].to_vec();
+  let (first, rest) = cs_elements.split_first().unwrap();
 
-  match first_element {
+  match first {
     ResolvedCsElement::Capture {
       name,
       mode,
       constraints,
     } => match mode {
-      CaptureMode::Single => match_single_capture(ctx, name, constraints, remaining_elements),
-      CaptureMode::OnePlus => match_one_plus_capture(ctx, name, constraints, remaining_elements),
-      CaptureMode::ZeroPlus => match_zero_plus_capture(ctx, name, constraints, remaining_elements),
+      CaptureMode::Single => match_single_capture(ctx, name, constraints, rest),
+      CaptureMode::OnePlus => match_one_plus_capture(ctx, name, constraints, rest),
+      CaptureMode::ZeroPlus => match_zero_plus_capture(ctx, name, constraints, rest),
     },
-    ResolvedCsElement::Literal(literal_text) => {
-      match_literal(ctx, literal_text, remaining_elements)
-    }
+    ResolvedCsElement::Literal(literal_text) => match_literal(ctx, literal_text, rest),
   }
 }
 
@@ -225,7 +223,7 @@ fn match_literal(
 /// Handle single capture: :[var] - must match exactly one node
 fn match_single_capture(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
-  remaining_pattern: &Vec<ResolvedCsElement>,
+  remaining_pattern: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, false)
 }
@@ -233,7 +231,7 @@ fn match_single_capture(
 /// Handle one-plus capture: :[var+] - must match one or more nodes  
 fn match_one_plus_capture(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
-  remaining_pattern: &Vec<ResolvedCsElement>,
+  remaining_pattern: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, true)
 }
@@ -241,7 +239,7 @@ fn match_one_plus_capture(
 /// Handle zero-plus capture: :[var*] - can match zero or more nodes
 fn match_zero_plus_capture(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
-  remaining_pattern: &Vec<ResolvedCsElement>,
+  remaining_pattern: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   // First try to match with zero nodes
   let mut zero_match_ctx = MatchingContext {
@@ -267,18 +265,22 @@ fn match_zero_plus_capture(
   match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, true)
 }
 
-/// Attempts to match a capture at different tree depths by traversing down the AST.
+/// Attempts to match a capture by exploring different levels of the AST hierarchy.
+/// Starting from the current node, it tries to match progressively smaller subtrees
+/// by traversing down to child nodes. This allows flexible matching where a capture
+/// can match a large statement block or just a single expression within it.
 ///
-/// This function tries to assign a node range to the capture variable at the current tree level,
-/// then moves one level deeper (to child nodes) and tries again, continuing until a match is found
-/// or no more child levels exist.
+/// For example, given: `int x = 1; x++;`
+/// The capture `:[x]` could match:
+/// - The entire statement block: `int x = 1; x++;`
+/// - Just the declaration: `int x = 1;`
+/// - Just the type: `int`
 fn match_at_all_tree_levels(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
   remaining_pattern: &[ResolvedCsElement], allow_horizontal_expansion: bool,
 ) -> PatternMatchResult {
   // Try matching at different tree levels, going deeper each iteration
   loop {
-    // Try to match a range of nodes starting at the current cursor position
     let result = try_match_node_range(
       ctx,
       var_name,
@@ -298,9 +300,20 @@ fn match_at_all_tree_levels(
   PatternMatchResult::failed()
 }
 
-/// Try to match a range of nodes starting at the current cursor position, expanding the range if needed
-/// This will try to assign [range_start_node, range_end_node] to a capture group, and match the rest of the cs pattern
-/// against remaining nodes
+/// Try to match a range of nodes starting at the current cursor position, expanding the range if needed and allowed
+/// It assigns [range_start, range_end] to a capture group, and matches the rest of the cs pattern against remaining nodes
+///
+/// Per‐iteration diagram:
+///
+///     AST siblings: … ─ node₀ ─ node₁ ─ node₂ ─ node₃ ─ node₄ ─ …  
+///                          ↑         ↑  
+///                    range_start range_end
+///
+///   1) capture = text(node₁…node₂)  
+///   2) match_cs_pattern(  
+///        remaining_elements,         // CS elements still to match  
+///        /* should_match */ true if node₃ exists  
+///      ) starting at node₃, node₄, …
 fn try_match_node_range(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
   remaining_pattern: &[ResolvedCsElement], allow_horizontal_expansion: bool,
@@ -309,7 +322,7 @@ fn try_match_node_range(
   let range_start = ctx.cursor.node();
   let mut range_end = range_start;
   let mut next_cursor = ctx.cursor.clone();
-  // “should_match” is  used to check whether there are siblings or ancestor siblings we need to match
+  // 'should_match' is used to check whether there are siblings or ancestor siblings we need to match
   // after we assign the current range to the capture node
   let mut should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_cursor);
   let mut is_last = false;
@@ -389,10 +402,10 @@ fn create_match_from_capture(
 
 /// Handle the case where pattern is empty or nodes are exhausted
 fn check_match_completion(
-  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], nodes_left_to_match: bool,
+  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], can_continue: bool,
 ) -> Option<PatternMatchResult> {
   if cs_elements.is_empty() {
-    if !nodes_left_to_match {
+    if !can_continue {
       return Some(PatternMatchResult::success(
         HashMap::new(),
         ctx.top_node.child_count() - 1,
@@ -403,7 +416,7 @@ fn check_match_completion(
       Some(consumed_nodes) => Some(PatternMatchResult::success(HashMap::new(), consumed_nodes)),
       None => Some(PatternMatchResult::failed()),
     };
-  } else if !nodes_left_to_match {
+  } else if !can_continue {
     return Some(PatternMatchResult::failed());
   }
   None
