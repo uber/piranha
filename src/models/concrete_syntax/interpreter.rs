@@ -13,6 +13,7 @@
 
 use crate::models::matches::Range;
 
+use crate::models::concrete_syntax::constraint_checker::satisfies_constraints;
 use crate::models::concrete_syntax::cursor_utils::CursorNavigator;
 use crate::models::concrete_syntax::parser::CaptureMode;
 use crate::models::concrete_syntax::parser::CsConstraint;
@@ -23,23 +24,9 @@ use std::collections::HashMap;
 use tree_sitter::{Node, TreeCursor};
 use tree_sitter_traversal::Cursor;
 
-/// Helper function to create a match from captured nodes
-fn create_match_from_capture(
-  replace_node_key: &str, match_map: HashMap<String, CapturedNode>, _range: Range,
-) -> Match {
-  let replace_node_match = match_map.get(replace_node_key).cloned().unwrap_or_else(|| {
-    panic!("The tag {replace_node_key} provided in the replace node is not present")
-  });
-
-  Match {
-    matched_string: replace_node_match.text,
-    range: replace_node_match.range,
-    matches: match_map.into_iter().map(|(k, v)| (k, v.text)).collect(),
-    associated_comma: None,
-    associated_comments: Vec::new(),
-    associated_leading_empty_lines: Vec::new(),
-  }
-}
+// =============================================================================
+// PUBLIC API
+// =============================================================================
 
 pub(crate) fn get_all_matches_for_concrete_syntax(
   node: &Node, source_code_ref: &[u8], cs: &ResolvedConcreteSyntax, recursive: bool,
@@ -86,6 +73,10 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
   }
   matches
 }
+
+// =============================================================================
+// CORE MATCHING ENGINE
+// =============================================================================
 
 /// Attempts to match a pattern against sequential sibling nodes in an AST.
 ///
@@ -195,37 +186,6 @@ pub(crate) fn match_cs_pattern(
   }
 }
 
-/// Handle the case where pattern is empty or nodes are exhausted
-fn check_match_completion(
-  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], nodes_left_to_match: bool,
-) -> Option<PatternMatchResult> {
-  if cs_elements.is_empty() {
-    if !nodes_left_to_match {
-      return Some(PatternMatchResult::success(
-        HashMap::new(),
-        ctx.top_node.child_count() - 1,
-      ));
-    }
-    let index = find_last_matched_node(&mut ctx.cursor, ctx.top_node);
-    return match index {
-      Some(consumed_nodes) => Some(PatternMatchResult::success(HashMap::new(), consumed_nodes)),
-      None => Some(PatternMatchResult::failed()),
-    };
-  } else if !nodes_left_to_match {
-    return Some(PatternMatchResult::failed());
-  }
-  None
-}
-
-/// Finds the index of the last matched node relative to the `match_sequential_siblings` function.
-///
-/// This function checks if the matching concluded on a child of the node where `match_sequential_siblings`
-/// was invoked. If so, it returns the index of that child.
-fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
-  CursorNavigator::find_child_index(&cursor.node(), parent_node)
-    .map(|i| if i > 0 { i - 1 } else { 0 })
-}
-
 fn match_literal(
   ctx: &mut MatchingContext<'_>, literal_text: &str, remaining_elements: &[ResolvedCsElement],
 ) -> PatternMatchResult {
@@ -258,31 +218,36 @@ fn match_literal(
   PatternMatchResult::failed()
 }
 
-/// Parser combinator helper functions
-fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {
-  match ctr {
-    CsConstraint::In { items, .. } => items.contains(&node.text.to_string()),
-  }
+// =============================================================================
+// CAPTURE MODE HANDLERS
+// =============================================================================
+
+/// Handle single capture: :[var] - must match exactly one node
+fn match_single_capture(
+  ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
+  remaining_pattern: &Vec<ResolvedCsElement>,
+) -> PatternMatchResult {
+  match_capture_with_original_logic(
+    ctx,
+    var_name,
+    constraints,
+    remaining_pattern,
+    CaptureMode::Single,
+  )
 }
 
-/// Parser combinator: Check if a captured node satisfies all constraints
-fn satisfies_constraints(node: &CapturedNode, constraints: &[CsConstraint]) -> bool {
-  constraints
-    .iter()
-    .all(|constraint| check_constraint(node, constraint))
-}
-
-/// Parser combinator: Create an empty captured node for zero-match patterns
-fn create_empty_captured_node() -> CapturedNode {
-  CapturedNode {
-    range: Range {
-      start_byte: 0,
-      end_byte: 0,
-      start_point: crate::models::matches::Point { row: 0, column: 0 },
-      end_point: crate::models::matches::Point { row: 0, column: 0 },
-    },
-    text: String::new(),
-  }
+/// Handle one-plus capture: :[var+] - must match one or more nodes  
+fn match_one_plus_capture(
+  ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
+  remaining_pattern: &Vec<ResolvedCsElement>,
+) -> PatternMatchResult {
+  match_capture_with_original_logic(
+    ctx,
+    var_name,
+    constraints,
+    remaining_pattern,
+    CaptureMode::OnePlus,
+  )
 }
 
 /// Handle zero-plus capture: :[var*] - can match zero or more nodes
@@ -318,137 +283,176 @@ fn match_zero_plus_capture(
   match_one_plus_capture(ctx, var_name, constraints, remaining_pattern)
 }
 
-/// Handle single capture: :[var] - must match exactly one node
-fn match_single_capture(
-  ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
-  remaining_pattern: &Vec<ResolvedCsElement>,
-) -> PatternMatchResult {
-  match_capture_with_original_logic(
-    ctx,
-    var_name,
-    constraints,
-    remaining_pattern,
-    CaptureMode::Single,
-  )
-}
-
-/// Handle one-plus capture: :[var+] - must match one or more nodes  
-fn match_one_plus_capture(
-  ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
-  remaining_pattern: &Vec<ResolvedCsElement>,
-) -> PatternMatchResult {
-  match_capture_with_original_logic(
-    ctx,
-    var_name,
-    constraints,
-    remaining_pattern,
-    CaptureMode::OnePlus,
-  )
-}
-
 /// Use the original capture matching logic that was working
 fn match_capture_with_original_logic(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
   remaining_pattern: &Vec<ResolvedCsElement>, mode: CaptureMode,
 ) -> PatternMatchResult {
-  // Matching :[var] against a sequence of nodes [first_node, ... last_node]
+  // Try matching at different tree levels, going deeper each iteration
   loop {
-    let first_node = ctx.cursor.node();
-    let mut last_node = first_node;
-
-    // Determine whether a next node exists:
-    let mut next_node_cursor = ctx.cursor.clone();
-    let mut should_match =
-      CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
-    // At this point next_node_cursor either points to the first sibling of the first node,
-    // or the first node itself, if such sibling no longer exists
-
-    // Intentionally setting is_final_sibling to false regardless of should_match, due to the logic of handling the last iteration
-    let mut is_final_sibling = false;
-    loop {
-      let remaining_elements_tmp = remaining_pattern.clone();
-      let mut temp_ctx = MatchingContext {
-        cursor: next_node_cursor.clone(),
-        source_code: ctx.source_code,
-        top_node: ctx.top_node,
-      };
-      let result = match_cs_pattern(&mut temp_ctx, &remaining_elements_tmp, should_match);
-
-      if let PatternMatchResult::Success {
-        captures: mut recursive_matches,
-        consumed_nodes: last_matched_node_idx,
-        range: None,
-      } = result
-      {
-        // Continuous code range that :[var] is matching from [first, ..., last]
-        let matched_code = CursorNavigator::get_text_from_range(
-          first_node.range().start_byte,
-          last_node.range().end_byte,
-          ctx.source_code,
-        );
-
-        // Check if :[var] was already matched against some code range
-        // If it did, and it is not the same, we return unsuccessful
-        if recursive_matches.contains_key(var_name)
-          && recursive_matches[var_name].text.trim() != matched_code.trim()
-        {
-          return PatternMatchResult::failed();
-        }
-
-        let captured_node = CapturedNode {
-          range: Range::span_ranges(first_node.range(), last_node.range()),
-          text: matched_code,
-        };
-
-        // Check all constraints for this capture
-        let mut constraints_satisfied = true;
-        for constraint in constraints {
-          if !check_constraint(&captured_node, constraint) {
-            constraints_satisfied = false;
-            break;
-          }
-        }
-
-        if !constraints_satisfied {
-          // Continue to try matching with more nodes or different positions
-          // The continue here will skip to the next iteration of the inner matching loop
-          break;
-        }
-
-        // Otherwise insert it
-        recursive_matches.insert(var_name.to_string(), captured_node);
-        return PatternMatchResult::success(recursive_matches, last_matched_node_idx);
-      }
-
-      // Append an extra node to match with :[var]. Remember we had advanced next_node_cursor before,
-      // therefore we cannot advance it again, otherwise we would skip nodes.
-      // We only attempt to append an extra code if we are in one_plus matching mode.
-      last_node = next_node_cursor.node();
-      if is_final_sibling {
-        break;
-      }
-
-      // This is used for the final iteration. We need to determine if there are any other nodes
-      // left to match, to inform our next recursive call. We do this by calling find_next_sibling_or_ancestor_sibling
-      // to move the cursor to the parent and find the next sibling at another level,
-      // since at this level we already matched everything
-      is_final_sibling = !next_node_cursor.goto_next_sibling();
-      if is_final_sibling {
-        should_match =
-          CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
-      }
-
-      if mode == CaptureMode::Single {
-        break;
-      }
+    // Try to match a range of nodes starting at the current cursor position
+    if let Some(result) = try_match_node_range(ctx, var_name, constraints, remaining_pattern, mode) {
+      return result;
     }
 
-    // Move one level down, to attempt to match the template variable :[var] against smaller nodes.
+    // Move one level down to try matching against smaller/deeper nodes
     if !ctx.cursor.goto_first_child() {
       break;
     }
   }
   PatternMatchResult::failed()
+}
+
+/// Try to match a range of nodes starting at the current position, expanding the range if needed
+fn try_match_node_range(
+  ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
+  remaining_pattern: &Vec<ResolvedCsElement>, mode: CaptureMode,
+) -> Option<PatternMatchResult> {
+  let first_node = ctx.cursor.node();
+  let mut last_node = first_node;
+
+  // Set up cursor for pattern matching after the captured range  
+  let mut next_node_cursor = ctx.cursor.clone();
+  let mut should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
+
+  let mut is_final_sibling = false;
+  
+  // Try expanding the captured range by including more nodes
+  loop {
+    // Try to match the remaining pattern after our current captured range
+    let mut temp_ctx = MatchingContext {
+      cursor: next_node_cursor.clone(),
+      source_code: ctx.source_code,
+      top_node: ctx.top_node,
+    };
+    let result = match_cs_pattern(&mut temp_ctx, remaining_pattern, should_match);
+
+    if let PatternMatchResult::Success {
+      captures: mut recursive_matches,
+      consumed_nodes: last_matched_node_idx,
+      range: None,
+    } = result
+    {
+      // Build the captured node from our range [first_node...last_node]
+      let matched_code = CursorNavigator::get_text_from_range(
+        first_node.range().start_byte,
+        last_node.range().end_byte,
+        ctx.source_code,
+      );
+
+      // Check for conflicting captures of the same variable
+      if recursive_matches.contains_key(var_name)
+        && recursive_matches[var_name].text.trim() != matched_code.trim()
+      {
+        return Some(PatternMatchResult::failed());
+      }
+
+      let captured_node = CapturedNode {
+        range: Range::span_ranges(first_node.range(), last_node.range()),
+        text: matched_code,
+      };
+
+      // Validate constraints
+      if !satisfies_constraints(&captured_node, constraints) {
+        break; // Try expanding the range further
+      }
+
+      // Success! Add our capture and return
+      recursive_matches.insert(var_name.to_string(), captured_node);
+      return Some(PatternMatchResult::success(recursive_matches, last_matched_node_idx));
+    }
+
+    // Expand the captured range to include the next node
+    last_node = next_node_cursor.node();
+    if is_final_sibling {
+      break;
+    }
+
+    // Advance to next sibling to potentially include in our captured range
+    is_final_sibling = !next_node_cursor.goto_next_sibling();
+    if is_final_sibling {
+      should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_node_cursor);
+    }
+
+    // Single capture mode only tries one node
+    if mode == CaptureMode::Single {
+      break;
+    }
+  }
+
+  None // No successful match found at this position
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/// Helper function to create a match from captured nodes
+fn create_match_from_capture(
+  replace_node_key: &str, match_map: HashMap<String, CapturedNode>, _range: Range,
+) -> Match {
+  let replace_node_match = match_map.get(replace_node_key).cloned().unwrap_or_else(|| {
+    panic!("The tag {replace_node_key} provided in the replace node is not present")
+  });
+
+  Match {
+    matched_string: replace_node_match.text,
+    range: replace_node_match.range,
+    matches: match_map.into_iter().map(|(k, v)| (k, v.text)).collect(),
+    associated_comma: None,
+    associated_comments: Vec::new(),
+    associated_leading_empty_lines: Vec::new(),
+  }
+}
+
+/// Handle the case where pattern is empty or nodes are exhausted
+fn check_match_completion(
+  ctx: &mut MatchingContext<'_>, cs_elements: &[ResolvedCsElement], nodes_left_to_match: bool,
+) -> Option<PatternMatchResult> {
+  if cs_elements.is_empty() {
+    if !nodes_left_to_match {
+      return Some(PatternMatchResult::success(
+        HashMap::new(),
+        ctx.top_node.child_count() - 1,
+      ));
+    }
+    let index = find_last_matched_node(&mut ctx.cursor, ctx.top_node);
+    return match index {
+      Some(consumed_nodes) => Some(PatternMatchResult::success(HashMap::new(), consumed_nodes)),
+      None => Some(PatternMatchResult::failed()),
+    };
+  } else if !nodes_left_to_match {
+    return Some(PatternMatchResult::failed());
+  }
+  None
+}
+
+/// Finds the index of the last matched node relative to the `match_sequential_siblings` function.
+///
+/// This function checks if the matching concluded on a child of the node where `match_sequential_siblings`
+/// was invoked. If so, it returns the index of that child.
+fn find_last_matched_node(cursor: &mut TreeCursor, parent_node: &Node) -> Option<usize> {
+  CursorNavigator::find_child_index(&cursor.node(), parent_node)
+    .map(|i| if i > 0 { i - 1 } else { 0 })
+}
+
+
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/// Parser combinator: Create an empty captured node for zero-match patterns
+fn create_empty_captured_node() -> CapturedNode {
+  CapturedNode {
+    range: Range {
+      start_byte: 0,
+      end_byte: 0,
+      start_point: crate::models::matches::Point { row: 0, column: 0 },
+      end_point: crate::models::matches::Point { row: 0, column: 0 },
+    },
+    text: String::new(),
+  }
 }
 
 #[cfg(test)]
