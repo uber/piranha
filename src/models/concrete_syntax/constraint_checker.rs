@@ -26,4 +26,4 @@ pub(crate) fn satisfies_constraints(node: &CapturedNode, constraints: &[CsConstr
   constraints
     .iter()
     .all(|constraint| check_constraint(node, constraint))
-} 
+}
