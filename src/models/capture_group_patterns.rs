@@ -133,7 +133,6 @@ impl CompiledCGPattern {
     &self, node: &Node, source_code: String, recursive: bool, replace_node: Option<String>,
     replace_node_idx: Option<u8>,
   ) -> Vec<Match> {
-    let code_str = source_code.as_bytes();
     match self {
       CompiledCGPattern::Q(query) => get_all_matches_for_query(
         node,
@@ -147,15 +146,15 @@ impl CompiledCGPattern {
         get_all_matches_for_regex(node, source_code, regex, recursive, replace_node)
       }
       CompiledCGPattern::M(concrete_syntax) => {
+        let source_code_ref = source_code.as_bytes();
         let resolved_syntax = concrete_syntax.clone().resolve().unwrap();
-        let matches = get_all_matches_for_concrete_syntax(
+        get_all_matches_for_concrete_syntax(
           node,
-          code_str,
+          source_code_ref,
           &resolved_syntax,
           recursive,
           replace_node,
-        );
-        matches.0
+        )
       }
     }
   }

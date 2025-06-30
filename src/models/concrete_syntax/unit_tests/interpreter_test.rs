@@ -29,7 +29,7 @@ fn run_test(
   let meta = ConcreteSyntax::parse(pattern).unwrap();
 
   let resolved_meta = meta.resolve().unwrap();
-  let (matches, _is_match_found) = get_all_matches_for_concrete_syntax(
+  let matches = get_all_matches_for_concrete_syntax(
     &tree.root_node(),
     code.as_bytes(),
     &resolved_meta,

@@ -11,6 +11,7 @@
  limitations under the License.
 */
 
+pub(crate) mod constraint_checker;
 pub(crate) mod cursor_utils;
 pub(crate) mod interpreter;
 pub(crate) mod parser;
