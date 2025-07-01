@@ -17,6 +17,7 @@ on:
 
 jobs:
   build:
+    name: Tree-sitter Playground Build
     runs-on: ubuntu-latest
 
     steps:
@@ -39,17 +40,16 @@ jobs:
         run: cargo install tree-sitter-cli --version "=0.24"
 
       - name: Build playground
-        run: python build.py --dist-dir ./dist/tree-sitter-playground
-        working-directory:
+        run: python playground/tree-sitter/build.py --dist-dir ./dist/tree-sitter-playground
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
-        working-directory: playground/tree-sitter
         with:
           name: site-build
           path: ./dist
 
   deploy:
+    name: Tree-sitter Playground Deploy
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'  # Only deploy from master
