@@ -290,19 +290,62 @@ mod tests {
     let constraints = &result.pattern.constraints;
     assert_eq!(constraints.len(), 1);
 
-    match &constraints[0] {
-      CsConstraint::In { capture, items } => {
-        assert_eq!(capture, "var");
-        assert_eq!(items.len(), 1);
-        assert_eq!(items[0], "a");
-      }
-    }
+            match &constraints[0] {
+          CsConstraint::In { capture, items } => {
+            assert_eq!(capture, "var");
+            assert_eq!(items.len(), 1);
+            assert_eq!(items[0], "a");
+          }
+          _ => panic!("Expected In constraint"),
+        }
 
     // Test that Debug trait works (useful for debugging)
     let debug_str = format!("{result:?}");
     assert!(debug_str.contains("var"));
     assert!(debug_str.contains("OnePlus"));
     assert!(debug_str.contains("constraints"));
+  }
+
+  #[test]
+  fn test_parse_regex_constraint() {
+    let input = ":[var] |> :[var] matches /^test.*/";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 1);
+
+    match &constraints[0] {
+      CsConstraint::Regex { capture, pattern } => {
+        assert_eq!(capture, "var");
+        assert_eq!(pattern, "^test.*");
+      }
+      _ => panic!("Expected regex constraint"),
+    }
+  }
+
+  #[test]
+  fn test_parse_regex_with_escaped_chars() {
+    let input = ":[var] |> :[var] matches /te\\/st.*/";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    let constraints = &result.pattern.constraints;
+    match &constraints[0] {
+      CsConstraint::Regex { pattern, .. } => {
+        assert_eq!(pattern, "te/st.*"); // Should be unescaped
+      }
+      _ => panic!("Expected regex constraint"),
+    }
+  }
+
+  #[test]
+  fn test_parse_mixed_constraints() {
+    let input = r#":[var] |> :[var] in ["a"], :[var] matches /^test.*/"#;
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 2);
+    assert!(matches!(constraints[0], CsConstraint::In { .. }));
+    assert!(matches!(constraints[1], CsConstraint::Regex { .. }));
   }
 
   #[test]
@@ -338,9 +381,12 @@ mod tests {
             assert_eq!(items.len(), 1);
             assert_eq!(items[0], "a");
           }
+          _ => panic!("Expected In constraint"),
         }
       }
       _ => panic!("Expected capture with constraints"),
     }
   }
+
+
 }

@@ -41,6 +41,7 @@ pub enum CsElement {
 #[derive(Debug, Clone, PartialEq)]
 pub enum CsConstraint {
   In { capture: String, items: Vec<String> },
+  Regex { capture: String, pattern: String },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -50,7 +51,7 @@ pub enum CaptureMode {
   ZeroPlus, // :[var*]
 }
 
-/// Decode \" \\ \n \t … inside a string literal.
+/// Decode \" \\ \n \t \/ … inside a string literal.
 fn unescape(src: &str) -> String {
   let mut out = String::with_capacity(src.len());
   let mut chars = src.chars();
@@ -61,6 +62,7 @@ fn unescape(src: &str) -> String {
         Some('\\') => out.push('\\'),
         Some('n') => out.push('\n'),
         Some('t') => out.push('\t'),
+        Some('/') => out.push('/'),
         Some(other) => {
           out.push('\\');
           out.push(other);
@@ -143,6 +145,7 @@ impl ConcreteSyntax {
         Self::parse_constraint(inner)
       }
       in_constraint => Self::parse_in_constraint(pair),
+      regex_constraint => Self::parse_regex_constraint(pair),
       _ => Err(format!("Unexpected constraint type: {:?}", pair.as_rule())),
     }
   }
@@ -164,6 +167,35 @@ impl ConcreteSyntax {
       capture: capture_name,
       items,
     })
+  }
+
+  fn parse_regex_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
+    let mut inner = pair.into_inner();
+
+    // First should be the capture
+    let capture_pair = inner.next().ok_or("Expected capture in regex_constraint")?;
+    let capture_name = Self::extract_capture_name(capture_pair)?;
+
+    // Then we should have the regex pattern
+    let pattern_pair = inner.next().ok_or("Expected regex pattern in regex_constraint")?;
+    let pattern = Self::parse_regex_pattern(pattern_pair)?;
+
+    Ok(CsConstraint::Regex {
+      capture: capture_name,
+      pattern,
+    })
+  }
+
+  fn parse_regex_pattern(pair: Pair<Rule>) -> Result<String, String> {
+    // The regex_pattern contains regex_content
+    let mut inner = pair.into_inner();
+    let content_pair = inner.next().ok_or("Expected regex content")?;
+    
+    // Use the existing unescape function for proper string unescaping
+    let raw_content = content_pair.as_str();
+    let unescaped = unescape(raw_content);
+    
+    Ok(unescaped)
   }
 
   fn extract_capture_name(pair: Pair<Rule>) -> Result<String, String> {

@@ -235,3 +235,36 @@ fn test_mutliple_where_clause() {
     JAVA,
   );
 }
+
+#[test]
+fn test_regex_constraint() {
+  run_test(
+    r#"
+    public String getName() { return name; }
+    public void setName(String n) { name = n; }
+    public int getAge() { return age; }
+    public void process() { return; }
+    "#,
+    r#"public :[returnType] :[methodName]() |> :[methodName] matches /^get.+/"#,
+    2, // only getName and getAge should match
+    vec![
+      vec![("returnType", "String"), ("methodName", "getName")],
+      vec![("returnType", "int"), ("methodName", "getAge")],
+    ],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_mixed_constraints() {
+  run_test(
+    r#"getValue("test"); getValue("other"); setValue("test"); getName("test");"#,
+    r#":[method](:[arg]) |> :[method] matches /^get.*/, :[arg] in ["\"test\""]"#,
+    2, // getValue("test") and getName("test")
+    vec![
+      vec![("method", "getValue"), ("arg", "\"test\"")],
+      vec![("method", "getName"), ("arg", "\"test\"")],
+    ],
+    JAVA,
+  );
+}
