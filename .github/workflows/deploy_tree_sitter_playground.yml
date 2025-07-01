@@ -17,6 +17,7 @@ on:
 
 jobs:
   build:
+    name: Tree-sitter Playground Build
     runs-on: ubuntu-latest
 
     steps:
@@ -48,6 +49,7 @@ jobs:
           path: ./dist
 
   deploy:
+    name: Tree-sitter Playground Deploy
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'  # Only deploy from master
