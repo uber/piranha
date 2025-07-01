@@ -1182,3 +1182,90 @@ is_seed_rule = false
 [[rules]]
 name = "statement_cleanup"
 is_seed_rule = false
+
+# Before 
+#  it 'return false when mee_slack_reactions_write is false ' do
+#     allow_any_instance_of(Account).to receive(:mee_slack_reactions_write?).and_return(false)
+#     flag = Account.current.mee_slack_reactions_write?
+#     expect(flag).to eq(false)
+#  end
+# After 
+#  
+#
+
+[[rules]]
+name = "remove_spec_case_with_stub_false"
+groups = ["rspec_block_removal"]
+query = """
+(
+  (call
+    method: (identifier) @it_method
+    arguments: (argument_list
+      (string) @description
+    )
+    block: (do_block
+      body: (body_statement
+        (_)*
+        (call
+          receiver: (call
+            method: (identifier) @stub_method
+            arguments: (argument_list
+              (constant) @class_name
+            )
+          )
+          method: (identifier) @to_method
+          arguments: (argument_list
+            (call
+              receiver: (call
+                method: (identifier) @receive_method
+                arguments: (argument_list
+                  (simple_symbol) @stubbed_flag
+                )
+              )
+              method: (identifier) @and_return_method
+              arguments: (argument_list
+                [
+                  (false) @stubbed_value
+                  (true) @stubbed_value
+                ]
+              )
+            )
+          )
+        )
+        (_)*
+      )
+    )
+    (#any-eq? @stub_method "allow_any_instance_of" "allow" )
+    (#eq? @stubbed_flag "@flag_name")
+    (#not-eq? @stubbed_value @treated)
+  ) @it_block
+)
+"""
+replace_node = "it_block"
+replace = ""
+holes = ["flag_name", "treated"]
+
+
+# Before 
+#  context 'empty context block' do
+#
+#  end
+# After 
+#  
+
+
+[[rules]]
+name = "remove_empty_context"
+groups = ["block_removal"]
+query = """
+  (call
+      method: (identifier) @method
+      arguments: (argument_list
+          (string) @description)
+      block: (do_block
+          !body)
+      (#eq? @method "context")
+  ) @to_remove
+  """
+replace_node = "to_remove"
+replace = ""
