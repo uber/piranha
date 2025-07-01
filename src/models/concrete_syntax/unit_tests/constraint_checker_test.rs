@@ -26,7 +26,10 @@ mod tests {
         start_byte: 0,
         end_byte: text.len(),
         start_point: Point { row: 0, column: 0 },
-        end_point: Point { row: 0, column: text.len() },
+        end_point: Point {
+          row: 0,
+          column: text.len(),
+        },
       },
       text: text.to_string(),
     }
@@ -59,4 +62,4 @@ mod tests {
     // Should return false for invalid regex patterns
     assert!(!check_constraint(&node, &constraint));
   }
-} 
+}

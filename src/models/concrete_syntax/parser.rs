@@ -177,7 +177,9 @@ impl ConcreteSyntax {
     let capture_name = Self::extract_capture_name(capture_pair)?;
 
     // Then we should have the regex pattern
-    let pattern_pair = inner.next().ok_or("Expected regex pattern in regex_constraint")?;
+    let pattern_pair = inner
+      .next()
+      .ok_or("Expected regex pattern in regex_constraint")?;
     let pattern = Self::parse_regex_pattern(pattern_pair)?;
 
     Ok(CsConstraint::Regex {
@@ -190,11 +192,11 @@ impl ConcreteSyntax {
     // The regex_pattern contains regex_content
     let mut inner = pair.into_inner();
     let content_pair = inner.next().ok_or("Expected regex content")?;
-    
+
     // Use the existing unescape function for proper string unescaping
     let raw_content = content_pair.as_str();
     let unescaped = unescape(raw_content);
-    
+
     Ok(unescaped)
   }
 

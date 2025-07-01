@@ -290,14 +290,14 @@ mod tests {
     let constraints = &result.pattern.constraints;
     assert_eq!(constraints.len(), 1);
 
-            match &constraints[0] {
-          CsConstraint::In { capture, items } => {
-            assert_eq!(capture, "var");
-            assert_eq!(items.len(), 1);
-            assert_eq!(items[0], "a");
-          }
-          _ => panic!("Expected In constraint"),
-        }
+    match &constraints[0] {
+      CsConstraint::In { capture, items } => {
+        assert_eq!(capture, "var");
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0], "a");
+      }
+      _ => panic!("Expected In constraint"),
+    }
 
     // Test that Debug trait works (useful for debugging)
     let debug_str = format!("{result:?}");
@@ -387,6 +387,4 @@ mod tests {
       _ => panic!("Expected capture with constraints"),
     }
   }
-
-
 }
