@@ -49,6 +49,12 @@ impl ConcreteSyntax {
             .or_default()
             .push(constraint);
         }
+        CsConstraint::Regex { capture, .. } => {
+          constraint_map
+            .entry(capture.clone())
+            .or_default()
+            .push(constraint);
+        }
       }
     }
 

@@ -13,11 +13,18 @@
 
 use crate::models::concrete_syntax::parser::CsConstraint;
 use crate::models::concrete_syntax::types::CapturedNode;
+use regex::Regex;
 
 /// Check if a captured node satisfies a single constraint
 pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {
   match ctr {
     CsConstraint::In { items, .. } => items.contains(&node.text.to_string()),
+    CsConstraint::Regex { pattern, .. } => {
+      match Regex::new(pattern) {
+        Ok(regex) => regex.is_match(&node.text),
+        Err(_) => false, // Invalid regex patterns don't match
+      }
+    }
   }
 }
 
@@ -27,3 +34,7 @@ pub(crate) fn satisfies_constraints(node: &CapturedNode, constraints: &[CsConstr
     .iter()
     .all(|constraint| check_constraint(node, constraint))
 }
+
+#[cfg(test)]
+#[path = "unit_tests/constraint_checker_test.rs"]
+mod constraint_checker_test;
