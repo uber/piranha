@@ -18,10 +18,10 @@ use crate::models::concrete_syntax::cursor_utils::CursorNavigator;
 use crate::models::concrete_syntax::parser::CaptureMode;
 use crate::models::concrete_syntax::parser::CsConstraint;
 use crate::models::concrete_syntax::resolver::{ResolvedConcreteSyntax, ResolvedCsElement};
+use crate::models::concrete_syntax::tree_sitter_adapter::{Node, TreeCursor};
 use crate::models::concrete_syntax::types::{CapturedNode, MatchingContext, PatternMatchResult};
 use crate::models::matches::Match;
 use std::collections::HashMap;
-use tree_sitter::{Node, TreeCursor};
 use tree_sitter_traversal::Cursor;
 
 // =============================================================================

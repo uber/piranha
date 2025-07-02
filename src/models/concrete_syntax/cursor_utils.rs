@@ -12,7 +12,7 @@
 */
 
 use crate::models::matches::Range;
-use tree_sitter::{Node, TreeCursor};
+use crate::models::concrete_syntax::tree_sitter_adapter::{Node, TreeCursor};
 
 /// Cursor navigation utilities for tree traversal during pattern matching.
 pub struct CursorNavigator;
