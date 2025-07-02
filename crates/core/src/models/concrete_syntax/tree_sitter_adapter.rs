@@ -145,7 +145,7 @@ impl TreeSitterAdapter {
     node.inner
   }
 
-  /// Extract the tree-sitter cursor from our wrapper  
+  /// Extract the tree-sitter cursor from our wrapper
   pub fn unwrap_cursor<'a>(cursor: &'a NativeCursor<'a>) -> &'a tree_sitter::TreeCursor<'a> {
     &cursor.inner
   }
