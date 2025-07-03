@@ -13,26 +13,28 @@
 
 use crate::models::matches::Range;
 
-use crate::models::concrete_syntax::constraint_checker::satisfies_constraints;
-use crate::models::concrete_syntax::cursor_utils::CursorNavigator;
-use crate::models::concrete_syntax::parser::CaptureMode;
-use crate::models::concrete_syntax::parser::CsConstraint;
-use crate::models::concrete_syntax::resolver::{ResolvedConcreteSyntax, ResolvedCsElement};
-use crate::models::concrete_syntax::tree_sitter_adapter::{Node, TreeCursor};
-use crate::models::concrete_syntax::types::{CapturedNode, MatchingContext, PatternMatchResult};
+use super::constraint_checker::satisfies_constraints;
+use super::cursor_utils::CursorNavigator;
+use super::parser::CaptureMode;
+use super::parser::CsConstraint;
+use super::resolver::{ResolvedConcreteSyntax, ResolvedCsElement};
+use super::tree_sitter_adapter::{Node, SyntaxCursor, SyntaxNode, TreeCursor};
+use super::types::{MatchingContext, PatternMatchResult};
+use crate::models::matches::CapturedNode;
 use crate::models::matches::Match;
 use std::collections::HashMap;
-use tree_sitter_traversal::Cursor;
 
 // =============================================================================
 // PUBLIC API
 // =============================================================================
 
-pub(crate) fn get_all_matches_for_concrete_syntax(
-  node: &Node, source_code_ref: &[u8], cs: &ResolvedConcreteSyntax, recursive: bool,
+pub fn get_all_matches_for_concrete_syntax<'a>(
+  node: &Node<'a>, source_code_ref: &[u8], cs: &ResolvedConcreteSyntax, recursive: bool,
   replace_node: Option<String>,
 ) -> Vec<Match> {
   let mut matches: Vec<Match> = Vec::new();
+
+  // Pattern matching starting
 
   if let PatternMatchResult::Success {
     captures: mut mapping,
@@ -60,10 +62,10 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
   }
 
   if recursive {
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    let _cursor = node.walk();
+    for child in node.children().iter() {
       let mut inner_matches = get_all_matches_for_concrete_syntax(
-        &child,
+        child,
         source_code_ref,
         cs,
         recursive,
@@ -85,16 +87,16 @@ pub(crate) fn get_all_matches_for_concrete_syntax(
 /// Given a function body with multiple statements, try to match a pattern starting
 /// at each statement position until we find a match.
 ///
-/// ```
+/// ```text
 /// Pattern: int :[x] = 2; :[x]++;
 ///
 /// Function Body AST:
-/// ├── [0] char a = 'c' ; ← Start matching here: ❌ No match
-/// ├── [1] a++;           ← Start matching here: ❌ No match
-/// ├── [2] int b = 2;     ← Start matching here: ✅ MATCH! (spans [2] and [3]) -> Returns
-/// ├── [3] b++;           ←
-/// ├── [4] return a;      ←
-/// └── [5] }              ←
+/// |-- [0] char a = 'c' ; <- Start matching here: No match
+/// |-- [1] a++;           <- Start matching here: No match
+/// |-- [2] int b = 2;     <- Start matching here: MATCH! (spans [2] and [3]) -> Returns
+/// |-- [3] b++;           <-
+/// |-- [4] return a;      <-
+/// \-- [5] }              <-
 /// ```
 ///
 /// The algorithm slides a "matching window" across all possible starting positions,
@@ -103,6 +105,7 @@ fn match_sequential_siblings(
   cursor: &mut TreeCursor, source_code_ref: &[u8], cs_elements: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   let parent_node = cursor.node();
+
   let mut child_seq_match_start = 0;
   if cursor.goto_first_child() {
     // Iterate through siblings to find a match
@@ -130,7 +133,9 @@ fn match_sequential_siblings(
       {
         // Determine the last matched node. Remember, we are matching subsequences of children [n ... k]
         let last_node = parent_node.child(last_node_index);
-        let range = Range::span_ranges(cursor.node().range(), last_node.unwrap().range());
+        let start_range = cursor.node().range();
+        let end_range = last_node.unwrap().range();
+        let range = Range::span_ranges(start_range, end_range);
         if last_node_index != child_seq_match_start || parent_node.child_count() == 1 {
           return PatternMatchResult::Success {
             captures: mapping,
@@ -193,6 +198,7 @@ fn match_literal(
   }
 
   let node_code = ctx.cursor.node().utf8_text(ctx.source_code).unwrap().trim();
+
   if literal_text.starts_with(node_code) && !node_code.is_empty() {
     let advance_by = node_code.len();
     // Can only advance if there is still enough chars to consume
@@ -213,6 +219,7 @@ fn match_literal(
       match_cs_pattern(ctx, &new_elements, should_match)
     };
   }
+
   PatternMatchResult::failed()
 }
 
@@ -303,24 +310,24 @@ fn match_at_all_tree_levels(
 /// Try to match a range of nodes starting at the current cursor position, expanding the range if needed and allowed
 /// It assigns [range_start, range_end] to a capture group, and matches the rest of the cs pattern against remaining nodes
 ///
-/// Per‐iteration diagram:
+/// Per-iteration diagram:
 ///
-///     AST siblings: … ─ node₀ ─ node₁ ─ node₂ ─ node₃ ─ node₄ ─ …  
-///                          ↑         ↑  
+/// AST siblings: ... - node0 - node1 - node2 - node3 - node4 - ...  
+///                          ^         ^  
 ///                    range_start range_end
 ///
-///   1) capture = text(node₁…node₂)  
-///   2) match_cs_pattern(  
-///        remaining_elements,         // CS elements still to match  
-///        /* should_match */ true if node₃ exists  
-///      ) starting at node₃, node₄, …
+/// 1) capture = text(node1...node2)  
+/// 2) match_cs_pattern(  
+///      remaining_elements,         // CS elements still to match  
+///      /* should_match */ true if node3 exists  
+///    ) starting at node3, node4, ...
 fn try_match_node_range(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
   remaining_pattern: &[ResolvedCsElement], allow_horizontal_expansion: bool,
 ) -> PatternMatchResult {
   // 1. Initial anchors
   let range_start = ctx.cursor.node();
-  let mut range_end = range_start;
+  let mut range_end = range_start.clone();
   let mut next_cursor = ctx.cursor.clone();
   // 'should_match' is used to check whether there are siblings or ancestor siblings we need to match
   // after we assign the current range to the capture node
@@ -338,7 +345,7 @@ fn try_match_node_range(
   };
 
   loop {
-    // ——— 1) try current [start…end] slice ———
+    // --- 1) try current [start...end] slice ---
     let captured = make_capture(&range_end);
     if satisfies_constraints(&captured, constraints) {
       let mut sub_ctx = MatchingContext {
@@ -363,7 +370,7 @@ fn try_match_node_range(
       }
     }
 
-    // ——— 2) need to expand slice? ———
+    // --- 2) need to expand slice? ---
     if !allow_horizontal_expansion || is_last {
       return PatternMatchResult::failed();
     }
@@ -390,13 +397,17 @@ fn create_match_from_capture(
     panic!("The tag {replace_node_key} provided in the replace node is not present")
   });
 
+  // Convert CapturedNode map to string map for compatibility
+  let string_matches: HashMap<String, String> = match_map
+    .iter()
+    .map(|(k, v)| (k.clone(), v.text.clone()))
+    .collect();
+
   Match {
     matched_string: replace_node_match.text,
     range: replace_node_match.range,
-    matches: match_map.into_iter().map(|(k, v)| (k, v.text)).collect(),
-    associated_comma: None,
-    associated_comments: Vec::new(),
-    associated_leading_empty_lines: Vec::new(),
+    matches: string_matches,
+    replacement: None,
   }
 }
 

@@ -13,37 +13,131 @@
 
 use crate::models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
 use crate::models::concrete_syntax::parser::ConcreteSyntax;
-use crate::models::default_configs::GO;
-use crate::models::{
-  default_configs::{JAVA, KOTLIN},
-  language::PiranhaLanguage,
-};
+use crate::models::concrete_syntax::resolver::resolve_concrete_syntax;
+use crate::models::concrete_syntax::tree_sitter_adapter::TreeSitterAdapter;
 
+// External tree-sitter language parsers
+extern crate tree_sitter_go;
+extern crate tree_sitter_java;
+extern crate tree_sitter_kotlin;
+extern crate tree_sitter_python;
+extern crate tree_sitter_ruby;
+extern crate tree_sitter_swift;
+extern crate tree_sitter_typescript;
+
+// Language constants
+const JAVA: &str = "java";
+const KOTLIN: &str = "kotlin";
+const GO: &str = "go";
+const PYTHON: &str = "python";
+const SWIFT: &str = "swift";
+const RUBY: &str = "ruby";
+const TYPESCRIPT: &str = "typescript";
+
+/// Run a concrete syntax pattern matching test
 fn run_test(
-  code: &str, pattern: &str, expected_matches: usize, expected_vars: Vec<Vec<(&str, &str)>>,
-  language: &str,
+  source_code: &str, pattern: &str, expected_count: usize,
+  expected_captures: Vec<Vec<(&str, &str)>>, language: &str,
 ) {
-  let java = PiranhaLanguage::from(language);
-  let mut parser = java.parser();
-  let tree = parser.parse(code.as_bytes(), None).unwrap();
-  let meta = ConcreteSyntax::parse(pattern).unwrap();
+  // Parse the pattern
+  let concrete_syntax = ConcreteSyntax::parse(pattern)
+    .unwrap_or_else(|e| panic!("Failed to parse pattern '{pattern}': {e}"));
 
-  let resolved_meta = meta.resolve().unwrap();
+  let resolved = resolve_concrete_syntax(&concrete_syntax);
+
+  // Set up tree-sitter parser for the specified language
+  let mut parser = tree_sitter::Parser::new();
+
+  match language {
+    JAVA => {
+      parser
+        .set_language(tree_sitter_java::language())
+        .expect("Error loading Java grammar");
+    }
+    KOTLIN => {
+      parser
+        .set_language(tree_sitter_kotlin::language())
+        .expect("Error loading Kotlin grammar");
+    }
+    GO => {
+      parser
+        .set_language(tree_sitter_go::language())
+        .expect("Error loading Go grammar");
+    }
+    PYTHON => {
+      parser
+        .set_language(tree_sitter_python::language())
+        .expect("Error loading Python grammar");
+    }
+    SWIFT => {
+      parser
+        .set_language(tree_sitter_swift::language())
+        .expect("Error loading Swift grammar");
+    }
+    RUBY => {
+      parser
+        .set_language(tree_sitter_ruby::language())
+        .expect("Error loading Ruby grammar");
+    }
+    TYPESCRIPT => {
+      parser
+        .set_language(tree_sitter_typescript::language_typescript())
+        .expect("Error loading TypeScript grammar");
+    }
+    _ => panic!("Unsupported language: {language}"),
+  }
+
+  // Parse the source code
+  let tree = parser
+    .parse(source_code, None)
+    .unwrap_or_else(|| panic!("Failed to parse source code"));
+
+  let root_node = tree.root_node();
+  let wrapped_node = TreeSitterAdapter::wrap_node(root_node);
+  let source_bytes = source_code.as_bytes();
+
+  // Run pattern matching
   let matches = get_all_matches_for_concrete_syntax(
-    &tree.root_node(),
-    code.as_bytes(),
-    &resolved_meta,
-    true,
-    None,
+    &wrapped_node,
+    source_bytes,
+    &resolved,
+    true, // recursive
+    None, // replace_node
   );
 
-  assert_eq!(matches.len(), expected_matches);
+  // Validate match count
+  assert_eq!(
+    matches.len(),
+    expected_count,
+    "Expected {} matches for pattern '{}' in '{}', but got {}.\nActual matches: {:#?}",
+    expected_count,
+    pattern,
+    source_code.replace('\n', "\\n"),
+    matches.len(),
+    matches
+  );
 
-  for (i, vars) in expected_vars.iter().enumerate() {
-    let match_item = &matches[i];
-    for &(var, expected_val) in vars {
-      let val = match_item.matches.get(var).unwrap();
-      assert_eq!(val, expected_val);
+  // Validate captures if matches were expected
+  if expected_count > 0 && !expected_captures.is_empty() {
+    for (i, (actual_match, expected_capture_set)) in
+      matches.iter().zip(expected_captures.iter()).enumerate()
+    {
+      for (capture_name, expected_value) in expected_capture_set.iter() {
+        let actual_value = actual_match.matches.get(*capture_name).unwrap_or_else(|| {
+          panic!(
+            "Match {} missing expected capture '{}'. Available captures: {:?}",
+            i,
+            capture_name,
+            actual_match.matches.keys().collect::<Vec<_>>()
+          )
+        });
+
+        let actual_text = actual_value.trim();
+        assert_eq!(
+          actual_text, *expected_value,
+          "Match {i} capture '{capture_name}': expected '{expected_value}', got '{actual_text}'"
+        );
+      }
     }
   }
 }

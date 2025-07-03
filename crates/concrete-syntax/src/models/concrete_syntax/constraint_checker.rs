@@ -11,8 +11,8 @@
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::parser::CsConstraint;
-use crate::models::concrete_syntax::types::CapturedNode;
+use super::parser::CsConstraint;
+use crate::models::matches::CapturedNode;
 
 /// Check if a captured node satisfies a single constraint
 pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {
