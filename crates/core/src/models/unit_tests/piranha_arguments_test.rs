@@ -45,8 +45,8 @@ fn piranha_argument_invalid_both_codebase_and_snippet() {
 #[test]
 fn piranha_argument_with_custom_builtin_rules() {
   let path_to_custom_builtin_rules = format!(
-    "{}/testdata/custom_builtin/",
-    std::path::Path::new(file!()).parent().unwrap().display()
+    "{}/src/models/unit_tests/testdata/custom_builtin/",
+    env!("CARGO_MANIFEST_DIR")
   );
   let args = PiranhaArgumentsBuilder::default()
     .path_to_configurations("some/path".to_string())
