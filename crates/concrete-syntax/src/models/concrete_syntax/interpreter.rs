@@ -87,6 +87,30 @@ pub fn get_all_matches_for_concrete_syntax<'a>(
   matches
 }
 
+// =============================================================================
+// CORE MATCHING ENGINE
+// =============================================================================
+
+/// Attempts to match a pattern against sequential sibling nodes in an AST.
+///
+/// ## How it works:
+/// Given a function body with multiple statements, try to match a pattern starting
+/// at each statement position until we find a match.
+///
+/// ```text
+/// Pattern: int :[x] = 2; :[x]++;
+///
+/// Function Body AST:
+/// |-- [0] char a = 'c' ; <- Start matching here: No match
+/// |-- [1] a++;           <- Start matching here: No match
+/// |-- [2] int b = 2;     <- Start matching here: MATCH! (spans [2] and [3]) -> Returns
+/// |-- [3] b++;           <-
+/// |-- [4] return a;      <-
+/// \-- [5] }              <-
+/// ```
+///
+/// The algorithm slides a "matching window" across all possible starting positions,
+/// trying to match consecutive siblings against the pattern elements.
 fn match_sequential_siblings(
   cursor: &mut TreeCursor, source_code_ref: &[u8], cs_elements: &[ResolvedCsElement],
 ) -> PatternMatchResult {
@@ -306,6 +330,20 @@ fn match_at_all_tree_levels(
   PatternMatchResult::failed()
 }
 
+/// Try to match a range of nodes starting at the current cursor position, expanding the range if needed and allowed
+/// It assigns [range_start, range_end] to a capture group, and matches the rest of the cs pattern against remaining nodes
+///
+/// Per-iteration diagram:
+/// 
+/// AST siblings: ... - node0 - node1 - node2 - node3 - node4 - ...  
+///                          ^         ^  
+///                    range_start range_end
+///
+/// 1) capture = text(node1...node2)  
+/// 2) match_cs_pattern(  
+///      remaining_elements,         // CS elements still to match  
+///      /* should_match */ true if node3 exists  
+///    ) starting at node3, node4, ...
 fn try_match_node_range(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
   remaining_pattern: &[ResolvedCsElement], allow_horizontal_expansion: bool,
@@ -330,7 +368,7 @@ fn try_match_node_range(
   };
 
   loop {
-    // ——— 1) try current [start…end] slice ———
+    // --- 1) try current [start...end] slice ---
     let captured = make_capture(&range_end);
     if satisfies_constraints(&captured, constraints) {
       let mut sub_ctx = MatchingContext {
@@ -355,7 +393,7 @@ fn try_match_node_range(
       }
     }
 
-    // ——— 2) need to expand slice? ———
+    // --- 2) need to expand slice? ---
     if !allow_horizontal_expansion || is_last {
       return PatternMatchResult::failed();
     }
