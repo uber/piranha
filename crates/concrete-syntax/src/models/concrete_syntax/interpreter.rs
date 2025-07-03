@@ -334,7 +334,7 @@ fn match_at_all_tree_levels(
 /// It assigns [range_start, range_end] to a capture group, and matches the rest of the cs pattern against remaining nodes
 ///
 /// Per-iteration diagram:
-/// 
+///
 /// AST siblings: ... - node0 - node1 - node2 - node3 - node4 - ...  
 ///                          ^         ^  
 ///                    range_start range_end
