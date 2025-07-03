@@ -518,3 +518,71 @@ impl SourceCodeUnit {
     output
   }
 }
+
+// =============================================================================
+// ADAPTERS FOR CONCRETE_SYNTAX TYPES
+// =============================================================================
+
+impl From<concrete_syntax::models::matches::Point> for Point {
+  fn from(point: concrete_syntax::models::matches::Point) -> Self {
+    Point {
+      row: point.row,
+      column: point.column,
+    }
+  }
+}
+
+impl From<Point> for concrete_syntax::models::matches::Point {
+  fn from(point: Point) -> Self {
+    concrete_syntax::models::matches::Point {
+      row: point.row,
+      column: point.column,
+    }
+  }
+}
+
+impl From<concrete_syntax::models::matches::Range> for Range {
+  fn from(range: concrete_syntax::models::matches::Range) -> Self {
+    Range {
+      start_byte: range.start_byte,
+      end_byte: range.end_byte,
+      start_point: range.start_point.into(),
+      end_point: range.end_point.into(),
+    }
+  }
+}
+
+impl From<Range> for concrete_syntax::models::matches::Range {
+  fn from(range: Range) -> Self {
+    concrete_syntax::models::matches::Range {
+      start_byte: range.start_byte,
+      end_byte: range.end_byte,
+      start_point: range.start_point.into(),
+      end_point: range.end_point.into(),
+    }
+  }
+}
+
+impl From<concrete_syntax::models::matches::Match> for Match {
+  fn from(cs_match: concrete_syntax::models::matches::Match) -> Self {
+    Match {
+      matched_string: cs_match.matched_string,
+      range: cs_match.range.into(),
+      matches: cs_match.matches,
+      associated_comma: None,
+      associated_comments: Vec::new(),
+      associated_leading_empty_lines: Vec::new(),
+    }
+  }
+}
+
+impl From<Match> for concrete_syntax::models::matches::Match {
+  fn from(piranha_match: Match) -> Self {
+    concrete_syntax::models::matches::Match {
+      matched_string: piranha_match.matched_string,
+      range: piranha_match.range.into(),
+      matches: piranha_match.matches,
+      replacement: None,
+    }
+  }
+}

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 Uber Technologies, Inc.
+ Copyright (c) 2023 Uber Technologies, Inc.
 
  <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  except in compliance with the License. You may obtain a copy of the License at
@@ -11,21 +11,13 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-pub(crate) mod capture_group_patterns;
-pub(crate) mod default_configs;
-pub mod edit;
-pub mod filter;
-pub mod language;
-pub(crate) mod matches;
-pub(crate) mod outgoing_edges;
-pub mod piranha_arguments;
-pub mod piranha_output;
-pub(crate) mod rule;
-pub(crate) mod rule_graph;
-pub(crate) mod rule_store;
-pub(crate) mod scopes;
-pub(crate) mod source_code_unit;
+pub mod constraint_checker;
+pub mod cursor_utils;
+pub mod interpreter;
+pub mod parser;
+pub mod resolver;
+pub mod tree_sitter_adapter;
+pub mod types;
 
-pub(crate) trait Validator {
-  fn validate(&self) -> Result<(), String>;
-}
+#[cfg(test)]
+pub mod unit_tests;

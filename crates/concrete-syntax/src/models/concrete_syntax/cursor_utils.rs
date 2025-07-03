@@ -11,7 +11,7 @@
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::tree_sitter_adapter::{Node, TreeCursor};
+use super::tree_sitter_adapter::{Node, SyntaxCursor, SyntaxNode, TreeCursor};
 use crate::models::matches::Range;
 
 /// Cursor navigation utilities for tree traversal during pattern matching.
@@ -41,15 +41,18 @@ impl CursorNavigator {
   /// Finds the index of a target node among its parent's children.
   pub fn find_child_index(target_node: &Node, parent_node: &Node) -> Option<usize> {
     parent_node
-      .children(&mut parent_node.walk())
+      .children()
+      .into_iter()
       .enumerate()
-      .find(|&(_i, child)| child == *target_node)
+      .find(|&(_i, ref child)| child == target_node)
       .map(|(i, _child)| i)
   }
 
   /// Creates a range that spans from the start of the first node to the end of the second node.
   pub fn span_node_ranges(first_node: &Node, last_node: &Node) -> Range {
-    Range::span_ranges(first_node.range(), last_node.range())
+    let first_range = first_node.range();
+    let last_range = last_node.range();
+    Range::span_ranges(first_range, last_range)
   }
 
   /// Extracts text from source code within the specified byte range.

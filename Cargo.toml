@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/core"]
+members = ["crates/core", "crates/concrete-syntax"]
 resolver = "2"
 
 # Future crates can be added here, for example:
@@ -19,7 +19,7 @@ tree-sitter = "0.20.6"
 tree-sitter-traversal = "0.1.2"
 json = "0.12.4"
 toml = "0.8.8"
-serde = "1.0.136"
+serde = { version = "1.0.136", features = ["derive"] }
 serde_derive = "1.0.136"
 colored = "2.0.0"
 itertools = "0.12.0"

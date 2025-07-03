@@ -11,8 +11,6 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
-use crate::models::concrete_syntax::parser::ConcreteSyntax;
 use crate::{
   models::Validator,
   utilities::{
@@ -20,6 +18,10 @@ use crate::{
     tree_sitter_utilities::{get_all_matches_for_query, get_ts_query_parser, number_of_errors},
     Instantiate,
   },
+};
+use concrete_syntax::{
+  get_all_matches_for_concrete_syntax, parser::ConcreteSyntax, resolver::resolve_concrete_syntax,
+  tree_sitter_adapter::TreeSitterAdapter,
 };
 use pyo3::prelude::pyclass;
 use regex::Regex;
@@ -147,14 +149,22 @@ impl CompiledCGPattern {
       }
       CompiledCGPattern::M(concrete_syntax) => {
         let source_code_ref = source_code.as_bytes();
-        let resolved_syntax = concrete_syntax.clone().resolve().unwrap();
-        get_all_matches_for_concrete_syntax(
-          node,
+        let resolved_syntax = resolve_concrete_syntax(concrete_syntax);
+
+        // Wrap tree_sitter node for concrete_syntax
+        let wrapped_node = TreeSitterAdapter::wrap_node(*node);
+
+        // Get matches and convert to piranha types
+        let cs_matches = get_all_matches_for_concrete_syntax(
+          &wrapped_node,
           source_code_ref,
           &resolved_syntax,
           recursive,
           replace_node,
-        )
+        );
+
+        // Convert concrete_syntax::Match to piranha::Match
+        cs_matches.into_iter().map(|m| m.into()).collect()
       }
     }
   }
