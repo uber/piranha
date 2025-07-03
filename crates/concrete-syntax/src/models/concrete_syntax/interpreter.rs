@@ -13,16 +13,6 @@
 
 use crate::models::matches::Range;
 
-// Helper macro for cross-platform logging
-macro_rules! debug_log {
-    ($($arg:tt)*) => {
-        #[cfg(feature = "wasm")]
-        web_sys::console::log_1(&format!($($arg)*).into());
-        #[cfg(not(feature = "wasm"))]
-        println!($($arg)*);
-    };
-}
-
 use super::constraint_checker::satisfies_constraints;
 use super::cursor_utils::CursorNavigator;
 use super::parser::CaptureMode;
@@ -115,18 +105,11 @@ fn match_sequential_siblings(
   cursor: &mut TreeCursor, source_code_ref: &[u8], cs_elements: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   let parent_node = cursor.node();
-  // debug_log!("🎯 Matching sequential siblings for parent: {}", parent_node.kind());
-  // debug_log!("🔍 Looking for pattern elements: {:?}", cs_elements);
 
   let mut child_seq_match_start = 0;
   if cursor.goto_first_child() {
-    // debug_log!("  👶 Found children, starting sibling iteration");
     // Iterate through siblings to find a match
     loop {
-      // debug_log!("    🔎 Trying sibling: type='{}', text='{}'",
-      //          cursor.node().kind(),
-      //          cursor.node().utf8_text(source_code_ref).unwrap_or("[invalid utf8]").chars().take(30).collect::<String>());
-
       // Clone the cursor in order to attempt matching the sequence starting at cursor.node
       // Cloning here is necessary other we won't be able to advance to the next sibling if the matching fails
       let result = {
@@ -209,19 +192,14 @@ pub(crate) fn match_cs_pattern(
 fn match_literal(
   ctx: &mut MatchingContext<'_>, literal_text: &str, remaining_elements: &[ResolvedCsElement],
 ) -> PatternMatchResult {
-  // debug_log!("    🔤 Matching literal: '{}' against node", literal_text);
-
   // We match literals against leaves
   while ctx.cursor.node().child_count() != 0 {
-    // debug_log!("      ⬇️ Going to first child of: {}", ctx.cursor.node().kind());
     ctx.cursor.goto_first_child();
   }
 
   let node_code = ctx.cursor.node().utf8_text(ctx.source_code).unwrap().trim();
-  // debug_log!("      📝 Node text: '{}' vs pattern: '{}'", node_code, literal_text);
 
   if literal_text.starts_with(node_code) && !node_code.is_empty() {
-    // debug_log!("      ✅ Literal matches!");
     let advance_by = node_code.len();
     // Can only advance if there is still enough chars to consume
     if advance_by > literal_text.len() {
@@ -242,7 +220,6 @@ fn match_literal(
     };
   }
 
-  debug_log!("      ❌ Literal doesn't match");
   PatternMatchResult::failed()
 }
 

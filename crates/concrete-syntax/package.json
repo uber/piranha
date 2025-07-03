@@ -8,7 +8,7 @@
     "test": "node test.js"
   },
   "dependencies": {
-    "tree-sitter": "^0.20.4",
+    "tree-sitter": "^0.20.6",
     "tree-sitter-python": "^0.20.4",
     "web-tree-sitter": "^0.20.8"
   },
@@ -24,4 +24,4 @@
   ],
   "author": "",
   "license": "Apache-2.0"
-} 
+}

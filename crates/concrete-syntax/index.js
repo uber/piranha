@@ -177,13 +177,13 @@ foo(1,4)
             console.log(`   ✅ Found ${matches.length} match(es):`);
             matches.forEach((match, index) => {
                 const line = match.range.start_point.row + 1;
-                const matchText = match.matched_text.trim();
+                const matchText = match.matched_string;
                 console.log(`      ${index + 1}. Line ${line}: "${matchText}"`);
                 // Show captures if any
-                const captureKeys = Object.keys(match.captures).filter(key => key !== '*');
+                const captureKeys = Object.keys(match.matches).filter(key => key !== '*');
                 if (captureKeys.length > 0) {
                     captureKeys.forEach(key => {
-                        const captureText = match.captures[key].text.trim();
+                        const captureText = match.matches[key];
                         console.log(`         ${key}: "${captureText}"`);
                     });
                 }
