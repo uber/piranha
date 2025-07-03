@@ -35,6 +35,13 @@ pub enum ResolvedCsElement {
   Literal(String),
 }
 
+/// Convenience function to resolve concrete syntax
+pub fn resolve_concrete_syntax(cs: &ConcreteSyntax) -> ResolvedConcreteSyntax {
+  cs.clone()
+    .resolve()
+    .expect("Failed to resolve concrete syntax")
+}
+
 impl ConcreteSyntax {
   /// Resolve constraints by attaching them to their corresponding captures
   pub fn resolve(self) -> Result<ResolvedConcreteSyntax, String> {

@@ -29,6 +29,9 @@ doctest = false
 cc = "1.0.73"
 
 [dependencies]
+concrete_syntax = { path = "../concrete-syntax", default-features = false, features = [
+  "native",
+] }
 tree-sitter = "0.20.6"
 tree-sitter-traversal = "0.1.2"
 json = "0.12.4"

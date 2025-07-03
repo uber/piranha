@@ -11,10 +11,12 @@
  limitations under the License.
 */
 
-pub(crate) mod constraint_checker;
-pub(crate) mod cursor_utils;
-pub(crate) mod interpreter;
-pub(crate) mod parser;
-pub(crate) mod resolver;
-pub(crate) mod tree_sitter_adapter;
-pub(crate) mod types;
+pub mod models;
+
+pub(crate) use models::concrete_syntax::constraint_checker;
+pub(crate) use models::concrete_syntax::cursor_utils;
+pub(crate) use models::concrete_syntax::interpreter;
+pub(crate) use models::concrete_syntax::parser;
+pub(crate) use models::concrete_syntax::resolver;
+pub(crate) use models::concrete_syntax::tree_sitter_adapter;
+pub(crate) use models::concrete_syntax::types;
