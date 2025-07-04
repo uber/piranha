@@ -66,7 +66,7 @@ static PLACEHOLDER: &str = ".placeholder";
 /// This method causes side effects - writes new files to a directory
 fn copy_folder_to_temp_dir(src: &Path) -> TempDir {
   // Copy the test scenario to temporary directory
-  let temp_dir = TempDir::new_in(".", "tmp_test").unwrap();
+  let temp_dir = TempDir::new_in("../../../..", "tmp_test").unwrap();
   let temp_dir_path = &temp_dir.path();
   for entry in fs::read_dir(src).unwrap() {
     let entry = entry.unwrap();

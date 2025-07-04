@@ -337,14 +337,14 @@ Currently, we have demos for the following :
    * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()`. Note it also adds the required import statement.
 
 
-*Please refer to our test cases at [`/test-resources/<language>/`](/test-resources/) as a reference for handling complicated scenarios*
+*Please refer to our test cases at [`/test-resources/<language>/`](/crates/core/test-resources/) as a reference for handling complicated scenarios*
 
 
 <h3>Building upon the stale feature flag cleanup demo </h3>
 
 First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
 
-Then see if your API usage is similar to the ones shown in the demo ([java-demo](/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
+Then see if your API usage is similar to the ones shown in the demo ([java-demo](/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/crates/core/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/crates/core/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/crates/core/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/crates/core/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
 
 If not :|, try to adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work. It is recommended to read the section- [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
 
@@ -543,7 +543,7 @@ pip install graphviz
 python visualize_rules_graph.py ./java_prebuilt_rules.dot src/cleanup_rules/java --title "Java pre-built cleanup rules"
 ```
 
-To generate an image for [java-ff_system1](test-resources/java/feature_flag_system_1/control/configurations/) in our tests:
+To generate an image for [java-ff_system1](crates/core/test-resources/java/feature_flag_system_1/control/configurations/) in our tests:
 
 ```bash
 python visualize_rules_graph.py ./java-ff_system1.dot src/cleanup_rules/java test-resources/java/feature_flag_system_1/control/configurations --title "Java Test Feature Flag Cleanup System 1"

@@ -1,83 +1,16 @@
-[package]
-authors = ["Uber Technologies Inc."]
-name = "piranha"
-description = "Polyglot Piranha is a library for performing structural find and replace with deep cleanup."
+[workspace]
+members = ["crates/core"]
+resolver = "2"
+
+[workspace.package]
 version = "0.4.1"
 edition = "2021"
-include = ["pyproject.toml", "src/"]
-exclude = ["legacy"]
+authors = ["Uber Technologies Inc."]
 license-file = "LICENSE"
-categories = [
-  "structural find-replace",
-  "find-replace",
-  "structural seearch",
-  "structural search and replace",
-  "tree-sitter",
-]
 
-[[bin]]
-name = "polyglot_piranha"
-path = "src/main.rs"
-
-[lib]
-name = "polyglot_piranha"
-path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
-doctest = false
-
-[build-dependencies]
-cc = "1.0.73"
-
-[dependencies]
-tree-sitter = "0.20.6"
-tree-sitter-traversal = "0.1.2"
-json = "0.12.4"
-toml = "0.8.8"
+# Workspace-level dependencies that can be inherited by member crates
+[workspace.dependencies]
+# Core dependencies
 serde = "1.0.136"
 serde_derive = "1.0.136"
-colored = "2.0.0"
-itertools = "0.12.0"
-regex = "1.5.5"
-jwalk = "0.8.1"
-clap = { version = "4.0.3", features = ["derive"] }
-log = "0.4.16"
-env_logger = "0.10.0"
-tempdir = "0.3"
 serde_json = "1.0.82"
-ctrlc = "3.4"
-
-# TODO: Update if we upgrade tree-sitter to >=0.21
-# Kotlin's grammar needs to fix the way it parses unary expressions (currently -a + b gets parsed as - (a +b)).
-# Once we upstream the fix, we can point to the official version.
-tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", rev = "5e0b07cb2ba628842028313b60b97699cc5e0fee" }
-tree-sitter-java = "0.20.2"
-# TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
-tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
-tree-sitter-python = "0.20.2"
-tree-sitter-ruby = "0.20.1"
-tree-sitter-typescript = "0.20.1"
-# TODO: Update after https://github.com/tree-sitter/tree-sitter-go/pull/103 lands
-tree-sitter-go = { git = "https://github.com/danieltrt/tree-sitter-go.git", rev = "ea5ceb716012db8813a2c05fab23c3a020988724" }
-tree-sitter-thrift = "0.5.0"
-tree-sitter-strings = { git = "https://github.com/uber/tree-sitter-strings.git" }
-tree-sitter-query = "0.1.0"
-tree-sitter-scala = "0.20.1"
-# newer versions of "tree-sitter-yaml" require that we bump "tree-sitter" version
-tree-sitter-yaml = "0.0.1"
-derive_builder = "0.12.0"
-getset = "0.1.2"
-pyo3 = "0.20.0"
-pyo3-log = "0.9.0"
-glob = "0.3.1"
-lazy_static = "1.4.0"
-pest = "2.8.1"
-pest_derive = "2.8.1"
-
-[features]
-extension-module = ["pyo3/extension-module"]
-default = ["extension-module"]
-
-
-[dev-dependencies]
-assert_cmd = "2.0.7"
-predicates = "3.0.2"
