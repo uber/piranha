@@ -50,6 +50,7 @@ mod tests {
             assert_eq!(capture, "var");
             assert_eq!(items, &vec!["a".to_string(), "b".to_string()]);
           }
+          _ => panic!("Expected in constraint"),
         }
       }
       _ => panic!("Expected capture"),
@@ -92,6 +93,31 @@ mod tests {
         assert_eq!(text, "test");
       }
       _ => panic!("Expected literal"),
+    }
+  }
+
+  #[test]
+  fn test_resolve_with_regex_constraints() {
+    let concrete = ConcreteSyntax {
+      pattern: CsPattern {
+        sequence: vec![CsElement::Capture {
+          name: "var".to_string(),
+          mode: CaptureMode::Single,
+        }],
+        constraints: vec![CsConstraint::Regex {
+          capture: "var".to_string(),
+          pattern: "^test.*".to_string(),
+        }],
+      },
+    };
+
+    let resolved = concrete.resolve().unwrap();
+    match &resolved.pattern.sequence[0] {
+      ResolvedCsElement::Capture { constraints, .. } => {
+        assert_eq!(constraints.len(), 1);
+        assert!(matches!(constraints[0], CsConstraint::Regex { .. }));
+      }
+      _ => panic!("Expected capture"),
     }
   }
 
