@@ -31,4 +31,5 @@ dev = ["pytest>=8.0"]
 
 [tool.maturin]
 bindings = "pyo3"
+manifest-path = "crates/core/Cargo.toml"
 include = ["LICENSE", "NOTICE", "polyglot_piranha.pyi"]
