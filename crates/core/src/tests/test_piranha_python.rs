@@ -32,15 +32,19 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
   let temp_file = temp_dir.path().join("output.json");
   _ = File::create(temp_file.as_path());
 
+  let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+  let test_input_path = manifest_dir.join("test-resources/python/delete_cleanup_str_in_list/input");
+  let test_config_path = manifest_dir.join("test-resources/python/delete_cleanup_str_in_list/configurations");
+  
   let mut cmd = Command::cargo_bin("polyglot_piranha").unwrap();
   cmd
     .args([
       "-c",
-      "test-resources/python/delete_cleanup_str_in_list/input",
+      test_input_path.to_str().unwrap(),
     ])
     .args([
       "-f",
-      "test-resources/python/delete_cleanup_str_in_list/configurations",
+      test_config_path.to_str().unwrap(),
     ])
     .args(["-l", "python"])
     .args(["-j", temp_file.to_str().unwrap()])
@@ -52,8 +56,7 @@ fn test_delete_modify_str_literal_from_list_via_cli() {
   cmd.assert().success();
   let content = read_file(&temp_file).unwrap();
   let output: Vec<PiranhaOutputSummary> = serde_json::from_str(&content).unwrap();
-  let expected_path =
-    Path::new("../../test-resources/python/delete_cleanup_str_in_list/expected/only_lists.py");
+  let expected_path = manifest_dir.join("test-resources/python/delete_cleanup_str_in_list/expected/only_lists.py");
   let expected = read_file(&expected_path.to_path_buf()).unwrap();
   assert!(eq_without_whitespace(output[0].content(), &expected));
 
