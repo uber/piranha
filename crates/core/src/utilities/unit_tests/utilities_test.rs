@@ -45,7 +45,7 @@ fn test_read_toml() {
 fn test_read_toml_default() {
   let project_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
   let path_to_test_file =
-    project_root.join("../../test-resources/utility_tests/another_sample.toml.toml");
+    project_root.join("test-resources/utility_tests/another_sample.toml.toml");
   let result: TestStruct = read_toml(&path_to_test_file, true);
   assert!(result.name.is_empty());
 }
