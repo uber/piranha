@@ -1,11 +1,6 @@
 [workspace]
-members = ["crates/core"]
+members = ["crates/*"]
 resolver = "2"
-
-# Future crates can be added here, for example:
-# "crates/cli",
-# "crates/web",
-# "crates/common",
 
 [workspace.package]
 version = "0.4.1"
@@ -15,19 +10,7 @@ license-file = "LICENSE"
 
 # Workspace-level dependencies that can be inherited by member crates
 [workspace.dependencies]
-tree-sitter = "0.20.6"
-tree-sitter-traversal = "0.1.2"
-json = "0.12.4"
-toml = "0.8.8"
+# Core dependencies
 serde = "1.0.136"
 serde_derive = "1.0.136"
-colored = "2.0.0"
-itertools = "0.12.0"
-regex = "1.5.5"
-jwalk = "0.8.1"
-clap = { version = "4.0.3", features = ["derive"] }
-log = "0.4.16"
-env_logger = "0.10.0"
-tempdir = "0.3"
 serde_json = "1.0.82"
-ctrlc = "3.4"
