@@ -1,6 +1,6 @@
 [package]
 name = "concrete_syntax"
-description = "Concrete syntax pattern matching library with native and WASM support"
+description = "Concrete syntax pattern matching library with Rust and WASM support"
 license-file = "../../LICENSE"
 
 version.workspace = true
