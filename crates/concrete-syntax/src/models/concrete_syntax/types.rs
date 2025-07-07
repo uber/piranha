@@ -11,7 +11,6 @@
  limitations under the License.
 */
 
-use super::tree_sitter_adapter::{Node, TreeCursor};
 use crate::models::matches::Range;
 use crate::models::concrete_syntax::tree_sitter_adapter::{Node, TreeCursor};
 use std::collections::HashMap;
