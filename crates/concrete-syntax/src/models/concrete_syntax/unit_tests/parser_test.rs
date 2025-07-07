@@ -11,8 +11,8 @@
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::parser::*;
-use crate::models::concrete_syntax::resolver::ResolvedCsElement;
+use super::super::parser::*;
+use super::super::resolver::ResolvedCsElement;
 
 #[cfg(test)]
 mod tests {

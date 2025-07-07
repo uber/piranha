@@ -1,0 +1,27 @@
+{
+  "name": "concrete-syntax-js",
+  "version": "1.0.0",
+  "description": "JavaScript implementation of concrete syntax pattern matching using tree-sitter",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "tree-sitter": "^0.20.6",
+    "tree-sitter-python": "^0.20.4",
+    "web-tree-sitter": "^0.20.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "tree-sitter",
+    "pattern-matching",
+    "wasm",
+    "rust",
+    "concrete-syntax"
+  ],
+  "author": "",
+  "license": "Apache-2.0"
+}

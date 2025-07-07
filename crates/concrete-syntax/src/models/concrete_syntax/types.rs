@@ -15,12 +15,8 @@ use crate::models::concrete_syntax::tree_sitter_adapter::{Node, TreeCursor};
 use crate::models::matches::Range;
 use std::collections::HashMap;
 
-/// Represents a captured node during pattern matching
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CapturedNode {
-  pub range: Range,
-  pub text: String,
-}
+// Re-export CapturedNode from matches for compatibility
+pub use crate::models::matches::CapturedNode;
 
 /// Result of a pattern matching operation with clear success/failure semantics
 #[derive(Debug, Clone, PartialEq, Eq)]

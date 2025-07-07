@@ -14,37 +14,38 @@
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
+use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
-#[grammar = "models/concrete_syntax/concrete_syntax.pest"]
+#[grammar = "concrete_syntax.pest"]
 pub struct ConcreteSyntaxParser;
 
 /// AST nodes for the concrete syntax language
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ConcreteSyntax {
   pub pattern: CsPattern,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CsPattern {
   pub sequence: Vec<CsElement>,
   pub constraints: Vec<CsConstraint>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CsElement {
   Capture { name: String, mode: CaptureMode },
   Literal(String),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CsConstraint {
   In { capture: String, items: Vec<String> },
   Regex { capture: String, pattern: String },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum CaptureMode {
   Single,   // :[var]
   OnePlus,  // :[var+]
