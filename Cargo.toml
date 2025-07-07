@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/core"]
+members = ["crates/core", "crates/concrete-syntax"]
 resolver = "2"
 
 [workspace.package]
@@ -14,3 +14,4 @@ license-file = "LICENSE"
 serde = "1.0.136"
 serde_derive = "1.0.136"
 serde_json = "1.0.82"
+regex = "1.11.1"

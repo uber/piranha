@@ -1,9 +1,11 @@
 [package]
 name = "concrete_syntax"
-version = "0.1.0"
-edition = "2021"
 description = "Concrete syntax pattern matching library with native and WASM support"
-license = "Apache-2.0"
+license-file = "../../LICENSE"
+
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -14,15 +16,15 @@ tree-sitter = { version = "0.20.6", optional = true }
 tree-sitter-traversal = { version = "0.1.2", optional = true }
 pest = "2.7"
 pest_derive = "2.7"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 # WASM dependencies
 wasm-bindgen = { version = "0.2", optional = true }
 js-sys = { version = "0.3", optional = true }
 web-sys = { version = "0.3", features = ["console"], optional = true }
 serde-wasm-bindgen = { version = "0.6", optional = true }
-regex = "1.11.1"
+regex = { workspace = true }
 
 [features]
 default = ["native"]
