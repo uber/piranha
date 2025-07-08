@@ -191,6 +191,30 @@ pub mod wasm {
 
   /// TypeScript interface definition for implementers
   pub const TYPESCRIPT_INTERFACES: &str = r#"
+    export interface Point {
+        readonly row: number;
+        readonly column: number;
+    }
+
+    export interface Range {
+        readonly startByte: number;
+        readonly endByte: number;
+        readonly startPoint: Point;
+        readonly endPoint: Point;
+    }
+
+    export interface CapturedNode {
+        readonly range: Range;
+        readonly text: string;
+    }
+
+    export interface Match {
+        readonly matchedString: string;
+        readonly range: Range;
+        readonly matches: Record<string, CapturedNode>;
+        readonly replacement?: string;
+    }
+
     export interface WasmSyntaxNode {
         readonly startByte: number;
         readonly endByte: number;
@@ -232,30 +256,4 @@ pub mod wasm {
         findMatches(node: WasmSyntaxNode, sourceCode: Uint8Array, recursive: boolean): Match[];
     }
     "#;
-}
-
-// Native-only API
-#[cfg(feature = "native")]
-pub struct PatternMatcher {
-  pattern: models::concrete_syntax::parser::ConcreteSyntax,
-}
-
-#[cfg(feature = "native")]
-impl PatternMatcher {
-  pub fn new(pattern_str: &str) -> Result<Self, String> {
-    let pattern = models::concrete_syntax::parser::ConcreteSyntax::parse(pattern_str)?;
-    Ok(PatternMatcher { pattern })
-  }
-
-  pub fn find_matches_native(
-    &self, node: &tree_sitter::Node, source_code: &[u8], recursive: bool,
-  ) -> Vec<Match> {
-    use models::concrete_syntax::interpreter::get_all_matches_for_concrete_syntax;
-    use models::concrete_syntax::resolver::resolve_concrete_syntax;
-    use models::concrete_syntax::tree_sitter_adapter::TreeSitterAdapter;
-
-    let wrapped_node = TreeSitterAdapter::wrap_node(*node);
-    let resolved = resolve_concrete_syntax(&self.pattern);
-    get_all_matches_for_concrete_syntax(&wrapped_node, source_code, &resolved, recursive, None)
-  }
 }

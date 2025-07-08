@@ -132,7 +132,7 @@ fn run_test(
           )
         });
 
-        let actual_text = actual_value.trim();
+        let actual_text = actual_value.text.trim();
         assert_eq!(
           actual_text, *expected_value,
           "Match {i} capture '{capture_name}': expected '{expected_value}', got '{actual_text}'"

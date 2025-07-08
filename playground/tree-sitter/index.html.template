@@ -3,6 +3,7 @@
   <title>tree-sitter Playground for Piranha</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/clusterize.js/0.19.0/clusterize.min.css">
+  <link rel="stylesheet" href="concrete-syntax.css">
   <link rel="icon" type="image/png" href="https://tree-sitter.github.io/tree-sitter/assets/images/favicon-32x32.png"
     sizes="32x32" />
   <link rel="icon" type="image/png" href="https://tree-sitter.github.io/tree-sitter/assets/images/favicon-16x16.png"
@@ -32,6 +33,20 @@
       <div class="header-item">
         <input id="query-checkbox" type="checkbox" checked>
         <label for="query-checkbox">query</label>
+      </div>
+
+      <div class="header-item query-type-selector" style="display: none;">
+        <label>Type:</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="query-type" value="tree-sitter" checked>
+            Tree-sitter
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="query-type" value="concrete-syntax">
+            Concrete Syntax
+          </label>
+        </div>
       </div>
 
       <div class="header-item">
@@ -71,7 +86,17 @@
 
         <div id="query-container" style="visibility: hidden; position: absolute;">
           <div class="panel-header">Query</div>
-          <textarea id="query-input"></textarea>
+          <textarea id="query-input" placeholder="Enter tree-sitter query..."></textarea>
+        </div>
+
+        <div id="concrete-syntax-container" style="visibility: hidden; position: absolute;">
+          <div class="panel-header">Concrete Syntax Pattern</div>
+          <div id="concrete-syntax-editor-container">
+            <div id="concrete-syntax-editor"></div>
+          </div>
+          <div class="concrete-syntax-controls">
+            <span id="concrete-syntax-status" class="status-text"></span>
+          </div>
         </div>
       </div>
 
@@ -92,9 +117,33 @@
   <script type="module" src="https://tree-sitter.github.io/tree-sitter/assets/js/playground.js"></script>
   <script type="module">
     import * as TreeSitter from 'https://tree-sitter.github.io/web-tree-sitter.js';
+    import init, { getAllMatches, parsePattern, ConcreteSyntaxMatcher } from './assets/concrete_syntax.js';
+    
     window.TreeSitter = TreeSitter;
+    
+    // Initialize concrete syntax WASM module
+    let concreteSyntaxInitialized = false;
+    init('./assets/concrete_syntax_bg.wasm').then(() => {
+      concreteSyntaxInitialized = true;
+      window.ConcreteSyntax = { getAllMatches, parsePattern, ConcreteSyntaxMatcher };
+      // Check if logging is enabled before logging
+      const loggingCheckbox = document.getElementById('logging-checkbox');
+      if (loggingCheckbox && loggingCheckbox.checked) {
+        console.log('Concrete syntax WASM module initialized');
+      }
+    }).catch(err => {
+      // Check if logging is enabled before logging
+      const loggingCheckbox = document.getElementById('logging-checkbox');
+      if (loggingCheckbox && loggingCheckbox.checked) {
+        console.error('Failed to initialize concrete syntax WASM:', err);
+      }
+    });
+    
     setTimeout(() => window.initializePlayground({local: true}), 1)
   </script>
+
+  <!-- Concrete Syntax Integration -->
+  <script src="concrete-syntax.js"></script>
 
   <style>
     /* Base Variables */
@@ -346,10 +395,78 @@
       vertical-align: middle;
     }
 
+    input[type="radio"] {
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
     label {
       font-size: 14px;
       margin-right: 16px;
       cursor: pointer;
+    }
+
+    /* Query Type Selector */
+    .query-type-selector {
+      border-left: 1px solid var(--border-color);
+      padding-left: 16px;
+      margin-left: 8px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      margin-right: 0;
+      cursor: pointer;
+    }
+
+    /* Enhanced Panel Header */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Concrete Syntax Controls */
+    .concrete-syntax-controls {
+      padding: 8px 16px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: var(--panel-bg);
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: #666;
+    }
+
+    [data-theme="dark"] .status-text {
+      color: #aaa;
+    }
+
+    /* Container positioning */
+    #concrete-syntax-container:not([style*="visibility: hidden"]) {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #concrete-syntax-container .panel-header {
+      flex: 0 0 auto;
+    }
+
+    #concrete-syntax-container textarea {
+      flex: 1;
+      min-height: 0;
     }
 
     #output-container a {
