@@ -6,14 +6,12 @@ A Rust library for structural pattern matching on code using concrete syntax pat
 
 ### WebAssembly (WASM)
 
-To build for WebAssembly and generate Node.js bindings:
+To build for web browsers:
 
 ```bash
-# Build for WASM target
-cargo build --target wasm32-unknown-unknown --features wasm --no-default-features
-
-# Generate Node.js bindings
-wasm-bindgen --out-dir pkg --target nodejs target/wasm32-unknown-unknown/debug/concrete_syntax.wasm
+# Build for web target
+cargo build --target wasm32-unknown-unknown --no-default-features --features wasm
+wasm-pack build --target web --out-dir pkg-web --no-default-features --features wasm
 ```
 
 ### Native (Piranha)
@@ -26,26 +24,13 @@ cargo build --release
 
 ## Tree-Sitter Integration
 
-The WASM bindings require tree-sitter node wrappers to interface with the Rust code. See [`index.js`](./index.js) for the complete implementation of:
+The WASM bindings require tree-sitter node wrappers to interface with the Rust code. The wrappers implement:
 
-- `TreeSitterNodeWrapper` - Implements the `WasmSyntaxNode` interface
+- `TreeSitterNodeWrapper` - Implements the `WasmSyntaxNode` interface  
 - `TreeSitterCursorWrapper` - Implements the `WasmSyntaxCursor` interface
 
 These wrappers bridge tree-sitter's JavaScript API with the Rust WASM module's expected interfaces.
 
-## Usage
+## Tree-Sitter Playground Integration
 
-After building the WASM bindings, you can use the pattern matching functionality in Node.js:
-
-```javascript
-const { getAllMatches, parsePattern } = require('./pkg/concrete_syntax.js');
-
-// Parse your code with tree-sitter
-const tree = parser.parse(sourceCode);
-const wrappedRootNode = new TreeSitterNodeWrapper(tree.rootNode);
-
-// Apply pattern matching
-const matches = getAllMatches(pattern, wrappedRootNode, sourceBytes, true, null);
-```
-
-See [`index.js`](./index.js) for a complete working example with Python code analysis. 
+The concrete syntax functionality is integrated into the tree-sitter playground at https://uber.github.io/piranha/tree-sitter-playground/.

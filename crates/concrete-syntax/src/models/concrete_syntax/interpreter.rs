@@ -379,7 +379,7 @@ fn try_match_node_range(
     range_end = next_cursor.node();
     is_last = !next_cursor.goto_next_sibling();
     if is_last {
-      // once we’re at the end of the range, check if there is any ancestor left to match
+      // once we're at the end of the range, check if there is any ancestor left to match
       should_match = CursorNavigator::find_next_sibling_or_ancestor_sibling(&mut next_cursor);
     }
   }
@@ -397,16 +397,11 @@ fn create_match_from_capture(
     panic!("The tag {replace_node_key} provided in the replace node is not present")
   });
 
-  // Convert CapturedNode map to string map for compatibility
-  let string_matches: HashMap<String, String> = match_map
-    .iter()
-    .map(|(k, v)| (k.clone(), v.text.clone()))
-    .collect();
-
+  // Keep the full CapturedNode information instead of converting to strings
   Match {
     matched_string: replace_node_match.text,
     range: replace_node_match.range,
-    matches: string_matches,
+    matches: match_map,
     replacement: None,
   }
 }

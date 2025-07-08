@@ -29,6 +29,51 @@ def run_command(cmd: List[str], cwd: Path = None) -> subprocess.CompletedProcess
         raise
 
 
+def build_concrete_syntax_wasm(repo_root: Path) -> Path:
+    """Build WASM files for concrete-syntax crate."""
+    concrete_syntax_dir = repo_root / "crates" / "concrete-syntax"
+    pkg_web_dir = concrete_syntax_dir / "pkg-web"
+    
+    print("Building concrete syntax WASM package...")
+    
+    # Check if WASM files need to be built (simple existence check)
+    wasm_files = [
+        pkg_web_dir / "concrete_syntax.js",
+        pkg_web_dir / "concrete_syntax_bg.wasm"
+    ]
+    
+    if all(f.exists() for f in wasm_files):
+        print("✓ Concrete syntax WASM files already exist, skipping build...")
+    else:
+        print("Building WASM package for web target...")
+        
+        # Build the WASM target first
+        run_command([
+            "cargo", "build", 
+            "--target", "wasm32-unknown-unknown",
+            "--no-default-features", 
+            "--features", "wasm"
+        ], cwd=concrete_syntax_dir)
+        
+        # Generate WASM bindings
+        run_command([
+            "wasm-pack", "build",
+            "--target", "web",
+            "--out-dir", "pkg-web", 
+            "--no-default-features",
+            "--features", "wasm"
+        ], cwd=concrete_syntax_dir)
+        
+        print("✅ WASM package built successfully")
+    
+    # Verify files exist
+    for wasm_file in wasm_files:
+        if not wasm_file.exists():
+            raise FileNotFoundError(f"Required WASM file not found: {wasm_file}")
+    
+    return pkg_web_dir
+
+
 def extract_tree_sitter_deps(repo_root: Path) -> list[tuple[str, str, dict[str, str]]]:
     """Extract tree-sitter dependencies from cargo metadata."""
     cmd = ["cargo", "metadata", "--format-version", "1"]
@@ -138,9 +183,13 @@ def copy_wasm_to_assets(wasm_file: Path, lang_name: str, assets_dir: Path) -> Pa
 def instantiate_index_html(template_path: Path, output_path: Path):
     with template_path.open("r") as inp, output_path.open("w") as out:
         content = inp.read()
-        languages = [
-            f'<option value="{lang}">{lang.title()}</option>' for lang in _LANGUAGES
-        ]
+        languages = []
+        for lang in _LANGUAGES:
+            # Set python as the default language
+            if lang == "python":
+                languages.append(f'<option value="{lang}" selected>{lang.title()}</option>')
+            else:
+                languages.append(f'<option value="{lang}">{lang.title()}</option>')
         content = content.replace("{{ LANGUAGE_OPTIONS }}", "\n".join(languages))
         out.write(content)
 
@@ -175,8 +224,32 @@ def main():
     print("Instantiating index.html.template to dist directory...")
     dist_dir.mkdir(parents=True, exist_ok=True)
     instantiate_index_html(_HERE / "index.html.template", dist_dir / "index.html")
+    
+    # Copy concrete syntax integration files
+    print("Copying concrete syntax integration files...")
+    concrete_syntax_files = ["concrete-syntax.css", "concrete-syntax.js"]
+    for file_name in concrete_syntax_files:
+        src_file = _HERE / file_name
+        if src_file.exists():
+            dest_file = dist_dir / file_name
+            print(f"Copying {src_file} to {dest_file}")
+            shutil.copy2(src_file, dest_file)
+        else:
+            raise FileNotFoundError(f"Required concrete syntax file not found: {src_file}")
+    
+    # Build and copy concrete syntax WASM files
+    print("\nBuilding concrete syntax WASM files...")
+    concrete_syntax_pkg_dir = build_concrete_syntax_wasm(repo_root)
+    
+    assets_dir = dist_dir / "assets"
+    assets_dir.mkdir(exist_ok=True)
+    for wasm_file in ["concrete_syntax.js", "concrete_syntax_bg.wasm"]:
+        src_file = concrete_syntax_pkg_dir / wasm_file
+        dest_file = assets_dir / wasm_file
+        print(f"Copying {src_file} to {dest_file}")
+        shutil.copy2(src_file, dest_file)
 
-    print("Building WASM files for all supported tree-sitter dependencies...")
+    print("\nBuilding WASM files for all supported tree-sitter dependencies...")
 
     print("Extracting tree-sitter dependencies to build WASM grammars...")
     deps = extract_tree_sitter_deps(repo_root)
@@ -196,12 +269,13 @@ def main():
 
             grammar_dir = clone_grammar(pkg_name, dep_info, temp_dir)
             wasm_file = build_wasm(grammar_dir, pkg_name)
-            copy_wasm_to_assets(wasm_file, lang_name, dist_dir / "assets")
+            copy_wasm_to_assets(wasm_file, lang_name, assets_dir)
 
             print(f"✓ Successfully built {pkg_name}")
 
         print("\n=== Build Complete ===")
         print(f"Successfully built {len(deps)} grammars: {_LANGUAGES}")
+        print(f"Concrete syntax WASM integration: ✓")
         print(f"Output directory: {dist_dir}")
 
 

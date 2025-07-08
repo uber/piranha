@@ -97,14 +97,14 @@ pub struct Match {
   pub matched_string: String,
   /// The range of the match in the source code
   pub range: Range,
-  /// Captured variables from the pattern (string representations)
-  pub matches: HashMap<String, String>,
+  /// Captured variables from the pattern (with full range information)
+  pub matches: HashMap<String, CapturedNode>,
   /// Optional replacement text for this match
   pub replacement: Option<String>,
 }
 
 impl Match {
-  pub fn new(matched_string: String, range: Range, matches: HashMap<String, String>) -> Self {
+  pub fn new(matched_string: String, range: Range, matches: HashMap<String, CapturedNode>) -> Self {
     Match {
       matched_string,
       range,
@@ -119,13 +119,21 @@ impl Match {
   }
 
   /// Get a captured variable by name
-  pub fn get_match(&self, name: &str) -> Option<&String> {
+  pub fn get_match(&self, name: &str) -> Option<&CapturedNode> {
     self.matches.get(name)
   }
 
   /// Get the text of a captured variable
   pub fn get_match_text(&self, name: &str) -> Option<&str> {
-    self.matches.get(name).map(|s| s.as_str())
+    self
+      .matches
+      .get(name)
+      .map(|captured| captured.text.as_str())
+  }
+
+  /// Get the range of a captured variable
+  pub fn get_match_range(&self, name: &str) -> Option<Range> {
+    self.matches.get(name).map(|captured| captured.range)
   }
 
   /// Get all match names
