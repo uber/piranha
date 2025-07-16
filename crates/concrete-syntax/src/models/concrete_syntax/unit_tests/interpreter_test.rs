@@ -172,7 +172,7 @@ fn test_optional_match_single() {
     "package something; func (r *receiver) someName() { }",
     "func :[receiver?] someName() { }",
     1,
-    vec![vec![("receiver", "(r *receiver)"),]],
+    vec![vec![("receiver", "(r *receiver)")]],
     GO,
   );
 }
@@ -183,7 +183,7 @@ fn test_optional_match_zero() {
     "package something; func someName() { }",
     "func :[receiver?] someName() { }",
     1,
-    vec![vec![("receiver", ""),]],
+    vec![vec![("receiver", "")]],
     GO,
   );
 }

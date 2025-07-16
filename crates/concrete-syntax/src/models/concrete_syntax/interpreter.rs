@@ -258,15 +258,20 @@ fn match_zero_plus_capture(
   match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, true)
 }
 
-fn match_optional_capture(ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],   remaining_pattern: &[ResolvedCsElement]) -> PatternMatchResult {
+fn match_optional_capture(
+  ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],
+  remaining_pattern: &[ResolvedCsElement],
+) -> PatternMatchResult {
   if let Some(value) = _match_zero(ctx, var_name, constraints, remaining_pattern) {
     return value;
   }
   match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, false)
 }
 
-
-fn _match_zero(ctx: &mut MatchingContext, var_name: &str, constraints: &[CsConstraint], remaining_pattern: &[ResolvedCsElement]) -> Option<PatternMatchResult> {
+fn _match_zero(
+  ctx: &mut MatchingContext, var_name: &str, constraints: &[CsConstraint],
+  remaining_pattern: &[ResolvedCsElement],
+) -> Option<PatternMatchResult> {
   let mut zero_match_ctx = MatchingContext {
     cursor: ctx.cursor.clone(),
     source_code: ctx.source_code,
@@ -282,7 +287,10 @@ fn _match_zero(ctx: &mut MatchingContext, var_name: &str, constraints: &[CsConst
     } = zero_match_result
     {
       zero_captures.insert(var_name.to_string(), empty_capture);
-      return Some(PatternMatchResult::success(zero_captures, last_matched_node_idx));
+      return Some(PatternMatchResult::success(
+        zero_captures,
+        last_matched_node_idx,
+      ));
     }
   }
   None
