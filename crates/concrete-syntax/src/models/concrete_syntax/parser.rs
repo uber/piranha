@@ -50,6 +50,7 @@ pub enum CaptureMode {
   Single,   // :[var]
   OnePlus,  // :[var+]
   ZeroPlus, // :[var*]
+  Optional, // :[var?]
 }
 
 /// Decode \" \\ \n \t \/ … inside a string literal.
@@ -253,6 +254,7 @@ impl ConcreteSyntax {
       match mode_pair.as_str() {
         "+" => CaptureMode::OnePlus,
         "*" => CaptureMode::ZeroPlus,
+        "?" => CaptureMode::Optional,
         _ => return Err(format!("Unknown capture mode: {}", mode_pair.as_str())),
       }
     } else {
