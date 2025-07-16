@@ -184,6 +184,7 @@ pub(crate) fn match_cs_pattern(
       CaptureMode::Single => match_single_capture(ctx, name, constraints, rest),
       CaptureMode::OnePlus => match_one_plus_capture(ctx, name, constraints, rest),
       CaptureMode::ZeroPlus => match_zero_plus_capture(ctx, name, constraints, rest),
+      CaptureMode::Optional => match_optional_capture(ctx, name, constraints, rest),
     },
     ResolvedCsElement::Literal(literal_text) => match_literal(ctx, literal_text, rest),
   }
@@ -249,6 +250,23 @@ fn match_zero_plus_capture(
   remaining_pattern: &[ResolvedCsElement],
 ) -> PatternMatchResult {
   // First try to match with zero nodes
+  if let Some(value) = _match_zero(ctx, var_name, constraints, remaining_pattern) {
+    return value;
+  }
+
+  // If zero nodes didn't work, try one or more nodes
+  match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, true)
+}
+
+fn match_optional_capture(ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],   remaining_pattern: &[ResolvedCsElement]) -> PatternMatchResult {
+  if let Some(value) = _match_zero(ctx, var_name, constraints, remaining_pattern) {
+    return value;
+  }
+  match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, false)
+}
+
+
+fn _match_zero(ctx: &mut MatchingContext, var_name: &str, constraints: &[CsConstraint], remaining_pattern: &[ResolvedCsElement]) -> Option<PatternMatchResult> {
   let mut zero_match_ctx = MatchingContext {
     cursor: ctx.cursor.clone(),
     source_code: ctx.source_code,
@@ -264,12 +282,10 @@ fn match_zero_plus_capture(
     } = zero_match_result
     {
       zero_captures.insert(var_name.to_string(), empty_capture);
-      return PatternMatchResult::success(zero_captures, last_matched_node_idx);
+      return Some(PatternMatchResult::success(zero_captures, last_matched_node_idx));
     }
   }
-
-  // If zero nodes didn't work, try one or more nodes
-  match_at_all_tree_levels(ctx, var_name, constraints, remaining_pattern, true)
+  None
 }
 
 /// Attempts to match a capture by exploring different levels of the AST hierarchy.
