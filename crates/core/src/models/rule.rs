@@ -12,8 +12,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 
 use colored::Colorize;
 use derive_builder::Builder;
@@ -269,8 +269,6 @@ impl InstantiatedRule {
       directory_scope: None, // Default to global scope
     }
   }
-
-
 
   pub fn name(&self) -> String {
     self.rule().name().to_string()

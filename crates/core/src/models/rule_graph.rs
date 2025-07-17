@@ -203,7 +203,7 @@ impl RuleGraph {
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope
-          for scope in [PARENT, PARENT_ITERATIVE, GLOBAL, DIRECTORY] {
+    for scope in [PARENT, PARENT_ITERATIVE, GLOBAL, DIRECTORY] {
       next_rules.entry(scope.to_string()).or_default();
     }
     next_rules
