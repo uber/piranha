@@ -44,18 +44,19 @@ create_rewrite_tests! {
     };
 }
 
+
+
 #[test]
 fn test_package_scope_delete_method() {
   super::initialize();
-  let _path = std::path::PathBuf::from("test-resources")
-    .join(GO)
-    .join("feature_flag/delete_method/private_pkg_fn");
+  let _path= std::path::PathBuf::from("test-resources").join(GO).join("feature_flag/delete_method/private_pkg_fn");
   let paths_to_codebase = vec![_path.join("input").to_str().unwrap().to_string()];
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
-  let piranha_arguments = crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
-    .paths_to_codebase(paths_to_codebase)
-    .path_to_configurations(path_to_configurations)
-    .language(crate::models::language::PiranhaLanguage::from(GO))
-    .build();
+  let piranha_arguments =  crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
+  .paths_to_codebase(paths_to_codebase)
+  .path_to_configurations(path_to_configurations)
+  .language(crate::models::language::PiranhaLanguage::from(GO))
+  .build();
   let output_summaries = crate::execute_piranha(&piranha_arguments);
+  println!("output_summaries: {:?}", output_summaries);
 }

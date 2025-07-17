@@ -17,8 +17,16 @@ import (
 )
 
 
+func someFunc() bool {
+    return true
+}
 
 func main() {
-    fmt.Println("Proceeding with new login flow...")
-
+    if someFunc() {
+        fmt.Println("Proceeding with new login flow...")
+        // ... code for new login flow
+    } else {
+        fmt.Println("Proceeding with old login flow...")
+        // ... code for old login flow
+    }
 }
