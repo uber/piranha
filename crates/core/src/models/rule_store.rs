@@ -93,15 +93,6 @@ impl RuleStore {
     }
   }
 
-  /// Get package rules for the given directory
-  pub(crate) fn get_package_rules_for_dir(&self, dir: &Path) -> Vec<&InstantiatedRule> {
-    self
-      .package_rules
-      .get(dir)
-      .map(|rules| rules.iter().collect())
-      .unwrap_or_default()
-  }
-
   /// Get package rules for a file path by checking if it's within any package rule directory (including subdirectories)
   pub(crate) fn get_package_rules_for_file(&self, file_path: &Path) -> Vec<&InstantiatedRule> {
     let mut rules = Vec::new();
