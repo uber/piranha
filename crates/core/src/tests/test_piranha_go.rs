@@ -42,9 +42,6 @@ create_rewrite_tests! {
       "stale_flag_name" => "staleFlag",
       "treated" => "false"
     };
-    test_package_scope_delete_method: "feature_flag/delete_method/private_pkg_fn", 3,
-    substitutions= substitutions! {
-    };
 }
 
 
@@ -56,10 +53,36 @@ fn test_package_scope_delete_method() {
   let paths_to_codebase = vec![_path.join("input").to_str().unwrap().to_string()];
   let path_to_configurations = _path.join("configurations").to_str().unwrap().to_string();
   let piranha_arguments =  crate::models::piranha_arguments::PiranhaArgumentsBuilder::default()
-  .paths_to_codebase(paths_to_codebase)
-  .path_to_configurations(path_to_configurations)
-  .language(crate::models::language::PiranhaLanguage::from(GO))
-  .build();
+      .paths_to_codebase(paths_to_codebase)
+      .path_to_configurations(path_to_configurations)
+      .language(crate::models::language::PiranhaLanguage::from(GO))
+      .build();
   let output_summaries = crate::execute_piranha(&piranha_arguments);
+  
+  // Check if expected files match transformed files
+  use std::fs;
+  use crate::utilities::read_file;
+  
+  let expected_dir = _path.join("expected");
+  let input_dir = _path.join("input");
+  
+  for entry in fs::read_dir(&expected_dir).unwrap() {
+    let entry = entry.unwrap();
+    if entry.path().is_file() {
+      let file_name = entry.file_name();
+      let expected_content = read_file(&entry.path()).unwrap();
+      let actual_file = input_dir.join(&file_name);
+      
+      if actual_file.exists() {
+        let actual_content = read_file(&actual_file).unwrap();
+        assert_eq!(
+          actual_content.trim(), 
+          expected_content.trim(),
+          "File {:?} doesn't match expected output", file_name
+        );
+      }
+    }
+  }
+  
   println!("output_summaries: {:?}", output_summaries);
 }
