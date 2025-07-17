@@ -167,6 +167,39 @@ fn test_single_match() {
 }
 
 #[test]
+fn test_optional_match_single() {
+  run_test(
+    "package something; func (r *receiver) someName() { }",
+    "func :[receiver?] someName() { }",
+    1,
+    vec![vec![("receiver", "(r *receiver)")]],
+    GO,
+  );
+}
+
+#[test]
+fn test_optional_match_zero() {
+  run_test(
+    "package something; func someName() { }",
+    "func :[receiver?] someName() { }",
+    1,
+    vec![vec![("receiver", "")]],
+    GO,
+  );
+}
+
+#[test]
+fn test_optional_no_match() {
+  run_test(
+    "package something; func (r *receiver) someName() { }",
+    "func :[receiver_and_name?]() { }",
+    0,
+    vec![],
+    GO,
+  );
+}
+
+#[test]
 fn test_multiple_match() {
   run_test(
     "class Example { public int a = 10; public int b = 20; }",
