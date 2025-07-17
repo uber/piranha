@@ -23,7 +23,7 @@ use tree_sitter::{InputEdit, Node, Parser, Tree};
 
 use crate::{
   models::capture_group_patterns::CGPattern,
-  models::rule_graph::{GLOBAL, PACKAGE, PARENT, PARENT_ITERATIVE},
+  models::rule_graph::{DIRECTORY, GLOBAL, PARENT, PARENT_ITERATIVE},
   utilities::tree_sitter_utilities::{
     get_node_for_range, get_replace_range, get_tree_sitter_edit, number_of_errors,
   },
@@ -238,10 +238,12 @@ impl SourceCodeUnit {
         rules_store.add_to_global_rules(r);
       }
 
-      // Add Package rules for the current file's directory
-      for r in &next_rules_by_scope[PACKAGE] {
+      // Add Directory rules to global rules with directory scope
+      for r in &next_rules_by_scope[DIRECTORY] {
         if let Some(dir) = self.path.parent() {
-          rules_store.add_to_package_rules(r, dir);
+          let mut directory_rule = r.clone();
+          directory_rule.directory_scope = Some(dir.to_path_buf());
+          rules_store.add_to_global_rules(&directory_rule);
         }
       }
 
@@ -274,8 +276,8 @@ impl SourceCodeUnit {
     stack: &mut VecDeque<(CGPattern, InstantiatedRule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
-      // Scope level is not "Parent", "ParentIterative", "Global", or "Package"
-      if ![PARENT, PARENT_ITERATIVE, GLOBAL, PACKAGE].contains(&scope_level.as_str()) {
+      // Scope level is not "Parent", "ParentIterative", "Global", or "Directory"
+      if ![PARENT, PARENT_ITERATIVE, GLOBAL, DIRECTORY].contains(&scope_level.as_str()) {
         for rule in rules {
           let scope_query = self.get_scope_query(
             scope_level,
@@ -313,7 +315,10 @@ impl SourceCodeUnit {
     scope_query: Option<CGPattern>,
   ) {
     for rule in rules {
-      self.apply_rule(rule.to_owned(), rules_store, parser, &scope_query)
+      // Check if rule applies to this file's directory
+      if rule.applies_to_file(&self.path) {
+        self.apply_rule(rule.to_owned(), rules_store, parser, &scope_query)
+      }
     }
     self.perform_delete_consecutive_new_lines();
   }

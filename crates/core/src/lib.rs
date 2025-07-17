@@ -148,8 +148,7 @@ impl Piranha {
     let mut current_global_substitutions = piranha_args.input_substitutions();
     // Keep looping until new `global` or `package` rules are added.
     loop {
-      let mut current_rules = self.rule_store.global_rules().clone();
-      let current_package_rules_count = self.rule_store.package_rules().len();
+      let current_rules = self.rule_store.global_rules().clone();
 
       debug!("\n # Global rules {}", current_rules.len());
       // Iterate over each file containing the usage of the feature flag API
@@ -174,26 +173,21 @@ impl Piranha {
             )
           });
 
-        // Apply the rules in this `SourceCodeUnit`
-        // Collect global rules and package rules for this file (including from parent directories)
-        let package_rules = self.rule_store.get_package_rules_for_file(&path);
-        current_rules.extend(package_rules.into_iter().cloned());
+                // Apply the rules in this `SourceCodeUnit`
         source_code_unit.apply_rules(&mut self.rule_store, &current_rules, &mut parser, None);
 
         // Add the substitutions for the global tags to the `current_global_substitutions`
         current_global_substitutions.extend(source_code_unit.global_substitutions());
 
-        // Break when a new `global` or `package` rule is added
+        // Break when a new global rule is added
         if self.rule_store.global_rules().len() > current_rules.len()
-          || self.rule_store.package_rules().len() > current_package_rules_count
         {
-          debug!("Found a new global or package rule. Will start scanning all the files again.");
+          debug!("Found a new global rule. Will start scanning all the files again.");
           break;
         }
       }
-      // If no new `global_rules` or `package_rules` were added, break.
+      // If no new global_rules were added, break.
       if self.rule_store.global_rules().len() == current_rules.len()
-        && self.rule_store.package_rules().len() == current_package_rules_count
       {
         break;
       }

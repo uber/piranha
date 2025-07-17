@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use std::hash::{Hash, Hasher};
 
 use colored::Colorize;
@@ -244,6 +245,9 @@ pub(crate) struct InstantiatedRule {
   rule: Rule,
   #[get = "pub"]
   substitutions: HashMap<String, String>,
+  /// Directory scope for Directory scope rules. None means global scope.
+  #[get = "pub"]
+  pub(crate) directory_scope: Option<PathBuf>,
 }
 
 impl InstantiatedRule {
@@ -262,8 +266,11 @@ impl InstantiatedRule {
     InstantiatedRule {
       rule: rule.instantiate(&substitutions_for_holes),
       substitutions: substitutions_for_holes,
+      directory_scope: None, // Default to global scope
     }
   }
+
+
 
   pub fn name(&self) -> String {
     self.rule().name().to_string()
@@ -297,6 +304,21 @@ impl InstantiatedRule {
 
   pub fn filters(&self) -> &HashSet<Filter> {
     self.rule().filters()
+  }
+
+  /// Check if this rule applies to the given file path based on its directory scope
+  pub(crate) fn applies_to_file(&self, file_path: &std::path::Path) -> bool {
+    match &self.directory_scope {
+      None => true, // Global scope - applies to all files
+      Some(scope_dir) => {
+        // Directory scope - check if file is in the exact same directory (non-recursive)
+        if let Some(file_dir) = file_path.parent() {
+          file_dir == scope_dir
+        } else {
+          false
+        }
+      }
+    }
   }
 }
 

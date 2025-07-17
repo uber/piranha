@@ -27,8 +27,6 @@ func ProcessData(input string) string {
 
 // HelperFunction demonstrates package scope rule application
 func HelperFunction() {
-    result := someFunc()
-    if result {
-        fmt.Println("Feature is enabled in sub folder")
-    }
+    fmt.Println("Feature is enabled in sub folder")
+
 }

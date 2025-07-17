@@ -10,6 +10,6 @@
 # limitations under the License.
 
 [[edges]]
-scope = "Package"
+scope = "Directory"
 from = "func_returns_true"
 to = ["propagate_val"]

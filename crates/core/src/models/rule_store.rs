@@ -94,7 +94,7 @@ impl RuleStore {
   }
 
   /// Get package rules for a file path by checking if it's within any package rule directory (including subdirectories)
-  pub(crate) fn get_package_rules_for_file(&self, file_path: &Path) -> Vec<&InstantiatedRule> {
+  pub(crate) fn get_package_rules_for_file(&self, file_path: &Path) -> Vec<InstantiatedRule> {
     let mut rules = Vec::new();
 
     // Get the file's directory
@@ -103,7 +103,7 @@ impl RuleStore {
       for (package_dir, package_rules) in &self.package_rules {
         // Check if the file's directory is the same as or a subdirectory of the package directory
         if file_dir == package_dir || file_dir.starts_with(package_dir) {
-          rules.extend(package_rules.iter());
+          rules.extend(package_rules.iter().cloned());
         }
       }
     }
