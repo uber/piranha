@@ -11,7 +11,7 @@
 
 [[rules]]
 name = "func_returns_true"
-query = """cs func :[name](:[args*]) bool {
+query = """cs func @name(:[args*]) bool {
     return :[ret_val]
 }
 
@@ -19,6 +19,7 @@ query = """cs func :[name](:[args*]) bool {
 """
 replace = ""
 replace_node = "*"
+holes = ["name"]
 is_seed_rule = true
 
 [[rules]]

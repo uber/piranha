@@ -146,7 +146,7 @@ impl Piranha {
     };
 
     let mut current_global_substitutions = piranha_args.input_substitutions();
-    // Keep looping until new `global` or `package` rules are added.
+    // Keep looping until new `global` rules are added.
     loop {
       let current_rules = self.rule_store.global_rules().clone();
 
@@ -179,13 +179,13 @@ impl Piranha {
         // Add the substitutions for the global tags to the `current_global_substitutions`
         current_global_substitutions.extend(source_code_unit.global_substitutions());
 
-        // Break when a new global rule is added
+        // Break when a new `global rule` is added
         if self.rule_store.global_rules().len() > current_rules.len() {
           debug!("Found a new global rule. Will start scanning all the files again.");
           break;
         }
       }
-      // If no new global_rules were added, break.
+      // If no new `global_rules` were added, break.
       if self.rule_store.global_rules().len() == current_rules.len() {
         break;
       }
