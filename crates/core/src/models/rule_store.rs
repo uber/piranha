@@ -77,40 +77,6 @@ impl RuleStore {
     }
   }
 
-  /// Add a new package rule for the given directory (If it doesn't already exist)
-  pub(crate) fn add_to_package_rules(&mut self, rule: &InstantiatedRule, source_dir: &Path) {
-    let r = rule.clone();
-    let dir_rules = self
-      .package_rules
-      .entry(source_dir.to_path_buf())
-      .or_default();
-    if !dir_rules.iter().any(|r| {
-      r.name().eq(&rule.name()) && r.replace().eq(&rule.replace()) && r.query().eq(&rule.query())
-    }) {
-      #[rustfmt::skip]
-      debug!("{}", format!("Added Package Rule for {:?}: {:?} - {}", source_dir, r.name(), r.query().pattern()).bright_cyan());
-      dir_rules.push(r);
-    }
-  }
-
-  /// Get package rules for a file path by checking if it's within any package rule directory (including subdirectories)
-  pub(crate) fn get_package_rules_for_file(&self, file_path: &Path) -> Vec<InstantiatedRule> {
-    let mut rules = Vec::new();
-
-    // Get the file's directory
-    if let Some(file_dir) = file_path.parent() {
-      // Check all package rule directories to see if this file is within any of them
-      for (package_dir, package_rules) in &self.package_rules {
-        // Check if the file's directory is the same as or a subdirectory of the package directory
-        if file_dir == package_dir || file_dir.starts_with(package_dir) {
-          rules.extend(package_rules.iter().cloned());
-        }
-      }
-    }
-
-    rules
-  }
-
   /// Get the compiled query for the `query_str` from the cache
   /// else compile it, add it to the cache and return it.
   pub(crate) fn query(&mut self, cg_pattern: &CGPattern) -> &CompiledCGPattern {

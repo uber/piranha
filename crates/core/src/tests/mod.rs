@@ -78,7 +78,7 @@ fn copy_recursively(src: &Path, dest: &Path) -> std::io::Result<()> {
     let entry = entry?;
     let path = entry.path();
     let dest_path = dest.join(entry.file_name());
-    
+
     if path.is_file() {
       fs::copy(&path, &dest_path)?;
     } else if path.is_dir() {
