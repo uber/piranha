@@ -42,7 +42,7 @@ create_rewrite_tests! {
       "stale_flag_name" => "staleFlag",
       "treated" => "false"
     };
-  test_package_scope_delete_method2 : "feature_flag/delete_method/private_pkg_fn", 2,
+  test_package_scope_delete_method : "feature_flag/delete_method/private_pkg_fn", 2,
     substitutions= substitutions! {
       "name" => "someFunc"
     };
