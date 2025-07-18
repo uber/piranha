@@ -395,3 +395,30 @@ fn test_mixed_constraints() {
     JAVA,
   );
 }
+
+#[test]
+fn test_negated_constraints() {
+  let input = "string testValue;";
+  let mut parser = tree_sitter::Parser::new();
+  parser.set_language(tree_sitter_java::language()).unwrap();
+
+  let tree = parser.parse(input, None).unwrap();
+  let root_node = tree.root_node();
+  let wrapped_node = TreeSitterAdapter::wrap_node(root_node);
+
+  // Test "not in" - should NOT match since "testValue" is in the list
+  let pattern = "string :[var]; |> :[var] not in [\"testValue\"]";
+  let cs = ConcreteSyntax::parse(pattern).unwrap();
+  let resolved = resolve_concrete_syntax(&cs);
+  let matches =
+    get_all_matches_for_concrete_syntax(&wrapped_node, input.as_bytes(), &resolved, true, None);
+  assert_eq!(matches.len(), 0);
+
+  // Test "not matches" - should NOT match since "testValue" matches the regex
+  let pattern = "string :[var]; |> :[var] not matches /^test.*/";
+  let cs = ConcreteSyntax::parse(pattern).unwrap();
+  let resolved = resolve_concrete_syntax(&cs);
+  let matches =
+    get_all_matches_for_concrete_syntax(&wrapped_node, input.as_bytes(), &resolved, true, None);
+  assert_eq!(matches.len(), 0);
+}

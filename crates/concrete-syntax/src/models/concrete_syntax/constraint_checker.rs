@@ -25,6 +25,10 @@ pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool 
         Err(_) => false, // Invalid regex patterns don't match
       }
     }
+    CsConstraint::Not(inner_constraint) => {
+      // Negation: return opposite of the inner constraint result
+      !check_constraint(node, inner_constraint)
+    }
   }
 }
 

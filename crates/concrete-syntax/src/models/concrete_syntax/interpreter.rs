@@ -475,4 +475,4 @@ fn create_empty_captured_node() -> CapturedNode {
 
 #[cfg(test)]
 #[path = "unit_tests/interpreter_test.rs"]
-mod interpreter_test;
+pub mod interpreter_test;

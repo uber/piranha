@@ -17,8 +17,9 @@ WHITESPACE = _{ (" " | "\t" | "\r" | "\n")+ }
 // Where constraints (extensible for future constraint types)
 constraints = { constraint ~ ("," ~ constraint)* }
 constraint = { in_constraint | regex_constraint }
-in_constraint = { capture ~ "in" ~ "[" ~ list_items? ~ "]" }
-regex_constraint = { capture ~ "matches" ~ regex_pattern }
+in_constraint = { capture ~ not_keyword? ~ "in" ~ "[" ~ list_items? ~ "]" }
+regex_constraint = { capture ~ not_keyword? ~ "matches" ~ regex_pattern }
+not_keyword = { "not" }
 list_items = { quoted_string ~ ("," ~ quoted_string)* }
 quoted_string = { "\"" ~ ( "\\\\" | "\\\"" | (!"\"" ~ ANY) )* ~ "\"" }
 regex_pattern = { "/" ~ regex_content ~ "/" }
