@@ -43,26 +43,28 @@ pub fn resolve_concrete_syntax(cs: &ConcreteSyntax) -> ResolvedConcreteSyntax {
 }
 
 impl ConcreteSyntax {
+  /// Extract capture name from any constraint type
+  fn extract_capture_name_from_constraint(constraint: &CsConstraint) -> String {
+    match constraint {
+      CsConstraint::In { capture, .. } => capture.clone(),
+      CsConstraint::Regex { capture, .. } => capture.clone(),
+      CsConstraint::Not(inner_constraint) => {
+        Self::extract_capture_name_from_constraint(inner_constraint)
+      }
+    }
+  }
+
   /// Resolve constraints by attaching them to their corresponding captures
   pub fn resolve(self) -> Result<ResolvedConcreteSyntax, String> {
     // Build a map of capture names to their constraints
     let mut constraint_map: HashMap<String, Vec<CsConstraint>> = HashMap::new();
 
     for constraint in self.pattern.constraints {
-      match &constraint {
-        CsConstraint::In { capture, .. } => {
-          constraint_map
-            .entry(capture.clone())
-            .or_default()
-            .push(constraint);
-        }
-        CsConstraint::Regex { capture, .. } => {
-          constraint_map
-            .entry(capture.clone())
-            .or_default()
-            .push(constraint);
-        }
-      }
+      let capture_name = Self::extract_capture_name_from_constraint(&constraint);
+      constraint_map
+        .entry(capture_name)
+        .or_default()
+        .push(constraint);
     }
 
     // Transform elements, attaching constraints to captures

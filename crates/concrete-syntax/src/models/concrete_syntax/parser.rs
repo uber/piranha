@@ -43,6 +43,7 @@ pub enum CsElement {
 pub enum CsConstraint {
   In { capture: String, items: Vec<String> },
   Regex { capture: String, pattern: String },
+  Not(Box<CsConstraint>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -159,16 +160,28 @@ impl ConcreteSyntax {
     let capture_pair = inner.next().ok_or("Expected capture in in_constraint")?;
     let capture_name = Self::extract_capture_name(capture_pair)?;
 
-    // Then we should have list_items (optional)
+    // Check for optional "not" keyword
+    let mut negated = false;
     let mut items = Vec::new();
-    if let Some(list_items_pair) = inner.next() {
-      items = Self::parse_list_items(list_items_pair)?;
+
+    for next_pair in inner {
+      match next_pair.as_rule() {
+        Rule::not_keyword => negated = true,
+        Rule::list_items => items = Self::parse_list_items(next_pair)?,
+        _ => continue, // Skip other tokens like "in"
+      }
     }
 
-    Ok(CsConstraint::In {
+    let base_constraint = CsConstraint::In {
       capture: capture_name,
       items,
-    })
+    };
+
+    if negated {
+      Ok(CsConstraint::Not(Box::new(base_constraint)))
+    } else {
+      Ok(base_constraint)
+    }
   }
 
   fn parse_regex_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
@@ -178,16 +191,28 @@ impl ConcreteSyntax {
     let capture_pair = inner.next().ok_or("Expected capture in regex_constraint")?;
     let capture_name = Self::extract_capture_name(capture_pair)?;
 
-    // Then we should have the regex pattern
-    let pattern_pair = inner
-      .next()
-      .ok_or("Expected regex pattern in regex_constraint")?;
-    let pattern = Self::parse_regex_pattern(pattern_pair)?;
+    // Check for optional "not" keyword
+    let mut negated = false;
+    let mut pattern = String::new();
 
-    Ok(CsConstraint::Regex {
+    for next_pair in inner {
+      match next_pair.as_rule() {
+        Rule::not_keyword => negated = true,
+        Rule::regex_pattern => pattern = Self::parse_regex_pattern(next_pair)?,
+        _ => continue, // Skip other tokens like "matches"
+      }
+    }
+
+    let base_constraint = CsConstraint::Regex {
       capture: capture_name,
       pattern,
-    })
+    };
+
+    if negated {
+      Ok(CsConstraint::Not(Box::new(base_constraint)))
+    } else {
+      Ok(base_constraint)
+    }
   }
 
   fn parse_regex_pattern(pair: Pair<Rule>) -> Result<String, String> {

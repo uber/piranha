@@ -387,4 +387,21 @@ mod tests {
       _ => panic!("Expected capture with constraints"),
     }
   }
+
+  #[test]
+  fn test_parse_negated_constraints() {
+    // Test "not in"
+    let result = ConcreteSyntax::parse(":[var] |> :[var] not in [\"a\"]").unwrap();
+    assert!(matches!(
+      result.pattern.constraints[0],
+      CsConstraint::Not(_)
+    ));
+
+    // Test "not matches"
+    let result = ConcreteSyntax::parse(":[var] |> :[var] not matches /test/").unwrap();
+    assert!(matches!(
+      result.pattern.constraints[0],
+      CsConstraint::Not(_)
+    ));
+  }
 }
