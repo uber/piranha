@@ -37,6 +37,7 @@ pub(crate) static GLOBAL: &str = "Global";
 pub(crate) static PARENT: &str = "Parent";
 pub(crate) static PARENT_ITERATIVE: &str = "ParentIterative";
 pub(crate) static DIRECTORY: &str = "Directory";
+pub(crate) static DIRECTORY_RECURSIVE: &str = "DirectoryRecursive";
 
 #[derive(Debug, Default, Getters, MutGetters, Builder, Clone, PartialEq)]
 #[builder(build_fn(name = "create"))]
@@ -203,7 +204,13 @@ impl RuleGraph {
       }
     }
     // Add empty entry, incase no next rule was found for a particular scope
-    for scope in [PARENT, PARENT_ITERATIVE, GLOBAL, DIRECTORY] {
+    for scope in [
+      PARENT,
+      PARENT_ITERATIVE,
+      GLOBAL,
+      DIRECTORY,
+      DIRECTORY_RECURSIVE,
+    ] {
       next_rules.entry(scope.to_string()).or_default();
     }
     next_rules
