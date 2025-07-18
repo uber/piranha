@@ -13,7 +13,14 @@ Copyright (c) 2023 Uber Technologies, Inc.
 
 use std::collections::{HashMap, HashSet};
 use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) enum DirectoryScope {
+  Global,
+  Directory(PathBuf),
+  DirectoryRecursive(PathBuf),
+}
 
 use colored::Colorize;
 use derive_builder::Builder;
@@ -239,15 +246,44 @@ impl Validator for Rule {
 
 pub use piranha_rule;
 
+/// Helper function to safely compare directory paths with canonicalization
+fn paths_match_directory_scope(file_path: &Path, scope_dir: &Path, recursive: bool) -> bool {
+  // Get parent directory of the file
+  let file_dir = match file_path.parent() {
+    Some(dir) => dir,
+    None => return false,
+  };
+
+  // Try to canonicalize both paths to handle symlinks, relative paths, etc.
+  let canonical_file_dir = file_dir
+    .canonicalize()
+    .unwrap_or_else(|_| file_dir.to_path_buf());
+  let canonical_scope_dir = scope_dir
+    .canonicalize()
+    .unwrap_or_else(|_| scope_dir.to_path_buf());
+
+  if recursive {
+    // DirectoryRecursive: file directory should be same as or under scope directory
+    // Use strip_prefix for proper path hierarchy checking instead of starts_with
+    canonical_file_dir == canonical_scope_dir
+      || canonical_file_dir
+        .strip_prefix(&canonical_scope_dir)
+        .is_ok()
+  } else {
+    // Directory: file directory should be exactly the same as scope directory
+    canonical_file_dir == canonical_scope_dir
+  }
+}
+
 #[derive(Debug, Getters, Clone)]
 pub(crate) struct InstantiatedRule {
   #[get = "pub"]
   rule: Rule,
   #[get = "pub"]
   substitutions: HashMap<String, String>,
-  /// Directory scope for Directory scope rules. None means global scope.
+  /// Directory scope for Directory scope rules.
   #[get = "pub"]
-  pub(crate) directory_scope: Option<PathBuf>,
+  pub(crate) directory_scope: DirectoryScope,
 }
 
 impl InstantiatedRule {
@@ -266,7 +302,7 @@ impl InstantiatedRule {
     InstantiatedRule {
       rule: rule.instantiate(&substitutions_for_holes),
       substitutions: substitutions_for_holes,
-      directory_scope: None, // Default to global scope
+      directory_scope: DirectoryScope::Global, // Default to global scope
     }
   }
 
@@ -307,14 +343,14 @@ impl InstantiatedRule {
   /// Check if this rule applies to the given file path based on its directory scope
   pub(crate) fn applies_to_file(&self, file_path: &std::path::Path) -> bool {
     match &self.directory_scope {
-      None => true, // Global scope - applies to all files
-      Some(scope_dir) => {
-        // Directory scope - check if file is in the exact same directory (non-recursive)
-        if let Some(file_dir) = file_path.parent() {
-          file_dir == scope_dir
-        } else {
-          false
-        }
+      DirectoryScope::Global => true, // Global scope - applies to all files
+      DirectoryScope::Directory(scope_dir) => {
+        // Directory scope - check exact same directory only
+        paths_match_directory_scope(file_path, scope_dir, false)
+      }
+      DirectoryScope::DirectoryRecursive(scope_dir) => {
+        // DirectoryRecursive scope - check same directory or subdirectories
+        paths_match_directory_scope(file_path, scope_dir, true)
       }
     }
   }

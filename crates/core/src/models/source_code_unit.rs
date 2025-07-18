@@ -23,7 +23,8 @@ use tree_sitter::{InputEdit, Node, Parser, Tree};
 
 use crate::{
   models::capture_group_patterns::CGPattern,
-  models::rule_graph::{DIRECTORY, GLOBAL, PARENT, PARENT_ITERATIVE},
+  models::rule::DirectoryScope,
+  models::rule_graph::{DIRECTORY, DIRECTORY_RECURSIVE, GLOBAL, PARENT, PARENT_ITERATIVE},
   utilities::tree_sitter_utilities::{
     get_node_for_range, get_replace_range, get_tree_sitter_edit, number_of_errors,
   },
@@ -238,11 +239,20 @@ impl SourceCodeUnit {
         rules_store.add_to_global_rules(r);
       }
 
-      // Add Directory rules to global rules with directory scope
+      // Add Directory rules to global rules with directory scope (non-recursive)
       for r in &next_rules_by_scope[DIRECTORY] {
         if let Some(dir) = self.path.parent() {
           let mut directory_rule = r.clone();
-          directory_rule.directory_scope = Some(dir.to_path_buf());
+          directory_rule.directory_scope = DirectoryScope::Directory(dir.to_path_buf());
+          rules_store.add_to_global_rules(&directory_rule);
+        }
+      }
+
+      // Add DirectoryRecursive rules to global rules with directory scope (recursive)
+      for r in &next_rules_by_scope[DIRECTORY_RECURSIVE] {
+        if let Some(dir) = self.path.parent() {
+          let mut directory_rule = r.clone();
+          directory_rule.directory_scope = DirectoryScope::DirectoryRecursive(dir.to_path_buf());
           rules_store.add_to_global_rules(&directory_rule);
         }
       }
@@ -276,8 +286,16 @@ impl SourceCodeUnit {
     stack: &mut VecDeque<(CGPattern, InstantiatedRule)>,
   ) {
     for (scope_level, rules) in next_rules_by_scope {
-      // Scope level is not "Parent", "ParentIterative", "Global", or "Directory"
-      if ![PARENT, PARENT_ITERATIVE, GLOBAL, DIRECTORY].contains(&scope_level.as_str()) {
+      // Scope level is not "Parent", "ParentIterative", "Global", "Directory", or "DirectoryRecursive"
+      if ![
+        PARENT,
+        PARENT_ITERATIVE,
+        GLOBAL,
+        DIRECTORY,
+        DIRECTORY_RECURSIVE,
+      ]
+      .contains(&scope_level.as_str())
+      {
         for rule in rules {
           let scope_query = self.get_scope_query(
             scope_level,

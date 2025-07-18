@@ -42,7 +42,12 @@ create_rewrite_tests! {
       "stale_flag_name" => "staleFlag",
       "treated" => "false"
     };
-  test_package_scope_delete_method : "feature_flag/delete_method/private_pkg_fn", 2,
+    test_directory_scope_delete_method : "feature_flag/delete_method/private_pkg_fn", 2,
+    substitutions= substitutions! {
+      "name" => "someFunc"
+    };
+
+  test_directory_recursive_scope_delete_method : "feature_flag/delete_method/private_pkg_fn_recursive", 3,
     substitutions= substitutions! {
       "name" => "someFunc"
     };
