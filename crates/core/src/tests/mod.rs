@@ -55,7 +55,7 @@ fn initialize() {
 static PLACEHOLDER: &str = ".placeholder";
 
 /// Copies the files under `src` to `dst`.
-/// The copy is NOT recursive.
+/// The copy is recursive - directories and subdirectories are copied.
 /// The files under `src` are copied under `dst`.
 ///
 /// # Arguments
@@ -68,21 +68,25 @@ fn copy_folder_to_temp_dir(src: &Path) -> TempDir {
   // Copy the test scenario to temporary directory
   let temp_dir = TempDir::new_in("../../../..", "tmp_test").unwrap();
   let temp_dir_path = &temp_dir.path();
-  for entry in fs::read_dir(src).unwrap() {
-    let entry = entry.unwrap();
+  copy_recursively(src, temp_dir_path).unwrap();
+  temp_dir
+}
+
+/// Recursively copy all files and directories from src to dest
+fn copy_recursively(src: &Path, dest: &Path) -> std::io::Result<()> {
+  for entry in fs::read_dir(src)? {
+    let entry = entry?;
     let path = entry.path();
+    let dest_path = dest.join(entry.file_name());
+
     if path.is_file() {
-      _ = fs::copy(
-        path.to_str().unwrap(),
-        temp_dir_path
-          .join(path.file_name().unwrap())
-          .to_str()
-          .unwrap(),
-      )
-      .unwrap();
+      fs::copy(&path, &dest_path)?;
+    } else if path.is_dir() {
+      fs::create_dir_all(&dest_path)?;
+      copy_recursively(&path, &dest_path)?;
     }
   }
-  temp_dir
+  Ok(())
 }
 
 fn assert_frequency_for_matches(

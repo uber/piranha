@@ -41,6 +41,9 @@ pub(crate) struct RuleStore {
   // Current global rules to be applied.
   #[get = "pub"]
   global_rules: Vec<InstantiatedRule>,
+  // Package-scoped rules mapped by their source directory path.
+  #[get = "pub"]
+  package_rules: HashMap<PathBuf, Vec<InstantiatedRule>>,
 
   #[get = "pub"]
   language: PiranhaLanguage,
