@@ -1,4 +1,10 @@
+package main
 
+import (
+	"fmt"
+	"mycompany/featureflags/exp"
+)
 
-func test() {
+func main() {
+	fmt.Println("Hello, World!")
 }

@@ -11,7 +11,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
  limitations under the License.
 */
 
-package pkg1
+package sub_folder
 
 import (
     "fmt"
