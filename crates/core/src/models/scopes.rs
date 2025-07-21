@@ -77,7 +77,26 @@ impl SourceCodeUnit {
         break;
       }
     }
-    panic!("Could not create scope query for {scope_level:?}");
+    panic!(
+      "
+=====================================
+ERROR: Failed to create scope query
+=====================================
+
+Scope Level: {}
+
+Source Code:
+-------------------------------------
+{}
+
+AST S-expression:
+-------------------------------------
+{}
+=====================================",
+      scope_level,
+      self.code(),
+      root_node.to_sexp()
+    );
   }
 }
 
