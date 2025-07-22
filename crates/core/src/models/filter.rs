@@ -339,7 +339,7 @@ impl SourceCodeUnit {
     let mut node_to_check = node;
     let instantiated_filter = filter.instantiate(substitutions);
 
-    debug!("Applying filter on potential match {:?} against potential match {:?}", instantiated_filter, node.to_sexp());
+    debug!("Applying filter {:?} against potential match {:?}", instantiated_filter, node.to_sexp());
     if *filter.child_count() != default_child_count() {
       return node.named_child_count() == (*filter.child_count() as usize);
     }
