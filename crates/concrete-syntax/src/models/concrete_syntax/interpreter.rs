@@ -483,7 +483,7 @@ fn create_empty_captured_node() -> CapturedNode {
       end_point: crate::models::matches::Point { row: 0, column: 0 },
     },
     text: String::new(),
-    node_type: "empty".to_string(),
+    node_type: "empty-node-from-empty-string".to_string(),
   }
 }
 
