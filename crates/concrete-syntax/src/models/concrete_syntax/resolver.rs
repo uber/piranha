@@ -23,6 +23,7 @@ pub struct ResolvedConcreteSyntax {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ResolvedCsPattern {
   pub sequence: Vec<ResolvedCsElement>,
+  pub root_constraints: Vec<CsConstraint>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -48,6 +49,7 @@ impl ConcreteSyntax {
     match constraint {
       CsConstraint::In { capture, .. } => capture.clone(),
       CsConstraint::Regex { capture, .. } => capture.clone(),
+      CsConstraint::Type { target, .. } => target.clone(),
       CsConstraint::Not(inner_constraint) => {
         Self::extract_capture_name_from_constraint(inner_constraint)
       }
@@ -56,10 +58,25 @@ impl ConcreteSyntax {
 
   /// Resolve constraints by attaching them to their corresponding captures
   pub fn resolve(self) -> Result<ResolvedConcreteSyntax, String> {
+    // Separate root constraints from capture constraints
+    let mut root_constraints = Vec::new();
+    let mut capture_constraints = Vec::new();
+
+    for constraint in self.pattern.constraints {
+      match &constraint {
+        CsConstraint::Type { target, .. } if target == "root" => {
+          root_constraints.push(constraint);
+        }
+        _ => {
+          capture_constraints.push(constraint);
+        }
+      }
+    }
+
     // Build a map of capture names to their constraints
     let mut constraint_map: HashMap<String, Vec<CsConstraint>> = HashMap::new();
 
-    for constraint in self.pattern.constraints {
+    for constraint in capture_constraints {
       let capture_name = Self::extract_capture_name_from_constraint(&constraint);
       constraint_map
         .entry(capture_name)
@@ -97,6 +114,7 @@ impl ConcreteSyntax {
     Ok(ResolvedConcreteSyntax {
       pattern: ResolvedCsPattern {
         sequence: resolved_sequence,
+        root_constraints,
       },
     })
   }

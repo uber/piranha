@@ -32,6 +32,7 @@ mod tests {
         },
       },
       text: text.to_string(),
+      node_type: "test_node".to_string(),
     }
   }
 

@@ -82,11 +82,16 @@ impl Range {
 pub struct CapturedNode {
   pub range: Range,
   pub text: String,
+  pub node_type: String,
 }
 
 impl CapturedNode {
-  pub fn new(range: Range, text: String) -> Self {
-    CapturedNode { range, text }
+  pub fn new(range: Range, text: String, node_type: String) -> Self {
+    CapturedNode {
+      range,
+      text,
+      node_type,
+    }
   }
 }
 

@@ -422,3 +422,36 @@ fn test_negated_constraints() {
     get_all_matches_for_concrete_syntax(&wrapped_node, input.as_bytes(), &resolved, true, None);
   assert_eq!(matches.len(), 0);
 }
+
+#[test]
+fn test_root_type_constraints_positive() {
+  run_test(
+    "class Example { public int field = 42; }",
+    "class :[name] { :[body] } |> :[name].type in [\"identifier\"], root.type in [\"class_declaration\"]",
+    1,
+    vec![vec![("name", "Example")]],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_root_type_constraints_negative() {
+  run_test(
+    "class Example { public int field = 42; }",
+    "class :[name] { :[body] } |> root.type in [\"function_declaration\"]",
+    0,
+    vec![],
+    JAVA,
+  );
+}
+
+#[test]
+fn test_type_constraints_negative() {
+  run_test(
+    "class Example { public int field = 42; }",
+    "class :[name] { :[body] } |> :[name].type in [\"function_declaration\"]",
+    0,
+    vec![],
+    JAVA,
+  );
+}
