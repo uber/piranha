@@ -371,11 +371,7 @@ impl ConcreteSyntax {
   }
 
   fn parse_literal_tokens(text: &str) -> Vec<CsElement> {
-    let tokens: Vec<String> = text
-      .trim()
-      .split_whitespace()
-      .map(|s| s.to_string())
-      .collect();
+    let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_string()).collect();
     tokens.into_iter().map(CsElement::Literal).collect()
   }
 
