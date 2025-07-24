@@ -370,6 +370,11 @@ impl ConcreteSyntax {
     Ok(items)
   }
 
+  fn parse_literal_tokens(text: &str) -> Vec<CsElement> {
+    let tokens: Vec<String> = text.trim().split_whitespace().map(|s| s.to_string()).collect();
+    tokens.into_iter().map(CsElement::Literal).collect()
+  }
+
   fn parse_element(pair: Pair<Rule>) -> Result<Vec<CsElement>, String> {
     use Rule::*;
 
@@ -377,17 +382,14 @@ impl ConcreteSyntax {
       capture => Ok(vec![Self::parse_capture_single(pair)?]),
       literal_text => {
         // Split the literal text on whitespace, similar to Python's .split()
-        let text = pair.as_str().trim();
-        let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_string()).collect();
-
-        Ok(tokens.into_iter().map(CsElement::Literal).collect())
+        let text = pair.as_str();
+        Ok(Self::parse_literal_tokens(text))
       }
       delimited_literal => {
-        // For delimited literals, treat as a single literal (don't split on whitespace)
-        // and unescape any escaped characters like \/
+        // Same as literal_text but with escape handling for \/
         let raw_text = pair.as_str();
         let unescaped_text = unescape(raw_text);
-        Ok(vec![CsElement::Literal(unescaped_text)])
+        Ok(Self::parse_literal_tokens(&unescaped_text))
       }
       _ => Err(format!("Unexpected element: {:?}", pair.as_rule())),
     }
