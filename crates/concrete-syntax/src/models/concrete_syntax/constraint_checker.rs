@@ -11,9 +11,11 @@
  limitations under the License.
 */
 
-use crate::models::concrete_syntax::parser::CsConstraint;
-use crate::models::concrete_syntax::types::CapturedNode;
 use regex::Regex;
+
+use super::tree_sitter_adapter::{Node, SyntaxNode};
+use crate::models::concrete_syntax::parser::CsConstraint;
+use crate::models::matches::CapturedNode;
 
 /// Check if a captured node satisfies a single constraint
 pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {
@@ -24,6 +26,10 @@ pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool 
         Ok(regex) => regex.is_match(&node.text),
         Err(_) => false, // Invalid regex patterns don't match
       }
+    }
+    CsConstraint::Type { types, .. } => {
+      // Check if the captured node's type is in the allowed types list
+      types.contains(&node.node_type)
     }
     CsConstraint::Not(inner_constraint) => {
       // Negation: return opposite of the inner constraint result
@@ -37,6 +43,21 @@ pub(crate) fn satisfies_constraints(node: &CapturedNode, constraints: &[CsConstr
   constraints
     .iter()
     .all(|constraint| check_constraint(node, constraint))
+}
+
+/// Check if a node satisfies root type constraints before attempting pattern matching
+pub(crate) fn satisfies_root_constraints(node: &Node, constraints: &[CsConstraint]) -> bool {
+  for constraint in constraints {
+    if let CsConstraint::Type { target, types } = constraint {
+      if target == "root" {
+        let node_type = node.kind();
+        if !types.contains(&node_type.to_string()) {
+          return false;
+        }
+      }
+    }
+  }
+  true
 }
 
 #[cfg(test)]

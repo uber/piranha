@@ -43,6 +43,7 @@ pub enum CsElement {
 pub enum CsConstraint {
   In { capture: String, items: Vec<String> },
   Regex { capture: String, pattern: String },
+  Type { target: String, types: Vec<String> },
   Not(Box<CsConstraint>),
 }
 
@@ -149,6 +150,7 @@ impl ConcreteSyntax {
       }
       in_constraint => Self::parse_in_constraint(pair),
       regex_constraint => Self::parse_regex_constraint(pair),
+      type_constraint => Self::parse_type_constraint(pair),
       _ => Err(format!("Unexpected constraint type: {:?}", pair.as_rule())),
     }
   }
@@ -215,6 +217,31 @@ impl ConcreteSyntax {
     }
   }
 
+  fn parse_type_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
+    let mut inner = pair.into_inner();
+
+    // First should be constraint_target
+    let target_pair = inner
+      .next()
+      .ok_or("Expected constraint_target in type_constraint")?;
+    let target_name = Self::extract_target_name(target_pair)?;
+
+    // Parse the list items (node types)
+    let mut types = Vec::new();
+
+    for next_pair in inner {
+      match next_pair.as_rule() {
+        Rule::list_items => types = Self::parse_list_items(next_pair)?,
+        _ => continue, // Skip other tokens like ".type", "in"
+      }
+    }
+
+    Ok(CsConstraint::Type {
+      target: target_name,
+      types,
+    })
+  }
+
   fn parse_regex_pattern(pair: Pair<Rule>) -> Result<String, String> {
     // The regex_pattern contains regex_content
     let mut inner = pair.into_inner();
@@ -236,6 +263,28 @@ impl ConcreteSyntax {
         Ok(identifier)
       }
       _ => Err(format!("Expected capture, got: {:?}", pair.as_rule())),
+    }
+  }
+
+  fn extract_target_name(pair: Pair<Rule>) -> Result<String, String> {
+    match pair.as_rule() {
+      Rule::constraint_target => {
+        // constraint_target contains either capture or root_keyword
+        let mut inner = pair.into_inner();
+        let target_pair = inner.next().unwrap();
+        Self::extract_target_name(target_pair)
+      }
+      Rule::capture => {
+        // Parse the capture to get its name
+        let mut inner = pair.into_inner();
+        let identifier = inner.next().unwrap().as_str().to_string();
+        Ok(identifier)
+      }
+      Rule::root_keyword => Ok("root".to_string()),
+      _ => Err(format!(
+        "Expected constraint_target, capture, or root_keyword, got: {:?}",
+        pair.as_rule()
+      )),
     }
   }
 

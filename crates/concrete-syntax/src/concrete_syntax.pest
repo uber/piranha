@@ -16,11 +16,20 @@ WHITESPACE = _{ (" " | "\t" | "\r" | "\n")+ }
 
 // Where constraints (extensible for future constraint types)
 constraints = { constraint ~ ("," ~ constraint)* }
-constraint = { in_constraint | regex_constraint }
+constraint = { in_constraint | regex_constraint | type_constraint}
+
 in_constraint = { capture ~ not_keyword? ~ "in" ~ "[" ~ list_items? ~ "]" }
 regex_constraint = { capture ~ not_keyword? ~ "matches" ~ regex_pattern }
+type_constraint = { constraint_target ~ ".node_type" ~ "in" ~ "[" ~ list_items? ~ "]"}
+
+constraint_target = { capture | root_keyword }
+root_keyword = { "root" }
+
+
 not_keyword = { "not" }
 list_items = { quoted_string ~ ("," ~ quoted_string)* }
+
+
 quoted_string = { "\"" ~ ( "\\\\" | "\\\"" | (!"\"" ~ ANY) )* ~ "\"" }
 regex_pattern = { "/" ~ regex_content ~ "/" }
 regex_content = { ( "\\/" | (!"/" ~ ANY) )* }

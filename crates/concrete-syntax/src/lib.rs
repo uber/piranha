@@ -206,6 +206,7 @@ pub mod wasm {
     export interface CapturedNode {
         readonly range: Range;
         readonly text: string;
+        readonly nodeType: string;
     }
 
     export interface Match {

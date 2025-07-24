@@ -13,7 +13,7 @@
 
 use crate::models::matches::Range;
 
-use super::constraint_checker::satisfies_constraints;
+use super::constraint_checker::{satisfies_constraints, satisfies_root_constraints};
 use super::cursor_utils::CursorNavigator;
 use super::parser::CaptureMode;
 use super::parser::CsConstraint;
@@ -34,31 +34,35 @@ pub fn get_all_matches_for_concrete_syntax<'a>(
 ) -> Vec<Match> {
   let mut matches: Vec<Match> = Vec::new();
 
-  // Pattern matching starting
+  // Check root type constraints before attempting to match
+  if satisfies_root_constraints(node, &cs.pattern.root_constraints) {
+    // Pattern matching starting
 
-  if let PatternMatchResult::Success {
-    captures: mut mapping,
-    consumed_nodes: _last_node_index,
-    range: Some(range),
-  } = match_sequential_siblings(&mut node.walk(), source_code_ref, &cs.pattern.sequence)
-  {
-    // If the user doesn't specify a replace node, we use '*' as the default (everything)
-    let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
+    if let PatternMatchResult::Success {
+      captures: mut mapping,
+      consumed_nodes: _last_node_index,
+      range: Some(range),
+    } = match_sequential_siblings(&mut node.walk(), source_code_ref, &cs.pattern.sequence)
+    {
+      // If the user doesn't specify a replace node, we use '*' as the default (everything)
+      let replace_node_key = replace_node.clone().unwrap_or("*".to_string());
 
-    if replace_node_key == "*" {
-      let replace_node_match = CapturedNode {
-        range,
-        text: CursorNavigator::get_text_from_range(
-          range.start_byte,
-          range.end_byte,
-          source_code_ref,
-        ),
-      };
-      mapping.insert("*".to_string(), replace_node_match);
+      if replace_node_key == "*" {
+        let replace_node_match = CapturedNode {
+          range,
+          text: CursorNavigator::get_text_from_range(
+            range.start_byte,
+            range.end_byte,
+            source_code_ref,
+          ),
+          node_type: node.kind().to_string(),
+        };
+        mapping.insert("*".to_string(), replace_node_match);
+      }
+
+      let match_item = create_match_from_capture(&replace_node_key, mapping, range);
+      matches.push(match_item);
     }
-
-    let match_item = create_match_from_capture(&replace_node_key, mapping, range);
-    matches.push(match_item);
   }
 
   if recursive {
@@ -359,13 +363,22 @@ fn try_match_node_range(
   let mut is_last = false;
 
   // Helper to slice out the captured text
-  let make_capture = |end: &Node| CapturedNode {
-    range: Range::span_ranges(range_start.range(), end.range()),
-    text: CursorNavigator::get_text_from_range(
-      range_start.range().start_byte,
-      end.range().end_byte,
-      ctx.source_code,
-    ),
+  let make_capture = |end: &Node| {
+    let node_type = if range_start.range() == end.range() {
+      range_start.kind().to_string() // Single node - use actual type
+    } else {
+      "multi_node".to_string() // Multiple nodes - use special type
+    };
+
+    CapturedNode {
+      range: Range::span_ranges(range_start.range(), end.range()),
+      text: CursorNavigator::get_text_from_range(
+        range_start.range().start_byte,
+        end.range().end_byte,
+        ctx.source_code,
+      ),
+      node_type,
+    }
   };
 
   loop {
@@ -470,6 +483,7 @@ fn create_empty_captured_node() -> CapturedNode {
       end_point: crate::models::matches::Point { row: 0, column: 0 },
     },
     text: String::new(),
+    node_type: "empty-node-from-empty-string".to_string(),
   }
 }
 
