@@ -455,3 +455,32 @@ fn test_type_constraints_negative() {
     JAVA,
   );
 }
+
+#[test]
+fn test_contains_constraint() {
+  run_test(
+    "Some().Very().Long().Builder().Pattern().Matches().This().Code",
+    ":[expr] 
+              |> :[expr].node_type in [\"expression_statement\"],  
+                 :[expr] contains /:[x].Long().Builder()/",
+    1,
+    vec![vec![(
+      "expr",
+      "Some().Very().Long().Builder().Pattern().Matches().This().Code",
+    )]],
+    GO,
+  );
+}
+
+#[test]
+fn test_not_contains_constraint() {
+  run_test(
+    "Some().Very().Long().Builder().Pattern().Matches().This().Code",
+    ":[expr] 
+              |> :[expr].node_type in [\"expression_statement\"],  
+                 :[expr] not contains /:[x].Long().Builder()/",
+    0,
+    vec![],
+    GO,
+  );
+}

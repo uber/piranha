@@ -13,7 +13,9 @@
 
 use crate::models::matches::Range;
 
-use super::constraint_checker::{satisfies_constraints, satisfies_root_constraints};
+use super::constraint_checker::{
+  satisfies_constraints, satisfies_root_constraints, ConstraintContext,
+};
 use super::cursor_utils::CursorNavigator;
 use super::parser::CaptureMode;
 use super::parser::CsConstraint;
@@ -282,7 +284,12 @@ fn _match_zero(
     top_node: ctx.top_node,
   };
   let empty_capture = create_empty_captured_node();
-  if satisfies_constraints(&empty_capture, constraints) {
+  let constraint_context = ConstraintContext {
+    captured_node: &empty_capture,
+    source_code: ctx.source_code,
+    ast_root: ctx.top_node,
+  };
+  if satisfies_constraints(&empty_capture, constraints, Some(&constraint_context)) {
     let zero_match_result = match_cs_pattern(&mut zero_match_ctx, remaining_pattern, true);
     if let PatternMatchResult::Success {
       captures: mut zero_captures,
@@ -384,7 +391,12 @@ fn try_match_node_range(
   loop {
     // --- 1) try current [start...end] slice ---
     let captured = make_capture(&range_end);
-    if satisfies_constraints(&captured, constraints) {
+    let constraint_context = ConstraintContext {
+      captured_node: &captured,
+      source_code: ctx.source_code,
+      ast_root: ctx.top_node,
+    };
+    if satisfies_constraints(&captured, constraints, Some(&constraint_context)) {
       let mut sub_ctx = MatchingContext {
         cursor: next_cursor.clone(),
         source_code: ctx.source_code,
