@@ -45,11 +45,11 @@ mod tests {
 
     // Should match
     let matching_node = create_test_node("testing123");
-    assert!(check_constraint(&matching_node, &constraint));
+    assert!(check_constraint(&matching_node, &constraint, None));
 
     // Should not match
     let non_matching_node = create_test_node("nottest");
-    assert!(!check_constraint(&non_matching_node, &constraint));
+    assert!(!check_constraint(&non_matching_node, &constraint, None));
   }
 
   #[test]
@@ -61,6 +61,6 @@ mod tests {
 
     let node = create_test_node("anything");
     // Should return false for invalid regex patterns
-    assert!(!check_constraint(&node, &constraint));
+    assert!(!check_constraint(&node, &constraint, None));
   }
 }

@@ -13,12 +13,22 @@
 
 use regex::Regex;
 
+use super::interpreter::get_all_matches_for_concrete_syntax;
 use super::tree_sitter_adapter::{Node, SyntaxNode};
 use crate::models::concrete_syntax::parser::CsConstraint;
 use crate::models::matches::CapturedNode;
 
+/// Simple context for contains constraint checking
+pub struct ConstraintContext<'a> {
+  pub captured_node: &'a CapturedNode,
+  pub source_code: &'a [u8],
+  pub ast_root: &'a Node<'a>,
+}
+
 /// Check if a captured node satisfies a single constraint
-pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool {
+pub(crate) fn check_constraint(
+  node: &CapturedNode, ctr: &CsConstraint, context: Option<&ConstraintContext>,
+) -> bool {
   match ctr {
     CsConstraint::In { items, .. } => items.contains(&node.text.to_string()),
     CsConstraint::Regex { pattern, .. } => {
@@ -31,18 +41,47 @@ pub(crate) fn check_constraint(node: &CapturedNode, ctr: &CsConstraint) -> bool 
       // Check if the captured node's type is in the allowed types list
       types.contains(&node.node_type)
     }
+    CsConstraint::Contains {
+      resolved_pattern, ..
+    } => {
+      // Use the resolved pattern for proper AST matching
+      if let (Some(resolved), Some(ctx)) = (resolved_pattern, context) {
+        check_contains_recursive(resolved, ctx)
+      } else {
+        false // No context or resolved pattern available
+      }
+    }
     CsConstraint::Not(inner_constraint) => {
       // Negation: return opposite of the inner constraint result
-      !check_constraint(node, inner_constraint)
+      !check_constraint(node, inner_constraint, context)
     }
   }
 }
 
+/// Check contains constraint using recursive pattern matching
+fn check_contains_recursive(
+  resolved_pattern: &super::resolver::ResolvedConcreteSyntax, context: &ConstraintContext,
+) -> bool {
+  // Run the resolved pattern against the entire AST
+  let matches = get_all_matches_for_concrete_syntax(
+    context.ast_root,
+    context.source_code,
+    resolved_pattern,
+    true, // recursive
+    None, // replace_node
+  );
+
+  // If we found any matches, the contains constraint is satisfied
+  !matches.is_empty()
+}
+
 /// Check if a captured node satisfies all constraints
-pub(crate) fn satisfies_constraints(node: &CapturedNode, constraints: &[CsConstraint]) -> bool {
+pub(crate) fn satisfies_constraints(
+  node: &CapturedNode, constraints: &[CsConstraint], context: Option<&ConstraintContext>,
+) -> bool {
   constraints
     .iter()
-    .all(|constraint| check_constraint(node, constraint))
+    .all(|constraint| check_constraint(node, constraint, context))
 }
 
 /// Check if a node satisfies root type constraints before attempting pattern matching

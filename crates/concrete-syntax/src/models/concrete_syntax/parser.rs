@@ -41,9 +41,24 @@ pub enum CsElement {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CsConstraint {
-  In { capture: String, items: Vec<String> },
-  Regex { capture: String, pattern: String },
-  Type { target: String, types: Vec<String> },
+  In {
+    capture: String,
+    items: Vec<String>,
+  },
+  Regex {
+    capture: String,
+    pattern: String,
+  },
+  Type {
+    target: String,
+    types: Vec<String>,
+  },
+  Contains {
+    target: String,
+    pattern: Vec<CsElement>,
+    #[serde(skip)] // Don't serialize the resolved pattern
+    resolved_pattern: Option<Box<super::resolver::ResolvedConcreteSyntax>>,
+  },
   Not(Box<CsConstraint>),
 }
 
@@ -151,6 +166,7 @@ impl ConcreteSyntax {
       in_constraint => Self::parse_in_constraint(pair),
       regex_constraint => Self::parse_regex_constraint(pair),
       type_constraint => Self::parse_type_constraint(pair),
+      contains_constraint => Self::parse_contains_constraint(pair),
       _ => Err(format!("Unexpected constraint type: {:?}", pair.as_rule())),
     }
   }
@@ -242,6 +258,56 @@ impl ConcreteSyntax {
     })
   }
 
+  fn parse_contains_constraint(pair: Pair<Rule>) -> Result<CsConstraint, String> {
+    let mut inner = pair.into_inner();
+
+    // First should be constraint_target
+    let target_pair = inner
+      .next()
+      .ok_or("Expected constraint_target in contains_constraint")?;
+    let target_name = Self::extract_target_name(target_pair)?;
+
+    // Check for optional "not" keyword and delimited_pattern
+    let mut negated = false;
+    let mut pattern_elements = Vec::new();
+
+    for next_pair in inner {
+      match next_pair.as_rule() {
+        Rule::not_keyword => negated = true,
+        Rule::delimited_pattern => pattern_elements = Self::parse_delimited_pattern(next_pair)?,
+        _ => continue, // Skip other tokens like "contains"
+      }
+    }
+
+    let base_constraint = CsConstraint::Contains {
+      target: target_name,
+      pattern: pattern_elements,
+      resolved_pattern: None, // Initialize as None
+    };
+
+    if negated {
+      Ok(CsConstraint::Not(Box::new(base_constraint)))
+    } else {
+      Ok(base_constraint)
+    }
+  }
+
+  fn parse_delimited_pattern(pair: Pair<Rule>) -> Result<Vec<CsElement>, String> {
+    // delimited_pattern contains sub_pattern
+    let mut inner = pair.into_inner();
+    let sub_pattern_pair = inner
+      .next()
+      .ok_or("Expected sub_pattern in delimited_pattern")?;
+
+    let mut elements = Vec::new();
+    for element_pair in sub_pattern_pair.into_inner() {
+      let mut parsed_elements = Self::parse_element(element_pair)?;
+      elements.append(&mut parsed_elements);
+    }
+
+    Ok(elements)
+  }
+
   fn parse_regex_pattern(pair: Pair<Rule>) -> Result<String, String> {
     // The regex_pattern contains regex_content
     let mut inner = pair.into_inner();
@@ -304,6 +370,11 @@ impl ConcreteSyntax {
     Ok(items)
   }
 
+  fn parse_literal_tokens(text: &str) -> Vec<CsElement> {
+    let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_string()).collect();
+    tokens.into_iter().map(CsElement::Literal).collect()
+  }
+
   fn parse_element(pair: Pair<Rule>) -> Result<Vec<CsElement>, String> {
     use Rule::*;
 
@@ -311,10 +382,14 @@ impl ConcreteSyntax {
       capture => Ok(vec![Self::parse_capture_single(pair)?]),
       literal_text => {
         // Split the literal text on whitespace, similar to Python's .split()
-        let text = pair.as_str().trim();
-        let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_string()).collect();
-
-        Ok(tokens.into_iter().map(CsElement::Literal).collect())
+        let text = pair.as_str();
+        Ok(Self::parse_literal_tokens(text))
+      }
+      delimited_literal => {
+        // Same as literal_text but with escape handling for \/
+        let raw_text = pair.as_str();
+        let unescaped_text = unescape(raw_text);
+        Ok(Self::parse_literal_tokens(&unescaped_text))
       }
       _ => Err(format!("Unexpected element: {:?}", pair.as_rule())),
     }

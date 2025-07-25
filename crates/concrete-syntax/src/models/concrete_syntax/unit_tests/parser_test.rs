@@ -404,4 +404,101 @@ mod tests {
       CsConstraint::Not(_)
     ));
   }
+
+  #[test]
+  fn test_parse_contains_constraint() {
+    let input = ":[x] |> :[x] contains /:[y]/";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    // Check constraints
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 1);
+
+    match &constraints[0] {
+      CsConstraint::Contains {
+        target, pattern, ..
+      } => {
+        assert_eq!(target, "x");
+        assert_eq!(pattern.len(), 1); // just capture
+
+        match &pattern[0] {
+          CsElement::Capture { name, .. } => assert_eq!(name, "y"),
+          _ => panic!("Expected capture"),
+        }
+      }
+      _ => panic!("Expected Contains constraint"),
+    }
+  }
+
+  #[test]
+  fn test_parse_contains_constraint_with_literal() {
+    let input = ":[x] |> :[x] contains /:[y].Return()/";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    // Check constraints
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 1);
+
+    match &constraints[0] {
+      CsConstraint::Contains {
+        target, pattern, ..
+      } => {
+        assert_eq!(target, "x");
+        assert_eq!(pattern.len(), 2); // capture + literal
+
+        match &pattern[0] {
+          CsElement::Capture { name, .. } => assert_eq!(name, "y"),
+          _ => panic!("Expected capture"),
+        }
+
+        match &pattern[1] {
+          CsElement::Literal(text) => assert_eq!(text, ".Return()"),
+          _ => panic!("Expected literal"),
+        }
+      }
+      _ => panic!("Expected Contains constraint"),
+    }
+  }
+
+  #[test]
+  fn test_parse_contains_constraint_with_escaped_slashes() {
+    let input = ":[x] |> :[x] contains /path\\/to\\/file/";
+    let result = ConcreteSyntax::parse(input).unwrap();
+
+    let constraints = &result.pattern.constraints;
+    assert_eq!(constraints.len(), 1);
+
+    match &constraints[0] {
+      CsConstraint::Contains {
+        target, pattern, ..
+      } => {
+        assert_eq!(target, "x");
+        assert_eq!(pattern.len(), 1);
+
+        // The escaped slashes should be unescaped in the pattern
+        match &pattern[0] {
+          CsElement::Literal(text) => {
+            assert_eq!(text, "path/to/file"); // Should be unescaped
+          }
+          _ => panic!("Expected literal element with unescaped text"),
+        }
+      }
+      _ => panic!("Expected Contains constraint"),
+    }
+  }
+
+  #[test]
+  fn test_parse_contains_constraint_with_root_fails() {
+    // This should fail during resolution, not parsing
+    let input = ":[x] |> root contains /:[y]/";
+    let parse_result = ConcreteSyntax::parse(input);
+    assert!(parse_result.is_ok()); // Parsing should succeed
+
+    // But resolution should fail
+    let resolved = parse_result.unwrap().resolve();
+    assert!(resolved.is_err());
+    assert!(resolved
+      .unwrap_err()
+      .contains("'root contains' is not supported"));
+  }
 }

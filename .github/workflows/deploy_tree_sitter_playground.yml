@@ -43,7 +43,9 @@ jobs:
         run: cargo install tree-sitter-cli --version "=0.24"
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        run: |
+          cargo install wasm-pack
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Build playground
         run: python playground/tree-sitter/build.py --dist-dir ./dist/tree-sitter-playground

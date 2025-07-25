@@ -50,14 +50,71 @@ impl ConcreteSyntax {
       CsConstraint::In { capture, .. } => capture.clone(),
       CsConstraint::Regex { capture, .. } => capture.clone(),
       CsConstraint::Type { target, .. } => target.clone(),
+      CsConstraint::Contains { target, .. } => target.clone(),
       CsConstraint::Not(inner_constraint) => {
         Self::extract_capture_name_from_constraint(inner_constraint)
       }
     }
   }
 
+  /// Resolve Contains patterns in constraints
+  fn resolve_contains_in_constraints(
+    constraints: Vec<CsConstraint>,
+  ) -> Result<Vec<CsConstraint>, String> {
+    let mut resolved_constraints = Vec::new();
+
+    for constraint in constraints {
+      let resolved_constraint = match constraint {
+        CsConstraint::Contains {
+          target,
+          pattern,
+          resolved_pattern: _,
+        } => {
+          // Create concrete syntax from the pattern elements
+          let cs_pattern = super::parser::CsPattern {
+            sequence: pattern.clone(),
+            constraints: vec![], // No additional constraints for sub-pattern
+          };
+          let concrete_syntax = ConcreteSyntax {
+            pattern: cs_pattern,
+          };
+
+          // Recursively resolve the sub-pattern
+          let resolved_pattern = concrete_syntax.resolve()?;
+
+          CsConstraint::Contains {
+            target,
+            pattern,
+            resolved_pattern: Some(Box::new(resolved_pattern)),
+          }
+        }
+        CsConstraint::Not(inner) => {
+          let resolved_inner = Self::resolve_contains_in_constraints(vec![*inner])?;
+          CsConstraint::Not(Box::new(resolved_inner.into_iter().next().unwrap()))
+        }
+        other => other, // No resolution needed for other constraint types
+      };
+      resolved_constraints.push(resolved_constraint);
+    }
+
+    Ok(resolved_constraints)
+  }
+
   /// Resolve constraints by attaching them to their corresponding captures
   pub fn resolve(self) -> Result<ResolvedConcreteSyntax, String> {
+    // Validate constraints first
+    for constraint in &self.pattern.constraints {
+      match constraint {
+        CsConstraint::Contains { target, .. } if target == "root" => {
+          return Err(
+            "'root contains' is not supported. Only 'root.node_type' constraints are allowed."
+              .to_string(),
+          );
+        }
+        _ => {}
+      }
+    }
+
     // Separate root constraints from capture constraints
     let mut root_constraints = Vec::new();
     let mut capture_constraints = Vec::new();
@@ -84,17 +141,20 @@ impl ConcreteSyntax {
         .push(constraint);
     }
 
-    // Transform elements, attaching constraints to captures
+    // Transform elements, attaching resolved constraints to captures
     let mut resolved_sequence = Vec::new();
 
     for element in self.pattern.sequence {
       match element {
         CsElement::Capture { name, mode } => {
           let constraints = constraint_map.remove(&name).unwrap_or_default();
+          // Resolve all constraints for this capture
+          let resolved_constraints = Self::resolve_contains_in_constraints(constraints)?;
+
           resolved_sequence.push(ResolvedCsElement::Capture {
             name,
             mode,
-            constraints,
+            constraints: resolved_constraints,
           });
         }
         CsElement::Literal(text) => {
@@ -111,10 +171,13 @@ impl ConcreteSyntax {
       ));
     }
 
+    // Resolve root constraints
+    let resolved_root_constraints = Self::resolve_contains_in_constraints(root_constraints)?;
+
     Ok(ResolvedConcreteSyntax {
       pattern: ResolvedCsPattern {
         sequence: resolved_sequence,
-        root_constraints,
+        root_constraints: resolved_root_constraints,
       },
     })
   }
