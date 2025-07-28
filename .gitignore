@@ -23,6 +23,8 @@ target
 Cargo.lock
 tmp_test*
 env/
+*.rlib
+*.rmeta
 
 
 # Dependencies

@@ -56,6 +56,7 @@ pub(crate) struct SourceCodeUnit {
   substitutions: HashMap<String, String>,
   // The path to the source code.
   #[get = "pub"]
+  #[set = "pub(crate)"]
   path: PathBuf,
 
   // Rewrites applied to this source code unit
@@ -76,7 +77,19 @@ impl SourceCodeUnit {
     parser: &mut Parser, code: String, substitutions: &HashMap<String, String>, path: &Path,
     piranha_arguments: &PiranhaArguments,
   ) -> Self {
-    let ast = parser.parse(&code, None).expect("Could not parse code");
+    let ast = if Self::is_erb_file(path) {
+      Self::parse_erb_with_ranges(parser, &code)
+    } else {
+      parser.parse(&code, None).expect("Could not parse code")
+    };
+
+    println!(
+      "Initializing source code with {}, ast {}, and source code {}",
+      path.display(),
+      ast.root_node().to_sexp(),
+      code
+    );
+
     let source_code_unit = Self {
       ast,
       original_content: code.to_string(),
@@ -94,6 +107,110 @@ impl SourceCodeUnit {
     }
 
     source_code_unit
+  }
+
+  /// Check if the file is an ERB file
+  fn is_erb_file(path: &Path) -> bool {
+    path.extension()
+      .and_then(|ext| ext.to_str())
+      .map(|ext| ext == "erb")
+      .unwrap_or(false)
+  }
+
+  /// Parse ERB file using Tree-sitter ranges
+  fn parse_erb_with_ranges(parser: &mut Parser, erb_content: &str) -> Tree {
+    // First, parse as ERB to extract ranges
+    parser.set_language(tree_sitter_embedded_template::language()).unwrap();
+    parser.set_included_ranges(&[]).unwrap(); // Clear any existing ranges
+
+    let erb_tree = parser.parse(erb_content, None).expect("Could not parse ERB");
+    let erb_root = erb_tree.root_node();
+
+    // Extract Ruby ranges from ERB tree
+    let ruby_ranges = Self::extract_ruby_ranges_from_erb(&erb_root, erb_content);
+
+    if ruby_ranges.is_empty() {
+      // If no Ruby ranges found, parse as plain Ruby (fallback)
+      parser.set_language(tree_sitter_ruby::language()).unwrap();
+      return parser.parse(erb_content, None).expect("Could not parse as Ruby");
+    }
+
+    // Parse Ruby content using ranges
+    parser.set_language(tree_sitter_ruby::language()).unwrap();
+    parser.set_included_ranges(&ruby_ranges).unwrap();
+
+    let ruby_tree = parser.parse(erb_content, None).expect("Could not parse Ruby with ranges");
+
+    // Debug: Print the AST to understand the structure
+    println!("ERB Range-based Ruby AST: {}", ruby_tree.root_node().to_sexp());
+
+    ruby_tree
+  }
+
+  /// Extract Ruby code ranges from ERB tree with proper boundary handling
+  fn extract_ruby_ranges_from_erb(erb_root: &tree_sitter::Node, content: &str) -> Vec<tree_sitter::Range> {
+    let mut ruby_ranges = Vec::new();
+
+    // Traverse the ERB tree to find Ruby code nodes
+    Self::traverse_erb_node_for_ranges(erb_root, &mut ruby_ranges);
+
+    // Sort ranges by start position to ensure they're in order
+    ruby_ranges.sort_by_key(|range| range.start_byte);
+
+    // Debug: Print the extracted ranges for troubleshooting
+    println!("DEBUG: Extracted {} Ruby ranges from ERB:", ruby_ranges.len());
+    for (i, range) in ruby_ranges.iter().enumerate() {
+      let text = &content[range.start_byte..range.end_byte];
+      println!("  Range {}: bytes[{}..{}] -> '{}'", i, range.start_byte, range.end_byte, text);
+    }
+
+    ruby_ranges
+  }
+
+  /// Extract Ruby code ranges from ERB tree, ensuring proper boundary handling
+  fn traverse_erb_node_for_ranges(node: &tree_sitter::Node, ranges: &mut Vec<tree_sitter::Range>) {
+    let node_type = node.kind();
+
+    match node_type {
+      "directive" => {
+        // For directive nodes, we need to find the actual Ruby code content
+        // and exclude the ERB markers (<% %>)
+        if let Some(code_node) = node.named_child(0) {
+          if code_node.kind() == "code" {
+            // The code node contains the actual Ruby code without ERB markers
+            let range = tree_sitter::Range {
+              start_byte: code_node.start_byte(),
+              end_byte: code_node.end_byte(),
+              start_point: code_node.start_position(),
+              end_point: code_node.end_position(),
+            };
+            ranges.push(range);
+          }
+        }
+      }
+      "output_directive" => {
+        // For output directives (<%=), handle similarly but preserve the structure
+        if let Some(code_node) = node.named_child(0) {
+          if code_node.kind() == "code" {
+            let range = tree_sitter::Range {
+              start_byte: code_node.start_byte(),
+              end_byte: code_node.end_byte(),
+              start_point: code_node.start_position(),
+              end_point: code_node.end_position(),
+            };
+            ranges.push(range);
+          }
+        }
+      }
+      _ => {
+        // Recursively traverse other nodes
+        for i in 0..node.child_count() {
+          if let Some(child) = node.child(i) {
+            Self::traverse_erb_node_for_ranges(&child, ranges);
+          }
+        }
+      }
+    }
   }
 
   pub(crate) fn root_node(&self) -> Node<'_> {
@@ -136,15 +253,19 @@ impl SourceCodeUnit {
     scope_query: &Option<CGPattern>,
   ) -> bool {
     let scope_node = self.get_scope_node(scope_query, rule_store);
-
+    println!("scope query: {:?}", scope_query);
+    println!("Scope node text: {:?}", scope_node.utf8_text(self.code().as_bytes()).unwrap());
+    println!("root node text: {:?}", self.root_node().utf8_text(self.code().as_bytes()).unwrap());
     let mut query_again = false;
 
     // When rule is a "rewrite" rule :
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
+    println!("Applying rule: {:?}", rule.name());
     if !rule.rule().is_match_only_rule() {
       if let Some(edit) = self.get_edit(&rule, rule_store, scope_node, true) {
+        println!("Found edit from source code unit {:?}", edit);  
         self.rewrites_mut().push(edit.clone());
         query_again = true;
 
@@ -243,6 +364,7 @@ impl SourceCodeUnit {
       if let Some(edit) =
         self.get_edit_for_ancestors(&current_replace_range, rules_store, &next_rules_by_scope)
       {
+        println!("Found edit from propagate {:?}", edit);
         self.rewrites_mut().push(edit.clone());
         // Apply the matched rule to the parent
         let applied_edit = self.apply_edit(&edit, parser);
@@ -289,6 +411,8 @@ impl SourceCodeUnit {
     if let Some(query_str) = scope_query {
       // Apply the scope query in the source code and get the appropriate node
       let scope_pattern = rules_store.query(query_str);
+      println!("Scope pattern: {:?}", scope_pattern);
+      println!("query_str: {:?}", query_str);
       if let Some(p_match) = scope_pattern.get_match(&self.root_node(), self.code(), true) {
         return get_node_for_range(
           self.root_node(),
@@ -322,6 +446,9 @@ impl SourceCodeUnit {
   ///
   /// Note - Causes side effect. - Updates `self.ast` and `self.code`
   pub(crate) fn apply_edit(&mut self, edit: &Edit, parser: &mut Parser) -> InputEdit {
+    // Log the source code before applying the edit
+    debug!("Source code before edit:\n{}", self.code);
+    debug!("Applying edit: {:?}", edit);
     // Get the tree_sitter's input edit representation
     let (new_source_code, ts_edit) = get_tree_sitter_edit(self.code.clone(), edit);
     // Apply edit to the tree
@@ -363,10 +490,16 @@ impl SourceCodeUnit {
     } else {
       None
     };
-    // Create a new updated tree from the previous tree
-    let new_tree = parser
-      .parse(replacement_content, prev_tree)
-      .expect("Could not generate new tree!");
+
+    // Parse based on file type
+    let new_tree = if Self::is_erb_file(&self.path) {
+      Self::parse_erb_with_ranges(parser, replacement_content)
+    } else {
+      parser
+        .parse(replacement_content, prev_tree)
+        .expect("Could not generate new tree!")
+    };
+  
     self.ast = new_tree;
     self.code = replacement_content.to_string();
   }

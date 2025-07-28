@@ -12,7 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 pub(crate) mod regex_utilities;
-pub(crate) mod tree_sitter_utilities;
+pub mod tree_sitter_utilities;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;

@@ -18,7 +18,7 @@ use super::{
     default_dry_run, default_exclude, default_global_tag_prefix, default_graph_validation,
     default_include, default_number_of_ancestors_in_parent_scope, default_path_to_configurations,
     default_path_to_output_summaries, default_paths_to_codebase, default_piranha_language,
-    default_rule_graph, default_substitutions, GO, JAVA, KOTLIN, PYTHON, RUBY, SWIFT, TSX,
+    default_rule_graph, default_substitutions, ERB, GO, JAVA, KOTLIN, PYTHON, RUBY, SWIFT, TSX,
     TYPESCRIPT,
   },
   language::PiranhaLanguage,
@@ -93,7 +93,7 @@ pub struct PiranhaArguments {
   /// The target language
   #[get = "pub"]
   #[builder(default = "default_piranha_language()")]
-  #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT, RUBY])
+  #[clap(short = 'l', value_parser = clap::builder::PossibleValuesParser::new([JAVA, SWIFT, PYTHON, KOTLIN, GO, TSX, TYPESCRIPT, RUBY, ERB])
   .map(|s| s.parse::<PiranhaLanguage>().unwrap()))]
   language: PiranhaLanguage,
 
@@ -281,6 +281,11 @@ impl PiranhaArguments {
       .dry_run(*p.dry_run())
       .experiment_dyn(default_experiment_dyn())
       .build()
+  }
+
+  /// Public getter for substitutions
+  pub fn substitutions(&self) -> &Vec<(String, String)> {
+    &self.substitutions
   }
 
   pub(crate) fn input_substitutions(&self) -> HashMap<String, String> {

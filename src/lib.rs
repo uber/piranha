@@ -143,6 +143,11 @@ impl Piranha {
       ) {
         // Get the `SourceCodeUnit` for the file `path` from the cache `relevant_files`.
         // In case of miss, lazily insert a new `SourceCodeUnit`.
+        if let Some(file_name) = path.file_name() {
+          if file_name.to_string_lossy().ends_with(".erb") {
+            debug!("Processing ERB file: {}", path.display());
+          }
+        }
         let source_code_unit = self
           .relevant_files
           .entry(path.to_path_buf())

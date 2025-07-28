@@ -24,6 +24,34 @@ query = """
 replace = "@consequence"
 replace_node = "if_statement"
 
+
+# Before : 
+# if true
+#  #hello 
+# else
+#   do_something_else
+# end
+# After :
+#  #hello
+[[rules]]
+name = "replace_empty_if_true"
+groups = ["if_cleanup"]
+is_seed_rule = false
+query = """
+(
+  (if
+      [
+        condition: (true)
+        condition: (parenthesized_statements (true))
+      ]
+      (comment)* @comment
+  )@if_statement
+)
+"""
+replace = "@comment"
+replace_node = "if_statement"
+
+
 # Before : 
 # if method_call
 #   [:meth_fields]

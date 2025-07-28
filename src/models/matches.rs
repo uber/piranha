@@ -262,6 +262,8 @@ impl Match {
     }
     // If trailing, check if the comment is on the same line as the deleted node
     // i.e. where the deleted node ends or starts
+    println!("comment: {:?}", comment.range());
+    println!("deleted_node: {:?}", deleted_node.range());
     let is_on_same_line = comment.range().start_point.row == deleted_node.range().end_point.row
       || comment.range().start_point.row == deleted_node.range().start_point.row;
 

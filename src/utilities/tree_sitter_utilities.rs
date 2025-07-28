@@ -37,10 +37,11 @@ use tree_sitter_traversal::{traverse, Order};
 ///
 /// # Returns
 /// The range of the match in the source code and the corresponding mapping from tags to code snippets.
-pub(crate) fn get_all_matches_for_query(
+pub fn get_all_matches_for_query(
   node: &Node, source_code: String, query: &Query, recursive: bool, replace_node: Option<String>,
   replace_node_idx: Option<u8>,
 ) -> Vec<Match> {
+  println!("node: {:?} with contents: {}", node, node.utf8_text(source_code.as_bytes()).unwrap());
   let query_capture_groups = _get_query_capture_groups(node, &source_code, query);
   // In the below code, we get the code snippet corresponding to each tag for each QueryMatch.
   // It could happen that we have multiple occurrences of the same tag (in queries
@@ -70,7 +71,9 @@ pub(crate) fn get_all_matches_for_query(
           continue;
         }
       }
-
+      // println!("query matches: {}", query_matches.len());
+      // println!("source code: {}", source_code);
+      // println!("query matches: {:?}", query_matches);
       let code_snippet_by_tag = accumulate_repeated_tags(query, query_matches, &source_code);
 
       output.push(Match {

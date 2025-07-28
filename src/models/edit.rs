@@ -58,7 +58,10 @@ impl Edit {
       matched_rule,
     };
     if edit.is_delete() {
+      println!("Expanding to associated matches");
+      println!("deleting edit: {:?}", edit);
       edit.p_match_mut().expand_to_associated_matches(code);
+      println!("expanded edit: {:?}", edit);
     }
     edit
   }
@@ -167,6 +170,11 @@ impl SourceCodeUnit {
       .get_matches(rule, rule_store, node, recursive)
       .first()
       .map(|p_match| {
+        println!(
+          "{} {}",
+          "Found match for rule".green(),
+          rule.name().bold()
+        );
         let replacement_string = rule.replace().instantiate(p_match.matches());
         let edit = Edit::new(
           p_match.clone(),

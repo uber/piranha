@@ -12,10 +12,10 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 use std::collections::HashMap;
 
-use tree_sitter::Query;
+use tree_sitter::{Query, Range};
 
 use crate::{
-  models::{capture_group_patterns::CGPattern, default_configs::JAVA, language::PiranhaLanguage},
+  models::{capture_group_patterns::CGPattern, default_configs::{ERB, JAVA, RUBY}, language::PiranhaLanguage},
   utilities::{tree_sitter_utilities::get_all_matches_for_query, Instantiate},
 };
 
@@ -64,6 +64,90 @@ fn test_get_all_matches_for_query_positive() {
   let matches = get_all_matches_for_query(
     &node,
     source_code.to_string(),
+    &query,
+    true,
+    Some("method_invocation".to_string()),
+    None,
+  );
+  assert_eq!(matches.len(), 2);
+}
+
+fn extract_ranges(node: tree_sitter::Node, source: &str, content_ranges: &mut Vec<Range>, ruby_ranges: &mut Vec<Range>) {
+  let node_type = node.kind();
+  // Check if this is a content node (HTML) or code node (Ruby)
+  if node_type == "content" {
+    content_ranges.push(Range {
+      start_byte: node.start_byte(),
+      end_byte: node.end_byte(),
+      start_point: node.start_position(),
+      end_point: node.end_position(),
+    });
+  } else if node_type == "directive" {
+    // For code nodes, we want the actual Ruby code inside
+    if let Some(code_child) = node.named_child(0) {
+      ruby_ranges.push(Range {
+        start_byte: code_child.start_byte(),
+        end_byte: code_child.end_byte(),
+        start_point: code_child.start_position(),
+        end_point: code_child.end_position(),
+      });
+    }
+  }
+
+  // Recursively process children
+  for i in 0..node.child_count() {
+    if let Some(child) = node.child(i) {
+      extract_ranges(child, source, content_ranges, ruby_ranges);
+    }
+  }
+}
+
+#[test]
+fn test_erb_parser() {
+  use std::fs;
+  let erb_source_code = fs::read_to_string("/Users/bsunder/uber/piranha/erb_test/sample.html.erb").expect("Failed to read ERB file");
+  let language = PiranhaLanguage::from(ERB);
+  let ruby_language = PiranhaLanguage::from(RUBY);
+  let mut erb_parser = language.parser();
+  let erb_tree = erb_parser.parse(&erb_source_code, None).unwrap();
+  let erb_root = erb_tree.root_node();
+  println!("ERB AST:");
+  println!("{}", erb_root.to_sexp());
+
+  let mut content_ranges = Vec::new();
+  let mut ruby_ranges = Vec::new();
+  extract_ranges(erb_root, &erb_source_code, &mut content_ranges, &mut ruby_ranges);
+
+  let query = Query::new(
+    *ruby_language.language(),
+    r#"
+      (((call
+        method: (identifier) @flag_name
+      )@flag_exp
+      )
+      (#eq? @flag_name "msp?")
+      )    
+    "#,
+  )
+  .unwrap();
+
+  let mut ruby_parser = PiranhaLanguage::from(RUBY).parser();
+
+  let mut ruby_snippet: String = String::new();
+  for (i, range) in ruby_ranges.iter().enumerate() {
+    let text = &erb_source_code[range.start_byte..range.end_byte];
+    ruby_snippet.push_str(text);  
+    println!("  Ruby {}: {:?} -> {:?}", i, range, text);
+  }
+  println!("Ruby Snippet: {}", ruby_snippet);  
+  erb_parser.set_language(tree_sitter_ruby::language()).unwrap();
+  erb_parser.set_included_ranges(&ruby_ranges).unwrap();
+
+  println!("erb_root: {}", erb_root.to_sexp());
+
+  let matches = get_all_matches_for_query(
+    &erb_root,
+    erb_source_code.to_string(),
     &query,
     true,
     Some("method_invocation".to_string()),
