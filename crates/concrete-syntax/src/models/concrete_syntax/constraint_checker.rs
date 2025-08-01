@@ -17,6 +17,7 @@ use super::interpreter::get_all_matches_for_concrete_syntax;
 use super::tree_sitter_adapter::{Node, SyntaxNode};
 use crate::models::concrete_syntax::parser::CsConstraint;
 use crate::models::matches::CapturedNode;
+use crate::tree_sitter_adapter::SyntaxCursor;
 
 /// Simple context for contains constraint checking
 pub struct ConstraintContext<'a> {
@@ -64,13 +65,12 @@ fn check_contains_recursive(
 ) -> bool {
   // Run the resolved pattern against the entire AST
   let matches = get_all_matches_for_concrete_syntax(
-    context.ast_root,
+    &context.ast_root.walk().node(),
     context.source_code,
     resolved_pattern,
     true, // recursive
     None, // replace_node
   );
-
   // If we found any matches, the contains constraint is satisfied
   !matches.is_empty()
 }

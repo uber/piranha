@@ -394,7 +394,7 @@ fn try_match_node_range(
     let constraint_context = ConstraintContext {
       captured_node: &captured,
       source_code: ctx.source_code,
-      ast_root: ctx.top_node,
+      ast_root: &ctx.cursor.node(),
     };
     if satisfies_constraints(&captured, constraints, Some(&constraint_context)) {
       let mut sub_ctx = MatchingContext {

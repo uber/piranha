@@ -484,3 +484,61 @@ fn test_not_contains_constraint() {
     GO,
   );
 }
+
+#[test]
+fn test_contains_constraint_bug_minimal() {
+  // Minimal anonymized test for contains constraint bug
+  run_test(
+    r#"func TestSomething(t *testing.T) {
+    for _, tc := range[] struct {
+      fieldA   string
+      fieldB   int
+      flag1    bool
+      flag2    bool
+      flag3    bool
+    } {
+      {
+        fieldA: "a",
+        flag2: false,
+        flag3: false,
+      },
+      {
+        fieldA: "b",
+        flag2: true,
+        flag3: false,
+      },
+      {
+        fieldA: "c",
+        flag2: true,
+        flag3: true,
+      },
+    }
+}"#,
+    r#"{
+    :[before*]
+    :[to_delete]
+    :[after*]
+    }
+    |>
+    :[to_delete].node_type in ["keyed_element"],
+    :[to_delete] contains /flag3: true/"#,
+    2,
+    vec![
+      vec![
+        ("to_delete", "flag3: true"),
+        (
+          "*",
+          "{\n        fieldA: \"c\",\n        flag2: true,\n        flag3: true,\n      }",
+        ),
+      ],
+      vec![
+        ("to_delete", "flag3: true"),
+        (
+          "*",
+          "{\n        fieldA: \"c\",\n        flag2: true,\n        flag3: true,\n      }",
+        ),
+      ],
+    ],
+    GO,
+  );
+}
