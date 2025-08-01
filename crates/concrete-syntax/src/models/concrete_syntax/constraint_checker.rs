@@ -71,14 +71,6 @@ fn check_contains_recursive(
     true, // recursive
     None, // replace_node
   );
-
-  let node_code = context
-    .ast_root
-    .utf8_text(context.source_code)
-    .unwrap()
-    .trim();
-  println!("checking contains for {node_code:?}");
-
   // If we found any matches, the contains constraint is satisfied
   !matches.is_empty()
 }
