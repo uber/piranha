@@ -278,7 +278,7 @@ impl std::str::FromStr for PiranhaLanguage {
         let ruby_rules: Rules = parse_toml(include_str!("../cleanup_rules/ruby/rules.toml"));
         let ruby_edges: Edges = parse_toml(include_str!("../cleanup_rules/ruby/edges.toml"));
         Ok(PiranhaLanguage {
-          extension: "rs".to_string(),
+          extension: "rb".to_string(),
           supported_language: SupportedLanguage::Ruby,
           language: tree_sitter_ruby::language(),
           scopes: parse_toml::<ScopeConfig>(include_str!(
@@ -286,7 +286,7 @@ impl std::str::FromStr for PiranhaLanguage {
           ))
           .scopes()
           .to_vec(),
-          comment_nodes: vec![],
+          comment_nodes: vec!["comment".to_string()],
           rules: Some(ruby_rules),
           edges: Some(ruby_edges),
         })
