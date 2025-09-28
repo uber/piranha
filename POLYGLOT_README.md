@@ -13,6 +13,7 @@ __This repository contains the Polyglot Piranha framework and pre-built cleanup 
     - [:snake: Python API](#snake-python-api)
     - [:computer: Command-line Interface](#computer-command-line-interface)
     - [Languages supported](#languages-supported)
+  - [Piranha's DSL](#piranha-dsl)
   - [Getting Started with demos](#getting-started-with-demos)
   - [*Stale Feature Flag Cleanup* in depth](#stale-feature-flag-cleanup-in-depth)
   - [Visualizing Graphs for Rules and Groups](#visualizing-graphs-for-rules-and-groups)
@@ -45,7 +46,7 @@ Below we can see an [automatically generated graph](#visualizing-graphs-for-rule
 <h5> Example 1 (Stale Feature Flag Cleanup) </h5>
 
 Let's take an example, where we know for a fact that the expression `exp.isTreated("SHOW_MENU")` always returns `true` (i.e. the feature *Show Menu* is treated)
-```
+```java
 public String fooBar(boolean x) {
     if(exp.isTreated("SHOW_MENU")|| x){
         String menu = getMenu();
@@ -55,7 +56,7 @@ public String fooBar(boolean x) {
 }
 ```
 To cleanup this code with Piranha, a user would have to write *one* rule to update the expressions like `exp.isTreated("SHOW_MENU")` to `true` and hook it to the pre-built boolean simplification rules. It would result in :
-```
+```java
 public String fooBar(boolean x) {
     String menu = getMenu();
     return menu;
@@ -66,7 +67,7 @@ Note how, user only specified the seed rule to update the expression to true, an
 <h5> Example 2 (Structural Find/Replace with built-in cleanup) </h5>
 
 Let's say a user writes a piranha rule to delete an unused enum case (let's say `LOW`). However, this enum case "co-incidentally" is the only enum case in this enum declaration.
-```
+```java
 enum Level {
   LOW,
 }
@@ -79,7 +80,7 @@ If the user hooks up this *enum case deletion* rule to the pre-built rules, it w
 Let's take a canonical example of replacing `Arrays.asList` with `Collections.singletonList`, when possible.
 This task involves two steps (i) Replacing the expression (ii) Adding the import statement for `Collections` if absent (Assuming *google java format* takes care of the unused imports :smile:).
 However, Piranha does not contain pre-built rules to add such a custom import statements.
-```
+```java
 import java.util.ArrayList;
 import java.util.Arrays;
 + import java.util.Collections;
@@ -162,7 +163,7 @@ Get platform-specific binary from [releases](https://github.com/uber/piranha/rel
 * Binary will be generated under `target/release`
 
 
-```
+```bash
 Polyglot Piranha
 A refactoring tool that eliminates dead code related to stale feature flags
 
@@ -210,22 +211,86 @@ The output JSON is the serialization of- [`PiranhaOutputSummary`](/src/models/pi
 
 *It can be seen that the Python API is basically a wrapper around this command line interface.*
 
-### Languages supported
 
-| Language         | Structural <br>Find-Replace | Chaining <br>Structural Find <br>Replace | Stale Feature <br>Flag Cleanup  <br> |
-| ---------------- | --------------------------- | ---------------------------------------- | ------------------------------------ |
-| Java             | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
-| Kotlin           | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
-| Java + Kotlin    | :x:                         | :calendar:                               | :calendar:                           |
-| Swift            | :heavy_check_mark:          | :construction:                           | :construction:                       |
-| Go               | :heavy_check_mark:          | :heavy_check_mark:                       | :heavy_check_mark:                   |
-| Python           | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| TypeScript       | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| TypeScript+React | :heavy_check_mark:          | :calendar:                               | :calendar:                           |
-| C#               | :calendar:                  | :calendar:                               | :calendar:                           |
-| JavaScript       | :calendar:                  | :calendar:                               | :calendar:                           |
+## Piranha DSL
 
-Contributions for the :calendar: (`planned`) languages or any other languages are welcome :)
+In PolyglotPiranha, programs are graphs of match-replace rules that can be composed and chained.
+
+### Rules
+
+Individual edits are represented as rules in Polyglot Piranha, where each rule matches and replaces a specific code snippet.
+A program in PolyglotPiranha should contain at least one rule with the following properties:
+- `query`: A query to find the code pattern to refactor 
+- `replace_node`: The captured node in the query that will be replaced.
+- `replace_string`: Replacement string or pattern for the refactored code.
+- `holes`: Placeholders in your queries that will be instantiated at runtime.
+- `is_seed_rule`: Specifies whether this rule is an entry point for the rule graph.
+
+Optionally, a rule can have filters. Piranha supports two kinds of filters:
+- `enclosing_node`: A pattern that specifies the enclosing node of the rule.
+- `not_enclosing_node`: A pattern that should not match any parent of the main match.
+
+The `enclosing_node` and `not_enclosing_node` filters can be refined using contains with specified `[at_least, at_most]` bounds, as well as `not_contains`.
+
+
+The rule queries, and filters can be written in the following languages:
+
+<h4> Tree-sitter Queries </h4>
+
+For a detailed understanding of the syntax, refer to the [Tree-sitter Syntax Reference](https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries).
+
+<h4> Regular Expressions (Regex) </h4>
+
+To create a rule in regex, prepend your query with `rgx `.
+For instance: `rgx <your regex query>`. Piranha supports the regex syntax derived from the [regex](https://docs.rs/regex/) crate.
+
+<h4> Concrete Syntax </h4>
+
+Piranha's Concrete Syntax is a custom rule language designed for matching and replacing code. 
+Concrete Syntax operates at the parse tree level, similar to [comby](https://comby.dev/).
+The key difference is that it matches a parse tree node only if the entire parse tree can be traversed using the concrete syntax template.
+
+To use concrete syntax, prepend the query with `cs <your_query>`. 
+For example, to match the code snippet `exp.isTreated("SHOW_MENU")`, you can use the following query `cs :[object].isTreated(:[string])`
+
+
+<h4> Example of a rule in TOML </h4>
+
+```toml
+[[rules]]
+name = "your_rule_name"
+query = """(
+    (method_invocation name: (_) @name
+                       arguments: (argument_list) @args) @invk
+    (#eq? @name @method_name))
+"""
+replace_node = "invk"
+replace = "foo @args"
+holes = ["method_name"]
+is_seed_rule = true
+
+[[rules.filters]]
+enclosing_node = "cs class MyClass { :[body] }"
+```
+
+### Edges
+
+Edges in Polyglot Piranha allow rules to depend on each other, establishing a hierarchy or sequence of application among rules. 
+An edge essentially describes the direction of dependency between two or more rules.
+Edges are also represented in the TOML format.
+
+Example edges in TOML:
+```toml
+[[edges]]
+scope = "Method"
+from = "your_rule_name"
+to = ["other_rule_name", "another_rule_name"]
+
+[[edges]]
+scope = "Method"
+from = "other_rule_name"
+to = ["your_rule_name"]
+```
 
 
 ## Getting Started with demos
@@ -272,14 +337,14 @@ Currently, we have demos for the following :
    * This demo shows how to replace `new ArrayList<>()` with `Collections.emptyList()`. Note it also adds the required import statement.
 
 
-*Please refer to our test cases at [`/test-resources/<language>/`](/test-resources/) as a reference for handling complicated scenarios*
+*Please refer to our test cases at [`/test-resources/<language>/`](/crates/core/test-resources/) as a reference for handling complicated scenarios*
 
 
 <h3>Building upon the stale feature flag cleanup demo </h3>
 
 First, check if Polyglot Piranha supports *Stale feature flag cleanup* for the required language.
 
-Then see if your API usage is similar to the ones shown in the demo ([java-demo](/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
+Then see if your API usage is similar to the ones shown in the demo ([java-demo](/demo/java/configurations/rules.toml)) or in the test resources ([java-ff_system1](/crates/core/test-resources/java/feature_flag_system_1/control/configurations/rules.toml), [java-ff_system2](/crates/core/test-resources/java/feature_flag_system_2/control/configurations/rules.toml), [kt-ff_system1](/crates/core/test-resources/kotlin/feature_flag_system_1/control/configurations/rules.toml), [kt-ff_system2](/crates/core/test-resources/kotlin/feature_flag_system_2/control/configurations/rules.toml)).
 
 If not :|, try to adapt these examples to your requirements. Further, you can study the [tree-sitter query documentation](https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries) to understand how tree-sitter queries work. It is recommended to read the section- [Adding support for a new feature flag system](#adding-support-for-a-new-feature-flag-system)
 
@@ -304,7 +369,7 @@ Please refer to the `test-resources/java` for detailed examples.
 <h3> Adding a new API usage </h3>
 
 The example below shows a usage of a feature flag API (`experiment.isTreated(STALE_FLAG)`), in a `if_statement`.
-```
+```java
 class PiranhaDemo {
 
     void demoMethod(ExperimentAPI experiment){
@@ -319,7 +384,7 @@ class PiranhaDemo {
 }
 ```
 In the case when STALE_FLAG is treated, we would expect Piranha to refactor the code as shown below (assuming that `STALE_FLAG` is treated) :
-```
+```java
 class PiranhaDemo {
 
     void demoMethod(ExperimentAPI experiment){
@@ -330,7 +395,7 @@ class PiranhaDemo {
 }
 ```
 This can be achieved by adding a rule in the `input_rules.toml` file (as shown below) :
-```
+```toml
 [[rules]]
 name = "Enum Based, toggle enabled"
 query = """((
@@ -372,7 +437,7 @@ At a higher level, we can say that - Piranha first selects AST nodes matching `r
 The `rule` contains `holes` or template variables that need to be instantiated.
 For instance, in the above rule `@treated` and `@stale_flag_name` need to be replaced with some concrete value so that the rule matches only the feature flag API usages corresponding to a specific flag, and replace it specifically with `true` or `false`.  To specify such a behavior,
 user should create a `piranha_arguments.toml` file as shown below (assuming that the behavior of STALE_FLAG is **treated**):
-```
+```toml
 language = ["java"]
 substitutions = [
     ["stale_flag_name", "STALE_FLAG"],
@@ -389,7 +454,7 @@ This section describes how to configure Piranha to support a new language. Users
 This section will describe how to encode cleanup rules that are triggered based on the update applied to the flag API usages.
 These rules should perform cleanups like simplifying boolean expressions, or if statements when the condition is constant, or deleting empty interfaces, or in-lining variables.
 For instance, the below example shows a rule that simplifies a `or` operation where its `RHS` is true.
-```
+```toml
 [[rules]]
 name = "Or - right operand is True"
 query = """(
@@ -415,7 +480,7 @@ Let's consider an example where we want to define a cleanup for the scenario whe
 <tr>
 <td>
 
-```
+```java
 int foobar(){
     boolean x = exp.isTreated(SOME_STALE_FLAG);
     if (x || someCondition()) {
@@ -429,7 +494,7 @@ int foobar(){
 
 <td>
 
-```
+```java
 int foobar(){
     return 100;
 }
@@ -458,6 +523,7 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
 First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
 
+
 ## Visualizing Graphs for Rules and Groups
 
 Visualizing rules, groups and their edges through a graph is a great way to understand how Piranha Polyglot works.
@@ -477,7 +543,7 @@ pip install graphviz
 python visualize_rules_graph.py ./java_prebuilt_rules.dot src/cleanup_rules/java --title "Java pre-built cleanup rules"
 ```
 
-To generate an image for [java-ff_system1](test-resources/java/feature_flag_system_1/control/configurations/) in our tests:
+To generate an image for [java-ff_system1](crates/core/test-resources/java/feature_flag_system_1/control/configurations/) in our tests:
 
 ```bash
 python visualize_rules_graph.py ./java-ff_system1.dot src/cleanup_rules/java test-resources/java/feature_flag_system_1/control/configurations --title "Java Test Feature Flag Cleanup System 1"
@@ -497,7 +563,7 @@ The purpose of Piranha Arguments is determining the behavior of Piranha.
 
 
 
-## Contributing
+## Development
 
 Prerequisites: 
 * Install [pre-commit](https://pre-commit.com/)

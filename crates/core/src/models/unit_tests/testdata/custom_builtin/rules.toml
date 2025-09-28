@@ -1,0 +1,35 @@
+[[rules]]
+name = "rule_1"
+query = """
+(
+    (expression_statement (method_invocation
+        !object
+        name: (_) @name
+        arguments: (_) @args)) @call_expr
+)"""
+replace_node = "call_expr"
+replace = ""
+is_seed_rule = false
+[[rules.filters]]
+enclosing_node = "(program) @prgrm"
+not_contains = ["""
+    (method_declaration
+        name: (_) @ExistingName) @method_decl
+    (#eq? @ExistingName "@name")
+    """]
+
+[[rules]]
+name = "rule_2"
+query = """
+(
+    (method_declaration
+        (modifiers) @modifier
+        name: (_) @name
+        body: (block) @body
+    ) @method
+    (#match? @body "^\\\\{\\\\s*(//.*?\\\\s*)*\\\\}$")
+    (#match? @modifier "private|protected")
+)"""
+replace_node = "method"
+replace = ""
+is_seed_rule = false
