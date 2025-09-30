@@ -501,4 +501,47 @@ mod tests {
       .unwrap_err()
       .contains("'root contains' is not supported"));
   }
-}
+
+  #[test]
+  fn test_parse_escaped_at_symbol() {
+    let input = "var :[name] = \\@something;";
+    let result = ConcreteSyntax::parse(input).unwrap();
+    let elements = result.pattern.sequence;
+
+
+    // Should have: "var", capture "name", "=", "@something", ";"
+    assert!(elements.len() >= 4);
+
+    // Find the literal with @something
+    let at_literal = elements
+      .iter()
+      .find(|e| matches!(e, CsElement::Literal(text) if text.contains("@")));
+    
+    match at_literal {
+      Some(CsElement::Literal(text)) => {
+        assert_eq!(text, "@something;");
+      }
+      _ => panic!("Expected literal with @something, got: {:#?}", elements),
+    }
+  }
+
+  #[test]
+  fn test_parse_escaped_colon_symbol() {
+    let input = "var :[name] = \\:[something]";
+    let result = ConcreteSyntax::parse(input).unwrap();
+    let elements = result.pattern.sequence;
+
+
+    // Find the literal with :something
+    let colon_literal = elements
+      .iter()
+      .find(|e| matches!(e, CsElement::Literal(text) if text.contains(":")));
+    
+    match colon_literal {
+      Some(CsElement::Literal(text)) => {
+        assert_eq!(text, ":[something]");
+      }
+      _ => panic!("Expected literal with :something, got: {:#?}", elements),
+    }
+  }
+  }

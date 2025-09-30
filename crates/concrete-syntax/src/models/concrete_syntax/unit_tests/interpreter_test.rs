@@ -542,3 +542,25 @@ fn test_contains_constraint_bug_minimal() {
     GO,
   );
 }
+
+#[test]
+fn test_escaped_at_symbol() {
+  run_test(
+    "var x = @something;",
+    "var :[name] = \\@something;",
+    1,
+    vec![vec![("name", "x")]],
+    GO,
+  );
+}
+
+#[test]
+fn test_escaped_colon_symbol() {
+  run_test(
+    "var x = :something;",
+    "var :[name] = \\:something;",
+    1,
+    vec![vec![("name", "x")]],
+    GO,
+  );
+}
