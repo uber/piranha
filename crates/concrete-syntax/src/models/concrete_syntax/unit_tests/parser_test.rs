@@ -521,7 +521,7 @@ mod tests {
       Some(CsElement::Literal(text)) => {
         assert_eq!(text, "@something;");
       }
-      _ => panic!("Expected literal with @something, got: {:#?}", elements),
+      _ => panic!("Expected literal with @something, got: {elements:#?}"),
     }
   }
 
@@ -541,7 +541,7 @@ mod tests {
       Some(CsElement::Literal(text)) => {
         assert_eq!(text, ":something;");
       }
-      _ => panic!("Expected literal with :something, got: {:#?}", elements),
+      _ => panic!("Expected literal with :something, got: {elements:#?}"),
     }
   }
   }
