@@ -353,8 +353,8 @@ fn match_at_all_tree_levels(
 ///
 /// 1) capture = text(node1...node2)  
 /// 2) match_cs_pattern(  
-///      remaining_elements,         // CS elements still to match  
-///      /* should_match */ true if node3 exists  
+///    remaining_elements,         // CS elements still to match  
+///    /* should_match */ true if node3 exists  
 ///    ) starting at node3, node4, ...
 fn try_match_node_range(
   ctx: &mut MatchingContext<'_>, var_name: &str, constraints: &[CsConstraint],

@@ -134,6 +134,11 @@ pub type Node<'a> = NativeNode<'a>;
 #[cfg(feature = "native")]
 pub type TreeCursor<'a> = NativeCursor<'a>;
 
+#[cfg(not(feature = "native"))]
+pub type Node<'a> = WasmNodeWrapper;
+#[cfg(not(feature = "native"))]
+pub type TreeCursor<'a> = WasmCursorWrapper;
+
 // Re-export raw tree-sitter types with different names to avoid confusion
 #[cfg(feature = "native")]
 pub use tree_sitter::{Node as RawNode, TreeCursor as RawTreeCursor};
@@ -286,12 +291,6 @@ impl SyntaxCursor for WasmCursorWrapper {
     self.js_cursor.goto_parent()
   }
 }
-
-// WASM type aliases
-#[cfg(feature = "wasm")]
-pub type Node<'a> = WasmNodeWrapper;
-#[cfg(feature = "wasm")]
-pub type TreeCursor<'a> = WasmCursorWrapper;
 
 /// Adapter functions for working with tree-sitter types directly
 /// These provide a bridge between the trait-based and direct tree-sitter APIs
