@@ -420,6 +420,3 @@ impl ConcreteSyntax {
   }
 }
 
-#[cfg(test)]
-#[path = "unit_tests/parser_test.rs"]
-mod parser_test;

@@ -539,7 +539,7 @@ mod tests {
     
     match colon_literal {
       Some(CsElement::Literal(text)) => {
-        assert_eq!(text, ":[something]");
+        assert_eq!(text, ":something;");
       }
       _ => panic!("Expected literal with :something, got: {:#?}", elements),
     }

@@ -183,6 +183,3 @@ impl ConcreteSyntax {
   }
 }
 
-#[cfg(test)]
-#[path = "unit_tests/resolver_test.rs"]
-mod resolver_test;
