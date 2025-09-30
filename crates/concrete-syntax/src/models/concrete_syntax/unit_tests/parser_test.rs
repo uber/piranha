@@ -508,7 +508,6 @@ mod tests {
     let result = ConcreteSyntax::parse(input).unwrap();
     let elements = result.pattern.sequence;
 
-
     // Should have: "var", capture "name", "=", "@something", ";"
     assert!(elements.len() >= 4);
 
@@ -516,7 +515,7 @@ mod tests {
     let at_literal = elements
       .iter()
       .find(|e| matches!(e, CsElement::Literal(text) if text.contains("@")));
-    
+
     match at_literal {
       Some(CsElement::Literal(text)) => {
         assert_eq!(text, "@something;");
@@ -531,12 +530,11 @@ mod tests {
     let result = ConcreteSyntax::parse(input).unwrap();
     let elements = result.pattern.sequence;
 
-
     // Find the literal with :something
     let colon_literal = elements
       .iter()
       .find(|e| matches!(e, CsElement::Literal(text) if text.contains(":")));
-    
+
     match colon_literal {
       Some(CsElement::Literal(text)) => {
         assert_eq!(text, ":something;");
@@ -544,4 +542,4 @@ mod tests {
       _ => panic!("Expected literal with :something, got: {elements:#?}"),
     }
   }
-  }
+}

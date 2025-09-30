@@ -292,7 +292,6 @@ impl SyntaxCursor for WasmCursorWrapper {
   }
 }
 
-
 /// Adapter functions for working with tree-sitter types directly
 /// These provide a bridge between the trait-based and direct tree-sitter APIs
 #[cfg(feature = "native")]

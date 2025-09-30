@@ -182,4 +182,3 @@ impl ConcreteSyntax {
     })
   }
 }
-
