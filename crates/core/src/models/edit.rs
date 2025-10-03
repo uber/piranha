@@ -139,8 +139,11 @@ impl SourceCodeUnit {
     //  we apply the rules in the order they are provided to each ancestor in the context
     for rule in &next_rules[PARENT] {
       for ancestor in &context() {
-        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
-          return Some(edit);
+        // Skip match-only rules - they should not create edits for parent scope
+        if !rule.rule().is_match_only_rule() {
+          if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+            return Some(edit);
+          }
         }
       }
     }
@@ -148,8 +151,11 @@ impl SourceCodeUnit {
     // we apply the rules to each ancestor in the context in the order they are provided
     for ancestor in &context() {
       for rule in &next_rules[PARENT_ITERATIVE] {
-        if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
-          return Some(edit);
+        // Skip match-only rules - they should not create edits for parent scope
+        if !rule.rule().is_match_only_rule() {
+          if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+            return Some(edit);
+          }
         }
       }
     }

@@ -378,3 +378,86 @@ def test_kotlin_boolean_simplification():
         }
         return true
         }"""
+
+
+def test_match_only_parent_rule_bug_fix():
+    """
+    Regression test for bug where match-only parent rules were incorrectly deleting code.
+    
+    Before the fix: match-only parent rules would create deletion edits
+    After the fix: match-only parent rules should only match without transforming code
+    """
+    code = """
+if (obj.isLocEnabled() || x > 0) {
+    // do something
+    x = obj.isLocEnabled();
+    if (other_check) { }
+} else {
+    // do something else!
+}
+"""
+
+    # Seed rule that replaces method calls with true
+    seed_rule = Rule(
+        name="replace_method",
+        query="cs :[x].isLocEnabled()",
+        replace_node="*",
+        replace="true",
+        is_seed_rule=True
+    )
+
+    # Match-only parent rule - should NOT delete the assignment
+    # This rule has no replace_node, making it match-only
+    match_only_parent_rule = Rule(
+        name="find_assignment_parent",
+        query="cs :[x] = true;"
+        # Note: no replace_node specified = match-only rule
+    )
+
+    # This rule should only be triggered after the match-only parent rule
+    logic_triggered_only_after_match_only_parent_rule = Rule(
+        name="logic_triggered_only_after_match_only_parent_rule",
+        query='cs if (other_check) { }',
+        replace_node="*",
+    )
+
+
+    # Parent edge: after replacing method call, look for assignments in parent scope
+    parent_edge = OutgoingEdges(
+        "replace_method",
+        ["find_assignment_parent"],
+        "Parent"
+    )
+    file_edge = OutgoingEdges(
+        "find_assignment_parent",
+        ["logic_triggered_only_after_match_only_parent_rule"],
+        "File"
+    )
+
+    rule_graph = RuleGraph(
+        rules=[seed_rule, match_only_parent_rule, logic_triggered_only_after_match_only_parent_rule], 
+        edges=[parent_edge, file_edge]
+    )
+
+    args = PiranhaArguments(
+        code_snippet=code,
+        language="java",
+        rule_graph=rule_graph
+    )
+
+    output_summaries = execute_piranha(args)
+    assert len(output_summaries) == 1
+    
+    result_code = output_summaries[0].content
+    
+    # The seed rule should replace isLocEnabled() with true
+    assert "obj.isLocEnabled()" not in result_code
+    assert "x = true;" in result_code
+    
+    # CRITICAL: The match-only parent rule should NOT delete the assignment
+    # Before the bug fix, this line would be deleted
+    # After the bug fix, this line should remain
+    assert "x = true;" in result_code, "Match-only parent rule incorrectly deleted the assignment"
+    
+    # The if condition should also be deleted
+    assert "if (other_check) { }" not in result_code
