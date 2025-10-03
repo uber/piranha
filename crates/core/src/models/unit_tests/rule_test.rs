@@ -384,6 +384,64 @@ fn test_satisfies_filter_not_enclosing_node_negative() {
   );
 }
 
+/// Test that match-only parent rules do not create edits (regression test for bug fix)
+#[test]
+fn test_match_only_parent_rule_no_edit() {
+  // Create a match-only rule (no replace_node specified)
+  let _match_only_rule = piranha_rule! {
+    name = "match_only_parent",
+    query = "(
+      (binary_expression
+          left : (_)* @lhs
+          operator:\"&&\"
+          right: [(true) (parenthesized_expression (true))]
+      )
+  @binary_expression)"
+    // Note: no replace_node specified, making this a match-only rule
+  };
+  let match_only_rule = InstantiatedRule::new(&_match_only_rule, &HashMap::new());
+  
+  // Verify it's actually a match-only rule
+  assert!(match_only_rule.rule().is_match_only_rule());
+
+  let source_code = "class A {
+          boolean f = something && true;
+        }";
+
+  let mut rule_store = RuleStore::default();
+  let args = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
+    .language(PiranhaLanguage::from(JAVA))
+    .build();
+  let mut parser = args.language().parser();
+
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &args,
+  );
+  
+  // Range pointing to part of the binary expression that would trigger parent rule matching
+  let range = Range {
+    start_byte: 41_usize,
+    end_byte: 44_usize,
+    ..Default::default()
+  };
+
+  // Set up match-only rule as a parent rule
+  let next_rules = HashMap::from([
+    (String::from(PARENT), vec![match_only_rule.clone()]),
+    (String::from(PARENT_ITERATIVE), vec![match_only_rule]),
+  ]);
+  
+  // Before the fix: this would return Some(edit) that deletes content
+  // After the fix: this should return None because match-only rules shouldn't create edits
+  let edit = source_code_unit.get_edit_for_ancestors(&range, &mut rule_store, &next_rules);
+  assert!(edit.is_none(), "Match-only parent rules should not create edits");
+}
+
 /// Tests whether comments are preserved when delete_comments is set to false
 #[test]
 fn test_rule_delete_comments() {
