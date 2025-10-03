@@ -400,7 +400,7 @@ fn test_match_only_parent_rule_no_edit() {
     // Note: no replace_node specified, making this a match-only rule
   };
   let match_only_rule = InstantiatedRule::new(&_match_only_rule, &HashMap::new());
-  
+
   // Verify it's actually a match-only rule
   assert!(match_only_rule.rule().is_match_only_rule());
 
@@ -422,7 +422,7 @@ fn test_match_only_parent_rule_no_edit() {
     PathBuf::new().as_path(),
     &args,
   );
-  
+
   // Range pointing to part of the binary expression that would trigger parent rule matching
   let range = Range {
     start_byte: 41_usize,
@@ -435,11 +435,14 @@ fn test_match_only_parent_rule_no_edit() {
     (String::from(PARENT), vec![match_only_rule.clone()]),
     (String::from(PARENT_ITERATIVE), vec![match_only_rule]),
   ]);
-  
+
   // Before the fix: this would return Some(edit) that deletes content
   // After the fix: this should return None because match-only rules shouldn't create edits
   let edit = source_code_unit.get_edit_for_ancestors(&range, &mut rule_store, &next_rules);
-  assert!(edit.is_none(), "Match-only parent rules should not create edits");
+  assert!(
+    edit.is_none(),
+    "Match-only parent rules should not create edits"
+  );
 }
 
 /// Tests whether comments are preserved when delete_comments is set to false
