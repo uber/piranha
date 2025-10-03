@@ -3,7 +3,7 @@ members = ["crates/core", "crates/concrete-syntax"]
 resolver = "2"
 
 [workspace.package]
-version = "0.4.5"
+version = "0.4.6"
 edition = "2021"
 authors = ["Uber Technologies Inc."]
 license-file = "LICENSE"
