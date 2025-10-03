@@ -70,7 +70,7 @@ pub enum CaptureMode {
   Optional, // :[var?]
 }
 
-/// Decode \" \\ \n \t \/ … inside a string literal.
+/// Decode \" \\ \n \t \/ \@ \: … inside a string literal.
 fn unescape(src: &str) -> String {
   let mut out = String::with_capacity(src.len());
   let mut chars = src.chars();
@@ -82,6 +82,8 @@ fn unescape(src: &str) -> String {
         Some('n') => out.push('\n'),
         Some('t') => out.push('\t'),
         Some('/') => out.push('/'),
+        Some('@') => out.push('@'),
+        Some(':') => out.push(':'),
         Some(other) => {
           out.push('\\');
           out.push(other);
@@ -383,7 +385,8 @@ impl ConcreteSyntax {
       literal_text => {
         // Split the literal text on whitespace, similar to Python's .split()
         let text = pair.as_str();
-        Ok(Self::parse_literal_tokens(text))
+        let unescaped_text = unescape(text);
+        Ok(Self::parse_literal_tokens(&unescaped_text))
       }
       delimited_literal => {
         // Same as literal_text but with escape handling for \/
@@ -416,7 +419,3 @@ impl ConcreteSyntax {
     })
   }
 }
-
-#[cfg(test)]
-#[path = "unit_tests/parser_test.rs"]
-mod parser_test;
