@@ -139,8 +139,20 @@ impl SourceCodeUnit {
     //  we apply the rules in the order they are provided to each ancestor in the context
     for rule in &next_rules[PARENT] {
       for ancestor in &context() {
-        // Skip match-only rules - they should not create edits for parent scope
-        if !rule.rule().is_match_only_rule() {
+        if rule.rule().is_match_only_rule() {
+          // For match-only rules, get matches and create identity edit if found
+          let matches = self.get_matches(rule, rules_store, *ancestor, false);
+          if let Some(first_match) = matches.first() {
+            // Create identity edit - same range for old and new (no code change)
+            let identity_edit = Edit::new(
+              first_match.clone(),
+              first_match.matched_string().clone(), // Replace with same content = identity
+              rule.name(),
+              self.code(),
+            );
+            return Some(identity_edit);
+          }
+        } else {
           if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
             return Some(edit);
           }
@@ -151,8 +163,20 @@ impl SourceCodeUnit {
     // we apply the rules to each ancestor in the context in the order they are provided
     for ancestor in &context() {
       for rule in &next_rules[PARENT_ITERATIVE] {
-        // Skip match-only rules - they should not create edits for parent scope
-        if !rule.rule().is_match_only_rule() {
+        if rule.rule().is_match_only_rule() {
+          // For match-only rules, get matches and create identity edit if found
+          let matches = self.get_matches(rule, rules_store, *ancestor, false);
+          if let Some(first_match) = matches.first() {
+            // Create identity edit - same range for old and new (no code change)
+            let identity_edit = Edit::new(
+              first_match.clone(),
+              first_match.matched_string().clone(), // Replace with same content = identity
+              rule.name(),
+              self.code(),
+            );
+            return Some(identity_edit);
+          }
+        } else {
           if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
             return Some(edit);
           }

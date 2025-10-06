@@ -391,6 +391,8 @@ def test_match_only_parent_rule_bug_fix():
 if (obj.isLocEnabled() || x > 0) {
     // do something
     x = obj.isLocEnabled();
+    x = obj.isLocEnabled();
+    x = obj.isLocEnabled();
     if (other_check) { }
 } else {
     // do something else!
@@ -410,7 +412,8 @@ if (obj.isLocEnabled() || x > 0) {
     # This rule has no replace_node, making it match-only
     match_only_parent_rule = Rule(
         name="find_assignment_parent",
-        query="cs :[x] = true;"
+        query="cs :[x] = true;",
+        is_seed_rule=False
         # Note: no replace_node specified = match-only rule
     )
 
@@ -419,6 +422,7 @@ if (obj.isLocEnabled() || x > 0) {
         name="logic_triggered_only_after_match_only_parent_rule",
         query='cs if (other_check) { }',
         replace_node="*",
+        is_seed_rule=False
     )
 
 
@@ -455,9 +459,9 @@ if (obj.isLocEnabled() || x > 0) {
     assert "x = true;" in result_code
     
     # CRITICAL: The match-only parent rule should NOT delete the assignment
-    # Before the bug fix, this line would be deleted
-    # After the bug fix, this line should remain
-    assert "x = true;" in result_code, "Match-only parent rule incorrectly deleted the assignment"
+    # Before the bug fix, this line would be deleted (replaced with empty string)
+    # After the bug fix, this line should remain (identity edit preserves content)
+    assert "x = true;" in result_code, "Match-only parent rule must preserve the assignment"
     
-    # The if condition should also be deleted
-    assert "if (other_check) { }" not in result_code
+    # The subsequent rule should still be triggered and delete the if statement
+    assert "if (other_check) { }" not in result_code, "Subsequent rules should still be triggered"
