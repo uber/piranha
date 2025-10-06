@@ -152,10 +152,8 @@ impl SourceCodeUnit {
             );
             return Some(identity_edit);
           }
-        } else {
-          if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
-            return Some(edit);
-          }
+        } else if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+          return Some(edit);
         }
       }
     }
@@ -176,10 +174,8 @@ impl SourceCodeUnit {
             );
             return Some(identity_edit);
           }
-        } else {
-          if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
-            return Some(edit);
-          }
+        } else if let Some(edit) = self.get_edit(rule, rules_store, *ancestor, false) {
+          return Some(edit);
         }
       }
     }

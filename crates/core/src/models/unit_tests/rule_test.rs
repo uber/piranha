@@ -439,8 +439,11 @@ fn test_match_only_parent_rule_no_edit() {
   // Before the fix: this would return Some(edit) that deletes content
   // After the fix: this should return Some(identity_edit) that preserves content
   let edit = source_code_unit.get_edit_for_ancestors(&range, &mut rule_store, &next_rules);
-  assert!(edit.is_some(), "Match-only parent rules should create identity edits");
-  
+  assert!(
+    edit.is_some(),
+    "Match-only parent rules should create identity edits"
+  );
+
   let edit = edit.unwrap();
   // Verify it's an identity edit (replacement equals original content)
   assert_eq!(
