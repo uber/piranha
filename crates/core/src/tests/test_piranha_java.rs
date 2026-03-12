@@ -508,10 +508,17 @@ fn test_fact_rule_records_facts_in_output() {
   let summary = &summaries[0];
 
   // No rewrites — facts do not modify code
-  assert!(summary.rewrites().is_empty(), "fact rules must not produce rewrites");
+  assert!(
+    summary.rewrites().is_empty(),
+    "fact rules must not produce rewrites"
+  );
 
   // Three facts recorded (one per boolean variable)
-  assert_eq!(summary.facts().len(), 3, "expected 3 facts, one per boolean variable");
+  assert_eq!(
+    summary.facts().len(),
+    3,
+    "expected 3 facts, one per boolean variable"
+  );
 
   // Every fact must have "var" and "val" keys
   for fact in summary.facts() {
@@ -540,7 +547,9 @@ fn test_fact_rule_records_facts_in_output() {
 #[test]
 fn test_fact_filter_gates_rewrite() {
   initialize();
-  let path = PathBuf::from("test-resources").join(JAVA).join("fact_filter");
+  let path = PathBuf::from("test-resources")
+    .join(JAVA)
+    .join("fact_filter");
   let temp_dir = copy_folder_to_temp_dir(&path.join("input"));
   let piranha_arguments = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])

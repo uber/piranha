@@ -882,9 +882,7 @@ fn make_var_fact_rule(fact: HashMap<String, String>) -> InstantiatedRule {
 }
 
 /// Helper: build a SourceCodeUnit + RuleStore for Java.
-fn java_scu_and_store(
-  source_code: &str, parser: &mut Parser,
-) -> (SourceCodeUnit, RuleStore) {
+fn java_scu_and_store(source_code: &str, parser: &mut Parser) -> (SourceCodeUnit, RuleStore) {
   let java = get_java_tree_sitter_language();
   let piranha_args = PiranhaArgumentsBuilder::default()
     .paths_to_codebase(vec![UNUSED_CODE_PATH.to_string()])
@@ -1007,7 +1005,8 @@ fn test_fact_voided_by_overlapping_rewrite() {
 
 /// A rewrite that precedes a fact's range shifts the fact's byte offsets by the edit delta.
 #[test]
-fn test_fact_shifted_by_preceding_rewrite() {  let source_code =
+fn test_fact_shifted_by_preceding_rewrite() {
+  let source_code =
     "class Test {\n  void foobar() {\n    boolean a = true;\n    boolean b = false;\n  }\n}";
   let java = get_java_tree_sitter_language();
   let mut parser = java.parser();
@@ -1090,7 +1089,10 @@ fn test_fact_filter_blocks_rewrite_when_no_matching_fact() {
   scu.apply_rule(rule, &mut rule_store, &mut parser, &None);
 
   // No rewrite should have happened
-  assert!(scu.rewrites().is_empty(), "rewrite must be blocked when no matching fact exists");
+  assert!(
+    scu.rewrites().is_empty(),
+    "rewrite must be blocked when no matching fact exists"
+  );
   assert_eq!(scu.code(), source_code, "source code must be unchanged");
 }
 
@@ -1104,18 +1106,29 @@ fn test_fact_filter_allows_rewrite_when_matching_fact_exists() {
 
   // Manually inject a fact with { stale = "true" } — simulates a prior fact rule having fired
   use crate::models::{fact::Fact, matches::Range};
-  let dummy_range = Range { start_byte: 0, end_byte: 0, ..Default::default() };
-  scu
-    .facts_mut()
-    .push(Fact::new(dummy_range, HashMap::from([("stale".to_string(), "true".to_string())])));
+  let dummy_range = Range {
+    start_byte: 0,
+    end_byte: 0,
+    ..Default::default()
+  };
+  scu.facts_mut().push(Fact::new(
+    dummy_range,
+    HashMap::from([("stale".to_string(), "true".to_string())]),
+  ));
 
   // Now run the rewrite rule — fact_filter should pass
   let rule = make_rewrite_rule_with_fact_filter();
   scu.apply_rule(rule, &mut rule_store, &mut parser, &None);
 
   // The rewrite should have fired
-  assert!(!scu.rewrites().is_empty(), "rewrite must fire when matching fact exists");
-  assert!(!scu.code().contains("boolean x = false"), "deleted declaration must be gone");
+  assert!(
+    !scu.rewrites().is_empty(),
+    "rewrite must fire when matching fact exists"
+  );
+  assert!(
+    !scu.code().contains("boolean x = false"),
+    "deleted declaration must be gone"
+  );
 }
 
 /// A voided fact does NOT satisfy fact_filter — the filter only considers live (non-voided) facts.
@@ -1128,9 +1141,15 @@ fn test_fact_filter_ignores_voided_facts() {
 
   // Inject a voided fact — should not satisfy fact_filter
   use crate::models::{fact::Fact, matches::Range};
-  let dummy_range = Range { start_byte: 0, end_byte: 0, ..Default::default() };
-  let mut voided_fact =
-    Fact::new(dummy_range, HashMap::from([("stale".to_string(), "true".to_string())]));
+  let dummy_range = Range {
+    start_byte: 0,
+    end_byte: 0,
+    ..Default::default()
+  };
+  let mut voided_fact = Fact::new(
+    dummy_range,
+    HashMap::from([("stale".to_string(), "true".to_string())]),
+  );
   voided_fact.voided = true;
   scu.facts_mut().push(voided_fact);
 
@@ -1193,7 +1212,10 @@ fn test_fact_filter_blocked_after_fact_voided_by_real_rewrite() {
   scu.apply_edit(&edit, &mut parser);
 
   // The fact is now voided
-  assert!(scu.facts()[0].voided(), "fact must be voided after overlapping rewrite");
+  assert!(
+    scu.facts()[0].voided(),
+    "fact must be voided after overlapping rewrite"
+  );
 
   // Rewrite rule: deletes `= false` declarations, gated by fact_filter { stale = "true" }
   let rewrite_rule = make_rewrite_rule_with_fact_filter();
@@ -1233,7 +1255,10 @@ fn test_two_facts_recorded_on_same_range() {
           .to_string(),
       ))
       .replace_node("decl".to_string())
-      .fact(HashMap::from([("category".to_string(), "bool".to_string())]))
+      .fact(HashMap::from([(
+        "category".to_string(),
+        "bool".to_string(),
+      )]))
       .is_seed_rule(true)
       .build()
       .unwrap();
@@ -1252,7 +1277,10 @@ fn test_two_facts_recorded_on_same_range() {
           .to_string(),
       ))
       .replace_node("decl".to_string())
-      .fact(HashMap::from([("var_name".to_string(), "@name".to_string())]))
+      .fact(HashMap::from([(
+        "var_name".to_string(),
+        "@name".to_string(),
+      )]))
       .is_seed_rule(true)
       .build()
       .unwrap();
@@ -1263,7 +1291,11 @@ fn test_two_facts_recorded_on_same_range() {
   scu.apply_rule(rule_b, &mut rule_store, &mut parser, &None);
 
   // Two facts, both recorded for the same declaration
-  assert_eq!(scu.facts().len(), 2, "expected two independent facts on the same node");
+  assert_eq!(
+    scu.facts().len(),
+    2,
+    "expected two independent facts on the same node"
+  );
 
   // Both target the same range (same @decl node)
   let range_a = scu.facts()[0].range();
@@ -1278,10 +1310,13 @@ fn test_two_facts_recorded_on_same_range() {
   );
 
   // Each fact has only its own key
-  let all_data: Vec<&HashMap<String, String>> =
-    scu.facts().iter().map(|f| f.data()).collect();
-  let has_category = all_data.iter().any(|d| d.get("category").map(String::as_str) == Some("bool"));
-  let has_var_name = all_data.iter().any(|d| d.get("var_name").map(String::as_str) == Some("x"));
+  let all_data: Vec<&HashMap<String, String>> = scu.facts().iter().map(|f| f.data()).collect();
+  let has_category = all_data
+    .iter()
+    .any(|d| d.get("category").map(String::as_str) == Some("bool"));
+  let has_var_name = all_data
+    .iter()
+    .any(|d| d.get("var_name").map(String::as_str) == Some("x"));
   assert!(has_category, "fact with category=bool not found");
   assert!(has_var_name, "fact with var_name=x not found");
 
@@ -1295,8 +1330,14 @@ fn test_two_facts_recorded_on_same_range() {
   scu.apply_edit(&edit, &mut parser);
 
   // A rewrite that overlaps the shared range must void BOTH facts
-  assert!(scu.facts()[0].voided(), "fact[0] must be voided after rewrite overlaps its range");
-  assert!(scu.facts()[1].voided(), "fact[1] must be voided after rewrite overlaps its range");
+  assert!(
+    scu.facts()[0].voided(),
+    "fact[0] must be voided after rewrite overlaps its range"
+  );
+  assert!(
+    scu.facts()[1].voided(),
+    "fact[1] must be voided after rewrite overlaps its range"
+  );
 }
 
 /// `validate()` must reject a rule that sets both `fact` and `replace` since they are
@@ -1307,7 +1348,9 @@ fn test_validate_rejects_fact_and_replace_together() {
   use crate::models::Validator;
   let rule = RuleBuilder::default()
     .name("bad_rule".to_string())
-    .query(CGPattern::new("(local_variable_declaration) @decl".to_string()))
+    .query(CGPattern::new(
+      "(local_variable_declaration) @decl".to_string(),
+    ))
     .replace_node("decl".to_string())
     .replace("// removed".to_string())
     .fact(HashMap::from([("k".to_string(), "v".to_string())]))
@@ -1347,8 +1390,7 @@ fn test_fact_shift_updates_row_col_points() {
   let orig_end_col = scu.facts()[late_idx].range().end_point.column;
 
   let early_range = *scu.facts()[early_idx].range();
-  let deleted_rows =
-    early_range.end_point.row as isize - early_range.start_point.row as isize;
+  let deleted_rows = early_range.end_point.row as isize - early_range.start_point.row as isize;
 
   // Delete the early declaration — entirely before the late fact
   let edit = Edit::delete_range(scu.code(), early_range);
@@ -1369,6 +1411,14 @@ fn test_fact_shift_updates_row_col_points() {
     "end row must shift by deleted rows"
   );
   // `b` starts its own line, so the column on that line is unchanged
-  assert_eq!(late.range().start_point.column, orig_start_col, "start column must be unchanged");
-  assert_eq!(late.range().end_point.column, orig_end_col, "end column must be unchanged");
+  assert_eq!(
+    late.range().start_point.column,
+    orig_start_col,
+    "start column must be unchanged"
+  );
+  assert_eq!(
+    late.range().end_point.column,
+    orig_end_col,
+    "end column must be unchanged"
+  );
 }

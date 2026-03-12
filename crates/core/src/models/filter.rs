@@ -452,7 +452,7 @@ impl SourceCodeUnit {
   /// Search for outermost ancestor of `node` (including itself) that matches `query_str`
   fn _match_outermost_ancestor(
     &self, rule_store: &mut RuleStore, node: Node, ts_query: &CGPattern,
-  ) -> Option<Node> {
+  ) -> Option<Node<'_>> {
     let mut matched_ancestor = self._match_ancestor(rule_store, node, ts_query);
     loop {
       if let Some(outer_matched_ancestor) = matched_ancestor
@@ -469,7 +469,7 @@ impl SourceCodeUnit {
   /// Search for innermost ancestor of `node` (including itself) that matches `query_str`
   fn _match_ancestor(
     &self, rule_store: &mut RuleStore, node: Node, ts_query: &CGPattern,
-  ) -> Option<Node> {
+  ) -> Option<Node<'_>> {
     let mut current_node = node;
     // This ensures that the below while loop considers the current node too when checking for filters.
     if current_node.child_count() > 0 {

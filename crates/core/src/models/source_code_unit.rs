@@ -336,7 +336,7 @@ impl SourceCodeUnit {
     }
   }
 
-  fn get_scope_node(&self, scope_query: &Option<CGPattern>, rules_store: &mut RuleStore) -> Node {
+  fn get_scope_node(&self, scope_query: &Option<CGPattern>, rules_store: &mut RuleStore) -> Node<'_> {
     // Get scope node
     // let mut scope_node = self.root_node();
     if let Some(query_str) = scope_query {
@@ -422,7 +422,13 @@ impl SourceCodeUnit {
         // Fact is entirely before the edit — no change needed
       } else if fact_start >= edit_old_end {
         // Fact is entirely after the edit — shift byte offsets and row/col points
-        fact.shift_range(byte_delta, old_end_row, old_end_col, new_end_row, new_end_col);
+        fact.shift_range(
+          byte_delta,
+          old_end_row,
+          old_end_col,
+          new_end_row,
+          new_end_col,
+        );
       } else {
         // Fact overlaps with the edit — void it
         fact.voided = true;

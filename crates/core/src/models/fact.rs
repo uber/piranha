@@ -41,7 +41,11 @@ pub struct Fact {
 
 impl Fact {
   pub(crate) fn new(range: Range, data: HashMap<String, String>) -> Self {
-    Fact { range, data, voided: false }
+    Fact {
+      range,
+      data,
+      voided: false,
+    }
   }
 
   /// Shift byte offsets and row/col points after a preceding edit.
@@ -78,7 +82,10 @@ impl Fact {
 /// - If the point is before `old_end_row`: should not occur for facts entirely after the edit.
 fn shift_point(p: Point, row_delta: isize, col_delta: isize, old_end_row: usize) -> Point {
   if p.row > old_end_row {
-    Point { row: (p.row as isize + row_delta) as usize, column: p.column }
+    Point {
+      row: (p.row as isize + row_delta) as usize,
+      column: p.column,
+    }
   } else {
     // p.row == old_end_row (same row as edit end)
     Point {
