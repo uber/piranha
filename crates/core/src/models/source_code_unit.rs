@@ -32,6 +32,7 @@ use crate::{
 
 use super::{
   edit::Edit,
+  fact::Fact,
   matches::{Match, Range},
   piranha_arguments::PiranhaArguments,
   rule::InstantiatedRule,
@@ -67,6 +68,10 @@ pub(crate) struct SourceCodeUnit {
   #[get = "pub"]
   #[get_mut = "pub"]
   matches: Vec<(String, Match)>,
+  // Facts recorded by fact rules in this source code unit
+  #[get = "pub"]
+  #[get_mut = "pub"]
+  facts: Vec<Fact>,
   // Piranha Arguments passed by the user
   #[get = "pub"]
   piranha_arguments: PiranhaArguments,
@@ -86,6 +91,7 @@ impl SourceCodeUnit {
       path: path.to_path_buf(),
       rewrites: Vec::new(),
       matches: Vec::new(),
+      facts: Vec::new(),
       piranha_arguments: piranha_arguments.clone(),
     };
     // Panic if allow dirty ast is false and the tree is syntactically incorrect
@@ -140,11 +146,31 @@ impl SourceCodeUnit {
 
     let mut query_again = false;
 
+    // When rule is a "fact" rule:
+    // Get all matches, record a Fact for each match (no code change), and propagate.
+    if rule.rule().is_fact_rule() {
+      for m in self.get_matches(&rule, rule_store, scope_node, true) {
+        let data: std::collections::HashMap<String, String> = rule
+          .rule()
+          .fact()
+          .iter()
+          .map(|(k, v)| {
+            let resolved = m.matches().iter().fold(v.clone(), |acc, (tag, val)| {
+              acc.replace(&format!("@{tag}"), val)
+            });
+            (k.clone(), resolved)
+          })
+          .collect();
+        self.facts_mut().push(Fact::new(*m.range(), data));
+        self.substitutions.extend(m.matches().clone());
+        self.propagate(*m.range(), rule.clone(), rule_store, parser);
+      }
+    }
     // When rule is a "rewrite" rule :
     // Update the first match of the rewrite rule
     // Add mappings to the substitution
     // Propagate each applied edit. The next rule will be applied relative to the application of this edit.
-    if !rule.rule().is_match_only_rule() {
+    else if !rule.rule().is_match_only_rule() {
       if let Some(edit) = self.get_edit(&rule, rule_store, scope_node, true) {
         self.rewrites_mut().push(edit.clone());
         query_again = true;
@@ -310,7 +336,9 @@ impl SourceCodeUnit {
     }
   }
 
-  fn get_scope_node(&self, scope_query: &Option<CGPattern>, rules_store: &mut RuleStore) -> Node {
+  fn get_scope_node(
+    &self, scope_query: &Option<CGPattern>, rules_store: &mut RuleStore,
+  ) -> Node<'_> {
     // Get scope node
     // let mut scope_node = self.root_node();
     if let Some(query_str) = scope_query {
@@ -363,7 +391,51 @@ impl SourceCodeUnit {
     if self._number_of_errors() > number_of_errors {
       self._panic_for_syntax_error();
     }
+
+    // Update fact ranges based on this edit
+    self.update_facts_after_edit(&ts_edit);
+
     ts_edit
+  }
+
+  /// Update (or void) stored facts after an edit is applied.
+  /// - Facts entirely before the edit are unchanged.
+  /// - Facts entirely after the edit have their byte offsets and row/col points shifted.
+  /// - Facts overlapping the edit are marked `voided = true`.
+  fn update_facts_after_edit(&mut self, ts_edit: &InputEdit) {
+    let edit_start = ts_edit.start_byte;
+    let edit_old_end = ts_edit.old_end_byte;
+    let edit_new_end = ts_edit.new_end_byte;
+    let byte_delta = edit_new_end as isize - edit_old_end as isize;
+
+    let old_end_row = ts_edit.old_end_position.row;
+    let old_end_col = ts_edit.old_end_position.column;
+    let new_end_row = ts_edit.new_end_position.row;
+    let new_end_col = ts_edit.new_end_position.column;
+
+    for fact in self.facts.iter_mut() {
+      if fact.voided {
+        continue;
+      }
+      let fact_start = fact.range().start_byte;
+      let fact_end = fact.range().end_byte;
+
+      if fact_end <= edit_start {
+        // Fact is entirely before the edit — no change needed
+      } else if fact_start >= edit_old_end {
+        // Fact is entirely after the edit — shift byte offsets and row/col points
+        fact.shift_range(
+          byte_delta,
+          old_end_row,
+          old_end_col,
+          new_end_row,
+          new_end_col,
+        );
+      } else {
+        // Fact overlaps with the edit — void it
+        fact.voided = true;
+      }
+    }
   }
 
   fn _panic_for_syntax_error(&self) {

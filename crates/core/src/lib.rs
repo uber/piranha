@@ -12,7 +12,7 @@
 */
 #![allow(deprecated)] // This prevents cargo clippy throwing warning for deprecated use.
 use models::{
-  edit::Edit, filter::Filter, matches::Match, outgoing_edges::OutgoingEdges,
+  edit::Edit, fact::Fact, filter::Filter, matches::Match, outgoing_edges::OutgoingEdges,
   piranha_arguments::PiranhaArguments, piranha_output::PiranhaOutputSummary, rule::Rule,
   rule_graph::RuleGraph, source_code_unit::SourceCodeUnit,
 };
@@ -47,6 +47,7 @@ fn polyglot_piranha(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
   m.add_class::<Rule>()?;
   m.add_class::<OutgoingEdges>()?;
   m.add_class::<Filter>()?;
+  m.add_class::<Fact>()?;
   Ok(())
 }
 
@@ -123,7 +124,7 @@ impl Piranha {
     self
       .relevant_files
       .values()
-      .filter(|r| !r.matches().is_empty() || !r.rewrites().is_empty())
+      .filter(|r| !r.matches().is_empty() || !r.rewrites().is_empty() || !r.facts().is_empty())
       .cloned()
       .collect_vec()
   }
