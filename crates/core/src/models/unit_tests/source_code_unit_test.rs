@@ -1298,3 +1298,77 @@ fn test_two_facts_recorded_on_same_range() {
   assert!(scu.facts()[0].voided(), "fact[0] must be voided after rewrite overlaps its range");
   assert!(scu.facts()[1].voided(), "fact[1] must be voided after rewrite overlaps its range");
 }
+
+/// `validate()` must reject a rule that sets both `fact` and `replace` since they are
+/// mutually exclusive.
+#[test]
+#[should_panic(expected = "both 'fact' and 'replace'")]
+fn test_validate_rejects_fact_and_replace_together() {
+  use crate::models::Validator;
+  let rule = RuleBuilder::default()
+    .name("bad_rule".to_string())
+    .query(CGPattern::new("(local_variable_declaration) @decl".to_string()))
+    .replace_node("decl".to_string())
+    .replace("// removed".to_string())
+    .fact(HashMap::from([("k".to_string(), "v".to_string())]))
+    .is_seed_rule(true)
+    .build()
+    .unwrap();
+  // validate() returns Err — unwrap triggers the panic that should_panic matches
+  rule.validate().unwrap();
+}
+
+/// A rewrite preceding a fact's range shifts both byte offsets AND row/col points correctly.
+#[test]
+fn test_fact_shift_updates_row_col_points() {
+  // Two declarations on separate lines so row arithmetic matters
+  let source_code =
+    "class T {\n  void run() {\n    boolean a = true;\n    boolean b = false;\n  }\n}";
+  let java = get_java_tree_sitter_language();
+  let mut parser = java.parser();
+  let (mut scu, mut rule_store) = java_scu_and_store(source_code, &mut parser);
+
+  let rule = make_var_fact_rule(HashMap::from([("k".to_string(), "@name".to_string())]));
+  scu.apply_rule(rule, &mut rule_store, &mut parser, &None);
+  assert_eq!(scu.facts().len(), 2);
+
+  // Identify the earlier fact (a) and later fact (b) by byte offset
+  let (early_idx, late_idx) =
+    if scu.facts()[0].range().start_byte < scu.facts()[1].range().start_byte {
+      (0, 1)
+    } else {
+      (1, 0)
+    };
+
+  // Snapshot late fact's original points
+  let orig_start_row = scu.facts()[late_idx].range().start_point.row;
+  let orig_start_col = scu.facts()[late_idx].range().start_point.column;
+  let orig_end_row = scu.facts()[late_idx].range().end_point.row;
+  let orig_end_col = scu.facts()[late_idx].range().end_point.column;
+
+  let early_range = *scu.facts()[early_idx].range();
+  let deleted_rows =
+    early_range.end_point.row as isize - early_range.start_point.row as isize;
+
+  // Delete the early declaration — entirely before the late fact
+  let edit = Edit::delete_range(scu.code(), early_range);
+  scu.apply_edit(&edit, &mut parser);
+
+  let late = &scu.facts()[late_idx];
+  assert!(!late.voided());
+
+  // Row shifts up by however many rows the deleted declaration spanned
+  assert_eq!(
+    late.range().start_point.row as isize,
+    orig_start_row as isize - deleted_rows,
+    "start row must shift by deleted rows"
+  );
+  assert_eq!(
+    late.range().end_point.row as isize,
+    orig_end_row as isize - deleted_rows,
+    "end row must shift by deleted rows"
+  );
+  // `b` starts its own line, so the column on that line is unchanged
+  assert_eq!(late.range().start_point.column, orig_start_col, "start column must be unchanged");
+  assert_eq!(late.range().end_point.column, orig_end_col, "end column must be unchanged");
+}

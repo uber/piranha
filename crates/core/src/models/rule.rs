@@ -254,11 +254,18 @@ impl Rule {
 
 impl Validator for Rule {
   fn validate(&self) -> Result<(), String> {
-    let validation = self
+    if self.is_fact_rule() && !self.replace().is_empty() {
+      return Err(format!(
+        "Rule '{}' sets both 'fact' and 'replace'. These are mutually exclusive: \
+         a fact rule records metadata without modifying code, while a rewrite rule \
+         replaces matched code. Remove one of the two fields.",
+        self.name()
+      ));
+    }
+    self
       .query()
       .validate()
-      .and_then(|_: ()| self.filters().iter().try_for_each(|f| f.validate()));
-    validation
+      .and_then(|_: ()| self.filters().iter().try_for_each(|f| f.validate()))
   }
 }
 

@@ -398,13 +398,18 @@ impl SourceCodeUnit {
 
   /// Update (or void) stored facts after an edit is applied.
   /// - Facts entirely before the edit are unchanged.
-  /// - Facts entirely after the edit have their byte offsets shifted by the edit delta.
+  /// - Facts entirely after the edit have their byte offsets and row/col points shifted.
   /// - Facts overlapping the edit are marked `voided = true`.
   fn update_facts_after_edit(&mut self, ts_edit: &InputEdit) {
     let edit_start = ts_edit.start_byte;
     let edit_old_end = ts_edit.old_end_byte;
     let edit_new_end = ts_edit.new_end_byte;
-    let delta = edit_new_end as isize - edit_old_end as isize;
+    let byte_delta = edit_new_end as isize - edit_old_end as isize;
+
+    let old_end_row = ts_edit.old_end_position.row;
+    let old_end_col = ts_edit.old_end_position.column;
+    let new_end_row = ts_edit.new_end_position.row;
+    let new_end_col = ts_edit.new_end_position.column;
 
     for fact in self.facts.iter_mut() {
       if fact.voided {
@@ -416,8 +421,8 @@ impl SourceCodeUnit {
       if fact_end <= edit_start {
         // Fact is entirely before the edit — no change needed
       } else if fact_start >= edit_old_end {
-        // Fact is entirely after the edit — shift byte offsets by delta
-        fact.shift_range(delta);
+        // Fact is entirely after the edit — shift byte offsets and row/col points
+        fact.shift_range(byte_delta, old_end_row, old_end_col, new_end_row, new_end_col);
       } else {
         // Fact overlaps with the edit — void it
         fact.voided = true;
