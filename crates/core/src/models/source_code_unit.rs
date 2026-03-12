@@ -336,7 +336,9 @@ impl SourceCodeUnit {
     }
   }
 
-  fn get_scope_node(&self, scope_query: &Option<CGPattern>, rules_store: &mut RuleStore) -> Node<'_> {
+  fn get_scope_node(
+    &self, scope_query: &Option<CGPattern>, rules_store: &mut RuleStore,
+  ) -> Node<'_> {
     // Get scope node
     // let mut scope_node = self.root_node();
     if let Some(query_str) = scope_query {
