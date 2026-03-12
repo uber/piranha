@@ -196,6 +196,14 @@ pub(crate) fn default_keep_comment_regexes() -> HashSet<String> {
   HashSet::new()
 }
 
+pub(crate) fn default_fact() -> HashMap<String, String> {
+  HashMap::new()
+}
+
+pub(crate) fn default_fact_filter() -> HashMap<String, String> {
+  HashMap::new()
+}
+
 pub(crate) fn default_allow_dirty_ast() -> bool {
   false
 }

@@ -52,3 +52,4 @@ dist/
 # Python virtual environments
 .venv/
 
+.mcp.json

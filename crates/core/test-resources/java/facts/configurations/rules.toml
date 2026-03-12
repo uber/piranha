@@ -1,0 +1,13 @@
+[[rules]]
+name = "record_bool_var_fact"
+query = """
+(
+  (local_variable_declaration
+    declarator: (variable_declarator
+      name: (_) @name
+      value: [(true) (false)] @value)) @decl
+)
+"""
+replace_node = "decl"
+fact = { var = "@name", val = "@value" }
+is_seed_rule = true

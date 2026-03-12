@@ -15,7 +15,7 @@ use getset::Getters;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 
-use super::{edit::Edit, matches::Match, source_code_unit::SourceCodeUnit};
+use super::{edit::Edit, fact::Fact, matches::Match, source_code_unit::SourceCodeUnit};
 use pyo3::{prelude::pyclass, pymethods};
 
 /// A class to represent Piranha's output
@@ -43,6 +43,10 @@ pub struct PiranhaOutputSummary {
   #[pyo3(get)]
   #[get = "pub"]
   rewrites: Vec<Edit>,
+  /// Facts recorded by fact rules
+  #[pyo3(get)]
+  #[get = "pub"]
+  facts: Vec<Fact>,
 }
 
 impl PiranhaOutputSummary {
@@ -53,6 +57,7 @@ impl PiranhaOutputSummary {
       content: source_code_unit.code().to_string(),
       matches: source_code_unit.matches().iter().cloned().collect_vec(),
       rewrites: source_code_unit.rewrites().iter().cloned().collect_vec(),
+      facts: source_code_unit.facts().iter().cloned().collect_vec(),
     }
   }
 }

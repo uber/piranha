@@ -488,3 +488,66 @@ fn test_incorrect_codebase_path() {
     .build();
   _ = execute_piranha(&piranha_arguments);
 }
+
+/// Integration test: a fact rule records one Fact per match, populating `summary.facts`.
+/// Code is not rewritten; only facts are collected.
+#[test]
+fn test_fact_rule_records_facts_in_output() {
+  initialize();
+  let path = PathBuf::from("test-resources").join(JAVA).join("facts");
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![path.join("input").to_str().unwrap().to_string()])
+    .path_to_configurations(path.join("configurations").to_str().unwrap().to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .build();
+
+  let summaries = execute_piranha(&piranha_arguments);
+
+  // The input has 3 boolean variable declarations → 3 facts expected
+  assert_eq!(summaries.len(), 1, "expected exactly one file in output");
+  let summary = &summaries[0];
+
+  // No rewrites — facts do not modify code
+  assert!(summary.rewrites().is_empty(), "fact rules must not produce rewrites");
+
+  // Three facts recorded (one per boolean variable)
+  assert_eq!(summary.facts().len(), 3, "expected 3 facts, one per boolean variable");
+
+  // Every fact must have "var" and "val" keys
+  for fact in summary.facts() {
+    assert!(fact.data().contains_key("var"), "fact missing 'var' key");
+    assert!(fact.data().contains_key("val"), "fact missing 'val' key");
+    assert!(!fact.voided(), "freshly recorded facts must not be voided");
+  }
+
+  // Verify the three variable names are present across facts
+  let var_names: Vec<&str> = summary
+    .facts()
+    .iter()
+    .map(|f| f.data()["var"].as_str())
+    .collect();
+  assert!(var_names.contains(&"flagA"), "missing fact for flagA");
+  assert!(var_names.contains(&"flagB"), "missing fact for flagB");
+  assert!(var_names.contains(&"flagC"), "missing fact for flagC");
+
+  // Code is unchanged — fact rules are read-only
+  assert_eq!(summary.content(), summary.original_content());
+}
+
+/// Integration test: a fact_filter on a rewrite rule gates the rewrite on the presence of a
+/// specific fact. The fact rule fires first (via a Global edge), records a fact, and only then
+/// does the rewrite rule's fact_filter pass.
+#[test]
+fn test_fact_filter_gates_rewrite() {
+  initialize();
+  let path = PathBuf::from("test-resources").join(JAVA).join("fact_filter");
+  let temp_dir = copy_folder_to_temp_dir(&path.join("input"));
+  let piranha_arguments = PiranhaArgumentsBuilder::default()
+    .paths_to_codebase(vec![temp_dir.path().to_str().unwrap().to_string()])
+    .path_to_configurations(path.join("configurations").to_str().unwrap().to_string())
+    .language(PiranhaLanguage::from(JAVA))
+    .build();
+
+  execute_piranha_and_check_result(&piranha_arguments, &path.join("expected"), 1, true);
+  _ = temp_dir.close();
+}

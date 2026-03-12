@@ -12,6 +12,7 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 use derive_builder::Builder;
 use getset::Getters;
@@ -35,10 +36,11 @@ use crate::utilities::Instantiate;
 
 use super::default_configs::{
   default_contains_at_least, default_contains_at_most, default_contains_query,
-  default_enclosing_node, default_not_contains_queries, default_not_enclosing_node,
+  default_enclosing_node, default_fact_filter, default_not_contains_queries,
+  default_not_enclosing_node,
 };
 
-#[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Getters, Builder)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq, Getters, Builder)]
 #[pyclass]
 #[builder(build_fn(name = "create"))]
 pub struct Filter {
@@ -102,6 +104,35 @@ pub struct Filter {
   #[serde(default = "default_sibling_count")]
   #[pyo3(get)]
   sibling_count: u32,
+
+  /// A set of key-value pairs that at least one recorded fact in the current file must satisfy.
+  /// The filter passes only if some fact's `data` map contains ALL key-value pairs listed here.
+  #[builder(default = "default_fact_filter()")]
+  #[get = "pub"]
+  #[serde(default = "default_fact_filter")]
+  #[pyo3(get)]
+  fact_filter: HashMap<String, String>,
+}
+
+/// Manual Hash implementation because HashMap<String, String> doesn't implement Hash.
+/// We hash a sorted list of (key, value) pairs so that equal HashMaps produce equal hashes,
+/// which is required for correctness when Filter is stored in a HashSet.
+impl Hash for Filter {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.enclosing_node.hash(state);
+    self.outermost_enclosing_node.hash(state);
+    self.not_enclosing_node.hash(state);
+    self.not_contains.hash(state);
+    self.contains.hash(state);
+    self.at_least.hash(state);
+    self.at_most.hash(state);
+    self.child_count.hash(state);
+    self.sibling_count.hash(state);
+    // Sort entries for deterministic hashing
+    let mut entries: Vec<_> = self.fact_filter.iter().collect();
+    entries.sort();
+    entries.hash(state);
+  }
 }
 
 #[pymethods]
@@ -112,6 +143,7 @@ impl Filter {
     not_enclosing_node: Option<String>, not_contains: Option<Vec<String>>,
     contains: Option<String>, at_least: Option<u32>, at_most: Option<u32>,
     child_count: Option<u32>, sibling_count: Option<u32>,
+    fact_filter: Option<HashMap<String, String>>,
   ) -> Self {
     FilterBuilder::default()
       .enclosing_node(CGPattern::new(enclosing_node.unwrap_or_default()))
@@ -129,6 +161,7 @@ impl Filter {
       .at_most(at_most.unwrap_or(default_contains_at_most()))
       .child_count(child_count.unwrap_or(default_child_count()))
       .sibling_count(sibling_count.unwrap_or(default_sibling_count()))
+      .fact_filter(fact_filter.unwrap_or_default())
       .build()
   }
 
@@ -301,6 +334,11 @@ impl Instantiate for Filter {
       at_most: self.at_most,
       child_count: self.child_count,
       sibling_count: self.sibling_count,
+      fact_filter: self
+        .fact_filter()
+        .iter()
+        .map(|(k, v)| (k.clone(), v.instantiate(substitutions_for_holes)))
+        .collect(),
     }
   }
 }
@@ -344,6 +382,20 @@ impl SourceCodeUnit {
       instantiated_filter,
       node.to_sexp()
     );
+
+    // Check fact_filter: at least one recorded fact must match all key-value pairs
+    let fact_filter = instantiated_filter.fact_filter();
+    if !fact_filter.is_empty() {
+      let any_fact_matches = self.facts().iter().any(|fact| {
+        !fact.voided()
+          && fact_filter
+            .iter()
+            .all(|(k, v)| fact.data().get(k).map(String::as_str) == Some(v.as_str()))
+      });
+      if !any_fact_matches {
+        return false;
+      }
+    }
     if *filter.child_count() != default_child_count() {
       return node.named_child_count() == (*filter.child_count() as usize);
     }

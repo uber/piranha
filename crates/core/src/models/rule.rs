@@ -33,7 +33,7 @@ use crate::utilities::Instantiate;
 use super::{
   capture_group_patterns::CGPattern,
   default_configs::{
-    default_filters, default_groups, default_holes, default_is_seed_rule,
+    default_fact, default_filters, default_groups, default_holes, default_is_seed_rule,
     default_keep_comment_regexes, default_query, default_replace, default_replace_idx,
     default_replace_node, default_rule_name,
   },
@@ -111,6 +111,15 @@ pub struct Rule {
   #[get = "pub"]
   #[pyo3(get)]
   keep_comment_regexes: HashSet<String>,
+
+  /// Fact key-value data to record when this rule matches.
+  /// Values may contain `@tag` references that are substituted from match captures.
+  /// A non-empty `fact` makes this a fact-recording rule (mutually exclusive with rewrite).
+  #[builder(default = "default_fact()")]
+  #[serde(default = "default_fact")]
+  #[get = "pub"]
+  #[pyo3(get)]
+  fact: HashMap<String, String>,
 }
 
 impl Rule {
@@ -122,6 +131,11 @@ impl Rule {
   /// Checks if a rule is `match-only` i.e. it has a query but no replace_node
   pub(crate) fn is_match_only_rule(&self) -> bool {
     *self.query() != default_query() && *self.replace_node() == default_replace_node()
+  }
+
+  /// Checks if a rule is a `fact` rule i.e. it records facts without rewriting code
+  pub(crate) fn is_fact_rule(&self) -> bool {
+    !self.fact().is_empty()
   }
 }
 
@@ -181,7 +195,7 @@ impl Rule {
     name: String, query: Option<String>, replace: Option<String>, replace_idx: Option<u8>,
     replace_node: Option<String>, holes: Option<HashSet<String>>, groups: Option<HashSet<String>>,
     filters: Option<HashSet<Filter>>, is_seed_rule: Option<bool>,
-    keep_comment_regexes: Option<HashSet<String>>,
+    keep_comment_regexes: Option<HashSet<String>>, fact: Option<HashMap<String, String>>,
   ) -> Self {
     let mut rule_builder = RuleBuilder::default();
 
@@ -220,6 +234,10 @@ impl Rule {
 
     if let Some(keep_comment_regexes) = keep_comment_regexes {
       rule_builder.keep_comment_regexes(keep_comment_regexes);
+    }
+
+    if let Some(fact) = fact {
+      rule_builder.fact(fact);
     }
 
     rule_builder.build().unwrap()
@@ -365,6 +383,11 @@ impl Instantiate for Rule {
     Rule {
       query: updated_rule.query().instantiate(substitutions_for_holes),
       replace: updated_rule.replace().instantiate(substitutions_for_holes),
+      fact: updated_rule
+        .fact()
+        .iter()
+        .map(|(k, v)| (k.clone(), v.instantiate(substitutions_for_holes)))
+        .collect(),
       ..updated_rule
     }
   }

@@ -1,0 +1,30 @@
+[[rules]]
+name = "record_stale_flag"
+query = """
+(
+  (local_variable_declaration
+    declarator: (variable_declarator
+      name: (identifier) @name
+      value: (true))) @decl
+  (#eq? @name "staleTreatmentFlag")
+)
+"""
+replace_node = "decl"
+fact = { flag_type = "stale" }
+is_seed_rule = true
+
+[[rules]]
+name = "delete_inactive_when_stale_exists"
+query = """
+(
+  (local_variable_declaration
+    declarator: (variable_declarator
+      value: (false))) @decl
+)
+"""
+replace_node = "decl"
+replace = ""
+is_seed_rule = true
+
+[[rules.filters]]
+fact_filter = { flag_type = "stale" }
