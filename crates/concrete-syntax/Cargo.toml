@@ -34,7 +34,7 @@ wasm = ["wasm-bindgen", "js-sys", "web-sys", "serde-wasm-bindgen"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
-tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", rev = "5e0b07cb2ba628842028313b60b97699cc5e0fee" }
+tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", rev = "ff4faf1d4e76a579df0d55410e22bc5512a6e731" }
 tree-sitter-java = "0.20.2"
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
 tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
