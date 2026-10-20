@@ -15,3 +15,7 @@ serde = "1.0.136"
 serde_derive = "1.0.136"
 serde_json = "1.0.82"
 regex = "1.11.1"
+
+# Optimize native query analysis in tests; Piranha keeps debug assertions.
+[profile.test.package.tree-sitter]
+opt-level = 2

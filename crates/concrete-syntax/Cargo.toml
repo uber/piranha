@@ -37,7 +37,7 @@ wasm-bindgen-test = "0.3"
 tree-sitter-kotlin = { git = "https://github.com/danieltrt/tree-sitter-kotlin", rev = "ff4faf1d4e76a579df0d55410e22bc5512a6e731" }
 tree-sitter-java = "0.20.2"
 # TODO: Update after: https://github.com/alex-pinkus/tree-sitter-swift/issues/278 resolves
-tree-sitter-swift = { git = "https://github.com/satyam1749/tree-sitter-swift.git", rev = "08a28993599f1968bc81631a89690503e1db7704" }
+tree-sitter-swift = { git = "https://github.com/norhh/tree-sitter-swift.git", rev = "6d6ebdba4d1a90690e4d2c2e513a4aa60a1b90c9" }
 tree-sitter-python = "0.20.2"
 tree-sitter-ruby = "0.20.1"
 tree-sitter-typescript = "0.20.1"

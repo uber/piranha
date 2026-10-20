@@ -66,7 +66,6 @@ fn execute_piranha_for_swift(
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_cleanup_rules_file() {
   super::initialize();
   execute_piranha_for_swift(
@@ -81,42 +80,36 @@ fn test_cleanup_rules_file() {
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_cleanup_with_derivatives() {
   super::initialize();
   execute_piranha_for_swift("cleanup_with_derivatives", vec![], 1);
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_local_variable_inline_file() {
   super::initialize();
   execute_piranha_for_swift("variable_inline/local_variable_inline", vec![], 1);
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_field_variable_inline_file() {
   super::initialize();
   execute_piranha_for_swift("variable_inline/field_variable_inline", vec![], 2);
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_adhoc_variable_inline_file() {
   super::initialize();
   execute_piranha_for_swift("variable_inline/adhoc_variable_inline", vec![], 1);
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_constructor_variable_inline_file() {
   super::initialize();
   execute_piranha_for_swift("variable_inline/constructor_variable_inline", vec![], 5);
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_delete_everything_after_return() {
   super::initialize();
   execute_piranha_for_swift(
@@ -127,7 +120,6 @@ fn test_delete_everything_after_return() {
 }
 
 #[test]
-#[ignore] // Long running test
 fn test_delete_empty_switch_statement() {
   super::initialize();
   execute_piranha_for_swift(
