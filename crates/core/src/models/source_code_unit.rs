@@ -243,7 +243,7 @@ impl SourceCodeUnit {
 
       debug!(
         "\n{}",
-        &next_rules_by_scope
+        next_rules_by_scope
           .iter()
           .map(|(k, v)| {
             let rules = v.iter().map(|f| f.name()).join(", ");

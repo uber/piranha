@@ -80,7 +80,7 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
     let number_of_matches = &summary.matches().len();
     info!(
       "File: {:?} with {} matches and {} rewrites",
-      &summary.path(),
+      summary.path(),
       number_of_matches,
       number_of_rewrites
     );
@@ -102,7 +102,7 @@ fn log_piranha_output_summaries(summaries: &Vec<PiranhaOutputSummary>) {
   if summaries.len() > 1 {
     info!(
       "Total files: {} (with {} matches and {} rewrites)",
-      &summaries.len(),
+      summaries.len(),
       total_number_of_matches,
       total_number_of_rewrites
     );

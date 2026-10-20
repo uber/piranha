@@ -105,7 +105,7 @@ impl fmt::Display for Edit {
     write!(
       f,
       "\n {} at ({:?}) -\n {}",
-      edit_kind, &replace_range, replacement_snippet_fmt
+      edit_kind, replace_range, replacement_snippet_fmt
     )
   }
 }
