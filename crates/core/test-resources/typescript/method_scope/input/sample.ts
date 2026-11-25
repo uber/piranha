@@ -53,3 +53,8 @@ const expr = function () {
   const x = true;
   return x;
 };
+
+function pick(kind: "a" | "b", separator = "\\") {
+  const x = true;
+  return x ? kind : separator;
+}

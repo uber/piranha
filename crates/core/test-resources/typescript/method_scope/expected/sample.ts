@@ -47,3 +47,7 @@ const otherArrow = () => {
 const expr = function () {
   return true;
 };
+
+function pick(kind: "a" | "b", separator = "\\") {
+  return true ? kind : separator;
+}
