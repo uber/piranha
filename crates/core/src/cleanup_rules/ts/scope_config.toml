@@ -1,0 +1,98 @@
+# Copyright (c) 2023 Uber Technologies, Inc.
+#
+# <p>Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+# except in compliance with the License. You may obtain a copy of the License at
+# <p>http://www.apache.org/licenses/LICENSE-2.0
+#
+# <p>Unless required by applicable law or agreed to in writing, software distributed under the
+# License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This file specifies the scope generators for `TypeScript` and `TSX`.
+# In `edges.toml`, an edge labelled "Method", "Class" or "File" tells Piranha to apply the next rule
+# only inside the method, class or file that contained the previous edit.
+# For a full explanation of how scope generators work, see crates/core/src/cleanup_rules/java/scope_config.toml.
+#
+# Piranha walks up from the node changed by the previous edit and tries each `enclosing_node` query
+# on every ancestor. The first match wins, and its captured code is substituted into `scope` to build
+# a query that finds the same node again.
+#
+# Substitution is a plain text replacement of `@tag`, so a tag name used in `scope` must not start
+# with the name of a tag captured in `enclosing_node` (for example `@n` would corrupt `@name`).
+
+[[scopes]]
+name = "Method"
+
+# function foo(a) { ... }
+[[scopes.rules]]
+enclosing_node = """
+((function_declaration name: (_) @n parameters: (formal_parameters) @fp) @xdn)
+"""
+scope = """
+(((function_declaration name: (_) @z parameters: (formal_parameters) @tp) @qdn)
+ (#eq? @z "@n")
+ (#eq? @tp "@fp"))
+"""
+
+# function* foo(a) { ... }
+[[scopes.rules]]
+enclosing_node = """
+((generator_function_declaration name: (_) @n parameters: (formal_parameters) @fp) @xdn)
+"""
+scope = """
+(((generator_function_declaration name: (_) @z parameters: (formal_parameters) @tp) @qdn)
+ (#eq? @z "@n")
+ (#eq? @tp "@fp"))
+"""
+
+# class A { foo(a) { ... } }
+[[scopes.rules]]
+enclosing_node = """
+((method_definition name: (_) @n parameters: (formal_parameters) @fp) @xdn)
+"""
+scope = """
+(((method_definition name: (_) @z parameters: (formal_parameters) @tp) @qdn)
+ (#eq? @z "@n")
+ (#eq? @tp "@fp"))
+"""
+
+# const foo = (a) => { ... };
+# const foo = function (a) { ... };
+[[scopes.rules]]
+enclosing_node = """
+((variable_declarator name: (_) @n value: [(arrow_function) (function_expression)]) @xdn)
+"""
+scope = """
+(((variable_declarator name: (_) @z value: [(arrow_function) (function_expression)]) @qdn)
+ (#eq? @z "@n"))
+"""
+
+# class A { foo = (a) => { ... }; }
+[[scopes.rules]]
+enclosing_node = """
+((public_field_definition name: (_) @n value: [(arrow_function) (function_expression)]) @xdn)
+"""
+scope = """
+(((public_field_definition name: (_) @z value: [(arrow_function) (function_expression)]) @qdn)
+ (#eq? @z "@n"))
+"""
+
+[[scopes]]
+name = "Class"
+
+[[scopes.rules]]
+enclosing_node = """
+([(class_declaration name: (_) @n) (abstract_class_declaration name: (_) @n)] @c)
+"""
+scope = """
+(([(class_declaration name: (_) @z) (abstract_class_declaration name: (_) @z)] @qc)
+ (#eq? @z "@n"))
+"""
+
+[[scopes]]
+name = "File"
+
+[[scopes.rules]]
+enclosing_node = "(program) @c_u"
+scope = "(program) @compilation_unit"

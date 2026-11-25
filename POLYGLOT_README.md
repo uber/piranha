@@ -523,6 +523,17 @@ The edges can be labelled as `Parent`, `Global` or even much finer scopes like `
 `scope_config.toml` file specifies how to capture these fine-grained scopes like `method`, `function`, `lambda`, `class`.
 First decide, what scopes you need to capture, for instance, in Java we capture "Method" and "Class" scopes. Once, you decide the scopes construct scope query generators similar to [java-scope_config](/src/cleanup_rules/java/scope_config.toml). Each scope query generator has two parts - (i) `matcher` is a tree-sitter query that matches the AST for the scope, and (ii) `generator` is a tree-sitter query with holes that is instantiated with the code snippets corresponding to tags when `matcher` is matched.
 
+Scope configs are compiled into Piranha and cannot be passed in at runtime, so a new scope needs a change to `crates/core/src/cleanup_rules/<language>/scope_config.toml`. These languages ship a scope config, and an edge's `scope` must use one of the names listed for its language:
+* `java`, `java_cs`: `Method`, `Class`, `File`
+* `kt`: `Function`, `Class`, `File`
+* `go`: `Function-Method`, `File`
+* `swift`: `Function`, `Constructor`, `Class`, `File`
+* `ruby`: `Method`
+* `scala`: `File`
+* `typescript`, `tsx`: `Method`, `Class`, `File` (see [ts-scope_config](/crates/core/src/cleanup_rules/ts/scope_config.toml))
+
+Scopes that do not need a scope config, such as `Parent` and `Global`, work for every language.
+
 
 ## Visualizing Graphs for Rules and Groups
 

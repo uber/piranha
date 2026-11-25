@@ -12,6 +12,8 @@ Copyright (c) 2023 Uber Technologies, Inc.
 */
 
 use super::capture_group_patterns::CGPattern;
+use super::language::PiranhaLanguage;
+use super::rule_graph::{DIRECTORY, DIRECTORY_RECURSIVE, GLOBAL, PARENT, PARENT_ITERATIVE};
 use super::{rule_store::RuleStore, source_code_unit::SourceCodeUnit};
 use crate::utilities::tree_sitter_utilities::get_node_for_range;
 use crate::utilities::Instantiate;
@@ -19,6 +21,7 @@ use derive_builder::Builder;
 use getset::Getters;
 use log::trace;
 use serde_derive::Deserialize;
+use std::collections::HashMap;
 
 // Represents the content in the `scope_config.toml` file
 #[derive(Deserialize, Debug, Clone, Hash, PartialEq, Eq, Default, Getters)]
@@ -55,6 +58,12 @@ impl SourceCodeUnit {
     let mut changed_node = get_node_for_range(root_node, start_byte, end_byte);
     // Get the scope enclosing_nodes for `scope_level` from the `scope_config.toml`.
     let scope_enclosing_nodes = rules_store.get_scope_query_generators(scope_level);
+    if scope_enclosing_nodes.is_empty() {
+      panic!(
+        "{}",
+        undefined_scope_level_message(scope_level, rules_store.language())
+      );
+    }
 
     // Match the `scope_enclosing_node.enclosing_node` to the parent
     loop {
@@ -68,7 +77,9 @@ impl SourceCodeUnit {
         if let Some(p_match) = pattern.get_match(&changed_node, self.code(), false) {
           // Generate the scope query for the specific context by substituting the
           // the tags with code snippets appropriately in the `generator` query.
-          return m.scope().instantiate(p_match.matches());
+          return m
+            .scope()
+            .instantiate(&escape_for_query_string(p_match.matches()));
         }
       }
       if let Some(parent) = changed_node.parent() {
@@ -98,6 +109,45 @@ AST S-expression:
       root_node.to_sexp()
     );
   }
+}
+
+/// Escapes `\` and `"` in the captured code snippets.
+/// Scope queries compare captures against these snippets inside double-quoted strings,
+/// for example `(#eq? @tp "@fp")`. Without escaping, code such as `(kind: "a" | "b")`
+/// produces an invalid query. Newlines are already escaped by `CGPattern::instantiate`.
+fn escape_for_query_string(matches: &HashMap<String, String>) -> HashMap<String, String> {
+  matches
+    .iter()
+    .map(|(tag, code)| {
+      let escaped = code.replace('\\', "\\\\").replace('"', "\\\"");
+      (tag.to_string(), escaped)
+    })
+    .collect()
+}
+
+/// Error message for a scope level that has no scope generators in the language's `scope_config.toml`.
+fn undefined_scope_level_message(scope_level: &str, language: &PiranhaLanguage) -> String {
+  let defined_levels: Vec<&str> = language
+    .scopes()
+    .iter()
+    .map(|s| s.name().as_str())
+    .collect();
+  let levels_for_every_language = [
+    PARENT,
+    PARENT_ITERATIVE,
+    GLOBAL,
+    DIRECTORY,
+    DIRECTORY_RECURSIVE,
+  ];
+  format!(
+    "Scope level \"{}\" is not defined for language {:?}. \
+     Scope levels defined for this language: [{}]. \
+     Scope levels available for every language: {}.",
+    scope_level,
+    language.supported_language(),
+    defined_levels.join(", "),
+    levels_for_every_language.join(", ")
+  )
 }
 
 #[cfg(test)]

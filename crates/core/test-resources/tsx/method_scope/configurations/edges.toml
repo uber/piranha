@@ -1,0 +1,4 @@
+[[edges]]
+scope = "Method"
+from = "delete_x_declaration"
+to = ["replace_x_with_true"]
