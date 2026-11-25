@@ -1,0 +1,19 @@
+# Deletes `const x = true;`. The edge to `replace_x_with_true` has scope "Method",
+# so the follow-up rule must only touch `x` inside the function that contained the deletion.
+[[rules]]
+name = "delete_x_declaration"
+query = "cs const x = true;"
+replace_node = "*"
+replace = ""
+
+[[rules]]
+name = "replace_x_with_true"
+query = """
+(
+  (identifier) @id
+  (#eq? @id "x")
+)
+"""
+replace_node = "id"
+replace = "true"
+is_seed_rule = false
