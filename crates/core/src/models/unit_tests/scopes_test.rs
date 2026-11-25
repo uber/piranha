@@ -13,7 +13,7 @@
 
 use crate::models::{
   capture_group_patterns::CGPattern,
-  default_configs::JAVA,
+  default_configs::{JAVA, PYTHON, TYPESCRIPT},
   language::PiranhaLanguage,
   piranha_arguments::{PiranhaArguments, PiranhaArgumentsBuilder},
 };
@@ -190,4 +190,44 @@ fn test_get_scope_query_negative() {
   );
   let mut rule_store = RuleStore::new(&piranha_args);
   let _ = source_code_unit.get_scope_query("Method", 9, 10, &mut rule_store);
+}
+
+/// Calls `get_scope_query` with a scope level that `language` does not define. Expected to panic.
+fn _get_scope_query_for_undefined_level(language: &str, source_code: &str, scope_level: &str) {
+  let piranha_args = PiranhaArgumentsBuilder::default()
+    .language(PiranhaLanguage::from(language))
+    .create()
+    .unwrap();
+  let mut parser = PiranhaLanguage::from(language).parser();
+  let source_code_unit = SourceCodeUnit::new(
+    &mut parser,
+    source_code.to_string(),
+    &HashMap::new(),
+    PathBuf::new().as_path(),
+    &piranha_args,
+  );
+  let mut rule_store = RuleStore::new(&piranha_args);
+  let _ = source_code_unit.get_scope_query(scope_level, 0, 1, &mut rule_store);
+}
+
+/// A language without a `scope_config.toml` reports that no scope levels are defined.
+#[test]
+#[should_panic(
+  expected = "Scope level \"Method\" is not defined for language Python. Scope levels defined for this language: []. Scope levels available for every language: Parent, ParentIterative, Global, Directory, DirectoryRecursive."
+)]
+fn test_get_scope_query_undefined_scope_level_no_scopes() {
+  _get_scope_query_for_undefined_level(PYTHON, "def foo():\n  x = True\n", "Method");
+}
+
+/// A language with a `scope_config.toml` lists the scope levels it defines.
+#[test]
+#[should_panic(
+  expected = "Scope level \"Function\" is not defined for language Ts. Scope levels defined for this language: [Method, Class, File]."
+)]
+fn test_get_scope_query_undefined_scope_level_lists_defined_levels() {
+  _get_scope_query_for_undefined_level(
+    TYPESCRIPT,
+    "function foo() {\n  const x = true;\n}\n",
+    "Function",
+  );
 }
