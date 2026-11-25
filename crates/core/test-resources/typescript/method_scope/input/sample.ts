@@ -27,6 +27,16 @@ class Toggles {
     const x = false;
     return x || flag;
   }
+
+  handler = () => {
+    const x = true;
+    return x;
+  };
+
+  otherHandler = () => {
+    const x = false;
+    return x;
+  };
 }
 
 const arrow = () => {
